@@ -1,0 +1,220 @@
+{
+  "schema": "plenum-public-agent-research-v1",
+  "run_id": "42162579029",
+  "revision": "535d70af82b101b98be72cb52e04805419b10f42",
+  "proposals": {
+    "schema": "plenum-ai-hypothesis-proposals-v1",
+    "precommitted_days": [
+      "2026-01-17",
+      "2026-04-17"
+    ],
+    "stations": [
+      "8443970",
+      "8723214"
+    ],
+    "candidate_names": [
+      "persistence_24h",
+      "m2_only",
+      "m2_s2",
+      "four_constituents"
+    ],
+    "proposals": [
+      {
+        "station": "8443970",
+        "holdout_day": "2026-01-17",
+        "development": {
+          "train_hours": 288,
+          "development_hours": 96,
+          "scores_mae_m": {
+            "persistence_24h": 0.32904166666666657,
+            "m2_only": 0.3535459487441485,
+            "m2_s2": 0.3520609983975989,
+            "four_constituents": 0.34779051305723896
+          },
+          "holdout_measurements_seen": false,
+          "fit_window": "first 12 days only",
+          "development_window": "next four days",
+          "selected": "persistence_24h",
+          "model_answer": "A"
+        },
+        "source_data_hash_sha256": "ccc30860aba2a93cfc65b43dee7e29d3a0e548f0ac2f463d41eaaef4049fad16",
+        "prompt_sha256": "3daf5845be8eaddb6e8fecb0c99184e2e29594b68584e4162df1d2d210c2eeb4",
+        "hypothesis": "persistence_24h trained exclusively on the prior 16 days will beat 24h persistence on the still-unseen held-out date",
+        "falsifier": "If selected model MAE is at least persistence MAE on the withheld 24 hours",
+        "question_generator": "reviewed candidate templates; AI selects one of four",
+        "selection_from_model": true
+      },
+      {
+        "station": "8723214",
+        "holdout_day": "2026-01-17",
+        "development": {
+          "train_hours": 288,
+          "development_hours": 96,
+          "scores_mae_m": {
+            "persistence_24h": 0.07823958333333332,
+            "m2_only": 0.0912810879019953,
+            "m2_s2": 0.08887451338821169,
+            "four_constituents": 0.07541734402387851
+          },
+          "holdout_measurements_seen": false,
+          "fit_window": "first 12 days only",
+          "development_window": "next four days",
+          "selected": "persistence_24h",
+          "model_answer": "A"
+        },
+        "source_data_hash_sha256": "0805f1f81a516f346e2a20cdb66e581b99b9ceeb40c4d605eb6235c1812e72b4",
+        "prompt_sha256": "8e4f895d162842c39dcecba4ff29a152da485bc0393a760999a4503b656e2aa7",
+        "hypothesis": "persistence_24h trained exclusively on the prior 16 days will beat 24h persistence on the still-unseen held-out date",
+        "falsifier": "If selected model MAE is at least persistence MAE on the withheld 24 hours",
+        "question_generator": "reviewed candidate templates; AI selects one of four",
+        "selection_from_model": true
+      },
+      {
+        "station": "8443970",
+        "holdout_day": "2026-04-17",
+        "development": {
+          "train_hours": 288,
+          "development_hours": 96,
+          "scores_mae_m": {
+            "persistence_24h": 0.34170833333333334,
+            "m2_only": 0.16310935165808316,
+            "m2_s2": 0.309612571765921,
+            "four_constituents": 0.3093397200998175
+          },
+          "holdout_measurements_seen": false,
+          "fit_window": "first 12 days only",
+          "development_window": "next four days",
+          "selected": "persistence_24h",
+          "model_answer": "A"
+        },
+        "source_data_hash_sha256": "a8d6fa9ae388f88bae7e8367ce2091e05bd2d64a5a082004de4ec40a93d95288",
+        "prompt_sha256": "6fac6294cb9e13e86d6761677dff58f6f67e0f604f289524a0c30710a6ba48e2",
+        "hypothesis": "persistence_24h trained exclusively on the prior 16 days will beat 24h persistence on the still-unseen held-out date",
+        "falsifier": "If selected model MAE is at least persistence MAE on the withheld 24 hours",
+        "question_generator": "reviewed candidate templates; AI selects one of four",
+        "selection_from_model": true
+      },
+      {
+        "station": "8723214",
+        "holdout_day": "2026-04-17",
+        "development": {
+          "train_hours": 288,
+          "development_hours": 96,
+          "scores_mae_m": {
+            "persistence_24h": 0.08279166666666667,
+            "m2_only": 0.0751363564463569,
+            "m2_s2": 0.09005830825978738,
+            "four_constituents": 0.08892881668704233
+          },
+          "holdout_measurements_seen": false,
+          "fit_window": "first 12 days only",
+          "development_window": "next four days",
+          "selected": "persistence_24h",
+          "model_answer": "A"
+        },
+        "source_data_hash_sha256": "38f65e3260300c47a62df2fed011b14d840aaf227dd1f604dd82193e8503c427",
+        "prompt_sha256": "ea7504c3519e45bfbcbdcbb7b1f8e57ad4e14c93e1a45bdc36489485d3c018f0",
+        "hypothesis": "persistence_24h trained exclusively on the prior 16 days will beat 24h persistence on the still-unseen held-out date",
+        "falsifier": "If selected model MAE is at least persistence MAE on the withheld 24 hours",
+        "question_generator": "reviewed candidate templates; AI selects one of four",
+        "selection_from_model": true
+      }
+    ],
+    "Qwen_model": "Qwen/Qwen3-0.6B",
+    "Qwen_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "agent_accessed_test_measurements": false,
+    "unrestricted_tool_execution": false,
+    "production_model_changed": false,
+    "hypotheses_new_physical_discoveries": false
+  },
+  "audit": {
+    "schema": "plenum-ai-hypothesis-audit-v1",
+    "cases": [
+      {
+        "station": "8443970",
+        "holdout_day": "2026-01-17",
+        "selected": "persistence_24h",
+        "test_hours": 24,
+        "training_hours": 384,
+        "observed_test_source_sha256": "f2880c2a936c625e4113e4094866ac767931fdb412eb0396ae21acdcc726ec24",
+        "development_data_sha256": "ccc30860aba2a93cfc65b43dee7e29d3a0e548f0ac2f463d41eaaef4049fad16",
+        "chosen_model_mae_m": 0.3336666666666668,
+        "persistence_mae_m": 0.3336666666666668,
+        "fixed_four_constituent_mae_m": 0.2964770402069031,
+        "chosen_beats_persistence": false,
+        "chosen_beats_previous_four_term_reference": false,
+        "test_data_used_to_select_or_fit_hypothesis": false,
+        "models_selected_after_test": false,
+        "scientific_discovery": false
+      },
+      {
+        "station": "8723214",
+        "holdout_day": "2026-01-17",
+        "selected": "persistence_24h",
+        "test_hours": 24,
+        "training_hours": 384,
+        "observed_test_source_sha256": "41168aee72f06beea0b3ce4759494759a0dccbe1b99d5da70eb09d87d9dec5ab",
+        "development_data_sha256": "0805f1f81a516f346e2a20cdb66e581b99b9ceeb40c4d605eb6235c1812e72b4",
+        "chosen_model_mae_m": 0.070875,
+        "persistence_mae_m": 0.070875,
+        "fixed_four_constituent_mae_m": 0.056561132624101375,
+        "chosen_beats_persistence": false,
+        "chosen_beats_previous_four_term_reference": false,
+        "test_data_used_to_select_or_fit_hypothesis": false,
+        "models_selected_after_test": false,
+        "scientific_discovery": false
+      },
+      {
+        "station": "8443970",
+        "holdout_day": "2026-04-17",
+        "selected": "persistence_24h",
+        "test_hours": 24,
+        "training_hours": 384,
+        "observed_test_source_sha256": "e3eaa6d47b6fc1b89437117ed0af937e62f72ccf134377bbae7a79cb75189bc8",
+        "development_data_sha256": "a8d6fa9ae388f88bae7e8367ce2091e05bd2d64a5a082004de4ec40a93d95288",
+        "chosen_model_mae_m": 0.3985833333333333,
+        "persistence_mae_m": 0.3985833333333333,
+        "fixed_four_constituent_mae_m": 0.323758572716449,
+        "chosen_beats_persistence": false,
+        "chosen_beats_previous_four_term_reference": false,
+        "test_data_used_to_select_or_fit_hypothesis": false,
+        "models_selected_after_test": false,
+        "scientific_discovery": false
+      },
+      {
+        "station": "8723214",
+        "holdout_day": "2026-04-17",
+        "selected": "persistence_24h",
+        "test_hours": 24,
+        "training_hours": 384,
+        "observed_test_source_sha256": "0fe59697b5c88a3d9039f3c5711f91b35149b7bf2b31cc7a0b4feb747af3cb5c",
+        "development_data_sha256": "38f65e3260300c47a62df2fed011b14d840aaf227dd1f604dd82193e8503c427",
+        "chosen_model_mae_m": 0.09683333333333331,
+        "persistence_mae_m": 0.09683333333333331,
+        "fixed_four_constituent_mae_m": 0.07166477859500481,
+        "chosen_beats_persistence": false,
+        "chosen_beats_previous_four_term_reference": false,
+        "test_data_used_to_select_or_fit_hypothesis": false,
+        "models_selected_after_test": false,
+        "scientific_discovery": false
+      }
+    ],
+    "trials": 4,
+    "won_against_persistence": 0,
+    "won_against_fixed_reference": 0,
+    "agent_selected_from_fixed_hypothesis_menu": true,
+    "agent_invented_new_equations": false,
+    "AI_found_generalizable_improvement": false,
+    "model_weights_updated": false,
+    "eligible_for_automatic_deployment": false,
+    "human_scientific_review_required": true,
+    "limitations": [
+      "This is constrained LLM hypothesis selection, not unrestricted autonomous invention.",
+      "The 0.6B model sees development scores only; the external audit fetches final-day measurements afterward.",
+      "Four station-day forecasts cannot establish robust generalization.",
+      "No model changes or research results are promoted automatically."
+    ]
+  },
+  "automatic_deployment": false,
+  "verified_new_discovery": false
+}
