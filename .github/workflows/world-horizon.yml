@@ -21,6 +21,9 @@ on:
           - journals
           - software
           - discoveries
+  schedule:
+    - cron: "37 7 * * *"
+      timezone: "America/New_York"
   push:
     paths:
       - '.github/workflows/world-horizon.yml'
@@ -79,3 +82,60 @@ jobs:
           path: reports/world_horizon.json
           if-no-files-found: warn
           retention-days: 14
+
+  public-memory-archive:
+    needs: source-verification
+    if: github.ref == 'refs/heads/main' && github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: research-memory
+      - uses: actions/download-artifact@v7
+        with:
+          name: plenum-public-world-horizon-evidence
+          path: reports/
+      - name: Append bounded, explicitly public read-only records
+        env:
+          RUN_ID: ${{ github.run_id }}
+          GIT_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          snapshot=json.loads(Path("reports/world_horizon.json").read_text())
+          assert snapshot["schema"]=="plenum-public-horizon-snapshot-v1"
+          assert not snapshot["independent_breakthrough_verified"]
+          assert not snapshot["AGI_achieved"]
+          assert snapshot["providers_attempted"]<=16
+          assert len(snapshot["records"])<=64
+          assert all(r["untrusted_external_content"] for r in snapshot["records"])
+          date=datetime.now(timezone.utc).strftime("%Y-%m-%d")
+          file=Path("research-memory/evidence/world-horizon")/(
+              date+"-run-"+os.environ["RUN_ID"]+".json")
+          file.parent.mkdir(parents=True,exist_ok=True)
+          if file.exists(): raise FileExistsError("Do not replace earlier discovery evidence")
+          report={
+              "schema":"plenum-public-world-intelligence-archive-v1",
+              "run_id":os.environ["RUN_ID"],
+              "source_revision":os.environ["GIT_SHA"],
+              "unverified_public_records":snapshot,
+              "trusted_instructions_from_sources":False,
+              "automatic_code_or_model_changes":False,
+              "private_data_accessed":False,
+          }
+          file.write_text(json.dumps(report,indent=2,ensure_ascii=False)+"\n")
+          print("Wrote one bounded public snapshot to:",file)
+          PY
+      - name: Save evidence on research-memory, never modify main
+        run: |
+          git -C research-memory config user.name "Plenum Public Intelligence Ledger"
+          git -C research-memory config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C research-memory add evidence/world-horizon/
+          git -C research-memory commit -m "Archive public read-only world intelligence snapshot"
+          git -C research-memory push origin HEAD:research-memory
