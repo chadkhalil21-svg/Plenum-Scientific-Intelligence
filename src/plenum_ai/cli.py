@@ -136,6 +136,9 @@ def main():
     memory_index.add_argument("--out", default="reports/memory_index.json")
     ecosystem = commands.add_parser("scientific-ecosystem")
     ecosystem.add_argument("--out", default="reports/scientific_ecosystem.json")
+    openmm = commands.add_parser("openmm-reference")
+    openmm.add_argument("--steps", type=int, default=100)
+    openmm.add_argument("--out", default="reports/openmm_reference.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -352,6 +355,12 @@ def main():
         result["published_api_keys_exposed"]=False
         print("Audited scientific tool ecosystem:", save_json(args.out,result),
               "entries:",len(result["tools"]))
+    elif args.action == "openmm-reference":
+        from .openmm_engine import reference_diatomic
+        report=reference_diatomic(args.steps)
+        print("OpenMM molecular-dynamics integration:",save_json(args.out,report),
+              "energy drift:",report["relative_total_energy_drift"],
+              "real molecular validation:",report["protein_dynamics_validated"])
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,

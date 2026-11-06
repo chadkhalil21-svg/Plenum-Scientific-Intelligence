@@ -16,6 +16,7 @@ empirical = ["numpy>=1.26,<3"]
 orchestration = ["langgraph==1.2.20", "openmdao==3.45.2", "langgraph-checkpoint-sqlite==3.1.3"]
 astronomy = ["astropy>=7.0,<8"]
 battery = ["pybamm==26.10.1.1"]
+dynamics = ["openmm==8.6.1"]
 
 [project.scripts]
 plenum = "plenum_ai.cli:main"
