@@ -6,7 +6,6 @@ on:
       - '.github/workflows/model-training.yml'
       - 'src/plenum_ai/trainlab.py'
       - 'tests/test_trainlab.py'
-      - 'pyproject.toml'
 permissions:
   contents: read
 concurrency:

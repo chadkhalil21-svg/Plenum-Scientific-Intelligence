@@ -6,7 +6,6 @@ on:
       - '.github/workflows/nasa-exoplanets.yml'
       - 'src/plenum_ai/nasa_exoplanets.py'
       - 'tests/test_nasa_exoplanets.py'
-      - 'pyproject.toml'
 permissions:
   contents: read
 concurrency:

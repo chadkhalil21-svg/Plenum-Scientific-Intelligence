@@ -11,7 +11,6 @@ on:
       - '.github/workflows/scientific-lab.yml'
       - 'src/plenum_ai/lab.py'
       - 'tests/test_lab.py'
-      - 'pyproject.toml'
 permissions:
   contents: read
 concurrency:

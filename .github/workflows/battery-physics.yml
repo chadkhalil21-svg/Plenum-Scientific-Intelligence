@@ -6,7 +6,6 @@ on:
       - '.github/workflows/battery-physics.yml'
       - 'src/plenum_ai/battery_model.py'
       - 'tests/test_battery_model.py'
-      - 'pyproject.toml'
 permissions:
   contents: read
 concurrency:

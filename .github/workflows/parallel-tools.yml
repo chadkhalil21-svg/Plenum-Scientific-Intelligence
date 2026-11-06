@@ -13,7 +13,6 @@ on:
       - "src/plenum_ai/tool_registry.py"
       - "src/plenum_ai/openmdao_adapter.py"
       - "tests/test_parallel_research.py"
-      - "pyproject.toml"
 permissions:
   contents: read
 concurrency:
