@@ -272,8 +272,16 @@ def scan_horizon(query, category="all", online=False, opener=urlopen):
         except Exception as exc:
             # Errors carry only type; no URLs, tokens, private data or unstable
             # remote responses may be recorded as executable instructions.
-            diagnosis = str(exc) if isinstance(exc,ValueError) and (
-                str(exc).startswith("Unsupported RSS or Atom root:")) else ""
+            safe_errors = {
+                "Public provider exceeded response byte limit",
+                "XML entities or DTD not accepted",
+                "Unsupported RSS or Atom feed",
+                "Unsupported RSS or Atom root:",
+                "Unknown public response schema",
+            }
+            reason = str(exc) if isinstance(exc,ValueError) else ""
+            diagnosis = reason[:90] if (reason in safe_errors or
+                reason.startswith("Unsupported RSS or Atom root:")) else ""
             return {"source":key,"status":"unavailable",
                     "error_type":type(exc).__name__,
                     "schema_diagnostic":diagnosis[:90],
