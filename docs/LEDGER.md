@@ -240,3 +240,30 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [ ] Establish full journal-text rights, retraction/citation follow-up, deeper lab-source coverage and genuinely broad persistent source search. Public metadata links do not equal publisher subscriptions.
 - [ ] Add independently validated professional CAD, 3D animation, score engraving and audio synthesis backends. The existing original creative sketches are not production-grade multimodal AGI.
 - [ ] Add private research storage and owner-approved persistent compute for unpublished IP, larger AI models and safely bounded deep research.
+
+## November 6 multidisciplinary expansion: active research and 3D design
+
+- [x] Integrate public NSF awards and ClinicalTrials.gov v2 registration
+  metadata into separate, source-linked evidence classes; zero results
+  are preserved as zero, and none imply scientific or medical efficacy.
+- [x] Complete live two-provider workflow 42170871194 with immutable
+  GitHub `research-memory/evidence/frontiers/` archive; **3 NSF awards**,
+  **0 matching clinical studies**, both services responsive.
+- [x] Add daily public frontier watch at 11:05 UTC plus founder control
+  center `frontiers` operation, without payments or API credentials.
+- [x] Implement and test an original editable OpenSCAD parametric CAD
+  design, and successfully export an STL 3D mesh on GitHub Actions run
+  42171089502, without claiming manufacturing or structural safety.
+- [x] Expand original cross-disciplinary idea studies into literary
+  arts, poetry, cinema, music, dance, digital humanities, game design,
+  urban design, and other creative disciplines.
+- [x] Clean duplicate tool registry entries and accurately distinguish
+  executed, read-only, planned and credential-requiring tools.
+- [ ] Connect an owner-approved `YOUTUBE_API_KEY` for general video
+  search in GitHub; its unauthenticated NASA feed is intermittently
+  blocked and no video or captions are copied.
+- [ ] Add demonstrated reasoning models for complex creative composition,
+  nuanced design and independent idea appraisal, with human oversight.
+- [ ] Expand licensed primary-text access, laboratory provenance,
+  multi-year journal coverage, and independent scientific replication;
+  no system can guarantee instantaneous knowledge of every world lab.

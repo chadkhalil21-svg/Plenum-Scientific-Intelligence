@@ -291,3 +291,18 @@ Plenum now includes a [Universal Discovery and Creativity Network](docs/UNIVERSA
 **YouTube:** The founder console supports a public channel ID with an Atom feed, though GitHub-based access can be blocked. An additional official YouTube Data API v3 adapter supports secure video search only after the owner privately configures the `YOUTUBE_API_KEY` GitHub Actions secret. No key, transcript, copyrighted video or paid provider was added by default.
 
 **iPad control center:** Choose `discovery`, `creative` or `youtube` from [Plenum Research Control Center](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/workflows/control-center.yml) alongside the existing scientific tools.
+
+### Further expansion: emerging lab projects and parametric design
+
+Plenum also runs an [NSF-and-ClinicalTrials research-frontiers
+watch](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/workflows/research-frontiers.yml)
+daily, retrieving source-linked metadata about funding and registered
+studies. The first archived test found three NSF records, zero clinical
+matches, and **no verified scientific results**. New CAD tooling creates
+editable OpenSCAD geometry and tested STL export from a bounded original
+3D panel model: [successful run](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42171089502).
+The iPad control center supports `frontiers` and `parametric-design`
+operations. Original ideas now cover more disciplines, including literature,
+dance, film, digital design and sound. The [multidisciplinary architecture
+document](docs/UNIVERSAL_DISCOVERY_AND_CREATIVITY.md) explains what is
+active, planned, blocked on keys, and still scientifically unvalidated.

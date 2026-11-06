@@ -22,6 +22,18 @@ DOMAIN_PAIRS=(
     ("aerospace","sculpture","lightweight structural studies"),
     ("ecology","games","educational simulations of resource cycles"),
     ("mathematics","art","transformations expressed through geometric composition"),
+    ("literature","artificial intelligence","original narrative experiments with explicit factual boundaries"),
+    ("music","architecture","original spatial rhythm and acoustic design concepts"),
+    ("film","physics","scientifically grounded original visual explanations"),
+    ("dance","robotics","safe expressive motion and choreography studies"),
+    ("linguistics","poetry","new structures for multilingual original verse"),
+    ("photography","astronomy","astronomical data translated into original visual studies"),
+    ("cinematography","earth science","evidence-grounded documentaries and immersive scenes"),
+    ("game design","ecology","systems simulations for environmental learning"),
+    ("fashion","biomaterials","wearable design concepts with testable safety constraints"),
+    ("theater","human-computer interaction","participatory learning and original stage storytelling"),
+    ("sound design","mathematics","procedural timbre and spatial sound studies"),
+    ("urban design","agriculture","self-sufficient community and food-production layouts"),
 )
 COLOR_PALETTE=("#2a3d66","#3c779c","#46a4a1","#d5b96b","#e38e63")
 

@@ -209,3 +209,51 @@ All source-specific failures remain observable and do not invalidate
 the successful independent parts of the research platform. As
 additional sources and tools are added, each must be separately tested
 and governed by access, license, cost and evidence-quality boundaries.
+
+## November 6 expansion: funded labs, trials and practical 3D design
+
+**Two more read-only research sources:** U.S. National Science Foundation
+public award metadata and ClinicalTrials.gov v2 registered-study metadata
+are now available through `plenum research-frontiers --query "public topic"
+--online` and the iPad control-center `frontiers` option. The scheduled
+[Funded Labs and Clinical Research Signals workflow](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/workflows/research-frontiers.yml)
+runs daily at 11:05 UTC and saves an immutable source-linked report on the
+public `research-memory` branch. The first complete run
+[42170871194](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42170871194)
+succeeded. It retrieved **3 actual NSF grant records**, while its narrowly
+specified clinical query matched **0 trials**. Zero matches is not a provider
+outage. Awards and registrations signal *research activity*, not verified
+results, medical efficacy or patents.
+
+**Design beyond static images:** OpenSCAD can now generate an editable original
+parametric panel file (`.scad`) and export its 3D STL geometry, using
+`plenum parametric-design --render`. The isolated
+[OpenSCAD CAD workflow](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42171089502)
+passed. Dimensions are explicitly bounded; there are no validated material
+properties, load paths, fastener engineering, fatigue data or manufacturing
+tolerances. No proposed CAD shape should be manufactured as a structural
+component without professional review.
+
+**A broader original-ideas space:** Plenum's procedural concept studies now
+cover literary art, cinema, poetry, photography, games, choreography,
+architecture, sound design, materials, community design, and other existing
+creative/scientific intersections. These remain original prompt templates,
+not claims of a novel invention, sophisticated trained generative art, or
+human-equivalent creative judgment.
+
+**YouTube status:** the official, metadata-only Data API adapter is already
+implemented and can search broadly if an authorized Google API key is added
+as the `YOUTUBE_API_KEY` GitHub Actions repository secret. The public
+channel feed often returns HTTP errors from GitHub runners. Without the key,
+there is no verified general YouTube search connection inside Plenum.
+Captions, videos, third-party recordings, unlicensed scores, and audio are
+not downloaded.
+
+**Broader planned creative engines:** FreeCAD, Blender, music21, LilyPond,
+MuseScore, Inkscape, Krita, Godot, p5.js, Sonic Pi, SuperCollider, Magenta,
+Wikimedia Commons, the Library of Congress and Smithsonian Open Access
+are inventoried for selective, rights-reviewed adapters. Merely being
+catalogued does not mean an engine is installed or operational. Future
+research directions include digital humanities, economics, engineering
+manufacturing, archaeology, ethics, design criticism, patent prior art,
+replication and open-data provenance.
