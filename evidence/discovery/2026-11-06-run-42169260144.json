@@ -1,0 +1,440 @@
+{
+  "schema": "plenum-public-cross-domain-observatory-v1",
+  "run_id": "42169260144",
+  "source_revision": "83d094b2011267749740680398b4db5a7f27254b",
+  "snapshot": {
+    "schema": "plenum-cross-domain-research-pulse-v1",
+    "topic": "scientific discovery and engineering",
+    "observed_at_utc": "2026-11-06T05:35:03.766547+00:00",
+    "journal_selection_strategy": "rotating_six_of_twenty",
+    "journal_coverage_in_this_run": [
+      "Nature Physics",
+      "Nature Photonics",
+      "Nature Materials",
+      "Nature Biotechnology",
+      "The Lancet",
+      "New England Journal of Medicine"
+    ],
+    "providers": [
+      {
+        "provider": "crossref:Nature Physics",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Physics",
+            "title": "Recent progress in the computational study of supercooled and glassy water",
+            "doi": "https://doi.org/10.1038/s41567-026-03479-x",
+            "url": "https://doi.org/10.1038/s41567-026-03479-x",
+            "published": "2026-11-02",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Physics",
+            "title": "Thermodynamic demonstration of tetracriticality and multicomponent superconductivity in UTe2",
+            "doi": "https://doi.org/10.1038/s41567-026-03504-z",
+            "url": "https://doi.org/10.1038/s41567-026-03504-z",
+            "published": "2026-10-30",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Physics",
+            "title": "Multiparticle quantum walks in a dipole-conserving Bose–Hubbard model",
+            "doi": "https://doi.org/10.1038/s41567-026-03512-z",
+            "url": "https://doi.org/10.1038/s41567-026-03512-z",
+            "published": "2026-10-30",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          }
+        ],
+        "count": 3
+      },
+      {
+        "provider": "crossref:Nature Photonics",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Photonics",
+            "title": "Pure-blue quantum-dot light-emitting diodes with minimal efficiency roll-off and high brightness",
+            "doi": "https://doi.org/10.1038/s41566-026-02041-8",
+            "url": "https://doi.org/10.1038/s41566-026-02041-8",
+            "published": "2026-11-04",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Photonics",
+            "title": "Optical control stabilizes cold-atom comagnetometry",
+            "doi": "https://doi.org/10.1038/s41566-026-02043-6",
+            "url": "https://doi.org/10.1038/s41566-026-02043-6",
+            "published": "2026-10-30",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Photonics",
+            "title": "Low-voltage avalanche heterojunction phototransistor for infrared-to-visible upconversion",
+            "doi": "https://doi.org/10.1038/s41566-026-02046-3",
+            "url": "https://doi.org/10.1038/s41566-026-02046-3",
+            "published": "2026-10-30",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          }
+        ],
+        "count": 3
+      },
+      {
+        "provider": "crossref:Nature Materials",
+        "status": "unavailable",
+        "error_type": "HTTPError",
+        "count": 0,
+        "records": []
+      },
+      {
+        "provider": "crossref:Nature Biotechnology",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Biotechnology",
+            "title": "Editor’s Pick: Wild Bioscience",
+            "doi": "https://doi.org/10.1038/s41587-026-03377-w",
+            "url": "https://doi.org/10.1038/s41587-026-03377-w",
+            "published": "2026-11-03",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Biotechnology",
+            "title": "An engineered, compact Cas12m variant for multiplexed gene activation in vivo",
+            "doi": "https://doi.org/10.1038/s41587-026-03352-5",
+            "url": "https://doi.org/10.1038/s41587-026-03352-5",
+            "published": "2026-10-28",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Biotechnology",
+            "title": "An mRNA–lipid nanoparticle vaccine against H5N1 influenza virus protects lactating dairy cows from infection",
+            "doi": "https://doi.org/10.1038/s41587-026-03343-6",
+            "url": "https://doi.org/10.1038/s41587-026-03343-6",
+            "published": "2026-10-28",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          }
+        ],
+        "count": 3
+      },
+      {
+        "provider": "crossref:The Lancet",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "The Lancet",
+            "title": "Global Fund appoints Mark Dybul as head",
+            "doi": "https://doi.org/10.1016/s0140-6736(26)02237-3",
+            "url": "https://doi.org/10.1016/s0140-6736(26)02237-3",
+            "published": "2026-11-01",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "The Lancet",
+            "title": "Global health reform is missing a generation",
+            "doi": "https://doi.org/10.1016/s0140-6736(26)01753-8",
+            "url": "https://doi.org/10.1016/s0140-6736(26)01753-8",
+            "published": "2026-11-01",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "The Lancet",
+            "title": "Jemilah Mahmood: Malaysian leadership in planetary health",
+            "doi": "https://doi.org/10.1016/s0140-6736(26)02081-7",
+            "url": "https://doi.org/10.1016/s0140-6736(26)02081-7",
+            "published": "2026-11-01",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          }
+        ],
+        "count": 3
+      },
+      {
+        "provider": "crossref:New England Journal of Medicine",
+        "status": "unavailable",
+        "error_type": "HTTPError",
+        "count": 0,
+        "records": []
+      },
+      {
+        "provider": "biorxiv",
+        "status": "retrieved_metadata",
+        "records": [],
+        "count": 0
+      },
+      {
+        "provider": "medrxiv",
+        "status": "retrieved_metadata",
+        "records": [],
+        "count": 0
+      },
+      {
+        "provider": "MIT News",
+        "status": "unavailable",
+        "error_type": "ValueError",
+        "count": 0,
+        "records": []
+      },
+      {
+        "provider": "NASA Updates",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "NASA Updates",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "Midwestern City Lights",
+            "url": "https://www.nasa.gov/image-article/midwestern-city-lights/",
+            "published": "Thu, 05 Nov 2026 15:17:19 +0000",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "NASA Updates",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "NASA Astronauts to Answer Questions from Florida Students",
+            "url": "https://www.nasa.gov/learning-resources/nasa-astronauts-to-answer-questions-from-florida-students-2/",
+            "published": "Thu, 05 Nov 2026 15:11:25 +0000",
+            "original_research_peer_review_confirmed": false
+          }
+        ],
+        "count": 2
+      },
+      {
+        "provider": "youtube-nasa",
+        "status": "unavailable",
+        "error_type": "HTTPError",
+        "count": 0,
+        "records": []
+      }
+    ],
+    "records": [
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Physics",
+        "title": "Recent progress in the computational study of supercooled and glassy water",
+        "doi": "https://doi.org/10.1038/s41567-026-03479-x",
+        "url": "https://doi.org/10.1038/s41567-026-03479-x",
+        "published": "2026-11-02",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Physics",
+        "title": "Thermodynamic demonstration of tetracriticality and multicomponent superconductivity in UTe2",
+        "doi": "https://doi.org/10.1038/s41567-026-03504-z",
+        "url": "https://doi.org/10.1038/s41567-026-03504-z",
+        "published": "2026-10-30",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Physics",
+        "title": "Multiparticle quantum walks in a dipole-conserving Bose–Hubbard model",
+        "doi": "https://doi.org/10.1038/s41567-026-03512-z",
+        "url": "https://doi.org/10.1038/s41567-026-03512-z",
+        "published": "2026-10-30",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Photonics",
+        "title": "Pure-blue quantum-dot light-emitting diodes with minimal efficiency roll-off and high brightness",
+        "doi": "https://doi.org/10.1038/s41566-026-02041-8",
+        "url": "https://doi.org/10.1038/s41566-026-02041-8",
+        "published": "2026-11-04",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Photonics",
+        "title": "Optical control stabilizes cold-atom comagnetometry",
+        "doi": "https://doi.org/10.1038/s41566-026-02043-6",
+        "url": "https://doi.org/10.1038/s41566-026-02043-6",
+        "published": "2026-10-30",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Photonics",
+        "title": "Low-voltage avalanche heterojunction phototransistor for infrared-to-visible upconversion",
+        "doi": "https://doi.org/10.1038/s41566-026-02046-3",
+        "url": "https://doi.org/10.1038/s41566-026-02046-3",
+        "published": "2026-10-30",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Biotechnology",
+        "title": "Editor’s Pick: Wild Bioscience",
+        "doi": "https://doi.org/10.1038/s41587-026-03377-w",
+        "url": "https://doi.org/10.1038/s41587-026-03377-w",
+        "published": "2026-11-03",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Biotechnology",
+        "title": "An engineered, compact Cas12m variant for multiplexed gene activation in vivo",
+        "doi": "https://doi.org/10.1038/s41587-026-03352-5",
+        "url": "https://doi.org/10.1038/s41587-026-03352-5",
+        "published": "2026-10-28",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Biotechnology",
+        "title": "An mRNA–lipid nanoparticle vaccine against H5N1 influenza virus protects lactating dairy cows from infection",
+        "doi": "https://doi.org/10.1038/s41587-026-03343-6",
+        "url": "https://doi.org/10.1038/s41587-026-03343-6",
+        "published": "2026-10-28",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "The Lancet",
+        "title": "Global Fund appoints Mark Dybul as head",
+        "doi": "https://doi.org/10.1016/s0140-6736(26)02237-3",
+        "url": "https://doi.org/10.1016/s0140-6736(26)02237-3",
+        "published": "2026-11-01",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "The Lancet",
+        "title": "Global health reform is missing a generation",
+        "doi": "https://doi.org/10.1016/s0140-6736(26)01753-8",
+        "url": "https://doi.org/10.1016/s0140-6736(26)01753-8",
+        "published": "2026-11-01",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "The Lancet",
+        "title": "Jemilah Mahmood: Malaysian leadership in planetary health",
+        "doi": "https://doi.org/10.1016/s0140-6736(26)02081-7",
+        "url": "https://doi.org/10.1016/s0140-6736(26)02081-7",
+        "published": "2026-11-01",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "NASA Updates",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "Midwestern City Lights",
+        "url": "https://www.nasa.gov/image-article/midwestern-city-lights/",
+        "published": "Thu, 05 Nov 2026 15:17:19 +0000",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "NASA Updates",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "NASA Astronauts to Answer Questions from Florida Students",
+        "url": "https://www.nasa.gov/learning-resources/nasa-astronauts-to-answer-questions-from-florida-students-2/",
+        "published": "Thu, 05 Nov 2026 15:11:25 +0000",
+        "original_research_peer_review_confirmed": false
+      }
+    ],
+    "distinct_records": 14,
+    "sources_unavailable": [
+      "crossref:Nature Materials",
+      "crossref:New England Journal of Medicine",
+      "MIT News",
+      "youtube-nasa"
+    ],
+    "peer_review_verified": false,
+    "breakthroughs_independently_confirmed": false,
+    "all_science_journals_covered": false,
+    "copyrighted_works_downloaded": false,
+    "video_transcripts_downloaded": false,
+    "external_actions_performed": false,
+    "limitations": [
+      "Research metadata and institutional announcements are not scientific truth.",
+      "Journal indexing varies; date of publication may differ from deposit date.",
+      "Preprints are not peer-reviewed; institutional statements are not independent evidence.",
+      "A six-of-twenty rotating sample is not comprehensive worldwide surveillance.",
+      "Video listings are not transcripts or scientific assessments."
+    ]
+  },
+  "breakthrough_claims_verified": false,
+  "public_metadata_only": true
+}
