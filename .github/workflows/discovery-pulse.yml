@@ -77,12 +77,23 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          persist-credentials: false
+      - uses: actions/checkout@v7
+        with:
           ref: research-memory
           path: memory
       - uses: actions/download-artifact@v7
         with:
           name: journal-lab-preprint-youtube-evidence
           path: public-reports/
+      - name: Compare with earlier public research records, not with the world's originality
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m plenum_ai.cli compare-discovery \
+            --report public-reports/daily_discovery.json \
+            --history memory/evidence/discovery \
+            --out public-reports/discovery_delta.json
       - name: Append source-linked public metadata only, never article text
         env:
           RUN_ID: ${{ github.run_id }}
@@ -106,16 +117,25 @@ jobs:
           path.parent.mkdir(parents=True,exist_ok=True)
           if path.exists():
               raise FileExistsError('Immutable discovery record already exists')
+          delta=json.loads(Path('public-reports/discovery_delta.json').read_text())
+          assert delta['schema']=='plenum-research-new-to-archive-v1'
+          assert delta['new_to_this_archive']<=r['distinct_records']
           content={
               'schema':'plenum-public-cross-domain-observatory-v1',
               'run_id':os.environ['RUN_ID'],
               'source_revision':os.environ['REVISION'],
-              'snapshot':r,'breakthrough_claims_verified':False,
+              'snapshot':r,'delta_from_public_memory':delta,
+              'breakthrough_claims_verified':False,
               'public_metadata_only':True,
           }
           path.write_text(json.dumps(content,indent=2,ensure_ascii=False)+'\n')
           print('Archiving journal/lab/video metadata from this run:',path)
           PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: newly-seen-vs-prior-public-research
+          path: public-reports/discovery_delta.json
+          retention-days: 14
       - name: Commit only new observatory record to research-memory branch
         run: |
           git -C memory config user.name "Plenum Discovery Observatory"

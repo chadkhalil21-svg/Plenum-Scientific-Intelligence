@@ -154,6 +154,10 @@ def main():
     videos.add_argument("--channel", default="nasa")
     videos.add_argument("--query", default="scientific lectures")
     videos.add_argument("--out", default="reports/youtube_updates.json")
+    delta = commands.add_parser("compare-discovery")
+    delta.add_argument("--report", required=True)
+    delta.add_argument("--history", required=True)
+    delta.add_argument("--out", default="reports/discovery_delta.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -415,6 +419,12 @@ def main():
         report["metadata_only"]=True
         print("YouTube public listing status:",save_json(args.out,report),
               "status:",report["status"],"videos:",len(report["videos"]))
+    elif args.action == "compare-discovery":
+        from .discovery_delta import compare_discovery
+        snapshot=json.loads(Path(args.report).read_text(encoding="utf-8"))
+        result=compare_discovery(snapshot,args.history)
+        print("New public sources since prior archive:",save_json(args.out,result),
+              "first-seen:",result["new_to_this_archive"])
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,

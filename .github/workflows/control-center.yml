@@ -103,6 +103,7 @@ jobs:
               ;;
             discovery)
               plenum discovery-pulse --topic "$QUESTION" --out reports/discovery_pulse.json
+              plenum compare-discovery --report reports/discovery_pulse.json --history prior-knowledge/evidence/discovery --out reports/discovery_delta.json
               ;;
             youtube)
               plenum youtube-updates --channel "$CHANNEL_ID" --query "$QUESTION" --out reports/youtube_updates.json
@@ -133,6 +134,9 @@ jobs:
               r=json.loads(Path("reports/discovery_pulse.json").read_text())
               assert not r["breakthroughs_independently_confirmed"]
               assert not r["video_transcripts_downloaded"]
+              fresh=json.loads(Path("reports/discovery_delta.json").read_text())
+              assert fresh["schema"]=="plenum-research-new-to-archive-v1"
+              assert not fresh["novel_to_world_or_independent_science"]
           if task=="youtube":
               r=json.loads(Path("reports/youtube_updates.json").read_text())
               assert r["metadata_only"] and not r["videos_downloaded"]
