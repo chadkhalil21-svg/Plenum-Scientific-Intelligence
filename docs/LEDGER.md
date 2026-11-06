@@ -126,3 +126,17 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [ ] Compare PyBaMM models against a suitably licensed measured battery dataset with out-of-sample evaluation before suggesting real cell performance.
 - [ ] Extend the persistent scientific-evidence ledger beyond bibliographic metadata and small demonstration artifacts, without disclosing proprietary research.
 - [ ] Demonstrate reliable AI-directed selection of models, falsifiable hypotheses and verified improvements on truly novel interdisciplinary tasks. Not yet AGI or scientific invention.
+
+## v0.9 First observational forecast on independently held-out measurements
+
+- [x] Implement a fixed four-harmonic tidal-water-level hypothesis and precommit to two NOAA gauges (Boston 8443970 and Virginia Key 8723214), sixteen historical training days, and a final unseen 24-hour observation window.
+- [x] Retrieve actual verified hourly water levels from NOAA's public CO-OPS API, not its tide prediction endpoint; refuse missing/duplicated measurements rather than fabricating data.
+- [x] Fit sine/cosine coefficients on 384 prior observations per station, without holdout leakage. Preserve raw-source SHA-256 digests, model details and 24 measured-versus-predicted records per station in the run artifact.
+- [x] Use a fixed previous-day same-hour baseline, with identical 24 held-out measurement targets for both models.
+- [x] GitHub workflow 42161428637 passed: Boston MAE 0.323731 m vs 0.340083 m baseline (4.81% reduction); Virginia Key MAE 0.065938 m vs 0.086875 m baseline (24.10% reduction). Both station-specific hypotheses supported **only on this fixed retrospective day**.
+- [x] Archive exact quantitative summary, input data SHA-256 and GitHub revision permanently at `evidence/noaa/2025-06-17.json`.
+- [x] Record the failure and correction of an overly strong synthetic unit-test assumption. The fixed prediction algorithm, stations, NOAA date window and scoring were unchanged.
+- [ ] Extend to predeclared unseen dates, weather regimes, multiple seasons, and additional gauges with honest failures and uncertainty intervals.
+- [ ] Compare to strong external tide-forecast products and proper operational skill metrics on independent periods.
+- [ ] Build a genuine AI planner that proposes and tests experiments beyond predefined analytical models, with scientist oversight. **The present hypothesis was authored by the developer, not autonomously discovered by the foundation model.**
+- [ ] Demonstrate reliable generalized AI improvement. Better retrospective coastal predictions are not proof of AGI, novel physics or a new invention.

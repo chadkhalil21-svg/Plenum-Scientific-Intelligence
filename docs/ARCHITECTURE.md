@@ -66,3 +66,19 @@ The tool registry now includes NASA's Exoplanet Archive, queried using a fixed, 
 A separate reproducible PyBaMM 26.10.1.1 workflow runs default lithium-ion SPM and SPMe discharge models. This is a substantive electrochemical modeling library, not our earlier ideal RC circuit. It is intentionally isolated from the general LangGraph worker environment until computational budgets, parameter provenance and model dependencies are reviewed. It produces no cell safety or patented-design claims.
 
 All live sources are read-only. No model weights are altered, no agents execute unreviewed external instructions, and no physical discovery is promoted without independent experimental evidence. The next research target is a paired external measurement/model comparison with verified input provenance, uncertainty and held-out observations.
+
+## v0.9 Verified outside-the-model observational data
+A new independent evidence worker uses NumPy, NOAA CO-OPS observed hourly
+water levels, immutable training/holdout UTC boundaries and a fixed
+harmonic basis. Two historical monitoring stations are selected in advance.
+Model coefficients are determined only using June 1-16 2025 observations.
+The isolated final day is never used for fitting. An observed-24h-prior
+baseline sees only training data. Both are compared on the same withheld
+water-level measurements using MAE and RMSE.
+
+This is distinct from model-to-model comparison or catalog fields calculated
+using the same physical formula. It constitutes a small but real observational
+forecast test. The evidence is persistently indexed, with source hashes and
+a linked reproducible workflow. It does not validate coastal warning
+operations or model-driven self-evolution. A multi-season backtest remains
+necessary before broad scientific or engineering claims.

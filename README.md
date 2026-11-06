@@ -146,3 +146,28 @@ plenum battery-simulation --minutes 10 --out reports/battery_simulation.json
 ```
 
 Use the corresponding NASA and PyBaMM workflows in GitHub Actions to reproduce on free public CPU runners. PyBaMM remains an isolated science workflow until its dependency environment is reviewed for shared parallel-agent execution. Neither integration is an autonomous invention or proof of AGI.
+
+## v0.9: Prediction evaluated on real, held-out NOAA measurements 🌊
+
+Plenum now has a reproducible observational test that differs fundamentally
+from our known-equation fixtures. A fixed four-constituent tidal model was fit
+on sixteen days of **real NOAA hourly water-level measurements**, then
+evaluated against a withheld 24-hour day at two stations.
+
+- **Boston:** model MAE 0.324 m, previous-day persistence MAE 0.340 m.
+- **Virginia Key:** model MAE 0.066 m, baseline MAE 0.087 m.
+- **Both beat the baseline** on this single precommitted historical test day.
+
+[Measured-data methodology](docs/EMPIRICAL_FORECASTING.md) |
+[Permanent machine-readable results](evidence/noaa/2025-06-17.json) |
+[Passing GitHub run](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42161428637)
+
+```sh
+python -m pip install -e ".[empirical]"
+plenum empirical-tides --out reports/noaa_measured_tides.json
+```
+
+The observations are genuinely separate from the model-fitting data. This
+does not demonstrate a newly discovered law, general scientific reasoning,
+an operational coastal forecast, autonomous invention or AGI. Larger
+precommitted multi-season evaluations are required before wider claims.

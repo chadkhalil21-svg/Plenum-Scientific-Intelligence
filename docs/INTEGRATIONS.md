@@ -41,3 +41,18 @@
 - **Astropy + NASA Exoplanet Archive:** unit-aware Keplerian calculations on NASA Planetary Systems records (run 42160359555). Code is in `src/plenum_ai/nasa_exoplanets.py`. Astropy is an optional package, installed using `.[astronomy]`. The sample is not a proof of independent physical validation because some archive orbital parameters are mathematically derived.
 - **PyBaMM 26.10.1.1:** two working default electrochemical lithium-ion simulations, SPM and SPMe (run 42160642565). Code is in `src/plenum_ai/battery_model.py`; install using `.[battery]`. Currently a verified isolated workflow, not a general parallel-worker tool; no measured cell validation or patented battery implementation.
 - Both integrations retain explicit scientific-evidence and provenance boundaries, work without paid AI inference subscriptions, and use public GitHub Actions runners.
+
+## v0.9 NOAA empirical coastal data
+- NOAA CO-OPS observed `hourly_height` station archive, fixed training and
+  holdout dates, bounded read-only HTTP response and strict timestamp checks.
+- NumPy fixed-harmonic least-squares fit, first compared against a proper
+  same-hour previous-day persistence baseline on entirely withheld observed
+  water levels. No model training on the held-out period.
+- Independent GitHub workflow
+  [42161428637](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42161428637)
+  passed. The method won at Boston and Virginia Key for the one predeclared
+  historical day. It is registered as `noaa.tides` in a **separate
+  controlled workflow**, not authorized for unrestricted agent execution.
+- Full evidence, caveats and permanent compact data source fingerprints:
+  [Empirical Forecasting](EMPIRICAL_FORECASTING.md) and
+  [Noaa evidence](../evidence/noaa/2025-06-17.json).
