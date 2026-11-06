@@ -60,6 +60,10 @@ def main():
     team.add_argument("--memory-dir")
     team.add_argument("--model", help="Existing local Ollama model")
     team.add_argument("--hf-model", action="store_true")
+    training = commands.add_parser("train-models")
+    training.add_argument("--tasks", default="botany,chemistry,handwriting,gravity",
+                          help="Comma-separated allowlisted scientific ML benchmarks")
+    training.add_argument("--out", default="reports/model_training.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -125,6 +129,13 @@ def main():
         print("Research team:", save_json(args.out, report),
               "verified known tools:", report["workflow_verified_as_known_tool_demonstration"],
               "new discovery:", report["hypotheses_verified"])
+    elif args.action == "train-models":
+        from .trainlab import run_training_lab
+        tasks = [task.strip() for task in args.tasks.split(",")]
+        report = run_training_lab(tasks)
+        print("Trained scientific ML models:", save_json(args.out, report),
+              "holdout improvements:", report["candidate_beats_dummy_in_all_tasks"],
+              "production deployed:", report["deployment_authorized"])
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,

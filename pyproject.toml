@@ -11,6 +11,7 @@ dependencies = []
 
 [project.optional-dependencies]
 science = ["numpy>=1.26,<3", "scipy>=1.12,<2", "rdkit>=2025.9,<2027"]
+ml = ["numpy>=1.26,<3", "scikit-learn>=1.5,<2"]
 
 [project.scripts]
 plenum = "plenum_ai.cli:main"
