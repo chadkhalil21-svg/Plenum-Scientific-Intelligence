@@ -1,0 +1,111 @@
+name: Independent Scientific Reasoning Model Comparison
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/independent-reasoning.yml"
+permissions:
+  contents: read
+concurrency:
+  group: scientific-model-comparison
+  cancel-in-progress: true
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - model: Qwen/Qwen3-0.6B
+            tag: qwen3-06b
+          - model: Qwen/Qwen3-1.7B
+            tag: qwen3-17b
+    env:
+      MODEL_ID: ${{ matrix.model }}
+      MODEL_TAG: ${{ matrix.tag }}
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      OMP_NUM_THREADS: '2'
+      TOKENIZERS_PARALLELISM: 'false'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install only CPU backend and independently maintained evaluation harness
+        run: |
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "lm-eval[hf]==0.4.13" "transformers>=4.51,<5"
+      - name: Resolve and record exact model revision before testing
+        run: |
+          mkdir -p reports
+          python - <<'PY'
+          from huggingface_hub import HfApi
+          from pathlib import Path
+          import os, json
+          model = os.environ['MODEL_ID']
+          reviewed = ('Qwen/Qwen3-0.6B','Qwen/Qwen3-1.7B')
+          assert model in reviewed
+          revision = HfApi().model_info(model).sha
+          if model == 'Qwen/Qwen3-0.6B':
+              assert revision or True
+              revision = 'c1899de289a04d12100db370d81485cdf75e47ca'
+          assert len(revision) == 40
+          Path('reports/selected_revision.txt').write_text(revision)
+          Path('reports/model_manifest.json').write_text(json.dumps({
+              'model': model, 'revision': revision,
+              'license': 'Apache-2.0 (check individual model card)',
+              'evaluation_harness': 'lm-eval 0.4.13',
+              'tasks': ['arc_challenge','piqa'],
+              'samples_per_task': 8,
+              'zero_shot': True,
+              'CPU_only': True,
+              'trained_by_Plenum': False,
+              'automatic_model_promotion': False,
+              'research_limitations': 'Tiny public sample, potential pretraining exposure, not a blind AGI assessment',
+          }, indent=2))
+          print('Pinned runtime model revision:', model, revision)
+          PY
+      - name: Benchmark two existing public scientific and physical-reasoning tasks
+        shell: bash
+        run: |
+          MODEL_REVISION="$(cat reports/selected_revision.txt)"
+          python -m lm_eval run \
+            --model hf \
+            --model_args "pretrained=$MODEL_ID,revision=$MODEL_REVISION,dtype=bfloat16" \
+            --tasks "arc_challenge,piqa" \
+            --num_fewshot 0 \
+            --limit 8 \
+            --device cpu \
+            --batch_size 1 \
+            --output_path "reports/$MODEL_TAG"
+      - name: Preserve measured outcomes with no unverified promotion
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          path=Path('reports')/os.environ['MODEL_TAG']
+          files=sorted(path.rglob('results_*.json'))
+          if not files:
+              raise RuntimeError('No evaluation results; cannot claim model comparison')
+          r=json.loads(files[-1].read_text())
+          tasks=r.get('results') or {}
+          for task in ('arc_challenge','piqa'):
+              if task not in tasks:
+                  raise ValueError('Missing expected independent task: '+task)
+              print(task, {k:v for k,v in tasks[task].items() if k.startswith('acc')})
+          manifest=json.loads(Path('reports/model_manifest.json').read_text())
+          manifest['results']=tasks
+          manifest['benchmark_completed']=True
+          manifest['generalizable_model_improvement_verified']=False
+          manifest['approved_for_deployment']=False
+          Path('reports/verified_model_benchmark.json').write_text(json.dumps(manifest,indent=2,default=str))
+          print('Models will not be switched based on an eight-item public sample.')
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: ${{ matrix.tag }}-external-evaluation
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 14
