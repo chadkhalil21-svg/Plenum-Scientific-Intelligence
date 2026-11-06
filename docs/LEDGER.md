@@ -165,3 +165,19 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [ ] Test unbiased prompt/choice calibration and larger independent language models; the current Qwen3 choices all favored persistence.
 - [ ] Connect hypothesis proposal to more real scientific solvers and properly independent empirical measurements, with human-reviewed permissions and compute budgets.
 - [ ] Demonstrate generalized AI learning or improvement of foundation-model weights. **Not yet achieved.**
+
+## Persistent intelligence infrastructure, scientific-library rights, and benchmark foundations
+
+- [x] Add a real LangGraph SQLite checkpointer and save/reopen verified scientific worker outcomes across separate processes. Bounded investigations cannot accidentally be rerun under the same thread ID.
+- [x] Add a searchable local SQLite FTS5 bibliography and excerpt index, with DOI, provenance, explicit license and content hashes.
+- [x] Rebuild indexed source metadata from checksum-verified existing `research-memory` entries; the public memory Git branch remains a persistent cross-run knowledge source.
+- [x] Retrieve a single full-text article through Europe PMC and verify the article's machine-readable Creative Commons license before indexing a bounded excerpt. Refuse unlicensed or unknown-content rights.
+- [x] Verify the local checkpoint and open-license retrieval on GitHub Actions run 42165442498. All jobs succeeded.
+- [x] Optimize five specialist science workflows so a shared `pyproject.toml` change does not rerun expensive isolated simulations unnecessarily.
+- [x] Add manual owner-controlled **Plenum Research Control Center** for science, public knowledge, licensed articles, durable checkpoints and verification.
+- [x] Add independent EleutherAI LM Evaluation Harness workflow with public Qwen3 0.6B and 1.7B candidates on ARC-Challenge and PIQA. No automatic model promotion.
+- [ ] Evaluate considerably larger, more diverse and truly unexposed scientific tasks before interpreting model-comparison accuracy as a general reasoning improvement.
+- [ ] Add a configured, trusted language-model backend for PaperQA2-class multi-document reasoning; no hosted LLM or paid API was activated.
+- [ ] Add a long-lived, permissioned worker/queue and production-quality persistence. Local SQLite checkpoints alone are not cloud continuity or horizontal scaling.
+- [ ] Keep proprietary patent material and research in a separate private environment with encryption, private backups and authorized access.
+- [ ] Establish experimentally reproduced new scientific discoveries and generalizable model self-improvement. Neither has been demonstrated.

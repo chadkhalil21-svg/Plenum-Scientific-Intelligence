@@ -208,3 +208,45 @@ reference was still stronger at 0.17501 m. No model weights changed.
 This is **bounded, auditable scientific decision-making**, not general
 autonomous invention, recursive self-improvement or AGI. No paid AI
 subscription or unreviewed tool execution was activated.
+
+## Foundational architecture upgrade: persistent research and independent model evaluation
+
+A new [Operating Architecture and iPad Guide](docs/OPERATIONS_V2.md)
+describes the founder-facing **Plenum Research Control Center** under GitHub
+Actions. Its approved operations can run multidisciplinary scientific
+investigations, index scholarly metadata, retrieve explicitly licensed
+open-access papers, recover local scientific graph checkpoints, and verify
+tests. No unrestricted self-deployment or paid model API is activated.
+
+New working modules:
+
+- `durable_graph.py`: LangGraph SQLite checkpoints and recovery, including
+  refusing accidental duplicate research-thread execution.
+- `knowledge_index.py`: FTS5 scientific-source search with DOI, origin,
+  license and SHA-256 evidence, rehydrated from content-addressed public
+  `research-memory` records.
+- `open_access.py`: read-only Europe PMC JATS retrieval with exact
+  Creative Commons license checks and bounded local indexing.
+- Independent [EleutherAI LM Evaluation Harness](https://github.com/EleutherAI/lm-evaluation-harness)
+  workflow comparing public Qwen3-0.6B and Qwen3-1.7B on ARC-Challenge and
+  PIQA. Each model is separately evaluated; neither is installed as a
+  production intelligence by default.
+
+Example usage:
+
+```sh
+python -m pip install -e ".[science,orchestration]"
+plenum durable-research --query "Verify orbit and thermal benchmark models" --thread-id study-1
+plenum durable-state --db reports/research_checkpoints.sqlite --thread-id study-1
+
+plenum import-public-memory --dir prior-knowledge/memory/entries --db reports/research_index.sqlite
+plenum index-literature --query "photonic computing" --online --db reports/research_index.sqlite
+plenum index-open-article --pmcid PMC12247565 --db reports/research_index.sqlite
+plenum search-knowledge --query "neuroscience and computing" --db reports/research_index.sqlite
+```
+
+The checkpoint and FTS5 databases live on the owner's retained disk or
+in explicitly downloaded GitHub artifacts, **not** automatically across
+temporary runners. The approved public research-memory Git branch is the
+cross-run record source. A long-running cloud AI and stronger model serving
+still require owner-approved computing resources and permissions.

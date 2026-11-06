@@ -56,3 +56,19 @@
 - Full evidence, caveats and permanent compact data source fingerprints:
   [Empirical Forecasting](EMPIRICAL_FORECASTING.md) and
   [Noaa evidence](../evidence/noaa/2025-06-17.json).
+
+## Persistent knowledge, public article rights and standardized evaluation
+- LangGraph checkpointer `langgraph-checkpoint-sqlite==3.1.3` with a
+  strictly validated thread ID, local SQLite file and second-process recovery.
+  The checkpoint is a lightweight local feature, not a horizontal cloud store.
+- Local SQLite FTS5 bibliography retrieval and rehydration from approved
+  checksum-verified public `research-memory` branch entries.
+- Europe PMC single-article JATS XML, exact Creative Commons license parsing,
+  article title, DOI and bounded paragraph extraction; no restricted
+  publisher crawling or uncontrolled bulk ingestion.
+- EleutherAI `lm-eval==0.4.13` standardized comparison of explicit
+  Qwen3-0.6B and Qwen3-1.7B public models, separate read-only CPU workflow.
+  Eight items per task are a smoke benchmark, not evidence for production.
+- PaperQA2 can be installed later as the main grounded scientific-document
+  reasoning interface when a suitable explicitly configured LLM service,
+  licensing policy and document storage exist.
