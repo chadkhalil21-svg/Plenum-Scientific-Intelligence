@@ -1,9 +1,199 @@
 {
+  "description": "Synthetic phrase-order ranking sanity checks, NOT general AI benchmark.",
   "train": [
-    {"query": "photonic chip memory", "titles": ["memory chip photonic architecture", "photonic chip memory accelerator"], "best_index": 1},
-    {"query": "molecular data storage", "titles": ["molecular storage data review", "molecular data storage with proteins"], "best_index": 1}
+    {
+      "query": "photonic chip memory",
+      "titles": [
+        "photonic chip memory accelerator",
+        "memory chip photonic architecture"
+      ],
+      "best_index": 0
+    },
+    {
+      "query": "molecular data storage",
+      "titles": [
+        "molecular storage data review",
+        "molecular data storage with proteins"
+      ],
+      "best_index": 1
+    },
+    {
+      "query": "quantum error correction",
+      "titles": [
+        "error correction quantum circuits",
+        "quantum error correction methods"
+      ],
+      "best_index": 1
+    },
+    {
+      "query": "battery thermal runaway",
+      "titles": [
+        "battery thermal runaway detection",
+        "thermal battery runaway tests"
+      ],
+      "best_index": 0
+    },
+    {
+      "query": "plasma confinement fusion",
+      "titles": [
+        "fusion plasma confinement simulations",
+        "plasma confinement fusion stability"
+      ],
+      "best_index": 1
+    },
+    {
+      "query": "aerodynamic drag reduction",
+      "titles": [
+        "drag reduction aerodynamic wing",
+        "aerodynamic drag reduction experiments"
+      ],
+      "best_index": 1
+    },
+    {
+      "query": "climate methane mitigation",
+      "titles": [
+        "climate methane mitigation pathways",
+        "mitigation methane climate trials"
+      ],
+      "best_index": 0
+    },
+    {
+      "query": "autonomous scientific discovery",
+      "titles": [
+        "scientific discovery autonomous agents",
+        "autonomous scientific discovery evaluation"
+      ],
+      "best_index": 1
+    },
+    {
+      "query": "protein molecular memory",
+      "titles": [
+        "memory molecular protein studies",
+        "protein molecular memory prototypes"
+      ],
+      "best_index": 1
+    },
+    {
+      "query": "formal proof verification",
+      "titles": [
+        "formal proof verification benchmark",
+        "verification proof formal methods"
+      ],
+      "best_index": 0
+    },
+    {
+      "query": "battery state estimation",
+      "titles": [
+        "state battery estimation filters",
+        "battery state estimation systems"
+      ],
+      "best_index": 1
+    },
+    {
+      "query": "nonlinear optical computing",
+      "titles": [
+        "computing nonlinear optical circuits",
+        "nonlinear optical computing processors"
+      ],
+      "best_index": 1
+    }
   ],
   "holdout": [
-    {"query": "autonomous scientific discovery", "titles": ["scientific discovery autonomous agents", "autonomous scientific discovery benchmark"], "best_index": 1}
+    {
+      "query": "magnetic memory circuits",
+      "titles": [
+        "magnetic memory circuits research",
+        "circuits magnetic memory design"
+      ],
+      "best_index": 0
+    },
+    {
+      "query": "radiation shielding materials",
+      "titles": [
+        "shielding materials radiation study",
+        "radiation shielding materials performance"
+      ],
+      "best_index": 1
+    },
+    {
+      "query": "climate model uncertainty",
+      "titles": [
+        "model uncertainty climate science",
+        "climate model uncertainty analysis"
+      ],
+      "best_index": 1
+    },
+    {
+      "query": "orbital debris tracking",
+      "titles": [
+        "orbital debris tracking simulations",
+        "debris orbital tracking methods"
+      ],
+      "best_index": 0
+    },
+    {
+      "query": "neural network efficiency",
+      "titles": [
+        "efficiency network neural algorithms",
+        "neural network efficiency evaluation"
+      ],
+      "best_index": 1
+    },
+    {
+      "query": "stellar nucleosynthesis pathways",
+      "titles": [
+        "pathways stellar nucleosynthesis models",
+        "stellar nucleosynthesis pathways research"
+      ],
+      "best_index": 1
+    },
+    {
+      "query": "superconducting qubit noise",
+      "titles": [
+        "superconducting qubit noise reduction",
+        "noise qubit superconducting calibration"
+      ],
+      "best_index": 0
+    },
+    {
+      "query": "quantum chemistry solvers",
+      "titles": [
+        "solvers chemistry quantum computing",
+        "quantum chemistry solvers comparison"
+      ],
+      "best_index": 1
+    },
+    {
+      "query": "protein structure prediction",
+      "titles": [
+        "structure protein prediction models",
+        "protein structure prediction evaluation"
+      ],
+      "best_index": 1
+    },
+    {
+      "query": "hydrogen storage materials",
+      "titles": [
+        "hydrogen storage materials experiments",
+        "storage hydrogen materials research"
+      ],
+      "best_index": 0
+    },
+    {
+      "query": "optical interconnect bandwidth",
+      "titles": [
+        "interconnect optical bandwidth tests",
+        "optical interconnect bandwidth analysis"
+      ],
+      "best_index": 1
+    },
+    {
+      "query": "coastal flood modeling",
+      "titles": [
+        "modeling coastal flood risk",
+        "coastal flood modeling validation"
+      ],
+      "best_index": 1
+    }
   ]
 }
