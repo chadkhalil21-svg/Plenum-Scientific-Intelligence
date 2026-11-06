@@ -24,3 +24,6 @@ Hot memory: electronic SRAM/HBM; warm: SSD; cold archival: experimental DNA/prot
 A bounded mission produces a source inventory (OpenAlex or clearly marked offline fixture), optional separately prompted proposer and critic, a known-physics heat/orbit numerical check, and a JSON audit record. A passing simulation benchmark only demonstrates expected operation of that small model: it does not validate the model-generated scientific claims.
 
 An optional CPU model run executes HuggingFaceTB/SmolLM2-135M-Instruct (Apache-2.0) on a temporary GitHub Actions runner. The model weights are not committed to GitHub. Larger models can be run through local Ollama on an owner-controlled always-on computer. Automatic public deployment and self-modifying main-branch writes remain disabled.
+
+## v0.3 research memory
+Public run artifacts are transferred to the research-memory branch via a separately permissioned GitHub Actions job after checksum validation. Prior stored paper metadata can be recalled as clearly labeled historical context. New hypotheses, unsupported references, secrets, and proprietary patent material are excluded from persisted records. Ranker-improvement proposals receive a second independent deterministic benchmark computation and cannot deploy themselves.

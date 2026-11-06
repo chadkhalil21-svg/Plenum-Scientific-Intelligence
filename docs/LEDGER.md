@@ -40,3 +40,12 @@ E. Scientific simulation adapters and ultimately robotic validation.
 - [x] Live OpenAlex retrieval and deterministic simulator verified in GitHub workflow 42150258387, with five publication metadata records.
 - [x] Qwen3-0.6B CPU inference generated substantive text and passed an initial echo screen (run 42150086623), but human inspection detected fabricated bibliographic citations. This output is NOT scientifically acceptable.
 - [ ] Re-run Qwen3 against actual public literature; forbid free-form citations and fail the content gate when it invents unsupported references. Any passing syntactic gate still requires expert scientific review.
+
+## v0.3 Public memory and measured improvement
+- [x] Research-memory branch created.
+- [x] Bounded SHA-256 content-addressed scientific metadata and search code.
+- [x] Separate benchmark implementation audits frozen 12 train and 12 holdout examples.
+- [x] Research workflow reads archive, produces records and attempts to persist only public data through a dedicated scoped job.
+- [ ] Verify a successful live memory publication and a subsequent memory recall.
+- [ ] Improve beyond synthetic text-ranking tests using external, out-of-domain benchmarks.
+- [ ] Human-reviewable candidate code/weights and rollback, no unattended deployment.

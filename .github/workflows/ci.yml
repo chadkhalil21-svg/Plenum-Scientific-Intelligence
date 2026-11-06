@@ -19,6 +19,16 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Evaluate a bounded improvement proposal
         run: python -m plenum_ai.cli improve --out reports/improvement.json
+      - name: Check independently recomputed improvement metrics
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          e=json.loads(Path("reports/improvement.json").read_text())
+          assert e["independent_audit"]["passed"], e["independent_audit"]
+          assert e["independent_audit"]["holdout_n"] >= 8
+          assert e["deployed"] is False
+          PY
       - uses: actions/upload-artifact@v7
         with:
           name: improvement-proposal

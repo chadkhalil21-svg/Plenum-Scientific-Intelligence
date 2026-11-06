@@ -5,6 +5,7 @@ from .physics import circular_orbit_speed
 from .research import make_report
 from .science import diffuse_heat
 from .quality import assess_answer
+from .memory import recall
 
 OFFLINE_SOURCES = [{
     "id": "OFFLINE-DEMO",
@@ -14,7 +15,7 @@ OFFLINE_SOURCES = [{
 
 
 def run_mission(question, simulation="heat", model=None, generator=None,
-                offline=False, searcher=search_papers):
+                offline=False, searcher=search_papers, memory_dir=None):
     if not question or len(question) > 600:
         raise ValueError("Question required, maximum 600 characters")
     if simulation not in ("heat", "orbit", "none"):
@@ -35,6 +36,23 @@ def run_mission(question, simulation="heat", model=None, generator=None,
             issues.append("Literature retrieval failed: " + type(exc).__name__)
     stages.append({"role": "literature_researcher", "action": "OpenAlex metadata retrieval",
                    "status": source_status})
+    previous_records = recall(memory_dir, question, limit=3)
+    known = {str(p.get("id")) for p in papers}
+    for previous in previous_records:
+        for source in previous["sources"]:
+            if len(papers) >= 10:
+                break
+            ident = str(source.get("id") or "")
+            if ident and ident not in known:
+                papers.append({
+                    "id": ident, "title": source.get("title"),
+                    "year": source.get("year"), "doi": source.get("doi"),
+                    "url": source.get("url"), "from_public_memory": True
+                })
+                known.add(ident)
+    stages.append({"role": "persistent_memory", "action": "Recall verified-format public metadata",
+                   "status": "consulted" if memory_dir else "not_configured",
+                   "matching_records": len(previous_records)})
     kw = {"model": model} if generator is None else {"model": model, "generator": generator}
     notes = make_report(question, papers, **kw)
     quality = {
@@ -65,6 +83,8 @@ def run_mission(question, simulation="heat", model=None, generator=None,
         "question": question,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "source_status": source_status,
+        "prior_memory_ids": [entry["id"] for entry in previous_records],
+        "prior_memory_public_metadata_only": True,
         "stages": stages,
         "literature_and_hypotheses": notes,
         "simulation": sim,

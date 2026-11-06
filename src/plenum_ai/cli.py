@@ -7,6 +7,9 @@ from .literature import search_papers
 from .physics import circular_orbit_speed
 from .research import make_report
 from .mission import run_mission
+from .memory import make_record, verify, save
+from .audit import independent_audit
+import os
 
 
 def save_json(path, value):
@@ -34,13 +37,23 @@ def main():
     mission.add_argument("--offline", action="store_true", help="Use clearly labeled offline fixture")
     mission.add_argument("--model", help="Optional locally running Ollama model")
     mission.add_argument("--hf-model", action="store_true", help="Optional reviewed tiny CPU model")
+    mission.add_argument("--memory-dir", help="Public archived research metadata")
+    memory = commands.add_parser("memory-record")
+    memory.add_argument("--mission", required=True)
+    memory.add_argument("--improvement", required=True)
+    memory.add_argument("--out", default="reports/memory_entry.json")
+    ingest = commands.add_parser("memory-ingest")
+    ingest.add_argument("--file", required=True)
+    ingest.add_argument("--dir", required=True)
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
         report = make_report(args.query, papers, model=args.model)
         print("Research inventory:", save_json(args.out, report), "papers:", len(papers))
     elif args.action == "improve":
-        evaluation = evaluate_evolution(default_benchmarks())
+        benchmarks = default_benchmarks()
+        evaluation = evaluate_evolution(benchmarks)
+        evaluation["independent_audit"] = independent_audit(benchmarks, evaluation)
         print("Improvement proposal:", save_json(args.out, evaluation),
               "accepted:", evaluation["accepted_for_proposal"])
     elif args.action == "mission":
@@ -55,10 +68,23 @@ def main():
             model = args.model
         report = run_mission(args.query, simulation=args.simulation,
                              offline=args.offline, model=model,
+                             memory_dir=args.memory_dir,
                              generator=generator)
         print("Mission:", save_json(args.out, report),
               "benchmark:", report["numeric_benchmark_verified"],
               "model:", report["model_inference_executed"])
+    elif args.action == "memory-record":
+        mission_report = json.loads(Path(args.mission).read_text(encoding="utf-8"))
+        improvement = json.loads(Path(args.improvement).read_text(encoding="utf-8"))
+        record = make_record(mission_report, improvement,
+                             os.getenv("GITHUB_RUN_ID", ""),
+                             os.getenv("GITHUB_SHA", ""))
+        verify(record)
+        print("Validated memory record:", save_json(args.out, record), "ID:", record["id"])
+    elif args.action == "memory-ingest":
+        record = json.loads(Path(args.file).read_text(encoding="utf-8"))
+        name, created = save(record, args.dir)
+        print("Stored checksum-verified memory:", name, "new:", created)
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,

@@ -54,3 +54,7 @@ plenum mission --query "Test an orbital model" --offline --simulation orbit --ou
 You can alternatively run a capable open-weight model through Ollama on your own computer, e.g. `plenum mission --query "..." --model YOUR_OLLAMA_MODEL`. Local Ollama does not run on GitHub's short-lived CPU runners unless separately installed.
 
 The initial 135M model benchmark completed, but its text echoed instructions. The improved model workflow now uses Qwen3-0.6B, disables thinking mode to avoid spending CPU on hidden reasoning tokens, and checks for obvious prompt repetition. This is a basic text-quality filter, not scientific verification.
+
+
+## Evidence persistence and improvement audit (v0.3)
+Research-memory is a separate public branch for checksum-addressed scientific paper metadata, verification status, and synthetic ranker benchmark results. Run Actions > Autonomous Research to obtain a report and archive a vetted-format public record. The tool can consult matching past metadata on subsequent runs; it cannot treat prior model proposals as proven facts or automatically change source code. Read docs/MEMORY.md before entering queries, because public GitHub workflow inputs and archives are not confidential.
