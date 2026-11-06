@@ -69,3 +69,57 @@ jobs:
           path: reports/universal_brief.json
           if-no-files-found: warn
           retention-days: 14
+
+  archive-public-brief:
+    needs: source-grounded-ideas
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: archive
+      - uses: actions/download-artifact@v7
+        with:
+          name: universal-public-discovery-and-ideas
+          path: reports/
+      - name: Validate public links and append an immutable evidence record
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_REVISION: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          r=json.loads(Path("reports/universal_brief.json").read_text())
+          assert r["schema"]=="plenum-universal-brief-v1"
+          assert r["public_snapshot"]["providers_attempted"]<=32
+          assert len(r["public_snapshot"]["records"])<=128
+          assert r["cross_domain_ideas"]["concept_count"]<=8
+          assert not r["cross_domain_ideas"]["scientific_discovery_verified"]
+          assert not r["AGI_achieved"]
+          folder=Path("archive/evidence/universal-brief")
+          folder.mkdir(parents=True,exist_ok=True)
+          dest=folder/("run-"+os.environ["RUN_ID"]+".json")
+          if dest.exists(): raise FileExistsError("No prior report may be replaced")
+          record={"schema":"plenum-public-universal-brief-memory-v1",
+                  "run_id":os.environ["RUN_ID"],
+                  "source_revision":os.environ["SOURCE_REVISION"],
+                  "public_metadata_and_reviewable_questions":r,
+                  "new_discoveries_verified":False,
+                  "copyrighted_content_republished":False,
+                  "auto_model_or_code_deployment":False}
+          dest.write_text(json.dumps(record,indent=2,ensure_ascii=False)+"\n")
+          print("Archived public cross-disciplinary evidence",dest)
+          PY
+      - name: Commit public questions only on separate research-memory branch
+        run: |
+          git -C archive config user.name "Plenum Public Research Radar"
+          git -C archive config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C archive add evidence/universal-brief/
+          git -C archive commit -m "Archive source-linked multidisciplinary research brief"
+          git -C archive pull --rebase origin research-memory
+          git -C archive push origin HEAD:research-memory

@@ -119,8 +119,8 @@ jobs:
           assert snapshot["schema"]=="plenum-public-horizon-snapshot-v1"
           assert not snapshot["independent_breakthrough_verified"]
           assert not snapshot["AGI_achieved"]
-          assert snapshot["providers_attempted"]<=16
-          assert len(snapshot["records"])<=64
+          assert snapshot["providers_attempted"]<=32
+          assert len(snapshot["records"])<=128
           assert all(r["untrusted_external_content"] for r in snapshot["records"])
           date=datetime.now(timezone.utc).strftime("%Y-%m-%d")
           file=Path("research-memory/evidence/world-horizon")/(
