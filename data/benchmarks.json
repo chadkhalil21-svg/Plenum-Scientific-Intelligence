@@ -1,0 +1,9 @@
+{
+  "train": [
+    {"query": "photonic chip memory", "titles": ["memory chip photonic architecture", "photonic chip memory accelerator"], "best_index": 1},
+    {"query": "molecular data storage", "titles": ["molecular storage data review", "molecular data storage with proteins"], "best_index": 1}
+  ],
+  "holdout": [
+    {"query": "autonomous scientific discovery", "titles": ["scientific discovery autonomous agents", "autonomous scientific discovery benchmark"], "best_index": 1}
+  ]
+}

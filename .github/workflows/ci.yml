@@ -1,0 +1,25 @@
+name: Verify Scientific AI Foundation
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install prototype
+        run: python -m pip install -e .
+      - name: Run independent checks
+        run: python -m unittest discover -s tests -v
+      - name: Evaluate a bounded improvement proposal
+        run: python -m plenum_ai.cli improve --out reports/improvement.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: improvement-proposal
+          path: reports/improvement.json
