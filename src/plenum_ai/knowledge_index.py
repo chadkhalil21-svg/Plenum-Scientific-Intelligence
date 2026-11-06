@@ -142,3 +142,40 @@ def search_index(path, query, limit=8):
         } for row in rows],
         "claim": "Local search index and document excerpts, not verified scientific conclusions",
     }
+
+
+def import_verified_memory(path, memory_dir, max_files=1000):
+    """Rebuild the local search index from public, checksum-verified GitHub memory.
+
+    The research-memory branch remains the cross-run source of truth.
+    This does not import privileged/private conversation content.
+    """
+    from .memory import verify
+    root = Path(memory_dir)
+    if not root.is_dir():
+        raise FileNotFoundError("Public research memory directory not found")
+    if not isinstance(max_files, int) or not 1 <= max_files <= 2000:
+        raise ValueError("Invalid bounded memory import size")
+    added, invalid, seen = 0, 0, 0
+    for file in sorted(root.glob("*.json"))[:max_files]:
+        seen += 1
+        try:
+            record = json.loads(file.read_text(encoding="utf-8"))
+            verify(record)
+            for item in record["sources"]:
+                document = {"source": "reviewed-memory", "id": item.get("id"),
+                            "title": item.get("title"), "url": item.get("url"),
+                            "doi": item.get("doi")}
+                if document["title"] and document["url"] and document["id"]:
+                    upsert_paper(path, document)
+                    added += 1
+        except (OSError, TypeError, ValueError, KeyError, json.JSONDecodeError):
+            invalid += 1
+    return {
+        "memory_files_examined": seen,
+        "valid_paper_references_indexed": added,
+        "invalid_or_rejected_records": invalid,
+        "private_data_imported": False,
+        "fulltext_imported": False,
+        "source_of_truth": "public content-addressed research-memory branch",
+    }
