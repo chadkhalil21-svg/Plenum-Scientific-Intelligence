@@ -64,7 +64,9 @@ jobs:
         if: always()
         with:
           name: journal-lab-preprint-youtube-evidence
-          path: reports/daily_discovery.json
+          path: |
+            reports/daily_discovery.json
+            reports/interdisciplinary_ideas.json
           if-no-files-found: warn
           retention-days: 14
 
