@@ -6,6 +6,8 @@ on:
       - "src/plenum_ai/hf_model.py"
       - "src/plenum_ai/quality.py"
       - "src/plenum_ai/research.py"
+      - "src/plenum_ai/investigate.py"
+      - "src/plenum_ai/lab.py"
       - ".github/workflows/open-model.yml"
 permissions:
   contents: read
@@ -27,17 +29,18 @@ jobs:
           python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
           python -m pip install "transformers>=4.51,<5" safetensors
       - name: Execute two model roles and verify a numerical simulation
-        run: python -m plenum_ai.cli mission --query "What falsifiable experiments could make AI-generated physics results more reproducible?" --hf-model --simulation heat --out reports/open_model_mission.json
+        run: python -m plenum_ai.cli investigate --query "What experiments can test the reliability of orbital mechanics and chemical simulation?" --hf-model --domains mechanics,chemistry,materials,molecules --out reports/open_model_investigation.json
       - name: Check generated content (not a scientific proof)
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          result = json.loads(Path("reports/open_model_mission.json").read_text())
-          assert result["model_inference_executed"]
-          assert result["numeric_benchmark_verified"]
-          assert result["model_outputs_pass_basic_screen"], result["model_output_quality"]
-          assert not result["verified_new_scientific_discovery"]
+          result = json.loads(Path("reports/open_model_investigation.json").read_text())
+          assert result["research"]["model_inference_executed"]
+          assert result["lab"]["known_model_checks_passed"]
+          assert result["workflow_verified_as_known_tool_demonstration"]
+          assert result["research"]["model_outputs_pass_basic_screen"], result["research"]["model_output_quality"]
+          assert not result["claims"]["new_scientific_discovery_verified"]
           print("Basic model output screen passed; scientific validity remains unverified.")
           PY
       - uses: actions/upload-artifact@v7
