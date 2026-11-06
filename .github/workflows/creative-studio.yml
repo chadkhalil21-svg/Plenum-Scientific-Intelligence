@@ -1,0 +1,77 @@
+name: Creative Studio and Open Culture Discovery
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Public creative theme (design, art, music, architecture, invention)"
+        required: true
+        default: "living architecture and geometric music"
+      seed:
+        description: "Original creative sketch seed (0..999999)"
+        type: number
+        required: false
+        default: 1701
+  push:
+    paths:
+      - '.github/workflows/creative-studio.yml'
+      - 'src/plenum_ai/creative_studio.py'
+      - 'src/plenum_ai/creative_sources.py'
+      - 'tests/test_creative_studio.py'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-creative-studio
+  cancel-in-progress: true
+jobs:
+  original-creative-sketch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    env:
+      CREATIVE_TOPIC: ${{ github.event.inputs.topic || 'living architecture and geometric music' }}
+      CREATIVE_SEED: ${{ github.event.inputs.seed || 1701 }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install only lightweight original creativity and metadata modules
+        run: python -m pip install -e .
+      - name: Verify attribution, supported licenses, SVG and MusicXML
+        run: python -m unittest discover -s tests -p 'test_creative_studio.py' -v
+      - name: Generate original vector study, notation and interdisciplinary ideas
+        run: |
+          python -m plenum_ai.cli creative-studio \
+            --topic "$CREATIVE_TOPIC" --seed "$CREATIVE_SEED" \
+            --dir reports/creative_studio \
+            --out reports/creative_manifest.json
+      - name: Discover relevant openly licensed imagery, art and music work metadata
+        run: |
+          python -m plenum_ai.cli creative-sources \
+            --query "$CREATIVE_TOPIC" \
+            --out reports/creative_sources.json
+      - name: Preserve rights metadata and honest source availability
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('reports/creative_manifest.json').read_text())
+          sources=json.loads(Path('reports/creative_sources.json').read_text())
+          assert m['created_from_algorithm']
+          assert not m['copied_copyrighted_music_or_art']
+          assert not m['audio_playback_or_rendering_performed']
+          assert Path(m['outputs']['score_musicxml']).is_file()
+          assert Path(m['outputs']['artwork_svg']).is_file()
+          assert not sources['assets_downloaded']
+          for p in sources['providers']:
+              print('Creative source:',p['provider'],p['status'],
+                    'references:',len(p['records']),'error:',p.get('error_type'))
+          if sources['source_count']==0:
+              raise SystemExit('All creative sources unavailable; original studies saved but no live external integration verified')
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: original-art-design-music-and-attributed-references
+          path: reports/
+          retention-days: 14
+          if-no-files-found: warn
