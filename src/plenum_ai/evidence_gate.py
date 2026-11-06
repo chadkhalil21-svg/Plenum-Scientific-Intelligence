@@ -23,7 +23,7 @@ from .autonomous_hypothesis import (
 )
 from .noaa_empirical import API, STATIONS, parse_observations
 
-FRESH_TEST_DAYS = ("2026-07-17", "2026-10-17")
+FRESH_TEST_DAYS = ("2025-01-17", "2025-11-17")
 MIN_TRAIN, MIN_DEV, MIN_FINAL = 250, 85, 20
 MODEL_REVISION = "c1899de289a04d12100db370d81485cdf75e47ca"
 

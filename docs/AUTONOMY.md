@@ -130,3 +130,17 @@ weights or invented new scientific hypotheses**.
 
 This is an explicitly precommitted, limited experiment in verifiable
 model-directed planning and objective evidence gating.
+
+### NOAA availability exception, recorded before replacement test retrieval
+The initially nominated July 17 and October 17, 2026 windows could not be
+evaluated: NOAA's live hourly-height API returned **"No data was found"**
+before the Qwen3 proposer could make any choices. These are availability
+failures, **not negative model-performance observations**. No held-out
+observations for those windows were retrieved.
+
+We therefore predeclared **January 17 and November 17, 2025** as the new
+replacement holdouts, which had not been evaluated by earlier Plenum tidal
+studies. This substitution is motivated solely by missing data, not by
+observed forecast accuracy. The revised workflow still seals all choices
+before retrieving either final-day measurement series, and it retains all
+four station-day outcomes, including losses.

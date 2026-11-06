@@ -93,9 +93,9 @@ class PolicyGateTests(unittest.TestCase):
         self.assertEqual(sum(reveal for _,_,reveal in self.requests),0)
 
     def test_dates_pinned_and_unapproved_data_rejected(self):
-        self.assertEqual(FRESH_TEST_DAYS,("2026-07-17","2026-10-17"))
-        self.assertIn("end_date=20260716",query("8443970","2026-07-17"))
-        self.assertIn("end_date=20260717",query("8443970","2026-07-17",True))
+        self.assertEqual(FRESH_TEST_DAYS,("2025-01-17","2025-11-17"))
+        self.assertIn("end_date=20250116",query("8443970","2025-01-17"))
+        self.assertIn("end_date=20250117",query("8443970","2025-01-17",True))
         with self.assertRaises(ValueError):
             query("8443970","2026-01-17",True)
 

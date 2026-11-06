@@ -47,7 +47,7 @@ jobs:
           from pathlib import Path
           p=json.loads(Path("reports/gated_hypotheses.json").read_text())
           assert p["schema"]=="plenum-review-gated-hypotheses-v1"
-          assert p["fresh_dates"] == ["2026-07-17","2026-10-17"]
+          assert p["fresh_dates"] == ["2025-01-17","2025-11-17"]
           assert len(p["proposals"]) == 4
           assert p["frozen_evidence_gate"] == "minimum_development_mae"
           assert not p["production_code_or_model_modified"]
