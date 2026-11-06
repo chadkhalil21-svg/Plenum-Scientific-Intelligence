@@ -9,7 +9,6 @@ from .research import make_report
 from .mission import run_mission
 from .memory import make_record, verify, save
 from .audit import independent_audit
-from .lab import run_lab, benchmark_methods
 import os
 
 
@@ -94,11 +93,13 @@ def main():
         name, created = save(record, args.dir)
         print("Stored checksum-verified memory:", name, "new:", created)
     elif args.action == "lab":
+        from .lab import run_lab
         domains = [x.strip() for x in args.domains.split(",")]
         result = run_lab(args.query, domains=domains, method=args.method)
         print("Scientific lab:", save_json(args.out,result),
               "passed:", result["known_model_checks_passed"])
     elif args.action == "solver-benchmark":
+        from .lab import benchmark_methods
         result = benchmark_methods()
         print("Numerical solver benchmark:", save_json(args.out,result))
     elif args.action == "physics":
