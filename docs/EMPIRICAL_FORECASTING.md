@@ -96,3 +96,59 @@ plenum empirical-tides --out reports/noaa_measured_tides.json
 No paid API key is required. The NOAA service may have outages or rate
 limits. Public workflows retain complete JSON artifacts for 14 days;
 a compact summary is permanently archived under `evidence/noaa/`.
+
+## v0.9b: Previously untested seasonal holdouts (three new dates)
+
+After the June 17 run, we **kept the model unchanged** and specified
+three additional future-to-the-training-window holdout days before
+retrieving their NOAA observations:
+
+- March 17, 2025
+- September 17, 2025
+- December 17, 2025
+
+For each date, we independently fetched the preceding 16 days of observed
+hourly water levels, fit the **same** four established tidal periods with
+the **same** least-squares approach, and scored the following 24 hours
+against the previous-day persistence baseline.
+
+| Site and season | Harmonic model MAE | Baseline MAE | Harmonic won? |
+|---|---:|---:|---|
+| Boston, March | 0.21275 m | 0.27179 m | Yes |
+| Virginia Key, March | 0.10695 m | 0.10471 m | **No** |
+| Boston, September | 0.28466 m | 0.49067 m | Yes |
+| Virginia Key, September | 0.06502 m | 0.09654 m | Yes |
+| Boston, December | 0.30299 m | 0.27750 m | **No** |
+| Virginia Key, December | 0.05996 m | 0.07150 m | Yes |
+
+**Aggregate:** four wins, two losses across six station-days and 144
+held-out observed hourly heights. Sample-weighted mean absolute errors:
+**0.17205 m** (harmonic) versus **0.21878 m** (baseline),
+a **21.36% lower aggregate MAE**. This is an observation-based
+evaluation, not a generally proven forecast system.
+
+- Successful fixed multi-season run:
+  https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42161902806
+- Source revision: `e3277dc93c96dc8c7e6e0c67f82534b97f2cde4e`
+- Permanent, machine-readable station/day results and raw-source SHA-256:
+  [evidence/noaa/2025-seasonal-independent.json](../evidence/noaa/2025-seasonal-independent.json)
+
+The six NOAA datasets are real measurements rather than the provider's
+predicted tide heights. Neither the model nor its established constituent
+periods was invented by Plenum's foundation model. There was no test-based
+parameter tuning. All failed station-days remain visible.
+
+These results still cannot certify coastal forecasting or flood-warning
+performance. The experiment excludes nonlinear hydrodynamics, changing
+meteorology and uncertainty. Six station-days at two locations do not
+represent independent region-wide samples or every season/weather condition.
+
+### Reproduce
+```sh
+python -m pip install -e ".[empirical]"
+plenum empirical-tides-seasons --out reports/noaa_seasonal_validation.json
+```
+
+The follow-on research program should compare against NOAA's operational
+predictions, quantify confidence intervals, expand to geographically
+independent stations, and hold out a **future** evaluation period.

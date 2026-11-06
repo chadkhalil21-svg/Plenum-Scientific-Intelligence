@@ -140,3 +140,14 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [ ] Compare to strong external tide-forecast products and proper operational skill metrics on independent periods.
 - [ ] Build a genuine AI planner that proposes and tests experiments beyond predefined analytical models, with scientist oversight. **The present hypothesis was authored by the developer, not autonomously discovered by the foundation model.**
 - [ ] Demonstrate reliable generalized AI improvement. Better retrospective coastal predictions are not proof of AGI, novel physics or a new invention.
+
+## v0.9b Seasonal generalization audit (same frozen model)
+
+- [x] Commit three additional predeclared 2025 seasonal holdouts (March 17, September 17, December 17) at each of Boston and Virginia Key, with no change to the original four-harmonic forecasting model.
+- [x] Keep raw NOAA hourly observation fingerprints, fixed station IDs, dates, physical periods, training/test sizes and failure outcomes.
+- [x] Run independent time-split evaluation on 384 training observations and 24 held-out future observations **per station/day**; total 144 fresh target observations across six cases.
+- [x] GitHub workflow 42161902806 passed. Harmonic forecast MAE (weighted across all cases) **0.17205 m**, persistence baseline **0.21878 m** (21.36% lower). Model beat baseline in **four of six** station-days.
+- [x] Preserve failures at Virginia Key in March and Boston in December, without reselecting dates, removing cases, or claiming all contexts improved.
+- [x] Permanently archive exact metrics and observation SHA-256 digests at `evidence/noaa/2025-seasonal-independent.json`.
+- [ ] Expand to at least several dozen independently chosen station-days and report confidence intervals, strong baselines and weather/surge subgroups before asserting operational skill.
+- [ ] Test generalization to genuinely novel scientific research tasks proposed by the AI. This model was manually specified and verified through code, **not** autonomously invented or improved by the foundation model.

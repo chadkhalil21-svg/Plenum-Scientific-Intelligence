@@ -171,3 +171,17 @@ The observations are genuinely separate from the model-fitting data. This
 does not demonstrate a newly discovered law, general scientific reasoning,
 an operational coastal forecast, autonomous invention or AGI. Larger
 precommitted multi-season evaluations are required before wider claims.
+
+### v0.9b follow-on evidence across seasons
+
+Without changing the model after the first successful day, Plenum evaluated
+the same equations against **six previously untested seasonal NOAA datasets**.
+The harmonic model beat prior-day persistence in 4 of 6 cases; pooled MAE
+was **0.17205 m versus 0.21878 m** (21.36% reduction). Two failures are
+explicitly retained. This is evidence of limited forecast skill on selected
+historical days, **not** operational tide forecasting or artificial general
+intelligence.
+
+[Seasonal methodology](docs/EMPIRICAL_FORECASTING.md) |
+[Complete permanent metric summary](evidence/noaa/2025-seasonal-independent.json) |
+[Successful seasonal validation run](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42161902806).
