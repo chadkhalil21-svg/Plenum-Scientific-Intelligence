@@ -43,13 +43,11 @@ class CreativeConnectionsTests(unittest.TestCase):
         self.assertIn("/v1/audio/",openverse_url("music","audio"))
         self.assertIn("/v1.1/search",museum_search_url("architectural"))
         self.assertIn("/ws/2/work/",musicbrainz_url("symphony"))
-        self.assertEqual(parse_museum_search(MET_LIST),[12])
-        self.assertTrue(parse_museum_object(MET_OBJECT)["public_domain_flag"])
-        self.assertIsNone(parse_museum_object(json.dumps({
-            "objectID":13,"isPublicDomain":False
-        }).encode() if False else {"objectID":13,"isPublicDomain":False}))
-        self.assertFalse(parse_openverse(MEDIA,"images")[0]["downloaded"])
-        self.assertFalse(parse_musicbrainz(MUSIC)[0]["permission_to_reproduce_music"])
+        self.assertEqual(parse_museum_search(json.loads(MET_LIST)),[12])
+        self.assertTrue(parse_museum_object(json.loads(MET_OBJECT))["public_domain_flag"])
+        self.assertIsNone(parse_museum_object({"objectID":13,"isPublicDomain":False}))
+        self.assertFalse(parse_openverse(json.loads(MEDIA),"images")[0]["downloaded"])
+        self.assertFalse(parse_musicbrainz(json.loads(MUSIC))[0]["permission_to_reproduce_music"])
 
     def test_four_creative_source_lookups(self):
         def opener(req,timeout):
