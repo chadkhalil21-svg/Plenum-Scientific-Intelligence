@@ -67,7 +67,6 @@ jobs:
         with:
           ref: research-memory
           path: public-memory
-          persist-credentials: false
       - uses: actions/download-artifact@v7
         with:
           name: public-nsf-and-clinical-research-signals
