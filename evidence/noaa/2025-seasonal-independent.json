@@ -1,0 +1,108 @@
+{
+  "schema": "plenum-measured-seasonal-evidence-v1",
+  "workflow": {
+    "run_id": 42161902806,
+    "sha": "e3277dc93c96dc8c7e6e0c67f82534b97f2cde4e",
+    "conclusion": "success"
+  },
+  "research_question": "Can an unchanged four-constituent harmonic model, fit on 16 earlier days, beat 24h persistence on three new held-out dates at Boston and Virginia Key?",
+  "model_predeclared": true,
+  "model_modified_after_initial_test": false,
+  "dataset": "NOAA CO-OPS observed verified hourly_height, GMT, MLLW, meters",
+  "fixed_holdout_days": [
+    "2025-03-17",
+    "2025-09-17",
+    "2025-12-17"
+  ],
+  "harmonic_periods_hours": [
+    12.4206,
+    12,
+    23.9345,
+    25.8193
+  ],
+  "baseline": "same hour measured previous day, inside training window",
+  "cases": [
+    {
+      "station_id": "8443970",
+      "station_name": "Boston, MA",
+      "test_date": "2025-03-17",
+      "training_n": 384,
+      "heldout_n": 24,
+      "model_mae_m": 0.2127547277222923,
+      "baseline_mae_m": 0.27179166666666665,
+      "model_beats_baseline": true,
+      "noaa_payload_sha256": "3ea58a046e0ea8237ae3019b8910d8046b5ab916d837ba438fdac4723eb11be4"
+    },
+    {
+      "station_id": "8723214",
+      "station_name": "Virginia Key, FL",
+      "test_date": "2025-03-17",
+      "training_n": 384,
+      "heldout_n": 24,
+      "model_mae_m": 0.1069469771747048,
+      "baseline_mae_m": 0.10470833333333332,
+      "model_beats_baseline": false,
+      "noaa_payload_sha256": "223e81d3644c7cbf8e80213d0ea5823ab69135f3d99b2a70e38cef7e045814bf"
+    },
+    {
+      "station_id": "8443970",
+      "station_name": "Boston, MA",
+      "test_date": "2025-09-17",
+      "training_n": 384,
+      "heldout_n": 24,
+      "model_mae_m": 0.28465620365195093,
+      "baseline_mae_m": 0.49066666666666664,
+      "model_beats_baseline": true,
+      "noaa_payload_sha256": "1f73e3483053ffe6fa75512277185d5794e2db91acccd171205f0534507cc3bb"
+    },
+    {
+      "station_id": "8723214",
+      "station_name": "Virginia Key, FL",
+      "test_date": "2025-09-17",
+      "training_n": 384,
+      "heldout_n": 24,
+      "model_mae_m": 0.06502002382450521,
+      "baseline_mae_m": 0.09654166666666666,
+      "model_beats_baseline": true,
+      "noaa_payload_sha256": "ecea3ce2261c63ca2298d7b2a724b0ab5ceff93145f51d02a5ec04481a52483d"
+    },
+    {
+      "station_id": "8443970",
+      "station_name": "Boston, MA",
+      "test_date": "2025-12-17",
+      "training_n": 384,
+      "heldout_n": 24,
+      "model_mae_m": 0.3029923388631387,
+      "baseline_mae_m": 0.2775,
+      "model_beats_baseline": false,
+      "noaa_payload_sha256": "b06a33cce33f79384f53e5584edfd6db34ce939103c555272690d5110c317804"
+    },
+    {
+      "station_id": "8723214",
+      "station_name": "Virginia Key, FL",
+      "test_date": "2025-12-17",
+      "training_n": 384,
+      "heldout_n": 24,
+      "model_mae_m": 0.05995899933086006,
+      "baseline_mae_m": 0.07150000000000001,
+      "model_beats_baseline": true,
+      "noaa_payload_sha256": "9a3cabb5758f07f8b7ae89f2c2c368d454653b8a0baef01fc908a6327134bfd2"
+    }
+  ],
+  "total_holdout_observations": 144,
+  "wins": 4,
+  "losses": 2,
+  "aggregate_model_mae_m": 0.17205487842790868,
+  "aggregate_baseline_mae_m": 0.21878472222222223,
+  "relative_mae_reduction_pct": 21.35882401644549,
+  "aggregate_hypothesis_supported": true,
+  "scientific_discovery_verified": false,
+  "operational_forecasting_validated": false,
+  "AI_self_improvement_demonstrated": false,
+  "shortcomings": [
+    "6 station-days are insufficient for operational reliability.",
+    "Two observed failures remain included.",
+    "No weather, storm surge or measurement uncertainty modeled.",
+    "The test was selected before its first NOAA observation retrieval, but all data are public historical observations."
+  ]
+}
