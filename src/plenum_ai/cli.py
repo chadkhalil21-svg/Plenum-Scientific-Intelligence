@@ -9,6 +9,7 @@ from .research import make_report
 from .mission import run_mission
 from .memory import make_record, verify, save
 from .audit import independent_audit
+from .lab import run_lab, benchmark_methods
 import os
 
 
@@ -45,6 +46,13 @@ def main():
     ingest = commands.add_parser("memory-ingest")
     ingest.add_argument("--file", required=True)
     ingest.add_argument("--dir", required=True)
+    lab = commands.add_parser("lab")
+    lab.add_argument("--query", required=True)
+    lab.add_argument("--domains", default="mechanics,chemistry,materials,electronics,molecules")
+    lab.add_argument("--out", default="reports/scientific_lab.json")
+    lab.add_argument("--method", choices=["RK45","DOP853","Radau"], default="RK45")
+    methods = commands.add_parser("solver-benchmark")
+    methods.add_argument("--out", default="reports/solver_benchmark.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -85,6 +93,14 @@ def main():
         record = json.loads(Path(args.file).read_text(encoding="utf-8"))
         name, created = save(record, args.dir)
         print("Stored checksum-verified memory:", name, "new:", created)
+    elif args.action == "lab":
+        domains = [x.strip() for x in args.domains.split(",")]
+        result = run_lab(args.query, domains=domains, method=args.method)
+        print("Scientific lab:", save_json(args.out,result),
+              "passed:", result["known_model_checks_passed"])
+    elif args.action == "solver-benchmark":
+        result = benchmark_methods()
+        print("Numerical solver benchmark:", save_json(args.out,result))
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,
