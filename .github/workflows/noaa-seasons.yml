@@ -1,0 +1,59 @@
+name: NOAA Precommitted Multi-Season Observational Validation
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/noaa-seasons.yml'
+      - 'src/plenum_ai/noaa_seasons.py'
+      - 'tests/test_noaa_seasons.py'
+permissions:
+  contents: read
+concurrency:
+  group: noaa-precommitted-seasonal-holdout
+  cancel-in-progress: true
+jobs:
+  seasonal-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Install small numerical evaluation dependency
+        run: python -m pip install -e ".[empirical]"
+      - name: Verify the frozen physical model on independent synthetic fixtures
+        run: python -m unittest discover -s tests -p 'test_noaa_seasons.py' -v
+      - name: Retrieve NOAA observations for all three new seasons and both stations
+        run: python -m plenum_ai.cli empirical-tides-seasons --out reports/noaa_seasonal_validation.json
+      - name: Require honest results for all six predeclared holdout windows
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path("reports/noaa_seasonal_validation.json").read_text())
+          assert r["number_of_station_day_tests"] == 6
+          assert r["number_of_independent_heldout_hourly_readings"] >= 108
+          assert r["model_method_same_as_initial_june_17"]
+          assert not r["scientific_discovery_verified"]
+          assert not r["AI_devised_the_hypothesis"]
+          assert len(r["predeclared_test_days"]) == 3
+          for s in r["station_day_results"]:
+              assert s["train_observations"] >= 280
+              assert s["test_observations"] >= 18
+              assert s["baseline_only_uses_pre_holdout_data"]
+              assert s["test_actuals_used_for_fitting"] is False
+              print(s["name"],s["holdout_utc"],
+                    "harmonic MAE",round(s["harmonic_mae_m"],5),
+                    "persistence MAE",round(s["persistence_mae_m"],5),
+                    "WIN",s["harmonic_better"])
+          print("All six cases kept, wins:",r["wins"],
+                "aggregate supported:",r["hypothesis_supported"])
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: noaa-multiseason-holdout-evidence
+          path: reports/noaa_seasonal_validation.json
+          if-no-files-found: warn
+          retention-days: 14
