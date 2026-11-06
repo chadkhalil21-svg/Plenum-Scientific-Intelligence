@@ -144,3 +144,59 @@ studies. This substitution is motivated solely by missing data, not by
 observed forecast accuracy. The revised workflow still seals all choices
 before retrieving either final-day measurement series, and it retains all
 four station-day outcomes, including losses.
+
+## Verified outcomes of the two-stage agent program
+
+**Ungated Qwen3 decision test, run 42162579029:**
+- Qwen3 selected persistence in all four January/April 2026 cases.
+- It made **zero** improvements over that baseline; the fixed
+  four-harmonic reference achieved lower MAE in all four cases.
+- The proposals and audit were archived permanently in
+  `research-memory/evidence/agent-experiments/run-42162579029.json`.
+
+**Evidence-gated new-date test, run 42163393864:**
+- Source revision: `2a9764135901160df9d388b159de873b7ac99c1d`.
+- Replaced unavailable 2026-07 and 2026-10 observation windows with
+  previously unused **2025-01-17** and **2025-11-17**. The swap happened
+  after an *availability error*, not after observing forecast outcomes.
+- The model still suggested 24h persistence all four times.
+- The evidence gate overrode two suggestions, selecting four tidal
+  constituents for January at both stations. It accepted persistence in
+  November at both stations.
+- On 24 held-out observed hourly readings per station-day, the gate
+  beat the ungated AI in **2 of 4 cases** and tied in **2 of 4**.
+
+| Station and day | Qwen3 suggestion | Gated selection | Qwen3 MAE | Gated MAE | Fixed four-harmonic MAE |
+|---|---|---|---:|---:|---:|
+| Boston, 2025-01-17 | Persistence | Four constituents | 0.33271 m | 0.20439 m | 0.20439 m |
+| Virginia Key, 2025-01-17 | Persistence | Four constituents | 0.08879 m | 0.06699 m | 0.06699 m |
+| Boston, 2025-11-17 | Persistence | Persistence | 0.39213 m | 0.39213 m | 0.35473 m |
+| Virginia Key, 2025-11-17 | Persistence | Persistence | 0.08100 m | 0.08100 m | 0.07391 m |
+
+Every case had the same 24h target duration, so the aggregate MAE is
+**0.18613 m** (guard), **0.22366 m** (Qwen proposal/persistence), and
+**0.17501 m** (fixed four-harmonic reference). The gate's average MAE
+was **16.78% lower** than the ungated agent's, but **6.35% higher**
+than the preexisting fixed four-harmonic reference.
+
+These are small public retrospective evaluations. The gate was
+**designed by the engineer**, not invented by Qwen3. No AI weights,
+scientific equations, production code, external services, or safety
+settings were autonomously modified. The results do not demonstrate
+AGI, original scientific discovery, or recursive self-improvement.
+
+Both jobs and the write-restricted public evidence-archival job completed
+successfully:
+https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42163393864
+
+Full proposals and independent test reports are preserved on
+`research-memory/evidence/agent-experiments/run-42163393864.json`.
+
+### Next capability gates
+1. A benchmarked model-choice protocol resistant to answer-position bias.
+2. Multiple genuinely unseen station/date holdouts with confidence intervals.
+3. Promotion only if compared with **both** persistence and the strongest
+   existing physical reference, never merely the weaker baseline.
+4. Expanded approved scientific tasks across domains, then an independently
+   measured agent ability to propose useful *new* falsifiable hypotheses.
+5. Human review before any model-weight update or autonomous code deployment.

@@ -185,3 +185,26 @@ intelligence.
 [Seasonal methodology](docs/EMPIRICAL_FORECASTING.md) |
 [Complete permanent metric summary](evidence/noaa/2025-seasonal-independent.json) |
 [Successful seasonal validation run](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42161902806).
+
+## v1.0–v1.1: AI-selected scientific hypotheses with independent testing
+
+Plenum has now run two independent, real-data experiments in which Qwen3-0.6B
+chooses from four reviewed forecast hypotheses before the test day is
+downloaded. An independent auditor then tests the choice against observed
+NOAA water-level measurements, and a final permission-scoped job archives
+all outcomes on the `research-memory` branch.
+
+**First run:** Qwen3 chose 24h persistence in all four cases. None improved.
+
+**Evidence-gated follow-up:** a fixed, engineer-designed development-data
+gate overrode two weak suggestions, lowering mean absolute error from
+0.22366 to 0.18613 m across four new cases, but the existing four-harmonic
+reference was still stronger at 0.17501 m. No model weights changed.
+
+[Protocol and full measured results](docs/AUTONOMY.md) |
+[Independent blind evaluation run](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42163393864) |
+[Full scientific ledger](docs/LEDGER.md)
+
+This is **bounded, auditable scientific decision-making**, not general
+autonomous invention, recursive self-improvement or AGI. No paid AI
+subscription or unreviewed tool execution was activated.

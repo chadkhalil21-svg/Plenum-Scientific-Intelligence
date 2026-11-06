@@ -151,3 +151,17 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [x] Permanently archive exact metrics and observation SHA-256 digests at `evidence/noaa/2025-seasonal-independent.json`.
 - [ ] Expand to at least several dozen independently chosen station-days and report confidence intervals, strong baselines and weather/surge subgroups before asserting operational skill.
 - [ ] Test generalization to genuinely novel scientific research tasks proposed by the AI. This model was manually specified and verified through code, **not** autonomously invented or improved by the foundation model.
+
+## v1.0–v1.1 Autonomous scientific hypothesis-selection and evidence gate
+
+- [x] Qwen3-0.6B selects from four approved testable tide-forecast hypotheses using development-only historical data; the proposer has no access to held-out observations.
+- [x] A separate independent GitHub Actions job measures those decisions on observed NOAA water levels, retains failures, and archives public audit evidence to the separate `research-memory` branch.
+- [x] Ungated Qwen3 run 42162579029: all four choices were persistence, producing **0/4 wins** over that baseline, and losing to the fixed four-harmonic model in every case.
+- [x] Engineer a deterministic minimum-development-error evidence gate without viewing future-day measurements. Original 2026 July/October proposals were unavailable at NOAA; no outcomes observed. Substitute predeclared previously untested 2025 January/November dates.
+- [x] Evidence-gated run 42163393864: **2/4 wins against ungated Qwen, 2/4 ties**. Mean MAE gate 0.18613 m, ungated 0.22366 m, four-harmonic reference 0.17501 m. The gate **did not beat the fixed scientific reference overall**.
+- [x] Confirm all three run jobs passed, including write-restricted evidence archival, under `research-memory/evidence/agent-experiments/run-42163393864.json`.
+- [x] Repair CLI auditor import-name collision and verify complete engineering test suite.
+- [ ] Evaluate on much larger independently held-out research datasets and compare against stronger physical references, not only weak baselines.
+- [ ] Test unbiased prompt/choice calibration and larger independent language models; the current Qwen3 choices all favored persistence.
+- [ ] Connect hypothesis proposal to more real scientific solvers and properly independent empirical measurements, with human-reviewed permissions and compute budgets.
+- [ ] Demonstrate generalized AI learning or improvement of foundation-model weights. **Not yet achieved.**
