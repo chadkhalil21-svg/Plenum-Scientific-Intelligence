@@ -1,0 +1,52 @@
+name: NASA Exoplanet Empirical Catalog Audit
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/nasa-exoplanets.yml'
+      - 'src/plenum_ai/nasa_exoplanets.py'
+      - 'tests/test_nasa_exoplanets.py'
+      - 'pyproject.toml'
+permissions:
+  contents: read
+concurrency:
+  group: nasa-exoplanet-public-audit
+  cancel-in-progress: true
+jobs:
+  nasa-astropy-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Install Astropy astronomical units and constants
+        run: python -m pip install -e ".[astronomy]"
+      - name: Test astronomy calculator and bounded NASA response parser offline
+        run: python -m unittest discover -s tests -p 'test_nasa_exoplanets.py' -v
+      - name: Retrieve public NASA exoplanet observations and check catalog consistency
+        run: python -m plenum_ai.cli nasa-exoplanets --out reports/nasa_exoplanet_consistency.json
+      - name: Verify real records and prohibit false discovery claims
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path("reports/nasa_exoplanet_consistency.json").read_text())
+          assert report["observations_evaluated"] >= 10
+          assert 0 <= report["fraction_within_ten_percent"] <= 1
+          assert len(report["sample_names_sha256"]) == 64
+          assert report["independent_empirical_validation"] is False
+          assert report["new_scientific_discovery_verified"] is False
+          assert report["experimental_result_verified"] is False
+          print("NASA records:",report["observations_evaluated"])
+          print("Fraction within 10%:",report["fraction_within_ten_percent"])
+          print("Important: catalog correlations may be algebraically dependent.")
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: nasa-exoplanet-catalog-evidence
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 14
