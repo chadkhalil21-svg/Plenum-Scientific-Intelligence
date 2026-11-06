@@ -39,3 +39,16 @@ On GitHub, open **Actions > Autonomous Research > Run workflow**, enter a public
 - docs/SECURITY.md: privacy and sandboxing
 
 **PUBLIC REPOSITORY NOTICE:** Do not add patents, unpublished inventions, credentials, proprietary data, or private records. No model self-deployment or external side effects are enabled.
+
+## Autonomous mission v0.2
+The `plenum mission` command now runs a bounded sequence: planner, literature retrieval, optional model-driven hypothesis proposer and critic, numerical simulator, and independent deterministic physics check.
+
+```sh
+plenum mission --query "How can we improve photonic computing?" --simulation heat --out reports/mission.json
+plenum mission --query "Test an orbital model" --offline --simulation orbit --out reports/orbit.json
+```
+
+### Actual open-weight model (optional)
+**Open-Weight AI Model Demonstration** is a GitHub Actions CPU workflow using the downloadable, Apache-2.0 **SmolLM2-135M-Instruct** model from Hugging Face. It requires neither a commercial AI subscription nor your iPad's processor; each run downloads model and Python dependencies to a temporary runner. It is a tiny proof-of-inference, **not an AGI** and not yet a high-quality scientist. Open the Actions tab to view its run and artifact. It runs automatically on first addition of its workflow and manually thereafter.
+
+You can alternatively run a capable open-weight model through Ollama on your own computer, e.g. `plenum mission --query "..." --model YOUR_OLLAMA_MODEL`. Local Ollama does not run on GitHub's short-lived CPU runners unless separately installed.

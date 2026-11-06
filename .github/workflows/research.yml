@@ -33,7 +33,7 @@ jobs:
           else
             QUERY="$REQUESTED_QUERY"
           fi
-          python -m plenum_ai.cli research --query "$QUERY" --out reports/research.json
+          python -m plenum_ai.cli mission --query "$QUERY" --simulation heat --out reports/mission.json
       - name: Independent narrow improvement benchmark
         run: python -m plenum_ai.cli improve --out reports/improvement.json
       - uses: actions/upload-artifact@v7

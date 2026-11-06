@@ -19,3 +19,8 @@ GitHub Actions standard runners are free for public repositories but not an unli
 
 ## Hardware research
 Hot memory: electronic SRAM/HBM; warm: SSD; cold archival: experimental DNA/protein storage. None of the proposed molecular archives can currently replace GPU working memory.
+
+## v0.2 implementation
+A bounded mission produces a source inventory (OpenAlex or clearly marked offline fixture), optional separately prompted proposer and critic, a known-physics heat/orbit numerical check, and a JSON audit record. A passing simulation benchmark only demonstrates expected operation of that small model: it does not validate the model-generated scientific claims.
+
+An optional CPU model run executes HuggingFaceTB/SmolLM2-135M-Instruct (Apache-2.0) on a temporary GitHub Actions runner. The model weights are not committed to GitHub. Larger models can be run through local Ollama on an owner-controlled always-on computer. Automatic public deployment and self-modifying main-branch writes remain disabled.

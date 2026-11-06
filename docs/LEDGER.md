@@ -25,3 +25,13 @@ B. Mathematical and physical verification systems.
 C. Science literature and reproducible experiments.
 D. AI memory/hardware architecture: electronic, photonic, molecular and protein concepts.
 E. Scientific simulation adapters and ultimately robotic validation.
+
+## Autonomous mission and model extension (2026-11-05)
+- [x] Add bounded multi-role mission orchestration and evidence-labeled output.
+- [x] Add deterministic one-dimensional insulated heat equation simulator with conservation validation.
+- [x] Wire mission to the unattended research workflow.
+- [x] Add optional CPU open-weight model adapter and GitHub Actions demonstration.
+- [ ] Confirm complete real model inference run and inspect its artifact; until then MODEL NOT VERIFIED.
+- [ ] Establish substantial independent model evaluations, sandbox tool use and reproducible scientific agent tests.
+- [ ] Build on-demand local Ollama daemon for genuine persistent autonomy (requires an always-on machine).
+- [ ] Integrate real scientific solvers and independently validate their predictions.
