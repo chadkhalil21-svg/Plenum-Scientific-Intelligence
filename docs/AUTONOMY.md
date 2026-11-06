@@ -91,3 +91,42 @@ A more capable agent can later propose *novel* testable mechanisms, but
 new physical laws, therapies, hardware designs and consequential actions
 must be reviewed and tested rather than trusted because they were
 suggested by a language model.
+
+## v1.1: Evidence-gated agent policy, evaluated on new days
+
+The first Qwen3-driven proposal experiment used January 17 and April 17,
+2026. Qwen3 selected **24-hour persistence in all four cases**, achieving
+**zero wins versus that baseline**, and its selections lost to the existing
+four-harmonic reference in all four cases. This failure is preserved in the
+`research-memory` branch as `evidence/agent-experiments/run-42162579029.json`.
+The agent's successful execution is not a scientific capability improvement.
+
+In response, we designed a **human-authored evidence guard**: Qwen3
+still proposes a model, but a separate, fixed rule chooses the candidate
+with the lowest *development-only* mean absolute error. Exact ties favor
+the simpler model by a fixed order. This policy cannot use final-day
+measurements, alter scientific equations or modify AI weights.
+
+The new holdout dates were set before their first evaluation: **July 17,
+2026 and October 17, 2026**. The same two NOAA stations are retained.
+For each case:
+1. The first 12 days fit four predeclared candidate approaches.
+2. The next four days yield development errors and Qwen3's proposal.
+3. The evidence guard independently selects the minimum-development-error
+candidate and seals its selection.
+4. A separate workflow refetches prior observations, reproduces the choice,
+   and only then downloads the final observed day.
+5. The audit reports selected-policy error, ungated Qwen-choice error,
+   24-hour persistence error and fixed four-harmonic reference error.
+6. Every outcome, including losses and overrides, is archived to
+   `research-memory`. No automatic source, model, deployment or payment
+   changes occur.
+
+**What counts as an improvement?** The guard must demonstrably beat its
+comparison baselines on truly new data, preferably repeatedly across
+locations and weather conditions. Even if it does, that shows better
+engineering selection, **not that Qwen3 autonomously improved its own
+weights or invented new scientific hypotheses**.
+
+This is an explicitly precommitted, limited experiment in verifiable
+model-directed planning and objective evidence gating.
