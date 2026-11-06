@@ -257,3 +257,43 @@ catalogued does not mean an engine is installed or operational. Future
 research directions include digital humanities, economics, engineering
 manufacturing, archaeology, ethics, design criticism, patent prior art,
 replication and open-data provenance.
+
+## Additional November 6 cultural catalog and real music analysis
+
+The [Library of Congress public JSON API](https://www.loc.gov/apis/json-and-yaml/requests/)
+has been added as a fifth cultural discovery adapter for historical books,
+photos, maps, film and notated music **metadata**. Its schema and rights
+safeguards passed independent tests. The live GitHub request returned a
+timeout in [Creative Studio run 42171554503](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42171554503).
+Consequently, the **adapter is tested but live Library of Congress access
+is not yet confirmed**. No library score, media or photograph was
+downloaded. Smithsonian Open Access and other collections remain separately
+credentialed or reviewed, not silently activated.
+
+A new optional computational musicology engine,
+[music21](https://github.com/cuthbertLab/music21), has now been integrated.
+It analyzes the original 32-note, eight-measure Plenum MusicXML study, reports
+pitch-class distribution and melodic intervals, and records that originality,
+artistic merit and musical composition ability are unproven. The isolated
+[music21 live test 42171857399](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42171857399)
+passed. It does not play or synthesize any copyrighted score.
+
+The founder control center now includes `music-analysis` alongside
+`parametric-design`, `creative`, `frontiers`, `discovery`, `knowledge`,
+`science`, `youtube` (public channel feed or owner-authorized official API),
+and the existing approved research functions.
+
+### Continuing scientific-source limitations
+No single API or feed provides guaranteed real-time coverage of every
+laboratory, leading journal, submitted manuscript or discovery. Crossref
+metadata can precede or lag a publisher posting; paper indexing and
+publication dates are not interchangeable. Lab news is not independent
+replication, a registered clinical trial is not efficacy evidence,
+and a funded NSF grant is not proof of a completed experiment.
+
+Full journal article text generally requires permission or the relevant
+institutional/open-access rights. Automated YouTube-wide video searches
+inside the GitHub system require an owner-approved private
+`YOUTUBE_API_KEY`; no such key has been installed or exposed. Research
+videos may be cited by title and URL, but no private captions, recordings,
+lyrics or copyrighted content are downloaded.
