@@ -9,8 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - name: Install prototype
@@ -19,7 +19,7 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Evaluate a bounded improvement proposal
         run: python -m plenum_ai.cli improve --out reports/improvement.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: improvement-proposal
           path: reports/improvement.json
