@@ -1,0 +1,149 @@
+name: Model-Directed Cross-Domain Research Pilot
+on:
+  workflow_dispatch:
+    inputs:
+      question:
+        description: 'PUBLIC question only; no company patents or private data'
+        required: true
+        default: 'Which numerical solvers generalize efficiently across scientific equations?'
+      domain:
+        description: 'Development domain; different holdout is independently evaluated'
+        type: choice
+        options:
+          - materials
+          - chemistry
+          - electronics
+          - mechanics
+  schedule:
+    - cron: '17 12 * * 3'
+  push:
+    paths:
+      - '.github/workflows/research-pilot.yml'
+      - 'src/plenum_ai/research_pilot.py'
+      - 'tests/test_research_pilot.py'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-research-pilot
+  cancel-in-progress: false
+jobs:
+  proposer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    env:
+      QUESTION: ${{ github.event.inputs.question || 'Compare scientific numerical integration efficiency' }}
+      DEVELOPMENT: ${{ github.event.inputs.domain || 'materials' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install verified SciPy and open-weight CPU Qwen3 (no paid API)
+        run: |
+          python -m pip install -e ".[science]"
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "transformers>=4.51,<5" safetensors
+      - name: Test model selections, holdout isolation and evidence seal
+        run: python -m unittest discover -s tests -p 'test_research_pilot.py' -v
+      - name: Produce one genuine model-selected scientific-software hypothesis
+        run: |
+          python -m plenum_ai.research_pilot propose --question "$QUESTION" --domain "$DEVELOPMENT" --engine qwen --online --out reports/pilot_proposal.json
+      - name: Verify no holdout or model/code promotion
+        run: |
+          python - <<'PY'
+          import json
+          p=json.load(open('reports/pilot_proposal.json'))
+          assert p['model_inference_executed']
+          assert p['holdout_seen_by_model'] is False
+          assert p['scientific_discovery_verified'] is False
+          assert p['code_or_model_deployed'] is False
+          print('Sealed model choice:',p['sealed']['method'])
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sealed-research-pilot-proposal
+          path: reports/pilot_proposal.json
+          retention-days: 14
+  independent-auditor:
+    needs: proposer
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e ".[science]"
+      - uses: actions/download-artifact@v7
+        with:
+          name: sealed-research-pilot-proposal
+          path: reports/
+      - name: Reproduce development measurements and reveal separate test fixture
+        run: |
+          python -m plenum_ai.research_pilot audit --proposal reports/pilot_proposal.json --out reports/pilot_audit.json
+      - name: Keep failures, compare the strongest reference, and forbid promotion
+        run: |
+          python - <<'PY'
+          import json
+          a=json.load(open('reports/pilot_audit.json'))
+          assert a['development_reproduced'] and a['holdout_computed_only_after_sealing']
+          assert len(a['measurements']) == 3
+          assert not a['AGI_demonstrated']
+          assert not a['scientific_discovery_verified']
+          assert not a['generalizable_improvement_established']
+          assert not a['auto_deployed']
+          print('Model predicted best on holdout:',a['selected_is_best_on_one_fixture'])
+          print('Calls saved vs RK45:',a['calls_saved_vs_RK45'])
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: independent-research-pilot-evidence
+          path: reports/pilot_*.json
+          retention-days: 14
+  archive-public-results:
+    needs: independent-auditor
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: public-archive
+      - uses: actions/download-artifact@v7
+        with:
+          name: independent-research-pilot-evidence
+          path: reports/
+      - name: Append immutable PUBLIC results only, never code
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_REV: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=json.load(open('reports/pilot_proposal.json'))
+          a=json.load(open('reports/pilot_audit.json'))
+          assert p['seal_sha256']==a['proposal_sha256']
+          assert p['schema']=='plenum-research-pilot-proposal-v1'
+          assert a['schema']=='plenum-research-pilot-audit-v1'
+          assert not a['auto_deployed']
+          folder=Path('public-archive/evidence/research-pilot')
+          folder.mkdir(parents=True,exist_ok=True)
+          target=folder/('run-'+os.environ['RUN_ID']+'.json')
+          if target.exists(): raise FileExistsError('Public evidence may not be replaced')
+          target.write_text(json.dumps({'revision':os.environ['SOURCE_REV'],
+              'proposal':p,'audit':a,'AI_breakthrough_verified':False},
+              indent=2,ensure_ascii=False)+'\n')
+          print('Saved public source-linked trial, including failures:',target)
+          PY
+      - name: Commit only to research-memory branch
+        run: |
+          git -C public-archive config user.name 'Plenum Public Evidence Ledger'
+          git -C public-archive config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C public-archive add evidence/research-pilot/
+          git -C public-archive commit -m 'Record model-selected cross-domain audit'
+          git -C public-archive pull --rebase origin research-memory
+          git -C public-archive push origin HEAD:research-memory
