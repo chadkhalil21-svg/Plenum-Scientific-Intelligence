@@ -17,10 +17,17 @@ on:
           - verify
           - ecosystem
           - molecular-dynamics
+          - discovery
+          - creative
+          - youtube
       question:
         description: "PUBLIC research question only. Do not enter patent or private data."
         required: true
         default: "Open scientific research on aerospace and materials"
+      channel_id:
+        description: "Public YouTube UC channel ID, or nasa"
+        required: false
+        default: "nasa"
       pmcid:
         description: "Europe PMC open-access identifier (only used for licensed-article)"
         required: false
@@ -38,6 +45,7 @@ jobs:
       TASK: ${{ github.event.inputs.operation || 'science' }}
       QUESTION: ${{ github.event.inputs.question || 'Evaluate orbit and thermal cooling' }}
       PMCID: ${{ github.event.inputs.pmcid || 'PMC12247565' }}
+      CHANNEL_ID: ${{ github.event.inputs.channel_id || 'nasa' }}
       LANGGRAPH_STRICT_MSGPACK: "true"
     steps:
       - uses: actions/checkout@v7
@@ -57,6 +65,7 @@ jobs:
             knowledge|licensed-article) python -m pip install -e . ;;
             verify) python -m pip install -e ".[science,ml,orchestration,astronomy,empirical]" ;;
             ecosystem) python -m pip install -e . ;;
+            discovery|creative|youtube) python -m pip install -e . ;;
             molecular-dynamics) python -m pip install -e ".[dynamics]" ;;
             *) echo "Unapproved operation"; exit 1 ;;
           esac
@@ -91,6 +100,16 @@ jobs:
             molecular-dynamics)
               plenum openmm-reference --steps 100 --out reports/molecular_dynamics.json
               ;;
+            discovery)
+              plenum discovery-pulse --topic "$QUESTION" --out reports/discovery_pulse.json
+              ;;
+            youtube)
+              plenum youtube-updates --channel "$CHANNEL_ID" --out reports/youtube_updates.json
+              ;;
+            creative)
+              plenum creative-sources --query "$QUESTION" --out reports/creative_sources.json
+              plenum creative-studio --topic "$QUESTION" --seed 1701 --dir reports/creative_studio --out reports/creative_studio.json
+              ;;
             verify)
               python -m unittest discover -s tests -v
               ;;
@@ -109,6 +128,18 @@ jobs:
               r=json.loads(Path("reports/molecular_dynamics.json").read_text())
               assert r["numerical_fixture_passed"] and r["relative_total_energy_drift"] < 0.01
               assert not r["protein_dynamics_validated"]
+          if task=="discovery":
+              r=json.loads(Path("reports/discovery_pulse.json").read_text())
+              assert not r["breakthroughs_independently_confirmed"]
+              assert not r["video_transcripts_downloaded"]
+          if task=="youtube":
+              r=json.loads(Path("reports/youtube_updates.json").read_text())
+              assert r["metadata_only"] and not r["videos_downloaded"]
+          if task=="creative":
+              r=json.loads(Path("reports/creative_studio.json").read_text())
+              assert r["created_from_algorithm"] and not r["copied_copyrighted_music_or_art"]
+              assert Path(r["outputs"]["artwork_svg"]).is_file()
+              assert Path(r["outputs"]["score_musicxml"]).is_file()
           if task=="science":
               r=json.loads(Path("reports/science.json").read_text())
               assert not r["scientific_discovery_verified"]

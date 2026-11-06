@@ -194,10 +194,14 @@ def parse_newsfeed(raw, provider):
 
 
 def youtube_url(channel="nasa"):
-    if channel not in YOUTUBE_CHANNELS:
-        raise ValueError("Channel is not on curated list")
+    if channel in YOUTUBE_CHANNELS:
+        channel_id=YOUTUBE_CHANNELS[channel]
+    elif isinstance(channel,str) and re.fullmatch(r"UC[A-Za-z0-9_-]{22}",channel):
+        channel_id=channel
+    else:
+        raise ValueError("Provide a supported channel name or valid YouTube UC channel ID")
     return "https://www.youtube.com/feeds/videos.xml?" + urlencode({
-        "channel_id":YOUTUBE_CHANNELS[channel]})
+        "channel_id":channel_id})
 
 
 def parse_youtube(raw):

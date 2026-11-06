@@ -139,6 +139,20 @@ def main():
     openmm = commands.add_parser("openmm-reference")
     openmm.add_argument("--steps", type=int, default=100)
     openmm.add_argument("--out", default="reports/openmm_reference.json")
+    discovery = commands.add_parser("discovery-pulse")
+    discovery.add_argument("--topic", default="scientific discovery")
+    discovery.add_argument("--out", default="reports/discovery_pulse.json")
+    artist = commands.add_parser("creative-sources")
+    artist.add_argument("--query", required=True)
+    artist.add_argument("--out", default="reports/creative_sources.json")
+    studio = commands.add_parser("creative-studio")
+    studio.add_argument("--topic", required=True)
+    studio.add_argument("--seed", type=int, default=1701)
+    studio.add_argument("--dir", default="reports/creative_studio")
+    studio.add_argument("--out", default="reports/creative_studio_manifest.json")
+    videos = commands.add_parser("youtube-updates")
+    videos.add_argument("--channel", default="nasa")
+    videos.add_argument("--out", default="reports/youtube_updates.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -361,6 +375,29 @@ def main():
         print("OpenMM molecular-dynamics integration:",save_json(args.out,report),
               "energy drift:",report["relative_total_energy_drift"],
               "real molecular validation:",report["protein_dynamics_validated"])
+    elif args.action == "discovery-pulse":
+        from .discovery_watch import research_pulse
+        report = research_pulse(args.topic)
+        print("Journal/preprint/lab/video discovery:",
+              save_json(args.out, report),"records:",report["distinct_records"],
+              "unavailable:",report["sources_unavailable"])
+    elif args.action == "creative-sources":
+        from .creative_sources import creative_discovery
+        report = creative_discovery(args.query)
+        print("Art and music source metadata:",save_json(args.out,report),
+              "providers:",report["source_count"])
+    elif args.action == "creative-studio":
+        from .creative_studio import write_studies
+        report = write_studies(args.topic,args.seed,args.dir)
+        print("Original art, music notation and ideas:",save_json(args.out,report))
+    elif args.action == "youtube-updates":
+        from .discovery_watch import youtube_url,parse_youtube,_read
+        report={"channel":args.channel,
+                "videos":parse_youtube(_read(youtube_url(args.channel))),
+                "transcripts_scraped":False,"videos_downloaded":False,
+                "metadata_only":True}
+        print("Public YouTube channel listings:",save_json(args.out,report),
+              "videos:",len(report["videos"]))
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,
