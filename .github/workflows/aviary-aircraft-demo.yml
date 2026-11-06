@@ -1,0 +1,58 @@
+name: NASA Aviary Public Aircraft Mission Demonstration
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/aviary-aircraft-demo.yml"
+permissions:
+  contents: read
+concurrency:
+  group: nasa-aviary-public-demo
+  cancel-in-progress: true
+jobs:
+  public-aircraft-mission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Install verified public NASA Aviary toolchain
+        run: python -m pip install "aviary==1.0.1" "openmdao==3.45.2"
+      - name: Verify aircraft toolchain
+        run: aviary check
+      - name: Run bounded public example aircraft mission
+        shell: bash
+        run: |
+          mkdir -p run
+          cd run
+          aviary run_mission advanced_single_aisle_FLOPS --optimizer SLSQP --max_iter 12 --verbosity 0
+      - name: Record demonstration state without claiming real-aircraft validation
+        run: |
+          mkdir -p reports
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from importlib.metadata import version
+          payload={
+              "aviary_version":version("aviary"),
+              "openmdao_version":version("openmdao"),
+              "public_aircraft_input":"advanced_single_aisle_FLOPS",
+              "mission_command_completed":True,
+              "optimizer_requested":"SLSQP",
+              "iteration_cap":12,
+              "convergence_verified":False,
+              "independent_aircraft_performance_validation":False,
+              "operational_aircraft_design_ready":False,
+              "status":"public NASA test model, not an aircraft engineering certification",
+          }
+          Path("reports/aviary_aircraft_demo.json").write_text(json.dumps(payload,indent=2))
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: nasa-aviary-public-aircraft-demo
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 14
