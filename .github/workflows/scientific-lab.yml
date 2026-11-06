@@ -1,0 +1,63 @@
+name: Verified Scientific Simulation Lab
+on:
+  workflow_dispatch:
+    inputs:
+      question:
+        description: "Public research question; no unpublished patents or private data"
+        required: true
+        default: "Evaluate validated orbital, chemical, thermal and molecular models"
+  push:
+    paths:
+      - '.github/workflows/scientific-lab.yml'
+      - 'src/plenum_ai/lab.py'
+      - 'tests/test_lab.py'
+      - 'pyproject.toml'
+permissions:
+  contents: read
+concurrency:
+  group: verified-scientific-lab
+  cancel-in-progress: true
+jobs:
+  solvers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install scientific libraries
+        run: python -m pip install -e ".[science]"
+      - name: Run complete independent tests
+        run: python -m unittest discover -s tests -v
+      - name: Execute science tools
+        shell: bash
+        env:
+          QUESTION: ${{ github.event.inputs.question }}
+        run: |
+          if [ -z "$QUESTION" ]; then
+            QUESTION="Evaluate validated orbital, chemical, thermal and molecular models"
+          fi
+          python -m plenum_ai.cli lab --query "$QUESTION" --domains mechanics,chemistry,materials,electronics,molecules --out reports/scientific_lab.json
+          python -m plenum_ai.cli solver-benchmark --out reports/solver_benchmark.json
+      - name: Verify standards, provenance and no deployment
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          a=json.loads(Path("reports/scientific_lab.json").read_text())
+          b=json.loads(Path("reports/solver_benchmark.json").read_text())
+          assert len(a["results"]) == 5
+          assert a["known_model_checks_passed"]
+          assert a["scientific_discovery_verified"] is False
+          assert a["self_modified"] is False
+          assert len(b["methods"]) == 3
+          assert b["candidate_deployed"] is False
+          assert b["least_calls_in_known_fixtures"]
+          print("Known models passed independent numerical/analytic fixture checks.")
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: multidisciplinary-scientific-results
+          path: reports/
+          retention-days: 14
