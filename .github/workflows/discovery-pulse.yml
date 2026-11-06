@@ -1,0 +1,125 @@
+name: Daily Journals Labs Preprints and YouTube Discovery
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "PUBLIC research discipline or cross-domain topic"
+        required: true
+        default: "scientific discovery and engineering"
+  schedule:
+    - cron: "37 10 * * *"
+  push:
+    paths:
+      - '.github/workflows/discovery-pulse.yml'
+      - 'src/plenum_ai/discovery_watch.py'
+      - 'tests/test_discovery_watch.py'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-daily-cross-domain-research
+  cancel-in-progress: false
+jobs:
+  read-only-discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    env:
+      WATCH_TOPIC: ${{ github.event.inputs.topic || 'scientific discovery and engineering' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install small research metadata reader
+        run: python -m pip install -e .
+      - name: Prove publisher/preprint/institution/YouTube source separation
+        run: python -m unittest discover -s tests -p 'test_discovery_watch.py' -v
+      - name: Retrieve bounded recent publications lab announcements and public videos
+        run: |
+          python -m plenum_ai.cli discovery-pulse \
+            --topic "$WATCH_TOPIC" --out reports/daily_discovery.json
+      - name: Audit all sources, timestamp meanings and unverified claims
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('reports/daily_discovery.json').read_text())
+          assert r['schema']=='plenum-cross-domain-research-pulse-v1'
+          assert len(r['journal_coverage_in_this_run'])==6
+          assert not r['breakthroughs_independently_confirmed']
+          assert not r['peer_review_verified']
+          assert not r['copyrighted_works_downloaded']
+          assert not r['video_transcripts_downloaded']
+          assert not r['all_science_journals_covered']
+          ok=sum(x['status']=='retrieved_metadata' for x in r['providers'])
+          for x in r['providers']:
+              print(x['provider'],x['status'],'records',x['count'],
+                    'error',x.get('error_type'))
+          print('Distinct research records:',r['distinct_records'])
+          if ok==0:
+              raise SystemExit('All providers unavailable, no discovery falsely claimed')
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: journal-lab-preprint-youtube-evidence
+          path: reports/daily_discovery.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  archive-public-discovery:
+    needs: read-only-discovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: memory
+      - uses: actions/download-artifact@v7
+        with:
+          name: journal-lab-preprint-youtube-evidence
+          path: public-reports/
+      - name: Append source-linked public metadata only, never article text
+        env:
+          RUN_ID: ${{ github.run_id }}
+          REVISION: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          r=json.loads(Path('public-reports/daily_discovery.json').read_text())
+          assert r['schema']=='plenum-cross-domain-research-pulse-v1'
+          assert not r['copyrighted_works_downloaded']
+          assert not r['video_transcripts_downloaded']
+          assert r['distinct_records']<=100
+          for item in r['records']:
+              assert item['tier'] in (
+                  'journal_publication_metadata','preprint_not_peer_reviewed',
+                  'institutional_news_not_independent_verification',
+                  'public_video_metadata')
+          name=r['observed_at_utc'][:10]+'-run-'+os.environ['RUN_ID']+'.json'
+          path=Path('memory/evidence/discovery')/name
+          path.parent.mkdir(parents=True,exist_ok=True)
+          if path.exists():
+              raise FileExistsError('Immutable discovery record already exists')
+          content={
+              'schema':'plenum-public-cross-domain-observatory-v1',
+              'run_id':os.environ['RUN_ID'],
+              'source_revision':os.environ['REVISION'],
+              'snapshot':r,'breakthrough_claims_verified':False,
+              'public_metadata_only':True,
+          }
+          path.write_text(json.dumps(content,indent=2,ensure_ascii=False)+'\n')
+          print('Archiving journal/lab/video metadata from this run:',path)
+          PY
+      - name: Commit only new observatory record to research-memory branch
+        run: |
+          git -C memory config user.name "Plenum Discovery Observatory"
+          git -C memory config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C memory add evidence/discovery/
+          git -C memory commit -m "Record public cross-domain discovery pulse"
+          git -C memory pull --rebase origin research-memory
+          git -C memory push origin HEAD:research-memory
