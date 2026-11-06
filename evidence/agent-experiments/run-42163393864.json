@@ -1,0 +1,228 @@
+{
+  "schema": "plenum-public-evidence-gated-agent-v1",
+  "run_id": "42163393864",
+  "source_revision": "2a9764135901160df9d388b159de873b7ac99c1d",
+  "proposals": {
+    "schema": "plenum-review-gated-hypotheses-v1",
+    "protocol_version": "1.1",
+    "fresh_dates": [
+      "2025-01-17",
+      "2025-11-17"
+    ],
+    "sites": [
+      "8443970",
+      "8723214"
+    ],
+    "reviewed_model_menu": [
+      "persistence_24h",
+      "m2_only",
+      "m2_s2",
+      "four_constituents"
+    ],
+    "frozen_evidence_gate": "minimum_development_mae",
+    "base_model": "Qwen/Qwen3-0.6B",
+    "base_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "proposals": [
+      {
+        "station": "8443970",
+        "day": "2025-01-17",
+        "train_only_sha256": "5311a92489fa97c382c14f69ae299cf123dbd7ff827ff5cc176f4b237a6e4e03",
+        "prompt_sha256": "4d322510494e10a2238072c8ed00d6f9a51274b6140e6fcfc690fa61c1ba8b7c",
+        "development": {
+          "training_hours": 288,
+          "validation_hours": 96,
+          "validation_mae_m": {
+            "persistence_24h": 0.44259374999999995,
+            "m2_only": 0.36496388007230135,
+            "m2_s2": 0.3354072954081006,
+            "four_constituents": 0.30222326348579304
+          },
+          "test_data_seen": false
+        },
+        "model_letter": "A",
+        "gate": {
+          "model_suggestion": "persistence_24h",
+          "selected_for_blind_test": "four_constituents",
+          "suggestion_accepted": false,
+          "guard_rule": "minimum_prior_development_MAE_ties_choose_simpler_model",
+          "guard_used_final_test_labels": false,
+          "original_model_selection_override": true
+        },
+        "falsifiable_prediction": "four_constituents will have lower mean absolute error than prior-day persistence on 2025-01-17",
+        "falsifier": "Selected forecast MAE >= persistence forecast MAE on the unseen day"
+      },
+      {
+        "station": "8723214",
+        "day": "2025-01-17",
+        "train_only_sha256": "c7524138e73f12ec81cf05d7b11f7dc44f138be019ede0ef663b6d387a361ae1",
+        "prompt_sha256": "0d7f6e0621806497c83791761eccc7a25ea989db1b72d9e9bc8d3faad6a22eb8",
+        "development": {
+          "training_hours": 288,
+          "validation_hours": 96,
+          "validation_mae_m": {
+            "persistence_24h": 0.09192708333333334,
+            "m2_only": 0.07693355051023239,
+            "m2_s2": 0.07524819112748753,
+            "four_constituents": 0.06402143310516906
+          },
+          "test_data_seen": false
+        },
+        "model_letter": "A",
+        "gate": {
+          "model_suggestion": "persistence_24h",
+          "selected_for_blind_test": "four_constituents",
+          "suggestion_accepted": false,
+          "guard_rule": "minimum_prior_development_MAE_ties_choose_simpler_model",
+          "guard_used_final_test_labels": false,
+          "original_model_selection_override": true
+        },
+        "falsifiable_prediction": "four_constituents will have lower mean absolute error than prior-day persistence on 2025-01-17",
+        "falsifier": "Selected forecast MAE >= persistence forecast MAE on the unseen day"
+      },
+      {
+        "station": "8443970",
+        "day": "2025-11-17",
+        "train_only_sha256": "a21d90143e2694de1fc3284cd11a7a4612b51e724efe77f7eee65ca626e32da8",
+        "prompt_sha256": "8a32341a4d824d0eb5b728451daad986c19820d4b6211cbe336bfe28319b29f7",
+        "development": {
+          "training_hours": 288,
+          "validation_hours": 96,
+          "validation_mae_m": {
+            "persistence_24h": 0.40789583333333335,
+            "m2_only": 0.49399546231265695,
+            "m2_s2": 0.44633441014062303,
+            "four_constituents": 0.44406811079307285
+          },
+          "test_data_seen": false
+        },
+        "model_letter": "A",
+        "gate": {
+          "model_suggestion": "persistence_24h",
+          "selected_for_blind_test": "persistence_24h",
+          "suggestion_accepted": true,
+          "guard_rule": "minimum_prior_development_MAE_ties_choose_simpler_model",
+          "guard_used_final_test_labels": false,
+          "original_model_selection_override": false
+        },
+        "falsifiable_prediction": "persistence_24h will have lower mean absolute error than prior-day persistence on 2025-11-17",
+        "falsifier": "Selected forecast MAE >= persistence forecast MAE on the unseen day"
+      },
+      {
+        "station": "8723214",
+        "day": "2025-11-17",
+        "train_only_sha256": "654a9a157466d15ae243a9f194a72e911acf4984a76342106c9e7a6dd75f1927",
+        "prompt_sha256": "9a3d57c1156e235fdb69e5dba11b29425be0d7b5d6f806b2d6dab3a24105f9c0",
+        "development": {
+          "training_hours": 288,
+          "validation_hours": 96,
+          "validation_mae_m": {
+            "persistence_24h": 0.08238541666666667,
+            "m2_only": 0.1113391473398852,
+            "m2_s2": 0.09555142138107724,
+            "four_constituents": 0.09553369402922272
+          },
+          "test_data_seen": false
+        },
+        "model_letter": "A",
+        "gate": {
+          "model_suggestion": "persistence_24h",
+          "selected_for_blind_test": "persistence_24h",
+          "suggestion_accepted": true,
+          "guard_rule": "minimum_prior_development_MAE_ties_choose_simpler_model",
+          "guard_used_final_test_labels": false,
+          "original_model_selection_override": false
+        },
+        "falsifiable_prediction": "persistence_24h will have lower mean absolute error than prior-day persistence on 2025-11-17",
+        "falsifier": "Selected forecast MAE >= persistence forecast MAE on the unseen day"
+      }
+    ],
+    "holdout_results_known_before_policy_committed": false,
+    "AI_generated_novel_equations": false,
+    "production_code_or_model_modified": false
+  },
+  "independent_audit": {
+    "schema": "plenum-review-gated-evidence-audit-v1",
+    "trials": 4,
+    "results": [
+      {
+        "station": "8443970",
+        "day": "2025-01-17",
+        "qwen_suggested": "persistence_24h",
+        "evidence_guard_chose": "four_constituents",
+        "model_suggestion_accepted": false,
+        "test_hours": 24,
+        "fit_hours": 384,
+        "observations_sha256": "087d889a0d7cc0b16eb6e9b02edf9e96947d54b78073829678e4c0e11948704a",
+        "qwen_suggestion_mae_m": 0.3327083333333333,
+        "evidence_guard_mae_m": 0.2043949844836619,
+        "previous_day_baseline_mae_m": 0.3327083333333333,
+        "four_term_reference_mae_m": 0.2043949844836619,
+        "guard_beats_persistence": true,
+        "guard_beats_qwen_suggestion": true,
+        "test_data_seen_by_proposer_or_guard": false
+      },
+      {
+        "station": "8723214",
+        "day": "2025-01-17",
+        "qwen_suggested": "persistence_24h",
+        "evidence_guard_chose": "four_constituents",
+        "model_suggestion_accepted": false,
+        "test_hours": 24,
+        "fit_hours": 384,
+        "observations_sha256": "04bff620599dfb14ccf624e5851b84bc3e750b651da400be9e36319986c56770",
+        "qwen_suggestion_mae_m": 0.08879166666666666,
+        "evidence_guard_mae_m": 0.06699035409006676,
+        "previous_day_baseline_mae_m": 0.08879166666666666,
+        "four_term_reference_mae_m": 0.06699035409006676,
+        "guard_beats_persistence": true,
+        "guard_beats_qwen_suggestion": true,
+        "test_data_seen_by_proposer_or_guard": false
+      },
+      {
+        "station": "8443970",
+        "day": "2025-11-17",
+        "qwen_suggested": "persistence_24h",
+        "evidence_guard_chose": "persistence_24h",
+        "model_suggestion_accepted": true,
+        "test_hours": 24,
+        "fit_hours": 384,
+        "observations_sha256": "4f5f3c3cc2d36e544a897fd36763389fbf2b61bc0642fbd0bba75c21dd6466c3",
+        "qwen_suggestion_mae_m": 0.3921250000000001,
+        "evidence_guard_mae_m": 0.3921250000000001,
+        "previous_day_baseline_mae_m": 0.3921250000000001,
+        "four_term_reference_mae_m": 0.3547319009405181,
+        "guard_beats_persistence": false,
+        "guard_beats_qwen_suggestion": false,
+        "test_data_seen_by_proposer_or_guard": false
+      },
+      {
+        "station": "8723214",
+        "day": "2025-11-17",
+        "qwen_suggested": "persistence_24h",
+        "evidence_guard_chose": "persistence_24h",
+        "model_suggestion_accepted": true,
+        "test_hours": 24,
+        "fit_hours": 384,
+        "observations_sha256": "240631b29c6cb96325f5742442782cd16d6a2130b2a12df51cd7d90692270c54",
+        "qwen_suggestion_mae_m": 0.08099999999999997,
+        "evidence_guard_mae_m": 0.08099999999999997,
+        "previous_day_baseline_mae_m": 0.08099999999999997,
+        "four_term_reference_mae_m": 0.0739102941043016,
+        "guard_beats_persistence": false,
+        "guard_beats_qwen_suggestion": false,
+        "test_data_seen_by_proposer_or_guard": false
+      }
+    ],
+    "qwen_suggestion_overridden": 2,
+    "guard_wins_against_persistence": 2,
+    "guard_wins_against_qwen_suggestion": 2,
+    "policy_changed_using_these_test_outcomes": false,
+    "new_scientific_discovery": false,
+    "model_weights_updated": false,
+    "generalizable_AI_improvement_demonstrated": false,
+    "deployment_authorized": false,
+    "scientific_status": "small observational benchmark of a human-designed validation gate"
+  },
+  "new_scientific_discovery_verified": false,
+  "production_deployment": false
+}
