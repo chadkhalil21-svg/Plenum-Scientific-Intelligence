@@ -70,7 +70,7 @@ def parse_open_article(pmcid, data):
             candidates.extend(v for k, v in node.attrib.items()
                               if k.endswith("href"))
             candidates.extend(re.findall(
-                r"https?://creativecommons\\.org/(?:licenses|publicdomain)/[A-Za-z0-9/.-]+",
+                r"https?://creativecommons\.org/(?:licenses|publicdomain)/[A-Za-z0-9/.-]+",
                 node.text or "", flags=re.I))
         for candidate in candidates:
             value = candidate.lower().split("#", 1)[0].split("?", 1)[0].rstrip("/").rstrip(".")
