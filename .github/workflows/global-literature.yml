@@ -1,0 +1,65 @@
+name: Global Public Scientific Sources Verification
+on:
+  workflow_dispatch:
+    inputs:
+      query:
+        description: "Public scientific topic, no confidential information"
+        required: true
+        default: "aerospace energy research"
+  push:
+    paths:
+      - '.github/workflows/global-literature.yml'
+      - 'src/plenum_ai/global_sources.py'
+      - 'tests/test_global_sources.py'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-public-global-literature
+  cancel-in-progress: true
+jobs:
+  global-public-literature:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    env:
+      PUBLIC_QUERY: ${{ github.event.inputs.query }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install only metadata adapters
+        run: python -m pip install -e .
+      - name: Verify five-source parsing, cross-index deduplication and failures
+        run: python -m unittest discover -s tests -p 'test_global_sources.py' -v
+      - name: Query worldwide papers across five independent public indices
+        shell: bash
+        run: |
+          if [ -z "$PUBLIC_QUERY" ]; then PUBLIC_QUERY='aerospace energy research'; fi
+          python -m plenum_ai.cli federated-literature \
+            --query "$PUBLIC_QUERY" --online --global-sources \
+            --out reports/global_scientific_literature.json
+      - name: Report actual provider availability and metadata, not invented citations
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          x=json.loads(Path('reports/global_scientific_literature.json').read_text())
+          assert [p['provider'] for p in x['providers']] == [
+            'openalex','europepmc','semanticscholar','arxiv','osti']
+          assert x['scientific_truth_verified'] is False
+          assert x['materials_project_status'] == 'not_requested_requires_private_API_key'
+          successes=sum(p['status']=='retrieved_metadata' for p in x['providers'])
+          for p in x['providers']:
+              print(p['provider'],p['status'],'records',len(p['records']),
+                    'error',p.get('error_type'))
+          print('Distinct actual records:',len(x['records']))
+          if successes == 0:
+              raise SystemExit('No public research providers available; do not claim live success')
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: verified-five-source-public-science
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 14
