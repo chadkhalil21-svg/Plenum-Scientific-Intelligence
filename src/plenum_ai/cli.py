@@ -100,6 +100,11 @@ def main():
     evaluate = commands.add_parser("audit-hypotheses")
     evaluate.add_argument("--proposal", required=True)
     evaluate.add_argument("--out", default="reports/ai_hypothesis_audit.json")
+    evidence_proposals = commands.add_parser("propose-evidence-gated")
+    evidence_proposals.add_argument("--out", default="reports/gated_hypotheses.json")
+    evidence_audit = commands.add_parser("audit-evidence-gated")
+    evidence_audit.add_argument("--proposal", required=True)
+    evidence_audit.add_argument("--out", default="reports/gated_audit.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -260,6 +265,19 @@ def main():
         print("Independent scientific evaluation:", save_report(args.out, verdict),
               "wins:", verdict["won_against_persistence"],
               "/", verdict["trials"])
+    elif args.action == "propose-evidence-gated":
+        from .evidence_gate import propose_gated
+        from .autonomous_hypothesis import save_report
+        result = propose_gated()
+        print("Evidence-gated model proposals:", save_report(args.out,result),
+              "decisions:",len(result["proposals"]))
+    elif args.action == "audit-evidence-gated":
+        from .evidence_gate import independent_audit
+        from .autonomous_hypothesis import save_report
+        proposals=json.loads(Path(args.proposal).read_text(encoding="utf-8"))
+        result=independent_audit(proposals)
+        print("Independent evidence-gated audit:",save_report(args.out,result),
+              "guard wins:",result["guard_wins_against_persistence"],"/",result["trials"])
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,
