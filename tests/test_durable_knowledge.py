@@ -107,6 +107,29 @@ class LibraryIndexTests(unittest.TestCase):
         self.assertTrue(result["results"][0]["fulltext_available_locally"])
         self.assertEqual(len(result["results"][0]["content_sha256"]), 64)
 
+    def test_public_memory_records_rebuild_index(self):
+        from plenum_ai.memory import make_record, save
+        from plenum_ai.knowledge_index import import_verified_memory
+        root = Path(self.tmp.name) / "prior-memory"
+        report = {
+            "question": "Spectroscopy of experimental materials",
+            "source_status": "retrieved_metadata",
+            "literature_and_hypotheses": {"papers": [{
+                "id":"https://openalex.org/W1234",
+                "title":"Measurements of photon emission",
+                "doi":"https://doi.org/10.5555/photons",
+                "url":"https://openalex.org/W1234",
+                "year":2024,
+            }]},
+            "numeric_benchmark_verified":False,
+        }
+        memory=make_record(report, {"candidate":{}}, "test-run", "test-revision")
+        save(memory, root)
+        index=import_verified_memory(self.db,root)
+        self.assertEqual(index["valid_paper_references_indexed"], 1)
+        self.assertEqual(index["invalid_or_rejected_records"], 0)
+        self.assertEqual(len(search_index(self.db,"photon")["results"]),1)
+
     def test_federated_ingestion_limited_and_explicit(self):
         payload = {"records":[self._metadata()]}
         r=index_federated(self.db, payload)

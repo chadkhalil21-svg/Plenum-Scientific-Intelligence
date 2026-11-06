@@ -128,6 +128,10 @@ def main():
     search_index.add_argument("--query", required=True)
     search_index.add_argument("--db", default="reports/research_index.sqlite")
     search_index.add_argument("--out", default="reports/knowledge_search.json")
+    memory_index = commands.add_parser("import-public-memory")
+    memory_index.add_argument("--dir", required=True)
+    memory_index.add_argument("--db", default="reports/research_index.sqlite")
+    memory_index.add_argument("--out", default="reports/memory_index.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -329,6 +333,11 @@ def main():
         report=local_search(args.db, args.query)
         print("Citation-ready local library:",save_json(args.out,report),
               "records:",len(report["results"]))
+    elif args.action == "import-public-memory":
+        from .knowledge_index import import_verified_memory
+        report = import_verified_memory(args.db, args.dir)
+        print("Restored public research memory:",save_json(args.out,report),
+              "references:",report["valid_paper_references_indexed"])
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,

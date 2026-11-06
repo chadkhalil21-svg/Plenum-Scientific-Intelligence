@@ -36,6 +36,12 @@ jobs:
       LANGGRAPH_STRICT_MSGPACK: "true"
     steps:
       - uses: actions/checkout@v7
+      - name: Read already archived verified public research memory
+        uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: prior-knowledge
+          persist-credentials: false
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
@@ -56,6 +62,8 @@ jobs:
               plenum parallel-research --auto --query "$QUESTION" --out reports/science.json
               ;;
             knowledge)
+              plenum import-public-memory --dir prior-knowledge/memory/entries \
+                --db reports/library.sqlite --out reports/memory_restored.json
               plenum index-literature --query "$QUESTION" --online --db reports/library.sqlite --out reports/ingestion.json
               plenum search-knowledge --query "$QUESTION" --db reports/library.sqlite --out reports/citations.json
               ;;
