@@ -53,6 +53,10 @@ class QualityTests(unittest.TestCase):
         text = ("Scientific hypothesis proposer: Provide two falsifiable proposals and tests. " * 4)
         self.assertFalse(assess_answer(text, "proposer")["acceptable"])
 
+    def test_fabricated_citations_rejected(self):
+        fake = "The tests were verified by a journal. Citations: [1] Smith et al., Nature, 2023."
+        self.assertFalse(assess_answer(fake, "proposer")["acceptable"])
+
     def test_empty_is_rejected(self):
         self.assertFalse(assess_answer("short", "critic")["acceptable"])
 

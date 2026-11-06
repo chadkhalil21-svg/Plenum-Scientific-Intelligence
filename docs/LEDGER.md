@@ -36,3 +36,7 @@ E. Scientific simulation adapters and ultimately robotic validation.
 - [ ] Establish substantial independent model evaluations, sandbox tool use and reproducible scientific agent tests.
 - [ ] Build on-demand local Ollama daemon for genuine persistent autonomy (requires an always-on machine).
 - [ ] Integrate real scientific solvers and independently validate their predictions.
+
+- [x] Live OpenAlex retrieval and deterministic simulator verified in GitHub workflow 42150258387, with five publication metadata records.
+- [x] Qwen3-0.6B CPU inference generated substantive text and passed an initial echo screen (run 42150086623), but human inspection detected fabricated bibliographic citations. This output is NOT scientifically acceptable.
+- [ ] Re-run Qwen3 against actual public literature; forbid free-form citations and fail the content gate when it invents unsupported references. Any passing syntactic gate still requires expert scientific review.

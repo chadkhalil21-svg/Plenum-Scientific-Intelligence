@@ -1,4 +1,8 @@
-"""Conservative heuristics to reject empty or obvious prompt-echo model output."""
+"""Reject empty, instruction-echo and unsupported-reference model outputs.
+
+This is a syntactic provenance screen, not a scientific-fact checker.
+"""
+import re
 
 
 def assess_answer(answer, role):
@@ -12,4 +16,10 @@ def assess_answer(answer, role):
         return {"acceptable": False, "reason": "repeated_instruction"}
     if answer.count(answer[:45]) >= 3:
         return {"acceptable": False, "reason": "repetition"}
-    return {"acceptable": True, "reason": "basic_echo_screen_only_not_scientific_validation"}
+    if re.search(r"\\b(?:references|citations|bibliography)\\s*:", answer, re.I) or re.search(
+        r"\\[[0-9]+\\]\\s+[A-Z]", answer
+    ) or re.search(r"\\bet\\s+al\\.", answer, re.I):
+        return {"acceptable": False, "reason": "unsupported_reference_style"}
+    if re.search(r"https?://|doi\\.org/|10\\.\\d{4,9}/", answer, re.I):
+        return {"acceptable": False, "reason": "free_form_citation_requires_source_link_validation"}
+    return {"acceptable": True, "reason": "basic_screen_only_not_source_or_scientific_validation"}
