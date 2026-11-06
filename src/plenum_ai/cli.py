@@ -272,10 +272,10 @@ def main():
         print("Evidence-gated model proposals:", save_report(args.out,result),
               "decisions:",len(result["proposals"]))
     elif args.action == "audit-evidence-gated":
-        from .evidence_gate import independent_audit
+        from .evidence_gate import independent_audit as audit_gated_evidence
         from .autonomous_hypothesis import save_report
         proposals=json.loads(Path(args.proposal).read_text(encoding="utf-8"))
-        result=independent_audit(proposals)
+        result=audit_gated_evidence(proposals)
         print("Independent evidence-gated audit:",save_report(args.out,result),
               "guard wins:",result["guard_wins_against_persistence"],"/",result["trials"])
     elif args.action == "physics":
