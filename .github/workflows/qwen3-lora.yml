@@ -1,0 +1,59 @@
+name: Qwen3 Controlled LoRA Candidate Training
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/qwen3-lora.yml"
+permissions:
+  contents: read
+concurrency:
+  group: qwen3-research-candidate
+  cancel-in-progress: true
+jobs:
+  bounded-cpu-training:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Install CPU-only open-weight training dependencies
+        run: |
+          python -m pip install -e .
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "transformers>=4.51,<5" "peft>=0.15,<0.20" "accelerate>=1,<2" "huggingface_hub>=0.30,<1" "safetensors>=0.5" "pyarrow>=15,<25"
+      - name: Validate original fixtures, test isolation, and candidate checksum code
+        run: |
+          python -m unittest discover -s tests -p "test_fine_tune.py" -v
+          python -m unittest discover -s tests -p "test_science_eval.py" -v
+      - name: Train two tiny LoRA steps and compare against frozen science holdout
+        run: python -m plenum_ai.cli fine-tune-science --out reports/qwen3_finetune.json --checkpoint-dir candidates/qwen3-science-v1
+      - name: Verify experiment and ensure no automatic promotion
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from plenum_ai.fine_tune import verify_manifest
+          r=json.loads(Path("reports/qwen3_finetune.json").read_text())
+          assert r["training_steps"] == 2
+          assert len(r["losses"]) == 2
+          assert r["source"]["split"] == "test"
+          assert r["baseline"]["total"] == r["candidate"]["total"] == 8
+          assert r["baseline"]["sample_sha256"] == r["candidate"]["sample_sha256"]
+          assert r["automatic_model_promotion"] is False
+          assert r["AGI_or_scientific_discovery_demonstrated"] is False
+          assert verify_manifest("candidates/qwen3-science-v1")
+          print("Base score:",r["baseline"]["accuracy"],"LoRA score:",r["candidate"]["accuracy"])
+          print("Improvement demonstrated:",r["measured_holdout_gain"] > 0)
+          print("Candidate only; never deployed.")
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: qwen3-lora-research-candidate
+          path: |
+            reports/qwen3_finetune.json
+            candidates/qwen3-science-v1/
+          if-no-files-found: warn
+          retention-days: 14
