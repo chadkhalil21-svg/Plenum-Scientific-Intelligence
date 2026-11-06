@@ -1,0 +1,43 @@
+name: Curated Scientific Skills Review
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/scientific-skills-review.yml"
+      - "src/plenum_ai/skill_catalog.py"
+      - "tests/test_skill_catalog.py"
+permissions:
+  contents: read
+jobs:
+  read-only-catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e .
+      - name: Confirm skill references cannot execute code
+        run: python -m unittest discover -s tests -p "test_skill_catalog.py" -v
+      - name: Fetch only one pinned reviewed-candidate reference for human inspection
+        run: |
+          python -m plenum_ai.cli scientific-skills --out reports/skill_catalog.json
+          python -m plenum_ai.cli scientific-skills --inspect rdkit --out reports/rdkit_skill_review.json
+      - name: Verify fetched upstream documentation is untrusted reference only
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          doc=json.loads(Path("reports/rdkit_skill_review.json").read_text())
+          assert len(doc["sha256"])==64
+          assert doc["executed"] is False
+          assert doc["status"]=="untrusted_document_for_human_review_only"
+          assert len(json.loads(Path("reports/skill_catalog.json").read_text())["skills"])==6
+          print("Pinned RDKit skill fetched for review; no instructions executed.")
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pinned-scientific-skills-review
+          path: reports/
+          retention-days: 14
