@@ -4,12 +4,12 @@ Established: 2026-11-05
 | ID | Work | Status |
 |---|---|---|
 | 001 | Public GitHub repository and constitution | Implemented |
-| 002 | OpenAlex bounded literature search | Implemented; live network run pending |
-| 003 | Optional local LLM proposer / independent critic roles | Implemented; not deployed |
+| 002 | OpenAlex bounded literature search | Implemented; live network verified, run 42150258387 |
+| 003 | Optional local LLM proposer / independent critic roles | Qwen3 CPU inference verified; no always-on model deployed |
 | 004 | Deterministic orbital-mechanics example | Implemented; unit tests included |
 | 005 | Narrow benchmark-driven ranker improvement proposal | Implemented; no automatic deployment |
-| 006 | Read-only CI, daily and manual research Actions | Configured; live workflow verification pending |
-| 007 | Persistent agent orchestration, memory, citations, evaluation records | Planned |
+| 006 | CI, daily and manual research Actions | Verified; memory archival job has branch-write permission |
+| 007 | Persistent research memory and evaluation records | Verified for two runs; advanced orchestration remains planned |
 | 008 | Integrated NASA, mathematics, fluid, chemistry and materials solvers | Planned |
 | 009 | Self-modification proposals with independent review and rollback | Planned |
 | 010 | Local model fine-tuning and generalized capability evaluation | Planned |
@@ -32,7 +32,7 @@ E. Scientific simulation adapters and ultimately robotic validation.
 - [x] Wire mission to the unattended research workflow.
 - [x] Add optional CPU open-weight model adapter and GitHub Actions demonstration.
 - [x] Verify CPU model inference, simulation and artifact on GitHub run 42149615125 (135M model). The artifact showed prompt repetition: inference worked but content quality failed human inspection.
-- [ ] Verify upgraded Qwen3-0.6B model and its basic output-quality gate. The gate is not a scientific validity guarantee.
+- [x] Verify Qwen3-0.6B inference and a basic output-quality gate, run 42150718097; passing a syntactic gate does not demonstrate scientific validity.
 - [ ] Establish substantial independent model evaluations, sandbox tool use and reproducible scientific agent tests.
 - [ ] Build on-demand local Ollama daemon for genuine persistent autonomy (requires an always-on machine).
 - [ ] Integrate real scientific solvers and independently validate their predictions.
@@ -50,3 +50,6 @@ E. Scientific simulation adapters and ultimately robotic validation.
 - [x] Verify subsequent memory recall: workflow 42151928822 archived record 514586158143c8315a33dcfa, which references prior record 8eb8532d9833c41f4a23cd76.
 - [ ] Improve beyond synthetic text-ranking tests using external, out-of-domain benchmarks.
 - [ ] Human-reviewable candidate code/weights and rollback, no unattended deployment.
+
+## 2026-11-05 v0.3 verification note
+Two successive live public research runs independently returned five publication metadata records each, appended SHA-256-addressed records on `research-memory`, and reported a passing narrow synthetic ranker audit. The second record explicitly references the first. This verifies cross-run memory retrieval and controlled archival, not scientifically sound autonomous invention, broad self-improvement, retraining, consciousness, or AGI. No paid AI service was enabled.
