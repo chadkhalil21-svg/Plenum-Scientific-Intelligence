@@ -253,7 +253,9 @@ def main():
         print("Read-only K-Dense skill index:", save_json(args.out,report))
     elif args.action == "federated-literature":
         from .federated_sources import search_federated
-        report=search_federated(args.query,offline=not args.online)
+        from .global_sources import global_literature
+        report=(global_literature(args.query,offline=not args.online) if args.global_sources
+                else search_federated(args.query,offline=not args.online))
         print("Federated public literature search:",save_json(args.out,report),
               "records:",len(report["records"]))
     elif args.action == "nasa-exoplanets":
