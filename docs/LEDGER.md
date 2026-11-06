@@ -46,6 +46,7 @@ E. Scientific simulation adapters and ultimately robotic validation.
 - [x] Bounded SHA-256 content-addressed scientific metadata and search code.
 - [x] Separate benchmark implementation audits frozen 12 train and 12 holdout examples.
 - [x] Research workflow reads archive, produces records and attempts to persist only public data through a dedicated scoped job.
-- [ ] Verify a successful live memory publication and a subsequent memory recall.
+- [x] Verify live public memory publication (workflow 42151821047; archive entry 8eb8532d9833c41f4a23cd76).
+- [ ] Verify subsequent memory recall in the next research run.
 - [ ] Improve beyond synthetic text-ranking tests using external, out-of-domain benchmarks.
 - [ ] Human-reviewable candidate code/weights and rollback, no unattended deployment.

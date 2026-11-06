@@ -109,3 +109,5 @@ jobs:
           else
             echo "No new records"
           fi
+
+# This workflow deliberately recalls a prior public-memory snapshot before each run.
