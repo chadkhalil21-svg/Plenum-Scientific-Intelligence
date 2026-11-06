@@ -4,6 +4,7 @@ from .literature import search_papers
 from .physics import circular_orbit_speed
 from .research import make_report
 from .science import diffuse_heat
+from .quality import assess_answer
 
 OFFLINE_SOURCES = [{
     "id": "OFFLINE-DEMO",
@@ -36,6 +37,10 @@ def run_mission(question, simulation="heat", model=None, generator=None,
                    "status": source_status})
     kw = {"model": model} if generator is None else {"model": model, "generator": generator}
     notes = make_report(question, papers, **kw)
+    quality = {
+        "proposer": assess_answer(notes["proposals"][0], "proposer") if model else None,
+        "critic": assess_answer(notes["independent_criticisms"][0], "critic") if model else None,
+    }
     stages.append({"role": "hypothesis_proposer", "action": "Local model hypothesis generation",
                    "status": "completed_unverified" if model else "not_run_no_model"})
     stages.append({"role": "adversarial_critic", "action": "Independent-role critique",
@@ -66,6 +71,8 @@ def run_mission(question, simulation="heat", model=None, generator=None,
         "numeric_benchmark_verified": verified,
         "verified_new_scientific_discovery": False,
         "model_inference_executed": bool(model),
+        "model_output_quality": quality,
+        "model_outputs_pass_basic_screen": bool(model and quality["proposer"]["acceptable"] and quality["critic"]["acceptable"]),
         "issues": issues,
         "limitations": [
             "Role prompts are not independent model training or experimental verification.",

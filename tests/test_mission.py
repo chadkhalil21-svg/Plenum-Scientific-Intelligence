@@ -47,3 +47,18 @@ class MissionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+from plenum_ai.quality import assess_answer
+
+
+class QualityTests(unittest.TestCase):
+    def test_repetition_is_rejected(self):
+        text = ("Scientific hypothesis proposer: Provide two falsifiable proposals and tests. " * 4)
+        self.assertFalse(assess_answer(text, "proposer")["acceptable"])
+
+    def test_empty_is_rejected(self):
+        self.assertFalse(assess_answer("short", "critic")["acceptable"])
+
+    def test_plausible_but_not_proven_accepted_for_screen(self):
+        text = "A proposed test would compare the conservation errors of two separate numerical schemes across distinct step sizes and independently report discrepancies."
+        self.assertTrue(assess_answer(text, "proposer")["acceptable"])

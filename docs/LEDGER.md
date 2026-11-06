@@ -31,7 +31,8 @@ E. Scientific simulation adapters and ultimately robotic validation.
 - [x] Add deterministic one-dimensional insulated heat equation simulator with conservation validation.
 - [x] Wire mission to the unattended research workflow.
 - [x] Add optional CPU open-weight model adapter and GitHub Actions demonstration.
-- [ ] Confirm complete real model inference run and inspect its artifact; until then MODEL NOT VERIFIED.
+- [x] Verify CPU model inference, simulation and artifact on GitHub run 42149615125 (135M model). The artifact showed prompt repetition: inference worked but content quality failed human inspection.
+- [ ] Verify upgraded Qwen3-0.6B model and its basic output-quality gate. The gate is not a scientific validity guarantee.
 - [ ] Establish substantial independent model evaluations, sandbox tool use and reproducible scientific agent tests.
 - [ ] Build on-demand local Ollama daemon for genuine persistent autonomy (requires an always-on machine).
 - [ ] Integrate real scientific solvers and independently validate their predictions.

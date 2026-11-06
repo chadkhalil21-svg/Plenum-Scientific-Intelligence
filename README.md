@@ -49,6 +49,8 @@ plenum mission --query "Test an orbital model" --offline --simulation orbit --ou
 ```
 
 ### Actual open-weight model (optional)
-**Open-Weight AI Model Demonstration** is a GitHub Actions CPU workflow using the downloadable, Apache-2.0 **SmolLM2-135M-Instruct** model from Hugging Face. It requires neither a commercial AI subscription nor your iPad's processor; each run downloads model and Python dependencies to a temporary runner. It is a tiny proof-of-inference, **not an AGI** and not yet a high-quality scientist. Open the Actions tab to view its run and artifact. It runs automatically on first addition of its workflow and manually thereafter.
+**Open-Weight AI Model Demonstration** is a GitHub Actions CPU workflow using the downloadable, Apache-2.0 **Qwen3-0.6B** model from Hugging Face. It requires neither a commercial AI subscription nor your iPad's processor; each run downloads model and Python dependencies to a temporary runner. It is a tiny proof-of-inference, **not an AGI** and not yet a high-quality scientist. Open the Actions tab to view its run and artifact. It runs automatically on first addition of its workflow and manually thereafter.
 
 You can alternatively run a capable open-weight model through Ollama on your own computer, e.g. `plenum mission --query "..." --model YOUR_OLLAMA_MODEL`. Local Ollama does not run on GitHub's short-lived CPU runners unless separately installed.
+
+The initial 135M model benchmark completed, but its text echoed instructions. The improved model workflow now uses Qwen3-0.6B, disables thinking mode to avoid spending CPU on hidden reasoning tokens, and checks for obvious prompt repetition. This is a basic text-quality filter, not scientific verification.
