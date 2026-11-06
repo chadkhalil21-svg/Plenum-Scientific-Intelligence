@@ -56,6 +56,14 @@ class ToolNetworkTests(unittest.TestCase):
         self.assertEqual(search["status"], "skipped_offline")
         self.assertEqual(search["papers"], [])
 
+    def test_offline_federated_registry_tool(self):
+        report=run_network("Scientific memory",tool_keys=["scipy.thermal","federated.metadata"],
+                           offline=True,optimize=True)
+        self.assertTrue(report["known_model_integration_passed"],report)
+        literature=next(x for x in report["workers"] if x["tool"]=="federated.metadata")
+        self.assertEqual(len(literature["evidence"]["providers"]),3)
+        self.assertEqual(literature["status"],"skipped_offline")
+
     def test_missing_dependency_is_rejected(self):
         with self.assertRaises(ValueError):
             run_network("No thermal result", tool_keys=["scipy.orbit"], optimize=True)

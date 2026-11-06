@@ -35,6 +35,14 @@ def _execute_tool(tool_key, question, offline):
                 "verified_fixture": bool(result["verified_fixture"]),
                 "output": result,
             }
+        if tool_key == "federated.metadata":
+            from .federated_sources import search_federated
+            evidence=search_federated(question, offline=offline)
+            status=("skipped_offline" if offline else
+                    "retrieved_metadata" if evidence["all_providers_healthy"]
+                    else "partial_metadata")
+            return {"tool":tool_key, "status":status, "verified_fixture":False,
+                    "evidence":evidence, "citation_verified":False}
         if tool_key == "openalex.metadata":
             if offline:
                 return {
@@ -98,8 +106,9 @@ def _verify(state):
     solvers_pass = bool(requested_solver) and all(
         x["status"] == "completed" and x["verified_fixture"] for x in requested_solver
     )
-    literature = [x for x in tools if x["tool"] == "openalex.metadata"]
-    literature_ok = all(x["status"] in ("retrieved_metadata", "skipped_offline")
+    literature = [x for x in tools if x["tool"] in
+                  ("openalex.metadata", "federated.metadata")]
+    literature_ok = all(x["status"] in ("retrieved_metadata", "partial_metadata", "skipped_offline")
                         for x in literature)
     optimize_ok = (state["optimized"].get("verified_fixture", False)
                    if state["enable_optimization"] else True)

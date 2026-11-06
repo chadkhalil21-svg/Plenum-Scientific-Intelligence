@@ -78,6 +78,13 @@ def main():
     multi.add_argument("--online", action="store_true", help="Allow read-only OpenAlex metadata retrieval")
     multi.add_argument("--no-optimization", action="store_true")
     multi.add_argument("--out", default="reports/parallel_research.json")
+    skills = commands.add_parser("scientific-skills")
+    skills.add_argument("--inspect", help="Allowlisted K-Dense skill name for pinned read-only review")
+    skills.add_argument("--out", default="reports/scientific_skills.json")
+    federation = commands.add_parser("federated-literature")
+    federation.add_argument("--query", required=True)
+    federation.add_argument("--online", action="store_true")
+    federation.add_argument("--out", default="reports/federated_literature.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -181,6 +188,15 @@ def main():
         print("Parallel scientific research:", save_json(args.out, report),
               "workers:", report["parallel_tool_count"],
               "known-model checks passed:", report["known_model_integration_passed"])
+    elif args.action == "scientific-skills":
+        from .skill_catalog import catalog, retrieve_skill_document
+        report = retrieve_skill_document(args.inspect) if args.inspect else catalog()
+        print("Read-only K-Dense skill index:", save_json(args.out,report))
+    elif args.action == "federated-literature":
+        from .federated_sources import search_federated
+        report=search_federated(args.query,offline=not args.online)
+        print("Federated public literature search:",save_json(args.out,report),
+              "records:",len(report["records"]))
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,
