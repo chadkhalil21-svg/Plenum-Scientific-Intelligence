@@ -193,6 +193,11 @@ def main():
     build.add_argument("--topic", required=True)
     build.add_argument("--dir", default="reports/generated_program")
     build.add_argument("--out", default="reports/program_manifest.json")
+    universal = commands.add_parser("universal-brief")
+    universal.add_argument("--topic", required=True)
+    universal.add_argument("--online", action="store_true")
+    universal.add_argument("--limit", type=int, default=8)
+    universal.add_argument("--out", default="reports/universal_brief.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -502,6 +507,13 @@ def main():
         print("Original review-required program:",save_json(args.out,report),
               "files generated:",report["file_count"],
               "deployed:",not report["generated_program_has_not_been_deployed"])
+    elif args.action == "universal-brief":
+        from .universal_brief import build_universal_brief
+        result=build_universal_brief(args.topic,online=args.online,limit=args.limit)
+        print("Worldwide interdisciplinary research brief:",
+              save_json(args.out,result),
+              "source items:",result["cross_domain_ideas"]["source_record_count"],
+              "reviewable idea questions:",result["cross_domain_ideas"]["concept_count"])
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,

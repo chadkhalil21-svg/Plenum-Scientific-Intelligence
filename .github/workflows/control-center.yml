@@ -24,6 +24,7 @@ on:
           - music-analysis
           - youtube
           - world-intelligence
+          - interdisciplinary-ideas
           - universities
           - defense-public
           - foreign-affairs
@@ -97,7 +98,7 @@ jobs:
             ecosystem) python -m pip install -e . ;;
             build-program) python -m pip install -e . ;;
             discovery|creative|youtube|frontiers) python -m pip install -e . ;;
-            world-intelligence|universities|defense-public|foreign-affairs|business|environment|world-news|journals|art|music|design|health|funding|artificial_intelligence|physics|code-ecosystem) python -m pip install -e . ;;
+            world-intelligence|interdisciplinary-ideas|universities|defense-public|foreign-affairs|business|environment|world-news|journals|art|music|design|health|funding|artificial_intelligence|physics|code-ecosystem) python -m pip install -e . ;;
             parametric-design) python -m pip install -e . && sudo apt-get update -qq && sudo apt-get install -y -qq openscad ;;
             music-analysis) python -m pip install -e ".[music]" ;;
             molecular-dynamics) python -m pip install -e ".[dynamics]" ;;
@@ -147,6 +148,9 @@ jobs:
               ;;
             world-intelligence)
               plenum world-horizon --topic "$QUESTION" --category all --online --out reports/world_horizon.json
+              ;;
+            interdisciplinary-ideas)
+              plenum universal-brief --topic "$QUESTION" --online --limit 8 --out reports/universal_brief.json
               ;;
             universities)
               plenum world-horizon --topic "$QUESTION" --category universities --online --out reports/world_horizon.json
@@ -273,6 +277,11 @@ jobs:
               assert r["created_from_algorithm"] and not r["copied_copyrighted_music_or_art"]
               assert Path(r["outputs"]["artwork_svg"]).is_file()
               assert Path(r["outputs"]["score_musicxml"]).is_file()
+          if task=="interdisciplinary-ideas":
+              r=json.loads(Path("reports/universal_brief.json").read_text())
+              assert not r["AGI_achieved"]
+              assert not r["cross_domain_ideas"]["scientific_discovery_verified"]
+              assert not r["automatic_model_self_revision"]
           if task=="science":
               r=json.loads(Path("reports/science.json").read_text())
               assert not r["scientific_discovery_verified"]
