@@ -81,3 +81,13 @@ arXiv and DOE OSTI returned three live metadata records each in run
 42167088294. Material Project credentials remain unconfigured.
 OpenMM v8.6.1 passed a bounded Reference CPU synthetic bond simulation in
 run 42167232309; no real biomolecular modeling claims are warranted.
+
+## Creative and current-research extension
+
+- `discovery_watch.py`: 20-curated-journal Crossref roster, a whole-index topic query, recent bio/med preprints, institutional/publisher RSS feeds and public NASA YouTube video listings. Daily Actions preserve failure status and peer-review distinctions.
+- `discovery_delta.py`: compare source DOI/link fingerprints against up to 120 prior archived daily reports. A record new to Plenum is **not** new to science or evidence of a breakthrough.
+- `serendipity.py`: speculative research-linked art, architecture, music, agriculture, design and engineering idea prompts, with required source links and falsification reminders.
+- `creative_studio.py`: original SVG geometry and MusicXML notation, with no audio playback or copied recordings.
+- `creative_sources.py`: Openverse, Metropolitan Museum v1.1 and MusicBrainz public metadata only, rights labeled and independently retrievable.
+- `youtube_api.py`: optional official v3 video metadata search with owner-supplied `YOUTUBE_API_KEY` secret, redacted errors and no captions/downloads.
+- `docs/UNIVERSAL_DISCOVERY_AND_CREATIVITY.md`: consolidated connection requirements and status inventory for future creative/scientific resources.

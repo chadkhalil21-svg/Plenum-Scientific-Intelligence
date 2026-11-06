@@ -279,3 +279,15 @@ The independently maintained EleutherAI benchmark also completed for
 Qwen3-0.6B and Qwen3-1.7B. Results favored 1.7B on some of the
 eight-question public tasks, but are **too small for model promotion**.
 [Protocol and actual scores](docs/SCIENTIFIC_ECOSYSTEM.md).
+
+## Worldwide journals, laboratories, original art and music (November 2026)
+
+Plenum now includes a [Universal Discovery and Creativity Network](docs/UNIVERSAL_DISCOVERY_AND_CREATIVITY.md) that broadens the scientific intelligence screenshots to music, visual art, architecture, engineering design, creative invention, YouTube and daily source-linked research monitoring.
+
+**Publications and labs:** Crossref's rotating 20-journal roster (six per daily check), Crossref's broader topical search, bioRxiv/medRxiv preprint metadata, institutional MIT/NASA/Stanford/NIH announcements, Nature publisher RSS, plus the existing five academic metadata services. Each upstream can fail independently and maintains its own timestamp, original URL and evidence class. A scheduled [Daily Discovery workflow](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/workflows/discovery-pulse.yml) runs at 10:37 UTC and archives public source metadata plus first-seen summaries and speculative research-linked questions to `research-memory`. This is **not comprehensive automatic coverage of all laboratories or journals**.
+
+**Design/music/art:** The tested [Creative Studio](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/workflows/creative-studio.yml) can produce editable original SVG geometry and MusicXML notes, plus bounded interdisciplinary ideas. It retrieves rights-labeled source metadata from Openverse (images and audio), The Met Collection v1.1 and MusicBrainz. It does **not** download copyrighted music, images, videos or scores, or certify artistic novelty.
+
+**YouTube:** The founder console supports a public channel ID with an Atom feed, though GitHub-based access can be blocked. An additional official YouTube Data API v3 adapter supports secure video search only after the owner privately configures the `YOUTUBE_API_KEY` GitHub Actions secret. No key, transcript, copyrighted video or paid provider was added by default.
+
+**iPad control center:** Choose `discovery`, `creative` or `youtube` from [Plenum Research Control Center](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/workflows/control-center.yml) alongside the existing scientific tools.

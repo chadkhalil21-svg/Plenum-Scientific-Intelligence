@@ -221,3 +221,22 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [ ] Improve foundational reasoning with larger genuine scientific
   benchmarks, independent agents and more capable persistent compute before
   claiming AGI or recursive model improvement.
+
+## Universal source intelligence and creative disciplines
+
+- [x] Add a bounded 20-journal Crossref roster spanning general science, physics, biology, medicine, photonics, materials, engineering computing, design and music. Rotate six journals per daily check, with a separate cross-disciplinary Crossref topic-wide search.
+- [x] Add recent public bioRxiv and medRxiv preprint metadata with explicit non-peer-reviewed labeling.
+- [x] Subscribe to bounded MIT and NASA RSS research news; add Stanford, NIH and Nature publication feeds with failure reporting. Live provider availability varies by run.
+- [x] Add public NASA YouTube Atom metadata reader and support explicitly supplied canonical UC channel IDs. Preserve HTTP blockage rather than claiming a successful connection.
+- [x] Add optional official YouTube Data API v3 video search backed by **private owner** `YOUTUBE_API_KEY`, no transcript scraping, no automatic cloud-project creation and no source-code secrets.
+- [x] Add Openverse openly licensed image/audio metadata search; The Metropolitan Museum of Art v1.1 Open Access collection data; MusicBrainz musical-work metadata, with rights and creator attribution.
+- [x] Generate original procedural SVG design, MusicXML notation and cross-domain creative idea manifests without copying existing copyrighted media.
+- [x] Add speculative, source-linked invention prompts from recent research, explicitly labeling the hypotheses as untested and not patentable by assumption.
+- [x] Add first-seen archive DOI/link comparison across up to 120 previous public observatory snapshots.
+- [x] Configure daily scheduled GitHub Actions monitoring at 10:37 UTC and immutable public research-memory evidence archival, separate from read-only collection permissions.
+- [x] Integrate `discovery`, `creative` and `youtube` into the founder-facing iPad control center.
+- [x] Create comprehensive [Universal Discovery and Creativity](UNIVERSAL_DISCOVERY_AND_CREATIVITY.md) technical documentation, including costs, licensing, scope and future disciplines.
+- [ ] Complete reliable video discovery via an owner-approved Google key or connected provider; the unauthenticated YouTube feed may reject GitHub Actions.
+- [ ] Establish full journal-text rights, retraction/citation follow-up, deeper lab-source coverage and genuinely broad persistent source search. Public metadata links do not equal publisher subscriptions.
+- [ ] Add independently validated professional CAD, 3D animation, score engraving and audio synthesis backends. The existing original creative sketches are not production-grade multimodal AGI.
+- [ ] Add private research storage and owner-approved persistent compute for unpublished IP, larger AI models and safely bounded deep research.
