@@ -64,3 +64,6 @@ Two successive live public research runs independently returned five publication
 - [ ] Replace small known analytical fixtures with independently validated simulations and empirical benchmark data for each subject.
 - [ ] Evaluate model reasoning on unseen interdisciplinary research tasks before claiming genuine improvement.
 - [ ] Integrate extended open-source scientific solvers and add memory-based experimental selection, subject to budget and safety controls.
+
+### v0.4 measured numerical efficiency (GitHub run 42152625695)
+Across four known-equation fixtures, DOP853 required 1,256 solver function evaluations, RK45 required 2,930, and Radau required 12,903. Every method passed its narrow analytic reference checks. This is an *evaluation-count* comparison for the specified tolerances and models, not a wall-time comparison, hardware energy measurement, validated scientific innovation, or universal algorithm ranking. The results remain proposals only; no code or weights were changed automatically.
