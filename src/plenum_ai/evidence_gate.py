@@ -56,7 +56,8 @@ def fetch(station, day, reveal=False, opener=urlopen):
         raise ValueError("NOAA response too large")
     obj = json.loads(body)
     if not isinstance(obj, dict) or obj.get("error") or not isinstance(obj.get("data"), list):
-        raise ValueError("NOAA observations unavailable")
+        detail = str(obj.get("error", {}).get("message", "unexpected response schema"))[:160] if isinstance(obj, dict) else "unexpected response type"
+        raise ValueError("NOAA observations unavailable: " + detail)
     return parse_observations(obj["data"]), sha256(body).hexdigest()
 
 
