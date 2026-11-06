@@ -1,0 +1,154 @@
+name: Autonomous Hypothesis Selection and Blind Evidence Audit
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/autonomous-hypothesis.yml'
+      - 'src/plenum_ai/autonomous_hypothesis.py'
+      - 'tests/test_autonomous_hypothesis.py'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-blind-hypothesis-experiment
+  cancel-in-progress: false
+jobs:
+  ai-proposer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install bounded NOAA experiment and CPU Qwen3
+        run: |
+          python -m pip install -e ".[empirical]"
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "transformers>=4.51,<5" safetensors
+      - name: Prove test measurements are inaccessible to proposer
+        run: python -m unittest discover -s tests -p 'test_autonomous_hypothesis.py' -v
+      - name: AI selects four falsifiable hypotheses from development-only measurements
+        run: python -m plenum_ai.cli propose-hypotheses --out reports/ai_hypothesis_proposals.json
+      - name: Gate structured proposals before test data are revealed
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path("reports/ai_hypothesis_proposals.json").read_text())
+          assert len(p["proposals"]) == 4
+          assert not p["agent_accessed_test_measurements"]
+          assert not p["production_model_changed"]
+          assert not p["hypotheses_new_physical_discoveries"]
+          for item in p["proposals"]:
+              assert item["development"]["development_hours"] >= 85
+              assert item["development"]["train_hours"] >= 250
+              assert item["development"]["selected"] in p["candidate_names"]
+              assert not item["development"]["holdout_measurements_seen"]
+          print("Qwen3 choice stage complete; no sealed NOAA measurements requested.")
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: preregistered-ai-proposals
+          path: reports/ai_hypothesis_proposals.json
+          retention-days: 14
+
+  independent-auditor:
+    needs: ai-proposer
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e ".[empirical]"
+      - uses: actions/download-artifact@v7
+        with:
+          name: preregistered-ai-proposals
+          path: reports/
+      - name: Retrieve sealed NOAA day only after candidate choices were saved
+        run: |
+          python -m plenum_ai.cli audit-hypotheses \
+            --proposal reports/ai_hypothesis_proposals.json \
+            --out reports/ai_hypothesis_audit.json
+      - name: Verify every success and failure is retained
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path("reports/ai_hypothesis_proposals.json").read_text())
+          a=json.loads(Path("reports/ai_hypothesis_audit.json").read_text())
+          assert a["trials"] == len(p["proposals"]) == 4
+          assert not a["AI_found_generalizable_improvement"]
+          assert not a["eligible_for_automatic_deployment"]
+          assert not a["model_weights_updated"]
+          assert a["agent_selected_from_fixed_hypothesis_menu"]
+          for x in a["cases"]:
+              assert x["test_hours"] >= 20
+              assert not x["test_data_used_to_select_or_fit_hypothesis"]
+              print(x["station"],x["holdout_day"],x["selected"],
+                    "chosen MAE",round(x["chosen_model_mae_m"],5),
+                    "baseline MAE",round(x["persistence_mae_m"],5),
+                    "reference MAE",round(x["fixed_four_constituent_mae_m"],5),
+                    "won?",x["chosen_beats_persistence"])
+          print("All four cases audited; no AI capability claim or deployment.")
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: independently-audited-ai-hypotheses
+          path: reports/ai_hypothesis_*.json
+          retention-days: 14
+
+  archive-untrusted-public-research:
+    needs: independent-auditor
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: evidence-branch
+      - uses: actions/download-artifact@v7
+        with:
+          name: independently-audited-ai-hypotheses
+          path: reports/
+      - name: Confirm narrow evidence-only append
+        env:
+          RUN_ID: ${{ github.run_id }}
+          REVISION: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p=json.loads(Path("reports/ai_hypothesis_proposals.json").read_text())
+          a=json.loads(Path("reports/ai_hypothesis_audit.json").read_text())
+          assert p["schema"] == "plenum-ai-hypothesis-proposals-v1"
+          assert a["schema"] == "plenum-ai-hypothesis-audit-v1"
+          assert len(a["cases"]) == 4
+          assert not a["eligible_for_automatic_deployment"]
+          assert not a["model_weights_updated"]
+          assert not p["agent_accessed_test_measurements"]
+          directory=Path("evidence-branch/evidence/agent-experiments")
+          directory.mkdir(parents=True,exist_ok=True)
+          dest=directory/("run-"+os.environ["RUN_ID"]+".json")
+          if dest.exists():
+              raise FileExistsError("Immutable run already archived")
+          record={"schema":"plenum-public-agent-research-v1","run_id":os.environ["RUN_ID"],
+                  "revision":os.environ["REVISION"],"proposals":p,"audit":a,
+                  "automatic_deployment":False,"verified_new_discovery":False}
+          dest.write_text(json.dumps(record,indent=2)+"\n")
+          print("Archiving research results, including failed proposals:",dest)
+          PY
+      - name: Commit evidence on research-memory, never main
+        run: |
+          git -C evidence-branch config user.name "Plenum Research Ledger"
+          git -C evidence-branch config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C evidence-branch add evidence/agent-experiments/
+          git -C evidence-branch commit -m "Archive constrained AI hypotheses and blind observed-data audit"
+          git -C evidence-branch push origin HEAD:research-memory
