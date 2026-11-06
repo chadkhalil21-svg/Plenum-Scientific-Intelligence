@@ -55,9 +55,12 @@ class MeasuredDataTests(unittest.TestCase):
 
     def test_hypothesis_may_fail_without_program_crashing(self):
         rows = synthetic_rows()
+        prior = {r["t"]: r["v"] for r in rows}
         for item in rows:
             if item["t"].startswith("2025-06-17"):
-                item["v"] = "5.0"
+                # Exactly repeat the prior day's measured hourly heights.
+                # This makes 24h persistence perfect by construction.
+                item["v"] = prior[item["t"].replace("2025-06-17", "2025-06-16")]
         report = score_station("8723214", rows, "0"*64)
         self.assertFalse(report["model_beats_baseline"])
         self.assertTrue(report["model_mae_m"] > .1)
