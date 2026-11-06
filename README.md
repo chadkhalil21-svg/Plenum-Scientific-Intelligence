@@ -89,3 +89,11 @@ plenum train-models --out reports/model_training.json
 ```
 
 Full measurements, limits and next steps: [docs/MODEL_TRAINING.md](docs/MODEL_TRAINING.md).
+
+## v0.6 External science reasoning and Qwen3 fine-tuning
+
+The Qwen3-0.6B model scored **2/12 (16.7%)** on the initial externally sourced ARC-Challenge science sample. This is a small public benchmark, not a robust AGI test.
+
+Our CPU experiment then trained a real, tiny LoRA adapter with **286,720 trainable parameters** across **two gradient steps**, using original public instructional examples. Its reserved 8-question score was **2/8 before and 2/8 after**. This is **no demonstrated improvement**.
+
+The SHA-256-verified adapter is available as a **14-day GitHub Actions artifact** from run 42157269113. It is an experimental candidate, not deployed or accepted into the base AI. Full methodology: [docs/SCIENTIFIC_REASONING.md](docs/SCIENTIFIC_REASONING.md).

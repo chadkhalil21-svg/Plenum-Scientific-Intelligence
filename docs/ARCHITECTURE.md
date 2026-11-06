@@ -23,7 +23,7 @@ Hot memory: electronic SRAM/HBM; warm: SSD; cold archival: experimental DNA/prot
 ## v0.2 implementation
 A bounded mission produces a source inventory (OpenAlex or clearly marked offline fixture), optional separately prompted proposer and critic, a known-physics heat/orbit numerical check, and a JSON audit record. A passing simulation benchmark only demonstrates expected operation of that small model: it does not validate the model-generated scientific claims.
 
-An optional CPU model run executes HuggingFaceTB/SmolLM2-135M-Instruct (Apache-2.0) on a temporary GitHub Actions runner. The model weights are not committed to GitHub. Larger models can be run through local Ollama on an owner-controlled always-on computer. Automatic public deployment and self-modifying main-branch writes remain disabled.
+An optional CPU model run executes Qwen/Qwen3-0.6B (Apache-2.0) on a temporary GitHub Actions runner. The model weights are not committed to GitHub. Larger models can be run through local Ollama on an owner-controlled always-on computer. Automatic public deployment and self-modifying main-branch writes remain disabled.
 
 ## v0.3 research memory
 Public run artifacts are transferred to the research-memory branch via a separately permissioned GitHub Actions job after checksum validation. Prior stored paper metadata can be recalled as clearly labeled historical context. New hypotheses, unsupported references, secrets, and proprietary patent material are excluded from persisted records. Ranker-improvement proposals receive a second independent deterministic benchmark computation and cannot deploy themselves.
@@ -44,3 +44,8 @@ Remaining: real external datasets, task-specific scientific model adapters, mult
 Allowlisted data sources → disjoint train/development/holdout partitions → two actual model families trained per task → candidate choice based solely on validation → independent replay and isolated holdout audit → JSON evidence artifact → human review. Test data and results are never supplied to the model-choice procedure. Demonstrates training of task-specific small models, **not** ongoing autonomous improvement of the underlying language model.
 
 A future foundation-model optimization service will require model-weight license checks, suitable GPU compute, reproducible training dataset provenance, safety and privacy controls, unseen interdisciplinary evaluations, checkpoint signatures, rollback and human approval. No automatic fine-tuning, deployment or production promotion is enabled.
+
+## v0.6 Foundation-model evaluation and model-candidate archive
+Qwen3-0.6B is loaded at a pinned public Hugging Face revision. The independent AI2 ARC-Challenge dataset is loaded at a pinned CC-BY-SA-4.0 revision, with deterministic sample IDs and answer order; test answers never appear as labeled correct in model prompts. Current score: 2/12 on the small public evaluation.
+
+A two-step PEFT LoRA experiment updates 286,720 low-rank adapter parameters on original public prompts. Separate reserved ARC questions are evaluated before and after the fixed training configuration. Result: 2/8 both times. No evidence of improvement. Candidate-only safetensors and a checksum manifest are uploaded to a GitHub workflow artifact, retained for 14 days, with no automatic promotion, deployment or payment. Longer-term model training requires stronger evaluation, independent review and suitable compute.

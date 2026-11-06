@@ -22,3 +22,9 @@ Longer-term work requires more independent questions, several domain-specific be
 Independent Scientific Reasoning Benchmark: public model evaluation only.
 Qwen3 Controlled LoRA Candidate Training: small CPU fine-tuning, SHA-256 checkpoint verification and paired evaluation.
 No paid AI service is activated. This repository is public; do not include unpublished inventions, credentials, patient records or private research.
+
+## Verified outcomes (2026-11-05)
+- First ARC-Challenge evaluation: GitHub run 42156895644, Qwen3-0.6B 2/12 correct, logit letter scoring.
+- Actual CPU Qwen3 LoRA training: GitHub run 42157269113, two AdamW gradient steps, 286,720 adapter parameters. Paired external 8-question science score 2/8 before and 2/8 after, **no measurable improvement**.
+- Model candidate checkpoint SHA-256: 9d9a3e6105f4f340cfa10ca76584919f2fd8bf2c537c5e04ae1f32f099a173be, stored only in the expiring GitHub artifact; not deployed.
+- The evaluation is very small and label-logit scoring may differ substantially from response-generation accuracy. Additional calibration is a priority before future comparisons.

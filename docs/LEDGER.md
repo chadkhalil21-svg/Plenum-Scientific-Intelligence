@@ -78,3 +78,15 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [ ] Evaluate the foundation language model against genuinely independent scientific reasoning benchmarks, rather than just public reference datasets.
 - [ ] Set up bounded, parameter-efficient training of open-weight language models once appropriate GPU capacity is available.
 - [ ] Run qualified expert review of any proposed new scientific invention. This result does not establish AGI, consciousness or general self-improvement.
+
+## v0.6 Foundation-model reasoning and self-improvement experiment
+- [x] Pinned baseline model Qwen/Qwen3-0.6B to revision c1899de289a04d12100db370d81485cdf75e47ca.
+- [x] Pinned external ARC-Challenge benchmark to dataset revision 210d026faf9955653af8916fad021475a3f00453 (CC-BY-SA-4.0).
+- [x] Verified CPU science evaluation run 42156895644: 2/12 correct (16.67%). Chance baseline 25%, substantial uncertainty and possible pretraining exposure.
+- [x] Implemented and executed bounded Qwen3 PEFT LoRA training with original training examples and no test-data gradient updates.
+- [x] Verified Qwen3 candidate training run 42157269113: 286,720 trainable adapter parameters, two optimizer steps, 2/8 correct before and 2/8 after, **0 percentage-point improvement** on paired sample. Candidate SHA-256: 9d9a3e6105f4f340cfa10ca76584919f2fd8bf2c537c5e04ae1f32f099a173be.
+- [x] Saved research-only, checksum-verified safetensors candidate and manifest as GitHub artifact; 14-day retention, no automatic model deployment.
+- [ ] Expand independent benchmark size and test answer-scoring calibration to avoid overinterpretation of small logit-based multiple-choice samples.
+- [ ] Use qualified science training examples with documented provenance, larger and more varied evaluations, and fixed predeclared improvement criteria.
+- [ ] Establish durable restricted checkpoint storage before training proprietary models or unpublished research; the public repository is not suitable.
+- [ ] Demonstrate measured, statistically supported improvements in generalizable scientific reasoning. No such improvement has been shown.
