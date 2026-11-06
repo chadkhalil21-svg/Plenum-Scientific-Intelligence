@@ -95,6 +95,11 @@ def main():
     tides.add_argument("--out", default="reports/noaa_measured_tides.json")
     seasons = commands.add_parser("empirical-tides-seasons")
     seasons.add_argument("--out", default="reports/noaa_seasonal_validation.json")
+    hypothesis = commands.add_parser("propose-hypotheses")
+    hypothesis.add_argument("--out", default="reports/ai_hypothesis_proposals.json")
+    evaluate = commands.add_parser("audit-hypotheses")
+    evaluate.add_argument("--proposal", required=True)
+    evaluate.add_argument("--out", default="reports/ai_hypothesis_audit.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -243,6 +248,18 @@ def main():
               "station-days:",report["number_of_station_day_tests"],
               "harmonic wins:",report["wins"],
               "aggregate hypothesis:",report["hypothesis_supported"])
+    elif args.action == "propose-hypotheses":
+        from .autonomous_hypothesis import make_proposals, qwen_choose, save_report
+        result = make_proposals(qwen_choose)
+        print("Constrained Qwen3 proposal manifest:", save_report(args.out, result),
+              "blind proposed hypotheses:", len(result["proposals"]))
+    elif args.action == "audit-hypotheses":
+        from .autonomous_hypothesis import audit_proposals, save_report
+        report = json.loads(Path(args.proposal).read_text(encoding="utf-8"))
+        verdict = audit_proposals(report)
+        print("Independent scientific evaluation:", save_report(args.out, verdict),
+              "wins:", verdict["won_against_persistence"],
+              "/", verdict["trials"])
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,
