@@ -102,7 +102,8 @@ def _verify(state):
     keys = state["tool_keys"]
     unique = len({x["tool"] for x in tools}) == len(keys)
     complete = all(any(x["tool"] == key for x in tools) for key in keys)
-    requested_solver = [x for x in tools if x["tool"] != "openalex.metadata"]
+    requested_solver = [x for x in tools if x["tool"] not in
+                        ("openalex.metadata", "federated.metadata")]
     solvers_pass = bool(requested_solver) and all(
         x["status"] == "completed" and x["verified_fixture"] for x in requested_solver
     )
