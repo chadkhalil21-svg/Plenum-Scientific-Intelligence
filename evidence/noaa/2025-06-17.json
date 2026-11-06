@@ -1,0 +1,62 @@
+{
+  "schema": "plenum-measured-evidence-v1",
+  "experiment": "NOAA observed water-level one-day holdout",
+  "hypothesis": "Four fixed tidal constituents fitted June 1-16 2025 beat previous-day persistence predicting June 17 2025 at both NOAA stations.",
+  "workflow": {
+    "run_id": 42161428637,
+    "run_url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42161428637",
+    "github_commit": "3591097d9b209f7083a6b8506eba7d1994298169",
+    "conclusion": "success"
+  },
+  "data_source": "NOAA CO-OPS hourly_height observed verified water levels, metric, MLLW, GMT, June 1-17 2025",
+  "training_period_utc": "2025-06-01 00:00 to 2025-06-17 00:00 exclusive",
+  "heldout_period_utc": "2025-06-17 00:00 to 2025-06-18 00:00 exclusive",
+  "forecast_type": "Retrospective 24h single-origin forecast",
+  "fitted_on_holdout": false,
+  "fixed_harmonic_periods_hours": [
+    12.4206,
+    12,
+    23.9345,
+    25.8193
+  ],
+  "baseline": "observed height at identical hour on previous day (training period)",
+  "metrics": [
+    {
+      "station_id": "8443970",
+      "station_name": "Boston, MA",
+      "train_n": 384,
+      "holdout_n": 24,
+      "raw_noaa_sha256": "b59ae8738ad41beda3228424b55f588339be1f1c4ed5267dc244cdad16468de4",
+      "model_mae_m": 0.32373083356110105,
+      "baseline_mae_m": 0.3400833333333333,
+      "model_rmse_m": 0.3567881789688502,
+      "baseline_rmse_m": 0.3739610050972338,
+      "relative_mae_reduction_percent": 4.808380231972236,
+      "model_beats_baseline": true
+    },
+    {
+      "station_id": "8723214",
+      "station_name": "Virginia Key, FL",
+      "train_n": 384,
+      "holdout_n": 24,
+      "raw_noaa_sha256": "44d0df8738f68c79d1fe3ebd59b455625a6e14776c20810fad770ed92f17464d",
+      "model_mae_m": 0.06593835382623135,
+      "baseline_mae_m": 0.086875,
+      "model_rmse_m": 0.0765754187899392,
+      "baseline_rmse_m": 0.1100736495866896,
+      "relative_mae_reduction_percent": 24.099736602899156,
+      "model_beats_baseline": true
+    }
+  ],
+  "hypothesis_supported_in_this_test": true,
+  "scientific_discovery_verified": false,
+  "operational_forecast_validated": false,
+  "AI_self_improvement_demonstrated": false,
+  "limitations": [
+    "Only two stations and a single heldout day.",
+    "Established harmonic periods supplied by developers, not AI-discovered.",
+    "Tide dynamics depend on meteorology and additional astronomical terms.",
+    "NOAA source can be retrieved again; raw payload hashes allow comparison; current artifact is retained only 14 days.",
+    "No claim of practical flood or vessel-navigation safety."
+  ]
+}
