@@ -115,3 +115,17 @@ From your iPad, open GitHub **Actions** to run **Parallel Scientific Tools and N
 Scientific retrieval uses **OpenAlex, Europe PMC and Semantic Scholar** concurrently, recording failures and separating paper metadata from experimentally verified facts. K-Dense scientific skills are accessible through a **pinned, read-only catalog for review**, not automatically installed/executed. NASA Aviary v1.0.1 passed its official installation check (run 42159140408); full aircraft mission verification remains future work.
 
 No agent can execute arbitrary shell commands, grant permissions, install unreviewed skills or replace the deployed AI. See [integrations](docs/INTEGRATIONS.md) and [engineering architecture](docs/ARCHITECTURE.md).
+
+### v0.7 automatic selection and live scientific sources
+
+A public question can be routed to **several** approved tools automatically using explicit, auditable keyword rules (not yet an AI reasoner):
+
+```sh
+plenum parallel-research --auto --query "Optimize cooling and electrical circuits for orbital motion"
+```
+
+Real federated verification (GitHub run 42159408960): OpenAlex, Europe PMC and Semantic Scholar each returned 3 public publication metadata records, 9 distinct records in total. This is not full-text review or verification of the studies.
+
+NASA Aviary 1.0.1 executed its bundled public Advanced Single Aisle mission example under a bounded SLSQP optimizer configuration (GitHub run 42159565273). Command completion was verified, but optimization convergence and actual aircraft performance have **not** been independently established.
+
+K-Dense's pinned RDKit scientific skill document was safely retrieved as a read-only untrusted reference without executing any instructions (GitHub run 42159591148).

@@ -10,7 +10,7 @@
 | LangGraph 1.2.20 | Parallel per-tool workers (dynamic Send), fan-in, dependent stages | Tested in multi-tool Actions |
 | OpenMDAO 3.45.2 | Constrained cooling-area optimization depending on verified SciPy thermal result | Tested |
 | OpenAlex | Bounded scientific metadata | Live checked earlier |
-| NASA Aviary 1.0.1 | Aircraft analysis package installation and official `aviary check` | Verified installation only (run 42159140408) |
+| NASA Aviary 1.0.1 | Aircraft package official check plus bounded public Advanced Single Aisle CLI mission | Verified commands (runs 42159140408 and 42159565273), independent aircraft performance validation **not** established |
 
 ## Public sources and curated references
 - Federated metadata (OpenAlex, Europe PMC, Semantic Scholar): concurrent bounded requests, DOI-level deduplication, explicit provider failure reporting. Do not claim full-text access or bibliographic truth. Actual live provider success is established only by an Actions report.

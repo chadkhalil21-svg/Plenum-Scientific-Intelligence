@@ -99,9 +99,16 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [x] Create read-only curated K-Dense scientific skill catalog pinned to a published commit; no unreviewed instructions executed.
 - [x] Verify installation and official environment check for NASA Aviary 1.0.1 (run 42159140408). No aircraft mission results claimed.
 - [x] Implement bounded concurrent metadata search for OpenAlex, Europe PMC and Semantic Scholar, including deduplication and per-provider errors.
-- [ ] Verify live multi-provider results; availability is subject to API rate limits.
-- [ ] Validate a complete published NASA Aviary aircraft mission with known inputs and convergence evidence before claiming aircraft design integration.
+- [x] Live federated provider verification: GitHub run 42159408960 returned 3 metadata records each from OpenAlex, Europe PMC, and Semantic Scholar (9 distinct records). API availability may vary.
+- [x] Bounded NASA Aviary Advanced Single Aisle demonstration command completed (run 42159565273); do not treat command success as optimizer convergence or aircraft validation.
+- [ ] Independently verify Aviary optimizer convergence, trace variables and compare against external published aircraft benchmarks before claiming design capability.
 - [ ] Connect NASA GMAT, Lean 4, PyBaMM, OpenMM, PySCF, SU2, Astropy and domain-specialist software individually, with tests, licensing checks and bounded operating environments.
 - [ ] Add persistent multi-machine graph execution, isolated scientific environments, resource quotas and model/tool capability benchmarks.
 - [ ] Prove a complete question-specific hypothesis-to-validated-evidence workflow on external experimental data. Not yet achieved.
 - [ ] Achieve measurable, reproducible generalizable AI improvement. AGI and consciousness remain unsolved.
+
+## v0.7 Additional verification and automatic tool selection
+- [x] Read-only pinned K-Dense RDKit skill retrieved, SHA-256 recorded and no instructions executed (run 42159591148).
+- [x] Implement rule-based automatic routing by research-question terms across mechanics, thermal modeling, kinetics, circuit dynamics, RDKit and literature metadata; dependent optimization requires a thermal result.
+- [ ] Replace keyword routing with independently benchmarked, resource-aware model planning. The current router is not a general AI planner.
+- [ ] Implement persistent multi-job DAG scheduling with durable checkpoints, timeouts, quota accounting and isolation for expensive scientific tools.
