@@ -27,6 +27,7 @@ def _execute_tool(tool_key, question, offline):
                 "scipy.orbit": "mechanics",
                 "scipy.thermal": "materials",
                 "scipy.kinetics": "chemistry",
+                "scipy.electronics": "electronics",
                 "rdkit.molecule": "molecules",
             }
             result = solve(names[tool_key])

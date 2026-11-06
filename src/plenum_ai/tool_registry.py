@@ -29,6 +29,9 @@ TOOLS = {
     "scipy.kinetics": Tool("scipy.kinetics", "https://github.com/scipy/scipy",
         "Known first-order chemical kinetics fixture", "scipy", ">=1.12,<2", "BSD-3-Clause",
         "parallel", "executable", limitations="Toy closed reaction, not a new reaction mechanism"),
+    "scipy.electronics": Tool("scipy.electronics", "https://github.com/scipy/scipy",
+        "Ideal RC circuit dynamics fixture", "scipy", ">=1.12,<2", "BSD-3-Clause",
+        "parallel", "executable", limitations="Idealized RC circuit, not validated battery electrochemistry"),
     "rdkit.molecule": Tool("rdkit.molecule", "https://github.com/rdkit/rdkit",
         "Known ethanol molecular formula and descriptor check", "rdkit", ">=2025.9,<2027",
         "BSD-3-Clause", "parallel", "executable",
@@ -94,3 +97,32 @@ def approve_request(tool_keys):
     if any(key not in PARALLEL_TOOLS for key in keys):
         raise ValueError("Unapproved, dependent, or reference-only scientific tool requested")
     return keys
+
+def route_request(question):
+    """Deterministic, auditable keyword router; not an LLM or proof of autonomous reasoning."""
+    if not isinstance(question, str) or not 1 <= len(question.strip()) <= 600:
+        raise ValueError("Public question must have 1..600 characters")
+    q = question.casefold()
+    rules = (
+        ("scipy.orbit", ("orbit", "gravity", "spacecraft", "trajectory", "aerospace")),
+        ("scipy.thermal", ("heat", "thermal", "cooling", "temperature", "material")),
+        ("scipy.kinetics", ("chemical reaction", "kinetic", "catalys", "reaction")),
+        ("rdkit.molecule", ("molecule", "molecular", "drug", "protein")),
+        ("scipy.electronics", ("circuit", "capacitor", "electronics", "electrical", "battery")),
+        ("federated.metadata", ("literature", "scientific paper", "publications", "bibliograph")),
+    )
+    selection = [name for name, keywords in rules if any(k in q for k in keywords)]
+    if "optimiz" in q or "design" in q:
+        if "scipy.thermal" not in selection:
+            selection.insert(0, "scipy.thermal")
+    if not selection:
+        selection = ["scipy.orbit", "scipy.thermal", "scipy.kinetics", "rdkit.molecule"]
+    selection = selection[:MAX_PARALLEL_TOOLS]
+    approve_request(selection)
+    return {
+        "tool_keys": selection,
+        "enable_optimization": "scipy.thermal" in selection,
+        "routing_method": "deterministic_allowlisted_keywords",
+        "model_selected_tools": False,
+        "note": "Keyword routing is a conservative prototype, not autonomous scientific planning",
+    }

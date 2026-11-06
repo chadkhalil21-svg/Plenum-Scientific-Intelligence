@@ -75,7 +75,8 @@ def main():
     multi = commands.add_parser("parallel-research")
     multi.add_argument("--query", required=True)
     multi.add_argument("--tools", default="scipy.orbit,scipy.thermal,scipy.kinetics,rdkit.molecule")
-    multi.add_argument("--online", action="store_true", help="Allow read-only OpenAlex metadata retrieval")
+    multi.add_argument("--online", action="store_true", help="Allow read-only research metadata retrieval")
+    multi.add_argument("--auto", action="store_true", help="Route public question to approved tools using deterministic keywords")
     multi.add_argument("--no-optimization", action="store_true")
     multi.add_argument("--out", default="reports/parallel_research.json")
     skills = commands.add_parser("scientific-skills")
@@ -179,12 +180,20 @@ def main():
               "catalogued tools:", len(report["tools"]))
     elif args.action == "parallel-research":
         from .parallel_research import run_network
+        if args.auto:
+            from .tool_registry import route_request
+            routing = route_request(args.query)
+            tool_keys = routing["tool_keys"]
+            optimization = routing["enable_optimization"] and not args.no_optimization
+        else:
+            routing = {"routing_method": "explicit_user_selected_tools"}
+            tool_keys = [key.strip() for key in args.tools.split(",")]
+            optimization = not args.no_optimization
         report = run_network(
-            args.query,
-            tool_keys=[key.strip() for key in args.tools.split(",")],
-            offline=not args.online,
-            optimize=not args.no_optimization,
+            args.query, tool_keys=tool_keys,
+            offline=not args.online, optimize=optimization,
         )
+        report["routing"] = routing
         print("Parallel scientific research:", save_json(args.out, report),
               "workers:", report["parallel_tool_count"],
               "known-model checks passed:", report["known_model_integration_passed"])
