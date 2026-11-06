@@ -42,11 +42,8 @@ class MissionTests(unittest.TestCase):
     def test_model_allowlist(self):
         with self.assertRaises(ValueError):
             _load_model("arbitrary/unreviewed-code")
-        self.assertIn("SmolLM2", APPROVED_MODEL)
+        self.assertIn("Qwen3", APPROVED_MODEL)
 
-
-if __name__ == "__main__":
-    unittest.main()
 
 from plenum_ai.quality import assess_answer
 
@@ -62,3 +59,7 @@ class QualityTests(unittest.TestCase):
     def test_plausible_but_not_proven_accepted_for_screen(self):
         text = "A proposed test would compare the conservation errors of two separate numerical schemes across distinct step sizes and independently report discrepancies."
         self.assertTrue(assess_answer(text, "proposer")["acceptable"])
+
+
+if __name__ == "__main__":
+    unittest.main()
