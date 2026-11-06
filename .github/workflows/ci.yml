@@ -1,7 +1,19 @@
 name: Verify Scientific AI Foundation
 on:
   push:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'data/**'
+      - 'pyproject.toml'
+      - '.github/workflows/ci.yml'
   pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'data/**'
+      - 'pyproject.toml'
+      - '.github/workflows/ci.yml'
 permissions:
   contents: read
 jobs:
