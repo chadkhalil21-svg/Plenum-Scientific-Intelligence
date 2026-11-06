@@ -20,6 +20,7 @@ on:
           - discovery
           - frontiers
           - creative
+          - parametric-design
           - youtube
       question:
         description: "PUBLIC research question only. Do not enter patent or private data."
@@ -68,6 +69,7 @@ jobs:
             verify) python -m pip install -e ".[science,ml,orchestration,astronomy,empirical]" ;;
             ecosystem) python -m pip install -e . ;;
             discovery|creative|youtube|frontiers) python -m pip install -e . ;;
+            parametric-design) python -m pip install -e . && sudo apt-get update -qq && sudo apt-get install -y -qq openscad ;;
             molecular-dynamics) python -m pip install -e ".[dynamics]" ;;
             *) echo "Unapproved operation"; exit 1 ;;
           esac
@@ -113,6 +115,9 @@ jobs:
             youtube)
               plenum youtube-updates --channel "$CHANNEL_ID" --query "$QUESTION" --out reports/youtube_updates.json
               ;;
+            parametric-design)
+              plenum parametric-design --render --dir reports/parametric_cad --out reports/cad_manifest.json
+              ;;
             creative)
               plenum creative-sources --query "$QUESTION" --out reports/creative_sources.json
               plenum creative-studio --topic "$QUESTION" --seed 1701 --dir reports/creative_studio --out reports/creative_studio.json
@@ -153,6 +158,10 @@ jobs:
               r=json.loads(Path("reports/youtube_updates.json").read_text())
               assert r["metadata_only"] and not r["videos_downloaded"]
               print("YouTube public metadata status:",r["status"])
+          if task=="parametric-design":
+              r=json.loads(Path("reports/cad_manifest.json").read_text())
+              assert r["mesh_export_verified"] and not r["structural_strength_or_safety_validated"]
+              assert Path(r["stl_mesh"]).is_file()
           if task=="creative":
               r=json.loads(Path("reports/creative_studio.json").read_text())
               assert r["created_from_algorithm"] and not r["copied_copyrighted_music_or_art"]

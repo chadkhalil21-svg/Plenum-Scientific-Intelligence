@@ -165,6 +165,14 @@ def main():
     frontiers.add_argument("--query", required=True)
     frontiers.add_argument("--online", action="store_true")
     frontiers.add_argument("--out", default="reports/research_frontiers.json")
+    design = commands.add_parser("parametric-design")
+    design.add_argument("--width",type=float,default=180)
+    design.add_argument("--height",type=float,default=110)
+    design.add_argument("--thickness",type=float,default=6)
+    design.add_argument("--hole-diameter",type=float,default=5)
+    design.add_argument("--render",action="store_true")
+    design.add_argument("--dir",default="reports/parametric_cad")
+    design.add_argument("--out",default="reports/cad_manifest.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -444,6 +452,12 @@ def main():
         print("Research funding and clinical-trial signals:",save_json(args.out,result),
               "records:",len(result["records"]),
               "verified breakthrough:",result["laboratory_breakthrough_confirmed"])
+    elif args.action == "parametric-design":
+        from .cad_studio import create_design
+        report=create_design(args.dir,args.width,args.height,args.thickness,
+                             args.hole_diameter,render=args.render)
+        print("Parametric original design:",save_json(args.out,report),
+              "mesh exported:",report["mesh_export_verified"])
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,
