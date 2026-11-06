@@ -1,0 +1,105 @@
+name: Plenum Research Control Center
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: "Select one approved public research operation"
+        type: choice
+        required: true
+        options:
+          - science
+          - knowledge
+          - licensed-article
+          - durable-investigation
+          - verify
+      question:
+        description: "PUBLIC research question only. Do not enter patent or private data."
+        required: true
+        default: "Open scientific research on aerospace and materials"
+      pmcid:
+        description: "Europe PMC open-access identifier (only used for licensed-article)"
+        required: false
+        default: "PMC12247565"
+permissions:
+  contents: read
+concurrency:
+  group: plenum-console-${{ github.run_id }}
+  cancel-in-progress: false
+jobs:
+  approved-operation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      TASK: ${{ github.event.inputs.operation }}
+      QUESTION: ${{ github.event.inputs.question }}
+      PMCID: ${{ github.event.inputs.pmcid }}
+      LANGGRAPH_STRICT_MSGPACK: "true"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Install only the tools required by the chosen operation
+        run: |
+          case "$TASK" in
+            science|durable-investigation) python -m pip install -e ".[science,orchestration]" ;;
+            knowledge|licensed-article) python -m pip install -e . ;;
+            verify) python -m pip install -e ".[science,ml,orchestration,astronomy,empirical]" ;;
+            *) echo "Unapproved operation"; exit 1 ;;
+          esac
+      - name: Execute the approved operation without autonomous code or deployment
+        shell: bash
+        run: |
+          mkdir -p reports
+          case "$TASK" in
+            science)
+              plenum parallel-research --auto --query "$QUESTION" --out reports/science.json
+              ;;
+            knowledge)
+              plenum index-literature --query "$QUESTION" --online --db reports/library.sqlite --out reports/ingestion.json
+              plenum search-knowledge --query "$QUESTION" --db reports/library.sqlite --out reports/citations.json
+              ;;
+            licensed-article)
+              plenum index-open-article --pmcid "$PMCID" --db reports/library.sqlite --out reports/oa.json
+              plenum search-knowledge --query "research scientific" --db reports/library.sqlite --out reports/citations.json
+              ;;
+            durable-investigation)
+              plenum durable-research --query "$QUESTION" \
+                --thread-id "control-${{ github.run_id }}" \
+                --db reports/checkpoints.sqlite --out reports/durable.json
+              plenum durable-state --thread-id "control-${{ github.run_id }}" \
+                --db reports/checkpoints.sqlite --out reports/restored.json
+              ;;
+            verify)
+              python -m unittest discover -s tests -v
+              ;;
+          esac
+      - name: Check evidence status and never authorize production changes
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          task=os.environ["TASK"]
+          if task=="science":
+              r=json.loads(Path("reports/science.json").read_text())
+              assert not r["scientific_discovery_verified"]
+              assert not r["external_execution_enabled"]
+          elif task=="knowledge":
+              r=json.loads(Path("reports/ingestion.json").read_text())
+              print("Literature metadata indexed:",r["metadata_records_indexed"])
+              assert not r["fulltext_added"]
+          elif task=="licensed-article":
+              r=json.loads(Path("reports/oa.json").read_text())
+              assert r["indexed"] and not r["scientific_claims_verified"]
+          elif task=="durable-investigation":
+              r=json.loads(Path("reports/restored.json").read_text())
+              assert r["finished"] and r["replayed_without_running_tools"]
+          print("Public research command complete:",task)
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: plenum-public-research-console
+          path: reports/
+          retention-days: 14
+          if-no-files-found: warn
