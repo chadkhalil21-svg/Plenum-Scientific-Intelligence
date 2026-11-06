@@ -68,7 +68,8 @@ jobs:
               assert item["url"].startswith('https://')
           for source in report["providers"]:
               print(source["source"], source["status"],
-                    "items:",len(source["records"]),source.get("error_type",""))
+                    "items:",len(source["records"]),source.get("error_type",""),
+                    "safe_schema:",source.get("schema_diagnostic",""))
           print("Total public records:",len(report["records"]))
           PY
       - uses: actions/upload-artifact@v7
