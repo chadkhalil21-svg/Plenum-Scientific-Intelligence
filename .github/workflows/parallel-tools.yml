@@ -42,6 +42,7 @@ jobs:
           fi
           python -m plenum_ai.cli tool-registry --out reports/tool_registry.json
           python -m plenum_ai.cli parallel-research --query "$USER_QUERY" --out reports/parallel_research.json
+          python -m plenum_ai.cli parallel-research --auto --query "Optimize cooling and electrical circuits for orbital motion" --out reports/auto_routed_research.json
       - name: Verify no untested scientific claims or automatic deployment
         run: |
           python - <<'PY'
@@ -55,7 +56,12 @@ jobs:
           assert not r["scientific_discovery_verified"]
           assert not r["model_inference_used"]
           assert not r["verification"]["production_code_modified_by_agents"]
-          print("Four independent tools and one dependent OpenMDAO optimization verified.")
+          auto=json.loads(Path("reports/auto_routed_research.json").read_text())
+          assert auto["known_model_integration_passed"], auto["verification"]
+          assert auto["dependent_optimization"]["verified_fixture"]
+          assert auto["routing"]["routing_method"] == "deterministic_allowlisted_keywords"
+          assert not auto["routing"]["model_selected_tools"]
+          print("Four independent tools, dependent OpenMDAO, and automatic routing verified.")
           PY
       - uses: actions/upload-artifact@v7
         with:
