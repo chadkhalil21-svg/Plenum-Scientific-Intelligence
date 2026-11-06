@@ -133,6 +133,43 @@ def parse_musicbrainz(data):
     return rows
 
 
+def library_of_congress_url(query):
+    _query(query)
+    return "https://www.loc.gov/search/?" + urlencode({
+        "q":query.strip(),"fo":"json","c":3,"at":"results"
+    })
+
+
+def parse_library_of_congress(data):
+    if not isinstance(data,dict) or not isinstance(data.get("results"),list):
+        raise ValueError("Invalid Library of Congress catalog search")
+    records=[]
+    for obj in data["results"][:3]:
+        if not isinstance(obj,dict):
+            continue
+        title=str(obj.get("title") or "").strip()
+        loc=str(obj.get("id") or "")
+        # The Library of Congress API sometimes returns http loc.gov IDs.
+        if loc.startswith("http://www.loc.gov/"):
+            loc="https://www.loc.gov/"+loc[len("http://www.loc.gov/"):]
+        if not title or not loc.startswith("https://www.loc.gov/"):
+            continue
+        item_format=obj.get("original_format")
+        if isinstance(item_format,list):
+            item_format=", ".join(map(str,item_format))
+        records.append({
+            "source":"library-of-congress",
+            "tier":"historic_cultural_catalog_metadata",
+            "title":title[:250],"url":loc[:600],
+            "date":str(obj.get("date") or "")[:50],
+            "original_format":str(item_format or "")[:150],
+            "rights_from_catalog_not_verified":True,
+            "media_downloaded":False,
+            "permission_to_reproduce_score_image_or_recording":False,
+        })
+    return records
+
+
 def creative_discovery(query,opener=urlopen):
     _query(query)
     def job(name,func):
@@ -158,6 +195,8 @@ def creative_discovery(query,opener=urlopen):
         ("metropolitan-museum",met),
         ("musicbrainz-works",lambda:parse_musicbrainz(
             _get(musicbrainz_url(query),opener))),
+        ("library-of-congress",lambda:parse_library_of_congress(
+            _get(library_of_congress_url(query),opener))),
     ]
     with ThreadPoolExecutor(max_workers=2) as pool:
         result=list(pool.map(lambda t:job(t[0],t[1]),operations))
@@ -174,6 +213,7 @@ def creative_discovery(query,opener=urlopen):
             "MusicBrainz work listings do not license recordings, lyrics or scores.",
             "Openverse licenses and attribution are metadata, not legal guarantees.",
             "The Met collection search uses the October 2026 v1.1 paginated API.",
+            "Library of Congress item pages do not themselves establish public-domain or media reuse rights.",
             "No copyrighted songs or other media were copied or played."
         ]
     }

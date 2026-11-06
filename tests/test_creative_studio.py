@@ -9,7 +9,7 @@ from xml.etree import ElementTree as ET
 from plenum_ai.creative_sources import (
     openverse_url,parse_openverse,museum_search_url,parse_museum_search,
     museum_object_url,parse_museum_object,musicbrainz_url,
-    parse_musicbrainz,creative_discovery
+    parse_musicbrainz,creative_discovery,library_of_congress_url,parse_library_of_congress
 )
 from plenum_ai.creative_studio import (
     svg_study,musicxml_study,idea_studies,write_studies
@@ -32,6 +32,11 @@ MUSIC=json.dumps({"works":[{
     "id":"c789a96f-13d2-4a94-a9a1-1df79aa9ed23","type":"Song"
 }]}).encode()
 
+LOC=json.dumps({"results":[{"id":"http://www.loc.gov/item/2020123456/",
+    "title":"Historical scientific illustration",
+    "date":"1902",
+    "original_format":["Photo, Print, Drawing"]}]}).encode()
+
 class Response(io.BytesIO):
     def __enter__(self): return self
     def __exit__(self,*args):self.close()
@@ -43,6 +48,10 @@ class CreativeConnectionsTests(unittest.TestCase):
         self.assertIn("/v1/audio/",openverse_url("music","audio"))
         self.assertIn("/v1.1/search",museum_search_url("architectural"))
         self.assertIn("/ws/2/work/",musicbrainz_url("symphony"))
+        self.assertIn("www.loc.gov/search/", library_of_congress_url("symphony"))
+        self.assertEqual(parse_library_of_congress(json.loads(LOC))[0]["tier"],
+                         "historic_cultural_catalog_metadata")
+        self.assertFalse(parse_library_of_congress(json.loads(LOC))[0]["permission_to_reproduce_score_image_or_recording"])
         self.assertEqual(parse_museum_search(json.loads(MET_LIST)),[12])
         self.assertTrue(parse_museum_object(json.loads(MET_OBJECT))["public_domain_flag"])
         self.assertIsNone(parse_museum_object({"objectID":13,"isPublicDomain":False}))
@@ -57,10 +66,11 @@ class CreativeConnectionsTests(unittest.TestCase):
             if host=="collectionapi.metmuseum.org":
                 return Response(MET_LIST if "/search?" in url else MET_OBJECT)
             if host=="musicbrainz.org": return Response(MUSIC)
+            if host=="www.loc.gov": return Response(LOC)
             raise AssertionError(host)
         report=creative_discovery("geometric music",opener=opener)
-        self.assertEqual(report["source_count"],4)
-        self.assertEqual(len(report["records"]),4)
+        self.assertEqual(report["source_count"],5)
+        self.assertEqual(len(report["records"]),5)
         self.assertFalse(report["assets_downloaded"])
         self.assertFalse(report["generative_ai_model_connected"])
 

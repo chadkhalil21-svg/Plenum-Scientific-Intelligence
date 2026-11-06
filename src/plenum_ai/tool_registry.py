@@ -248,7 +248,7 @@ TOOLS = {
     "libraryofcongress.collection": Tool("libraryofcongress.collection",
         "https://www.loc.gov/apis/",
         "Historical books, music manuscripts, photographs and maps",None,
-        "not connected","Per-item rights review","future","planned",
+        "not connected","Per-item rights review","external_source","implementation_test_pending",
         limitations="Historical catalog does not imply all items are public domain"),
     "patents.intelligence": Tool("patents.intelligence",
         "https://www.uspto.gov/patents/search",
