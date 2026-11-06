@@ -178,3 +178,34 @@ scraper, or an instant push notification to the user's iPad.
 The best next step after collecting enough actual data is an independent
 model-led review of method quality, citation trails and reproducibility,
 not more unverified assertions of breakthroughs.
+
+## Live verification results, November 6, 2026
+
+- Original design, music notation and open-media reference run
+  [42169012086](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42169012086)
+  **passed**. Original SVG, 32-note MusicXML, and interdisciplinary idea JSON
+  created. All four metadata API providers responded; Openverse images
+  returned 3 references, MusicBrainz returned 3 music-work references;
+  the audio and Met object queries returned zero matching references for
+  that specific topic. No media files were downloaded or reproduced.
+- Cross-disciplinary scheduled discovery run
+  [42170083885](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42170083885)
+  **passed both collection and permanent archival**.
+  It preserved 35 source-linked journal/preprint/lab/video metadata records,
+  archived 8 unverified design/science question cards and compared against
+  4 previous public reports. All 35 current links were previously seen,
+  so **zero new-to-archive records** were claimed.
+  Nature Photonics, Stanford News and public NASA YouTube feed were
+  marked unavailable in that run; success does not imply all sources worked.
+- The full engineering regression workflow
+  [42169911385](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42169911385)
+  **passed** after adding structured YouTube API tests and the
+  interdisciplinary discovery archive.
+- The Google YouTube Data API key is **not configured**; no actual
+  owner-authenticated YouTube API connection is asserted. Caption
+  extraction, proprietary videos and unrestricted downloads are not enabled.
+
+All source-specific failures remain observable and do not invalidate
+the successful independent parts of the research platform. As
+additional sources and tools are added, each must be separately tested
+and governed by access, license, cost and evidence-quality boundaries.
