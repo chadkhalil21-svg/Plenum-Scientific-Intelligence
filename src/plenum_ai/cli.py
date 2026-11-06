@@ -93,6 +93,8 @@ def main():
     battery.add_argument("--out", default="reports/battery_simulation.json")
     tides = commands.add_parser("empirical-tides")
     tides.add_argument("--out", default="reports/noaa_measured_tides.json")
+    seasons = commands.add_parser("empirical-tides-seasons")
+    seasons.add_argument("--out", default="reports/noaa_seasonal_validation.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -233,6 +235,14 @@ def main():
         print("NOAA measured water-level forecast:", save_json(args.out, report),
               "all-station hypothesis supported:", report["hypothesis_supported_at_both_stations"],
               "independent observed target:", report["is_independent_future_observation_holdout"])
+    elif args.action == "empirical-tides-seasons":
+        from .noaa_seasons import run_seasonal_validation
+        report=run_seasonal_validation()
+        print("NOAA multi-season measured holdouts:",
+              save_json(args.out,report),
+              "station-days:",report["number_of_station_day_tests"],
+              "harmonic wins:",report["wins"],
+              "aggregate hypothesis:",report["hypothesis_supported"])
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,
