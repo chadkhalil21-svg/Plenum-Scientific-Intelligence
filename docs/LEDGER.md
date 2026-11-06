@@ -53,3 +53,14 @@ E. Scientific simulation adapters and ultimately robotic validation.
 
 ## 2026-11-05 v0.3 verification note
 Two successive live public research runs independently returned five publication metadata records each, appended SHA-256-addressed records on `research-memory`, and reported a passing narrow synthetic ranker audit. The second record explicitly references the first. This verifies cross-run memory retrieval and controlled archival, not scientifically sound autonomous invention, broad self-improvement, retraining, consciousness, or AGI. No paid AI service was enabled.
+
+## v0.4 Scientific simulation and agent research
+- [x] Implement real SciPy ODE simulations for orbital mechanics, reaction kinetics, material cooling and electronic RC discharge.
+- [x] Integrate RDKit chemical structure descriptors, fixed publicly known ethanol fixture.
+- [x] Add an allowlisted specialist router and research workflow combining literature, optional open-weight model proposer/critic, scientific tool execution, and an independent evidence supervisor.
+- [x] Add method comparison for RK45, DOP853 and Radau across four known-equation scientific domains; no source code or model weights are automatically modified.
+- [x] GitHub scientific lab verification: run 42152625695 passed all tests and five domain fixtures.
+- [ ] Verify complete updated Qwen3 model-driven investigation pipeline with live literature, science tools and provenance gate. It is not evidence of autonomous scientific discovery.
+- [ ] Replace small known analytical fixtures with independently validated simulations and empirical benchmark data for each subject.
+- [ ] Evaluate model reasoning on unseen interdisciplinary research tasks before claiming genuine improvement.
+- [ ] Integrate extended open-source scientific solvers and add memory-based experimental selection, subject to budget and safety controls.

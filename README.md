@@ -58,3 +58,23 @@ The initial 135M model benchmark completed, but its text echoed instructions. Th
 
 ## Evidence persistence and improvement audit (v0.3)
 Research-memory is a separate public branch for checksum-addressed scientific paper metadata, verification status, and synthetic ranker benchmark results. Run Actions > Autonomous Research to obtain a report and archive a vetted-format public record. The tool can consult matching past metadata on subsequent runs; it cannot treat prior model proposals as proven facts or automatically change source code. Read docs/MEMORY.md before entering queries, because public GitHub workflow inputs and archives are not confidential.
+
+## Multidisciplinary scientific lab and agentic investigation (v0.4)
+
+Validated known-equation fixtures now call real open-source libraries: SciPy for numerical differential equations and RDKit for chemical structure descriptors. The lab covers Earth-orbit mechanics, closed reaction kinetics, lumped material cooling, simple RC circuits, and ethanol molecular descriptors. Its verification compares calculations with analytical results or known formula/weight. These fixtures are **not** new scientific discoveries, validated medicine, a full drug simulator or a generalized physics engine.
+
+To run the integrated tools locally:
+
+    python -m pip install -e ".[science]"
+    plenum lab --query "Test orbital, chemical and material models"
+    plenum solver-benchmark
+    plenum investigate --query "How should we test an orbital mechanics hypothesis?" --offline
+
+For optional open-weight model-driven hypothesis proposer and independent critic:
+
+    python -m pip install torch "transformers>=4.51,<5" safetensors
+    plenum investigate --query "How might scientific numerical validation improve?" --hf-model
+
+You can run **Verified Scientific Simulation Lab** using GitHub Actions from an iPad. The Qwen3 open-weight model test is separate and more expensive in CPU time, but uses no paid inference subscription. The source code never auto-deploys proposed changes.
+
+Scientific tool references: https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html and https://rdkit.org/docs/. This repository depends on these packages; it does not copy their source trees.

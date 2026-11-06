@@ -27,3 +27,15 @@ An optional CPU model run executes HuggingFaceTB/SmolLM2-135M-Instruct (Apache-2
 
 ## v0.3 research memory
 Public run artifacts are transferred to the research-memory branch via a separately permissioned GitHub Actions job after checksum validation. Prior stored paper metadata can be recalled as clearly labeled historical context. New hypotheses, unsupported references, secrets, and proprietary patent material are excluded from persisted records. Ranker-improvement proposals receive a second independent deterministic benchmark computation and cannot deploy themselves.
+
+## v0.4 Scientific research toolchains
+
+- Specialist router: allowlisted task dispatch across five disciplines, with explicit bounds on domain selection and input size.
+- Literature workflow: existing OpenAlex metadata retrieval and persistent public evidence branch.
+- Reasoning workflow: optional open-weight Qwen3 or local Ollama model, with proposer and critic roles. Role separation does not establish independent models or scientific accuracy.
+- Scientific lab: SciPy solve_ivp for orbital, reaction, thermal and electrical ODE fixtures; RDKit for parsing an established public molecule and computing descriptors.
+- Deterministic verifier: comparison against analytical known solutions, physical conservation where specified, and fixed structure reference values. Passing the checks establishes narrow numerical performance only.
+- Adversarial evidence supervisor: refuses to label a numerical fixture a discovery and refuses silent self-modification.
+- Benchmark: compare RK45, DOP853 and Radau across four domains. Recommend the method with fewest solver function evaluations only **for these fixtures**; record without deploying or changing model weights.
+
+Remaining: real external datasets, task-specific scientific model adapters, multi-agent model scaling, robust domain coverage, safe execution sandboxes, expert verification and independently established generalization. GitHub Actions is a transient CPU runner and does not represent permanent autonomous AGI hosting.
