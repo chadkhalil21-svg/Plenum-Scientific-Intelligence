@@ -1,0 +1,159 @@
+name: Evidence-Gated AI Research on Fresh NOAA Holdouts
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/evidence-gated.yml'
+      - 'src/plenum_ai/evidence_gate.py'
+      - 'tests/test_evidence_gate.py'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-evidence-gated-blind-tests
+  cancel-in-progress: false
+jobs:
+  propose-without-test-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install numpy and locally executed Qwen3
+        run: |
+          python -m pip install -e ".[empirical]"
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "transformers>=4.51,<5" safetensors
+      - name: Verify evidence gate against tampering and future-data leakage
+        run: python -m unittest discover -s tests -p 'test_evidence_gate.py' -v
+      - name: Generate model choices and gate them using only earlier development errors
+        run: python -m plenum_ai.cli propose-evidence-gated --out reports/gated_hypotheses.json
+      - name: Check all four proposals before revealing final dates
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path("reports/gated_hypotheses.json").read_text())
+          assert p["schema"]=="plenum-review-gated-hypotheses-v1"
+          assert p["fresh_dates"] == ["2026-07-17","2026-10-17"]
+          assert len(p["proposals"]) == 4
+          assert p["frozen_evidence_gate"] == "minimum_development_mae"
+          assert not p["production_code_or_model_modified"]
+          for proposal in p["proposals"]:
+              assert not proposal["development"]["test_data_seen"]
+              assert not proposal["gate"]["guard_used_final_test_labels"]
+              assert proposal["gate"]["selected_for_blind_test"] in p["reviewed_model_menu"]
+          print("Four evidence-gated proposals sealed before final-day observations.")
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: new-blind-gated-proposals
+          path: reports/gated_hypotheses.json
+          retention-days: 14
+
+  independent-future-observation-audit:
+    needs: propose-without-test-data
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e ".[empirical]"
+      - uses: actions/download-artifact@v7
+        with:
+          name: new-blind-gated-proposals
+          path: reports/
+      - name: Recheck development data and only then retrieve sealed NOAA test days
+        run: |
+          python -m plenum_ai.cli audit-evidence-gated \
+            --proposal reports/gated_hypotheses.json \
+            --out reports/gated_audit.json
+      - name: Preserve every result, whether the policy helped or failed
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path("reports/gated_audit.json").read_text())
+          assert r["schema"]=="plenum-review-gated-evidence-audit-v1"
+          assert r["trials"] == 4
+          assert not r["deployment_authorized"]
+          assert not r["generalizable_AI_improvement_demonstrated"]
+          assert not r["model_weights_updated"]
+          assert not r["policy_changed_using_these_test_outcomes"]
+          for case in r["results"]:
+              assert case["test_hours"] >= 20
+              assert not case["test_data_seen_by_proposer_or_guard"]
+              print(case["station"],case["day"],
+                    "Qwen suggested",case["qwen_suggested"],
+                    "gate chose",case["evidence_guard_chose"],
+                    "Qwen error",round(case["qwen_suggestion_mae_m"],5),
+                    "gated error",round(case["evidence_guard_mae_m"],5),
+                    "baseline error",round(case["previous_day_baseline_mae_m"],5))
+          print("Gated wins versus persistence",r["guard_wins_against_persistence"],
+                "and versus Qwen",r["guard_wins_against_qwen_suggestion"])
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: evidence-gated-blind-experiment
+          path: |
+            reports/gated_hypotheses.json
+            reports/gated_audit.json
+          retention-days: 14
+
+  archive-reviewed-public-results:
+    needs: independent-future-observation-audit
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: public-memory
+      - uses: actions/download-artifact@v7
+        with:
+          name: evidence-gated-blind-experiment
+          path: reports/
+      - name: Append only public experiment reports to long-lived research memory
+        env:
+          RUN_ID: ${{ github.run_id }}
+          REVISION: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, os
+          p=json.loads(Path("reports/gated_hypotheses.json").read_text())
+          r=json.loads(Path("reports/gated_audit.json").read_text())
+          assert p["schema"]=="plenum-review-gated-hypotheses-v1"
+          assert r["schema"]=="plenum-review-gated-evidence-audit-v1"
+          assert len(p["proposals"]) == r["trials"] == 4
+          assert not r["deployment_authorized"]
+          assert not p["production_code_or_model_modified"]
+          path=Path("public-memory/evidence/agent-experiments")/(
+              "run-"+os.environ["RUN_ID"]+".json")
+          path.parent.mkdir(parents=True,exist_ok=True)
+          if path.exists(): raise FileExistsError("No overwrite of prior experiments")
+          record={"schema":"plenum-public-evidence-gated-agent-v1",
+                  "run_id":os.environ["RUN_ID"],
+                  "source_revision":os.environ["REVISION"],
+                  "proposals":p,"independent_audit":r,
+                  "new_scientific_discovery_verified":False,
+                  "production_deployment":False}
+          path.write_text(json.dumps(record,indent=2)+"\n")
+          print("Archiving full success-and-failure evidence:",path)
+          PY
+      - name: Commit audit only on separate research-memory branch
+        run: |
+          git -C public-memory config user.name "Plenum Research Ledger"
+          git -C public-memory config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C public-memory add evidence/agent-experiments/
+          git -C public-memory commit -m "Archive evidence-gated AI proposal and blind test"
+          git -C public-memory push origin HEAD:research-memory
