@@ -64,6 +64,9 @@ def main():
     training.add_argument("--tasks", default="botany,chemistry,handwriting,gravity",
                           help="Comma-separated allowlisted scientific ML benchmarks")
     training.add_argument("--out", default="reports/model_training.json")
+    qa = commands.add_parser("eval-science")
+    qa.add_argument("--count", type=int, default=12)
+    qa.add_argument("--out", default="reports/science_reasoning.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -136,6 +139,12 @@ def main():
         print("Trained scientific ML models:", save_json(args.out, report),
               "holdout improvements:", report["candidate_beats_dummy_in_all_tasks"],
               "production deployed:", report["deployment_authorized"])
+    elif args.action == "eval-science":
+        from .science_eval import run_external_evaluation
+        report = run_external_evaluation(count=args.count, out=args.out)
+        print("External science evaluation:", report["correct"], "/", report["total"],
+              "data revision:", report["source"]["revision"],
+              "model revision:", report["model_revision"])
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,
