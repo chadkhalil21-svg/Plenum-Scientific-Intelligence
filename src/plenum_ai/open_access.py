@@ -58,12 +58,24 @@ def parse_open_article(pmcid, data):
         raise ValueError("Expected an article-level JATS XML document")
     licenses = root.findall(".//license")
     approved = None
+    # JATS publishers vary: CC links may occur in license attributes,
+    # nested <ext-link> elements, or plain-text <license-p>.
+    # Accept only exact recognized CC license URLs, not broad CC wording.
+    allowed_uri = {scheme + "://" + url: name
+                   for url, name in LICENSE_URLS.items()
+                   for scheme in ("http", "https")}
     for license_tag in licenses:
-        uri = (license_tag.attrib.get("{http://www.w3.org/1999/xlink}href") or
-               license_tag.attrib.get("href") or "").lower().rstrip("/")
-        for url, name in LICENSE_URLS.items():
-            if uri == "https://" + url or uri == "http://" + url:
-                approved = name
+        candidates = []
+        for node in license_tag.iter():
+            candidates.extend(v for k, v in node.attrib.items()
+                              if k.endswith("href"))
+            candidates.extend(re.findall(
+                r"https?://creativecommons\\.org/(?:licenses|publicdomain)/[A-Za-z0-9/.-]+",
+                node.text or "", flags=re.I))
+        for candidate in candidates:
+            value = candidate.lower().split("#", 1)[0].split("?", 1)[0].rstrip("/").rstrip(".")
+            if value in allowed_uri:
+                approved = allowed_uri[value]
                 break
         if approved:
             break
