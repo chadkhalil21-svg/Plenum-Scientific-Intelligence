@@ -1,0 +1,47 @@
+name: music21 Original Music Theory and Composition Analysis
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/music-analysis.yml"
+      - "src/plenum_ai/music_analysis.py"
+      - "tests/test_music_analysis.py"
+permissions:
+  contents: read
+concurrency:
+  group: plenum-music21-original-theory
+  cancel-in-progress: true
+jobs:
+  analytical-music:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Install independent open-source computational musicology
+        run: python -m pip install -e '.[music]'
+      - name: Verify original source notation and music21 parser
+        run: python -m unittest discover -s tests -p test_music_analysis.py -v
+      - name: Analyze an original 8-measure piece, not an existing copyrighted composition
+        run: python -m plenum_ai.cli music-analysis --topic "procedural light and sound" --seed 1701 --out reports/music_analysis.json
+      - name: Verify notes and honest scope
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('reports/music_analysis.json').read_text())
+          assert d['schema']=='plenum-original-music21-study-v1'
+          assert d['note_count']==32 and d['measures']==8
+          assert d['original_procedural_score']
+          assert not d['audio_generated_or_played']
+          assert not d['artistic_quality_or_originality_verified']
+          assert not d['copyrighted_source_score_imported']
+          print('Original notation analyzed by music21:',d['distinct_pitch_classes'],'pitch classes')
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: original-composition-music21-theory-analysis
+          path: reports/music_analysis.json
+          retention-days: 14
