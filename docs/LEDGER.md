@@ -181,3 +181,12 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [ ] Add a long-lived, permissioned worker/queue and production-quality persistence. Local SQLite checkpoints alone are not cloud continuity or horizontal scaling.
 - [ ] Keep proprietary patent material and research in a separate private environment with encryption, private backups and authorized access.
 - [ ] Establish experimentally reproduced new scientific discoveries and generalizable model self-improvement. Neither has been demonstrated.
+
+## Verified operator console, cross-run retrieval and first external model score
+
+- [x] Live founder console on GitHub Actions: run 42166252075; approved public science question selected two numerical tools, reported two worker results and passed known-model checks.
+- [x] Daily autonomous public research + memory integration: run 42166035006; research and isolated-memory archival jobs both passed. The public research-memory branch can be re-indexed on future runs.
+- [x] Independent official EleutherAI benchmark for Qwen3-0.6B: run 42165601852, ARC-Challenge 2/8 (25%) and PIQA 5/8 (62.5%), zero-shot, eight public samples each. Not enough for a production choice.
+- [x] Reduce unnecessary CPU usage: five specialist workflows no longer rerun on general dependency edits; central CI skips documentation-only changes but still runs for source, test and dependency edits.
+- [ ] Require a larger independent scientific/agent benchmark before model promotion. The larger Qwen3-1.7B CPU candidate is being evaluated separately; no outcome is assumed until its workflow finishes.
+- [ ] Configure dedicated always-on computing, durable off-runner database and private researcher-controlled storage only with founder-approved resources and budget.
