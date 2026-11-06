@@ -91,6 +91,8 @@ def main():
     battery = commands.add_parser("battery-simulation")
     battery.add_argument("--minutes", type=int, default=10)
     battery.add_argument("--out", default="reports/battery_simulation.json")
+    tides = commands.add_parser("empirical-tides")
+    tides.add_argument("--out", default="reports/noaa_measured_tides.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -225,6 +227,12 @@ def main():
               save_json(args.out, report),
               "simulations:", len(report["models"]),
               "experimental validation:", report["experimentally_validated"])
+    elif args.action == "empirical-tides":
+        from .noaa_empirical import run_empirical_forecast
+        report = run_empirical_forecast()
+        print("NOAA measured water-level forecast:", save_json(args.out, report),
+              "all-station hypothesis supported:", report["hypothesis_supported_at_both_stations"],
+              "independent observed target:", report["is_independent_future_observation_holdout"])
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,
