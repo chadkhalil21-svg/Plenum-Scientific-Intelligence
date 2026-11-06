@@ -34,6 +34,12 @@ SOURCES = {
         "publisher":"U.S. Department of Defense"},
     "un_global_news": {"category":"foreign_affairs", "type":"feed",
         "url":"https://news.un.org/feed/subscribe/en/news/all/rss.xml", "publisher":"United Nations News"},
+    "darpa_public_research": {"category":"defense", "type":"feed",
+        "url":"https://www.darpa.mil/rss.xml",
+        "publisher":"DARPA public research news"},
+    "un_geneva_releases": {"category":"foreign_affairs", "type":"feed",
+        "url":"https://www.ungeneva.org/news-media/press-releases-list/rss.xml",
+        "publisher":"UN Geneva public press releases"},
     "federal_reserve": {"category":"business", "type":"feed",
         "url":"https://www.federalreserve.gov/feeds/press_all.xml",
         "publisher":"Federal Reserve"},
@@ -177,7 +183,8 @@ def _feed(key, data):
             if record:
                 items.append(record)
     else:
-        raise ValueError("Unsupported RSS or Atom feed")
+        safe_root = re.sub(r"[^a-zA-Z0-9_{}./:-]","",str(root.tag))[:70]
+        raise ValueError("Unsupported RSS or Atom root: "+safe_root)
     return items
 
 
@@ -265,8 +272,12 @@ def scan_horizon(query, category="all", online=False, opener=urlopen):
         except Exception as exc:
             # Errors carry only type; no URLs, tokens, private data or unstable
             # remote responses may be recorded as executable instructions.
+            diagnosis = str(exc) if isinstance(exc,ValueError) and (
+                str(exc).startswith("Unsupported RSS or Atom root:")) else ""
             return {"source":key,"status":"unavailable",
-                    "error_type":type(exc).__name__,"records":[]}
+                    "error_type":type(exc).__name__,
+                    "schema_diagnostic":diagnosis[:90],
+                    "records":[]}
     with ThreadPoolExecutor(max_workers=4) as pool:
         statuses=list(pool.map(one,keys))
     all_records=[r for s in statuses for r in s["records"]]
