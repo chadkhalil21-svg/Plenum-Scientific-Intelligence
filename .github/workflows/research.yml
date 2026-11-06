@@ -1,5 +1,8 @@
 name: Autonomous Research
 on:
+  push:
+    paths:
+      - '.github/workflows/research.yml'
   workflow_dispatch:
     inputs:
       query:
@@ -36,6 +39,16 @@ jobs:
           python -m plenum_ai.cli mission --query "$QUERY" --simulation heat --out reports/mission.json
       - name: Independent narrow improvement benchmark
         run: python -m plenum_ai.cli improve --out reports/improvement.json
+      - name: Verify live source retrieval and numerical benchmark
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("reports/mission.json").read_text())
+          print("Literature source status:", report["source_status"])
+          assert report["source_status"] == "retrieved_metadata", report["issues"]
+          assert report["numeric_benchmark_verified"]
+          PY
       - uses: actions/upload-artifact@v7
         with:
           name: research-and-improvement
