@@ -86,6 +86,8 @@ def main():
     federation.add_argument("--query", required=True)
     federation.add_argument("--online", action="store_true")
     federation.add_argument("--out", default="reports/federated_literature.json")
+    nasa = commands.add_parser("nasa-exoplanets")
+    nasa.add_argument("--out", default="reports/nasa_exoplanet_consistency.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -206,6 +208,13 @@ def main():
         report=search_federated(args.query,offline=not args.online)
         print("Federated public literature search:",save_json(args.out,report),
               "records:",len(report["records"]))
+    elif args.action == "nasa-exoplanets":
+        from .nasa_exoplanets import run_nasa_catalog_consistency
+        report = run_nasa_catalog_consistency()
+        print("NASA catalog comparison:", save_json(args.out, report),
+              "planets:", report["observations_evaluated"],
+              "within ten percent:", report["fraction_within_ten_percent"],
+              "independent proof:", report["independent_empirical_validation"])
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,

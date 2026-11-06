@@ -36,6 +36,16 @@ def _execute_tool(tool_key, question, offline):
                 "verified_fixture": bool(result["verified_fixture"]),
                 "output": result,
             }
+        if tool_key == "nasa.exoplanets":
+            if offline:
+                return {"tool": tool_key, "status": "skipped_offline",
+                        "verified_fixture": False, "report": None,
+                        "independent_empirical_validation": False}
+            from .nasa_exoplanets import run_nasa_catalog_consistency
+            evidence = run_nasa_catalog_consistency()
+            return {"tool": tool_key, "status": "catalog_consistency_checked",
+                    "verified_fixture": False, "report": evidence,
+                    "independent_empirical_validation": False}
         if tool_key == "federated.metadata":
             from .federated_sources import search_federated
             evidence=search_federated(question, offline=offline)
@@ -104,13 +114,13 @@ def _verify(state):
     unique = len({x["tool"] for x in tools}) == len(keys)
     complete = all(any(x["tool"] == key for x in tools) for key in keys)
     requested_solver = [x for x in tools if x["tool"] not in
-                        ("openalex.metadata", "federated.metadata")]
+                        ("openalex.metadata", "federated.metadata", "nasa.exoplanets")]
     solvers_pass = bool(requested_solver) and all(
         x["status"] == "completed" and x["verified_fixture"] for x in requested_solver
     )
     literature = [x for x in tools if x["tool"] in
-                  ("openalex.metadata", "federated.metadata")]
-    literature_ok = all(x["status"] in ("retrieved_metadata", "partial_metadata", "skipped_offline")
+                  ("openalex.metadata", "federated.metadata", "nasa.exoplanets")]
+    literature_ok = all(x["status"] in ("retrieved_metadata", "partial_metadata", "catalog_consistency_checked", "skipped_offline")
                         for x in literature)
     optimize_ok = (state["optimized"].get("verified_fixture", False)
                    if state["enable_optimization"] else True)

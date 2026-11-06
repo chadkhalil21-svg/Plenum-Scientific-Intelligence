@@ -51,6 +51,12 @@ TOOLS = {
         "Apache-2.0", "dependent", "executable",
         depends_on=("scipy.thermal",),
         limitations="Illustrative linear heat rejection with constant h; not an aircraft engineering validation"),
+    "nasa.exoplanets": Tool("nasa.exoplanets",
+        "https://exoplanetarchive.ipac.caltech.edu/",
+        "Astropy Keplerian consistency check on bounded real NASA catalog records",
+        "astropy", ">=7.0,<8", "BSD-3-Clause (Astropy); NASA archive attribution",
+        "parallel", "executable",
+        limitations="Orbital semimajor axes may be derived from period and mass; NOT independent proof"),
     "nasa.aviary": Tool("nasa.aviary", "https://github.com/OpenMDAO/Aviary",
         "Aircraft design and mission analysis", "aviary", "not installed",
         "Check version and transitive data licenses", "future", "planned",
@@ -110,6 +116,7 @@ def route_request(question):
         ("rdkit.molecule", ("molecule", "molecular", "drug", "protein")),
         ("scipy.electronics", ("circuit", "capacitor", "electronics", "electrical", "battery")),
         ("federated.metadata", ("literature", "scientific paper", "publications", "bibliograph")),
+        ("nasa.exoplanets", ("exoplanet", "keplerian", "stellar orbit", "stellar mass")),
     )
     selection = [name for name, keywords in rules if any(k in q for k in keywords)]
     if "optimiz" in q or "design" in q:
