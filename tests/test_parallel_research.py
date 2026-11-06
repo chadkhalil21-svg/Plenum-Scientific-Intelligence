@@ -80,6 +80,18 @@ class ToolNetworkTests(unittest.TestCase):
                            optimize=routing["enable_optimization"],offline=True)
         self.assertTrue(report["known_model_integration_passed"],report)
 
+    def test_nasa_astronomy_is_not_fabricated_offline(self):
+        report = run_network(
+            "exoplanet orbital periods",
+            tool_keys=["scipy.orbit", "nasa.exoplanets"],
+            offline=True,
+            optimize=False,
+        )
+        self.assertTrue(report["known_model_integration_passed"])
+        nasa = next(x for x in report["workers"] if x["tool"] == "nasa.exoplanets")
+        self.assertEqual(nasa["status"], "skipped_offline")
+        self.assertFalse(nasa["independent_empirical_validation"])
+
     def test_missing_dependency_is_rejected(self):
         with self.assertRaises(ValueError):
             run_network("No thermal result", tool_keys=["scipy.orbit"], optimize=True)
