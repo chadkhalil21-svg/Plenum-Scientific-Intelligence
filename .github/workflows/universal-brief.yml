@@ -1,0 +1,71 @@
+name: Public Universal Research and Creative Ideas Brief
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: 'Public topic for cross-disciplinary inquiry (no private patents or secrets)'
+        required: true
+        default: 'scientific research and creativity'
+  schedule:
+    - cron: '21 13 * * 1,4'
+  push:
+    paths:
+      - '.github/workflows/universal-brief.yml'
+      - 'src/plenum_ai/universal_brief.py'
+      - 'tests/test_universal_brief.py'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-universal-research-brief
+  cancel-in-progress: true
+jobs:
+  source-grounded-ideas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    env:
+      PUBLIC_TOPIC: ${{ github.event.inputs.topic || 'scientific research and creativity' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install public-only research adapters
+        run: python -m pip install -e .
+      - name: Test independent sources and safe cross-domain idea questions
+        run: python -m unittest discover -s tests -p 'test_universal_brief.py' -v
+      - name: Query publicly accessible worldwide sources and generate cited inquiry proposals
+        run: |
+          python -m plenum_ai.cli universal-brief --topic "$PUBLIC_TOPIC" --online \
+            --limit 8 --out reports/universal_brief.json
+      - name: Audit source provenance and scientific-claim boundaries
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('reports/universal_brief.json').read_text())
+          s=r['public_snapshot']
+          c=r['cross_domain_ideas']
+          assert r['schema']=='plenum-universal-brief-v1'
+          assert not r['AGI_achieved']
+          assert not r['automatic_model_self_revision']
+          assert not c['foundation_model_wrote_new_science']
+          assert not c['scientific_discovery_verified']
+          assert len(c['concepts']) <= 8
+          print('Public feeds attempted:',s['providers_attempted'])
+          print('Feeds with results:',s['providers_reporting_data'])
+          print('Source-linked ideas:',c['concept_count'])
+          for x in s['providers']:
+              print(x['source'],x['status'],len(x['records']))
+          for x in c['concepts']:
+              assert all(ref['url'].startswith('https://') for ref in x['inspiration'])
+              assert not x['novelty_or_patentability_verified']
+          if s['providers_reporting_data'] == 0:
+              raise SystemExit('All sources unavailable; no fabricated brief')
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: universal-public-discovery-and-ideas
+          path: reports/universal_brief.json
+          if-no-files-found: warn
+          retention-days: 14
