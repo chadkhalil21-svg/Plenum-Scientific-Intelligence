@@ -13,6 +13,7 @@ from pathlib import Path
 LETTERS = "ABCD"
 SOURCE = "allenai/ai2_arc"
 SUBSET = "ARC-Challenge"
+APPROVED_DATA_REVISION = "210d026faf9955653af8916fad021475a3f00453"
 
 
 def _digest(value):
@@ -63,7 +64,7 @@ def load_external_cases(split="test", count=12):
     from huggingface_hub import HfApi, hf_hub_download
     import pyarrow.parquet as pq
     api = HfApi()
-    revision = api.dataset_info(SOURCE).sha
+    revision = APPROVED_DATA_REVISION
     files = api.list_repo_files(SOURCE, repo_type="dataset", revision=revision)
     prefix = SUBSET + "/" + split + "-"
     chosen = sorted(f for f in files if f.startswith(prefix) and f.endswith(".parquet"))

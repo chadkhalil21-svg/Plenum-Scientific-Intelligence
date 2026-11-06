@@ -2,6 +2,7 @@
 from functools import lru_cache
 
 APPROVED_MODEL = "Qwen/Qwen3-0.6B"
+APPROVED_REVISION = "c1899de289a04d12100db370d81485cdf75e47ca"
 
 
 @lru_cache(maxsize=1)
@@ -11,9 +12,9 @@ def _load_model(model_id):
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
     torch.set_num_threads(4)
-    tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=False)
+    tokenizer = AutoTokenizer.from_pretrained(model_id, revision=APPROVED_REVISION, trust_remote_code=False)
     model = AutoModelForCausalLM.from_pretrained(
-        model_id, trust_remote_code=False, use_safetensors=True
+        model_id, revision=APPROVED_REVISION, trust_remote_code=False, use_safetensors=True
     ).to("cpu").eval()
     return tokenizer, model, torch
 
