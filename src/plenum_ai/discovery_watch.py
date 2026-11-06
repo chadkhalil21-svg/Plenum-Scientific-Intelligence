@@ -94,6 +94,20 @@ def crossref_url(issn, cutoff):
     })
 
 
+def crossref_topic_url(topic,cutoff):
+    if not isinstance(topic,str) or not 2<=len(topic.strip())<=160:
+        raise ValueError("Public topic must contain 2..160 characters")
+    if not isinstance(cutoff,datetime) or cutoff.tzinfo is None:
+        raise ValueError("Timezone-aware cutoff required")
+    earliest=(cutoff-timedelta(days=14)).date().isoformat()
+    return "https://api.crossref.org/works?" + urlencode({
+        "filter":"from-pub-date:"+earliest,
+        "query.bibliographic":topic.strip(),
+        "sort":"published","order":"desc","rows":3,
+        "select":"DOI,title,published,container-title,type,URL",
+    })
+
+
 def parse_crossref(raw, journal, cutoff):
     payload=json.loads(raw)
     if not isinstance(payload,dict) or not isinstance(payload.get("message"),dict):
@@ -121,9 +135,13 @@ def parse_crossref(raw, journal, cutoff):
             except (ValueError,TypeError,OverflowError):
                 pass
         link="https://doi.org/"+doi
+        actual_journal=item.get("container-title") or []
+        displayed_journal=(str(actual_journal[0])[:150]
+                           if isinstance(actual_journal,list) and actual_journal
+                           else journal)
         collected.append({
             "source":"crossref", "tier":"journal_publication_metadata",
-            "journal":journal, "title":str(title[0])[:300],
+            "journal":displayed_journal, "title":str(title[0])[:300],
             "doi":"https://doi.org/"+doi,
             "url":link, "published":date,
             "date_verified_by_publisher":False,
@@ -258,6 +276,11 @@ def research_pulse(topic="scientific discovery",cutoff=None,opener=urlopen,
         issn=JOURNALS[name][0]
         tasks.append(("crossref:"+name,lambda n=name,i=issn:
             parse_crossref(_read(crossref_url(i,cutoff),opener),n,cutoff)))
+    # The cross-journal topic index covers papers beyond the rotating
+    # highlighted journals, including specialized and regional publishers.
+    tasks.append(("crossref:topic",lambda:parse_crossref(
+        _read(crossref_topic_url(topic,cutoff),opener),
+        "cross-disciplinary topic search",cutoff)))
     for server in ("biorxiv","medrxiv"):
         tasks.append((server,lambda s=server:parse_preprints(
             _read(preprint_url(s),opener),s)))
@@ -294,6 +317,7 @@ def research_pulse(topic="scientific discovery",cutoff=None,opener=urlopen,
         "sources_unavailable":[x["provider"] for x in outcomes if x["status"]=="unavailable"],
         "peer_review_verified":False,"breakthroughs_independently_confirmed":False,
         "all_science_journals_covered":False,
+        "cross_journal_topic_query_enabled":True,
         "copyrighted_works_downloaded":False,"video_transcripts_downloaded":False,
         "external_actions_performed":False,
         "limitations":[
