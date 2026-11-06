@@ -354,3 +354,30 @@ Owner controls:
 persistent generalizable learning, novel independently replicated
 inventions, reliable self-improvement, and owner-approved private
 inference infrastructure remain future research milestones.
+
+## Universal discovery and creative intelligence expansion (November 2026)
+
+Our [universal expansion inventory](docs/UNIVERSAL_EXPANSION_2026.md)
+records 11 additional public, read-only research and culture sources across
+MIT music/visual art/architecture, NIH, NSF news/funding, Nature RSS,
+MIT Technology Review, UN climate, and arXiv AI/physics.
+
+The [Public World Intelligence](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/workflows/world-horizon.yml)
+workflow now supports 25 sources and art, music, design, health, funding,
+AI and physics categories. The live November 6 test retrieved **82 public
+records** with Nature RSS 1.0 parsing corrected. External outages remain
+visible; institutional news and journals are not automatically verified
+breakthroughs or formal institutional partnerships.
+
+The new [Universal Research and Creative Ideas Brief](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/workflows/universal-brief.yml)
+builds **eight reference-linked, unverified cross-disciplinary research
+questions** from independent public publishers. Its scheduled twice-weekly
+snapshots are archived separately to the `research-memory` Git branch,
+and the founder's [Control Center](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/workflows/control-center.yml)
+offers `interdisciplinary-ideas` alongside all new subject filters.
+
+Real images/music, proprietary journals, comprehensive YouTube video
+understanding, private university/military accounts, fully autonomous code
+deployment, and AGI **are not implemented** merely by adding source feeds.
+These require licensing, permissions, independent evaluation, appropriate
+hardware and explicit approval.

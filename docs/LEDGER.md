@@ -328,3 +328,15 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
   GitHub scheduled runs and public archives are not always-on private AGI.
 - [ ] Demonstrate genuine generality, novel experimental discoveries and
   reliable self-improvement without cherry-picking. **Not established.**
+
+## Multidisciplinary global knowledge and creativity expansion (Nov. 6, 2026)
+
+- [x] Expand public world-horizon coverage from 14 to **25 allowlisted sources**, adding MIT music, art and architecture; NIH biomedical announcements; NSF news and funding; Nature journal RSS; MIT Technology Review; UN climate; and arXiv AI/physics updates.
+- [x] Add seven founder-selectable categories: art, music, design, health, funding, AI, physics. Retain universities, public defense, international affairs, business, environment, journals, general news, discoveries and software.
+- [x] Verify public 25-source scan; **82 records** retrieved in run 42174424616. Unavailable UN feeds explicitly reported. Fix and test Nature RSS 1.0 namespaced RDF parsing so four journal records appear.
+- [x] Add a bounded source-grounded cross-disciplinary question synthesizer with diverse publisher pairing, provenance hashes, evidence requirements and an explicit no-invention/no-AGI assertion.
+- [x] Verify eight generated questions through run 42174153585 and archive them independently through the public `research-memory` branch (run 42174318660).
+- [x] Correct world-horizon archival limits for 25-source monitoring and add immutable public universal-brief archive with no deployment or private-data access.
+- [x] Preserve existing creative SVG/MusicXML/parametric CAD, museum/art/music metadata, YouTube channel metadata and reviewable software program starters.
+- [ ] Add genuinely evaluated multi-domain reasoning, multimodal creative models with licensed sources, expanded university and journal affiliations, patent/standards retrieval and a persistent privately hosted intelligence worker.
+- [ ] Demonstrate general intelligence, reliable self-directed coding/invention or recursive AI model self-improvement. **Not achieved.**
