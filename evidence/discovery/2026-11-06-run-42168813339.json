@@ -1,0 +1,440 @@
+{
+  "schema": "plenum-public-cross-domain-observatory-v1",
+  "run_id": "42168813339",
+  "source_revision": "7b558666918aff6b264ddbc3f01f79b825219845",
+  "snapshot": {
+    "schema": "plenum-cross-domain-research-pulse-v1",
+    "topic": "scientific discovery and engineering",
+    "observed_at_utc": "2026-11-06T05:30:36.102799+00:00",
+    "journal_selection_strategy": "rotating_six_of_twenty",
+    "journal_coverage_in_this_run": [
+      "Nature Physics",
+      "Nature Photonics",
+      "Nature Materials",
+      "Nature Biotechnology",
+      "The Lancet",
+      "New England Journal of Medicine"
+    ],
+    "providers": [
+      {
+        "provider": "crossref:Nature Physics",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Physics",
+            "title": "Recent progress in the computational study of supercooled and glassy water",
+            "doi": "https://doi.org/10.1038/s41567-026-03479-x",
+            "url": "https://doi.org/10.1038/s41567-026-03479-x",
+            "published": "2026-11-02",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Physics",
+            "title": "Thermodynamic demonstration of tetracriticality and multicomponent superconductivity in UTe2",
+            "doi": "https://doi.org/10.1038/s41567-026-03504-z",
+            "url": "https://doi.org/10.1038/s41567-026-03504-z",
+            "published": "2026-10-30",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Physics",
+            "title": "Multiparticle quantum walks in a dipole-conserving Bose–Hubbard model",
+            "doi": "https://doi.org/10.1038/s41567-026-03512-z",
+            "url": "https://doi.org/10.1038/s41567-026-03512-z",
+            "published": "2026-10-30",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          }
+        ],
+        "count": 3
+      },
+      {
+        "provider": "crossref:Nature Photonics",
+        "status": "unavailable",
+        "error_type": "HTTPError",
+        "count": 0,
+        "records": []
+      },
+      {
+        "provider": "crossref:Nature Materials",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Materials",
+            "title": "Mechanical adaptation drives out-of-equilibrium network reorganization and self-strengthening in adapt-ring networks",
+            "doi": "https://doi.org/10.1038/s41563-026-02795-0",
+            "url": "https://doi.org/10.1038/s41563-026-02795-0",
+            "published": "2026-11-05",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Materials",
+            "title": "Model systems and integration strategies to capture human biology",
+            "doi": "https://doi.org/10.1038/s41563-026-02784-3",
+            "url": "https://doi.org/10.1038/s41563-026-02784-3",
+            "published": "2026-11-05",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Materials",
+            "title": "Process-intrinsic cellular network for sustained strength–ductility across temperatures in a 3D-printed multi-principal-element alloy",
+            "doi": "https://doi.org/10.1038/s41563-026-02792-3",
+            "url": "https://doi.org/10.1038/s41563-026-02792-3",
+            "published": "2026-11-02",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          }
+        ],
+        "count": 3
+      },
+      {
+        "provider": "crossref:Nature Biotechnology",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Biotechnology",
+            "title": "Editor’s Pick: Wild Bioscience",
+            "doi": "https://doi.org/10.1038/s41587-026-03377-w",
+            "url": "https://doi.org/10.1038/s41587-026-03377-w",
+            "published": "2026-11-03",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Biotechnology",
+            "title": "An engineered, compact Cas12m variant for multiplexed gene activation in vivo",
+            "doi": "https://doi.org/10.1038/s41587-026-03352-5",
+            "url": "https://doi.org/10.1038/s41587-026-03352-5",
+            "published": "2026-10-28",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Biotechnology",
+            "title": "An mRNA–lipid nanoparticle vaccine against H5N1 influenza virus protects lactating dairy cows from infection",
+            "doi": "https://doi.org/10.1038/s41587-026-03343-6",
+            "url": "https://doi.org/10.1038/s41587-026-03343-6",
+            "published": "2026-10-28",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          }
+        ],
+        "count": 3
+      },
+      {
+        "provider": "crossref:The Lancet",
+        "status": "unavailable",
+        "error_type": "HTTPError",
+        "count": 0,
+        "records": []
+      },
+      {
+        "provider": "crossref:New England Journal of Medicine",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "New England Journal of Medicine",
+            "title": "When Patients Need an Enemy",
+            "doi": "https://doi.org/10.1056/nejmp2606011",
+            "url": "https://doi.org/10.1056/nejmp2606011",
+            "published": "2026-11-05",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "New England Journal of Medicine",
+            "title": "PARP and Androgen-Signaling Inhibition in Metastatic Prostate Cancer",
+            "doi": "https://doi.org/10.1056/nejmc2611171",
+            "url": "https://doi.org/10.1056/nejmc2611171",
+            "published": "2026-11-05",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "New England Journal of Medicine",
+            "title": "Private Health Insurance and Profit — Lessons for the United States",
+            "doi": "https://doi.org/10.1056/nejmp2611270",
+            "url": "https://doi.org/10.1056/nejmp2611270",
+            "published": "2026-11-05",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          }
+        ],
+        "count": 3
+      },
+      {
+        "provider": "biorxiv",
+        "status": "retrieved_metadata",
+        "records": [],
+        "count": 0
+      },
+      {
+        "provider": "medrxiv",
+        "status": "retrieved_metadata",
+        "records": [],
+        "count": 0
+      },
+      {
+        "provider": "MIT News",
+        "status": "unavailable",
+        "error_type": "ValueError",
+        "count": 0,
+        "records": []
+      },
+      {
+        "provider": "NASA Updates",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "NASA Updates",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "Midwestern City Lights",
+            "url": "https://www.nasa.gov/image-article/midwestern-city-lights/",
+            "published": "Thu, 05 Nov 2026 15:17:19 +0000",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "NASA Updates",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "NASA Astronauts to Answer Questions from Florida Students",
+            "url": "https://www.nasa.gov/learning-resources/nasa-astronauts-to-answer-questions-from-florida-students-2/",
+            "published": "Thu, 05 Nov 2026 15:11:25 +0000",
+            "original_research_peer_review_confirmed": false
+          }
+        ],
+        "count": 2
+      },
+      {
+        "provider": "youtube-nasa",
+        "status": "unavailable",
+        "error_type": "HTTPError",
+        "count": 0,
+        "records": []
+      }
+    ],
+    "records": [
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Physics",
+        "title": "Recent progress in the computational study of supercooled and glassy water",
+        "doi": "https://doi.org/10.1038/s41567-026-03479-x",
+        "url": "https://doi.org/10.1038/s41567-026-03479-x",
+        "published": "2026-11-02",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Physics",
+        "title": "Thermodynamic demonstration of tetracriticality and multicomponent superconductivity in UTe2",
+        "doi": "https://doi.org/10.1038/s41567-026-03504-z",
+        "url": "https://doi.org/10.1038/s41567-026-03504-z",
+        "published": "2026-10-30",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Physics",
+        "title": "Multiparticle quantum walks in a dipole-conserving Bose–Hubbard model",
+        "doi": "https://doi.org/10.1038/s41567-026-03512-z",
+        "url": "https://doi.org/10.1038/s41567-026-03512-z",
+        "published": "2026-10-30",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Materials",
+        "title": "Mechanical adaptation drives out-of-equilibrium network reorganization and self-strengthening in adapt-ring networks",
+        "doi": "https://doi.org/10.1038/s41563-026-02795-0",
+        "url": "https://doi.org/10.1038/s41563-026-02795-0",
+        "published": "2026-11-05",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Materials",
+        "title": "Model systems and integration strategies to capture human biology",
+        "doi": "https://doi.org/10.1038/s41563-026-02784-3",
+        "url": "https://doi.org/10.1038/s41563-026-02784-3",
+        "published": "2026-11-05",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Materials",
+        "title": "Process-intrinsic cellular network for sustained strength–ductility across temperatures in a 3D-printed multi-principal-element alloy",
+        "doi": "https://doi.org/10.1038/s41563-026-02792-3",
+        "url": "https://doi.org/10.1038/s41563-026-02792-3",
+        "published": "2026-11-02",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Biotechnology",
+        "title": "Editor’s Pick: Wild Bioscience",
+        "doi": "https://doi.org/10.1038/s41587-026-03377-w",
+        "url": "https://doi.org/10.1038/s41587-026-03377-w",
+        "published": "2026-11-03",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Biotechnology",
+        "title": "An engineered, compact Cas12m variant for multiplexed gene activation in vivo",
+        "doi": "https://doi.org/10.1038/s41587-026-03352-5",
+        "url": "https://doi.org/10.1038/s41587-026-03352-5",
+        "published": "2026-10-28",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Biotechnology",
+        "title": "An mRNA–lipid nanoparticle vaccine against H5N1 influenza virus protects lactating dairy cows from infection",
+        "doi": "https://doi.org/10.1038/s41587-026-03343-6",
+        "url": "https://doi.org/10.1038/s41587-026-03343-6",
+        "published": "2026-10-28",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "New England Journal of Medicine",
+        "title": "When Patients Need an Enemy",
+        "doi": "https://doi.org/10.1056/nejmp2606011",
+        "url": "https://doi.org/10.1056/nejmp2606011",
+        "published": "2026-11-05",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "New England Journal of Medicine",
+        "title": "PARP and Androgen-Signaling Inhibition in Metastatic Prostate Cancer",
+        "doi": "https://doi.org/10.1056/nejmc2611171",
+        "url": "https://doi.org/10.1056/nejmc2611171",
+        "published": "2026-11-05",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "New England Journal of Medicine",
+        "title": "Private Health Insurance and Profit — Lessons for the United States",
+        "doi": "https://doi.org/10.1056/nejmp2611270",
+        "url": "https://doi.org/10.1056/nejmp2611270",
+        "published": "2026-11-05",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "NASA Updates",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "Midwestern City Lights",
+        "url": "https://www.nasa.gov/image-article/midwestern-city-lights/",
+        "published": "Thu, 05 Nov 2026 15:17:19 +0000",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "NASA Updates",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "NASA Astronauts to Answer Questions from Florida Students",
+        "url": "https://www.nasa.gov/learning-resources/nasa-astronauts-to-answer-questions-from-florida-students-2/",
+        "published": "Thu, 05 Nov 2026 15:11:25 +0000",
+        "original_research_peer_review_confirmed": false
+      }
+    ],
+    "distinct_records": 14,
+    "sources_unavailable": [
+      "crossref:Nature Photonics",
+      "crossref:The Lancet",
+      "MIT News",
+      "youtube-nasa"
+    ],
+    "peer_review_verified": false,
+    "breakthroughs_independently_confirmed": false,
+    "all_science_journals_covered": false,
+    "copyrighted_works_downloaded": false,
+    "video_transcripts_downloaded": false,
+    "external_actions_performed": false,
+    "limitations": [
+      "Research metadata and institutional announcements are not scientific truth.",
+      "Journal indexing varies; date of publication may differ from deposit date.",
+      "Preprints are not peer-reviewed; institutional statements are not independent evidence.",
+      "A six-of-twenty rotating sample is not comprehensive worldwide surveillance.",
+      "Video listings are not transcripts or scientific assessments."
+    ]
+  },
+  "breakthrough_claims_verified": false,
+  "public_metadata_only": true
+}
