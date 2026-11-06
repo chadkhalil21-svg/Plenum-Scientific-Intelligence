@@ -1,0 +1,45 @@
+name: NASA Aviary Verified Installation
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/nasa-aviary.yml"
+permissions:
+  contents: read
+jobs:
+  nasa-aviary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Install pinned NASA-origin Aviary aircraft analysis package
+        run: python -m pip install "aviary==1.0.1" "openmdao==3.45.2"
+      - name: Run official Aviary installation verification
+        run: |
+          aviary --version
+          aviary check
+      - name: Record installed library versions, no mission analysis performed
+        run: |
+          mkdir -p reports
+          python - <<'PY'
+          import json
+          from importlib.metadata import version
+          from pathlib import Path
+          out={"aviary_version":version("aviary"),"openmdao_version":version("openmdao"),
+               "installation_test":"aviary check", "aircraft_design_executed":False,
+               "aircraft_results_validated":False, "AGI_demonstrated":False,
+               "next_step":"Controlled public aircraft input deck, unit and mission validation"}
+          Path("reports/nasa_aviary_install.json").write_text(json.dumps(out,indent=2))
+          assert out["aviary_version"] == "1.0.1"
+          assert out["openmdao_version"] == "3.45.2"
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: nasa-aviary-install-verification
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 14
