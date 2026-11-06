@@ -1,0 +1,53 @@
+name: Independent Scientific Reasoning Benchmark
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/science-reasoning.yml"
+      - "src/plenum_ai/science_eval.py"
+      - "tests/test_science_eval.py"
+permissions:
+  contents: read
+concurrency:
+  group: independent-science-reasoning
+  cancel-in-progress: true
+jobs:
+  independent-science-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Install open-weight model evaluation tools
+        run: |
+          python -m pip install -e .
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "transformers>=4.51,<5" safetensors "huggingface_hub>=0.30,<1" "pyarrow>=15,<25"
+      - name: Verify scoring and dataset-isolation logic offline
+        run: python -m unittest discover -s tests -p "test_science_eval.py" -v
+      - name: Evaluate published external ARC science exam (not a blind pretraining benchmark)
+        run: python -m plenum_ai.cli eval-science --count 12 --out reports/science_reasoning.json
+      - name: Check provenance and absence of unsupported research claims
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path("reports/science_reasoning.json").read_text())
+          assert r["source"]["license"] == "CC-BY-SA-4.0"
+          assert r["source"]["split"] == "test"
+          assert len(r["source"]["revision"]) >= 12
+          assert r["total"] == 12
+          assert 0 <= r["accuracy"] <= 1
+          assert r["fine_tuning_performed"] is False
+          assert r["scientific_discovery_verified"] is False
+          print("Model",r["model"],"score",r["correct"],"/",r["total"])
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: arc-challenge-science-evaluation
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 14
