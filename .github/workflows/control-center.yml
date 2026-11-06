@@ -16,6 +16,7 @@ on:
           - durable-investigation
           - verify
           - ecosystem
+          - molecular-dynamics
       question:
         description: "PUBLIC research question only. Do not enter patent or private data."
         required: true
@@ -56,6 +57,7 @@ jobs:
             knowledge|licensed-article) python -m pip install -e . ;;
             verify) python -m pip install -e ".[science,ml,orchestration,astronomy,empirical]" ;;
             ecosystem) python -m pip install -e . ;;
+            molecular-dynamics) python -m pip install -e ".[dynamics]" ;;
             *) echo "Unapproved operation"; exit 1 ;;
           esac
       - name: Execute the approved operation without autonomous code or deployment
@@ -86,6 +88,9 @@ jobs:
             ecosystem)
               plenum scientific-ecosystem --out reports/scientific_ecosystem.json
               ;;
+            molecular-dynamics)
+              plenum openmm-reference --steps 100 --out reports/molecular_dynamics.json
+              ;;
             verify)
               python -m unittest discover -s tests -v
               ;;
@@ -100,6 +105,10 @@ jobs:
               r=json.loads(Path("reports/scientific_ecosystem.json").read_text())
               assert r["all_external_execution_approved"] is False
               assert r["published_api_keys_exposed"] is False
+          if task=="molecular-dynamics":
+              r=json.loads(Path("reports/molecular_dynamics.json").read_text())
+              assert r["numerical_fixture_passed"] and r["relative_total_energy_drift"] < 0.01
+              assert not r["protein_dynamics_validated"]
           if task=="science":
               r=json.loads(Path("reports/science.json").read_text())
               assert not r["scientific_discovery_verified"]
