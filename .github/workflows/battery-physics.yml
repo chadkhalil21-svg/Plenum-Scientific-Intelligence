@@ -1,0 +1,57 @@
+name: PyBaMM Battery Electrochemistry Demonstration
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/battery-physics.yml'
+      - 'src/plenum_ai/battery_model.py'
+      - 'tests/test_battery_model.py'
+      - 'pyproject.toml'
+permissions:
+  contents: read
+concurrency:
+  group: pybamm-bounded-battery-demonstration
+  cancel-in-progress: true
+jobs:
+  battery-model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYBAMM_DISABLE_TELEMETRY: 'true'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install pinned open-source lithium-ion modeling engine
+        run: python -m pip install -e ".[battery]"
+      - name: Validate battery result handling before running models
+        run: python -m unittest discover -s tests -p 'test_battery_model.py' -v
+      - name: Simulate default SPM and SPMe lithium-ion discharge
+        run: python -m plenum_ai.cli battery-simulation --minutes 10 --out reports/battery_simulation.json
+      - name: Validate trace integrity and strictly limit scientific claims
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path('reports/battery_simulation.json').read_text())
+          assert report['pybamm_version'] == '26.10.1.1'
+          assert report['simulation_completed']
+          assert report['predicted_voltage_decline']
+          assert len(report['models']) == 2
+          assert not report['actual_battery_cell_data_loaded']
+          assert not report['experimentally_validated']
+          assert not report['safety_qualification']
+          for model in report['models']:
+              assert model['sample_count'] >= 4
+              assert model['voltage_finite_and_in_range']
+              assert model['declining_voltage_under_discharge']
+          print('Two genuine PyBaMM discharge simulations passed model-output checks.')
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: pybamm-battery-model-results
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 14
