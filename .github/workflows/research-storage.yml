@@ -1,0 +1,111 @@
+name: Persistent Scientific Knowledge and Checkpoint Verification
+on:
+  workflow_dispatch:
+    inputs:
+      pmcid:
+        description: "Public PMCID with verified open license"
+        required: false
+        default: "PMC12247565"
+  push:
+    paths:
+      - ".github/workflows/research-storage.yml"
+      - "src/plenum_ai/durable_graph.py"
+      - "src/plenum_ai/knowledge_index.py"
+      - "src/plenum_ai/open_access.py"
+      - "tests/test_durable_knowledge.py"
+permissions:
+  contents: read
+concurrency:
+  group: public-research-storage-verification
+  cancel-in-progress: true
+jobs:
+  persistent-workflow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install reviewed research and numerical dependencies
+        run: python -m pip install -e '.[science,orchestration]'
+      - name: Test restart-safe checkpointing, searchable index and license restrictions
+        run: python -m unittest discover -s tests -p 'test_durable_knowledge.py' -v
+      - name: Execute two scientific tools with a disk-persistent checkpoint
+        run: |
+          python -m plenum_ai.cli durable-research \
+            --query 'Verify orbit and thermal benchmark models' \
+            --thread-id science-demo-1 --db reports/study.sqlite \
+            --out reports/durable_run.json
+      - name: Reopen the SQLite checkpoint from a different process
+        run: |
+          python -m plenum_ai.cli durable-state \
+            --thread-id science-demo-1 --db reports/study.sqlite \
+            --out reports/restored_state.json
+      - name: Independently check actual recovered state
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('reports/restored_state.json').read_text())
+          a=json.loads(Path('reports/durable_run.json').read_text())
+          assert r['finished'] and r['workers_recorded']==2
+          assert r['replayed_without_running_tools']
+          assert a['status']=='executed_and_checkpointed'
+          assert a['result']['known_model_integration_passed']
+          print('Persistent checkpoint reloaded with two scientifically verified tools.')
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: persistent-research-checkpoint
+          path: |
+            reports/study.sqlite
+            reports/durable_run.json
+            reports/restored_state.json
+          retention-days: 14
+          if-no-files-found: error
+  open-access-index:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - name: Retrieve one public CC-BY-4.0 Europe PMC paper and index allowed text
+        env:
+          SOURCE_PMCID: ${{ github.event.inputs.pmcid }}
+        shell: bash
+        run: |
+          PMCID="${SOURCE_PMCID:-PMC12247565}"
+          python -m plenum_ai.cli index-open-article \
+            --pmcid "$PMCID" --db reports/research_index.sqlite \
+            --out reports/oa_ingest.json
+          python -m plenum_ai.cli search-knowledge \
+            --query 'research neuroscience computing' \
+            --db reports/research_index.sqlite --out reports/oa_search.json
+      - name: Verify no unlicensed fulltext and preserve source license and hash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          doc=json.loads(Path('reports/oa_ingest.json').read_text())
+          search=json.loads(Path('reports/oa_search.json').read_text())
+          assert doc['indexed']
+          assert doc['license'] in ('CC-BY-4.0','CC-BY-3.0','CC-BY-SA-4.0','CC0-1.0')
+          assert len(doc['xml_sha256'])==64
+          assert doc['full_article_archived'] is False
+          assert all(not item['citation_verified'] for item in search['results'])
+          print('Licensed article indexed:',doc['title'],'license',doc['license'])
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: licensed-scientific-knowledge-index
+          path: |
+            reports/research_index.sqlite
+            reports/oa_ingest.json
+            reports/oa_search.json
+          if-no-files-found: warn
+          retention-days: 14
