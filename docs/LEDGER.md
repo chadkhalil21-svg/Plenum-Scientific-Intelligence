@@ -60,10 +60,21 @@ Two successive live public research runs independently returned five publication
 - [x] Add an allowlisted specialist router and research workflow combining literature, optional open-weight model proposer/critic, scientific tool execution, and an independent evidence supervisor.
 - [x] Add method comparison for RK45, DOP853 and Radau across four known-equation scientific domains; no source code or model weights are automatically modified.
 - [x] GitHub scientific lab verification: run 42152625695 passed all tests and five domain fixtures.
-- [ ] Verify complete updated Qwen3 model-driven investigation pipeline with live literature, science tools and provenance gate. It is not evidence of autonomous scientific discovery.
+- [x] Complete updated Qwen3 model-driven investigation pipeline with live literature, science tools and text-quality gate, run 42152898614. This is not evidence of autonomous scientific discovery.
 - [ ] Replace small known analytical fixtures with independently validated simulations and empirical benchmark data for each subject.
 - [ ] Evaluate model reasoning on unseen interdisciplinary research tasks before claiming genuine improvement.
 - [ ] Integrate extended open-source scientific solvers and add memory-based experimental selection, subject to budget and safety controls.
 
 ### v0.4 measured numerical efficiency (GitHub run 42152625695)
 Across four known-equation fixtures, DOP853 required 1,256 solver function evaluations, RK45 required 2,930, and Radau required 12,903. Every method passed its narrow analytic reference checks. This is an *evaluation-count* comparison for the specified tolerances and models, not a wall-time comparison, hardware energy measurement, validated scientific innovation, or universal algorithm ranking. The results remain proposals only; no code or weights were changed automatically.
+
+## v0.5 Small model training, validation and independent test
+- [x] Train standard logistic-regression and random-forest candidates on public botany, wine-chemistry and handwriting datasets, with frozen train/validation/test splits.
+- [x] Train a simple physics-informed model for known Newtonian gravity and evaluate on held-out radii outside the training range.
+- [x] Reproduce model choice in a separate evaluator and reject altered splits, unapproved models and prematurely disclosed test results.
+- [x] Free GitHub Actions run 42154005299 passed and produced the test report; candidates exceeded dummy baselines in all four tasks.
+- [x] Held-out accuracy: botany 97.37% versus 31.58% dummy; wine 100% versus 40% dummy; digits 96.67% versus 10.22% dummy. Physics synthetic MAE: 8.32e-16 versus 3.60 m/s² dummy.
+- [ ] Persist and verify model artifacts securely for optional manual deployment, without loading untrusted serialized code.
+- [ ] Evaluate the foundation language model against genuinely independent scientific reasoning benchmarks, rather than just public reference datasets.
+- [ ] Set up bounded, parameter-efficient training of open-weight language models once appropriate GPU capacity is available.
+- [ ] Run qualified expert review of any proposed new scientific invention. This result does not establish AGI, consciousness or general self-improvement.

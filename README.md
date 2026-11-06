@@ -78,3 +78,14 @@ For optional open-weight model-driven hypothesis proposer and independent critic
 You can run **Verified Scientific Simulation Lab** using GitHub Actions from an iPad. The Qwen3 open-weight model test is separate and more expensive in CPU time, but uses no paid inference subscription. The source code never auto-deploys proposed changes.
 
 Scientific tool references: https://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.solve_ivp.html and https://rdkit.org/docs/. This repository depends on these packages; it does not copy their source trees.
+
+## v0.5: Actual model training and evaluation
+
+Run **Scientific Model Training and Holdout Evaluation** in GitHub Actions. It trains small classification and physics-regression models with scikit-learn. Model families are selected from validation data, independently replayed, and evaluated on reserved held-out examples. No paid model API or GPU is required. The trained models are **not** Qwen3 weights, AGI, new inventions or scientific discoveries.
+
+```sh
+python -m pip install -e ".[ml]"
+plenum train-models --out reports/model_training.json
+```
+
+Full measurements, limits and next steps: [docs/MODEL_TRAINING.md](docs/MODEL_TRAINING.md).

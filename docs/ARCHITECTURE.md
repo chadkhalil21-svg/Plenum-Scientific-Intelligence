@@ -39,3 +39,8 @@ Public run artifacts are transferred to the research-memory branch via a separat
 - Benchmark: compare RK45, DOP853 and Radau across four domains. Recommend the method with fewest solver function evaluations only **for these fixtures**; record without deploying or changing model weights.
 
 Remaining: real external datasets, task-specific scientific model adapters, multi-agent model scaling, robust domain coverage, safe execution sandboxes, expert verification and independently established generalization. GitHub Actions is a transient CPU runner and does not represent permanent autonomous AGI hosting.
+
+## v0.5 Verified model-training pipeline
+Allowlisted data sources → disjoint train/development/holdout partitions → two actual model families trained per task → candidate choice based solely on validation → independent replay and isolated holdout audit → JSON evidence artifact → human review. Test data and results are never supplied to the model-choice procedure. Demonstrates training of task-specific small models, **not** ongoing autonomous improvement of the underlying language model.
+
+A future foundation-model optimization service will require model-weight license checks, suitable GPU compute, reproducible training dataset provenance, safety and privacy controls, unseen interdisciplinary evaluations, checkpoint signatures, rollback and human approval. No automatic fine-tuning, deployment or production promotion is enabled.
