@@ -16,7 +16,7 @@ from xml.etree import ElementTree as ET
 import json
 import re
 
-MAX_BYTES = 300_000
+MAX_BYTES = 550_000
 YT_ATOM = "{http://www.w3.org/2005/Atom}"
 YT_NS = "{http://www.youtube.com/xml/schemas/2015}"
 NASA_CHANNEL_ID = "UCLA_DiR1FfKNvjuUpBHmylQ"
@@ -44,8 +44,11 @@ JOURNALS = {
     "The Journal of Creative Behavior": ("0022-0175", "creativity"),
 }
 LAB_FEEDS = {
-    "MIT News": "https://news.mit.edu/?format=feed&type=rss",
+    "MIT News": "https://news.mit.edu/rss/research",
     "NASA Updates": "https://www.nasa.gov/feed/",
+    "Stanford News": "https://news.stanford.edu/rss/index.xml",
+    "NIH News": "https://www.nih.gov/news-releases/feed.xml",
+    "Nature Journal": "https://www.nature.com/nature.rss",
 }
 ALL_PROVIDER_NAMES = ("crossref", "biorxiv", "medrxiv", "mit_news",
                       "nasa_news", "nasa_youtube")
@@ -188,21 +191,36 @@ def parse_newsfeed(raw, provider):
     if root.tag=="rss":
         items=root.findall(".//channel/item")
         for item in items[:5]:
-            link=_safe_source_link(item.findtext("link"), {"news.mit.edu","www.nasa.gov","nasa.gov"})
+            link=_safe_source_link(item.findtext("link"), {"news.mit.edu","www.nasa.gov","nasa.gov","news.stanford.edu","www.nih.gov","nih.gov","www.nature.com"})
             title=" ".join((item.findtext("title") or "").split())
             if link and title:
-                result.append({"source":provider,"tier":"institutional_news_not_independent_verification",
+                result.append({"source":provider,"tier":("publisher_updates_metadata" if provider=="Nature Journal"
+                                       else "institutional_news_not_independent_verification"),
                                "title":title[:300], "url":link,
                                "published":(item.findtext("pubDate") or "")[:90],
                                "original_research_peer_review_confirmed":False})
+    elif root.tag=="{http://www.w3.org/1999/02/22-rdf-syntax-ns#}RDF":
+        for item in root.findall("{http://purl.org/rss/1.0/}item")[:5]:
+            namespace="{http://purl.org/rss/1.0/}"
+            link=_safe_source_link(item.findtext(namespace+"link"),{"news.mit.edu","www.nasa.gov","nasa.gov","news.stanford.edu","www.nih.gov","nih.gov","www.nature.com"})
+            title=" ".join((item.findtext(namespace+"title") or "").split())
+            if link and title:
+                result.append({
+                    "source":provider,
+                    "tier":("publisher_updates_metadata" if provider=="Nature Journal"
+                                       else "institutional_news_not_independent_verification"),
+                    "title":title[:300],"url":link,
+                    "published":str(item.findtext("{http://purl.org/dc/elements/1.1/}date") or "")[:40],
+                    "original_research_peer_review_confirmed":False})
     elif root.tag==YT_ATOM+"feed":
         for item in root.findall(YT_ATOM+"entry")[:5]:
             l=item.find(YT_ATOM+"link")
             link=_safe_source_link(l.get("href") if l is not None else None,
-                                   {"news.mit.edu","www.nasa.gov","nasa.gov"})
+                                   {"news.mit.edu","www.nasa.gov","nasa.gov","news.stanford.edu","www.nih.gov","nih.gov","www.nature.com"})
             title=" ".join((item.findtext(YT_ATOM+"title") or "").split())
             if link and title:
-                result.append({"source":provider,"tier":"institutional_news_not_independent_verification",
+                result.append({"source":provider,"tier":("publisher_updates_metadata" if provider=="Nature Journal"
+                                       else "institutional_news_not_independent_verification"),
                                "title":title[:300],"url":link,
                                "published":(item.findtext(YT_ATOM+"published") or "")[:40],
                                "original_research_peer_review_confirmed":False})
