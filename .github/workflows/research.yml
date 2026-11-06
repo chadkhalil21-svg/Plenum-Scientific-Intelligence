@@ -43,6 +43,36 @@ jobs:
             QUERY="$REQUESTED_QUERY"
           fi
           python -m plenum_ai.cli mission --query "$QUERY" --memory-dir prior-knowledge/memory/entries --simulation heat --out reports/mission.json
+      - name: Rebuild searchable memory and retrieve current multidisciplinary metadata
+        env:
+          REQUESTED_QUERY: ${{ github.event.inputs.query }}
+        shell: bash
+        run: |
+          if [ -z "$REQUESTED_QUERY" ]; then
+            QUERY="artificial intelligence for scientific discovery"
+          else
+            QUERY="$REQUESTED_QUERY"
+          fi
+          python -m plenum_ai.cli import-public-memory \
+            --dir prior-knowledge/memory/entries \
+            --db reports/daily_science_index.sqlite \
+            --out reports/daily_recovered_memory.json
+          python -m plenum_ai.cli index-literature \
+            --query "$QUERY" --online \
+            --db reports/daily_science_index.sqlite \
+            --out reports/daily_federated_literature.json
+          python -m plenum_ai.cli search-knowledge \
+            --query "$QUERY" \
+            --db reports/daily_science_index.sqlite \
+            --out reports/daily_source_search.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path("reports/daily_federated_literature.json").read_text())
+          assert not p["fulltext_added"]
+          print("Daily external metadata indexed:", p["metadata_records_indexed"])
+          print("All unavailable providers are explicitly reported, not fabricated.")
+          PY
       - name: Independent narrow improvement benchmark
         run: python -m plenum_ai.cli improve --out reports/improvement.json
       - name: Verify live source retrieval and numerical benchmark
