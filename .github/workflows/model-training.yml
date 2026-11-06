@@ -1,0 +1,53 @@
+name: Scientific Model Training and Holdout Evaluation
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/model-training.yml'
+      - 'src/plenum_ai/trainlab.py'
+      - 'tests/test_trainlab.py'
+      - 'pyproject.toml'
+permissions:
+  contents: read
+concurrency:
+  group: bounded-scientific-training
+  cancel-in-progress: true
+jobs:
+  train-and-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install CPU-based machine-learning tools
+        run: python -m pip install -e ".[ml]"
+      - name: Verify split isolation and candidate selection
+        run: python -m unittest discover -s tests -p 'test_trainlab.py' -v
+      - name: Train models and assess disjoint scientific holdouts
+        run: python -m plenum_ai.cli train-models --out reports/model_training.json
+      - name: Verify no test leakage or silent deployment
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("reports/model_training.json").read_text())
+          assert report["evaluated_tasks"] == 4
+          assert report["candidate_beats_dummy_in_all_tasks"], report
+          assert report["automatic_model_promotion"] is False
+          assert report["AGI_demonstrated"] is False
+          for item in report["tasks"]:
+              proposal, audit = item["proposal"], item["audit"]
+              assert proposal["test_results"] == "sealed_until_independent_audit"
+              assert audit["independent_selection_reproduced"]
+              assert audit["holdout_used_for_selection"] is False
+              assert audit["trained_weights_persisted"] is False
+              assert audit["beats_baseline_on_held_out_examples"]
+          print("All four task-specific model candidates trained and passed held-out baseline checks.")
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: scientific-model-training-results
+          path: reports/model_training.json
+          retention-days: 14
