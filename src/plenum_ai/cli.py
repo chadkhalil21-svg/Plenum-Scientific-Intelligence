@@ -67,6 +67,9 @@ def main():
     qa = commands.add_parser("eval-science")
     qa.add_argument("--count", type=int, default=12)
     qa.add_argument("--out", default="reports/science_reasoning.json")
+    tune = commands.add_parser("fine-tune-science")
+    tune.add_argument("--out", default="reports/qwen3_finetune.json")
+    tune.add_argument("--checkpoint-dir", default="candidates/qwen3-science-v1")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -145,6 +148,15 @@ def main():
         print("External science evaluation:", report["correct"], "/", report["total"],
               "data revision:", report["source"]["revision"],
               "model revision:", report["model_revision"])
+    elif args.action == "fine-tune-science":
+        from .fine_tune import run_fine_tuning
+        report = run_fine_tuning(output_dir=args.checkpoint_dir, report_file=args.out)
+        print("LoRA candidate training:", report["training_steps"],
+              "optimizer steps; baseline:", report["baseline"]["correct"],
+              "/", report["baseline"]["total"],
+              "candidate:", report["candidate"]["correct"],
+              "/", report["candidate"]["total"],
+              "automatically deployed:", report["automatic_model_promotion"])
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,
