@@ -187,6 +187,11 @@ def main():
     horizon.add_argument("--out", default="reports/world_horizon.json")
     horizon_registry = commands.add_parser("horizon-catalog")
     horizon_registry.add_argument("--out", default="reports/horizon_catalog.json")
+    build = commands.add_parser("build-program")
+    build.add_argument("--kind", choices=["research_cli","data_validator","geometry_designer"], default="research_cli")
+    build.add_argument("--topic", required=True)
+    build.add_argument("--dir", default="reports/generated_program")
+    build.add_argument("--out", default="reports/program_manifest.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -490,6 +495,12 @@ def main():
         result=source_catalog()
         print("Public-source catalog:",save_json(args.out,result),
               "sources:",len(result["providers"]))
+    elif args.action == "build-program":
+        from .program_foundry import generate_program
+        report=generate_program(args.kind,args.topic,args.dir)
+        print("Original review-required program:",save_json(args.out,report),
+              "files generated:",report["file_count"],
+              "deployed:",not report["generated_program_has_not_been_deployed"])
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,

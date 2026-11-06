@@ -32,10 +32,19 @@ on:
           - world-news
           - journals
           - code-ecosystem
+          - build-program
       question:
         description: "PUBLIC research question only. Do not enter patent or private data."
         required: true
         default: "Open scientific research on aerospace and materials"
+      program_kind:
+        description: "Reviewed program starter kind"
+        required: false
+        type: choice
+        options:
+          - research_cli
+          - data_validator
+          - geometry_designer
       channel_id:
         description: "Public YouTube UC channel ID, or nasa"
         required: false
@@ -58,6 +67,7 @@ jobs:
       QUESTION: ${{ github.event.inputs.question || 'Evaluate orbit and thermal cooling' }}
       PMCID: ${{ github.event.inputs.pmcid || 'PMC12247565' }}
       YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+      PROGRAM_KIND: ${{ github.event.inputs.program_kind || 'research_cli' }}
       CHANNEL_ID: ${{ github.event.inputs.channel_id || 'nasa' }}
       LANGGRAPH_STRICT_MSGPACK: "true"
     steps:
@@ -78,6 +88,7 @@ jobs:
             knowledge|licensed-article) python -m pip install -e . ;;
             verify) python -m pip install -e ".[science,ml,orchestration,astronomy,empirical]" ;;
             ecosystem) python -m pip install -e . ;;
+            build-program) python -m pip install -e . ;;
             discovery|creative|youtube|frontiers) python -m pip install -e . ;;
             world-intelligence|universities|defense-public|foreign-affairs|business|environment|world-news|journals|code-ecosystem) python -m pip install -e . ;;
             parametric-design) python -m pip install -e . && sudo apt-get update -qq && sudo apt-get install -y -qq openscad ;;
@@ -154,6 +165,11 @@ jobs:
             code-ecosystem)
               plenum world-horizon --topic "$QUESTION" --category software --online --out reports/world_horizon.json
               ;;
+            build-program)
+              plenum build-program --kind "$PROGRAM_KIND" --topic "$QUESTION" \
+                --dir reports/generated_program --out reports/program_manifest.json
+              (cd reports/generated_program && python -m unittest discover -s . -p 'test_generated.py' -v)
+              ;;
             parametric-design)
               plenum parametric-design --render --dir reports/parametric_cad --out reports/cad_manifest.json
               ;;
@@ -192,6 +208,12 @@ jobs:
               assert all(item["untrusted_external_content"] for item in r["records"])
               print("Public-source availability:",[(p["source"],p["status"])
                                                     for p in r["providers"]])
+          if task=="build-program":
+              r=json.loads(Path("reports/program_manifest.json").read_text())
+              assert r["generated_program_has_not_been_deployed"]
+              assert r["human_code_review_required"]
+              assert not r["model_weights_self_modified"]
+              print("Three original starter files generated; no code deployed.")
           if task=="frontiers":
               report=json.loads(Path("reports/research_frontiers.json").read_text())
               assert report["schema"]=="plenum-research-frontiers-v1"
