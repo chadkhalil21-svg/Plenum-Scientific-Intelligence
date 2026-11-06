@@ -1,0 +1,52 @@
+name: Original Parametric CAD Design and OpenSCAD Mesh
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/parametric-design.yml"
+      - "src/plenum_ai/cad_studio.py"
+      - "tests/test_cad_studio.py"
+permissions:
+  contents: read
+concurrency:
+  group: plenum-parametric-design-reference
+  cancel-in-progress: true
+jobs:
+  mesh-design:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - name: Install verified open-source 3D CAD exporter
+        run: |
+          python -m pip install -e .
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq openscad
+      - name: Test valid original dimensions and exporter contract
+        run: python -m unittest discover -s tests -p test_cad_studio.py -v
+      - name: Compile editable OpenSCAD design to a 3D STL mesh
+        run: python -m plenum_ai.cli parametric-design --render --dir reports/cad --out reports/cad_manifest.json
+      - name: Verify actual output and refuse manufacturing claims
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('reports/cad_manifest.json').read_text())
+          assert r['schema']=='plenum-original-parametric-design-v1'
+          assert r['mesh_export_verified']
+          assert r['mounting_holes']==8
+          assert r['human_review_required_before_manufacture']
+          assert not r['structural_strength_or_safety_validated']
+          assert not r['manufacturing_tolerances_verified']
+          assert Path(r['source_scad']).is_file()
+          assert Path(r['stl_mesh']).stat().st_size > 1000
+          print('Original editable 3D CAD mesh exported:',r['stl_mesh'])
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: open-source-original-3d-parametric-cad
+          path: reports/
+          retention-days: 14
