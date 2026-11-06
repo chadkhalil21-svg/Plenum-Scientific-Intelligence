@@ -125,7 +125,7 @@ def search_index(path, query, limit=8):
         rows = conn.execute("""
             SELECT p.key,p.title,p.doi,p.url,p.source,p.license,p.body,
                    p.body_sha256
-            FROM paper_search s JOIN papers p ON s.key=p.key
+            FROM paper_search JOIN papers p ON paper_search.key=p.key
             WHERE paper_search MATCH ?
             ORDER BY bm25(paper_search) LIMIT ?
         """, (expression, limit)).fetchall()

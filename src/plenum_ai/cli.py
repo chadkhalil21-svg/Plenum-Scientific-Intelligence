@@ -105,6 +105,29 @@ def main():
     evidence_audit = commands.add_parser("audit-evidence-gated")
     evidence_audit.add_argument("--proposal", required=True)
     evidence_audit.add_argument("--out", default="reports/gated_audit.json")
+    durable = commands.add_parser("durable-research")
+    durable.add_argument("--query", required=True)
+    durable.add_argument("--db", default="reports/research_checkpoints.sqlite")
+    durable.add_argument("--thread-id", required=True)
+    durable.add_argument("--tools", default="scipy.orbit,scipy.thermal")
+    durable.add_argument("--out", default="reports/durable_research.json")
+    recover = commands.add_parser("durable-state")
+    recover.add_argument("--db", required=True)
+    recover.add_argument("--thread-id", required=True)
+    recover.add_argument("--out", default="reports/recovered_graph.json")
+    index = commands.add_parser("index-literature")
+    index.add_argument("--query", required=True)
+    index.add_argument("--db", default="reports/research_index.sqlite")
+    index.add_argument("--online", action="store_true")
+    index.add_argument("--out", default="reports/knowledge_ingest.json")
+    fulltext = commands.add_parser("index-open-article")
+    fulltext.add_argument("--pmcid", required=True)
+    fulltext.add_argument("--db", default="reports/research_index.sqlite")
+    fulltext.add_argument("--out", default="reports/oa_ingest.json")
+    search_index = commands.add_parser("search-knowledge")
+    search_index.add_argument("--query", required=True)
+    search_index.add_argument("--db", default="reports/research_index.sqlite")
+    search_index.add_argument("--out", default="reports/knowledge_search.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -278,6 +301,34 @@ def main():
         result=audit_gated_evidence(proposals)
         print("Independent evidence-gated audit:",save_report(args.out,result),
               "guard wins:",result["guard_wins_against_persistence"],"/",result["trials"])
+    elif args.action == "durable-research":
+        from .durable_graph import run_persistent
+        report=run_persistent(args.query, args.db, args.thread_id,
+                              tool_keys=[t.strip() for t in args.tools.split(",")],
+                              offline=True, optimize=("scipy.thermal" in args.tools))
+        print("Persistent scientific graph:", save_json(args.out,report),
+              "status:",report["status"])
+    elif args.action == "durable-state":
+        from .durable_graph import inspect_persistent
+        report=inspect_persistent(args.db, args.thread_id)
+        print("Recovered previous research:",save_json(args.out,report))
+    elif args.action == "index-literature":
+        from .federated_sources import search_federated
+        from .knowledge_index import index_federated
+        search=search_federated(args.query, offline=not args.online)
+        report=index_federated(args.db, search)
+        report["provider_status"]=[{"provider":p["provider"],"status":p["status"]}
+                                   for p in search["providers"]]
+        print("Searchable bibliography:",save_json(args.out,report))
+    elif args.action == "index-open-article":
+        from .open_access import index_open_article
+        report=index_open_article(args.db, args.pmcid)
+        print("Licensed open-access paper indexed:",save_json(args.out,report))
+    elif args.action == "search-knowledge":
+        from .knowledge_index import search_index as local_search
+        report=local_search(args.db, args.query)
+        print("Citation-ready local library:",save_json(args.out,report),
+              "records:",len(report["results"]))
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,

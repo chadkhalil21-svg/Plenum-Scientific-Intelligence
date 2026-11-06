@@ -138,7 +138,7 @@ def _verify(state):
         }
     }
 
-def build_graph():
+def build_graph(checkpointer=None):
     from langgraph.graph import START, END, StateGraph
     graph = StateGraph(ResearchState)
     graph.add_node("planner", _planner)
@@ -150,9 +150,9 @@ def build_graph():
     graph.add_edge("worker", "dependent_openmdao")
     graph.add_edge("dependent_openmdao", "independent_verifier")
     graph.add_edge("independent_verifier", END)
-    return graph.compile()
+    return graph.compile(checkpointer=checkpointer)
 
-def run_network(question, tool_keys=None, offline=True, optimize=True, graph=None):
+def run_network(question, tool_keys=None, offline=True, optimize=True, graph=None, invoke_config=None):
     if not isinstance(question, str) or not 1 <= len(question.strip()) <= 600:
         raise ValueError("Public research question must have 1..600 characters")
     default = ("scipy.orbit", "scipy.thermal", "scipy.kinetics", "rdkit.molecule")
@@ -164,7 +164,7 @@ def run_network(question, tool_keys=None, offline=True, optimize=True, graph=Non
         "question": question, "tool_keys": keys,
         "offline": bool(offline), "enable_optimization": bool(optimize),
         "results": [],
-    }, config={"max_concurrency": 5, "recursion_limit": 12})
+    }, config={**{"max_concurrency": 5, "recursion_limit": 12}, **(invoke_config or {})})
     order = {key: index for index, key in enumerate(keys)}
     results = sorted(result["results"], key=lambda row: order.get(row["tool"], 100))
     registry = get_registry()
