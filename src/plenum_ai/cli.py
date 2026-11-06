@@ -158,6 +158,9 @@ def main():
     delta.add_argument("--report", required=True)
     delta.add_argument("--history", required=True)
     delta.add_argument("--out", default="reports/discovery_delta.json")
+    ideas = commands.add_parser("invention-ideas")
+    ideas.add_argument("--report", required=True)
+    ideas.add_argument("--out", default="reports/serendipity.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -425,6 +428,12 @@ def main():
         result=compare_discovery(snapshot,args.history)
         print("New public sources since prior archive:",save_json(args.out,result),
               "first-seen:",result["new_to_this_archive"])
+    elif args.action == "invention-ideas":
+        from .serendipity import hypotheses_from_sources
+        report=json.loads(Path(args.report).read_text(encoding="utf-8"))
+        output=hypotheses_from_sources(report)
+        print("Speculative research-linked creative ideas:",
+              save_json(args.out,output),"ideas:",output["idea_count"])
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,

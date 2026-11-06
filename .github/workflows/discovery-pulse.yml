@@ -38,6 +38,7 @@ jobs:
         run: |
           python -m plenum_ai.cli discovery-pulse \
             --topic "$WATCH_TOPIC" --out reports/daily_discovery.json
+          python -m plenum_ai.cli invention-ideas --report reports/daily_discovery.json --out reports/interdisciplinary_ideas.json
       - name: Audit all sources, timestamp meanings and unverified claims
         run: |
           python - <<'PY'
@@ -120,11 +121,15 @@ jobs:
           delta=json.loads(Path('public-reports/discovery_delta.json').read_text())
           assert delta['schema']=='plenum-research-new-to-archive-v1'
           assert delta['new_to_this_archive']<=r['distinct_records']
+          inspiration=json.loads(Path('public-reports/interdisciplinary_ideas.json').read_text())
+          assert not inspiration['breakthrough_verified']
+          assert not inspiration['copyrighted_paper_contents_copied']
           content={
               'schema':'plenum-public-cross-domain-observatory-v1',
               'run_id':os.environ['RUN_ID'],
               'source_revision':os.environ['REVISION'],
               'snapshot':r,'delta_from_public_memory':delta,
+              'interdisciplinary_inspiration':inspiration,
               'breakthrough_claims_verified':False,
               'public_metadata_only':True,
           }
