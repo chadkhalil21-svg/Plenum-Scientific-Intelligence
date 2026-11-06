@@ -35,3 +35,9 @@
 - No unrestricted dynamic Python, shell, privileged network operations, or self-deployment.
 - Tests demonstrate fixed scientific examples, not validated novel inventions, clinical efficacy, general-purpose science modeling or AGI.
 - Github Actions uses temporary public CPU environments; scale beyond these examples requires job scheduling, quotas and computing budgets.
+
+## v0.8 Additional verified scientific integrations
+
+- **Astropy + NASA Exoplanet Archive:** unit-aware Keplerian calculations on NASA Planetary Systems records (run 42160359555). Code is in `src/plenum_ai/nasa_exoplanets.py`. Astropy is an optional package, installed using `.[astronomy]`. The sample is not a proof of independent physical validation because some archive orbital parameters are mathematically derived.
+- **PyBaMM 26.10.1.1:** two working default electrochemical lithium-ion simulations, SPM and SPMe (run 42160642565). Code is in `src/plenum_ai/battery_model.py`; install using `.[battery]`. Currently a verified isolated workflow, not a general parallel-worker tool; no measured cell validation or patented battery implementation.
+- Both integrations retain explicit scientific-evidence and provenance boundaries, work without paid AI inference subscriptions, and use public GitHub Actions runners.

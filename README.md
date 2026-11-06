@@ -129,3 +129,20 @@ Real federated verification (GitHub run 42159408960): OpenAlex, Europe PMC and S
 NASA Aviary 1.0.1 executed its bundled public Advanced Single Aisle mission example under a bounded SLSQP optimizer configuration (GitHub run 42159565273). Command completion was verified, but optimization convergence and actual aircraft performance have **not** been independently established.
 
 K-Dense's pinned RDKit scientific skill document was safely retrieved as a read-only untrusted reference without executing any instructions (GitHub run 42159591148).
+
+## v0.8: NASA observations and battery electrochemistry
+
+Two additional public scientific integrations have now passed live GitHub tests:
+
+- **NASA Exoplanet Archive + Astropy:** retrieved 80 public catalog records and calculated Keplerian orbital periods with astronomical units and physical constants. 73/80 records (91.25%) had predicted periods within 10% of catalog values, with a median absolute relative difference of 0.159%. **Not independent experimental proof:** some catalog semimajor axes may be derived from the periods themselves. [Methodology](docs/EXTERNAL_EVIDENCE.md).
+- **PyBaMM:** ran actual default SPM and SPMe lithium-ion electrochemical discharge models for ten minutes. Both simulations completed with bounded voltage decreases. **Not a test of Plenum's solid-state battery or actual measured cell performance.** [Model evidence](docs/BATTERY_MODELS.md).
+
+```sh
+python -m pip install -e ".[astronomy]"
+plenum nasa-exoplanets --out reports/nasa_exoplanet_consistency.json
+
+python -m pip install -e ".[battery]"
+plenum battery-simulation --minutes 10 --out reports/battery_simulation.json
+```
+
+Use the corresponding NASA and PyBaMM workflows in GitHub Actions to reproduce on free public CPU runners. PyBaMM remains an isolated science workflow until its dependency environment is reviewed for shared parallel-agent execution. Neither integration is an autonomous invention or proof of AGI.

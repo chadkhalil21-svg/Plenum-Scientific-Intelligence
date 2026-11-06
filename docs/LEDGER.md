@@ -112,3 +112,17 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [x] Implement rule-based automatic routing by research-question terms across mechanics, thermal modeling, kinetics, circuit dynamics, RDKit and literature metadata; dependent optimization requires a thermal result.
 - [ ] Replace keyword routing with independently benchmarked, resource-aware model planning. The current router is not a general AI planner.
 - [ ] Implement persistent multi-job DAG scheduling with durable checkpoints, timeouts, quota accounting and isolation for expensive scientific tools.
+
+## v0.8 NASA evidence pipeline and electrochemical battery engine
+
+- [x] Implement Astropy calculations for stellar-mass and orbital-semimajor-axis based Keplerian period predictions with explicit physical units.
+- [x] Fetch a bounded set of NASA Exoplanet Archive public Planetary Systems parameters through TAP. Successfully analyzed 80 catalog records, with 73/80 within 10% and 0.159% median absolute fractional discrepancy (GitHub run 42160359555).
+- [x] Label the NASA result as catalog consistency only; independent empirical validation is **false** because orbital semimajor axes can be derived from the same law.
+- [x] Add NASA evidence tool to the approved scientific registry and allowlisted multi-tool graph; maintain offline-no-fabrication behavior.
+- [x] Install PyBaMM v26.10.1.1 in a separate bounded workflow and execute two ten-minute default lithium-ion battery simulations (run 42160642565).
+- [x] PyBaMM SPM 3.7801 V to 3.7104 V; SPMe 3.7708 V to 3.6914 V. Models completed and passed bounded output checks; **no real battery data or proprietary parameters used**.
+- [x] Updated full regression and parallel-tool integration tests to include NASA tool selection without granting new privileges.
+- [ ] Identify independent measured astronomical quantities, their uncertainties and data provenance to avoid circular model comparisons.
+- [ ] Compare PyBaMM models against a suitably licensed measured battery dataset with out-of-sample evaluation before suggesting real cell performance.
+- [ ] Extend the persistent scientific-evidence ledger beyond bibliographic metadata and small demonstration artifacts, without disclosing proprietary research.
+- [ ] Demonstrate reliable AI-directed selection of models, falsifiable hypotheses and verified improvements on truly novel interdisciplinary tasks. Not yet AGI or scientific invention.

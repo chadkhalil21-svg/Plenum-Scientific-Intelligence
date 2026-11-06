@@ -58,3 +58,11 @@ A worker is a **tool call**, not an independently conscious agent. Five parallel
 Independent metadata retrieval also offers a separate three-source concurrent pool across OpenAlex, Europe PMC and Semantic Scholar. K-Dense references remain pinned, read-only and untrusted until explicitly reviewed. NASA Aviary's official package installation check passed; an actual aircraft mission remains unvalidated. No private patent data or API keys belong in this public environment.
 
 The most important gap toward a credible agentic scientific AI is **question-specific experimental design and validated models**. Current runnable examples use known equations, standard molecules and one simple optimization, not frontier scientific discovery. Future stages must evaluate agents on unseen research tasks and promote improvements only after independent review.
+
+## v0.8 External scientific evidence and specialized electrochemistry
+
+The tool registry now includes NASA's Exoplanet Archive, queried using a fixed, bounded public TAP query. Astropy computes periods from catalog stellar masses and orbital sizes with dimensional units. Results are checked for physical ranges, summarized quantitatively, and flagged as **catalog consistency only** because some catalog inputs may be calculated using the same Keplerian relationship. The public NASA observations are external data, but the underlying measurements are not established as independent.
+
+A separate reproducible PyBaMM 26.10.1.1 workflow runs default lithium-ion SPM and SPMe discharge models. This is a substantive electrochemical modeling library, not our earlier ideal RC circuit. It is intentionally isolated from the general LangGraph worker environment until computational budgets, parameter provenance and model dependencies are reviewed. It produces no cell safety or patented-design claims.
+
+All live sources are read-only. No model weights are altered, no agents execute unreviewed external instructions, and no physical discovery is promoted without independent experimental evidence. The next research target is a paired external measurement/model comparison with verified input provenance, uncertainty and held-out observations.
