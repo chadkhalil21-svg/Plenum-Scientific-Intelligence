@@ -97,3 +97,21 @@ The Qwen3-0.6B model scored **2/12 (16.7%)** on the initial externally sourced A
 Our CPU experiment then trained a real, tiny LoRA adapter with **286,720 trainable parameters** across **two gradient steps**, using original public instructional examples. Its reserved 8-question score was **2/8 before and 2/8 after**. This is **no demonstrated improvement**.
 
 The SHA-256-verified adapter is available as a **14-day GitHub Actions artifact** from run 42157269113. It is an experimental candidate, not deployed or accepted into the base AI. Full methodology: [docs/SCIENTIFIC_REASONING.md](docs/SCIENTIFIC_REASONING.md).
+
+## v0.7: Multi-tool research network, pinned scientific integrations
+
+The scientific tool registry enables **several specialist tools concurrently**, followed by an explicit dependency-aware engineering optimization and independent numerical checks. [LangGraph](https://github.com/langchain-ai/langgraph) provides dynamic parallel fan-out and fan-in. [OpenMDAO](https://github.com/OpenMDAO/OpenMDAO), a NASA-origin multidisciplinary design framework, performs a constrained cooling-area optimization based on a prior verified SciPy thermal result.
+
+```sh
+python -m pip install -e ".[science,orchestration]"
+plenum tool-registry
+plenum parallel-research --query "Evaluate orbital, thermal, kinetic and molecular models"
+plenum scientific-skills
+plenum federated-literature --query "photonic memory" --online
+```
+
+From your iPad, open GitHub **Actions** to run **Parallel Scientific Tools and NASA OpenMDAO** or **Federated Scientific Literature**. These actions do not need a paid AI API. Independent tools execute concurrently, but use a bounded number of workers per batch.
+
+Scientific retrieval uses **OpenAlex, Europe PMC and Semantic Scholar** concurrently, recording failures and separating paper metadata from experimentally verified facts. K-Dense scientific skills are accessible through a **pinned, read-only catalog for review**, not automatically installed/executed. NASA Aviary v1.0.1 passed its official installation check (run 42159140408); full aircraft mission verification remains future work.
+
+No agent can execute arbitrary shell commands, grant permissions, install unreviewed skills or replace the deployed AI. See [integrations](docs/INTEGRATIONS.md) and [engineering architecture](docs/ARCHITECTURE.md).

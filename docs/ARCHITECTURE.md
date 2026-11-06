@@ -49,3 +49,12 @@ A future foundation-model optimization service will require model-weight license
 Qwen3-0.6B is loaded at a pinned public Hugging Face revision. The independent AI2 ARC-Challenge dataset is loaded at a pinned CC-BY-SA-4.0 revision, with deterministic sample IDs and answer order; test answers never appear as labeled correct in model prompts. Current score: 2/12 on the small public evaluation.
 
 A two-step PEFT LoRA experiment updates 286,720 low-rank adapter parameters on original public prompts. Separate reserved ARC questions are evaluated before and after the fixed training configuration. Result: 2/8 both times. No evidence of improvement. Candidate-only safetensors and a checksum manifest are uploaded to a GitHub workflow artifact, retained for 14 days, with no automatic promotion, deployment or payment. Longer-term model training requires stronger evaluation, independent review and suitable compute.
+
+## v0.7 Dependency-aware concurrent research
+The orchestrator uses LangGraph's worker map-reduce pattern: a planner creates an explicit allowlisted tool selection, Send dispatches independent tool workers concurrently, workers append structured results through a reducer, an OpenMDAO node runs only after verified SciPy thermal results exist, and an independent verifier checks known reference models, result completeness, dependency status, provenance and non-deployment.
+
+A worker is a **tool call**, not an independently conscious agent. Five parallel tools is a **per-batch safety bound**, not a permanent architecture ceiling. Large-scale research should use a durable queue, hierarchical dependency graph, per-tool memory/CPU/time budgets, worker isolation, idempotency and state checkpointing.
+
+Independent metadata retrieval also offers a separate three-source concurrent pool across OpenAlex, Europe PMC and Semantic Scholar. K-Dense references remain pinned, read-only and untrusted until explicitly reviewed. NASA Aviary's official package installation check passed; an actual aircraft mission remains unvalidated. No private patent data or API keys belong in this public environment.
+
+The most important gap toward a credible agentic scientific AI is **question-specific experimental design and validated models**. Current runnable examples use known equations, standard molecules and one simple optimization, not frontier scientific discovery. Future stages must evaluate agents on unseen research tasks and promote improvements only after independent review.

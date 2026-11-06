@@ -90,3 +90,18 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [ ] Use qualified science training examples with documented provenance, larger and more varied evaluations, and fixed predeclared improvement criteria.
 - [ ] Establish durable restricted checkpoint storage before training proprietary models or unpublished research; the public repository is not suitable.
 - [ ] Demonstrate measured, statistically supported improvements in generalizable scientific reasoning. No such improvement has been shown.
+
+## v0.7 Multi-tool orchestration and scientific integration
+- [x] Build a typed scientific tool registry with licenses, versions, dependency declarations and executable versus reference-only states.
+- [x] Run four scientific tools concurrently through LangGraph and verify their results.
+- [x] Feed SciPy material-cooling output into a dependent OpenMDAO constrained heat-rejection optimization. The numerical result is a **toy thermal design**, not empirical engineering validation.
+- [x] Verify the multi-tool GitHub Actions pipeline (run 42158954548).
+- [x] Create read-only curated K-Dense scientific skill catalog pinned to a published commit; no unreviewed instructions executed.
+- [x] Verify installation and official environment check for NASA Aviary 1.0.1 (run 42159140408). No aircraft mission results claimed.
+- [x] Implement bounded concurrent metadata search for OpenAlex, Europe PMC and Semantic Scholar, including deduplication and per-provider errors.
+- [ ] Verify live multi-provider results; availability is subject to API rate limits.
+- [ ] Validate a complete published NASA Aviary aircraft mission with known inputs and convergence evidence before claiming aircraft design integration.
+- [ ] Connect NASA GMAT, Lean 4, PyBaMM, OpenMM, PySCF, SU2, Astropy and domain-specialist software individually, with tests, licensing checks and bounded operating environments.
+- [ ] Add persistent multi-machine graph execution, isolated scientific environments, resource quotas and model/tool capability benchmarks.
+- [ ] Prove a complete question-specific hypothesis-to-validated-evidence workflow on external experimental data. Not yet achieved.
+- [ ] Achieve measurable, reproducible generalizable AI improvement. AGI and consciousness remain unsolved.
