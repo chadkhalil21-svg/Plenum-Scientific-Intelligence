@@ -182,7 +182,8 @@ def main():
     horizon.add_argument("--category", default="all",
                          choices=["all","universities","defense","foreign_affairs",
                                   "business","environment","news","journals",
-                                  "software","discoveries"])
+                                  "software","discoveries","art","music","design",
+                                  "health","funding","artificial_intelligence","physics"])
     horizon.add_argument("--online", action="store_true")
     horizon.add_argument("--out", default="reports/world_horizon.json")
     horizon_registry = commands.add_parser("horizon-catalog")

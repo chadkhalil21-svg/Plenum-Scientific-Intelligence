@@ -21,6 +21,13 @@ on:
           - journals
           - software
           - discoveries
+          - art
+          - music
+          - design
+          - health
+          - funding
+          - artificial_intelligence
+          - physics
   schedule:
     - cron: "37 7 * * *"
       timezone: "America/New_York"

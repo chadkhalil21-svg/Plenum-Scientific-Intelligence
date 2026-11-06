@@ -31,6 +31,13 @@ on:
           - environment
           - world-news
           - journals
+          - art
+          - music
+          - design
+          - health
+          - funding
+          - artificial_intelligence
+          - physics
           - code-ecosystem
           - build-program
       question:
@@ -90,7 +97,7 @@ jobs:
             ecosystem) python -m pip install -e . ;;
             build-program) python -m pip install -e . ;;
             discovery|creative|youtube|frontiers) python -m pip install -e . ;;
-            world-intelligence|universities|defense-public|foreign-affairs|business|environment|world-news|journals|code-ecosystem) python -m pip install -e . ;;
+            world-intelligence|universities|defense-public|foreign-affairs|business|environment|world-news|journals|art|music|design|health|funding|artificial_intelligence|physics|code-ecosystem) python -m pip install -e . ;;
             parametric-design) python -m pip install -e . && sudo apt-get update -qq && sudo apt-get install -y -qq openscad ;;
             music-analysis) python -m pip install -e ".[music]" ;;
             molecular-dynamics) python -m pip install -e ".[dynamics]" ;;
@@ -161,6 +168,27 @@ jobs:
               ;;
             journals)
               plenum world-horizon --topic "$QUESTION" --category journals --online --out reports/world_horizon.json
+              ;;
+            art)
+              plenum world-horizon --topic "$QUESTION" --category art --online --out reports/world_horizon.json
+              ;;
+            music)
+              plenum world-horizon --topic "$QUESTION" --category music --online --out reports/world_horizon.json
+              ;;
+            design)
+              plenum world-horizon --topic "$QUESTION" --category design --online --out reports/world_horizon.json
+              ;;
+            health)
+              plenum world-horizon --topic "$QUESTION" --category health --online --out reports/world_horizon.json
+              ;;
+            funding)
+              plenum world-horizon --topic "$QUESTION" --category funding --online --out reports/world_horizon.json
+              ;;
+            artificial_intelligence)
+              plenum world-horizon --topic "$QUESTION" --category artificial_intelligence --online --out reports/world_horizon.json
+              ;;
+            physics)
+              plenum world-horizon --topic "$QUESTION" --category physics --online --out reports/world_horizon.json
               ;;
             code-ecosystem)
               plenum world-horizon --topic "$QUESTION" --category software --online --out reports/world_horizon.json

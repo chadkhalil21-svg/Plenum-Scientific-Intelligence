@@ -15,7 +15,7 @@ import re
 
 MAX_BYTES = 1_250_000
 MAX_RESULTS = 4
-MAX_SOURCES = 16
+MAX_SOURCES = 32
 ATOM = "{http://www.w3.org/2005/Atom}"
 _VALID_QUERY = re.compile(r"^[\w\s,\-.()/+]{2,120}$", re.UNICODE)
 
@@ -23,6 +23,28 @@ _VALID_QUERY = re.compile(r"^[\w\s,\-.()/+]{2,120}$", re.UNICODE)
 # Availability is verified at runtime; an endpoint listed here is not asserted
 # to be healthy, or an official institutional partnership.
 SOURCES = {
+    "mit_music_research": {"category":"music", "type":"feed",
+        "url":"https://news.mit.edu/rss/topic/music", "publisher":"MIT Music and Technology"},
+    "mit_visual_arts": {"category":"art", "type":"feed",
+        "url":"https://news.mit.edu/rss/topic/arts", "publisher":"MIT Arts"},
+    "mit_architecture": {"category":"design", "type":"feed",
+        "url":"https://news.mit.edu/rss/topic/architecture", "publisher":"MIT Architecture"},
+    "nih_biomedical_news": {"category":"health", "type":"feed",
+        "url":"https://www.nih.gov/news-releases/feed.xml", "publisher":"U.S. National Institutes of Health"},
+    "nsf_new_discoveries": {"category":"discoveries", "type":"feed",
+        "url":"https://www.nsf.gov/rss/rss_www_news.xml", "publisher":"U.S. National Science Foundation"},
+    "nsf_open_funding": {"category":"funding", "type":"feed",
+        "url":"https://www.nsf.gov/rss/rss_www_funding_pgm_annc_inf.xml", "publisher":"U.S. National Science Foundation Funding"},
+    "nature_journal_news": {"category":"journals", "type":"feed",
+        "url":"https://www.nature.com/nature.rss", "publisher":"Nature Portfolio"},
+    "mit_technology_review": {"category":"news", "type":"feed",
+        "url":"https://www.technologyreview.com/stories.rss", "publisher":"MIT Technology Review"},
+    "un_climate_environment": {"category":"environment", "type":"feed",
+        "url":"https://news.un.org/feed/subscribe/en/news/topic/climate-change/feed/rss.xml", "publisher":"United Nations Climate News"},
+    "arxiv_ai_new_submissions": {"category":"artificial_intelligence", "type":"feed",
+        "url":"https://rss.arxiv.org/rss/cs.AI", "publisher":"arXiv Computer Science AI"},
+    "arxiv_physics_new_submissions": {"category":"physics", "type":"feed",
+        "url":"https://rss.arxiv.org/rss/physics", "publisher":"arXiv Physics"},
     "mit_labs": {"category":"universities", "type":"feed",
         "url":"https://news.mit.edu/rss/school/science", "publisher":"MIT News"},
     "harvard_research": {"category":"universities", "type":"feed",

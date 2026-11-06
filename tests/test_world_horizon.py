@@ -40,7 +40,9 @@ class WorldHorizonTests(unittest.TestCase):
     def test_registry_crosses_requested_public_domains(self):
         assert len(SOURCES)>=12
         for category in ("universities","defense","foreign_affairs","business",
-                         "environment","news","journals","software","discoveries"):
+                         "environment","news","journals","software","discoveries",
+                         "art","music","design","health","funding",
+                         "artificial_intelligence","physics"):
             self.assertIn(category,CATEGORIES)
         report=source_catalog()
         self.assertFalse(report["AGI_achieved"])
