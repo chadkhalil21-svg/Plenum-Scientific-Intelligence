@@ -52,6 +52,14 @@ def main():
     lab.add_argument("--method", choices=["RK45","DOP853","Radau"], default="RK45")
     methods = commands.add_parser("solver-benchmark")
     methods.add_argument("--out", default="reports/solver_benchmark.json")
+    team = commands.add_parser("investigate")
+    team.add_argument("--query", required=True)
+    team.add_argument("--domains", default="mechanics,chemistry,materials,electronics,molecules")
+    team.add_argument("--out", default="reports/investigation.json")
+    team.add_argument("--offline", action="store_true")
+    team.add_argument("--memory-dir")
+    team.add_argument("--model", help="Existing local Ollama model")
+    team.add_argument("--hf-model", action="store_true")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -102,6 +110,21 @@ def main():
         from .lab import benchmark_methods
         result = benchmark_methods()
         print("Numerical solver benchmark:", save_json(args.out,result))
+    elif args.action == "investigate":
+        if args.model and args.hf_model:
+            parser.error("Choose either Ollama or Qwen3")
+        from .investigate import investigate
+        if args.hf_model:
+            from .hf_model import hf_generate, APPROVED_MODEL
+            name, generator = APPROVED_MODEL, hf_generate
+        else:
+            name, generator = args.model, None
+        report = investigate(args.query, domains=[s.strip() for s in args.domains.split(",")],
+                             offline=args.offline, model=name, generator=generator,
+                             memory_dir=args.memory_dir)
+        print("Research team:", save_json(args.out, report),
+              "verified known tools:", report["workflow_verified_as_known_tool_demonstration"],
+              "new discovery:", report["hypotheses_verified"])
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,
