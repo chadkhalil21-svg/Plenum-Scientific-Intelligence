@@ -173,6 +173,10 @@ def main():
     design.add_argument("--render",action="store_true")
     design.add_argument("--dir",default="reports/parametric_cad")
     design.add_argument("--out",default="reports/cad_manifest.json")
+    music = commands.add_parser("music-analysis")
+    music.add_argument("--topic",default="procedural light and sound")
+    music.add_argument("--seed",type=int,default=1701)
+    music.add_argument("--out",default="reports/music_analysis.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -458,6 +462,12 @@ def main():
                              args.hole_diameter,render=args.render)
         print("Parametric original design:",save_json(args.out,report),
               "mesh exported:",report["mesh_export_verified"])
+    elif args.action == "music-analysis":
+        from .music_analysis import analyze_original_music
+        report=analyze_original_music(args.topic,args.seed)
+        print("Original score music21 study:",save_json(args.out,report),
+              "notes:",report["note_count"],
+              "artistic novelty verified:",report["artistic_quality_or_originality_verified"])
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,
