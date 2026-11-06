@@ -88,6 +88,9 @@ def main():
     federation.add_argument("--out", default="reports/federated_literature.json")
     nasa = commands.add_parser("nasa-exoplanets")
     nasa.add_argument("--out", default="reports/nasa_exoplanet_consistency.json")
+    battery = commands.add_parser("battery-simulation")
+    battery.add_argument("--minutes", type=int, default=10)
+    battery.add_argument("--out", default="reports/battery_simulation.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -215,6 +218,13 @@ def main():
               "planets:", report["observations_evaluated"],
               "within ten percent:", report["fraction_within_ten_percent"],
               "independent proof:", report["independent_empirical_validation"])
+    elif args.action == "battery-simulation":
+        from .battery_model import simulate_discharge
+        report=simulate_discharge(minutes=args.minutes)
+        print("PyBaMM electrochemical models:",
+              save_json(args.out, report),
+              "simulations:", len(report["models"]),
+              "experimental validation:", report["experimentally_validated"])
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,
