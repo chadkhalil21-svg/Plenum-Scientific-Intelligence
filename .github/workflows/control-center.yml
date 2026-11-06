@@ -23,6 +23,15 @@ on:
           - parametric-design
           - music-analysis
           - youtube
+          - world-intelligence
+          - universities
+          - defense-public
+          - foreign-affairs
+          - business
+          - environment
+          - world-news
+          - journals
+          - code-ecosystem
       question:
         description: "PUBLIC research question only. Do not enter patent or private data."
         required: true
@@ -70,6 +79,7 @@ jobs:
             verify) python -m pip install -e ".[science,ml,orchestration,astronomy,empirical]" ;;
             ecosystem) python -m pip install -e . ;;
             discovery|creative|youtube|frontiers) python -m pip install -e . ;;
+            world-intelligence|universities|defense-public|foreign-affairs|business|environment|world-news|journals|code-ecosystem) python -m pip install -e . ;;
             parametric-design) python -m pip install -e . && sudo apt-get update -qq && sudo apt-get install -y -qq openscad ;;
             music-analysis) python -m pip install -e ".[music]" ;;
             molecular-dynamics) python -m pip install -e ".[dynamics]" ;;
@@ -117,6 +127,33 @@ jobs:
             youtube)
               plenum youtube-updates --channel "$CHANNEL_ID" --query "$QUESTION" --out reports/youtube_updates.json
               ;;
+            world-intelligence)
+              plenum world-horizon --topic "$QUESTION" --category all --online --out reports/world_horizon.json
+              ;;
+            universities)
+              plenum world-horizon --topic "$QUESTION" --category universities --online --out reports/world_horizon.json
+              ;;
+            defense-public)
+              plenum world-horizon --topic "$QUESTION" --category defense --online --out reports/world_horizon.json
+              ;;
+            foreign-affairs)
+              plenum world-horizon --topic "$QUESTION" --category foreign_affairs --online --out reports/world_horizon.json
+              ;;
+            business)
+              plenum world-horizon --topic "$QUESTION" --category business --online --out reports/world_horizon.json
+              ;;
+            environment)
+              plenum world-horizon --topic "$QUESTION" --category environment --online --out reports/world_horizon.json
+              ;;
+            world-news)
+              plenum world-horizon --topic "$QUESTION" --category news --online --out reports/world_horizon.json
+              ;;
+            journals)
+              plenum world-horizon --topic "$QUESTION" --category journals --online --out reports/world_horizon.json
+              ;;
+            code-ecosystem)
+              plenum world-horizon --topic "$QUESTION" --category software --online --out reports/world_horizon.json
+              ;;
             parametric-design)
               plenum parametric-design --render --dir reports/parametric_cad --out reports/cad_manifest.json
               ;;
@@ -145,6 +182,16 @@ jobs:
               r=json.loads(Path("reports/molecular_dynamics.json").read_text())
               assert r["numerical_fixture_passed"] and r["relative_total_energy_drift"] < 0.01
               assert not r["protein_dynamics_validated"]
+          if task in ("world-intelligence","universities","defense-public",
+                      "foreign-affairs","business","environment","world-news",
+                      "journals","code-ecosystem"):
+              r=json.loads(Path("reports/world_horizon.json").read_text())
+              assert r["schema"] == "plenum-public-horizon-snapshot-v1"
+              assert not r["independent_breakthrough_verified"]
+              assert not r["AGI_achieved"]
+              assert all(item["untrusted_external_content"] for item in r["records"])
+              print("Public-source availability:",[(p["source"],p["status"])
+                                                    for p in r["providers"]])
           if task=="frontiers":
               report=json.loads(Path("reports/research_frontiers.json").read_text())
               assert report["schema"]=="plenum-research-frontiers-v1"

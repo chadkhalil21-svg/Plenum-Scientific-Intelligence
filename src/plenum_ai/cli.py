@@ -177,6 +177,16 @@ def main():
     music.add_argument("--topic",default="procedural light and sound")
     music.add_argument("--seed",type=int,default=1701)
     music.add_argument("--out",default="reports/music_analysis.json")
+    horizon = commands.add_parser("world-horizon")
+    horizon.add_argument("--topic", required=True)
+    horizon.add_argument("--category", default="all",
+                         choices=["all","universities","defense","foreign_affairs",
+                                  "business","environment","news","journals",
+                                  "software","discoveries"])
+    horizon.add_argument("--online", action="store_true")
+    horizon.add_argument("--out", default="reports/world_horizon.json")
+    horizon_registry = commands.add_parser("horizon-catalog")
+    horizon_registry.add_argument("--out", default="reports/horizon_catalog.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -468,6 +478,18 @@ def main():
         print("Original score music21 study:",save_json(args.out,report),
               "notes:",report["note_count"],
               "artistic novelty verified:",report["artistic_quality_or_originality_verified"])
+    elif args.action == "world-horizon":
+        from .world_horizon import scan_horizon
+        report=scan_horizon(args.topic,category=args.category,online=args.online)
+        print("Public research and world-intelligence horizon:",
+              save_json(args.out,report), "sources checked:",
+              report.get("providers_attempted",0),
+              "actual returned items:",len(report["records"]))
+    elif args.action == "horizon-catalog":
+        from .world_horizon import source_catalog
+        result=source_catalog()
+        print("Public-source catalog:",save_json(args.out,result),
+              "sources:",len(result["providers"]))
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,
