@@ -70,6 +70,14 @@ def main():
     tune = commands.add_parser("fine-tune-science")
     tune.add_argument("--out", default="reports/qwen3_finetune.json")
     tune.add_argument("--checkpoint-dir", default="candidates/qwen3-science-v1")
+    registry = commands.add_parser("tool-registry")
+    registry.add_argument("--out", default="reports/tool_registry.json")
+    multi = commands.add_parser("parallel-research")
+    multi.add_argument("--query", required=True)
+    multi.add_argument("--tools", default="scipy.orbit,scipy.thermal,scipy.kinetics,rdkit.molecule")
+    multi.add_argument("--online", action="store_true", help="Allow read-only OpenAlex metadata retrieval")
+    multi.add_argument("--no-optimization", action="store_true")
+    multi.add_argument("--out", default="reports/parallel_research.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -157,6 +165,22 @@ def main():
               "candidate:", report["candidate"]["correct"],
               "/", report["candidate"]["total"],
               "automatically deployed:", report["automatic_model_promotion"])
+    elif args.action == "tool-registry":
+        from .tool_registry import get_registry
+        report = get_registry()
+        print("Scientific tool registry:", save_json(args.out, report),
+              "catalogued tools:", len(report["tools"]))
+    elif args.action == "parallel-research":
+        from .parallel_research import run_network
+        report = run_network(
+            args.query,
+            tool_keys=[key.strip() for key in args.tools.split(",")],
+            offline=not args.online,
+            optimize=not args.no_optimization,
+        )
+        print("Parallel scientific research:", save_json(args.out, report),
+              "workers:", report["parallel_tool_count"],
+              "known-model checks passed:", report["known_model_integration_passed"])
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,
