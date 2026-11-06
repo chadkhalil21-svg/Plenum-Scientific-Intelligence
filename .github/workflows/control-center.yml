@@ -15,6 +15,7 @@ on:
           - licensed-article
           - durable-investigation
           - verify
+          - ecosystem
       question:
         description: "PUBLIC research question only. Do not enter patent or private data."
         required: true
@@ -54,6 +55,7 @@ jobs:
             science|durable-investigation) python -m pip install -e ".[science,orchestration]" ;;
             knowledge|licensed-article) python -m pip install -e . ;;
             verify) python -m pip install -e ".[science,ml,orchestration,astronomy,empirical]" ;;
+            ecosystem) python -m pip install -e . ;;
             *) echo "Unapproved operation"; exit 1 ;;
           esac
       - name: Execute the approved operation without autonomous code or deployment
@@ -67,7 +69,7 @@ jobs:
             knowledge)
               plenum import-public-memory --dir prior-knowledge/memory/entries \
                 --db reports/library.sqlite --out reports/memory_restored.json
-              plenum index-literature --query "$QUESTION" --online --db reports/library.sqlite --out reports/ingestion.json
+              plenum index-literature --query "$QUESTION" --online --global-sources --db reports/library.sqlite --out reports/ingestion.json
               plenum search-knowledge --query "$QUESTION" --db reports/library.sqlite --out reports/citations.json
               ;;
             licensed-article)
@@ -81,6 +83,9 @@ jobs:
               plenum durable-state --thread-id "control-${{ github.run_id }}" \
                 --db reports/checkpoints.sqlite --out reports/restored.json
               ;;
+            ecosystem)
+              plenum scientific-ecosystem --out reports/scientific_ecosystem.json
+              ;;
             verify)
               python -m unittest discover -s tests -v
               ;;
@@ -91,6 +96,10 @@ jobs:
           import json, os
           from pathlib import Path
           task=os.environ["TASK"]
+          if task=="ecosystem":
+              r=json.loads(Path("reports/scientific_ecosystem.json").read_text())
+              assert r["all_external_execution_approved"] is False
+              assert r["published_api_keys_exposed"] is False
           if task=="science":
               r=json.loads(Path("reports/science.json").read_text())
               assert not r["scientific_discovery_verified"]

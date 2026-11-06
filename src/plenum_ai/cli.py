@@ -85,6 +85,7 @@ def main():
     federation = commands.add_parser("federated-literature")
     federation.add_argument("--query", required=True)
     federation.add_argument("--online", action="store_true")
+    federation.add_argument("--global-sources", action="store_true", help="Also query public arXiv and DOE OSTI metadata")
     federation.add_argument("--out", default="reports/federated_literature.json")
     nasa = commands.add_parser("nasa-exoplanets")
     nasa.add_argument("--out", default="reports/nasa_exoplanet_consistency.json")
@@ -119,6 +120,7 @@ def main():
     index.add_argument("--query", required=True)
     index.add_argument("--db", default="reports/research_index.sqlite")
     index.add_argument("--online", action="store_true")
+    index.add_argument("--global-sources", action="store_true", help="Add arXiv and DOE OSTI metadata search")
     index.add_argument("--out", default="reports/knowledge_ingest.json")
     fulltext = commands.add_parser("index-open-article")
     fulltext.add_argument("--pmcid", required=True)
@@ -132,6 +134,8 @@ def main():
     memory_index.add_argument("--dir", required=True)
     memory_index.add_argument("--db", default="reports/research_index.sqlite")
     memory_index.add_argument("--out", default="reports/memory_index.json")
+    ecosystem = commands.add_parser("scientific-ecosystem")
+    ecosystem.add_argument("--out", default="reports/scientific_ecosystem.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -318,8 +322,10 @@ def main():
         print("Recovered previous research:",save_json(args.out,report))
     elif args.action == "index-literature":
         from .federated_sources import search_federated
+        from .global_sources import global_literature
         from .knowledge_index import index_federated
-        search=search_federated(args.query, offline=not args.online)
+        search=(global_literature(args.query, offline=not args.online) if args.global_sources
+                else search_federated(args.query, offline=not args.online))
         report=index_federated(args.db, search)
         report["provider_status"]=[{"provider":p["provider"],"status":p["status"]}
                                    for p in search["providers"]]
@@ -338,6 +344,12 @@ def main():
         report = import_verified_memory(args.db, args.dir)
         print("Restored public research memory:",save_json(args.out,report),
               "references:",report["valid_paper_references_indexed"])
+    elif args.action == "scientific-ecosystem":
+        from .tool_registry import get_registry
+        result=get_registry()
+        result["published_api_keys_exposed"]=False
+        print("Audited scientific tool ecosystem:", save_json(args.out,result),
+              "entries:",len(result["tools"]))
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,
