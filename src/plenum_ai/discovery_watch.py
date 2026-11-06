@@ -263,7 +263,17 @@ def research_pulse(topic="scientific discovery",cutoff=None,opener=urlopen,
             _read(preprint_url(s),opener),s)))
     for name,url in LAB_FEEDS.items():
         tasks.append((name,lambda n=name,u=url:parse_newsfeed(_read(u,opener),n)))
-    tasks.append(("youtube-nasa",lambda:parse_youtube(_read(youtube_url(),opener))))
+    def get_nasa_video():
+        try:
+            return parse_youtube(_read(youtube_url(),opener))
+        except Exception:
+            import os
+            if not os.getenv("YOUTUBE_API_KEY"):
+                raise
+            from .youtube_api import from_environment
+            return from_environment("NASA science research",
+                                    channel=NASA_CHANNEL_ID)["videos"]
+    tasks.append(("youtube-nasa",get_nasa_video))
     with ThreadPoolExecutor(max_workers=3) as pool:
         outcomes=list(pool.map(lambda job:source_status(job[0],job[1]),tasks))
     seen=set()

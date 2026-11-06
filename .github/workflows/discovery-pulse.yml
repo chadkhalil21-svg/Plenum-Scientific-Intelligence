@@ -23,6 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 9
     env:
+      YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
       WATCH_TOPIC: ${{ github.event.inputs.topic || 'scientific discovery and engineering' }}
     steps:
       - uses: actions/checkout@v7

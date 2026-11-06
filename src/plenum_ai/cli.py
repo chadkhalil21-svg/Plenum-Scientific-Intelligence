@@ -152,6 +152,7 @@ def main():
     studio.add_argument("--out", default="reports/creative_studio_manifest.json")
     videos = commands.add_parser("youtube-updates")
     videos.add_argument("--channel", default="nasa")
+    videos.add_argument("--query", default="scientific lectures")
     videos.add_argument("--out", default="reports/youtube_updates.json")
     args = parser.parse_args()
     if args.action == "research":
@@ -391,13 +392,29 @@ def main():
         report = write_studies(args.topic,args.seed,args.dir)
         print("Original art, music notation and ideas:",save_json(args.out,report))
     elif args.action == "youtube-updates":
-        from .discovery_watch import youtube_url,parse_youtube,_read
-        report={"channel":args.channel,
-                "videos":parse_youtube(_read(youtube_url(args.channel))),
-                "transcripts_scraped":False,"videos_downloaded":False,
-                "metadata_only":True}
-        print("Public YouTube channel listings:",save_json(args.out,report),
-              "videos:",len(report["videos"]))
+        from .discovery_watch import youtube_url,parse_youtube,_read,YOUTUBE_CHANNELS
+        if os.getenv("YOUTUBE_API_KEY"):
+            from .youtube_api import from_environment
+            channel_id=YOUTUBE_CHANNELS.get(args.channel,args.channel)
+            report=from_environment(args.query,channel=channel_id)
+            report["status"]="retrieved_metadata"
+        else:
+            try:
+                videos=parse_youtube(_read(youtube_url(args.channel)))
+                report={"channel":args.channel,"videos":videos,
+                        "status":"retrieved_metadata",
+                        "service":"public_youtube_atom_feed"}
+            except Exception as exc:
+                report={"channel":args.channel,"videos":[],
+                        "status":"unavailable",
+                        "error_type":type(exc).__name__,
+                        "service":"public_youtube_atom_feed",
+                        "next_step":"Configure private YOUTUBE_API_KEY secret for official API search"}
+        report["transcripts_scraped"]=False
+        report["videos_downloaded"]=False
+        report["metadata_only"]=True
+        print("YouTube public listing status:",save_json(args.out,report),
+              "status:",report["status"],"videos:",len(report["videos"]))
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,

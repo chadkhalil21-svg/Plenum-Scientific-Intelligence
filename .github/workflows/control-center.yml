@@ -45,6 +45,7 @@ jobs:
       TASK: ${{ github.event.inputs.operation || 'science' }}
       QUESTION: ${{ github.event.inputs.question || 'Evaluate orbit and thermal cooling' }}
       PMCID: ${{ github.event.inputs.pmcid || 'PMC12247565' }}
+      YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
       CHANNEL_ID: ${{ github.event.inputs.channel_id || 'nasa' }}
       LANGGRAPH_STRICT_MSGPACK: "true"
     steps:
@@ -104,7 +105,7 @@ jobs:
               plenum discovery-pulse --topic "$QUESTION" --out reports/discovery_pulse.json
               ;;
             youtube)
-              plenum youtube-updates --channel "$CHANNEL_ID" --out reports/youtube_updates.json
+              plenum youtube-updates --channel "$CHANNEL_ID" --query "$QUESTION" --out reports/youtube_updates.json
               ;;
             creative)
               plenum creative-sources --query "$QUESTION" --out reports/creative_sources.json
@@ -135,6 +136,7 @@ jobs:
           if task=="youtube":
               r=json.loads(Path("reports/youtube_updates.json").read_text())
               assert r["metadata_only"] and not r["videos_downloaded"]
+              print("YouTube public metadata status:",r["status"])
           if task=="creative":
               r=json.loads(Path("reports/creative_studio.json").read_text())
               assert r["created_from_algorithm"] and not r["copied_copyrighted_music_or_art"]
