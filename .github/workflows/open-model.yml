@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - "src/plenum_ai/hf_model.py"
+      - "src/plenum_ai/quality.py"
+      - "src/plenum_ai/research.py"
       - ".github/workflows/open-model.yml"
 permissions:
   contents: read
