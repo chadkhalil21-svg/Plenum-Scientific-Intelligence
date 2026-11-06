@@ -161,6 +161,10 @@ def main():
     ideas = commands.add_parser("invention-ideas")
     ideas.add_argument("--report", required=True)
     ideas.add_argument("--out", default="reports/serendipity.json")
+    frontiers = commands.add_parser("research-frontiers")
+    frontiers.add_argument("--query", required=True)
+    frontiers.add_argument("--online", action="store_true")
+    frontiers.add_argument("--out", default="reports/research_frontiers.json")
     args = parser.parse_args()
     if args.action == "research":
         papers = search_papers(args.query)
@@ -434,6 +438,12 @@ def main():
         output=hypotheses_from_sources(report)
         print("Speculative research-linked creative ideas:",
               save_json(args.out,output),"ideas:",output["idea_count"])
+    elif args.action == "research-frontiers":
+        from .research_frontiers import scan_frontiers
+        result=scan_frontiers(args.query,online=args.online)
+        print("Research funding and clinical-trial signals:",save_json(args.out,result),
+              "records:",len(result["records"]),
+              "verified breakthrough:",result["laboratory_breakthrough_confirmed"])
     elif args.action == "physics":
         print(json.dumps({
             "radius_m": args.radius_m,

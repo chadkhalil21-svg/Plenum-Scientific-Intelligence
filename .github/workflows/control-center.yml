@@ -18,6 +18,7 @@ on:
           - ecosystem
           - molecular-dynamics
           - discovery
+          - frontiers
           - creative
           - youtube
       question:
@@ -66,7 +67,7 @@ jobs:
             knowledge|licensed-article) python -m pip install -e . ;;
             verify) python -m pip install -e ".[science,ml,orchestration,astronomy,empirical]" ;;
             ecosystem) python -m pip install -e . ;;
-            discovery|creative|youtube) python -m pip install -e . ;;
+            discovery|creative|youtube|frontiers) python -m pip install -e . ;;
             molecular-dynamics) python -m pip install -e ".[dynamics]" ;;
             *) echo "Unapproved operation"; exit 1 ;;
           esac
@@ -106,6 +107,9 @@ jobs:
               plenum invention-ideas --report reports/discovery_pulse.json --out reports/invention_ideas.json
               plenum compare-discovery --report reports/discovery_pulse.json --history prior-knowledge/evidence/discovery --out reports/discovery_delta.json
               ;;
+            frontiers)
+              plenum research-frontiers --query "$QUESTION" --online --out reports/research_frontiers.json
+              ;;
             youtube)
               plenum youtube-updates --channel "$CHANNEL_ID" --query "$QUESTION" --out reports/youtube_updates.json
               ;;
@@ -131,6 +135,11 @@ jobs:
               r=json.loads(Path("reports/molecular_dynamics.json").read_text())
               assert r["numerical_fixture_passed"] and r["relative_total_energy_drift"] < 0.01
               assert not r["protein_dynamics_validated"]
+          if task=="frontiers":
+              report=json.loads(Path("reports/research_frontiers.json").read_text())
+              assert report["schema"]=="plenum-research-frontiers-v1"
+              assert not report["laboratory_breakthrough_confirmed"]
+              assert not report["clinical_efficacy_established"]
           if task=="discovery":
               r=json.loads(Path("reports/discovery_pulse.json").read_text())
               assert not r["breakthroughs_independently_confirmed"]
