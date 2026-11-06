@@ -1,5 +1,8 @@
 name: Plenum Research Control Center
 on:
+  push:
+    paths:
+      - '.github/workflows/control-center.yml'
   workflow_dispatch:
     inputs:
       operation:
@@ -30,9 +33,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 18
     env:
-      TASK: ${{ github.event.inputs.operation }}
-      QUESTION: ${{ github.event.inputs.question }}
-      PMCID: ${{ github.event.inputs.pmcid }}
+      TASK: ${{ github.event.inputs.operation || 'science' }}
+      QUESTION: ${{ github.event.inputs.question || 'Evaluate orbit and thermal cooling' }}
+      PMCID: ${{ github.event.inputs.pmcid || 'PMC12247565' }}
       LANGGRAPH_STRICT_MSGPACK: "true"
     steps:
       - uses: actions/checkout@v7
