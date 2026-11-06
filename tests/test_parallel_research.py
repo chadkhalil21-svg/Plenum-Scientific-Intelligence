@@ -2,7 +2,7 @@
 import unittest
 
 from plenum_ai.parallel_research import run_network, _execute_tool
-from plenum_ai.tool_registry import TOOLS, approve_request, get_registry
+from plenum_ai.tool_registry import TOOLS, approve_request, get_registry, route_request
 from plenum_ai.openmdao_adapter import optimize_cooling_area
 from plenum_ai.lab import solve
 
@@ -63,6 +63,22 @@ class ToolNetworkTests(unittest.TestCase):
         literature=next(x for x in report["workers"] if x["tool"]=="federated.metadata")
         self.assertEqual(len(literature["evidence"]["providers"]),3)
         self.assertEqual(literature["status"],"skipped_offline")
+
+    def test_explicit_deterministic_routing_covers_multiple_domains(self):
+        route = route_request("Optimize a thermal battery circuit and orbital trajectory")
+        self.assertIn("scipy.thermal", route["tool_keys"])
+        self.assertIn("scipy.orbit", route["tool_keys"])
+        self.assertIn("scipy.electronics", route["tool_keys"])
+        self.assertTrue(route["enable_optimization"])
+        self.assertFalse(route["model_selected_tools"])
+        self.assertLessEqual(len(route["tool_keys"]), 5)
+
+    def test_auto_routed_two_tools_and_dependent_optimization(self):
+        routing=route_request("optimize cooling for electrical circuits")
+        report=run_network("optimize cooling for electrical circuits",
+                           tool_keys=routing["tool_keys"],
+                           optimize=routing["enable_optimization"],offline=True)
+        self.assertTrue(report["known_model_integration_passed"],report)
 
     def test_missing_dependency_is_rejected(self):
         with self.assertRaises(ValueError):
