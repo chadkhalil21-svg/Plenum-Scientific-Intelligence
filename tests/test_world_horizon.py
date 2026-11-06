@@ -11,6 +11,16 @@ from plenum_ai.world_horizon import (
 RSS=b'''<?xml version="1.0"?><rss version="2.0"><channel><title>Research</title>
 <item><title>Public laboratory announcement</title><link>https://news.mit.edu/example</link>
 <pubDate>Fri, 06 Nov 2026 08:00:00 GMT</pubDate></item></channel></rss>'''
+RDF_RSS=b'''<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+ xmlns="http://purl.org/rss/1.0/"
+ xmlns:dc="http://purl.org/dc/elements/1.1/">
+<channel><title>Nature journal feed</title></channel>
+<item rdf:about="https://www.nature.com/articles/abc123">
+<title>Measured advances in scientific discovery</title>
+<link>https://www.nature.com/articles/abc123</link>
+<dc:date>2026-11-06</dc:date></item>
+</rdf:RDF>'''
 ATOM=b'''<?xml version="1.0"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 <entry><title>University laboratory report</title>
@@ -49,6 +59,14 @@ class WorldHorizonTests(unittest.TestCase):
         self.assertFalse(report["private_military_or_university_systems_accessible"])
         self.assertTrue(report["credential_or_permission_gated"])
         self.assertIn("defense_internal_systems",REVIEW_GATED)
+
+    def test_nature_rdf_rss_namespaced_item(self):
+        records=parse_public("nature_journal_news",RDF_RSS)
+        self.assertEqual(len(records),1)
+        self.assertEqual(records[0]["title"],"Measured advances in scientific discovery")
+        self.assertEqual(records[0]["published"],"2026-11-06")
+        self.assertEqual(records[0]["category"],"journals")
+        self.assertFalse(records[0]["independent_fact_check_complete"])
 
     def test_fixed_hosts_and_bounded_topic(self):
         for key in SOURCES:

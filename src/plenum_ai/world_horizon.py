@@ -183,14 +183,24 @@ def _feed(key, data):
     root = ET.fromstring(data)
     items = []
     if root.tag in ("rss","RDF", "{http://www.w3.org/1999/02/22-rdf-syntax-ns#}RDF"):
+        rss1 = "{http://purl.org/rss/1.0/}"
+        dc_date = "{http://purl.org/dc/elements/1.1/}date"
+        # RSS 1.0/RDF (including journal publishers) places <item> elements
+        # under a default namespace, often directly under rdf:RDF.
         channel = root.find("channel")
-        rows = channel.findall("item") if channel is not None else root.findall("item")
+        if channel is None:
+            channel = root.find(rss1+"channel")
+        rows = (channel.findall("item") if channel is not None else [])
+        if not rows:
+            rows = root.findall("item") + root.findall(rss1+"item")
         for node in rows[:MAX_RESULTS]:
-            link = _text(node,"link")
+            link = _text(node,"link") or _text(node,rss1+"link")
             if link.startswith("http://"):
                 link = "https://" + link[len("http://"):]
-            record = _record(key, _text(node,"title"), link,
-                             _text(node,"pubDate") or _text(node,"date"))
+            record = _record(key,
+                             _text(node,"title") or _text(node,rss1+"title"),
+                             link,
+                             _text(node,"pubDate") or _text(node,"date") or _text(node,dc_date))
             if record:
                 items.append(record)
     elif root.tag == ATOM+"feed":
