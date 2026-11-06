@@ -1,0 +1,1132 @@
+{
+  "schema": "plenum-public-cross-domain-observatory-v1",
+  "run_id": "42263598305",
+  "source_revision": "3658d1cdd9209354549602175a3fe82c403fe226",
+  "snapshot": {
+    "schema": "plenum-cross-domain-research-pulse-v1",
+    "topic": "scientific discovery and engineering",
+    "observed_at_utc": "2026-11-06T17:39:29.092038+00:00",
+    "journal_selection_strategy": "rotating_six_of_twenty",
+    "journal_coverage_in_this_run": [
+      "Nature Physics",
+      "Nature Photonics",
+      "Nature Materials",
+      "Nature Biotechnology",
+      "The Lancet",
+      "New England Journal of Medicine"
+    ],
+    "providers": [
+      {
+        "provider": "crossref:Nature Physics",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Physics",
+            "title": "Coherence enhancement through equilibration to near-zero optical temperatures",
+            "doi": "https://doi.org/10.1038/s41567-026-03520-z",
+            "url": "https://doi.org/10.1038/s41567-026-03520-z",
+            "published": "2026-11-06",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Physics",
+            "title": "Recent progress in the computational study of supercooled and glassy water",
+            "doi": "https://doi.org/10.1038/s41567-026-03479-x",
+            "url": "https://doi.org/10.1038/s41567-026-03479-x",
+            "published": "2026-11-02",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Physics",
+            "title": "Thermodynamic demonstration of tetracriticality and multicomponent superconductivity in UTe2",
+            "doi": "https://doi.org/10.1038/s41567-026-03504-z",
+            "url": "https://doi.org/10.1038/s41567-026-03504-z",
+            "published": "2026-10-30",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          }
+        ],
+        "count": 3
+      },
+      {
+        "provider": "crossref:Nature Photonics",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Photonics",
+            "title": "All-optical thin-film lithium niobate memristor",
+            "doi": "https://doi.org/10.1038/s41566-026-02048-1",
+            "url": "https://doi.org/10.1038/s41566-026-02048-1",
+            "published": "2026-11-06",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Photonics",
+            "title": "Pure-blue quantum-dot light-emitting diodes with minimal efficiency roll-off and high brightness",
+            "doi": "https://doi.org/10.1038/s41566-026-02041-8",
+            "url": "https://doi.org/10.1038/s41566-026-02041-8",
+            "published": "2026-11-04",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Photonics",
+            "title": "Optical control stabilizes cold-atom comagnetometry",
+            "doi": "https://doi.org/10.1038/s41566-026-02043-6",
+            "url": "https://doi.org/10.1038/s41566-026-02043-6",
+            "published": "2026-10-30",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          }
+        ],
+        "count": 3
+      },
+      {
+        "provider": "crossref:Nature Materials",
+        "status": "unavailable",
+        "error_type": "HTTPError",
+        "count": 0,
+        "records": []
+      },
+      {
+        "provider": "crossref:Nature Biotechnology",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Biotechnology",
+            "title": "Cas12a-based combinatorial knockout screens define the genetic architecture of the DNA damage response",
+            "doi": "https://doi.org/10.1038/s41587-026-03339-2",
+            "url": "https://doi.org/10.1038/s41587-026-03339-2",
+            "published": "2026-11-06",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Biotechnology",
+            "title": "Editor’s Pick: Wild Bioscience",
+            "doi": "https://doi.org/10.1038/s41587-026-03377-w",
+            "url": "https://doi.org/10.1038/s41587-026-03377-w",
+            "published": "2026-11-03",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Biotechnology",
+            "title": "An engineered, compact Cas12m variant for multiplexed gene activation in vivo",
+            "doi": "https://doi.org/10.1038/s41587-026-03352-5",
+            "url": "https://doi.org/10.1038/s41587-026-03352-5",
+            "published": "2026-10-28",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          }
+        ],
+        "count": 3
+      },
+      {
+        "provider": "crossref:The Lancet",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "The Lancet",
+            "title": "Global Fund appoints Mark Dybul as head",
+            "doi": "https://doi.org/10.1016/s0140-6736(26)02237-3",
+            "url": "https://doi.org/10.1016/s0140-6736(26)02237-3",
+            "published": "2026-11-01",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "The Lancet",
+            "title": "Global health reform is missing a generation",
+            "doi": "https://doi.org/10.1016/s0140-6736(26)01753-8",
+            "url": "https://doi.org/10.1016/s0140-6736(26)01753-8",
+            "published": "2026-11-01",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "The Lancet",
+            "title": "Jemilah Mahmood: Malaysian leadership in planetary health",
+            "doi": "https://doi.org/10.1016/s0140-6736(26)02081-7",
+            "url": "https://doi.org/10.1016/s0140-6736(26)02081-7",
+            "published": "2026-11-01",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          }
+        ],
+        "count": 3
+      },
+      {
+        "provider": "crossref:New England Journal of Medicine",
+        "status": "unavailable",
+        "error_type": "HTTPError",
+        "count": 0,
+        "records": []
+      },
+      {
+        "provider": "crossref:topic",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Journal of Advances in Environmental Health Research",
+            "title": "A Simplified Approach to Evaluate Retinal Blue Light Hazard Using the Correlated Color Temperature of LED Light Sources",
+            "doi": "https://doi.org/10.32598/jaehr.9.4.1226",
+            "url": "https://doi.org/10.32598/jaehr.9.4.1226",
+            "published": "2121-10-01",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Journal of Advances in Environmental Health Research",
+            "title": "Studying the Effluent Quality of Enhanced Modified Ludzack Ettinger-oxic Settling Anaerobic Process (E-MLE-OSA) for Treating Real Municipal Wastewater",
+            "doi": "https://doi.org/10.32598/jaehr.9.4.1243",
+            "url": "https://doi.org/10.32598/jaehr.9.4.1243",
+            "published": "2121-10-01",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Journal of Advances in Environmental Health Research",
+            "title": "Investigation and Optimization of Air Pollution Risk by a Multi-criteria Decision Making Method Using Fuzzy TOPSIS: A Case Study of Construction Workers",
+            "doi": "https://doi.org/10.32598/jaehr.9.4.1229",
+            "url": "https://doi.org/10.32598/jaehr.9.4.1229",
+            "published": "2121-10-01",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          }
+        ],
+        "count": 3
+      },
+      {
+        "provider": "biorxiv",
+        "status": "retrieved_metadata",
+        "records": [],
+        "count": 0
+      },
+      {
+        "provider": "medrxiv",
+        "status": "retrieved_metadata",
+        "records": [],
+        "count": 0
+      },
+      {
+        "provider": "MIT News",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "MIT News",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "Pinning down the structure of quark-gluon plasma, the universe’s first fluid",
+            "url": "https://news.mit.edu/2026/pinning-down-quark-gluon-plasma-structure-1105",
+            "published": "Thu, 05 Nov 2026 11:20:00 -0500",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "MIT News",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "Clearing up a robot’s fuzzy memory",
+            "url": "https://news.mit.edu/2026/clearing-up-robot-fuzzy-memory-1105",
+            "published": "Thu, 05 Nov 2026 00:00:00 -0500",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "MIT News",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "MIT-led team receives funding to develop a wearable monitor for early disease detection",
+            "url": "https://news.mit.edu/2026/mit-led-team-receives-funding-for-early-disease-detection-wearable-monitor-1104",
+            "published": "Wed, 04 Nov 2026 00:00:00 -0500",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "MIT News",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "Featured video: Changing the conversation about endometriosis",
+            "url": "https://news.mit.edu/2026/featured-video-changing-conversation-about-endometriosis-1103",
+            "published": "Tue, 03 Nov 2026 16:00:00 -0500",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "MIT News",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "Powering up for a pivotal moment",
+            "url": "https://news.mit.edu/2026/powering-up-for-pivotal-moment-1102",
+            "published": "Mon, 02 Nov 2026 14:55:00 -0500",
+            "original_research_peer_review_confirmed": false
+          }
+        ],
+        "count": 5
+      },
+      {
+        "provider": "NASA Updates",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "NASA Updates",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "M30’s Sparkling Stars",
+            "url": "https://www.nasa.gov/image-article/m30s-sparkling-stars/",
+            "published": "Fri, 06 Nov 2026 16:23:41 +0000",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "NASA Updates",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "Midwestern City Lights",
+            "url": "https://www.nasa.gov/image-article/midwestern-city-lights/",
+            "published": "Thu, 05 Nov 2026 15:17:19 +0000",
+            "original_research_peer_review_confirmed": false
+          }
+        ],
+        "count": 2
+      },
+      {
+        "provider": "Stanford News",
+        "status": "unavailable",
+        "error_type": "HTTPError",
+        "count": 0,
+        "records": []
+      },
+      {
+        "provider": "NIH News",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "NIH News",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "Two ‘forever chemicals’ associated with higher risk of aggressive breast cancer in NIH analysis",
+            "url": "https://www.nih.gov/news-events/news-releases/two-forever-chemicals-associated-higher-risk-aggressive-breast-cancer-nih-analysis",
+            "published": "Thu, 11/05/2026 - 16:00\n",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "NIH News",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "Integrated health service delivery through medical mobile units helped to reduce deaths among individuals at risk for HIV who also inject drugs",
+            "url": "https://www.nih.gov/news-events/news-releases/integrated-health-service-delivery-through-medical-mobile-units-helped-reduce-deaths-among-individuals-risk-hiv-who-also-inject-drugs",
+            "published": "Wed, 11/04/2026 - 11:00\n",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "NIH News",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "An extra year of secondary school lowered dementia diagnoses later in life",
+            "url": "https://www.nih.gov/news-events/news-releases/extra-year-secondary-school-lowered-dementia-diagnoses-later-life",
+            "published": "Fri, 10/23/2026 - 13:00\n",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "NIH News",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "A precision T-cell therapy stalls treatment-resistant cancers in clinical trial",
+            "url": "https://www.nih.gov/news-events/news-releases/precision-t-cell-therapy-stalls-treatment-resistant-cancers-clinical-trial",
+            "published": "Fri, 10/23/2026 - 10:00\n",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "NIH News",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "A blood-pressure drug may activate health-promoting brown fat",
+            "url": "https://www.nih.gov/news-events/news-releases/blood-pressure-drug-may-activate-health-promoting-brown-fat",
+            "published": "Wed, 10/14/2026 - 11:00\n",
+            "original_research_peer_review_confirmed": false
+          }
+        ],
+        "count": 5
+      },
+      {
+        "provider": "Nature Journal",
+        "status": "unavailable",
+        "error_type": "ValueError",
+        "count": 0,
+        "records": []
+      },
+      {
+        "provider": "youtube-nasa",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "youtube-nasa",
+            "tier": "public_video_metadata",
+            "title": "U.S. Spacewalk 101",
+            "url": "https://www.youtube.com/watch?v=25JEQqgv5I4",
+            "video_id": "25JEQqgv5I4",
+            "published": "2026-11-05T21:35:58+00:00",
+            "transcript_available_or_licensed": false,
+            "video_downloaded": false,
+            "laboratory_result_verified": false
+          },
+          {
+            "source": "youtube-nasa",
+            "tier": "public_video_metadata",
+            "title": "Astronaut Anil Menon Speaks With Mark Rober From the International Space Station",
+            "url": "https://www.youtube.com/watch?v=IhpBgLB8JUQ",
+            "video_id": "IhpBgLB8JUQ",
+            "published": "2026-11-04T16:37:53+00:00",
+            "transcript_available_or_licensed": false,
+            "video_downloaded": false,
+            "laboratory_result_verified": false
+          },
+          {
+            "source": "youtube-nasa",
+            "tier": "public_video_metadata",
+            "title": "NASA Moon Base: November 2026 Update (Nov. 7, 2026)",
+            "url": "https://www.youtube.com/watch?v=MRg4uIpJ3xE",
+            "video_id": "MRg4uIpJ3xE",
+            "published": "2026-11-02T17:57:25+00:00",
+            "transcript_available_or_licensed": false,
+            "video_downloaded": false,
+            "laboratory_result_verified": false
+          },
+          {
+            "source": "youtube-nasa",
+            "tier": "public_video_metadata",
+            "title": "U.S. Spacewalk 100",
+            "url": "https://www.youtube.com/watch?v=hv867HnY4j4",
+            "video_id": "hv867HnY4j4",
+            "published": "2026-10-29T20:05:42+00:00",
+            "transcript_available_or_licensed": false,
+            "video_downloaded": false,
+            "laboratory_result_verified": false
+          },
+          {
+            "source": "youtube-nasa",
+            "tier": "public_video_metadata",
+            "title": "Artemis Acceleration (Oct. 23, 2026)",
+            "url": "https://www.youtube.com/watch?v=pAKqJxuxDgk",
+            "video_id": "pAKqJxuxDgk",
+            "published": "2026-10-23T20:16:18+00:00",
+            "transcript_available_or_licensed": false,
+            "video_downloaded": false,
+            "laboratory_result_verified": false
+          },
+          {
+            "source": "youtube-nasa",
+            "tier": "public_video_metadata",
+            "title": "Live High-Definition Views from the International Space Station (Official NASA Stream)",
+            "url": "https://www.youtube.com/watch?v=ROboUHfPUrU",
+            "video_id": "ROboUHfPUrU",
+            "published": "2026-10-22T14:29:44+00:00",
+            "transcript_available_or_licensed": false,
+            "video_downloaded": false,
+            "laboratory_result_verified": false
+          },
+          {
+            "source": "youtube-nasa",
+            "tier": "public_video_metadata",
+            "title": "U.S. Spacewalk Preview News Conference (Oct. 20, 2026)",
+            "url": "https://www.youtube.com/watch?v=UleiRdWFG7o",
+            "video_id": "UleiRdWFG7o",
+            "published": "2026-10-20T18:30:12+00:00",
+            "transcript_available_or_licensed": false,
+            "video_downloaded": false,
+            "laboratory_result_verified": false
+          },
+          {
+            "source": "youtube-nasa",
+            "tier": "public_video_metadata",
+            "title": "NASA Moon Base: Rovers and Lunar Terrain Vehicles (October 2026 Update)",
+            "url": "https://www.youtube.com/watch?v=Zezt6EsG9WE",
+            "video_id": "Zezt6EsG9WE",
+            "published": "2026-10-20T15:02:15+00:00",
+            "transcript_available_or_licensed": false,
+            "video_downloaded": false,
+            "laboratory_result_verified": false
+          }
+        ],
+        "count": 8
+      }
+    ],
+    "records": [
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Physics",
+        "title": "Coherence enhancement through equilibration to near-zero optical temperatures",
+        "doi": "https://doi.org/10.1038/s41567-026-03520-z",
+        "url": "https://doi.org/10.1038/s41567-026-03520-z",
+        "published": "2026-11-06",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Physics",
+        "title": "Recent progress in the computational study of supercooled and glassy water",
+        "doi": "https://doi.org/10.1038/s41567-026-03479-x",
+        "url": "https://doi.org/10.1038/s41567-026-03479-x",
+        "published": "2026-11-02",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Physics",
+        "title": "Thermodynamic demonstration of tetracriticality and multicomponent superconductivity in UTe2",
+        "doi": "https://doi.org/10.1038/s41567-026-03504-z",
+        "url": "https://doi.org/10.1038/s41567-026-03504-z",
+        "published": "2026-10-30",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Photonics",
+        "title": "All-optical thin-film lithium niobate memristor",
+        "doi": "https://doi.org/10.1038/s41566-026-02048-1",
+        "url": "https://doi.org/10.1038/s41566-026-02048-1",
+        "published": "2026-11-06",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Photonics",
+        "title": "Pure-blue quantum-dot light-emitting diodes with minimal efficiency roll-off and high brightness",
+        "doi": "https://doi.org/10.1038/s41566-026-02041-8",
+        "url": "https://doi.org/10.1038/s41566-026-02041-8",
+        "published": "2026-11-04",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Photonics",
+        "title": "Optical control stabilizes cold-atom comagnetometry",
+        "doi": "https://doi.org/10.1038/s41566-026-02043-6",
+        "url": "https://doi.org/10.1038/s41566-026-02043-6",
+        "published": "2026-10-30",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Biotechnology",
+        "title": "Cas12a-based combinatorial knockout screens define the genetic architecture of the DNA damage response",
+        "doi": "https://doi.org/10.1038/s41587-026-03339-2",
+        "url": "https://doi.org/10.1038/s41587-026-03339-2",
+        "published": "2026-11-06",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Biotechnology",
+        "title": "Editor’s Pick: Wild Bioscience",
+        "doi": "https://doi.org/10.1038/s41587-026-03377-w",
+        "url": "https://doi.org/10.1038/s41587-026-03377-w",
+        "published": "2026-11-03",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Biotechnology",
+        "title": "An engineered, compact Cas12m variant for multiplexed gene activation in vivo",
+        "doi": "https://doi.org/10.1038/s41587-026-03352-5",
+        "url": "https://doi.org/10.1038/s41587-026-03352-5",
+        "published": "2026-10-28",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "The Lancet",
+        "title": "Global Fund appoints Mark Dybul as head",
+        "doi": "https://doi.org/10.1016/s0140-6736(26)02237-3",
+        "url": "https://doi.org/10.1016/s0140-6736(26)02237-3",
+        "published": "2026-11-01",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "The Lancet",
+        "title": "Global health reform is missing a generation",
+        "doi": "https://doi.org/10.1016/s0140-6736(26)01753-8",
+        "url": "https://doi.org/10.1016/s0140-6736(26)01753-8",
+        "published": "2026-11-01",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "The Lancet",
+        "title": "Jemilah Mahmood: Malaysian leadership in planetary health",
+        "doi": "https://doi.org/10.1016/s0140-6736(26)02081-7",
+        "url": "https://doi.org/10.1016/s0140-6736(26)02081-7",
+        "published": "2026-11-01",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Journal of Advances in Environmental Health Research",
+        "title": "A Simplified Approach to Evaluate Retinal Blue Light Hazard Using the Correlated Color Temperature of LED Light Sources",
+        "doi": "https://doi.org/10.32598/jaehr.9.4.1226",
+        "url": "https://doi.org/10.32598/jaehr.9.4.1226",
+        "published": "2121-10-01",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Journal of Advances in Environmental Health Research",
+        "title": "Studying the Effluent Quality of Enhanced Modified Ludzack Ettinger-oxic Settling Anaerobic Process (E-MLE-OSA) for Treating Real Municipal Wastewater",
+        "doi": "https://doi.org/10.32598/jaehr.9.4.1243",
+        "url": "https://doi.org/10.32598/jaehr.9.4.1243",
+        "published": "2121-10-01",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Journal of Advances in Environmental Health Research",
+        "title": "Investigation and Optimization of Air Pollution Risk by a Multi-criteria Decision Making Method Using Fuzzy TOPSIS: A Case Study of Construction Workers",
+        "doi": "https://doi.org/10.32598/jaehr.9.4.1229",
+        "url": "https://doi.org/10.32598/jaehr.9.4.1229",
+        "published": "2121-10-01",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "MIT News",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "Pinning down the structure of quark-gluon plasma, the universe’s first fluid",
+        "url": "https://news.mit.edu/2026/pinning-down-quark-gluon-plasma-structure-1105",
+        "published": "Thu, 05 Nov 2026 11:20:00 -0500",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "MIT News",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "Clearing up a robot’s fuzzy memory",
+        "url": "https://news.mit.edu/2026/clearing-up-robot-fuzzy-memory-1105",
+        "published": "Thu, 05 Nov 2026 00:00:00 -0500",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "MIT News",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "MIT-led team receives funding to develop a wearable monitor for early disease detection",
+        "url": "https://news.mit.edu/2026/mit-led-team-receives-funding-for-early-disease-detection-wearable-monitor-1104",
+        "published": "Wed, 04 Nov 2026 00:00:00 -0500",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "MIT News",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "Featured video: Changing the conversation about endometriosis",
+        "url": "https://news.mit.edu/2026/featured-video-changing-conversation-about-endometriosis-1103",
+        "published": "Tue, 03 Nov 2026 16:00:00 -0500",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "MIT News",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "Powering up for a pivotal moment",
+        "url": "https://news.mit.edu/2026/powering-up-for-pivotal-moment-1102",
+        "published": "Mon, 02 Nov 2026 14:55:00 -0500",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "NASA Updates",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "M30’s Sparkling Stars",
+        "url": "https://www.nasa.gov/image-article/m30s-sparkling-stars/",
+        "published": "Fri, 06 Nov 2026 16:23:41 +0000",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "NASA Updates",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "Midwestern City Lights",
+        "url": "https://www.nasa.gov/image-article/midwestern-city-lights/",
+        "published": "Thu, 05 Nov 2026 15:17:19 +0000",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "NIH News",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "Two ‘forever chemicals’ associated with higher risk of aggressive breast cancer in NIH analysis",
+        "url": "https://www.nih.gov/news-events/news-releases/two-forever-chemicals-associated-higher-risk-aggressive-breast-cancer-nih-analysis",
+        "published": "Thu, 11/05/2026 - 16:00\n",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "NIH News",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "Integrated health service delivery through medical mobile units helped to reduce deaths among individuals at risk for HIV who also inject drugs",
+        "url": "https://www.nih.gov/news-events/news-releases/integrated-health-service-delivery-through-medical-mobile-units-helped-reduce-deaths-among-individuals-risk-hiv-who-also-inject-drugs",
+        "published": "Wed, 11/04/2026 - 11:00\n",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "NIH News",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "An extra year of secondary school lowered dementia diagnoses later in life",
+        "url": "https://www.nih.gov/news-events/news-releases/extra-year-secondary-school-lowered-dementia-diagnoses-later-life",
+        "published": "Fri, 10/23/2026 - 13:00\n",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "NIH News",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "A precision T-cell therapy stalls treatment-resistant cancers in clinical trial",
+        "url": "https://www.nih.gov/news-events/news-releases/precision-t-cell-therapy-stalls-treatment-resistant-cancers-clinical-trial",
+        "published": "Fri, 10/23/2026 - 10:00\n",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "NIH News",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "A blood-pressure drug may activate health-promoting brown fat",
+        "url": "https://www.nih.gov/news-events/news-releases/blood-pressure-drug-may-activate-health-promoting-brown-fat",
+        "published": "Wed, 10/14/2026 - 11:00\n",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "title": "U.S. Spacewalk 101",
+        "url": "https://www.youtube.com/watch?v=25JEQqgv5I4",
+        "video_id": "25JEQqgv5I4",
+        "published": "2026-11-05T21:35:58+00:00",
+        "transcript_available_or_licensed": false,
+        "video_downloaded": false,
+        "laboratory_result_verified": false
+      },
+      {
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "title": "Astronaut Anil Menon Speaks With Mark Rober From the International Space Station",
+        "url": "https://www.youtube.com/watch?v=IhpBgLB8JUQ",
+        "video_id": "IhpBgLB8JUQ",
+        "published": "2026-11-04T16:37:53+00:00",
+        "transcript_available_or_licensed": false,
+        "video_downloaded": false,
+        "laboratory_result_verified": false
+      },
+      {
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "title": "NASA Moon Base: November 2026 Update (Nov. 7, 2026)",
+        "url": "https://www.youtube.com/watch?v=MRg4uIpJ3xE",
+        "video_id": "MRg4uIpJ3xE",
+        "published": "2026-11-02T17:57:25+00:00",
+        "transcript_available_or_licensed": false,
+        "video_downloaded": false,
+        "laboratory_result_verified": false
+      },
+      {
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "title": "U.S. Spacewalk 100",
+        "url": "https://www.youtube.com/watch?v=hv867HnY4j4",
+        "video_id": "hv867HnY4j4",
+        "published": "2026-10-29T20:05:42+00:00",
+        "transcript_available_or_licensed": false,
+        "video_downloaded": false,
+        "laboratory_result_verified": false
+      },
+      {
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "title": "Artemis Acceleration (Oct. 23, 2026)",
+        "url": "https://www.youtube.com/watch?v=pAKqJxuxDgk",
+        "video_id": "pAKqJxuxDgk",
+        "published": "2026-10-23T20:16:18+00:00",
+        "transcript_available_or_licensed": false,
+        "video_downloaded": false,
+        "laboratory_result_verified": false
+      },
+      {
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "title": "Live High-Definition Views from the International Space Station (Official NASA Stream)",
+        "url": "https://www.youtube.com/watch?v=ROboUHfPUrU",
+        "video_id": "ROboUHfPUrU",
+        "published": "2026-10-22T14:29:44+00:00",
+        "transcript_available_or_licensed": false,
+        "video_downloaded": false,
+        "laboratory_result_verified": false
+      },
+      {
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "title": "U.S. Spacewalk Preview News Conference (Oct. 20, 2026)",
+        "url": "https://www.youtube.com/watch?v=UleiRdWFG7o",
+        "video_id": "UleiRdWFG7o",
+        "published": "2026-10-20T18:30:12+00:00",
+        "transcript_available_or_licensed": false,
+        "video_downloaded": false,
+        "laboratory_result_verified": false
+      },
+      {
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "title": "NASA Moon Base: Rovers and Lunar Terrain Vehicles (October 2026 Update)",
+        "url": "https://www.youtube.com/watch?v=Zezt6EsG9WE",
+        "video_id": "Zezt6EsG9WE",
+        "published": "2026-10-20T15:02:15+00:00",
+        "transcript_available_or_licensed": false,
+        "video_downloaded": false,
+        "laboratory_result_verified": false
+      }
+    ],
+    "distinct_records": 35,
+    "sources_unavailable": [
+      "crossref:Nature Materials",
+      "crossref:New England Journal of Medicine",
+      "Stanford News",
+      "Nature Journal"
+    ],
+    "peer_review_verified": false,
+    "breakthroughs_independently_confirmed": false,
+    "all_science_journals_covered": false,
+    "cross_journal_topic_query_enabled": true,
+    "copyrighted_works_downloaded": false,
+    "video_transcripts_downloaded": false,
+    "external_actions_performed": false,
+    "limitations": [
+      "Research metadata and institutional announcements are not scientific truth.",
+      "Journal indexing varies; date of publication may differ from deposit date.",
+      "Preprints are not peer-reviewed; institutional statements are not independent evidence.",
+      "A six-of-twenty rotating sample is not comprehensive worldwide surveillance.",
+      "Video listings are not transcripts or scientific assessments."
+    ]
+  },
+  "delta_from_public_memory": {
+    "schema": "plenum-research-new-to-archive-v1",
+    "current_report_time": "2026-11-06T17:39:29.092038+00:00",
+    "prior_archive_files_scanned": 5,
+    "prior_records_scanned": 116,
+    "rejected_or_unreadable_archives": 0,
+    "new_to_this_archive": 12,
+    "previously_seen_in_this_archive": 23,
+    "items_first_observed_by_plenum": [
+      {
+        "title": "Coherence enhancement through equilibration to near-zero optical temperatures",
+        "url": "https://doi.org/10.1038/s41567-026-03520-z",
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "published": "2026-11-06",
+        "record_id_sha256": "c58fbcc46df5bba395140e9454dfb55963ac176d7556ae1ddbda0c85d3d5dd44",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "All-optical thin-film lithium niobate memristor",
+        "url": "https://doi.org/10.1038/s41566-026-02048-1",
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "published": "2026-11-06",
+        "record_id_sha256": "fa82ca229b7af191b8ea4f35446009b58d7bb4fd13e6d9579fd340c5dbbd028a",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Cas12a-based combinatorial knockout screens define the genetic architecture of the DNA damage response",
+        "url": "https://doi.org/10.1038/s41587-026-03339-2",
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "published": "2026-11-06",
+        "record_id_sha256": "e0258edd151ca3a0da0eb2d275193077ecf2ea004fc0f43f2b4b00fdbb510217",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "M30’s Sparkling Stars",
+        "url": "https://www.nasa.gov/image-article/m30s-sparkling-stars/",
+        "source": "NASA Updates",
+        "tier": "institutional_news_not_independent_verification",
+        "published": "Fri, 06 Nov 2026 16:23:41 +0000",
+        "record_id_sha256": "83b8b7ae95d54e1d19c799f902d6b7556a3172e6167896224b93d3bf5fe19f50",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "U.S. Spacewalk 101",
+        "url": "https://www.youtube.com/watch?v=25JEQqgv5I4",
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "published": "2026-11-05T21:35:58+00:00",
+        "record_id_sha256": "33786b37c718ebaf7c2146d88d7eda5275f3629f3b7519006965abe2e6b84d97",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Astronaut Anil Menon Speaks With Mark Rober From the International Space Station",
+        "url": "https://www.youtube.com/watch?v=IhpBgLB8JUQ",
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "published": "2026-11-04T16:37:53+00:00",
+        "record_id_sha256": "fefb0ddc6ad7a982b704bf50ba3044bdcdba5583afc6c57a48851fd22342a39f",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "NASA Moon Base: November 2026 Update (Nov. 7, 2026)",
+        "url": "https://www.youtube.com/watch?v=MRg4uIpJ3xE",
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "published": "2026-11-02T17:57:25+00:00",
+        "record_id_sha256": "0db281e6c14176e05ffd7f7d4931d6598fa04b95c2cfd05e09110ddd0ee4e466",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "U.S. Spacewalk 100",
+        "url": "https://www.youtube.com/watch?v=hv867HnY4j4",
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "published": "2026-10-29T20:05:42+00:00",
+        "record_id_sha256": "92329eae0c37be8e5bca0c57a230852e0efc1751bca4f1c75e0c9e5b5f82c712",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Artemis Acceleration (Oct. 23, 2026)",
+        "url": "https://www.youtube.com/watch?v=pAKqJxuxDgk",
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "published": "2026-10-23T20:16:18+00:00",
+        "record_id_sha256": "7bb82c0bcd1459ed21dc8b0617084fdabac1e2c280723e61fa0dfd5893992c2a",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Live High-Definition Views from the International Space Station (Official NASA Stream)",
+        "url": "https://www.youtube.com/watch?v=ROboUHfPUrU",
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "published": "2026-10-22T14:29:44+00:00",
+        "record_id_sha256": "dd7d3fa835d00042f4604548e57f35347fa03ffa57ac734e3566715ba5414d36",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "U.S. Spacewalk Preview News Conference (Oct. 20, 2026)",
+        "url": "https://www.youtube.com/watch?v=UleiRdWFG7o",
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "published": "2026-10-20T18:30:12+00:00",
+        "record_id_sha256": "6e07bf555677ea96c8bc158f2569cbca1626b2d04841598941abaaccb6e00480",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "NASA Moon Base: Rovers and Lunar Terrain Vehicles (October 2026 Update)",
+        "url": "https://www.youtube.com/watch?v=Zezt6EsG9WE",
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "published": "2026-10-20T15:02:15+00:00",
+        "record_id_sha256": "f25754f9127034982191f954ef25a39cbe1432409f0e18525f0933cacb5a2782",
+        "breakthrough_verified": false
+      }
+    ],
+    "novel_to_world_or_independent_science": false,
+    "new_patentable_discoveries": false,
+    "next_step": "Read primary papers, inspect methods, compare replication and check retractions"
+  },
+  "interdisciplinary_inspiration": {
+    "schema": "plenum-source-linked-serendipity-v1",
+    "source_snapshot_time": "2026-11-06T17:39:29.092038+00:00",
+    "idea_count": 8,
+    "ideas": [
+      {
+        "label": "speculative_question_unverified",
+        "domain_to_explore": "architecture",
+        "possible_application": "parametric facades and controllable natural lighting",
+        "research_title": "Coherence enhancement through equilibration to near-zero optical temperatures",
+        "reference_url": "https://doi.org/10.1038/s41567-026-03520-z",
+        "reference_tier": "journal_publication_metadata",
+        "source_fingerprint_sha256": "c58fbcc46df5bba395140e9454dfb55963ac176d7556ae1ddbda0c85d3d5dd44",
+        "question": "Could the actual measured methods or principles (if any) in the linked research be adapted to parametric facades and controllable natural lighting? Read and verify the original methodology before proposing an experiment.",
+        "first_validation_action": "Retrieve permitted primary text, identify evidence and compare prior work",
+        "second_validation_action": "Formulate falsifiable constraints and test independently",
+        "new_invention_proven": false,
+        "scientific_claim_verified": false,
+        "original_paper_read": false
+      },
+      {
+        "label": "speculative_question_unverified",
+        "domain_to_explore": "music",
+        "possible_application": "original rhythm and timbre as representations of measured data",
+        "research_title": "Recent progress in the computational study of supercooled and glassy water",
+        "reference_url": "https://doi.org/10.1038/s41567-026-03479-x",
+        "reference_tier": "journal_publication_metadata",
+        "source_fingerprint_sha256": "d8d365478d328eceb7c9719abd715dc3960949dee5c83429a593bd0c157b9a51",
+        "question": "Could the actual measured methods or principles (if any) in the linked research be adapted to original rhythm and timbre as representations of measured data? Read and verify the original methodology before proposing an experiment.",
+        "first_validation_action": "Retrieve permitted primary text, identify evidence and compare prior work",
+        "second_validation_action": "Formulate falsifiable constraints and test independently",
+        "new_invention_proven": false,
+        "scientific_claim_verified": false,
+        "original_paper_read": false
+      },
+      {
+        "label": "speculative_question_unverified",
+        "domain_to_explore": "visual art",
+        "possible_application": "interpretable geometric forms and public scientific education",
+        "research_title": "Thermodynamic demonstration of tetracriticality and multicomponent superconductivity in UTe2",
+        "reference_url": "https://doi.org/10.1038/s41567-026-03504-z",
+        "reference_tier": "journal_publication_metadata",
+        "source_fingerprint_sha256": "c5306d43232e5d25251d5dd559cee007fc524864512b3be3a9b949f02c655066",
+        "question": "Could the actual measured methods or principles (if any) in the linked research be adapted to interpretable geometric forms and public scientific education? Read and verify the original methodology before proposing an experiment.",
+        "first_validation_action": "Retrieve permitted primary text, identify evidence and compare prior work",
+        "second_validation_action": "Formulate falsifiable constraints and test independently",
+        "new_invention_proven": false,
+        "scientific_claim_verified": false,
+        "original_paper_read": false
+      },
+      {
+        "label": "speculative_question_unverified",
+        "domain_to_explore": "product design",
+        "possible_application": "manufacturable low-waste human-centered objects",
+        "research_title": "All-optical thin-film lithium niobate memristor",
+        "reference_url": "https://doi.org/10.1038/s41566-026-02048-1",
+        "reference_tier": "journal_publication_metadata",
+        "source_fingerprint_sha256": "fa82ca229b7af191b8ea4f35446009b58d7bb4fd13e6d9579fd340c5dbbd028a",
+        "question": "Could the actual measured methods or principles (if any) in the linked research be adapted to manufacturable low-waste human-centered objects? Read and verify the original methodology before proposing an experiment.",
+        "first_validation_action": "Retrieve permitted primary text, identify evidence and compare prior work",
+        "second_validation_action": "Formulate falsifiable constraints and test independently",
+        "new_invention_proven": false,
+        "scientific_claim_verified": false,
+        "original_paper_read": false
+      },
+      {
+        "label": "speculative_question_unverified",
+        "domain_to_explore": "aerospace engineering",
+        "possible_application": "lightweight structures and validated constraints",
+        "research_title": "Pure-blue quantum-dot light-emitting diodes with minimal efficiency roll-off and high brightness",
+        "reference_url": "https://doi.org/10.1038/s41566-026-02041-8",
+        "reference_tier": "journal_publication_metadata",
+        "source_fingerprint_sha256": "fa92f0301c20ac298f7e9380c7245c38dbe8cb1316b579f1279b64642df14f54",
+        "question": "Could the actual measured methods or principles (if any) in the linked research be adapted to lightweight structures and validated constraints? Read and verify the original methodology before proposing an experiment.",
+        "first_validation_action": "Retrieve permitted primary text, identify evidence and compare prior work",
+        "second_validation_action": "Formulate falsifiable constraints and test independently",
+        "new_invention_proven": false,
+        "scientific_claim_verified": false,
+        "original_paper_read": false
+      },
+      {
+        "label": "speculative_question_unverified",
+        "domain_to_explore": "agriculture",
+        "possible_application": "low-cost nutrient and environmental sensor systems",
+        "research_title": "Optical control stabilizes cold-atom comagnetometry",
+        "reference_url": "https://doi.org/10.1038/s41566-026-02043-6",
+        "reference_tier": "journal_publication_metadata",
+        "source_fingerprint_sha256": "b8c4b7b6064f4a922e389828ccdaaf1c11a5d99fb4db5926f321f043e0637f50",
+        "question": "Could the actual measured methods or principles (if any) in the linked research be adapted to low-cost nutrient and environmental sensor systems? Read and verify the original methodology before proposing an experiment.",
+        "first_validation_action": "Retrieve permitted primary text, identify evidence and compare prior work",
+        "second_validation_action": "Formulate falsifiable constraints and test independently",
+        "new_invention_proven": false,
+        "scientific_claim_verified": false,
+        "original_paper_read": false
+      },
+      {
+        "label": "speculative_question_unverified",
+        "domain_to_explore": "fashion and textiles",
+        "possible_application": "recyclable safe materials and functional wearables",
+        "research_title": "Cas12a-based combinatorial knockout screens define the genetic architecture of the DNA damage response",
+        "reference_url": "https://doi.org/10.1038/s41587-026-03339-2",
+        "reference_tier": "journal_publication_metadata",
+        "source_fingerprint_sha256": "e0258edd151ca3a0da0eb2d275193077ecf2ea004fc0f43f2b4b00fdbb510217",
+        "question": "Could the actual measured methods or principles (if any) in the linked research be adapted to recyclable safe materials and functional wearables? Read and verify the original methodology before proposing an experiment.",
+        "first_validation_action": "Retrieve permitted primary text, identify evidence and compare prior work",
+        "second_validation_action": "Formulate falsifiable constraints and test independently",
+        "new_invention_proven": false,
+        "scientific_claim_verified": false,
+        "original_paper_read": false
+      },
+      {
+        "label": "speculative_question_unverified",
+        "domain_to_explore": "education and games",
+        "possible_application": "interactive models of experimentally confirmed processes",
+        "research_title": "Editor’s Pick: Wild Bioscience",
+        "reference_url": "https://doi.org/10.1038/s41587-026-03377-w",
+        "reference_tier": "journal_publication_metadata",
+        "source_fingerprint_sha256": "adab4415bfbc5cdcd5233136d942a6bc5fff50a0109ecdd177e4323e31af3f9f",
+        "question": "Could the actual measured methods or principles (if any) in the linked research be adapted to interactive models of experimentally confirmed processes? Read and verify the original methodology before proposing an experiment.",
+        "first_validation_action": "Retrieve permitted primary text, identify evidence and compare prior work",
+        "second_validation_action": "Formulate falsifiable constraints and test independently",
+        "new_invention_proven": false,
+        "scientific_claim_verified": false,
+        "original_paper_read": false
+      }
+    ],
+    "method": "deterministic_interdisciplinary_prompt_templates",
+    "foundation_model_generated_hypotheses": false,
+    "breakthrough_verified": false,
+    "patentability_verified": false,
+    "copyrighted_paper_contents_copied": false,
+    "next_step": "Use a stronger evaluated reasoning model and independent scientific tools for candidate validation"
+  },
+  "breakthrough_claims_verified": false,
+  "public_metadata_only": true
+}
