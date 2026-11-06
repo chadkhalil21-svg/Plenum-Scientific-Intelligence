@@ -318,3 +318,39 @@ an existing work: [verified run](https://github.com/chadkhalil21-svg/Plenum-Scie
 The founder console offers `music-analysis`.
 See [Universal Discovery and Creativity](docs/UNIVERSAL_DISCOVERY_AND_CREATIVITY.md)
 for the expanded source and licensing inventory.
+
+## General-purpose discovery, civilization intelligence, and code creation
+
+Plenum now incorporates the pictured broader goal across science, universities,
+public defense research, diplomacy, environment, business and global news;
+research journals, original art, music and industrial design; YouTube public
+video metadata; and reviewable software creation.
+
+- The [World Knowledge and AGI Architecture](docs/GENERAL_INTELLIGENCE_WORLD_HORIZON.md)
+  distinguishes functional public-source connectors from institutional
+  access requiring credentials, agreements and security reviews.
+- The `world-horizon` command checks 14 approved public sources across
+  nine categories, with bounded requests, exact source links, and
+  honest per-provider failures. The latest tested run retrieved 45 records
+  from 13 sources. Read-only public releases are not classified access or
+  independently verified scientific discoveries.
+- **World Intelligence** on GitHub Actions can scan public universities,
+  defense news, UN communications, Federal Reserve and World Bank data,
+  cross-journal metadata, GDELT world news, NASA/USGS environment, and
+  public GitHub project metadata. A daily scheduled scan archives bounded
+  public reports to the independent `research-memory` Git branch.
+- The **Program Foundry** creates working, original research, data
+  validation or SVG design Python starters with independent tests.
+  Generated programs require human review and are not automatically
+  deployed. This capability does not imply general AI programming
+  competence or that this ChatGPT model can modify its own weights.
+
+Owner controls:
+[World Intelligence workflow](.github/workflows/world-horizon.yml),
+[Program Foundry](.github/workflows/program-foundry.yml),
+[Research Control Center](.github/workflows/control-center.yml).
+
+**AGI has not been achieved.** Proven broad autonomous understanding,
+persistent generalizable learning, novel independently replicated
+inventions, reliable self-improvement, and owner-approved private
+inference infrastructure remain future research milestones.

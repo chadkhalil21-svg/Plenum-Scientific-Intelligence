@@ -129,3 +129,24 @@ specialist workflows for debugging and reproducibility.
 
 The governing objective is evidence-supported improvement, not maximizing
 the count of integrated repositories.
+
+## World Intelligence control and ongoing operation
+
+The Control Center now exposes `world-intelligence`, `universities`,
+`defense-public`, `foreign-affairs`, `business`, `environment`,
+`world-news`, `journals`, `code-ecosystem` and `build-program`.
+World source checks are read-only. All institution titles and links are
+untrusted data and are not executed as prompts or code.
+
+Daily worldwide source verification is configured on the GitHub
+`world-horizon.yml` workflow (07:37 America/New_York). The pipeline can
+archive its public snapshot on a write-restricted separate research branch.
+The journal and university source endpoints may change or reject requests,
+and data outages are not silent. Scheduled public GitHub workflows can
+be disabled after 60 days of no repository activity.
+
+For `build-program`, choose one of `research_cli`,
+`data_validator` or `geometry_designer`, provide a **public** topic
+and inspect the generated files, tests and manifest. These are original
+starter programs and are not deployed or auto-merged. Proprietary coding
+work should remain in a separate private environment.

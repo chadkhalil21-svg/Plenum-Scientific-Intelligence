@@ -288,3 +288,43 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
   for reliable video-wide searching; the GitHub worker currently lacks the key.
 - [ ] Validate independent artistic originality, musical composition and
   engineering aesthetics beyond narrow procedural or structural fixtures.
+
+## General-purpose world intelligence and original program creation
+
+- [x] Verify existing video metadata, licensed Openverse/Met art, music21
+  composition analysis, original MusicXML/SVG studies, and parameterized
+  OpenSCAD design; avoid rebuilding working tools.
+- [x] Add 14 bounded public provider connectors spanning universities
+  (MIT, Harvard), public defense research (DARPA, DoD), UN diplomacy,
+  Federal Reserve and World Bank economics, Crossref journals, GDELT news,
+  NASA/USGS environment, NASA research and public GitHub software metadata.
+- [x] Preserve provider-level failures and output metadata titles/primary
+  source URLs as untrusted information, **not** verified breakthroughs.
+- [x] Live GitHub verification: first world scan 42172175911 returned
+  28 public records from 8 working providers. Later feed adjustments plus
+  DARPA/UN Geneva alternatives returned 45 records from 13 of 14 providers
+  (run 42173158110); older UN News RSS remained unavailable.
+- [x] Configure a scheduled daily public World Intelligence scan, with a
+  separate write-limited archival job storing source-linked outcomes only on
+  `research-memory` (no source code or model deployment).
+- [x] Add read-only categories for universities, public defense, foreign
+  affairs, economy, world news, environment, journals, discoveries and public
+  software to the iPad founder control center.
+- [x] Add Program Foundry: three original, allowlisted Python starter
+  programs plus generated unit tests and a manifest requiring human review.
+  Its GitHub run 42172615560 passed. No automatic code merge or deployment.
+- [x] Inventory independently maintained repositories for a real
+  intelligence architecture: coding agents (OpenHands/aider/SWE-agent),
+  evaluation (Inspect AI/lm-eval), RAG (PaperQA2), local inference
+  (llama.cpp/vLLM), candidate training (TRL/AutoResearch), design
+  (FreeCAD/Blender/Manim/Godot), science (xarray/GeoPandas) and others.
+  See `docs/GENERAL_INTELLIGENCE_WORLD_HORIZON.md`.
+- [ ] Add authenticated institution services only after explicit authorized
+  integrations, licensing, private data protections and credentials.
+- [ ] Build a model-backed agent which proposes **new programs**, writes
+  candidate patches on isolated branches and passes external unseen tests;
+  the current foundry uses reviewed templates, not open-ended AGI coding.
+- [ ] Establish an owner-approved durable private compute/data environment;
+  GitHub scheduled runs and public archives are not always-on private AGI.
+- [ ] Demonstrate genuine generality, novel experimental discoveries and
+  reliable self-improvement without cherry-picking. **Not established.**
