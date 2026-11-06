@@ -55,7 +55,7 @@ class QualityTests(unittest.TestCase):
 
     def test_fabricated_citations_rejected(self):
         fake = "The tests were verified by a journal. Citations: [1] Smith et al., Nature, 2023."
-        self.assertFalse(assess_answer(fake, "proposer")["acceptable"])
+        self.assertEqual(assess_answer(fake + " This is an invented reference.", "proposer")["reason"], "unsupported_reference_style")
 
     def test_empty_is_rejected(self):
         self.assertFalse(assess_answer("short", "critic")["acceptable"])
