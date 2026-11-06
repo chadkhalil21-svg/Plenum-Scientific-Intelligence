@@ -190,3 +190,34 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [x] Reduce unnecessary CPU usage: five specialist workflows no longer rerun on general dependency edits; central CI skips documentation-only changes but still runs for source, test and dependency edits.
 - [ ] Require a larger independent scientific/agent benchmark before model promotion. The larger Qwen3-1.7B CPU candidate is being evaluated separately; no outcome is assumed until its workflow finishes.
 - [ ] Configure dedicated always-on computing, durable off-runner database and private researcher-controlled storage only with founder-approved resources and budget.
+
+## Expanded pictured-science ecosystem and reproducible verification
+
+- [x] Inventory every scientific engine shown in the founder's screenshots,
+  with upstream links, execution permissions, scientific boundaries and
+  planned/credential-gated/verified statuses. See `docs/SCIENTIFIC_ECOSYSTEM.md`.
+- [x] Implement additional read-only arXiv Atom and US DOE OSTI JSON adapters,
+  composed with three existing worldwide scholarly indexes for five-source
+  concurrent search and DOI-based provenance deduplication.
+- [x] Five-source live GitHub test 42167088294 passed with 12 distinct records:
+  OpenAlex 3, Europe PMC 3, arXiv 3, OSTI 3; Semantic Scholar returned an
+  HTTP error. The provider outage remains explicit, not concealed.
+- [x] Keep Materials Project API credential-gated and not connected. The
+  personal key is not published, inferred or requested in this public repo.
+- [x] Install isolated pinned OpenMM 8.6.1 on free GitHub CPU hardware,
+  execute 100 reference molecular-dynamics steps and verify independent
+  harmonic initial energy (1.25 kJ/mol) with relative conservation error
+  approximately 7.18×10^-6 (run 42167232309).
+- [x] Expose worldwide scholarly search, the audited full ecosystem registry
+  and isolated OpenMM engine from the founder's iPad GitHub control center.
+- [x] Complete EleutherAI Qwen3 0.6B versus 1.7B external model-comparison
+  workflow (run 42165601852); accuracy sample too small for promotion.
+- [x] Preserve all uninstalled Lean4, DiffDock, PySCF, pymatgen, SU2, ToolUniverse,
+  GMAT and other ambitious integrations as **staged**, not falsely operational.
+- [ ] Install and independently validate the next high-value scientific
+  engines, their scientific data, licensing and resource budgets one at a
+  time. No general drug-design, protein-folding, formal-proof or advanced
+  aircraft-design system is yet validated.
+- [ ] Improve foundational reasoning with larger genuine scientific
+  benchmarks, independent agents and more capable persistent compute before
+  claiming AGI or recursive model improvement.

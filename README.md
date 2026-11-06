@@ -250,3 +250,32 @@ in explicitly downloaded GitHub artifacts, **not** automatically across
 temporary runners. The approved public research-memory Git branch is the
 cross-run record source. A long-running cloud AI and stronger model serving
 still require owner-approved computing resources and permissions.
+
+## Screenshot-driven global scientific ecosystem expansion
+
+The founder's complete scientific-engine, global-library and AI-research
+reference screenshots have been incorporated into the reviewed
+[Scientific Ecosystem Inventory](docs/SCIENTIFIC_ECOSYSTEM.md).
+
+New, **tested** integrations include two public scholarly indexes (arXiv
+and US DOE OSTI) alongside the existing OpenAlex, Europe PMC and
+Semantic Scholar adapters, plus isolated **OpenMM 8.6.1** CPU molecular
+dynamics. Their live GitHub workflows completed successfully:
+[Five-source library](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42167088294)
+and [OpenMM reference](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42167232309).
+Semantic Scholar was unavailable during the latest five-source live call,
+and that absence is retained in the report.
+
+From GitHub Actions, the founder-facing **Plenum Research Control Center**
+now includes `knowledge` (five-source search), `molecular-dynamics`
+(isolated OpenMM CPU demonstration) and `ecosystem` (full status and
+permissions registry). Other pictured engines remain visible as
+license-/dependency-reviewed **planned integrations** until their genuine
+numerical capabilities have passed separate tests. None is falsely treated
+as an unrestricted plug-in, and no private patent screenshots were
+uploaded to this public repository.
+
+The independently maintained EleutherAI benchmark also completed for
+Qwen3-0.6B and Qwen3-1.7B. Results favored 1.7B on some of the
+eight-question public tasks, but are **too small for model promotion**.
+[Protocol and actual scores](docs/SCIENTIFIC_ECOSYSTEM.md).

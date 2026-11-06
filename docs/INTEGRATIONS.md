@@ -72,3 +72,12 @@
 - PaperQA2 can be installed later as the main grounded scientific-document
   reasoning interface when a suitable explicitly configured LLM service,
   licensing policy and document storage exist.
+
+## 2026-11 pictured-resource expansion
+All referenced engines and international knowledge sources are inventoried in
+[Scientific Ecosystem](SCIENTIFIC_ECOSYSTEM.md). The new combined metadata
+worker queries five public providers with separate bounded failures.
+arXiv and DOE OSTI returned three live metadata records each in run
+42167088294. Material Project credentials remain unconfigured.
+OpenMM v8.6.1 passed a bounded Reference CPU synthetic bond simulation in
+run 42167232309; no real biomolecular modeling claims are warranted.
