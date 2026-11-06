@@ -13,7 +13,7 @@ from xml.etree import ElementTree as ET
 import json
 import re
 
-MAX_BYTES = 420_000
+MAX_BYTES = 1_250_000
 MAX_RESULTS = 4
 MAX_SOURCES = 16
 ATOM = "{http://www.w3.org/2005/Atom}"
@@ -24,13 +24,13 @@ _VALID_QUERY = re.compile(r"^[\w\s,\-.()/+]{2,120}$", re.UNICODE)
 # to be healthy, or an official institutional partnership.
 SOURCES = {
     "mit_labs": {"category":"universities", "type":"feed",
-        "url":"https://news.mit.edu/rss/research", "publisher":"MIT News"},
+        "url":"https://news.mit.edu/rss/school/science", "publisher":"MIT News"},
     "harvard_research": {"category":"universities", "type":"feed",
-        "url":"https://news.harvard.edu/gazette/feed/", "publisher":"Harvard Gazette"},
+        "url":"https://news.harvard.edu/gazette/section/science-technology/feed/", "publisher":"Harvard Gazette"},
     "nasa_research": {"category":"discoveries", "type":"feed",
         "url":"https://www.nasa.gov/feed/", "publisher":"NASA"},
     "dod_public_news": {"category":"defense", "type":"feed",
-        "url":"https://www.defense.gov/DesktopModules/ArticleCS/RSS.ashx?ContentType=1&Site=945",
+        "url":"https://www.defense.gov/DesktopModules/ArticleCS/RSS.ashx?ContentType=1&Site=945&max=4",
         "publisher":"U.S. Department of Defense"},
     "un_global_news": {"category":"foreign_affairs", "type":"feed",
         "url":"https://news.un.org/feed/subscribe/en/news/all/rss.xml", "publisher":"United Nations News"},
