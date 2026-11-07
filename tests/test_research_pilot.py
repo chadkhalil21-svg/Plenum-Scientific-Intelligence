@@ -105,5 +105,25 @@ class PilotTests(unittest.TestCase):
         self.assertEqual(p["sealed"]["method"], "DOP853")
 
 
+
+from plenum_ai.research_pilot import _matches_development
+
+class IndependentRunnerNumericTests(unittest.TestCase):
+    def test_harmless_float_roundoff_is_allowed(self):
+        original = [{"method":"RK45","calls":806,"error":1.118e-10,"invariant":0.0},
+                    {"method":"DOP853","calls":254,"error":5.131e-12,"invariant":0.0},
+                    {"method":"Radau","calls":3515,"error":7.04e-14,"invariant":0.0}]
+        independent = [dict(record) for record in original]
+        independent[0]["error"] += 1e-15
+        self.assertTrue(_matches_development(original, independent))
+        independent[0]["calls"] += 1
+        self.assertFalse(_matches_development(original, independent))
+        independent[0]["calls"] -= 1
+        independent[0]["method"] = "spoof"
+        self.assertFalse(_matches_development(original, independent))
+        independent[0]["method"] = "RK45"
+        independent[0]["error"] = 0.01
+        self.assertFalse(_matches_development(original, independent))
+
 if __name__ == "__main__":
     unittest.main()
