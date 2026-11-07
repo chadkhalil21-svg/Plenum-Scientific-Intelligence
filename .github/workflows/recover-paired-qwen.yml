@@ -1,0 +1,144 @@
+name: Recover Original Qwen3 Paired Scores without New Inference
+on:
+  pull_request:
+    paths:
+      - 'src/plenum_ai/inspect_paired_qwen.py'
+      - 'tests/test_inspect_paired_qwen.py'
+      - '.github/workflows/recover-paired-qwen.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/plenum_ai/inspect_paired_qwen.py'
+      - 'tests/test_inspect_paired_qwen.py'
+      - '.github/workflows/recover-paired-qwen.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: qwen-original-evidence-recovery-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  offline-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Validate paired scoring, original source IDs and zero-inference default
+        run: |
+          python -m pip install -e .
+          python -m unittest discover -s tests -p 'test_inspect_paired_qwen.py' -v
+          python -m plenum_ai.inspect_paired_qwen --out reports/recovered-paired-plan.json
+  recover-original:
+    needs: offline-guard
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Archive existing Qwen3-1.7B paired evidence'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 17
+    permissions:
+      actions: read
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      OPENAI_API_KEY: ''
+      ANTHROPIC_API_KEY: ''
+      GOOGLE_API_KEY: ''
+      HF_HUB_DISABLE_TELEMETRY: '1'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Download the immutable original failed-audit run's four completed Inspect files
+        run: |
+          gh run download 42342242561 \
+            --repo "$GITHUB_REPOSITORY" \
+            -n qwen17-vs-06b-original-evidence \
+            -D reports/
+      - name: Match each downloaded original candidate log against reviewed SHA256 manifest
+        run: |
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          expected={
+            "2026-11-07T05-21-27-00-00_arc-challenge_et4gD3XqETGCivJwQqDoM7.eval":"41d37c077d76929c06c3caafab018c68ab275268992eee31e4f28496833b5088",
+            "2026-11-07T05-25-24-00-00_gsm8k_bzErEehtcfktdNiNAP5AvL.eval":"2017279ba6c1ee18bc804e582c5eb4876b6cd16491eb0419a5fd98e66ff79fff",
+            "2026-11-07T05-35-09-00-00_hellaswag_nLKqPRoLf6axXXsSbaDhvN.eval":"a597b4c7846ad0736cbe7339d226e605a68e2b78cd0d2b7b37f3f8104ab75b11",
+            "2026-11-07T05-39-28-00-00_mmlu-0-shot_hCsd5J6XHKbWSa8fcD25dB.eval":"c9f8c0b2afb35cbf2c2af762fd582fa7fe66136e80ee0d4875ff8667aca7c1b8",
+          }
+          logs=list(Path("reports/inspect-paired-logs").rglob("*.eval"))
+          assert len(logs)==4 and {p.name for p in logs}==set(expected), "Original Inspect task count/name changed"
+          for p in logs:
+              assert hashlib.sha256(p.read_bytes()).hexdigest()==expected[p.name], "Original 1.7B model data changed"
+          print("All four original pinned model eval files match their separately inspected SHA256 values")
+          PY
+      - name: Install only reviewed independent Inspect scoring readers, no model weights or inference
+        run: |
+          python -m pip install -e '.[inspection]'
+          python -m pip install "inspect-evals==0.27.0"
+          python -m pip check
+      - name: Independently audit original 48 pairs and question/target equality
+        run: |
+          python -m plenum_ai.inspect_paired_qwen \
+            --audit-dir reports/inspect-paired-logs \
+            --reference-dir ledger/evidence/inspect-cross-domain \
+            --out reports/paired-qwen-scores.json
+          python - <<'PY'
+          import json
+          r=json.load(open("reports/paired-qwen-scores.json"))
+          assert r["paired_scoring_verified"] and r["reference_raw_log_fingerprints_checked"]
+          assert r["original_prompt_and_scoring_targets_matched"]
+          assert r["reference_correct"]==18 and r["candidate_correct"]==21
+          assert sum(x["paired_improved"] for x in r["by_family"].values())==8
+          assert sum(x["paired_regressed"] for x in r["by_family"].values())==5
+          assert not r["automatic_promotion"] and not r["AGI_demonstrated"]
+          assert r["paid_api_calls"]==0 and r["model_calls"]==48
+          print("Archived original evaluator grades, 18/48 baseline, 21/48 candidate; 8 corrected and 5 regressed")
+          PY
+      - name: Preserve exact raw source with append-only historical run ID
+        env:
+          RECOVERY_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,zipfile
+          from pathlib import Path
+          r=json.loads(Path("reports/paired-qwen-scores.json").read_text())
+          assert r["paired_scoring_verified"] and r["total_matched_cases"]==48
+          root=Path("ledger/evidence/paired-qwen")
+          root.mkdir(parents=True,exist_ok=True)
+          target=root/"run-42342242561.json"
+          raw=root/"run-42342242561-raw.zip"
+          if target.exists() or raw.exists():
+              raise FileExistsError("No rewriting completed experiments, even on rerun")
+          files=sorted(Path("reports/inspect-paired-logs").rglob("*.eval"))
+          if len(files)!=4:raise ValueError("Four original independent logs required")
+          r["source_sha"]="dbd7636a936f8090a11031debf685dea40a1d91c"
+          r["recovery_sha"]=os.environ["RECOVERY_SHA"]
+          r["original_failed_audit_run_id"]="42342242561"
+          r["original_eval_sha256"]={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
+          with zipfile.ZipFile(raw,"x",compression=zipfile.ZIP_DEFLATED) as z:
+              for p in files:z.write(p,arcname=p.name)
+          target.write_text(json.dumps(r,indent=2)+"\n",encoding="utf-8")
+          print("Evidence preserved with the original run ID and its original raw log SHA256 values")
+          PY
+      - name: Upload original evidence for independent reviewer
+        uses: actions/upload-artifact@v7
+        with:
+          name: recovered-original-48-pair-scores
+          path: |
+            reports/paired-qwen-scores.json
+            ledger/evidence/paired-qwen/run-42342242561.json
+          retention-days: 90
+      - name: Commit only independent public research evidence, no rewritten results
+        run: |
+          git -C ledger config user.name 'Plenum Scientific Evidence'
+          git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ledger add evidence/paired-qwen/
+          git -C ledger commit -m 'Preserve original Qwen3 paired model evidence without new inference'
+          git -C ledger pull --rebase origin research-memory
+          git -C ledger push origin HEAD:research-memory
