@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T06:20:00Z",
+  "last_reviewed_utc": "2026-11-07T06:28:00Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -279,10 +279,14 @@
     },
     {
       "id": "qwen17-gsm8k-256-release-20261107",
-      "status": "running_unverified",
+      "status": "verified_foundation",
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42346026034",
       "AGI_demonstrated": false,
-      "notes": "Released PR #34 for one controlled original Inspect Evals Qwen3-1.7B math ablation: exact 12 original public GSM8K questions scored 1/12 at 128 max output tokens; 10/12 model outputs reached that limit (0 correct among 10). Only token cap becomes 256, all model weights/prompt/IDs/scorer held fixed, one CPU worker, original SHA256-verified source evidence and no paid APIs. Requires independent fresh log score and append-only archive before claiming any improvement. Preflight/full CI passed; this entry tracks running experiment, not AGI."
+      "notes": "Independently scored official Inspect Evals GSM8K frozen Qwen3-1.7B same exact 12 original public questions on CPU, original task IDs/prompt and scoring targets SHA256 verified. 128-token baseline 1/12 and 256-token variant 7/12, six previously wrong repaired and zero regressions, all six repairs came from ten formerly at-cap replies. New 256-token cap hit 3/12. Original .eval and hash archived at research-memory/evidence/qwen17-math-budget/run-42346026034.json and -raw.zip. This post-hoc truncation confound correction is a configuration improvement, not training, broad generalization, AGI or proof of better model size.",
+      "result": {
+        "correct": 7,
+        "attempted": 12
+      }
     },
     {
       "id": "inspect-original-human-eval-coding-20261107",
@@ -295,11 +299,11 @@
   "next_actions": [
     {
       "priority": 1,
-      "action": "Check actual independently scored Qwen3-1.7B GSM8K 128-vs-256-token ablation run 42346026034. Verify same 12 original question IDs, prompt/scorer targets, frozen checkpoint, original 128-token 1/12 with 10/12 capped, and raw Inspect log archive. Do not infer improvements until completed."
+      "action": "Run and independently audit original upstream HumanEval code-function test #42346922772 (3 historical published coding tasks) in disposable Docker; verify true model-generated code success/failure, original scorer and raw .eval archive. Then evaluate bounded Inspect ReAct or OpenHands on independent multi-step software repair."
     },
     {
       "priority": 2,
-      "action": "Inspect original upstream HumanEval coding-proof release #42346922772: require real frozen Qwen3-1.7B model-generated Python run against original independent Docker-isolated functional tests, all three scores/failed cases and hash-verified raw .eval files. Then reuse existing Inspect react() or OpenHands/mini-SWE-agent for actual multi-step code repair; never rebuild agent loops."
+      "action": "Protect experimental comparability: Qwen3-1.7B fixed 12-question GSM8K 128 to 256 tokens rose 1/12 to 7/12 (6 repairs, zero regressions). Reassess models using equal output budgets, novel holdouts and actual tool/coding results; do not claim general-purpose model promotion from tiny public samples."
     },
     {
       "priority": 3,
@@ -382,6 +386,10 @@
     {
       "decision": "Reuse official Inspect HumanEval original functional scorer and Docker isolation rather than creating a custom coding benchmark.",
       "reason": "Current verified Plenum OpenHands editor operation is not an autonomous code-generation result. Test actual model-written code using 3 original official independent tests before selecting a larger agent framework or model; this cannot prove general intelligence."
+    },
+    {
+      "decision": "Prioritize a fair original functional coding/agent test over new model training; change model output budget before assuming low math accuracy reflects reasoning deficiency.",
+      "reason": "On 12 matched public Qwen3-1.7B GSM8K questions, independently scored 256 tokens improved 1/12 to 7/12 compared with 128 tokens (six repairs, no regressions, all fixed earlier cap-hits). This is a meaningful format confound and cannot establish AGI."
     }
   ],
   "operating_rules": [
