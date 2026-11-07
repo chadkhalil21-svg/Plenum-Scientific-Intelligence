@@ -15,6 +15,24 @@ Develop a voice-first, multimodal, persistent and scientifically useful assistan
 
 **Beyond Stage One:** prospective replicated research, physical laboratory integrations, verifiable gains on unfamiliar problems, reliable long-horizon planning, persistent learning, robustness and trustworthy self-improvement. Fictional sentience or feelings are **not** an engineering milestone that can presently be guaranteed.
 
+## Reuse-first conversational architecture (planned, not installed)
+
+```
+iPad microphone / optional camera / typed requests
+  -> consent-aware WebRTC and speech I/O
+  -> existing realtime voice framework (evaluate LiveKit Agents or Pipecat)
+  -> model backend chosen by measured latency, quality, cost and privacy
+  -> existing LangGraph plans and typed durable memory
+  -> approved tools (science, source retrieval, coding, calendars)
+  -> independent evidence/scoring and action approval
+  -> speech response plus project progress ledger
+```
+
+- **LiveKit Agents** (https://github.com/livekit/agents) already implements streaming speech-to-text/model/text-to-speech, interruption and turn-taking, iOS/web clients and scoped tool integrations. Evaluate an isolated pilot before adoption. The open-source library and paid cloud service are distinct.
+- **Pipecat** (https://github.com/pipecat-ai/pipecat) is another mature open-source voice/multimodal framework. Compare rather than build two voice stacks. Choose based on original latency tests, accessibility and maintenance.
+- Existing Plenum **LangGraph**, scoped tool integrations, independent Inspect evaluations and project ledger remain the core research/agency layer. New voice components are interface technology and do not establish AGI or consciousness.
+- Free Kaggle sessions are too ephemeral to promise uninterrupted conversational availability, 24/7 proactivity, stable iPad streaming or secure private memory. Those are separate infrastructure design gates and can incur costs.
+
 ## Free-cloud route, discovered 2026-11-07
 
 1. **Kaggle Notebooks (preferred experiment):** free, quota-limited `GPU T4 x2`, two 16 GB GPUs, approximately 29 GB host RAM in its public documentation. Kaggle retired P100 on 2026-09-15. Limited temporary storage and session quota; **not continuous production hosting**. The founder needs to enable the free accelerator in their Kaggle account and run the notebook.
