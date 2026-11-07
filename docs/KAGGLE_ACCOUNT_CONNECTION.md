@@ -19,9 +19,7 @@ Supported operations:
 
 No delete operation, arbitrary source editor, GPU launch, private-to-public
 export or self-modification operation is implemented. These would require
-separate authorization and review. **Read/write code infrastructure is not
-evidence that the user has authenticated or that this ChatGPT chat can
-directly operate a Kaggle website.**
+separate authorization and review. **Verified status (Nov 7, 2026):** the founder configured the `kaggle-access` environment secret and manually ran GitHub Actions [42408852329](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42408852329). The official Kaggle CLI authenticated and listed owner notebook metadata successfully. This proves Kaggle API authorization for this workflow, **not** a Kaggle notebook write, model inference, or this chat's direct control of Kaggle's website.
 
 ## To enable the connection securely
 
@@ -66,3 +64,7 @@ from the current chat.
 
 No pay-as-you-go service, Kaggle billing, model execution or third-party
 account connection was activated by merging this documentation.
+
+## Security follow-up from owner screenshots
+
+The founder's GitHub environment screenshot showed no required reviewer, admin bypass selected, and deployment-branch restriction set to no restriction. Before further notebook write or login automation, restrict the `kaggle-access` environment to the reviewed `main` branch, add a required human reviewer when supported, and disable administrator bypass. The API token screenshot appeared partly obscured, so rotating the token and replacing the environment secret is prudent. No API key value belongs in public repository files, build logs or chat.
