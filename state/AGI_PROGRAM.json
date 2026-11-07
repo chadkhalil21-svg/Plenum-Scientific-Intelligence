@@ -121,7 +121,7 @@
       },
       "metric": "top-1 intended document retrieved from two precommitted public scientific source questions",
       "AGI_demonstrated": false,
-      "notes": "Pinned PaperQA2 2026.8.12 completed actual local offline sparse-embedding retrieval over two existing public Plenum NOAA and battery notes. One of two source queries matched; not evidence of reliable retrieval or AGI. No language-model inference; outbound network blocked. PR #24 merged."
+      "notes": "Real pinned PaperQA2 2026.8.12 offline SparseEmbeddingModel indexed two public records. Battery/SPM query retrieved battery correctly; NOAA Boston/Virginia Key tide question incorrectly retrieved battery (independent artifact 13561750015, run 42340104253). Score 1/2. No model or paid API; results are retrospective small-public-data failure and not AGI."
     }
   ],
   "next_actions": [
