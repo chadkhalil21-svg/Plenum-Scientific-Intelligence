@@ -1,11 +1,19 @@
 name: Verify Private Browser Cloud Identity (No Deployment)
 on:
   workflow_dispatch:
+  issues:
+    types: [opened]
 permissions:
   contents: read
   id-token: write
 jobs:
   verify-auth:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' &&
+       github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+       github.event.issue.user.login == 'chadkhalil21-svg' &&
+       github.event.issue.title == 'Computer Browser: verify cloud identity')
     runs-on: ubuntu-latest
     environment: computer-browser-production
     timeout-minutes: 8
