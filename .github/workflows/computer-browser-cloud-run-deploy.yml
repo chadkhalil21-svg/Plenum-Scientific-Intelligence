@@ -1,5 +1,7 @@
 name: Deploy Private Computer Browser on Cloud Run (Owner Approval)
 on:
+  issues:
+    types: [opened]
   workflow_dispatch:
     inputs:
       confirmation:
@@ -22,9 +24,17 @@ concurrency:
   cancel-in-progress: false
 jobs:
   private-deploy:
-    if: ${{ inputs.confirmation == 'DEPLOY_APPROVED' }}
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.confirmation == 'DEPLOY_APPROVED') ||
+      (github.event_name == 'issues' &&
+       github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+       github.event.issue.user.login == 'chadkhalil21-svg' &&
+       github.event.issue.title == 'Computer Browser: deploy private Cloud Run' &&
+       github.event.issue.body == 'DEPLOY_APPROVED:plenum-computer-browser:us-east1:2026-11-07')
     runs-on: ubuntu-latest
     environment: computer-browser-production
+    env:
+      BROWSER_DEPLOY_REGION: ${{ github.event_name == 'issues' && 'us-east1' || inputs.region }}
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
@@ -51,10 +61,19 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
       - uses: google-github-actions/setup-gcloud@v3
+      - name: Confirm private cloud target and founder-approved deployment parameters
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCP_PROJECT_ID" = "plenum-computer-browser"
+          case "$BROWSER_DEPLOY_REGION" in us-east1|us-central1) ;; *) exit 1 ;; esac
+          echo "Deployment region verified. Private IAP and min-instances zero preserved."
       - name: Verify preexisting Artifact Registry and Secret Manager configuration
         env:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-          REGION: ${{ inputs.region }}
+          REGION: ${{ env.BROWSER_DEPLOY_REGION }}
           BROWSER_PROFILE_BUCKET: ${{ vars.BROWSER_PROFILE_BUCKET }}
         run: |
           gcloud artifacts repositories describe plenum-browser --location="$REGION" --project="$GCP_PROJECT_ID" --format='value(name)' > /dev/null
@@ -73,7 +92,7 @@ jobs:
       - name: Build isolated source image (may use billable Cloud Build)
         env:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-          REGION: ${{ inputs.region }}
+          REGION: ${{ env.BROWSER_DEPLOY_REGION }}
         run: |
           IMAGE="$REGION-docker.pkg.dev/$GCP_PROJECT_ID/plenum-browser/computer-browser:$GITHUB_SHA"
           PROJECT_NUMBER="$(gcloud projects describe "$GCP_PROJECT_ID" --format='value(projectNumber)')"
@@ -90,7 +109,7 @@ jobs:
       - name: Deploy authenticated only, on-demand, bounded resource Cloud Run
         env:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-          REGION: ${{ inputs.region }}
+          REGION: ${{ env.BROWSER_DEPLOY_REGION }}
           BROWSER_RUNTIME_SA: ${{ vars.GCP_BROWSER_RUNTIME_SA }}
           BROWSER_PROFILE_BUCKET: ${{ vars.BROWSER_PROFILE_BUCKET }}
           COMPUTER_OWNER_EMAIL: ${{ vars.COMPUTER_OWNER_EMAIL }}
