@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T19:34:00.194Z",
+  "last_reviewed_utc": "2026-11-07T19:50:55.088Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -463,16 +463,23 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/58",
       "AGI_demonstrated": false,
       "notes": "PR #58 merged as 838ba8356caea7665e9e2d0206c2fec49959cd49 after full core CI success run 42406621122. Existing global World Horizon and Lab Radar now include official English Chinese Academy of Sciences research announcement links and OpenAlex works with CN institutional coauthors, rolling 30-day publication window (not a paid records-updated sync). Offline parsing and origin tests passed; as of ledger update, real public endpoint success/outage under scheduled live workflow is not yet validated. An author with China affiliation is not necessarily a China-only or institution-led discovery. No blocked full text, direct lab access or breakthrough verification is asserted."
+    },
+    {
+      "id": "kaggle-official-cli-bridge-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42408019998",
+      "AGI_demonstrated": false,
+      "notes": "PR #59 merged 81029c5b0c56a77a42b00dc4b566f43da7a096cb. Official Kaggle/kaggle-cli source pinned SHA fdc788faffe3f29ae317480325c44080a00a5434 (released v2.2.4 lacks --no-run), actual CLI and --no-run checked in isolated CI #42408019998; full foundation CI #42408020014 passed. Six isolated owner-bridge tests passed. Manual GitHub workflow offers authenticated verify/list/read/status and private fixed-slug write-draft with --no-run and no model approval. No Kaggle token connected, live account action performed, private source accessed, GPU inference or paid service activated. Founder screenshots: two T4s ~15GiB each, available RAM 30.1 GiB, reported /tmp free 966.9 GiB; do not infer durable quota."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Founder Kaggle iPad verified real 2x Tesla T4, 15,360 MiB each, via nvidia-smi, but /kaggle/temp was absent and memory/disk code aborted before measuring RAM. Run revised read-only preflight that probes existing /kaggle/working and /tmp folders and prints available RAM. Existing GitHub notebook scratch fallback was merged in PR #57. If any writable scratch volume has >=25 GiB, import notebook and manually approve Qwen3.6-27B Q4 download and timed inference. No private Kaggle API connection or model execution yet."
+      "action": "To authorize Kaggle, founder should create a Kaggle API token and privately add it as GitHub `kaggle-access` environment secret `KAGGLE_API_TOKEN`; never paste token in chat. Then run manual GitHub workflow `Prometheus Kaggle Owner-Approved Notebook Access`, operation `verify`. PR #59 code and offline CLI tests passed, but Kaggle has NOT been authenticated or read/written by ChatGPT. Current hardware: two T4 GPUs, 30.1GiB RAM, /tmp reports 966.9GiB free. Next run the verified notebook with explicit human model approval to measure actual Qwen3.6-27B inference."
     },
     {
       "priority": 2,
-      "action": "Compare actually running Qwen3.6-27B to another practical open-weight candidate (e.g. Qwen3.6-35B-A3B if quantized runtime fits available GPUs) using independent Inspect and matched unfamiliar coding, reasoning, scientific, multimodal tasks. Establish initial quality/speed/memory and provenance; official benchmark publicity is not Plenum independent performance or AGI."
+      "action": "After real Kaggle quantized Qwen3.6-27B model inference, archive SHA/revisions, latency, memory and genuine output. Independently benchmark against small and competing open models with Inspect AI on unseen coding, science, mathematics and long-horizon tasks. Kaggle, Colab and Hugging Face ZeroGPU are temporary free compute; none is continuously available AGI hosting."
     },
     {
       "priority": 3,
@@ -727,6 +734,22 @@
     {
       "decision": "Preserve distinct verification of actual GPU access, scratch disk, notebook execution, model inference and durable autonomous AGI service.",
       "reason": "Screenshots verified two T4s and a live 14-minute notebook session, but /kaggle/temp was missing and no inference or persistence was established. Free Kaggle sessions and GitHub Actions are not always-on private AGI compute."
+    },
+    {
+      "decision": "Use the official Kaggle CLI through a manual GitHub workflow and protected Kaggle environment for account operations.",
+      "reason": "Founder wants API read/write access. A private GitHub environment secret `KAGGLE_API_TOKEN` and initial owner run remain necessary; no token in chat or public files."
+    },
+    {
+      "decision": "Initial Kaggle write access must never automatically execute the expensive trial.",
+      "reason": "Pinned upstream CLI --no-run Quick Save verified; restrict to a private Prometheus notebook and default model approval False. Broader edit/deletion needs review."
+    },
+    {
+      "decision": "Prioritize current Kaggle dual T4 for the first free model experiment; keep free Colab only as fallback.",
+      "reason": "Founder GPU, scratch and RAM tests succeeded; Colab GPU supply and usage limits vary and neither provider guarantees persistent hosting."
+    },
+    {
+      "decision": "Treat Hugging Face ZeroGPU as an on-demand short demo option, not permanent compute.",
+      "reason": "Current free-user ZeroGPU shared GPU quota is 5 minutes daily, despite larger 48/96GB GPU configurations. Production AGI requires separate durable compute and memory."
     }
   ],
   "operating_rules": [
