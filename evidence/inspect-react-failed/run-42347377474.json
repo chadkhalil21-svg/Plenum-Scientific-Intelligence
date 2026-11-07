@@ -1,0 +1,22 @@
+{
+  "schema": "plenum-original-react-tool-failure-v1",
+  "original_run_id": "42347377474",
+  "original_source_sha": "054957ba0ce63004257f409d228da9f049f51680",
+  "original_cause": "Object of type Undefined is not JSON serializable",
+  "original_log_reviewed": true,
+  "independent_functional_grade_available": false,
+  "agent_tool_calls": 1,
+  "tool_result_messages": 1,
+  "model_error_recovery_demonstrated": false,
+  "model_retrained_or_deployed": false,
+  "AGI_demonstrated": false,
+  "unscored_execution": true,
+  "sandbox_tool_error_observed": true,
+  "chat_template_error_observed": true,
+  "source_sample_id": "HumanEval/0",
+  "original_input_sha256": "2a1468c7f8cff7478340bf0ed269017b47f513daca257a8dbe0f6dadc0e6398e",
+  "original_error_sha256": "8f56faa6404031ec1f3554acb4bf775953eab6034c18ce83962994eab3957961",
+  "original_eval_sha256": {
+    "2026-11-07T06-33-51-00-00_react-original-humaneval_9xvQJmZDqT6M9Lh6ziKj2s.eval": "c205cc78bf4cf341a6ea275ffd526ab6b2d24a3e7132bca4e1f68f0c427cce3d"
+  }
+}
