@@ -2,7 +2,8 @@
 
 No Javascript, cookies or login credentials reach ChatGPT or public GitHub.
 This is a useful authenticated owner surface for status and public inspection.
-Full interactive website login is a separate future operation.
+One-time human-operated website sign-in uses a separate IAP-protected page.
+This is not ChatGPT model-controlled website login.
 """
 from html import escape
 from fastapi import Depends, Header, HTTPException, Query
@@ -43,8 +44,9 @@ overflow-wrap:anywhere}small{opacity:.75}a{color:inherit}
 </style></head><body><h1>Computer · Private Browser</h1>
 <small>Owner-only Google sign-in · Plenum Prometheus</small>
 <h2>"""+escape(title)+"</h2>"+body+"""<hr>
-<small>Public-page reading only. Website account logins, real forms and submissions
-remain disabled until private sessions and approvals are connected.</small>
+<small>Private login is available only after the owner enables the site,
+protected cloud storage and Google authentication. Computer cannot yet operate
+private websites directly from ordinary ChatGPT messages.</small>
 </body></html>""",headers=_HEADERS)
 
 
@@ -54,8 +56,11 @@ def mount_owner_console(app):
         return _page("Connected as verified owner",
             """<article>Google identity: verified.
 Browser software: built and tested.
-Private website logins: not enabled.
-Cloud sign-in storage: encryption component built; not yet connected.</article>
+Private website login: owner-operated only, after cloud deployment.
+Saved sessions: encrypted cloud storage when connected and configured.
+ChatGPT direct website interaction: not yet connected.</article>
+<h2>Sign in to an approved website</h2>
+<p><a href="/owner/sign-in">Open secure website sign-in</a></p>
 <h2>Read an approved public website</h2>
 <form method="get" action="/owner/public-preview">
 <label for="url">Website address</label>
