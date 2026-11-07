@@ -81,14 +81,14 @@ jobs:
         run: |
           MODEL_PATH="$(cat reports/model-path.txt)"
           inspect eval inspect_evals/arc_easy --model hf/local \
-            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false \
+            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
             --limit 12 --max-connections 1 --max-tokens 48 --temperature 0 \
             --log-dir reports/inspect-real-logs --display none
       - name: Run official ARC Challenge questions with actual CPU inference
         run: |
           MODEL_PATH="$(cat reports/model-path.txt)"
           inspect eval inspect_evals/arc_challenge --model hf/local \
-            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false \
+            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
             --limit 12 --max-connections 1 --max-tokens 48 --temperature 0 \
             --log-dir reports/inspect-real-logs --display none
       - name: Independently audit original Inspect scores
@@ -100,6 +100,7 @@ jobs:
           import json
           d=json.load(open('reports/inspect-science-audit.json'))
           assert d['total_attempted']==24 and d['independently_scored']
+          assert d['evaluation_variant']=='nonthinking-v2' and d['enable_thinking'] is False
           assert not d['AGI_demonstrated'] and not d['automatic_promotion']
           print('Real Inspect scores:',d['domain_scores'])
           PY
