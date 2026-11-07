@@ -22,7 +22,9 @@ tasks, not laboratory inventions or discoveries.
 
 The programs are JSON data interpreted with strictly bounded add, multiply,
 and square operations. They cannot access filesystem, shell, subprocess,
-network, arbitrary Python, dynamic imports or outside tool calls. This is
+network, arbitrary Python, dynamic imports or outside tool calls. All 28 hidden program inputs are distinct from one another and from
+public input/output examples. The scorer tests the same model program against
+those inputs without adding any new instructions. This is
 not full unrestricted programming.
 
 ## Two reviewed open-weight candidates
