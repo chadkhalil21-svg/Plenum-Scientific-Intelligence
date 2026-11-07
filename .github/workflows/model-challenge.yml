@@ -8,6 +8,8 @@ on:
       - '.github/workflows/model-challenge.yml'
       - 'src/plenum_ai/model_challenge.py'
       - 'tests/test_model_challenge.py'
+      - 'src/plenum_ai/research_pilot.py'
+      - 'tests/test_research_pilot.py'
 permissions:
   contents: read
 concurrency:
