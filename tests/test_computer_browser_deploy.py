@@ -19,6 +19,7 @@ class PrivateCloudDeployGuardTests(unittest.TestCase):
             "--max-instances=1", "--concurrency=1",
             "--set-secrets COMPUTER_BROWSER_TOKEN=computer-browser-token:latest",
             "plenum-browser-builder@", "--gcs-source-staging-dir",
+            "--raw --format=json",
         ]:
             self.assertIn(evidence,wf)
         self.assertNotIn("--allow-unauthenticated ",wf)
