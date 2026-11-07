@@ -1,8 +1,12 @@
 """Offline tests for encrypted GCS-backed browser session isolation."""
-import base64
 import os
 import unittest
-from cryptography.fernet import Fernet
+import importlib.util
+from unittest.mock import patch
+
+HAS_CRYPTO=importlib.util.find_spec('cryptography') is not None
+if HAS_CRYPTO:
+    from cryptography.fernet import Fernet
 from services.computer_browser.private_profiles import BrowserProfileStore
 
 
@@ -45,6 +49,7 @@ class FakeClient:
     def bucket(self,name):
         return self.bucket_obj
 
+@unittest.skipUnless(HAS_CRYPTO, 'Dedicated browser CI installs optional crypto dependency')
 class SessionCloudStoreTests(unittest.TestCase):
     def setUp(self):
         self.key=Fernet.generate_key()
@@ -95,7 +100,7 @@ class SessionCloudStoreTests(unittest.TestCase):
             self.store.status(owner="other/owner",origin="https://example.com")
 
     def test_unconfigured_service_is_fail_closed(self):
-        with unittest.mock.patch.dict(os.environ,{"BROWSER_SESSION_KEY":"","BROWSER_PROFILE_BUCKET":""}):
+        with patch.dict(os.environ,{"BROWSER_SESSION_KEY":"","BROWSER_PROFILE_BUCKET":""}):
             with self.assertRaises(RuntimeError):
                 BrowserProfileStore.from_environment()
 
