@@ -144,6 +144,7 @@ def audit(log_dir):
         **plan(),
         "inference_executed": True,
         "independently_scored": True,
+        "model_calls": len(all_ids),
         "attempted": len(all_ids),
         "correct": sum(x["correct"] for x in by_family.values()),
         "by_family": by_family,
