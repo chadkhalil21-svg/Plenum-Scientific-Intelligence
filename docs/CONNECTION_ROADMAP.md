@@ -8,8 +8,8 @@ or unnecessary access grants.
 | Area | Already implemented or verified | Next worthwhile step | Permission/cost |
 |---|---|---|---|
 | GitHub engineering | Owner repository, Actions, reviewed PRs, public memory ledger | Extend independent benchmarks; protect sensitive environments | Existing access |
-| Kaggle GPU | Authenticated API listing via GitHub workflow run #42408852329 | Privately draft trial notebook then owner manually starts 27B inference | GitHub env secret exists; explicit run approval |
-| General web/browser | Official Playwright isolated local interaction fixture and public allowlisted read-only browser | Add reviewed Playwright MCP agent adapter, secure session vault and approvals | No browser credentials now |
+| Kaggle GPU | Official API authorization verified #42408852329; **private trial notebook uploaded without execution** via [#42413145594](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42413145594) | In Kaggle, inspect quotas, enable free T4×2 and internet, explicitly opt in to Qwen3.6-27B first inference | Owner API secret exists; GPU runtime is free but quota-limited |
+| General web/browser | Real official Playwright, [MCP stdio](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/62), and fixed [LangGraph → browser → independent verification](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/63) passed | Evaluate model-guided public tasks; retain tool allowlists, session isolation and approvals | Open-source engine; free standard GitHub Actions runners for public repo |
 | Journals/science | OpenAlex, arXiv, Europe PMC, Semantic Scholar, Crossref, OSTI, CAS/China-affiliated works, selected lab feeds and research memory | Improve discovery quality, translation, full-text licenses and prospective verification | Public metadata only |
 | Science engines | SciPy, RDKit, OpenMDAO, Aviary, Astropy, PyBaMM, OpenMM, PySCF, Lean, and selected evaluated papers | Connect actual method workflows into one end-to-end research question | Pinned isolated runners |
 | Reasoning models | Small Qwen/SmolLM and Inspect AI, broader trials planned | Perform real Kaggle 27B quantified inference with matched independent tasks | Limited free GPU quota |
@@ -29,3 +29,32 @@ and rollback.
 
 The ledger remains the authoritative `research-memory/state/AGI_PROGRAM.json`;
 this document is an integration map, not a capability certificate.
+
+## Free-first strategy: avoid unnecessary subscriptions
+
+**Selection rule:** prefer an existing verified public API or local open-source library. Only use a hosted/metered browser agent when the requested website cannot reasonably be handled by an allowed free route and the owner specifically approves consumption.
+
+| Task | Free-first route | Important limit |
+|---|---|---|
+| Quick public web search in a ChatGPT conversation | ChatGPT native web search; TinyFish Search is currently $0 | Search is not arbitrary clicking, login or form submission |
+| Read public webpages / scholarly publications | ChatGPT web, existing arXiv/OpenAlex/Europe PMC/CAS adapters, or TinyFish Fetch ($0) | Full texts and copyrighted research may be restricted |
+| Interactive browser in a ChatGPT conversation | ChatGPT Work Cloud Browser *when eligible* | Separate Work mode; available with plan usage limits, not unlimited or necessarily available in standard chat |
+| Cloud-browser operations inside Prometheus | Existing pinned Microsoft Playwright / Playwright MCP in public GitHub Actions | GitHub CI is short-lived; the present MCP gateway only reads a fixed public example; it is **not yet** model-directed arbitrary browsing |
+| Scientific monitoring and research briefings | Existing scheduled GitHub workflow and owner daily research reminder | A public feed is not a verified scientific discovery; standard Actions free in public repositories subject to GitHub policy |
+| Model benchmarking | Kaggle quota-limited T4×2 and existing Inspect AI evaluation | Official source model weights and 19.1 GB quantization still require free compute quota and actual inference |
+| Voice / online account operations | Open-source libraries, selectively integrated | Audio hosting, persistent credentials and managed real-time providers may have costs |
+
+**TinyFish wallet:** $8 was credited on account creation, not an $8 invoice. Current confirmed account rates (Nov 7, 2026): Search and Fetch $0; Agent $0.016/step; Browser $0.002/min; Monitor $0.005/check plus free search/fetch; Deep Research $2/run; Max Research $3/run. Auto-reload unconfigured, no pending top-up. This platform is **not needed** for the existing Plenum Playwright + GitHub CI research workflow.
+
+**Prevent accidental costs:** do not enable TinyFish Agent/Browser/Research/Monitor for routine scientific scanning or conversational questions without a separate owner-approved task and a cost limit. Do not install duplicate browser controllers (browser-use, Stagehand, another MCP) until a measured reliability/capability gap justifies replacement.
+
+**Provenance:** [Kaggle draft upload run](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42413145594); [Playwright MCP proof](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42412389018); [LangGraph + MCP proof](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42412589718).
+
+### Next gates, not yet complete
+
+1. Open private Kaggle trial notebook and manually set `APPROVE_FREE_GPU_RUN=True` after checking T4×2, reported scratch disk, quota and Internet. Run to produce `prometheus_free_cloud_report.json`. This smoke check is not AGI.
+2. Preserve actual model revision, GGUF hash, runtime provenance, timing, memory and outputs, including negative or inconclusive results. Independently score held-out general tasks using the **existing** Inspect AI framework instead of writing another evaluator.
+3. Only then connect an evaluated model to the **already verified** guarded LangGraph → Playwright MCP pipeline for read-only tasks. Add private sessions and account-changing actions after independent reliability evidence, per-action approval, and approved budget.
+4. Stage continuous coordination and durable private memory separately from temporary Kaggle or CI runners. Do not describe scheduled GitHub Actions as full 24/7 AGI.
+
+**AGI has not yet been demonstrated.** No completion percentage is scientifically supported by these subsystem tests.
