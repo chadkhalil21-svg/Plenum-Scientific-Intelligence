@@ -9,6 +9,7 @@ on:
     paths:
       - '.github/workflows/evidence-ledger-index.yml'
       - 'src/plenum_ai/evidence_index.py'
+      - 'src/plenum_ai/continuity_ledger.py'
 permissions:
   contents: read
 concurrency:
@@ -35,6 +36,9 @@ jobs:
         with:
           ref: research-memory
           path: ledger
+      - name: Validate current canonical AGI state against actual evolving research evidence
+        run: |
+          python -m plenum_ai.continuity_ledger --state ledger/state/AGI_PROGRAM.json --print-brief
       - name: Reconcile original immutable research records
         run: |
           python -m plenum_ai.evidence_index --root ledger/evidence --out ledger/state/evidence_index.json
