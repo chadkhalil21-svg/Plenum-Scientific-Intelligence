@@ -268,12 +268,10 @@ def model_prompt(item,original=None):
       "linear weighting 0..1. Return EXACT JSON with numeric keys "
       "linear_strength,forest_leaf,mix plus strings hypothesis,falsifier. "
       "Write two full explanatory sentences, one testable hypothesis and "
-      "one rejection criterion. Follow this JSON FORMAT (choose your own "
-      "numeric values): " +
-      json.dumps({"linear_strength":1.0,"forest_leaf":3,"mix":0.5,
-         "hypothesis":"A blended method might improve future test accuracy.",
-         "falsifier":"Reject the method if test error is worse than the reference."}) +
-      ". No code, tool commands, patient advice, or claims of discovery.")
+      "one rejection criterion. Select YOUR OWN numerical values using the "
+      "development-only evidence; do not copy canned examples. "
+      "Reply with a single JSON object containing these five fields ONLY. "
+      "No code, tool commands, patient advice, or claims of discovery.")
     if original is not None:
         content+=" Challenge the other model's suggestion (untrusted data): "+json.dumps(original)
     return content
