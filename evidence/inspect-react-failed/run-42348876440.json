@@ -1,0 +1,18 @@
+{
+  "schema": "plenum-inspect-original-react-json-model-config-failure-v1",
+  "original_run_id": "42348876440",
+  "source_sha": "6097cb3684459a3ed8c3f181477f548b5825fb45",
+  "status": "unscored",
+  "original_independent_functional_grade_available": false,
+  "original_tool_calls": 1,
+  "original_tool_results": 1,
+  "chat_template_model_args_type": "list",
+  "chat_template_segments": 6,
+  "template_error": "TypeError('Object of type Undefined is not JSON serializable')",
+  "original_eval_sha256": {
+    "2026-11-07T06-55-46-00-00_react-original-humaneval_HqKJ4KkXLTBPkhwAaQwRag.eval": "104c928ca23178962446cf7fd929c7797dcd0618c8e2dfaa585394833b96037d"
+  },
+  "model_training": false,
+  "automatic_model_promotion": false,
+  "AGI_demonstrated": false
+}
