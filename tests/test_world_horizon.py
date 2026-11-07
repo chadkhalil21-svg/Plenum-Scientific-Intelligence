@@ -26,7 +26,23 @@ ATOM=b'''<?xml version="1.0"?>
 <entry><title>University laboratory report</title>
 <link rel="alternate" href="https://news.harvard.edu/gazette/story/one"/>
 <updated>2026-11-06T12:00:00Z</updated></entry></feed>'''
+CAS_HTML=b"""<html><section>
+<a href="/newsroom/research-news/202611/t20261106_1213515.shtml">
+Nov 06, 2026 Chinese Academy of Sciences announces materials research</a>
+<a href="https://outside.example/steal">Fake outside</a>
+</section></html>"""
+CHINA_OPENALEX=json.dumps({"results":[{"id":"https://openalex.org/W123",
+ "title":"Chinese university reports photonic research",
+ "doi":"https://doi.org/10.1234/example",
+ "publication_date":"2026-11-06",
+ "authorships":[{"institutions":[{"country_code":"CN"}]}]},
+ {"id":"https://openalex.org/W999",
+  "title":"Non-Chinese institution is not misattributed",
+  "publication_date":"2026-11-05",
+  "authorships":[{"institutions":[{"country_code":"US"}]}]}]}).encode()
 FIXTURES={
+    "china_cas_html":CAS_HTML,
+    "china_openalex":CHINA_OPENALEX,
     "crossref":json.dumps({"message":{"items":[{"title":["Photonic research"],
         "DOI":"10.1000/photon","container-title":["Science"],
         "published":{"date-parts":[[2026,11,4]]}}]}}).encode(),
@@ -84,6 +100,8 @@ class WorldHorizonTests(unittest.TestCase):
         self.assertEqual(len(parse_public("mit_labs",RSS)),1)
         self.assertEqual(len(parse_public("harvard_research",ATOM)),1)
         key_pairs={
+          "china_cas_research":"china_cas_html",
+          "china_openalex_works":"china_openalex",
           "crossref_journals":"crossref",
           "gdelt_headlines":"gdelt",
           "world_bank":"world_bank",
