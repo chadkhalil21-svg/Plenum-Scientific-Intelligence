@@ -1,0 +1,111 @@
+# Reuse-first development and program continuity
+
+## Canonical public program checkpoint
+
+The source of truth for the publicly discloseable AGI research program is
+[research-memory/state/AGI_PROGRAM.json](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/research-memory/state/AGI_PROGRAM.json).
+The older
+[science ledger](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/research-memory/docs/LEDGER.md)
+is historical and now points at this updated checkpoint.
+
+Every new research session should first read the latest checked-in state,
+original audit files and current unmerged pull requests. Do **not** rely on
+an assistant retaining perfect recall across conversations. The canonical
+record distinguishes implementation, scheduled work, negative evaluations,
+unverified hypotheses and independent scientific evidence.
+
+A read-only, lightweight CI job verifies this state every Monday and on
+the relevant code changes. CI only checks provenance, types and record
+integrity. It cannot certify scientific discovery or replace an actual
+founder review. The state is explicitly updated after verified outcomes.
+
+## Protect confidential source materials
+
+This repository and its research-memory branch are **public**. Never copy
+unpublished patents, founder confidential memoranda, personal records,
+business secrets, source documents or credentials to this GitHub repository.
+Only concise goals and outcomes that were already publicly disclosed may
+appear in the public program checkpoint. Private knowledge, episodic memory
+and strategic memory require a separate access-controlled store and human
+authorization before any private connector or cloud sync.
+
+## Reuse-first engineering decision
+
+Prefer reviewing and composing existing tools to building substitutes:
+
+- **EleutherAI LM Evaluation Harness v0.4.13**: an established MIT-licensed
+  standard benchmark framework from a reviewed upstream release and pinned
+  source commit. Plenum has a small, optional, manual-only adapter that
+  restricts models to existing immutable checkpoints and tasks to
+  arc_easy or hellaswag with at most 32 examples, on CPU. The adapter is
+  not installed during ordinary CI and never runs automatically.
+  Version and code provenance: [upstream release](https://github.com/EleutherAI/lm-evaluation-harness/releases/tag/v0.4.13).
+  Be mindful that the task datasets are public and a handful of examples
+  is only a *smoke test*, not statistical evidence of AGI.
+- **LangGraph**: already an optional workflow orchestration dependency.
+  Keep using its existing graph engine instead of replacing it with another
+  hand-coded planner. Do not claim this creates general intelligence.
+- **SciPy, scikit-learn and RDKit**: existing reviewed numerical, statistical
+  and molecular-computation tools. Prefer them over homemade scientific
+  algorithm implementations when they suit the exact task.
+- **K-Dense scientific-agent-skills**: already included as a read-only
+  catalog of candidate instructions. Such text is untrusted and requires
+  license, dependency and security review before installation or execution.
+- **Multimodal/agent benchmarks and larger model engines**: evaluate only
+  when there is a clear experimental need and acceptable computing cost.
+  Copying code requires license and security review, not just popularity.
+
+The registry at [protocols/reuse_first_registry.json](../protocols/reuse_first_registry.json)
+records sources, pins and the implementation status of this policy.
+
+### Standard benchmark workflow from an iPad
+
+GitHub → Actions → Reviewed Standard Model Benchmark (Manual Only) →
+Run workflow. Select one reviewed model, one public task and a 4/8/16
+sample limit. Model/dataset downloads and CPU work occur **only after the
+founder manually launches that workflow**; this is not a new monthly
+subscription or unrestricted automatic spending. If the reviewed evaluator
+cannot run at the specified version, fail closed rather than substituting
+a different package or model.
+
+Alternatively, preview the exact command without network or model inference:
+
+    python -m plenum_ai.standard_benchmark --model Qwen/Qwen3-1.7B --task arc_easy --limit 8
+
+Full execution requires both separately installing the optional benchmark
+extra and passing the explicit --execute flag. This creates versioned
+benchmark artifacts, but their results are not silently promoted into
+the strategic ledger or presented as scientific inventions.
+
+## Methodology from model-scaling research
+
+The 2022 emergent-capability papers motivate comparing models at different
+scales, but apparent threshold jumps can arise from task selection and
+discontinuous metrics. Pair pass/fail rates with numerical error, calibration,
+sample count, compute cost, and independent held-out evidence. The 2022
+zero-shot reasoning work demonstrated large improvements from prompting on
+particular large-scale models; its results are **not automatically transferable**
+to our 1.7B-parameter models. Compare direct-answer and structured reasoning
+prompts experimentally rather than assuming a universal benefit.
+
+## Public scientific results already verified
+
+The original AGI Capability Lab run 42331449321 (research-memory evidence)
+recorded **zero correct out of six** for both small models, though response
+format validity differed. Historical chemistry and biology method-selection
+experiments also failed to improve on fixed reference methods. These negative
+outcomes remain part of the record. Successful workflows establish valid
+engineering and provenance, not general intelligence.
+
+### Next sequence
+
+1. Resume from the canonical goal-and-evidence checkpoint.
+2. Compare a stronger reasoning backend using a trusted external evaluator.
+3. Add standardized independent tests with meaningful sample sizes.
+4. Build genuinely persistent knowledge / episodic / strategic memory, with
+   confidential materials held separately from public research.
+5. Add bounded long-horizon planning and verification loops, improving only
+   components that pass independent, newly unseen evaluations.
+
+Measure **verified capability per compute dollar and hour**, not how many
+agents, packages or prompts are present.
