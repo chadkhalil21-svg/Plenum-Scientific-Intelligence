@@ -97,7 +97,9 @@ def count_actual_tools(messages):
     return calls,returns
 
 
-def audit(directory):
+def audit(directory, expected_sample_id="HumanEval/0"):
+    if expected_sample_id not in ("HumanEval/0","HumanEval/1"):
+        raise ValueError("Only two original, explicitly reviewed HumanEval sample IDs allowed")
     base=original_plan()
     if (importlib.metadata.version("inspect-ai")!=base["inspect_ai_version"]
         or importlib.metadata.version("inspect-evals")!=base["inspect_evals_version"]):
@@ -120,7 +122,7 @@ def audit(directory):
         or str(cfg.get("enable_thinking")).lower()!="false"):
         raise ValueError("Agent model provenance changed")
     samples=log.samples or []
-    if len(samples)!=1 or str(samples[0].id)!="HumanEval/0":
+    if len(samples)!=1 or str(samples[0].id)!=expected_sample_id:
         raise ValueError("Wrong or repeated original coding question")
     sample=samples[0]
     values=list((sample.scores or {}).values())
@@ -152,10 +154,11 @@ def audit(directory):
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument("--audit-dir")
+    parser.add_argument("--expected-sample-id",default="HumanEval/0",choices=("HumanEval/0","HumanEval/1"))
     parser.add_argument("--out",default="reports/inspect-react-coding-plan.json")
     args=parser.parse_args()
     destination=permitted_report(args.out)
-    result=audit(args.audit_dir) if args.audit_dir else plan()
+    result=audit(args.audit_dir,args.expected_sample_id) if args.audit_dir else plan()
     destination.parent.mkdir(parents=True,exist_ok=True)
     destination.write_text(json.dumps(result,indent=2)+"\n")
     print("Real Inspect ReAct coding:",result.get("correct","not run"),
