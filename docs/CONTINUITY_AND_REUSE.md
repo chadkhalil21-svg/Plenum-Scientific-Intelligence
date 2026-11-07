@@ -25,9 +25,9 @@ This repository and its research-memory branch are **public**. Never copy
 unpublished patents, founder confidential memoranda, personal records,
 business secrets, source documents or credentials to this GitHub repository.
 Only concise goals and outcomes that were already publicly disclosed may
-appear in the public program checkpoint. Private knowledge, episodic memory
-and strategic memory require a separate access-controlled store and human
-authorization before any private connector or cloud sync.
+appear in the public program checkpoint. Private project state and confidential memory require a separate
+access-controlled store and human authorization before any private
+connector or cloud sync.
 
 ## Reuse-first engineering decision
 
@@ -102,8 +102,8 @@ engineering and provenance, not general intelligence.
 1. Resume from the canonical goal-and-evidence checkpoint.
 2. Compare a stronger reasoning backend using a trusted external evaluator.
 3. Add standardized independent tests with meaningful sample sizes.
-4. Build genuinely persistent knowledge / episodic / strategic memory, with
-   confidential materials held separately from public research.
+4. Build durable retrievable project state and memory, with confidential
+   material held separately from public research.
 5. Add bounded long-horizon planning and verification loops, improving only
    components that pass independent, newly unseen evaluations.
 
