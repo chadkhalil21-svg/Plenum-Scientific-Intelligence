@@ -70,8 +70,10 @@
       "adoption": "optional_import_smoke_only",
       "default_execution": false,
       "preinstalled": false,
-      "status": "pending_upstream_api_ci",
-      "notes": "Agent execution, workspace access and model calls require separate isolated budgeted approval."
+      "status": "real_upstream_sdk_api_import_verified",
+      "notes": "Pinned 1.60.1 imported actual Agent/Conversation/LLM/Tool and AlwaysConfirm classes in separate Python 3.12 CI without running agent or code. Functional coding experiment needs isolated workspace, reviewed inference and tests.",
+      "verified_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42339003588",
+      "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/21"
     },
     {
       "name": "PaperQA2",
@@ -83,8 +85,10 @@
       "adoption": "optional_import_smoke_only",
       "default_execution": false,
       "preinstalled": false,
-      "status": "pending_upstream_api_ci",
-      "notes": "Paper, embedding, metadata and model interactions require explicit separate rights and budget approval. API import is not citation accuracy."
+      "status": "real_upstream_sdk_api_import_verified",
+      "notes": "Pinned 2026.8.12 imported actual Docs/Settings/ask in Python 3.11 CI without indexing papers, embeddings, models or external calls. Citation accuracy remains unevaluated.",
+      "verified_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42339003588",
+      "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/21"
     }
   ],
   "rules": {
