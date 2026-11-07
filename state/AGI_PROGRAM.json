@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T05:24:00Z",
+  "last_reviewed_utc": "2026-11-07T05:30:00Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -235,24 +235,31 @@
         "correct_among_at_cap": 0
       },
       "AGI_demonstrated": false,
-      "notes": "Independent second read of the 24 original Qwen3-0.6B GSM8K Inspect .eval sample outputs: 10 sample completions used exactly the hard 128-token output budget and all ten received incorrect original numeric-match grades; 6/24 overall. This association is not proof that truncation caused each error. A controlled 128-vs-256 study is drafted at PR #31 with exact matching 24 IDs and no paid APIs. Historical original score/log unchanged."
+      "notes": "Independent second read of the 24 original Qwen3-0.6B GSM8K Inspect .eval sample outputs: 10 sample completions used exactly the hard 128-token output budget and all ten received incorrect original numeric-match grades; 6/24 overall. This association is not proof that truncation caused each error. A controlled 128-vs-256 study was merged via PR #31 and launched in run #42342997198 with exact matching 24 IDs and no paid APIs. Historical original score/log unchanged."
     },
     {
       "id": "inspect-local-generation-call-accounting-20261107",
-      "status": "confirmed_reporting_issue",
+      "status": "correction_merged_for_future_runs",
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/31",
       "AGI_demonstrated": false,
-      "notes": "The cross-domain 96-task audit and paired audit inherit model_calls=0 from their offline plan even after actual local generations. That is an accounting presentation defect, NOT absence of inference or paid API use. PR #31 corrects future live audits to report local_generation_calls as real 96/48 sample-generation requests, with paid_api_calls=0; original immutable run reports remain preserved."
+      "notes": "Prior original four-domain and paired Inspect audit reports incorrectly inherited model_calls=0 from the no-inference plan despite 96 or 48 local model generation requests. This is a reporting defect, not absence of local inference or a paid API call. PR #31 merged with corrected future audit accounting: actual local generation calls 96 for full cross-domain and 48 for paired; paid API calls remain 0. Historical original evidence is immutable."
+    },
+    {
+      "id": "gsm8k-256-token-release-20261107",
+      "status": "running_unverified",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42342997198",
+      "AGI_demonstrated": false,
+      "notes": "Controlled Qwen3-0.6B GSM8K 128 vs 256 max output token experiment launched after passing offline and complete repository tests. 24 original identical public math questions, zero paid model APIs, original Inspect scorer and matched sample IDs, complete independently hashed source evidence. No new result verified until original .eval audit and archival; comparison is exploratory and not AGI."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Complete paired 1.7B-vs-0.6B on identical 48 public official Inspect questions in run 42342242561; require original log IDs, SHA256 reference evidence and independent paired correct/incorrect counts, then archive all negative results."
+      "action": "Audit Qwen3-1.7B versus Qwen3-0.6B paired run #42342242561 on 48 identical official Inspect questions; verify exact per-domain correct/incorrect, original 0.6B SHA256 archive and 1.7B raw logs. Do not claim accuracy until complete."
     },
     {
       "priority": 2,
-      "action": "Audit paired Qwen3-1.7B vs 0.6B run 42342242561 on identical 48 original questions. Then review draft PR #31 controlled GSM8K 128-vs-256 output budget study (10/24 original replies reached cap, none graded correct), rerun only after verifying pinned source and compute bounds."
+      "action": "Audit controlled Qwen3-0.6B GSM8K 128-versus-256-token run #42342997198, compare original 24 identifiers/grades and 10 prior at-cap responses, preserve original scorer logs and archive separately. Do not attribute changes to general intelligence or model learning."
     },
     {
       "priority": 3,
