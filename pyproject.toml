@@ -26,6 +26,7 @@ battery = ["pybamm==26.10.1.1"]
 dynamics = ["openmm==8.6.1"]
 chemistry = ["pyscf==2.15.0"]
 music = ["music21>=9.7,<10"]
+browser = ["playwright==1.64.1"]
 
 [project.scripts]
 plenum = "plenum_ai.cli:main"
