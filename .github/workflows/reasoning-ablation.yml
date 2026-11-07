@@ -1,0 +1,226 @@
+name: Reasoning Improvement | Fresh Paired CPU Comparison
+on:
+  pull_request:
+    paths:
+      - 'src/plenum_ai/reasoning_ablation.py'
+      - 'tests/test_reasoning_ablation.py'
+      - 'protocols/reasoning-method-ablation-v1.json'
+      - '.github/workflows/reasoning-ablation.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/plenum_ai/reasoning_ablation.py'
+      - 'tests/test_reasoning_ablation.py'
+      - 'protocols/reasoning-method-ablation-v1.json'
+      - '.github/workflows/reasoning-ablation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: plenum-reasoning-ablation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+jobs:
+  independent-offline-test-and-fresh-questions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install only Plenum test harness
+        run: python -m pip install -e .
+      - name: Verify protocol, safety, correct/incorrect answers and provenance with no model calls
+        run: python -m unittest discover -s tests -p 'test_reasoning_ablation.py' -v
+      - name: Generate fresh paired questions from the immutable workflow run seed
+        env:
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          python -m plenum_ai.reasoning_ablation prepare --seed "$RUN_ID" --out reports/paired-questions.json
+          python - <<'PY'
+          import json
+          p=json.load(open('reports/paired-questions.json'))
+          assert p['schema']=='plenum-reasoning-method-ablation-v1'
+          assert p['question_count']==6
+          assert p['answer_key_exposed'] is False
+          assert p['modes']==['baseline','verify']
+          assert not p['AGI_demonstrated']
+          print('Prepared six fresh question instances; 2 conditions and 2 reviewed model variants')
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: fresh-paired-public-questions
+          path: reports/paired-questions.json
+          retention-days: 21
+  cpu-inference:
+    needs: independent-offline-test-and-fresh-questions
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release paired reasoning comparison'))
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: Qwen/Qwen3-1.7B
+            tag: baseline
+          - id: Qwen/Qwen3-4B-Instruct-2507
+            tag: stronger
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      MODEL_ID: ${{ matrix.id }}
+      TAG: ${{ matrix.tag }}
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v7
+        with:
+          name: fresh-paired-public-questions
+          path: reports/
+      - name: Install only reviewed runner dependencies for this model
+        run: |
+          python -m pip install -e .
+          if [ "$TAG" = 'baseline' ]; then
+            python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+            python -m pip install "transformers>=4.51,<5" "huggingface_hub>=0.30,<1" "accelerate>=1.1,<2" safetensors
+          else
+            python -m pip install "huggingface_hub>=0.30,<1"
+            CMAKE_ARGS='-DGGML_NATIVE=OFF' python -m pip install "llama-cpp-python==0.3.16"
+          fi
+      - name: Run two conditions on six fresh identical questions; retain all failed model responses
+        run: |
+          python -m plenum_ai.reasoning_ablation propose \
+            --prepared reports/paired-questions.json --model "$MODEL_ID" \
+            --out "reports/$TAG.json"
+      - name: Ensure no model has scored its own answers or self-promoted
+        run: |
+          python - <<'PY'
+          import os,json
+          from pathlib import Path
+          d=json.loads((Path('reports')/(os.environ['TAG']+'.json')).read_text())
+          assert d['model_id']==os.environ['MODEL_ID']
+          assert d['model_calls']==12 and len(d['results'])==12
+          assert not d['AGI_demonstrated']
+          assert not d['model_promoted']
+          assert not d['model_saw_gold_answers']
+          assert not d['model_saw_program_holdouts']
+          print('Pinned model:',d['model_id'],'engine:',d['engine']['engine'],
+                'seconds:',d['elapsed_seconds'])
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: model-${{ matrix.tag }}-paired-original-responses
+          path: reports/${{ matrix.tag }}.json
+          retention-days: 21
+  independently-score-both-models:
+    needs: cpu-inference
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@v7
+        with:
+          name: fresh-paired-public-questions
+          path: reports/
+      - uses: actions/download-artifact@v7
+        with:
+          name: model-baseline-paired-original-responses
+          path: reports/
+      - uses: actions/download-artifact@v7
+        with:
+          name: model-stronger-paired-original-responses
+          path: reports/
+      - name: Reproduce original questions, check models and score without AI inference
+        run: |
+          python -m plenum_ai.reasoning_ablation audit \
+            --prepared reports/paired-questions.json \
+            --baseline reports/baseline.json --stronger reports/stronger.json \
+            --out reports/audit.json
+      - name: Keep scientific accuracy and output formatting distinctly reported
+        run: |
+          python - <<'PY'
+          import json
+          x=json.load(open('reports/audit.json'))
+          assert x['independent_deterministic_scoring']
+          assert x['task_count_per_condition']==6
+          assert not x['unrestricted_generated_code_executed']
+          assert not x['automatic_model_promotion'] and not x['AGI_demonstrated']
+          for model,metric in x['models'].items():
+              for method,row in metric['conditions'].items():
+                  print(model,method,'correct',row['normalized_correct'],'/6',
+                        'strict_json',row['strict_schema_valid'],'/6',
+                        'recoverable_json',row['normalized_schema_valid'],'/6',
+                        'CPU inference seconds',row['model_seconds'])
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: independently-scored-reasoning-method-results
+          path: reports/audit.json
+          retention-days: 90
+  archive-full-evidence:
+    needs: independently-score-both-models
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/download-artifact@v7
+        with:
+          name: fresh-paired-public-questions
+          path: reports/
+      - uses: actions/download-artifact@v7
+        with:
+          name: model-baseline-paired-original-responses
+          path: reports/
+      - uses: actions/download-artifact@v7
+        with:
+          name: model-stronger-paired-original-responses
+          path: reports/
+      - uses: actions/download-artifact@v7
+        with:
+          name: independently-scored-reasoning-method-results
+          path: reports/
+      - name: Append unmodified failures and successes to public research-memory
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          base=Path('ledger/evidence/reasoning-ablation')
+          base.mkdir(parents=True,exist_ok=True)
+          name=base/('run-'+os.environ['RUN_ID']+'.json')
+          if name.exists(): raise FileExistsError('Cannot overwrite original scientific evidence')
+          d={k:json.load(open('reports/'+f)) for k,f in (
+              ('prepared','paired-questions.json'),('baseline','baseline.json'),
+              ('stronger','stronger.json'),('independent_audit','audit.json'))}
+          assert d['independent_audit']['AGI_demonstrated'] is False
+          assert not d['independent_audit']['automatic_model_promotion']
+          d['source_sha']=os.environ['SOURCE_SHA']
+          name.write_text(json.dumps(d,indent=2,ensure_ascii=False)+'\n')
+          print('Preserved evidence, including incorrect answers:',name)
+          PY
+      - name: Commit only to research-memory, never automatically change models
+        run: |
+          git -C ledger config user.name 'Plenum Scientific Evidence'
+          git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ledger add evidence/reasoning-ablation/
+          git -C ledger commit -m 'Archive paired reasoning-method evaluation and negative evidence'
+          git -C ledger pull --rebase origin research-memory
+          git -C ledger push origin HEAD:research-memory
