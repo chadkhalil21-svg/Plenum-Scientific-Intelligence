@@ -1,0 +1,209 @@
+name: Inspect | Paired ReAct Versus One-Shot on Three Original HumanEval Tasks
+on:
+  pull_request:
+    paths:
+      - 'src/plenum_ai/inspect_react_three.py'
+      - 'tests/test_inspect_react_three.py'
+      - '.github/workflows/inspect-react-three.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/plenum_ai/inspect_react_three.py'
+      - 'tests/test_inspect_react_three.py'
+      - '.github/workflows/inspect-react-three.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: inspect-react-three-original-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  offline-source-and-scoring-guards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Check zero-inference default and independently paired score arithmetic
+        run: |
+          python -m pip install -e .
+          python -m unittest discover -s tests -p 'test_inspect_react_three.py' -v
+          python -m plenum_ai.inspect_react_three --out reports/three-react-plan.json
+  original-matched-tool-using-agent:
+    needs: offline-source-and-scoring-guards
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release original matched three-case Inspect ReAct coding'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+      OPENAI_API_KEY: ''
+      ANTHROPIC_API_KEY: ''
+      GOOGLE_API_KEY: ''
+      HF_TOKEN: ''
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Require original three-case non-agent AND actual first ReAct transcripts before any model weights
+        run: |
+          python -m pip install -e .
+          python -m plenum_ai.inspect_react_three \
+            --check-reference ledger/evidence/inspect-original-coding \
+            --out reports/verified-reference-original.json
+          python - <<'PY'
+          import json,hashlib,zipfile
+          from pathlib import Path
+          root=Path('ledger/evidence/inspect-react-coding')
+          report=root/'run-42349665865.json'
+          archive=root/'run-42349665865-raw.zip'
+          if not report.is_file() or not archive.is_file():
+              raise SystemExit('Genuine one-question tool-using ReAct proof is not archived')
+          d=json.loads(report.read_text())
+          assert d['official_functional_test_scored'] and d['attempted']==1 and d['correct']==1
+          assert d['candidate_revision']=='70d244cc86ccca08cf5af4e1e306ecf908b1ad5e'
+          assert d['actual_model_tool_calls']==4 and d['actual_tool_results']==4
+          assert d['AGI_demonstrated'] is False and d['paid_api_calls']==0
+          expected=d['original_eval_sha256']
+          with zipfile.ZipFile(archive) as z:
+              assert len(expected)==1 and z.namelist()==list(expected)
+              assert hashlib.sha256(z.read(next(iter(expected)))).hexdigest()==next(iter(expected.values()))
+          print('Original single real tool-using agent and three original one-shot functions verified')
+          PY
+      - name: Require disposable Docker sandbox, no private code or production mounts
+        run: |
+          docker info >/dev/null
+          docker compose version
+      - name: Reuse the same pinned official model-scoring, tokenizer and CPU libraries
+        run: |
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[inspection]'
+          python -m pip install "inspect-evals==0.27.0" "transformers==5.22.1" "accelerate>=1.1,<2" "huggingface_hub>=1.2,<2" safetensors
+          python -m pip check
+      - name: Download the ONE previously verified public Qwen3-1.7B checkpoint
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from huggingface_hub import HfApi,snapshot_download
+          from plenum_ai.inspect_react_three import plan
+          d=plan()
+          info=HfApi().model_info(d['model'],revision=d['model_revision'])
+          assert info.sha==d['model_revision']
+          Path('reports/model-path.txt').write_text(
+              snapshot_download(repo_id=d['model'],revision=d['model_revision']))
+          print('One original pinned model only, no paid model APIs')
+          PY
+      - name: Render original Qwen tokenizer with previously verified minimal function-call compatibility
+        run: |
+          MODEL_PATH="$(cat reports/model-path.txt)"
+          python -m plenum_ai.qwen3_chat_template \
+            --model-path "$MODEL_PATH" \
+            --template-out reports/qwen3-react-template.jinja \
+            --out reports/three-case-template-check.json
+          python -m plenum_ai.react_json_model_config \
+            --model-path "$MODEL_PATH" \
+            --original-template native \
+            --template reports/qwen3-react-template.jinja \
+            --out reports/qwen3-react-model-config.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('reports/qwen3-react-model-config.json').read_text())
+          assert type(p['chat_template']) is str
+          assert p['model_path'].endswith('70d244cc86ccca08cf5af4e1e306ecf908b1ad5e')
+          assert p['device']=='cpu' and p['enable_thinking'] is False and p['do_sample'] is False
+          print('Original tokenizer and native Inspect provider config are one reviewed string')
+          PY
+      - name: Complete EXACTLY three matched original HumanEval functions with existing ReAct and Python tools
+        run: |
+          inspect eval src/plenum_ai/inspect_react_coding.py --model hf/local \
+            --model-config reports/qwen3-react-model-config.json \
+            --limit 3 --epochs 1 --max-samples 1 --max-sandboxes 1 \
+            --max-connections 1 --max-tokens 256 --temperature 0 \
+            --turn-limit 6 --message-limit 14 --time-limit 1200 --max-retries 0 \
+            --log-dir reports/inspect-react-three-logs --display none
+      - name: Independently score exact original IDs and source tests, count actual tool calls and regressions
+        run: |
+          python -m plenum_ai.inspect_react_three \
+            --audit-dir reports/inspect-react-three-logs \
+            --source-dir ledger/evidence/inspect-original-coding \
+            --out reports/react-three-original-scores.json
+          python - <<'PY'
+          import json
+          d=json.load(open('reports/react-three-original-scores.json'))
+          assert d['original_inference_executed'] and d['original_scorer_verified']
+          assert d['paired_original_questions_verified'] and d['original_source_log_sha256_verified']
+          assert d['attempted']==3 and d['one_shot_correct']==2
+          assert len(d['by_original_problem'])==3
+          assert d['paid_api_calls']==0 and not d['automatic_model_promotion']
+          assert not d['AGI_demonstrated']
+          print('Original HumanEval functions: one-shot 2/3, tool-using ReAct',d['react_correct'],'/3',
+                '; fixed',d['original_cases_repaired'],'regressed',d['original_cases_regressed'],
+                '; actual tool requests',d['actual_tool_calls'],'observed responses',d['actual_tool_responses'])
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: original-three-case-react-versus-oneshot
+          path: |
+            reports/react-three-original-scores.json
+            reports/inspect-react-three-logs/
+          retention-days: 90
+  append-only-original-agent-transcripts:
+    needs: original-matched-tool-using-agent
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/download-artifact@v7
+        with:
+          name: original-three-case-react-versus-oneshot
+          path: reports
+      - name: Preserve all three independent grades and original full tool transcripts
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,zipfile
+          from pathlib import Path
+          d=json.loads(Path('reports/react-three-original-scores.json').read_text())
+          assert d['paired_original_questions_verified'] and d['attempted']==3
+          assert not d['automatic_model_promotion'] and not d['AGI_demonstrated']
+          files=list(Path('reports/inspect-react-three-logs').rglob('*.eval'))
+          if len(files)!=1:raise ValueError('Exactly one original independent three-case transcript required')
+          root=Path('ledger/evidence/inspect-react-three')
+          root.mkdir(parents=True,exist_ok=True)
+          stem='run-'+os.environ['RUN_ID']
+          report=root/(stem+'.json')
+          archive=root/(stem+'-raw.zip')
+          if report.exists() or archive.exists():raise FileExistsError('Never overwrite historical evidence')
+          d['source_sha']=os.environ['SOURCE_SHA']
+          d['original_eval_sha256']={f.name:hashlib.sha256(f.read_bytes()).hexdigest() for f in files}
+          with zipfile.ZipFile(archive,'x',compression=zipfile.ZIP_DEFLATED) as z:
+              for f in files:z.write(f,arcname=f.name)
+          report.write_text(json.dumps(d,indent=2)+'\n',encoding='utf-8')
+          print('Three-case original tool transcript and scorer evidence preserved')
+          PY
+      - name: Commit public research logs only, never generated code or model weights
+        run: |
+          git -C ledger config user.name 'Plenum Scientific Evidence'
+          git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ledger add evidence/inspect-react-three/
+          git -C ledger commit -m 'Archive original three-case ReAct versus one-shot independent scoring evidence'
+          git -C ledger pull --rebase origin research-memory
+          git -C ledger push origin HEAD:research-memory
