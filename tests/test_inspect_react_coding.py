@@ -37,6 +37,11 @@ class OriginalReactCodingTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"Unpaired"):
             a.count_actual_tools([SimpleNamespace(role="tool")])
 
+    def test_only_original_reviewed_coding_sample_ids_are_auditable(self):
+        for unknown in ("HumanEval/2","HumanEval/-1","../file","",None):
+            with self.subTest(unknown=unknown), self.assertRaisesRegex(ValueError,"original, explicitly reviewed"):
+                a.audit("reports/inspect-react-coding-logs",expected_sample_id=unknown)
+
     def test_no_model_or_sandbox_without_explicit_original_log(self):
         with self.assertRaises(ValueError):
             a.audit("other/logs")
