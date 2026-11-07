@@ -157,6 +157,33 @@ def compare_matched(previous, current):
     return paired
 
 
+def select_matching_reference(original_grades, candidate_grades):
+    """Match by actual Inspect sample ID; log completion order is not dataset order.
+
+    Official Inspect evaluator records may arrive in completion order. Taking
+    the first twelve from a twenty-four-response reference silently mismatches
+    source questions despite identical underlying fixed datasets.
+    """
+    if (len(original_grades) != 24
+        or len(candidate_grades) != SAMPLES_PER_TASK
+        or not set(candidate_grades).issubset(set(original_grades))):
+        raise ValueError("Reference and candidate must share exact original IDs")
+    return {key: original_grades[key] for key in candidate_grades}
+
+
+def question_contract(log):
+    """Preserve exact task inputs and scoring targets, not only answer IDs."""
+    record = {}
+    for sample in log.samples or []:
+        identifier = str(sample.id)
+        if not identifier or identifier in record:
+            raise ValueError("Invalid or duplicate independently scored question")
+        record[identifier] = (
+            sample.input, sample.target, str(sample.choices),
+        )
+    return record
+
+
 def audit(candidate_dir, reference_dir):
     if importlib.metadata.version("inspect-ai") != INSPECT_AI:
         raise RuntimeError("Inspect AI upstream release changed")
@@ -173,14 +200,17 @@ def audit(candidate_dir, reference_dir):
     if len(candidate_entries) != 4:
         raise ValueError("Need all four candidate benchmark families")
     current = {}
+    candidate_questions = {}
     for entry in candidate_entries:
         log = read_eval_log(entry.name)
         name, marks = audited_log(log, REVISION, SAMPLES_PER_TASK)
         if name in current:
             raise ValueError("Repeated candidate task")
         current[name] = marks
+        candidate_questions[name] = question_contract(log)
 
     previous = {}
+    verified_question_contracts = {}
     with tempfile.TemporaryDirectory(prefix="plenum-reference-") as temp:
         with ZipFile(archive) as z:
             for fname in z.namelist():
@@ -192,17 +222,26 @@ def audit(candidate_dir, reference_dir):
                 name, marks = audited_log(log, BASE_REVISION, 24)
                 if name in previous:
                     raise ValueError("Repeated reference task")
-                # Candidate evaluates the FIRST 12 examples of each official task.
-                # Preserve native log order, not sorted order.
-                previous[name] = dict(list(marks.items())[:SAMPLES_PER_TASK])
+                # Inspect logs arrive in completion order. Match ONLY the
+                # actual candidate sample IDs, not the first 12 log records.
+                previous[name] = select_matching_reference(marks, current[name])
+                source_questions = question_contract(log)
+                expected_questions = candidate_questions[name]
+                if any(source_questions[k] != expected_questions[k]
+                       for k in expected_questions):
+                    raise ValueError("Paired prompts, choices or scoring targets differ")
+                verified_question_contracts[name] = True
     if set(previous) != set(TASKS) or set(current) != set(TASKS):
         raise ValueError("Missing one of four benchmark families")
 
     paired = compare_matched(previous, current)
+    if set(verified_question_contracts) != set(TASKS):
+        raise ValueError("Original sample content was not checked across all domains")
     return {
         **plan(),
         "reference_source_sha": baseline_summary["source_sha"],
         "reference_raw_log_fingerprints_checked": True,
+        "original_prompt_and_scoring_targets_matched": True,
         "inference_executed": True,
         "paired_scoring_verified": True,
         "model_calls": 48,
