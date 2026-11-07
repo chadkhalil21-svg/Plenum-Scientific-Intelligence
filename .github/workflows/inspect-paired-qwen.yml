@@ -1,0 +1,192 @@
+name: Inspect | Paired Qwen 0.6B vs 1.7B on Identical Public Questions
+on:
+  pull_request:
+    paths:
+      - 'src/plenum_ai/inspect_paired_qwen.py'
+      - 'tests/test_inspect_paired_qwen.py'
+      - '.github/workflows/inspect-paired-qwen.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/plenum_ai/inspect_paired_qwen.py'
+      - 'tests/test_inspect_paired_qwen.py'
+      - '.github/workflows/inspect-paired-qwen.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: paired-qwen-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  default-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Verify fixed models and zero-inference default
+        run: |
+          python -m pip install -e .
+          python -m unittest discover -s tests -p 'test_inspect_paired_qwen.py' -v
+          python -m plenum_ai.inspect_paired_qwen --out reports/paired-qwen-plan.json
+  paired-inference:
+    needs: default-offline
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release paired Qwen'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+      OPENAI_API_KEY: ''
+      ANTHROPIC_API_KEY: ''
+      GOOGLE_API_KEY: ''
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - name: Refuse to download any model unless archived original baseline exists
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          r=Path('ledger/evidence/inspect-cross-domain')
+          f=r/'run-42341668858.json'
+          z=r/'run-42341668858-raw.zip'
+          if not f.is_file() or not z.is_file():raise SystemExit('The independent 96-task original reference is not yet archived: blocked before downloading candidate')
+          d=json.loads(f.read_text())
+          assert d['schema']=='plenum-inspect-cross-domain-v1'
+          assert d['source_sha']=='738e97210ff7e74bd957e06ca8b78cc14750178a'
+          assert d['attempted']==96 and d['independently_scored']
+          assert d['model_revision']=='c1899de289a04d12100db370d81485cdf75e47ca'
+          print('Real 96-question original reference found, further SHA validation follows')
+          PY
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Reuse same pinned independent benchmark scoring packages and CPU model libraries
+        run: |
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[inspection]'
+          python -m pip install "inspect-evals==0.27.0" "transformers==5.22.1" "accelerate>=1.1,<2" "huggingface_hub>=1.2,<2" safetensors
+          python -m pip check
+      - name: Require original raw-log SHA256 hashes before downloading candidate model
+        run: |
+          python -m plenum_ai.inspect_paired_qwen --check-reference ledger/evidence/inspect-cross-domain --out reports/reviewed-baseline.json
+      - name: Download the one existing immutable reviewed Qwen3-1.7B model
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from huggingface_hub import HfApi, snapshot_download
+          from plenum_ai.inspect_paired_qwen import MODEL,REVISION,plan
+          assert plan()['candidate_revision']==REVISION
+          info=HfApi().model_info(MODEL,revision=REVISION)
+          assert info.sha==REVISION
+          path=snapshot_download(repo_id=MODEL,revision=REVISION)
+          Path('reports/model-path.txt').write_text(str(path))
+          print('Pinned, public Qwen3-1.7B source checkpoint verified')
+          PY
+      - name: Run 12 original ARC Challenge public science questions
+        run: |
+          MODEL_PATH="$(cat reports/model-path.txt)"
+          inspect eval inspect_evals/arc_challenge --model hf/local \
+            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
+            --limit 12 --max-connections 1 --max-tokens 128 --temperature 0 \
+            --log-dir reports/inspect-paired-logs --display none
+      - name: Run 12 original zero-shot GSM8K arithmetic word questions
+        run: |
+          MODEL_PATH="$(cat reports/model-path.txt)"
+          inspect eval inspect_evals/gsm8k -T fewshot=0 --model hf/local \
+            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
+            --limit 12 --max-connections 1 --max-tokens 128 --temperature 0 \
+            --log-dir reports/inspect-paired-logs --display none
+      - name: Run 12 original HellaSwag commonsense questions
+        run: |
+          MODEL_PATH="$(cat reports/model-path.txt)"
+          inspect eval inspect_evals/hellaswag --model hf/local \
+            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
+            --limit 12 --max-connections 1 --max-tokens 128 --temperature 0 \
+            --log-dir reports/inspect-paired-logs --display none
+      - name: Run 12 original MMLU multidisciplinary questions
+        run: |
+          MODEL_PATH="$(cat reports/model-path.txt)"
+          inspect eval inspect_evals/mmlu_0_shot --model hf/local \
+            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
+            --limit 12 --max-connections 1 --max-tokens 128 --temperature 0 \
+            --log-dir reports/inspect-paired-logs --display none
+      - name: Independently audit exact paired original official scores
+        run: |
+          python -m plenum_ai.inspect_paired_qwen \
+            --audit-dir reports/inspect-paired-logs \
+            --reference-dir ledger/evidence/inspect-cross-domain \
+            --out reports/paired-qwen-scores.json
+          python - <<'PY'
+          import json
+          d=json.load(open('reports/paired-qwen-scores.json'))
+          assert d['paired_scoring_verified'] and d['total_matched_cases']==48
+          assert d['reference_raw_log_fingerprints_checked']
+          assert not d['automatic_promotion'] and not d['AGI_demonstrated']
+          print('Original paired scores:',[(k,v['reference_correct'],v['candidate_correct']) for k,v in d['by_family'].items()])
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: qwen17-vs-06b-original-evidence
+          path: |
+            reports/paired-qwen-scores.json
+            reports/inspect-paired-logs/
+          retention-days: 90
+  archive-paired:
+    needs: paired-inference
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/download-artifact@v7
+        with:
+          name: qwen17-vs-06b-original-evidence
+          path: reports
+      - name: Preserve original score sheet and all four raw Inspect files
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,zipfile
+          from pathlib import Path
+          d=json.loads(Path('reports/paired-qwen-scores.json').read_text())
+          assert d['paired_scoring_verified'] and d['total_matched_cases']==48
+          assert not d['automatic_promotion'] and not d['AGI_demonstrated']
+          root=Path('ledger/evidence/paired-qwen')
+          root.mkdir(parents=True,exist_ok=True)
+          name='run-'+os.environ['RUN_ID']
+          target=root/(name+'.json')
+          archive=root/(name+'-raw.zip')
+          if target.exists() or archive.exists():raise FileExistsError('Experimental history is append-only')
+          logs=sorted(Path('reports/inspect-paired-logs').rglob('*.eval'))
+          if len(logs)!=4:raise ValueError('Missing one of four original model logs')
+          d['source_sha']=os.environ['SOURCE_SHA']
+          d['original_eval_sha256']={x.name:hashlib.sha256(x.read_bytes()).hexdigest() for x in logs}
+          with zipfile.ZipFile(archive,'x',zipfile.ZIP_DEFLATED) as z:
+              for x in logs:z.write(x,arcname=x.name)
+          target.write_text(json.dumps(d,indent=2)+'\n')
+          print('Archived paired evidence, not model promotion:',target)
+          PY
+      - name: Append only reviewed evidence to research-memory
+        run: |
+          git -C ledger config user.name 'Plenum Scientific Evidence'
+          git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ledger add evidence/paired-qwen/
+          git -C ledger commit -m 'Archive exact independently scored paired model comparison'
+          git -C ledger pull --rebase origin research-memory
+          git -C ledger push origin HEAD:research-memory
