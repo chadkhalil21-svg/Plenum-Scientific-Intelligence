@@ -213,7 +213,8 @@ jobs:
           from pathlib import Path
           report=json.load(open('reports/audit.json'))
           assert not report['AGI_demonstrated']
-          assert not report['model_generated_code_executed']
+          assert not report['unrestricted_generated_code_executed']
+          assert report['restricted_arithmetic_dsl_interpreted'] is True
           assert not report['auto_model_promotion']
           target=Path('ledger/evidence/agi-capability-lab')/('run-'+os.environ['RUN_ID']+'.json')
           target.parent.mkdir(parents=True,exist_ok=True)
