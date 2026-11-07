@@ -1,0 +1,148 @@
+name: Iterative Cross-Discipline Scientific Hypothesis Laboratory
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 11 15 * *'
+  push:
+    paths:
+      - '.github/workflows/iterative-hypotheses.yml'
+      - 'src/plenum_ai/hypothesis_cycle.py'
+      - 'tests/test_hypothesis_cycle.py'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-iterative-science-lab
+  cancel-in-progress: false
+jobs:
+  model-directed-investigator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 32
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install only pinned open-weight CPU inference dependencies
+        run: |
+          python -m pip install -e .
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "transformers>=4.51,<5" "huggingface_hub>=0.30,<1" "accelerate>=1.1,<2" safetensors
+      - name: Validate isolation, numerical integrator and failure handling
+        run: python -m unittest discover -s tests -p 'test_hypothesis_cycle.py' -v
+      - name: Use the reviewed 1.7B model to propose, critique and revise mechanisms
+        run: |
+          python -m plenum_ai.hypothesis_cycle propose \
+            --question "Investigate numerical mechanisms across thermal, chemical and electronic systems" \
+            --out reports/iterative_proposal.json
+      - name: Assert only development data were used and all failures retained
+        run: |
+          python - <<'PY'
+          import json
+          p=json.load(open('reports/iterative_proposal.json'))
+          assert p['schema']=='plenum-iterative-science-proposal-v1'
+          assert p['model']=='Qwen/Qwen3-1.7B'
+          assert p['revision']=='70d244cc86ccca08cf5af4e1e306ecf908b1ad5e'
+          assert p['model_calls']==6 and len(p['cases'])==3
+          assert not p['holdout_seen'] and not p['model_promoted']
+          assert not p['new_physical_law_verified']
+          print('Submitted mechanisms:',sum(bool(x['chosen_hypothesis']) for x in p['cases']))
+          print('Failed attempts retained, not replaced with invented answers')
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sealed-iterative-scientific-proposals
+          path: reports/iterative_proposal.json
+          retention-days: 14
+  independent-experimental-auditor:
+    needs: model-directed-investigator
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@v7
+        with:
+          name: sealed-iterative-scientific-proposals
+          path: reports/
+      - name: Verify seals and selection BEFORE reading withheld independent results
+        run: |
+          python -m plenum_ai.hypothesis_cycle audit \
+            --proposal reports/iterative_proposal.json \
+            --out reports/iterative_audit.json
+      - name: Record failures and compare against strongest train-fitted baseline
+        run: |
+          python - <<'PY'
+          import json
+          a=json.load(open('reports/iterative_audit.json'))
+          assert a['evidence_independently_reproduced']
+          assert a['holdout_revealed_only_in_audit']
+          assert a['domains_tested']==3
+          assert a['AGI_demonstrated'] is False
+          assert a['independent_scientific_discovery'] is False
+          assert a['automatic_deployment'] is False
+          print('Independently tested:',a['domains_tested'])
+          print('Valid candidate mechanisms:',a['valid_hypotheses'])
+          print('Beat strongest development-fitted reference:',a['wins_over_strongest_baseline'])
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: independently-audited-iterative-science
+          path: reports/iterative_*.json
+          retention-days: 14
+  archive-public-evidence:
+    needs: independent-experimental-auditor
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: archive
+      - uses: actions/download-artifact@v7
+        with:
+          name: independently-audited-iterative-science
+          path: reports/
+      - name: Append complete PUBLIC experiment with failures, never private data or code
+        env:
+          RUN_ID: ${{ github.run_id }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          p=json.load(open('reports/iterative_proposal.json'))
+          a=json.load(open('reports/iterative_audit.json'))
+          assert p['schema']=='plenum-iterative-science-proposal-v1'
+          assert a['schema']=='plenum-iterative-science-audit-v1'
+          assert a['domains_tested']==3
+          assert not a['AGI_demonstrated'] and not a['automatic_deployment']
+          dest=Path('archive/evidence/iterative-hypotheses')
+          dest.mkdir(parents=True,exist_ok=True)
+          path=dest/('run-'+os.environ['RUN_ID']+'.json')
+          if path.exists(): raise FileExistsError('Immutable experiment already archived')
+          path.write_text(json.dumps({
+              'source_revision':os.environ['COMMIT_SHA'],
+              'proposal':p,'independent_audit':a,
+              'physical_discovery_verified':False,
+              'general_self_improvement_verified':False
+          },indent=2,ensure_ascii=False)+'\n')
+          print('Archived independent public evidence:',path)
+          PY
+      - name: Preserve evidence on separate research-memory branch only
+        run: |
+          git -C archive config user.name 'Plenum Public Evidence Ledger'
+          git -C archive config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C archive add evidence/iterative-hypotheses/
+          git -C archive commit -m 'Archive model-revised hypotheses and independent synthetic experiments'
+          git -C archive pull --rebase origin research-memory
+          git -C archive push origin HEAD:research-memory
