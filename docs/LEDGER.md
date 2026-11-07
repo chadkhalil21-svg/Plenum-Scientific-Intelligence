@@ -40,3 +40,39 @@ E. Scientific simulation adapters and ultimately robotic validation.
 - [x] Live OpenAlex retrieval and deterministic simulator verified in GitHub workflow 42150258387, with five publication metadata records.
 - [x] Qwen3-0.6B CPU inference generated substantive text and passed an initial echo screen (run 42150086623), but human inspection detected fabricated bibliographic citations. This output is NOT scientifically acceptable.
 - [ ] Re-run Qwen3 against actual public literature; forbid free-form citations and fail the content gate when it invents unsupported references. Any passing syntactic gate still requires expert scientific review.
+
+
+## Current operational checkpoint | 2026-11-07 UTC
+
+**The original November 5 entries above are historical, not the current
+implementation status.** The current public-safe strategic source of truth
+is [state/AGI_PROGRAM.json](../state/AGI_PROGRAM.json). New sessions must
+read that file and the original evidence records before claiming progress.
+
+- Real public scientific sources, bounded simulation tools, the research
+  memory archive, independent model verification and an efficient known-task
+  router have since been implemented and checked on GitHub. This verifies
+  selected components, not AGI.
+- The original NOAA and USGS future-observation experiments remain gated
+  by their precommitted target/audit dates and must not be scored early.
+- The first independently audited AGI Capability Laboratory trial (run
+  42331449321) scored **0/6** on Qwen3-1.7B and **0/6** on SmolLM2-1.7B
+  across six simple math, science and restricted program tasks. Valid
+  response format was 2/6 and 4/6 respectively. **No AGI demonstrated.**
+- Chemistry and biology historical benchmark reruns selected conventional
+  baselines in both domains, zero demonstrated AI improvements. These are
+  adaptive historical evaluations and not independent future inventions.
+- The current priority is to **reuse reviewed, standard evaluation systems**
+  rather than create another tiny bespoke AGI scoring framework. Compare
+  model/answer quality with external benchmarks and source-linked evidence,
+  while tracking compute costs.
+- The private founder's technical memoranda are **not part of this public
+  ledger**. No private source materials should be committed to GitHub.
+
+### Continuity discipline
+
+Update the strategic JSON state after consequential verified outcomes,
+decisions and new experiment results. Do not delete or alter the original
+per-run evidence files. Always preserve original source links. An agent
+does not automatically remember GitHub contents across sessions; it must
+read the latest canonical state before representing current progress.
