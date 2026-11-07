@@ -6,12 +6,13 @@ No subscription, payment, scraping of gated pages, geopolitical targeting,
 external execution or unpublished patent material is accessed.
 """
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from urllib.parse import urlencode, urlsplit
 from urllib.request import Request, urlopen
 from xml.etree import ElementTree as ET
 import json
 import re
+from .china_sources import cas_research_articles, china_affiliated_works, CN_NOTE
 
 MAX_BYTES = 1_250_000
 MAX_RESULTS = 4
@@ -81,6 +82,12 @@ SOURCES = {
     "github_public_code": {"category":"software", "type":"github",
         "url":"https://api.github.com/search/repositories",
         "publisher":"GitHub public repository index"},
+    "china_cas_research": {"category":"discoveries", "type":"china_cas_html",
+        "url":"https://english.cas.cn/newsroom/",
+        "publisher":"Chinese Academy of Sciences, public institutional research news"},
+    "china_openalex_works": {"category":"journals", "type":"china_openalex",
+        "url":"https://api.openalex.org/works",
+        "publisher":"OpenAlex, China-affiliated scholarly publications"},
 }
 CATEGORIES = tuple(sorted(set(item["category"] for item in SOURCES.values())))
 # External services needing credentials/rights/review are catalogued, not faked.
@@ -110,8 +117,15 @@ def request_url(key, query):
     definition = SOURCES[key]
     base = definition["url"]
     kind = definition["type"]
-    if kind in ("feed", "usgs"):
+    if kind in ("feed", "usgs", "china_cas_html"):
         return base
+    if kind == "china_openalex":
+        start=(datetime.now(timezone.utc)-timedelta(days=30)).date().isoformat()
+        return base + "?" + urlencode({
+            "filter":"institutions.country_code:CN,from_publication_date:"+start,
+            "sort":"publication_date:desc","per_page":4,
+            "select":"id,title,doi,publication_date,authorships"
+        })
     if kind == "crossref":
         return base + "?" + urlencode({
             "query.bibliographic":query,"rows":4,
@@ -144,7 +158,7 @@ def fetch_public(key, query, opener=urlopen):
         raise ValueError("Public source host mismatch")
     request = Request(url, headers={
         "User-Agent":"PlenumScientificIntelligence/1.8 read-only-public-signals",
-        "Accept":"application/json,application/rss+xml,application/atom+xml,application/xml",
+        "Accept":"application/json,text/html,application/rss+xml,application/atom+xml,application/xml",
     })
     with opener(request, timeout=13) as response:
         data = response.read(MAX_BYTES + 1)
@@ -226,6 +240,12 @@ def parse_public(key, data):
     kind = SOURCES[key]["type"]
     if kind == "feed":
         return _feed(key,data)
+    if kind == "china_cas_html":
+        return [r for title,url,date in cas_research_articles(data)
+                if (r:=_record(key,title,url,date,"CAS institutional announcement, not independent research validation"))]
+    if kind == "china_openalex":
+        return [r for title,url,date in china_affiliated_works(data)
+                if (r:=_record(key,title,url,date,CN_NOTE))]
     payload = json.loads(data)
     result = []
     if kind == "crossref":
