@@ -1,0 +1,6 @@
+name = "plenum_formal"
+version = "0.1.0"
+defaultTargets = ["PlenumFormal"]
+
+[[lean_lib]]
+name = "PlenumFormal"

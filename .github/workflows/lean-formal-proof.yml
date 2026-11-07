@@ -1,0 +1,57 @@
+name: Independent Lean 4 Formal Proof Checker
+on:
+  pull_request:
+    paths:
+      - 'formal/**'
+      - '.github/workflows/lean-formal-proof.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'formal/**'
+      - '.github/workflows/lean-formal-proof.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  proof-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    defaults:
+      run:
+        working-directory: formal
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install and build with official Lean 4 toolchain
+        uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: formal
+          auto-config: false
+          build: 'true'
+          use-mathlib-cache: 'false'
+      - name: Verify toolchain and proof source contains no unproved placeholders
+        run: |
+          lean --version
+          if grep -R -nE '(^|[^[:alpha:]])(sorry|admit|axiom)([^[:alpha:]]|$)' PlenumFormal/*.lean; then
+            echo "Unproved placeholders are prohibited in approved source"
+            exit 1
+          fi
+      - name: Negative control - an intentionally false theorem must be rejected
+        run: |
+          set +e
+          lake env lean negative/FalseClaim.lean > /tmp/plenum-false-claim.log 2>&1
+          code=$?
+          set -e
+          if [ "$code" -eq 0 ]; then
+            echo "CRITICAL: Lean erroneously accepted an invalid proof"
+            exit 1
+          fi
+          if ! grep -Eiq '(tactic.*failed|unsolved goals|type mismatch|failed to synthesize)' /tmp/plenum-false-claim.log; then
+            echo "Compiler failed, but not with expected independent proof rejection"
+            cat /tmp/plenum-false-claim.log
+            exit 1
+          fi
+          echo "Real Lean kernel rejected the false theorem"
+      - name: Verify no model inference or science discovery was claimed
+        run: |
+          test -f .lake/build/lib/lean/PlenumFormal/ResearchAccounting.olean
+          echo "Proof source compiled; model inference and empirical discovery were not tested"
