@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T22:41:43.701Z",
+  "last_reviewed_utc": "2026-11-07T22:45:06.697Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -574,6 +574,13 @@
       "status": "user_screenshot_confirmed",
       "AGI_demonstrated": false,
       "notes": "Founder created and selected dedicated Google Cloud project Plenum Computer Browser. Exact project ID plenum-computer-browser; screenshot showed project number 98614162800 in Google Cloud Console Nov 7 2026. Google Cloud browser project now exists, separate from American Rider. Billing activation, IAM roles, encrypted GCS bucket, deployment secrets, GitHub WIF, Cloud Run deployment and browser login not yet verified. Next user-facing step: open Billing in newly selected project to confirm linked active account. Do not assume $0.00 charges proves billing enabled."
+    },
+    {
+      "id": "computer-browser-google-cloud-free-tier-capacity-20261107",
+      "status": "official-pricing-verified",
+      "url": "https://cloud.google.com/run/pricing",
+      "AGI_demonstrated": false,
+      "notes": "Google official current Cloud Run REQUEST-based monthly free tier: 180,000 vCPU-seconds, 360,000 GiB-seconds, 2 million requests, based on us-central1 Tier 1 pricing and aggregated across projects by linked BILLING ACCOUNT. Existing planned Cloud Run browser worker has 2 vCPU, 2GiB RAM, min instances 0. Ignoring startup, egress, build, secret storage and other usage, free CPU allowance corresponds to ~90,000 billable active seconds = 25 active browser hours/month or ~1,500 60-second tasks. Cloud Run requires project linked to active billing even for free-tier use. Budget alerts do NOT automatically cap charges. Long-lived browser WebSocket can remain billable while open. These are rough planning upper bounds, not guaranteed no-cost usage. Browser operations do not demonstrate AGI or provide free LLM/GPU training."
     }
   ],
   "next_actions": [
@@ -591,7 +598,7 @@
     },
     {
       "priority": 4,
-      "action": "Founder created dedicated GCP project Plenum Computer Browser (project ID plenum-computer-browser, project number 98614162800). Next confirm active billing is linked on Google Cloud Console Billing page; then owner-authorize minimum roles/resources (secret vault, private GCS bucket, service accounts and GitHub Workload Identity). GH environment currently lacks all six deployment settings as proved by issue #74; the project existing does not mean deployed. Keep IAM-private Cloud Run deployment manual and protected; then verify IAP owner login, browser session UI and ChatGPT connectivity. No spend activated."
+      "action": "Founder created Google project plenum-computer-browser; billing linkage unverified. Browser source/CI and owner IAP private read-only page built but no cloud deployment, real account login or ChatGPT private-browser tool yet. Nominal 2vCPU/2GiB free capacity ~25 active browser hours/month, shared per billing account and not guaranteed; Cloud billing account must be linked. Next: verify project billing and cost guardrails, owner-authorize GCP IAM/WIF/private GCS/Secret Manager, deploy private Cloud Run, independently verify logged-in user/browser approvals and ChatGPT connector. Existing GitHub free public bridge and optional metered TinyFish remain separate."
     },
     {
       "priority": 5,
@@ -946,6 +953,10 @@
     {
       "decision": "Use shared Google-protected private browser with human owner website sign-in and separately authorized agent tasks, never posting private sessions to public chat or GitHub.",
       "reason": "PRs #69, #70 and #73 verify the encrypted fake-session storage, multistep offline Chromium form action and signed-owner private WebSocket login UI. It is not deployed. Free GitHub Issues bridge is for public reading only. Real account actions and custom ChatGPT tool connection require provider permissions, owner consent, egress isolation and live tests."
+    },
+    {
+      "decision": "Treat Cloud Run's nominal 25 hours/month of free 2-vCPU browser compute as an estimate, not a zero-cost guarantee or AGI compute allocation.",
+      "reason": "Official pricing: request-based allowance 180k vCPU-seconds, 360k GiB-seconds, 2M requests monthly shared across projects on same billing account. 2 vCPU 2GiB browser is CPU-limited to ~25 hours only if no other use. Cloud billing must be linked even within free tier; side services, egress and idle open browser sessions can incur charges."
     }
   ],
   "operating_rules": [
