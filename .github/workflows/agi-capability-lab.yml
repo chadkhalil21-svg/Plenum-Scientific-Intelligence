@@ -61,7 +61,7 @@ jobs:
           retention-days: 21
   bounded-open-weight-models:
     needs: generate-public-challenges
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Initialize AGI Capability Laboratory v1'))
     runs-on: ubuntu-latest
     timeout-minutes: 40
     strategy:
