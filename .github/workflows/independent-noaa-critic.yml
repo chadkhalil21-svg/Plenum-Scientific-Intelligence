@@ -1,0 +1,194 @@
+name: Different-Family Scientific Critic of NOAA Research
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/independent-noaa-critic.yml'
+      - 'src/plenum_ai/independent_noaa_critic.py'
+      - 'tests/test_independent_noaa_critic.py'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-noaa-scientific-critic
+  cancel-in-progress: false
+jobs:
+  freeze-only-development:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: archive
+      - name: Install existing NOAA source and test tools
+        run: python -m pip install -e ".[empirical]"
+      - name: Test archive isolation and scientific critic guards
+        run: python -m unittest discover -s tests -p 'test_independent_noaa_critic.py' -v
+      - name: Remove historical test outcomes before any new-model inference
+        run: |
+          python -m plenum_ai.independent_noaa_critic extract \
+            --archived archive/evidence/noaa-research-agent/run-42321911614.json \
+            --out reports/frozen.json
+          python - <<'PY'
+          import json
+          o=json.load(open('reports/frozen.json'))
+          assert o['schema']=='plenum-noaa-frozen-proposals-v1'
+          assert not o['includes_holdout_measurements']
+          assert 'independent_audit' not in o
+          assert len(o['proposal']['cases'])==4
+          print('Isolated four historically frozen DEVELOPMENT cases')
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: isolated-original-development-proposals
+          path: reports/frozen.json
+          retention-days: 14
+  different-family-reviewer:
+    needs: freeze-only-development
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Load the sanitized source proposal ONLY, not the historical audit
+        uses: actions/download-artifact@v7
+        with:
+          name: isolated-original-development-proposals
+          path: reports/
+      - name: Install bounded NOAA and independent open-weight CPU model dependencies
+        run: |
+          python -m pip install -e ".[empirical]"
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "transformers>=4.51,<5" "huggingface_hub>=0.30,<1" "accelerate>=1.1,<2" safetensors
+      - name: Critique Qwen3 with a DIFFERENT family SmolLM2 model and development-only NOAA data
+        run: |
+          python -m plenum_ai.independent_noaa_critic critique \
+            --frozen reports/frozen.json --out reports/criticism.json
+      - name: Preserve all valid/invalid counterarguments, never claim discovery
+        run: |
+          python - <<'PY'
+          import json
+          r=json.load(open('reports/criticism.json'))
+          assert r['schema']=='plenum-independent-noaa-critic-v1'
+          assert r['critic_model']=='HuggingFaceTB/SmolLM2-1.7B-Instruct'
+          assert r['critic_revision']=='31b70e2e869a7173562077fd711b654946d38674'
+          assert r['critique_calls']==4
+          assert not r['heldout_observations_seen_by_critic']
+          assert r['retrospective_public_historical_data']
+          assert not r['autonomous_model_promotion']
+          print('Valid independent counterproposals:',sum(x['critic_alternative'] is not None for x in r['critiques']))
+          print('Development-suggested changes:',sum(x['counterproposal_better_on_development'] for x in r['critiques']))
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: different-family-critic-proposals
+          path: reports/criticism.json
+          retention-days: 14
+  independent-science-audit:
+    needs: different-family-reviewer
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e ".[empirical]"
+      - uses: actions/download-artifact@v7
+        with:
+          name: isolated-original-development-proposals
+          path: reports/
+      - uses: actions/download-artifact@v7
+        with:
+          name: different-family-critic-proposals
+          path: reports/
+      - name: Recompute development first, then evaluate real historical NOAA holdout
+        run: |
+          python -m plenum_ai.independent_noaa_critic audit \
+            --frozen reports/frozen.json --critic reports/criticism.json \
+            --out reports/audit.json
+      - name: Record successes and failures and forbid unverified auto-promotion
+        run: |
+          python - <<'PY'
+          import json
+          a=json.load(open('reports/audit.json'))
+          assert a['schema']=='plenum-independent-noaa-critic-audit-v1'
+          assert a['total_cases']==4 and a['development_evidence_reproduced']
+          assert a['separate_model_family_used'] and a['historical_public_data_not_prospectively_blind']
+          assert not a['general_intelligence_verified']
+          assert not a['new_scientific_discovery_verified']
+          assert not a['auto_model_promotion']
+          print('Valid alternate proposals:',a['valid_counterproposals'])
+          print('Development-approved changes:',a['development_recommended_changes'])
+          print('Real holdout improvements:',a['actual_holdout_improvements'])
+          print('Wins versus strongest conventional baseline:',a['wins_vs_strongest_baseline'])
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: independently-verified-critic-evidence
+          path: reports/audit.json
+          retention-days: 14
+  archive-public-review:
+    needs: independent-science-audit
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/download-artifact@v7
+        with:
+          name: isolated-original-development-proposals
+          path: reports/
+      - uses: actions/download-artifact@v7
+        with:
+          name: different-family-critic-proposals
+          path: reports/
+      - uses: actions/download-artifact@v7
+        with:
+          name: independently-verified-critic-evidence
+          path: reports/
+      - name: Append all PUBLIC review evidence including negative findings
+        env:
+          RUN_ID: ${{ github.run_id }}
+          REVISION: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          data={k:json.load(open('reports/'+name+'.json')) for k,name in [
+              ('frozen_development','frozen'),('independent_critic','criticism'),
+              ('audit','audit')]}
+          assert data['audit']['total_cases']==4
+          assert not data['audit']['auto_model_promotion']
+          path=Path('ledger/evidence/noaa-independent-critic')/('run-'+os.environ['RUN_ID']+'.json')
+          path.parent.mkdir(parents=True,exist_ok=True)
+          if path.exists(): raise FileExistsError('Archive record may not be overwritten')
+          path.write_text(json.dumps({
+              'source_revision':os.environ['REVISION'],**data,
+              'claims_new_discovery':False,'claims_AGI':False
+          },indent=2,ensure_ascii=False)+'\n')
+          print('Archived retrospective different-model scientific critique:',path)
+          PY
+      - name: Commit evidence only to research-memory branch
+        run: |
+          git -C ledger config user.name 'Plenum Scientific Research Ledger'
+          git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ledger add evidence/noaa-independent-critic/
+          git -C ledger commit -m 'Archive independent model critique of real NOAA research'
+          git -C ledger pull --rebase origin research-memory
+          git -C ledger push origin HEAD:research-memory
