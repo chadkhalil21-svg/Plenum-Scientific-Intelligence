@@ -48,10 +48,10 @@ def plan():
     }
 
 
-def compare(original, revised, before_tokens, after_tokens):
+def compare(original, revised, before_tokens, after_tokens, *, count=N):
     """Score only externally supplied original Inspect grades and token counts."""
     keys = set(original)
-    if (len(keys) != N or set(revised) != keys or
+    if (len(keys) != count or set(revised) != keys or
         set(before_tokens) != keys or set(after_tokens) != keys):
         raise ValueError("Original and revised questions do not have exact matching identifiers")
     for dictionary in (original, revised):
@@ -64,7 +64,7 @@ def compare(original, revised, before_tokens, after_tokens):
     repaired = sorted(k for k in keys if not original[k] and revised[k])
     regressed = sorted(k for k in keys if original[k] and not revised[k])
     return {
-        "question_count": N,
+        "question_count": count,
         "baseline_correct": sum(original.values()),
         "candidate_correct": sum(revised.values()),
         "candidate_minus_baseline": sum(revised.values()) - sum(original.values()),
