@@ -111,10 +111,20 @@ class LocalEdgeProofTests(unittest.TestCase):
             self.assertEqual(report["stdout_sha256"], sha256(b"42").hexdigest())
             self.assertEqual(report["stdout_characters"], 2)
             self.assertTrue(report["inference_executed"])
+            self.assertTrue(report["public_smoke_exact_match"])
+            self.assertEqual(report["public_smoke_reference"], "42")
             self.assertFalse(report["independent_accuracy_verified"])
             self.assertIsNone(report["original_independent_correctness_score"])
             self.assertFalse(report["network_isolation_independently_verified"])
             self.assertFalse(report["AGI_demonstrated"])
+
+    def test_public_one_case_smoke_check_is_strict_and_not_independent(self):
+        self.assertTrue(edge.score_public_smoke("42\n", 0))
+        for output in ("", "41", "43", "The answer is 42",
+                       "42 because 17 + 25 = 42", "042", "42\n43"):
+            with self.subTest(output=output):
+                self.assertFalse(edge.score_public_smoke(output, 0))
+        self.assertIsNone(edge.score_public_smoke("42", 7))
 
     def test_nonzero_exit_is_not_success(self):
         with tempfile.TemporaryDirectory() as d:
@@ -127,6 +137,7 @@ class LocalEdgeProofTests(unittest.TestCase):
             )
             self.assertEqual(result["process_exit_code"], 7)
             self.assertFalse(result["inference_executed"])
+            self.assertIsNone(result["public_smoke_exact_match"])
             self.assertFalse(result["AGI_demonstrated"])
 
 
