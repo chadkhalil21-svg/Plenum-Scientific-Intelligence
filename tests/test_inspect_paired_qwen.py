@@ -60,6 +60,40 @@ class PairedFrozenQwenTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"grades"):
             q.compare_matched(past,now)
 
+    def test_original_log_completion_order_is_not_dataset_subset(self):
+        # Model completions arrive out of order; the same fixed questions
+        # must be selected by exact IDs without a second inference run.
+        original={f"q{i}":i%2==0 for i in range(24)}
+        candidate={f"q{i}":i%2==1 for i in (11,0,8,4,3,7,1,5,6,2,10,9)}
+        subset=q.select_matching_reference(original,candidate)
+        self.assertEqual(list(subset),list(candidate))
+        self.assertEqual(set(subset),set(candidate))
+        self.assertEqual(subset["q0"],True)
+        self.assertEqual(subset["q11"],False)
+
+    def test_missing_candidate_id_fails_closed(self):
+        original={f"q{i}":True for i in range(24)}
+        candidate={f"q{i}":True for i in range(11)}
+        candidate["tampered"]=True
+        with self.assertRaisesRegex(ValueError,"exact original IDs"):
+            q.select_matching_reference(original,candidate)
+
+    def test_original_question_contracts_must_match(self):
+        from types import SimpleNamespace
+        x=SimpleNamespace(
+            samples=[
+                SimpleNamespace(id="s0",input="Why?",target="A",choices=("A","B")),
+                SimpleNamespace(id="s1",input="How?",target="B",choices=("A","B")),
+            ])
+        y=SimpleNamespace(
+            samples=[
+                SimpleNamespace(id="s0",input="Why?",target="A",choices=("A","B")),
+                SimpleNamespace(id="s1",input="How?",target="C",choices=("A","B")),
+            ])
+        self.assertNotEqual(q.question_contract(x),q.question_contract(y))
+        y.samples[1].target="B"
+        self.assertEqual(q.question_contract(x),q.question_contract(y))
+
     def test_no_reference_data_fails_closed(self):
         with self.assertRaises(FileNotFoundError):
             q.verify_reference("does-not-exist/inspect-cross-domain")
