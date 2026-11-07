@@ -1,0 +1,406 @@
+{
+  "source_revision": "e0043882d7c46d604b15021d092bb43019091589",
+  "audit": {
+    "schema": "plenum-model-challenge-audit-v1",
+    "baseline": {
+      "model": "Qwen/Qwen3-0.6B",
+      "correct": 0,
+      "cases": [
+        {
+          "schema": "plenum-research-pilot-audit-v1",
+          "proposal_sha256": "1b27be36618498f0449ccb1b6f80c2c0c6f1882e5685ad4c500bb6de77bc2e2f",
+          "development_reproduced": true,
+          "holdout_computed_only_after_sealing": true,
+          "holdout_domain": "electronics",
+          "measurements": [
+            {
+              "method": "RK45",
+              "calls": 806,
+              "error": 1.1180316383276649e-10,
+              "invariant": 0.0
+            },
+            {
+              "method": "DOP853",
+              "calls": 254,
+              "error": 5.130990937079177e-12,
+              "invariant": 0.0
+            },
+            {
+              "method": "Radau",
+              "calls": 3515,
+              "error": 7.043990448302339e-14,
+              "invariant": 0.0
+            }
+          ],
+          "model_selected": "RK45",
+          "selected_is_best_on_one_fixture": false,
+          "selected_beats_RK45_on_one_fixture": false,
+          "calls_saved_vs_RK45": 0,
+          "strongest_reference_calls": 254,
+          "scientific_discovery_verified": false,
+          "AGI_demonstrated": false,
+          "generalizable_improvement_established": false,
+          "auto_deployed": false
+        },
+        {
+          "schema": "plenum-research-pilot-audit-v1",
+          "proposal_sha256": "ba0af8e45ef647ce821e4a693ad152125a3feeb00d5a85493d8c59a666cbd9e7",
+          "development_reproduced": true,
+          "holdout_computed_only_after_sealing": true,
+          "holdout_domain": "mechanics",
+          "measurements": [
+            {
+              "method": "RK45",
+              "calls": 1232,
+              "error": 1.8449608864310291e-10,
+              "invariant": 1.8449770946348796e-10
+            },
+            {
+              "method": "DOP853",
+              "calls": 470,
+              "error": 3.0498029016318127e-12,
+              "invariant": 3.245552452128279e-12
+            },
+            {
+              "method": "Radau",
+              "calls": 5564,
+              "error": 4.673806097390926e-13,
+              "invariant": 4.678992128965157e-13
+            }
+          ],
+          "model_selected": "RK45",
+          "selected_is_best_on_one_fixture": false,
+          "selected_beats_RK45_on_one_fixture": false,
+          "calls_saved_vs_RK45": 0,
+          "strongest_reference_calls": 470,
+          "scientific_discovery_verified": false,
+          "AGI_demonstrated": false,
+          "generalizable_improvement_established": false,
+          "auto_deployed": false
+        }
+      ]
+    },
+    "candidate": {
+      "model": "Qwen/Qwen3-1.7B",
+      "correct": 2,
+      "cases": [
+        {
+          "schema": "plenum-research-pilot-audit-v1",
+          "proposal_sha256": "9d98612502143ad79dc8906dfee5be243b11c6bc20b9bdf5ab1240d0db969e31",
+          "development_reproduced": true,
+          "holdout_computed_only_after_sealing": true,
+          "holdout_domain": "electronics",
+          "measurements": [
+            {
+              "method": "RK45",
+              "calls": 806,
+              "error": 1.1180316383276649e-10,
+              "invariant": 0.0
+            },
+            {
+              "method": "DOP853",
+              "calls": 254,
+              "error": 5.130990937079177e-12,
+              "invariant": 0.0
+            },
+            {
+              "method": "Radau",
+              "calls": 3515,
+              "error": 7.043990448302339e-14,
+              "invariant": 0.0
+            }
+          ],
+          "model_selected": "DOP853",
+          "selected_is_best_on_one_fixture": true,
+          "selected_beats_RK45_on_one_fixture": true,
+          "calls_saved_vs_RK45": 552,
+          "strongest_reference_calls": 254,
+          "scientific_discovery_verified": false,
+          "AGI_demonstrated": false,
+          "generalizable_improvement_established": false,
+          "auto_deployed": false
+        },
+        {
+          "schema": "plenum-research-pilot-audit-v1",
+          "proposal_sha256": "94b4567a48cdaa53563226be59a619b300b7eded9cbc7046bb339b843d263d58",
+          "development_reproduced": true,
+          "holdout_computed_only_after_sealing": true,
+          "holdout_domain": "mechanics",
+          "measurements": [
+            {
+              "method": "RK45",
+              "calls": 1232,
+              "error": 1.8449608864310291e-10,
+              "invariant": 1.8449770946348796e-10
+            },
+            {
+              "method": "DOP853",
+              "calls": 470,
+              "error": 3.0498029016318127e-12,
+              "invariant": 3.245552452128279e-12
+            },
+            {
+              "method": "Radau",
+              "calls": 5564,
+              "error": 4.673806097390926e-13,
+              "invariant": 4.678992128965157e-13
+            }
+          ],
+          "model_selected": "DOP853",
+          "selected_is_best_on_one_fixture": true,
+          "selected_beats_RK45_on_one_fixture": true,
+          "calls_saved_vs_RK45": 762,
+          "strongest_reference_calls": 470,
+          "scientific_discovery_verified": false,
+          "AGI_demonstrated": false,
+          "generalizable_improvement_established": false,
+          "auto_deployed": false
+        }
+      ]
+    },
+    "tasks_per_model": 2,
+    "candidate_better_on_these_tasks": true,
+    "same_holdout_evidence": true,
+    "hypotheses_independently_verified": false,
+    "stronger_general_intelligence_proven": false,
+    "AGI_achieved": false,
+    "model_weights_modified": false,
+    "model_promoted": false,
+    "limitations": "Two known-equation tasks are exploratory, not a blind pretraining-independent benchmark; no automatic promotion."
+  },
+  "baseline": {
+    "schema": "plenum-model-challenge-proposals-v1",
+    "model_id": "Qwen/Qwen3-0.6B",
+    "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+    "proposals": [
+      {
+        "schema": "plenum-research-pilot-proposal-v1",
+        "sealed": {
+          "question": "Which numerical methods efficiently solve different scientific equations?",
+          "development_domain": "materials",
+          "holdout_domain": "electronics",
+          "development": [
+            {
+              "method": "RK45",
+              "calls": 320,
+              "error": 1.932687473952456e-11,
+              "invariant": 0.0
+            },
+            {
+              "method": "DOP853",
+              "calls": 266,
+              "error": 1.3191376896650861e-15,
+              "invariant": 0.0
+            },
+            {
+              "method": "Radau",
+              "calls": 1198,
+              "error": 2.9021029172631894e-14,
+              "invariant": 0.0
+            }
+          ],
+          "model": "Qwen/Qwen3-0.6B",
+          "answer": "A",
+          "method": "RK45"
+        },
+        "seal_sha256": "1b27be36618498f0449ccb1b6f80c2c0c6f1882e5685ad4c500bb6de77bc2e2f",
+        "hypothesis": "RK45 uses the fewest derivative evaluations on the withheld different-domain fixture while maintaining verified accuracy.",
+        "falsifier": "Any allowed solver uses fewer evaluations, or accuracy fails.",
+        "source_metadata_untrusted": {
+          "providers": [],
+          "records": [],
+          "status": "offline_benchmark_only",
+          "scientific_truth_verified": false
+        },
+        "model_inference_executed": true,
+        "holdout_seen_by_model": false,
+        "AGI_demonstrated": false,
+        "scientific_discovery_verified": false,
+        "code_or_model_deployed": false
+      },
+      {
+        "schema": "plenum-research-pilot-proposal-v1",
+        "sealed": {
+          "question": "Which numerical methods efficiently solve different scientific equations?",
+          "development_domain": "chemistry",
+          "holdout_domain": "mechanics",
+          "development": [
+            {
+              "method": "RK45",
+              "calls": 572,
+              "error": 9.667084403756753e-11,
+              "invariant": 1.1102230246251565e-16
+            },
+            {
+              "method": "DOP853",
+              "calls": 266,
+              "error": 2.0025728562911539e-13,
+              "invariant": 0.0
+            },
+            {
+              "method": "Radau",
+              "calls": 2626,
+              "error": 5.0667506002547265e-14,
+              "invariant": 4.440892098500626e-16
+            }
+          ],
+          "model": "Qwen/Qwen3-0.6B",
+          "answer": "A",
+          "method": "RK45"
+        },
+        "seal_sha256": "ba0af8e45ef647ce821e4a693ad152125a3feeb00d5a85493d8c59a666cbd9e7",
+        "hypothesis": "RK45 uses the fewest derivative evaluations on the withheld different-domain fixture while maintaining verified accuracy.",
+        "falsifier": "Any allowed solver uses fewer evaluations, or accuracy fails.",
+        "source_metadata_untrusted": {
+          "providers": [],
+          "records": [],
+          "status": "offline_benchmark_only",
+          "scientific_truth_verified": false
+        },
+        "model_inference_executed": true,
+        "holdout_seen_by_model": false,
+        "AGI_demonstrated": false,
+        "scientific_discovery_verified": false,
+        "code_or_model_deployed": false
+      }
+    ],
+    "draft": {
+      "status": "unverified_draft",
+      "draft": {
+        "hypothesis": "A future experiment will investigate the behavior of a quantum field under the influence of a time-dependent potential, using numerical integration techniques to simulate the effects of a hypothetical 'quantum gravity' scenario.",
+        "experiment": "A computational model will simulate the evolution of a quantum field under a time-dependent potential, using a combination of finite difference and variational methods to predict the resulting physical phenomena.",
+        "falsification": "The experiment will be falsified if the numerical integration results do not align with the expected behavior of the quantum field under the proposed time-dependent potential.",
+        "alternative_explanation": "The alternative explanation is that the quantum field's behavior may be governed by a different underlying physical law, such as a non-linear interaction model, which is not accounted for in the current numerical integration approach."
+      },
+      "experiment_performed": false,
+      "novelty_verified": false,
+      "source_claims_verified": false,
+      "scientific_discovery_verified": false
+    },
+    "model_inference_executed": true,
+    "model_calls": 3,
+    "elapsed_seconds": 12.3,
+    "holdout_executed": false,
+    "AGI_achieved": false,
+    "scientific_discovery_verified": false,
+    "auto_model_promotion": false
+  },
+  "candidate": {
+    "schema": "plenum-model-challenge-proposals-v1",
+    "model_id": "Qwen/Qwen3-1.7B",
+    "model_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+    "proposals": [
+      {
+        "schema": "plenum-research-pilot-proposal-v1",
+        "sealed": {
+          "question": "Which numerical methods efficiently solve different scientific equations?",
+          "development_domain": "materials",
+          "holdout_domain": "electronics",
+          "development": [
+            {
+              "method": "RK45",
+              "calls": 320,
+              "error": 1.932687473952456e-11,
+              "invariant": 0.0
+            },
+            {
+              "method": "DOP853",
+              "calls": 266,
+              "error": 1.3191376896650861e-15,
+              "invariant": 0.0
+            },
+            {
+              "method": "Radau",
+              "calls": 1198,
+              "error": 2.9021029172631894e-14,
+              "invariant": 0.0
+            }
+          ],
+          "model": "Qwen/Qwen3-1.7B",
+          "answer": "B",
+          "method": "DOP853"
+        },
+        "seal_sha256": "9d98612502143ad79dc8906dfee5be243b11c6bc20b9bdf5ab1240d0db969e31",
+        "hypothesis": "DOP853 uses the fewest derivative evaluations on the withheld different-domain fixture while maintaining verified accuracy.",
+        "falsifier": "Any allowed solver uses fewer evaluations, or accuracy fails.",
+        "source_metadata_untrusted": {
+          "providers": [],
+          "records": [],
+          "status": "offline_benchmark_only",
+          "scientific_truth_verified": false
+        },
+        "model_inference_executed": true,
+        "holdout_seen_by_model": false,
+        "AGI_demonstrated": false,
+        "scientific_discovery_verified": false,
+        "code_or_model_deployed": false
+      },
+      {
+        "schema": "plenum-research-pilot-proposal-v1",
+        "sealed": {
+          "question": "Which numerical methods efficiently solve different scientific equations?",
+          "development_domain": "chemistry",
+          "holdout_domain": "mechanics",
+          "development": [
+            {
+              "method": "RK45",
+              "calls": 572,
+              "error": 9.667199296060613e-11,
+              "invariant": 2.220446049250313e-16
+            },
+            {
+              "method": "DOP853",
+              "calls": 266,
+              "error": 1.987636856789269e-13,
+              "invariant": 0.0
+            },
+            {
+              "method": "Radau",
+              "calls": 2626,
+              "error": 5.1471752129571824e-14,
+              "invariant": 6.661338147750939e-16
+            }
+          ],
+          "model": "Qwen/Qwen3-1.7B",
+          "answer": "B",
+          "method": "DOP853"
+        },
+        "seal_sha256": "94b4567a48cdaa53563226be59a619b300b7eded9cbc7046bb339b843d263d58",
+        "hypothesis": "DOP853 uses the fewest derivative evaluations on the withheld different-domain fixture while maintaining verified accuracy.",
+        "falsifier": "Any allowed solver uses fewer evaluations, or accuracy fails.",
+        "source_metadata_untrusted": {
+          "providers": [],
+          "records": [],
+          "status": "offline_benchmark_only",
+          "scientific_truth_verified": false
+        },
+        "model_inference_executed": true,
+        "holdout_seen_by_model": false,
+        "AGI_demonstrated": false,
+        "scientific_discovery_verified": false,
+        "code_or_model_deployed": false
+      }
+    ],
+    "draft": {
+      "status": "unverified_draft",
+      "draft": {
+        "hypothesis": "The numerical integration of physical equations using a specific algorithm will yield results that are significantly more accurate than those obtained using a different algorithm, when tested on a set of known physical systems.",
+        "experiment": "Perform numerical integration on a set of well-defined physical systems (e.g., harmonic oscillators, fluid dynamics, or quantum mechanical systems) using two different algorithms, and compare the accuracy of the results.",
+        "falsification": "If the results from the two algorithms are not significantly different in terms of accuracy, the hypothesis is falsified.",
+        "alternative_explanation": "The difference in accuracy may be due to the inherent limitations of the algorithms, rather than the method of numerical integration itself."
+      },
+      "experiment_performed": false,
+      "novelty_verified": false,
+      "source_claims_verified": false,
+      "scientific_discovery_verified": false
+    },
+    "model_inference_executed": true,
+    "model_calls": 3,
+    "elapsed_seconds": 97.159,
+    "holdout_executed": false,
+    "AGI_achieved": false,
+    "scientific_discovery_verified": false,
+    "auto_model_promotion": false
+  },
+  "verified_general_improvement": false
+}
