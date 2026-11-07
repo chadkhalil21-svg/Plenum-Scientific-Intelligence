@@ -74,3 +74,6 @@ async def local_smoke():
 # Owner-facing Google IAP page is separate from the service's internal bearer API.
 from .owner_console import mount_owner_console
 mount_owner_console(app)
+
+from .private_login import mount_private_login
+mount_private_login(app)
