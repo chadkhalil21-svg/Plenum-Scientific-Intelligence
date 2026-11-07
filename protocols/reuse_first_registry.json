@@ -59,6 +59,32 @@
       "notes": "Real pinned Inspect Task/Sample/Solver/built-in scorer passed correct and incorrect public replay samples without model/API calls. This verifies integration only; it does not measure intelligence or AGI.",
       "verified_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42336662799",
       "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/20"
+    },
+    {
+      "name": "OpenHands Software Agent SDK",
+      "role": "controlled_software_coding_agent",
+      "origin": "https://github.com/OpenHands/software-agent-sdk",
+      "release": "1.60.1",
+      "license": "MIT",
+      "python": ">=3.12",
+      "adoption": "optional_import_smoke_only",
+      "default_execution": false,
+      "preinstalled": false,
+      "status": "pending_upstream_api_ci",
+      "notes": "Agent execution, workspace access and model calls require separate isolated budgeted approval."
+    },
+    {
+      "name": "PaperQA2",
+      "role": "scientific_document_grounded_question_answering",
+      "origin": "https://github.com/Future-House/paper-qa",
+      "release": "2026.8.12",
+      "license": "Apache-2.0",
+      "python": ">=3.11",
+      "adoption": "optional_import_smoke_only",
+      "default_execution": false,
+      "preinstalled": false,
+      "status": "pending_upstream_api_ci",
+      "notes": "Paper, embedding, metadata and model interactions require explicit separate rights and budget approval. API import is not citation accuracy."
     }
   ],
   "rules": {
