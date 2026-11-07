@@ -100,6 +100,32 @@
         "inference_calls": 0,
         "confidential_inputs": false
       }
+    },
+    {
+      "name": "Inspect Evals HumanEval",
+      "role": "original_independent_executable_program_synthesis_benchmark",
+      "origin": "https://github.com/UKGovernmentBEIS/inspect_evals",
+      "release": "0.27.0",
+      "original_dataset": "openai/openai_humaneval",
+      "pinned_dataset_revision": "7dce6050a7d6d172f3cc5c32aa97f52fa1a2e544",
+      "status": "implemented_ci_offline_plan_pending_real_scoring",
+      "default_execution": false,
+      "model": "Qwen/Qwen3-1.7B at 70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+      "sandbox": "Inspect Docker default network disabled",
+      "sample_limit": 3,
+      "model_download_required": true,
+      "paid_api_calls": 0,
+      "notes": "Original HumanEval Python test grader executes model-generated functions only inside sandbox; initial tiny sample shows code capability, not autonomous agents or AGI. Archive negative/positive original official results before claims."
+    },
+    {
+      "name": "Inspect ReAct / OpenHands / mini-SWE-agent reuse decision",
+      "role": "future_multi_step_agentic_code_repair",
+      "origin": "https://inspect.aisi.org.uk/tutorial.html",
+      "adoption": "reuse_existing_agent_loops_and_standard_benchmarks",
+      "status": "next_gate_not_yet_executed",
+      "default_execution": false,
+      "prerequisites": "verified Docker isolation, source-approved model backend and compute ceiling, independent test-based task scoring",
+      "notes": "Do not build new planning/agent loop or claim self-improvement. Prefer existing Inspect react(), OpenHands Software Agent SDK, SWE-bench Verified and PaperBench. A completed multistep task is needed, not library import."
     }
   ],
   "rules": {
