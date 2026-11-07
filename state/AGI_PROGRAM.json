@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T07:59:15.816Z",
+  "last_reviewed_utc": "2026-11-07T18:08:24.398Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -372,12 +372,26 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42353430569",
       "AGI_demonstrated": false,
       "notes": "PR #46 merged at 4c13fd9b82e8a655e16dcbe432ccc89979ba5291, added verified unit-tested offline-by-default local llama.cpp GGUF invocation contract with SHA256 provenance of locally supplied model and executable, exact model/engine paths, bounded CPU-only CLI flags and 180s time limit, symlink/tamper checks, restricted subprocess credentials, hash-only output report, and no automatic downloads/training/deployment. Original PR CI run #42353353428 and merged-main CI run #42353430569 completed SUCCESS, but all edge executor runner tests were mocked. NO llama.cpp binary/weights loaded, NO real device inference, NO physical/offline network isolation validated, NO model output accuracy scored, NO Qwen3.6-27B compatibility or AGI demonstrated. Hardware and independent capability evaluation tracked in issue #47. Public architecture roadmap docs/EDGE_FIRST_AGI_ROADMAP.md maps screenshots, Inspect/OpenHands/PaperQA2/ToolUniverse/AutoResearch and AGI evidence gates."
+    },
+    {
+      "id": "edge-smoke-exact-check-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42399360514",
+      "AGI_demonstrated": false,
+      "notes": "PR #48 merged as d51a92f6f007c4d2e1e24c44a28c2ded49bf801b. Independent repository CI passed strict local one-case answer check and negatives for the public 17+25 prompt; execution report now distinguishes process success from exact answer. No genuine local GGUF inference or owner-hardware power/RAM measurements have been completed; not independent reasoning or AGI."
+    },
+    {
+      "id": "continuity-live-regression-check-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42399620346",
+      "AGI_demonstrated": false,
+      "notes": "PR #49 merged as ff5b1ebeeacb25ac1d06de8f85d25c587935b65a. Dedicated live-ledger CI successfully validated existing matched HumanEval regression (direct 2/3 versus tool-using 1/3, 11 paired sandbox calls) with strengthened count consistency checks and bounded longer priorities. Full repository CI also passed, run 42399620377. Historical scientific evidence unchanged; this is continuity reliability only."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "First establish a real on-device offline inference measurement with an owner-approved local machine and an independently reviewed pinned GGUF plus llama.cpp binary: merged edge runtime PR #46, successful main CI #42353430569; benchmark execution NOT DONE, tracked by issue #47. Verify host OS network isolation, device RAM/CPU/power, genuine model output correctness and unseen tasks. Evaluate stronger Qwen3.6-27B only after tokenizer/backend compatibility and hardware proof. Avoid downloading model files or exposing private Plenum IP in public CI."
+      "action": "First establish a real on-device offline inference measurement with an owner-approved local machine and an independently reviewed pinned GGUF plus llama.cpp binary: merged edge runtime PR #46, successful main CI #42353430569; benchmark execution NOT DONE, tracked by issue #47. Verify host OS network isolation, device RAM/CPU/power, genuine model output correctness and unseen tasks. Evaluate stronger Qwen3.6-27B only after tokenizer/backend compatibility and hardware proof. Avoid downloading model files or exposing private Plenum IP in public CI. One-case strict smoke check PR #48 merged but not yet run on actual device."
     },
     {
       "priority": 2,
@@ -492,6 +506,10 @@
     {
       "decision": "Do not infer reliable autonomous coding from the first one-task ReAct success; retain second independently incorrect task and runner abort, then shift to real public repository-level independent tests.",
       "reason": "Original Inspect HumanEval/0 ReAct passed 1/1 with four real sandbox tool calls; HumanEval/1 produced one tool call and official independent incorrect grade 0/1, with unrelated host exit 134 after scoring. The combined 1/2 tiny historical sample is insufficient for generalization or AGI."
+    },
+    {
+      "decision": "Distinguish actual edge model correctness from successful CLI invocation, and reconcile ledger validators with preserved negative outcomes.",
+      "reason": "The one-case smoke checker and live-ledger regression validator are engineering checkpoints; neither demonstrates improved general intelligence. Original failed and successful records remain available."
     }
   ],
   "operating_rules": [
