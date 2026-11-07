@@ -1,0 +1,44 @@
+name: Verify Durable AGI Program Ledger
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/continuity-check.yml'
+      - 'src/plenum_ai/continuity_ledger.py'
+      - 'tests/test_continuity_ledger.py'
+  pull_request:
+    paths:
+      - '.github/workflows/continuity-check.yml'
+      - 'src/plenum_ai/continuity_ledger.py'
+      - 'tests/test_continuity_ledger.py'
+  workflow_dispatch:
+  schedule:
+    - cron: '10 11 * * 1'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-continuity-audit-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate-public-state:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Retrieve canonical published scientific evidence and AGI status
+        uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - name: Verify lightweight public status reader
+        run: |
+          python -m pip install -e .
+          python -m unittest discover -s tests -p 'test_continuity_ledger.py' -v
+      - name: Show the actual durable program checkpoint; never claim AGI
+        run: |
+          python -m plenum_ai.continuity_ledger \
+            --state ledger/state/AGI_PROGRAM.json --print-brief
