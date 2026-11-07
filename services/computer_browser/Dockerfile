@@ -3,7 +3,7 @@ ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PLAYWRIGHT_BROWSERS_PATH=/ms-pl
 WORKDIR /srv/plenum
 COPY pyproject.toml ./
 COPY src ./src
-RUN python -m pip install --no-cache-dir -e '.[browser,browser_secure]' fastapi==0.115.12 uvicorn==0.34.2
+RUN python -m pip install --no-cache-dir -e '.[browser,browser_secure,browser_cloud_storage]' fastapi==0.115.12 uvicorn==0.34.2
 COPY services ./services
 RUN useradd --uid 10001 --create-home --shell /usr/sbin/nologin browser \
     && chown -R 10001:10001 /srv/plenum
