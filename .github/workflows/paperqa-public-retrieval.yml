@@ -79,4 +79,5 @@ jobs:
           path: |
             reports/paperqa-public-plan.json
             reports/paperqa-real-retrieval.json
+            reports/paperqa-dimensional-study.json
           retention-days: 30
