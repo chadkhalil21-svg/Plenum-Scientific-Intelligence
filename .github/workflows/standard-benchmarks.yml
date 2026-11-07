@@ -1,0 +1,77 @@
+name: Upstream Standard Benchmarks | Manual, Reviewed
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: Pinned public open-weight model
+        type: choice
+        required: true
+        options:
+          - Qwen/Qwen3-1.7B
+          - HuggingFaceTB/SmolLM2-1.7B-Instruct
+      task:
+        description: Published upstream multiple-choice benchmark
+        type: choice
+        required: true
+        options:
+          - arc_easy
+          - hellaswag
+      examples:
+        description: Tiny diagnostic sample, NOT an AGI score
+        type: choice
+        required: true
+        options:
+          - '4'
+          - '8'
+          - '16'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-upstream-standard-benchmarks
+  cancel-in-progress: false
+jobs:
+  reviewed-upstream-evaluator:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 44
+    env:
+      MODEL: ${{ inputs.model }}
+      TASK: ${{ inputs.task }}
+      LIMIT: ${{ inputs.examples }}
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Validate adapter, license and immutable model allowlist without downloads
+        run: |
+          python -m pip install -e .
+          python -m unittest discover -s tests -p 'test_standard_benchmarks.py' -v
+          python -m plenum_ai.standard_benchmarks --model "$MODEL" --task "$TASK" --limit "$LIMIT"
+      - name: Install reviewed MIT-licensed upstream package and CPU Hugging Face backend only when owner explicitly dispatches
+        run: python -m pip install -e ".[standard_eval]"
+      - name: Verify actual upstream CLI availability and registered tasks
+        run: |
+          lm-eval --help
+          python - <<'PY'
+          from importlib.metadata import version
+          from plenum_ai.standard_benchmarks import PACKAGE_VERSION
+          found=version('lm_eval')
+          assert found==PACKAGE_VERSION,(found,PACKAGE_VERSION)
+          print("Using reviewed upstream evaluator:",found)
+          PY
+      - name: Run standard public sample evaluation through upstream library, not a replacement evaluator
+        run: python -m plenum_ai.standard_benchmarks --model "$MODEL" --task "$TASK" --limit "$LIMIT" --execute
+      - name: Preserve raw upstream results without claiming general intelligence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: optional-reviewed-upstream-benchmark-results
+          path: reports/standard-evaluation/
+          retention-days: 21
+          if-no-files-found: warn
