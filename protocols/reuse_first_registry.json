@@ -85,10 +85,18 @@
       "adoption": "optional_import_smoke_only",
       "default_execution": false,
       "preinstalled": false,
-      "status": "real_upstream_sdk_api_import_verified",
-      "notes": "Pinned 2026.8.12 imported actual Docs/Settings/ask in Python 3.11 CI without indexing papers, embeddings, models or external calls. Citation accuracy remains unevaluated.",
+      "status": "real_offline_retrieval_partially_failed_1_of_2",
+      "notes": "Actual pinned PaperQA2 local sparse embeddings indexed 2 public NOAA/battery notes and retrieved only 1/2 intended top-1 sources, no model or paid API calls. Results are insufficient for reliable research QA; future tests must use newly preregistered documents.",
       "verified_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42339003588",
-      "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/21"
+      "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/21",
+      "retrieval_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42340104253",
+      "evidence": {
+        "top_1_correct": 1,
+        "attempted": 2,
+        "scientific_accuracy_verified": false,
+        "inference_calls": 0,
+        "confidential_inputs": false
+      }
     }
   ],
   "rules": {
