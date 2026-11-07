@@ -31,9 +31,16 @@ jobs:
         env:
           KAGGLE_API_TOKEN: ''
         run: |
-          kaggle kernels push --help | grep -Fq -- '--no-run'
-          kaggle kernels pull --help | grep -Fq -- '--metadata'
-          kaggle kernels list --help | grep -Fq -- '--mine'
+          for command in push pull list; do
+            if ! kaggle kernels "$command" --help > "/tmp/kaggle-${command}-help.txt" 2>&1; then
+              echo "Official Kaggle CLI $command help could not initialize without credentials"
+              head -n 35 "/tmp/kaggle-${command}-help.txt"
+              exit 1
+            fi
+          done
+          grep -F -- '--no-run' /tmp/kaggle-push-help.txt
+          grep -F -- '--metadata' /tmp/kaggle-pull-help.txt
+          grep -F -- '--mine' /tmp/kaggle-list-help.txt
           python scripts/kaggle_bridge.py --mode offline
       - name: Exercise all safety contracts without network or token
         env:
