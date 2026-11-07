@@ -36,7 +36,9 @@ jobs:
           WIF_PROVIDER: ${{ secrets.GCP_WIF_PROVIDER }}
           DEPLOY_SA: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
           BROWSER_RUNTIME_SA: ${{ vars.GCP_BROWSER_RUNTIME_SA }}
+          BROWSER_PROFILE_BUCKET: ${{ vars.BROWSER_PROFILE_BUCKET }}
         run: |
+          test -n "$BROWSER_PROFILE_BUCKET"
           test -n "$GCP_PROJECT_ID"
           test -n "$WIF_PROVIDER"
           test -n "$DEPLOY_SA"
@@ -54,7 +56,17 @@ jobs:
         run: |
           gcloud artifacts repositories describe plenum-browser --location="$REGION" --project="$GCP_PROJECT_ID" --format='value(name)' > /dev/null
           gcloud secrets describe computer-browser-token --project="$GCP_PROJECT_ID" --format='value(name)' > /dev/null
-          echo "Required repository and browser token secret exist."
+          gcloud secrets describe computer-browser-session-key --project="$GCP_PROJECT_ID" --format='value(name)' > /dev/null
+          gcloud storage buckets describe "gs://$BROWSER_PROFILE_BUCKET" --project "$GCP_PROJECT_ID" --format=json > "$RUNNER_TEMP/plenum-profile-bucket.json"
+          python - <<'PY'
+          import json,os
+          d=json.load(open(os.path.join(os.environ["RUNNER_TEMP"],"plenum-profile-bucket.json")))
+          iam=d.get("iamConfiguration",{})
+          assert iam.get("publicAccessPrevention") == "enforced", "Bucket must block all public access"
+          assert iam.get("uniformBucketLevelAccess",{}).get("enabled") is True, "Bucket must use uniform access"
+          print("Private browser bucket security verified.")
+          PY
+          echo "Required registry and encrypted session secrets exist."
       - name: Build isolated source image (may use billable Cloud Build)
         env:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
@@ -69,6 +81,7 @@ jobs:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
           REGION: ${{ inputs.region }}
           BROWSER_RUNTIME_SA: ${{ vars.GCP_BROWSER_RUNTIME_SA }}
+          BROWSER_PROFILE_BUCKET: ${{ vars.BROWSER_PROFILE_BUCKET }}
         run: |
           IMAGE="$REGION-docker.pkg.dev/$GCP_PROJECT_ID/plenum-browser/computer-browser:$GITHUB_SHA"
           gcloud run deploy plenum-computer-browser \
@@ -82,7 +95,7 @@ jobs:
             --min-instances=0 --max-instances=1 \
             --timeout=300 \
             --no-allow-unauthenticated \
-            --set-secrets COMPUTER_BROWSER_TOKEN=computer-browser-token:latest \
-            --set-env-vars BROWSER_ALLOWED_ORIGINS=https://example.com \
+            --set-secrets COMPUTER_BROWSER_TOKEN=computer-browser-token:latest,BROWSER_SESSION_KEY=computer-browser-session-key:latest \
+            --set-env-vars "BROWSER_ALLOWED_ORIGINS=https://example.com,BROWSER_PROFILE_BUCKET=$BROWSER_PROFILE_BUCKET" \
             --quiet
           echo "Deployed IAM-private browser service; ChatGPT plugin OAuth not connected."
