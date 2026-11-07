@@ -65,14 +65,14 @@ def metadata(ref):
 
 
 def sdk(args):
+    if not isinstance(args, list) or not args or args[0] != "kernels":
+        raise ValueError("Only preapproved official notebook CLI operations are supported")
     if not os.environ.get("KAGGLE_API_TOKEN"):
         raise PermissionError(
             "Kaggle is NOT connected. Configure the environment secret "
             "KAGGLE_API_TOKEN in the protected kaggle-access GitHub environment. "
             "Never paste it into chat, logs or a public repository."
         )
-    if not isinstance(args, list) or not args or args[0] != "kernels":
-        raise ValueError("Only preapproved official notebook CLI operations are supported")
     # Do not print stdout/stderr: private kernel names and local API diagnostics
     # may contain sensitive metadata. No shell=True or dynamic code execution.
     result = subprocess.run(
