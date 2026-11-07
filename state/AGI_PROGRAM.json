@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T19:08:00.130Z",
+  "last_reviewed_utc": "2026-11-07T19:26:07.180Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -428,12 +428,33 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42404040469",
       "AGI_demonstrated": false,
       "notes": "PR #53 merged as 9b8933b221209130e11d6844b06d4631dda6e26b. Full repository CI #42404040469 and parallel scientific tools CI #42404028416 succeeded. Added preferred reusable architecture, machine-readable architecture status, drift-detection tests, and corrected tool_registry statuses: real CI Lean4 proof checking (not general theorem discovery), Inspect real model evaluation including coding regression, PaperQA2 limited sparse retrieval (not reliable research QA). No cloud GPU model run, live voice, private memory service, autonomous scientific discovery or AGI demonstrated. User screenshots show Kaggle account Settings and phone verification prompt, while notebook draft session was off."
+    },
+    {
+      "id": "lab-radar-real-world-scan-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42405802931",
+      "AGI_demonstrated": false,
+      "notes": "PR #54 merged as ba973a8da74d1f2b6dc53d7a6132a27ca2a724e8. The reused daily public-world-horizon scan actually queried 25 public source adapters; 21 returned records. It archived an initial 47 new-to-index HTTPS research links and selected 30 for bounded Lab Radar display. These are first-scan baseline public metadata, not 47 newly published or verified breakthroughs. Two providers were unavailable. First archive's invalid literal newline suffix was explicitly corrected in two source-linked research-memory commits; original bytes remain visible in Git history."
+    },
+    {
+      "id": "pyscf-2p15-real-chemistry-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42405663463",
+      "AGI_demonstrated": false,
+      "notes": "PR #55 merged as af2bbcc695977ea5b83153896ec02ba59e5df0a9. Official PySCF v2.15.0 (Apache-2.0) installed on isolated GitHub CPU and actually calculated H2 RHF/STO-3G energy at 0.74 Angstrom matching -1.1167593073964255 Hartree reference within machine tolerance; stretched-bond control passed. No molecular discovery, therapeutic validation, founder-specific chemistry, continuous agent service or AGI demonstrated."
+    },
+    {
+      "id": "radar-chemistry-json-archive-repair-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/56",
+      "AGI_demonstrated": false,
+      "notes": "PR #56 merged as 7ea42fabfa64882132120885669661f3b03d8c3f. Strict JSON archive output fixes and round-trip validation tests were added to the daily Lab Radar and PySCF workflows. Original first public radar JSON and link index were normalized in corrective commits with full Git history retained; parsed actual results were checked. Core CI and the revised isolated workflows passed. No scientific findings or model behavior changed."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "On Kaggle iPad, the founder has selected GPU T4 x2 in notebook Settings (screenshot Nov 7), but Internet was off and Draft Session explicitly off, so no GPU allocation or real model inference is yet confirmed. Enable notebook Internet, choose Run > Start session, add a new code cell `!nvidia-smi`, and preserve the reported GPU identity/VRAM. Then run the prepared manual Qwen3.6-27B preflight and explicitly approve bounded free inference only after checking hardware/storage/quotas. No paid service is approved."
+      "action": "Kaggle founder's iPad session has genuinely executed nvidia-smi with two Tesla T4 GPUs, 15,360 MiB each (screenshots Nov 7; not public in repo). NEXT: run read-only disk/RAM checks for /kaggle/temp and /kaggle/working. If sufficient (27B Q4 GGUF ~19.1 GB plus build/KV caches) import the approved Qwen3.6-27B notebook and manually enable free model download and inference; report actual revision, compatibility, memory, speed and measured correctness. No large-model execution yet."
     },
     {
       "priority": 2,
@@ -449,7 +470,7 @@
     },
     {
       "priority": 5,
-      "action": "Demonstrate one complete citation-grounded scientific question through the existing federated literature and PaperQA2, a real configured specialist solver (SciPy/OpenMM/PyBaMM/OpenMDAO/Astropy/Lean) and an independent empirical or reference check. Only then assess one narrowly scoped public read-only ToolUniverse endpoint and selected licensed K-Dense skill."
+      "action": "Take the existing verified real PySCF H2 SCF reference (PR #55), OpenMM, PyBaMM, LangGraph and federated APIs and demonstrate one source-linked scientific question -> licensed methods/data -> authentic computational solver -> independent reference/empirical result. A daily Lab Radar now archives first-seen public metadata (PR #54); require scholarly-method review before labeling breakthroughs or automating downstream experiments."
     },
     {
       "priority": 6,
@@ -465,7 +486,7 @@
     },
     {
       "priority": 9,
-      "action": "Pursue original prospective scientific discovery across disciplines, including independently scheduled November NOAA/USGS assessments, with genuine external data and archived negative outcomes. Respect authorization for physical labs, sensors and tools; do not equate simulations with discovery."
+      "action": "Review the daily public-world-horizon Lab Radar evidence/updates: initial real run 42405802931 tried 25 public sources, 21 returned data, 47 links were first seen, and archive JSON was repaired/tested in PR #56. Keep a running public-source record and daily briefing, monitor missing sources, and advance truly prospective NOAA/USGS research and independent cross-domain reproduction. Research announcements are not validated laboratory discoveries."
     },
     {
       "priority": 10,
@@ -656,6 +677,26 @@
     {
       "decision": "Reuse existing federated arXiv, OpenAlex, Semantic Scholar, Europe PMC and OSTI metadata adapters on demand rather than duplicating public scientific databases.",
       "reason": "Founder clarifies that comprehensive research access must be preserved and expanded. Public APIs do not require reinstalling databases; standalone computational software may need isolated runtime installation. Free API availability, licensing and full-text rights vary."
+    },
+    {
+      "decision": "Treat Kaggle dual Tesla T4 GPUs as actually allocated, but do not claim Qwen3.6-27B has run.",
+      "reason": "Founder-provided Kaggle nvidia-smi output (private screenshots, not republished) showed two Tesla T4s each 15,360 MiB, idle, CUDA driver 13.0 and running notebook session. Next check scratch disk and host RAM before any large public model download."
+    },
+    {
+      "decision": "Use the existing 25-source daily public world-horizon scanner as Prometheus Lab Radar, with an incremental source-linked archive.",
+      "reason": "Actual first GitHub run #42405802931 produced records from 21 of 25 providers and 47 first-seen public links. A new-to-index link is not a confirmed breakthrough; data outages, archival quality and licenses remain visible. No duplicate source APIs or paid subscription."
+    },
+    {
+      "decision": "Integrate proven scientific packages into isolated execution workers rather than into every agent or the iPad.",
+      "reason": "Real PySCF 2.15.0 H2 reference passed in independent CPU CI, joining previous OpenMM, PyBaMM and other bounded engines. This demonstrates scoped packages and mathematical outputs but not an autonomous scientific research service."
+    },
+    {
+      "decision": "Maintain a recurring global scientific research briefing separate from the underlying ingestion workflows.",
+      "reason": "The owner-authorized daily briefing automation was successfully created for America/New_York mornings, using public source-linked GitHub archives and current primary sources. It does not run a permanent GPU, alter code or certify claimed breakthroughs."
+    },
+    {
+      "decision": "Require strict round-trip JSON validation and preserve provenance of any archived-research corrections.",
+      "reason": "PR #56 fixed literal newline serialization errors exposed by a genuine live run; original faulty archive versions remain visible in Git history while corrected files parse reliably. Scientific evidence may never be silently rewritten."
     }
   ],
   "operating_rules": [
