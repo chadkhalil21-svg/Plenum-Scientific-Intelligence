@@ -95,6 +95,14 @@ class BrowserProfileStore:
         state=self.vault.decrypt(sealed,owner,origin)
         return state,generation
 
+    def current_generation(self, *, owner, origin):
+        """Metadata-only revision for safe replacement of expired sessions."""
+        blob=self._blob(owner,origin)
+        if not blob.exists():
+            return None
+        blob.reload()
+        return int(blob.generation)
+
     def revoke(self, *, owner, origin, expected_generation):
         """Delete only when an independently authorized owner requests logout."""
         if not isinstance(expected_generation,int) or expected_generation<1:
