@@ -94,6 +94,19 @@ def _artifact(root, relative, digest, max_bytes, *, gguf=False, executable=False
     return full
 
 
+def score_public_smoke(output, process_exit_code):
+    """Strict local exact-answer check, not an external independent benchmark.
+
+    The public, fixed arithmetic prompt requires *only* the integer 42.
+    A successful process alone is not a correct answer. Do not include raw
+    model text in the persistent report.
+    """
+    if process_exit_code != 0:
+        return None
+    return (isinstance(output, str) and len(output) <= 64
+            and re.fullmatch(r"[ \t\r\n]*42[ \t\r\n]*", output) is not None)
+
+
 def execute(record, *, approved=False, assets_root=ASSETS_ROOT,
             runner=subprocess.run, clock=monotonic):
     if not approved:
@@ -135,6 +148,8 @@ def execute(record, *, approved=False, assets_root=ASSETS_ROOT,
         "stderr_sha256": sha256(err.encode("utf-8")).hexdigest(),
         "stderr_characters": len(err),
         "original_independent_correctness_score": None,
+        "public_smoke_exact_match": score_public_smoke(out, result.returncode),
+        "public_smoke_reference": "42",
         "local_files_sha256_verified": True,
         "remote_inference_authorized": False,
         "network_isolation_independently_verified": False,
@@ -170,6 +185,7 @@ def main():
     else:
         destination.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print("Local llama.cpp:", "executed" if report["inference_executed"] else "not executed",
+          "one-case smoke correctness:", report.get("public_smoke_exact_match"),
           "independent AGI proof:", report["AGI_demonstrated"])
 
 
