@@ -1,0 +1,121 @@
+{
+  "schema": "plenum-agi-program-continuity-v1",
+  "last_reviewed_utc": "2026-11-07T03:12:00Z",
+  "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
+  "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
+  "AGI_achieved": false,
+  "automatic_model_promotion": false,
+  "confidential_documents_copied": false,
+  "canonical_branch": "research-memory",
+  "public_scope": "Only already-public repository goals, experiment identifiers, measurements, and references. Do not copy confidential founder memoranda or unpublished IP.",
+  "evidence": [
+    {
+      "id": "agi-capability-v1-qwen",
+      "status": "measured_failure",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/research-memory/evidence/agi-capability-lab/run-42331449321.json",
+      "result": {
+        "correct": 0,
+        "attempted": 6
+      },
+      "metric": "exact tasks correct",
+      "AGI_demonstrated": false,
+      "notes": "Qwen3-1.7B; valid answer format 2/6; 100.6086 CPU inference seconds."
+    },
+    {
+      "id": "agi-capability-v1-smollm",
+      "status": "measured_failure",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/research-memory/evidence/agi-capability-lab/run-42331449321.json",
+      "result": {
+        "correct": 0,
+        "attempted": 6
+      },
+      "metric": "exact tasks correct",
+      "AGI_demonstrated": false,
+      "notes": "SmolLM2-1.7B; valid answer format 4/6; 22.0265 CPU inference seconds."
+    },
+    {
+      "id": "chem-bio-adaptive",
+      "status": "measured_failure",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/research-memory/evidence/cross-domain-chemistry-biology/run-42327817917.json",
+      "result": {
+        "correct": 0,
+        "attempted": 2
+      },
+      "metric": "model method selections better than strongest baseline; not accuracy",
+      "AGI_demonstrated": false,
+      "notes": "Public historical data and adaptive rerun; both conventional baselines retained."
+    },
+    {
+      "id": "research-tools-verified",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42329796933",
+      "AGI_demonstrated": false,
+      "notes": "Scientific engineering and low-cost routing tests passed. This is implementation evidence, not reasoning evidence."
+    },
+    {
+      "id": "prospective-noaa",
+      "status": "scheduled",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/workflows/prospective-noaa.yml",
+      "AGI_demonstrated": false,
+      "notes": "Future measurements and independent audit not yet established as of checkpoint."
+    },
+    {
+      "id": "prospective-usgs",
+      "status": "scheduled",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/workflows/prospective-usgs-hydrology.yml",
+      "AGI_demonstrated": false,
+      "notes": "River test forecasts Nov 11; target days Nov 12–13; independent audit Nov 18 if source available."
+    }
+  ],
+  "next_actions": [
+    {
+      "priority": 1,
+      "action": "Integrate a reviewed standard LLM evaluation harness; compare stronger reasoning methods on held-out tasks with baseline/cost reporting."
+    },
+    {
+      "priority": 2,
+      "action": "Evaluate model accuracy separately from JSON formatting, context windows, inference speed, and reasoning prompt changes."
+    },
+    {
+      "priority": 3,
+      "action": "Establish retrievable knowledge, episode/outcome, and strategic-goal memory with private/public separation."
+    },
+    {
+      "priority": 4,
+      "action": "Implement sustained bounded planning, task repair, independent criticism, and self-evaluation across unrelated domains."
+    },
+    {
+      "priority": 5,
+      "action": "Accept new methods or model changes only after prospective independent evaluation and explicit human approval."
+    }
+  ],
+  "decisions": [
+    {
+      "decision": "Prefer existing reviewed tools and evaluation frameworks over bespoke replacements.",
+      "reason": "Reduce duplicated engineering and improve reproducibility, provenance, maintenance, and cost."
+    },
+    {
+      "decision": "Treat first six-question capability benchmark as measured failure, not emergence or AGI.",
+      "reason": "Both small open-weight models scored zero correct; benchmark was tiny and nonstandard."
+    },
+    {
+      "decision": "Retain bounded deterministic solvers for tasks they can directly verify.",
+      "reason": "Avoid unnecessary language model inference where approved tools already suffice."
+    },
+    {
+      "decision": "Do not publish private founder source documents in public research-memory.",
+      "reason": "The repository and its evidence ledger are public; confidential memoranda require private controls."
+    },
+    {
+      "decision": "Preserve append-only experiment archives; separately update concise strategic state.",
+      "reason": "A durable project ledger must link original failed and successful runs while making current objectives easy to resume."
+    }
+  ],
+  "operating_rules": [
+    "On every status/resume request, fetch the latest state and append-only evidence from research-memory before advising.",
+    "Label scheduled, implemented, experimentally confirmed, and failed work distinctly.",
+    "Never infer scientific novelty or general intelligence from generated language or green CI.",
+    "Do not auto-publish private content or authorize spending, model promotion, external communication, or unrestricted code execution.",
+    "Update this public-safe status after important verified experiments and decisions, preserving previous evidence URLs."
+  ]
+}
