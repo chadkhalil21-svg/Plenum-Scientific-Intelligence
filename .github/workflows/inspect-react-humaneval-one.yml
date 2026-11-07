@@ -1,0 +1,211 @@
+name: Inspect ReAct | Independently Test Earlier Failed HumanEval/1
+on:
+  pull_request:
+    paths:
+      - 'src/plenum_ai/inspect_react_coding.py'
+      - 'tests/test_inspect_react_coding.py'
+      - '.github/workflows/inspect-react-humaneval-one.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/plenum_ai/inspect_react_coding.py'
+      - 'tests/test_inspect_react_coding.py'
+      - '.github/workflows/inspect-react-humaneval-one.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: react-original-humaneval-one-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  no-model-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Verify original Inspect ReAct agent and exact reviewed public sample, no inference
+        run: |
+          python -m pip install -e '.[inspection]'
+          python -m pip install "inspect-evals==0.27.0"
+          python -m pip check
+          python -m unittest discover -s tests -p 'test_inspect_react_coding.py' -v
+          python -m unittest discover -s tests -p 'test_react_json_model_config.py' -v
+          python -m plenum_ai.inspect_react_coding --out reports/react-humaneval1-no-model-plan.json
+  original-second-question:
+    needs: no-model-preflight
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release original HumanEval 1 ReAct tool feedback'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 38
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+      OPENAI_API_KEY: ''
+      ANTHROPIC_API_KEY: ''
+      GOOGLE_API_KEY: ''
+      HF_TOKEN: ''
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Require original one-shot failed and original ReAct succeeded before model download
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,hashlib,zipfile
+          root=Path("ledger/evidence")
+          plain=root/"inspect-original-coding"/"run-42346922772.json"
+          plainraw=root/"inspect-original-coding"/"run-42346922772-raw.zip"
+          react=root/"inspect-react-coding"/"run-42349665865.json"
+          reactraw=root/"inspect-react-coding"/"run-42349665865-raw.zip"
+          for path in (plain,plainraw,react,reactraw):
+              if not path.is_file(): raise SystemExit("Original functional test archive not yet intact")
+          p=json.loads(plain.read_text())
+          q=json.loads(react.read_text())
+          assert p["attempted"]==3 and p["correct"]==2 and p["original_scoring_verified"]
+          assert p["candidate_revision"]=="70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+          original=[x for x in p["samples"] if x["id"]=="HumanEval/1"]
+          assert len(original)==1 and original[0]["correct"] is False
+          assert q["attempted"]==1 and q["correct"]==1 and q["official_functional_test_scored"]
+          assert q["independent_original_test_id"]=="HumanEval/0"
+          assert q["actual_model_tool_calls"]==4 and q["actual_tool_results"]==4
+          assert q["candidate_revision"]=="70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+          assert not p["AGI_demonstrated"] and not q["AGI_demonstrated"]
+          for record,archive in ((p,plainraw),(q,reactraw)):
+              with zipfile.ZipFile(archive) as z:
+                  assert set(z.namelist())==set(record["original_eval_sha256"])
+                  for name,h in record["original_eval_sha256"].items():
+                      assert hashlib.sha256(z.read(name)).hexdigest()==h
+          print("Original HumanEval/1 failed without tools, original ReAct HumanEval/0 passed; all raw evidence verified")
+          PY
+      - name: Require networkless disposable Docker before model inference
+        run: |
+          docker info >/dev/null
+          docker compose version
+      - name: Install exact reviewed original Inspect scorer and one CPU model
+        run: |
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[inspection]'
+          python -m pip install "inspect-evals==0.27.0" "transformers==5.22.1" "accelerate>=1.1,<2" "huggingface_hub>=1.2,<2" safetensors
+          python -m pip check
+      - name: Download only original immutable reviewed Qwen3-1.7B checkpoint
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from huggingface_hub import HfApi,snapshot_download
+          from plenum_ai.qwen3_chat_template import MODEL,REVISION
+          info=HfApi().model_info(MODEL,revision=REVISION)
+          assert info.sha==REVISION
+          Path("reports").mkdir(exist_ok=True)
+          Path("reports/model-path.txt").write_text(snapshot_download(repo_id=MODEL,revision=REVISION))
+          PY
+      - name: Verify original tokenizer and serialize complete tool history in native JSON model config
+        run: |
+          MODEL_PATH="$(cat reports/model-path.txt)"
+          python -m plenum_ai.qwen3_chat_template \
+            --model-path "$MODEL_PATH" \
+            --template-out reports/qwen3-react-template.jinja \
+            --out reports/qwen3-tool-template-verified.json
+          python -m plenum_ai.react_json_model_config \
+            --model-path "$MODEL_PATH" \
+            --original-template native \
+            --template reports/qwen3-react-template.jinja \
+            --out reports/qwen3-react-model-config.json
+          python - <<'PY'
+          import json
+          c=json.load(open("reports/qwen3-react-model-config.json"))
+          assert isinstance(c["chat_template"],str) and c["chat_template"].count("tool_call.function is string")==1
+          assert c["device"]=="cpu" and c["enable_thinking"] is False and c["do_sample"] is False
+          print("One complete original Qwen template in native Inspect JSON config; zero model calls in preflight")
+          PY
+      - name: Official Inspect ReAct on SAME earlier failed HumanEval/1, one isolated sandbox
+        run: |
+          inspect eval src/plenum_ai/inspect_react_coding.py --model hf/local \
+            --model-config reports/qwen3-react-model-config.json \
+            --sample-id "HumanEval/1" --epochs 1 \
+            --max-samples 1 --max-sandboxes 1 --max-connections 1 \
+            --max-tokens 256 --temperature 0 --turn-limit 6 --message-limit 14 \
+            --time-limit 240 --max-retries 0 \
+            --log-dir reports/inspect-react-coding-logs --display none
+      - name: Independently audit exact original functional grade and actual tool transcript
+        run: |
+          python -m plenum_ai.inspect_react_coding \
+            --audit-dir reports/inspect-react-coding-logs \
+            --expected-sample-id "HumanEval/1" \
+            --out reports/react-original-humaneval1-result.json
+          python - <<'PY'
+          import json
+          x=json.load(open("reports/react-original-humaneval1-result.json"))
+          assert x["attempted"]==1 and x["independent_original_test_id"]=="HumanEval/1"
+          assert x["official_functional_test_scored"] and x["agent_loop_verified"]
+          assert not x["AGI_demonstrated"] and not x["automated_deployment"]
+          assert x["paid_api_calls"]==0
+          print("Original HumanEval/1 ReAct coding score:",x["correct"],"/1; actual tool calls",
+                x["actual_model_tool_calls"],"results",x["actual_tool_results"])
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: original-react-previously-failed-humaneval1
+          path: |
+            reports/react-original-humaneval1-result.json
+            reports/inspect-react-coding-logs/
+          retention-days: 90
+  preserve-original-research:
+    needs: original-second-question
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/download-artifact@v7
+        with:
+          name: original-react-previously-failed-humaneval1
+          path: reports
+      - name: Independently archive original HumanEval/1 functional grade and raw tool transcript
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,zipfile
+          from pathlib import Path
+          d=json.load(open("reports/react-original-humaneval1-result.json"))
+          assert d["attempted"]==1 and d["independent_original_test_id"]=="HumanEval/1"
+          assert d["official_functional_test_scored"] and not d["AGI_demonstrated"]
+          root=Path("ledger/evidence/inspect-react-humaneval1")
+          root.mkdir(parents=True,exist_ok=True)
+          name="run-"+os.environ["RUN_ID"]
+          out=root/(name+".json")
+          raw=root/(name+"-raw.zip")
+          if out.exists() or raw.exists():raise FileExistsError("Never overwrite historical evaluations")
+          files=list(Path("reports/inspect-react-coding-logs").rglob("*.eval"))
+          if len(files)!=1:raise ValueError("One original HumanEval/1 model log required")
+          d["source_sha"]=os.environ["SOURCE_SHA"]
+          d["original_eval_sha256"]={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
+          with zipfile.ZipFile(raw,"x",compression=zipfile.ZIP_DEFLATED) as z:
+              for p in files:z.write(p,arcname=p.name)
+          out.write_text(json.dumps(d,indent=2)+"\n",encoding="utf-8")
+          print("Archival complete; no code deployed and no model promoted")
+          PY
+      - name: Commit only original public independent test evidence
+        run: |
+          git -C ledger config user.name 'Plenum Scientific Evidence'
+          git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ledger add evidence/inspect-react-humaneval1/
+          git -C ledger commit -m 'Preserve original bounded ReAct functional coding HumanEval one evidence'
+          git -C ledger pull --rebase origin research-memory
+          git -C ledger push origin HEAD:research-memory
