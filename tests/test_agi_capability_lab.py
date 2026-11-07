@@ -84,9 +84,9 @@ class AGICapabilityLaboratoryTests(unittest.TestCase):
 
     def test_bad_program_fails_unseen_inputs_without_runtime_execution(self):
         manifest=lab.prepare(SEED)
-        responses=iter(responses())
+        model_answers=iter(responses())
         def bad_gen(prompt):
-            original=next(responses)
+            original=next(model_answers)
             if "Synthesize integer function" in prompt:
                 return json.dumps({"ops":[{"op":"add","value":1}]})
             return original
