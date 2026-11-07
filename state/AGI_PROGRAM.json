@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T05:36:00Z",
+  "last_reviewed_utc": "2026-11-07T06:04:00Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -165,10 +165,10 @@
     },
     {
       "id": "inspect-arc-v2-execution-gate-20261107",
-      "status": "running_unverified",
+      "status": "verified_foundation",
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42340974100",
       "AGI_demonstrated": false,
-      "notes": "Corrected v2 run uses pinned Qwen3-0.6B, enable_thinking=false, and proper Inspect qualified task audit. Raw independently scored evaluation is still pending. Original 0/24 invalid-format run remains unchanged."
+      "notes": "Historical pending checkpoint now closed: corrected Qwen3-0.6B ARC evaluation run 42340974100 successfully independently scored 17/24; exact original logs archived. Prior separate 0/24 invalid-format run preserved."
     },
     {
       "id": "inspect-arc-24-nonthinking-v2-20261107",
@@ -215,14 +215,36 @@
       "status": "planned",
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/30",
       "AGI_demonstrated": false,
-      "notes": "Draft PR #30 adds real paired 0.6B-vs-1.7B Inspect evaluation on exactly the first 12 of each of four official benchmark tasks; 48 identical public questions required, exact raw original log SHA256 evidence from 96-case baseline run 42341668858 required before any 1.7B model download or inference. Offline CI run 42341958805 passed; candidate inference not run and no performance gain demonstrated."
+      "notes": "Historical PR #30 planned 48-case paired public Inspect comparison; merged as dbd7636a936f8090a11031debf685dea40a1d91c. The completed inference run #42342242561 originally failed only in postprocessing due to selecting first 12 from completion-ordered original baseline, but four model logs retained. PR #33 fixed auditor and reprocessed original logs offline successfully in #42345531115. See paired-qwen17-four-domain-release-20261107 for actual independently archived grades. No additional model call in recovery."
     },
     {
       "id": "paired-qwen17-four-domain-release-20261107",
-      "status": "scheduled",
+      "status": "verified_foundation",
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42342242561",
       "AGI_demonstrated": false,
-      "notes": "PR #30 merged, 48-case pinned Qwen3-1.7B versus exact archived baseline 0.6B sample-ID paired test released using official Inspect scorers. At ledger checkpoint no 1.7B scores yet; bounded GitHub CPU, no paid model APIs, no automatic model promotion."
+      "notes": "Original frozen Qwen3-1.7B actual Inspect inference run 42342242561 scored on 48 exact original public questions, re-audited OFFLINE in completed independent recovery run 42345531115 after finding first-12 baseline log completion-order bug. All 48 original IDs, source prompts, choices, scoring targets, 0.6B reference archive checksums and 1.7B four original .eval file SHA256 verified. Qwen3-0.6B matched reference 18/48 vs Qwen3-1.7B 21/48; improvements 8, regressions 5, no robust broad claim. ARC Challenge 8/12 vs 10/12, GSM8K 4/12 vs 1/12, HellaSwag 5/12 vs 7/12, MMLU 1/12 vs 3/12. Original run postprocessing failed (preserved); repair used zero model inferences. 1.7B GSM8K reached 128-token limit on 10/12 versus 0.6B 4/12, so math comparison is confounded by output length. Archived original 1.7B raw logs research-memory/evidence/paired-qwen/run-42342242561-raw.zip; no model promotion or AGI achieved.",
+      "result": {
+        "correct": 21,
+        "attempted": 48,
+        "by_family": {
+          "arc_challenge": {
+            "correct": 10,
+            "attempted": 12
+          },
+          "gsm8k": {
+            "correct": 1,
+            "attempted": 12
+          },
+          "hellaswag": {
+            "correct": 7,
+            "attempted": 12
+          },
+          "mmlu_0_shot": {
+            "correct": 3,
+            "attempted": 12
+          }
+        }
+      }
     },
     {
       "id": "gsm8k-output-cap-diagnostic-20261107",
@@ -259,11 +281,11 @@
   "next_actions": [
     {
       "priority": 1,
-      "action": "Audit Qwen3-1.7B versus Qwen3-0.6B paired run #42342242561 on 48 identical official Inspect questions; verify exact per-domain correct/incorrect, original 0.6B SHA256 archive and 1.7B raw logs. Do not claim accuracy until complete."
+      "action": "Prioritize reproducible unseen-domain ability, coding correctness and research citation faithfulness over incremental public benchmark scores; Qwen3-1.7B versus 0.6B originally matched 21/48 vs 18/48 after offline independent recovery, 8 gains and 5 regressions."
     },
     {
       "priority": 2,
-      "action": "Review matched model-size outcomes from run #42342242561 and original raw .eval scores before any deployment. GSM8K 128-vs-256 official study #42342997198 finished 6/24 -> 7/24 (2 repairs, 1 regression); token budget alone is insufficient, avoid larger unbounded retries."
+      "action": "Investigate Qwen3-1.7B GSM8K output-budget confound on fixed 12 original math examples (10/12 hit 128 tokens vs 4/12 for 0.6B), using one strictly bounded independently scored 256-token ablation if remaining free CPU budget permits; no model auto-promotion."
     },
     {
       "priority": 3,
@@ -338,6 +360,10 @@
     {
       "decision": "Retain the original GSM8K 128-token baseline; archive the exploratory 256-token variant without changing model weights or promoting it.",
       "reason": "Controlled official GSM8K study showed only 6/24 -> 7/24 on the same questions, with two repairs and one regression. Increased generation allowance did not establish a reliable reasoning improvement."
+    },
+    {
+      "decision": "Do not promote Qwen3-1.7B on the tiny public 48-question comparison; archive recovered official grades, all per-example regressions and original model outputs.",
+      "reason": "21/48 versus 18/48 was accompanied by five regressions, especially GSM8K 1/12 versus 4/12. The larger model hit the 128-token cap on 10/12 math questions; more data and controlled evaluation needed."
     }
   ],
   "operating_rules": [
