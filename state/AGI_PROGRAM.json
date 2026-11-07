@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T21:56:57.176Z",
+  "last_reviewed_utc": "2026-11-07T22:23:05.091Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -526,6 +526,13 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42418106003",
       "AGI_demonstrated": false,
       "notes": "PR #68 merged 54fc269c3a7e3dc576b54556407593f19d52a592. Official cryptography Fernet 50.0.2 and genuine Playwright Chromium verified encryption of synthetic browser cookies, owner and HTTPS origin binding, expiration and strict canonical token encoding; actual new browser context restored synthetic test cookie. All nine CI workflows passed including browser gateway #42418106003. This is OFFLINE fake cookie proof only; no actual Kaggle, Google, bank or other real sign-in; no persistent GCS/KMS vault, OAuth plugin or site-changing automation. No cloud deployment or spending."
+    },
+    {
+      "id": "computer-browser-google-iap-owner-console-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42420220272",
+      "AGI_demonstrated": false,
+      "notes": "PR #71 merged to main ab00ef766207ccd50f108aa7bd45f526d301ed9a. Signed Google Cloud Run IAP JWT ES256 verified against Google JWK (audience, issuer, expiry, owner email); real HTTP owner console tests prove forged unsigned identity headers and wrong owner/signatures are denied, untrusted public page HTML escaped, status and public-preview gated. Full browser container CI #42420220272 and all nine repository workflows passed. Deployment workflow now requires --iap and owner email with Cloud Run audience. No IAP-enabled Cloud Run instance or signed-in website session has been deployed. Browser console does NOT yet log into third-party websites and cannot use arbitrary private accounts from ChatGPT."
     }
   ],
   "next_actions": [
@@ -543,7 +550,7 @@
     },
     {
       "priority": 4,
-      "action": "PRs #67-68 verified shared private Cloud Run-ready Playwright gateway and owner/site-bound encrypted Chromium session prototype. NO Cloud Run deployment, real account sign-in, Cloud Storage vault or ChatGPT OAuth2 plugin yet. Next: owner-authorized Google Cloud project/WIF/Secret Manager and billing budget; deploy IAM-private service via manual workflow; create encrypted GCS/KMS profile vault and human login interface; test task-scoped form actions with approvals. Existing GitHub chat bridge remains public read-only."
+      "action": "Shared Computer+Prometheus browser: PRs #67-71 merged. Real Playwright actions, encrypted GCS profile adapter, and signed Google IAP private owner console all pass CI (#42420220272). NO live Cloud Run deployment or arbitrary site logins yet. Next owner must configure GCP project + Workload Identity Federation, private GCS bucket and Secret Manager, and first-time IAP Google login/role. Use manually approved workflow only after billing review. Then verify live owner console, private account login UI, session storage, approvals and ChatGPT connector as account supports."
     },
     {
       "priority": 5,
@@ -886,6 +893,10 @@
     {
       "decision": "Encrypt and owner/site-bind browser storage state, but never store account cookies, passkeys or tokens in public GitHub or ChatGPT tool outputs.",
       "reason": "Real Chromium session restore passed using synthetic cookies and cryptography 50.0.2 (PR #68). A genuine private account requires persistent KMS-backed storage and a controlled human login UX before enabling any authenticated browser action. Session ciphertext should not be returned to the language model."
+    },
+    {
+      "decision": "Protect Computer's private browser console with Google Cloud Run IAP signed-owner identity, rather than custom passwords or unsigned headers.",
+      "reason": "Direct Google Cloud Run IAP is officially supported; ES256 signed tokens are independently verified in the API. PR #71 and actual container tests passed. The initial owner dashboard can read approved public sites but real third-party logins and site actions remain separately gated pending live cloud setup and private session approvals."
     }
   ],
   "operating_rules": [
