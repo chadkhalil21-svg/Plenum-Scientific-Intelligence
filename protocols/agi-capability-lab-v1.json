@@ -1,0 +1,42 @@
+{
+  "protocol_id": "plenum-agi-capability-laboratory-v1",
+  "purpose": "Measure bounded model reasoning on unseen generated instances, not claim AGI.",
+  "domain_families": [
+    "mathematics",
+    "scientific_quantitative_reasoning",
+    "restricted_program_synthesis"
+  ],
+  "task_count_per_family": 2,
+  "task_count_total": 6,
+  "generator": "random.Random(github_run_id), deterministic case generation independent of the models",
+  "test_design": "The proposer receives prompts but never the solutions; independent auditor regenerates solutions from the seed and tests candidate programs on additional hidden inputs.",
+  "hidden_code_test_count": 28,
+  "input_data": "Synthetic textbook-grade tasks only, no real lab results or private data.",
+  "authorized_models": [
+    {
+      "name": "Qwen/Qwen3-1.7B",
+      "immutable_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+    },
+    {
+      "name": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+      "immutable_revision": "31b70e2e869a7173562077fd711b654946d38674"
+    }
+  ],
+  "responses": {
+    "numerical": "JSON object with only answer, a finite number",
+    "programming": "JSON object with only ops, a list of up to 6 allowlisted arithmetic instructions",
+    "executed_generated_python": false,
+    "unrestricted_tool_calls": false
+  },
+  "scoring": "Independent deterministic mathematical or scientific reference; all programming hidden cases must match exactly; invalid responses count as failures.",
+  "metrics": [
+    "per-task exactness",
+    "domain-level correct/attempted",
+    "schema validity",
+    "inference wall time",
+    "model calls",
+    "heldout program-case results"
+  ],
+  "ethics_and_scope": "No medical diagnosis, no novel physical law or AGI claim, no model self-promotion, no confidential Plenum data, no paid hosted AI API.",
+  "revisit_policy": "Full model evaluation may run once on the initial main-branch feature merge and on manually initiated fresh-seed runs, not on every source commit."
+}

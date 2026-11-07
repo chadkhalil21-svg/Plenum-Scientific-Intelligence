@@ -1,0 +1,238 @@
+name: AGI Capability Laboratory | Independent Generalization Check
+on:
+  pull_request:
+    paths:
+      - 'src/plenum_ai/agi_capability_lab.py'
+      - 'tests/test_agi_capability_lab.py'
+      - 'protocols/agi-capability-lab-v1.json'
+      - '.github/workflows/agi-capability-lab.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/plenum_ai/agi_capability_lab.py'
+      - 'tests/test_agi_capability_lab.py'
+      - 'protocols/agi-capability-lab-v1.json'
+      - '.github/workflows/agi-capability-lab.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: plenum-capability-lab-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+jobs:
+  generate-public-challenges:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install small standard-library capability harness
+        run: python -m pip install -e .
+      - name: Verify exact math, physics and chemistry references and restricted program interpreter
+        run: python -m unittest discover -s tests -p 'test_agi_capability_lab.py' -v
+      - name: Generate NEW seeded questions but never expose gold solutions
+        env:
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          python -m plenum_ai.agi_capability_lab prepare \
+            --seed "$RUN_ID" --out reports/manifest.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('reports/manifest.json').read_text())
+          assert p['schema']=='plenum-agi-capability-laboratory-v1'
+          assert len(p['tasks'])==6
+          assert p['model_answer_key_exposed'] is False
+          assert p['heldout_program_inputs_exposed'] is False
+          assert p['confidential_data_used'] is False
+          assert 'gold' not in json.dumps(p)
+          print('Public task families:',sorted(set(t['family'] for t in p['tasks'])))
+          print('Reference solutions are NOT supplied to the AI models.')
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sealed-generalization-questions-only
+          path: reports/manifest.json
+          retention-days: 21
+  bounded-open-weight-models:
+    needs: generate-public-challenges
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Initialize AGI Capability Laboratory v1'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - model: Qwen/Qwen3-1.7B
+            tag: qwen
+          - model: HuggingFaceTB/SmolLM2-1.7B-Instruct
+            tag: critic
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+      MODEL_ID: ${{ matrix.model }}
+      MODEL_TAG: ${{ matrix.tag }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - uses: actions/download-artifact@v7
+        with:
+          name: sealed-generalization-questions-only
+          path: reports/
+      - name: Install only reviewed open-weight CPU inference dependencies
+        run: |
+          python -m pip install -e .
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "transformers>=4.51,<5" "huggingface_hub>=0.30,<1" "accelerate>=1.1,<2" safetensors
+      - name: Make six independent model answers without hidden solutions or code execution
+        run: |
+          python -m plenum_ai.agi_capability_lab propose \
+            --manifest reports/manifest.json --model "$MODEL_ID" \
+            --out "reports/${MODEL_TAG}.json"
+      - name: Check model identity, attempts, and no pre-emptive scoring
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          r=json.loads((Path('reports')/(os.environ['MODEL_TAG']+'.json')).read_text())
+          assert r['schema']=='plenum-agi-capability-laboratory-v1'
+          assert r['model_id']==os.environ['MODEL_ID']
+          assert r['tasks_attempted']==6
+          assert r['solutions_observed'] is False
+          assert r['program_holdouts_evaluated'] is False
+          assert r['model_promoted'] is False and r['AGI_demonstrated'] is False
+          print('Model:',r['model_id'],'immutable revision:',r['revision'])
+          print('Responses:',len(r['records']),'model elapsed seconds:',r['elapsed_seconds'])
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: model-${{ matrix.tag }}-sealed-capabilities
+          path: reports/${{ matrix.tag }}.json
+          retention-days: 21
+  separate-deterministic-auditor:
+    needs: bounded-open-weight-models
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@v7
+        with:
+          name: sealed-generalization-questions-only
+          path: reports/
+      - uses: actions/download-artifact@v7
+        with:
+          name: model-qwen-sealed-capabilities
+          path: reports/
+      - uses: actions/download-artifact@v7
+        with:
+          name: model-critic-sealed-capabilities
+          path: reports/
+      - name: Check exact original questions and model provenance; independently reveal solutions
+        env:
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          python -m plenum_ai.agi_capability_lab audit \
+            --seed "$RUN_ID" --manifest reports/manifest.json \
+            --qwen reports/qwen.json --critic reports/critic.json \
+            --out reports/audit.json
+      - name: Publish every failed answer and separately measured model runtime
+        run: |
+          python - <<'PY'
+          import json
+          r=json.load(open('reports/audit.json'))
+          assert r['schema']=='plenum-agi-capability-independent-audit-v1'
+          assert r['tasks_per_model']==6 and r['total_model_calls']==12
+          assert r['independent_reference_calculations']
+          assert r['heldout_program_cases_generated_only_by_auditor']
+          assert r['unrestricted_generated_code_executed'] is False
+          assert r['restricted_arithmetic_dsl_interpreted'] is True
+          assert r['AGI_demonstrated'] is False
+          assert r['scientific_discovery_verified'] is False
+          assert r['auto_model_promotion'] is False
+          for name,score in r['models'].items():
+              print(name, 'correct',score['correct'],'/6,',
+                    'valid responses',score['valid_json_schema'],'/6,',
+                    'model seconds',score['total_inference_seconds'])
+              for domain,s in score['domain_scores'].items():
+                  print('  ',domain,s['correct'],'/',s['total'])
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: independently-audited-agi-capability-results
+          path: reports/audit.json
+          retention-days: 90
+  public-research-ledger:
+    needs: separate-deterministic-auditor
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/download-artifact@v7
+        with:
+          name: sealed-generalization-questions-only
+          path: reports/
+      - uses: actions/download-artifact@v7
+        with:
+          name: model-qwen-sealed-capabilities
+          path: reports/
+      - uses: actions/download-artifact@v7
+        with:
+          name: model-critic-sealed-capabilities
+          path: reports/
+      - uses: actions/download-artifact@v7
+        with:
+          name: independently-audited-agi-capability-results
+          path: reports/
+      - name: Preserve all public successes and failures without overwriting prior evidence
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_REV: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          report=json.load(open('reports/audit.json'))
+          assert not report['AGI_demonstrated']
+          assert not report['unrestricted_generated_code_executed']
+          assert report['restricted_arithmetic_dsl_interpreted'] is True
+          assert not report['auto_model_promotion']
+          target=Path('ledger/evidence/agi-capability-lab')/('run-'+os.environ['RUN_ID']+'.json')
+          target.parent.mkdir(parents=True,exist_ok=True)
+          if target.exists(): raise FileExistsError('Experiment already recorded')
+          entry={'source_revision':os.environ['SOURCE_REV'],
+                 'manifest':json.load(open('reports/manifest.json')),
+                 'qwen':json.load(open('reports/qwen.json')),
+                 'critic':json.load(open('reports/critic.json')),
+                 'independent_audit':report,
+                 'verified_AGI':False,'verified_scientific_invention':False}
+          target.write_text(json.dumps(entry,ensure_ascii=False,indent=2)+'\n')
+          print('Archived immutable bounded capability examination:',target)
+          PY
+      - name: Commit experimental record to research-memory only
+        run: |
+          git -C ledger config user.name 'Plenum Scientific Capability Ledger'
+          git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ledger add evidence/agi-capability-lab/
+          git -C ledger commit -m 'Archive independently scored AGI capability laboratory examination'
+          git -C ledger pull --rebase origin research-memory
+          git -C ledger push origin HEAD:research-memory
