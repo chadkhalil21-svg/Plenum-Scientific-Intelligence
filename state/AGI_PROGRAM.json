@@ -235,7 +235,7 @@
         "correct_among_at_cap": 0
       },
       "AGI_demonstrated": false,
-      "notes": "Independent second read of the 24 original Qwen3-0.6B GSM8K Inspect .eval sample outputs: 10 sample completions used exactly the hard 128-token output budget and all ten received incorrect original numeric-match grades; 6/24 overall. This association is not proof that truncation caused each error. A controlled 128-vs-256 study was merged via PR #31 and launched in run #42342997198 with exact matching 24 IDs and no paid APIs. Historical original score/log unchanged."
+      "notes": "Independent second read of the 24 original Qwen3-0.6B GSM8K Inspect .eval sample outputs: 10 sample completions used exactly the hard 128-token output budget and all ten received incorrect original numeric-match grades; 6/24 overall. This association is not proof that truncation caused each error. A controlled 128-vs-256 study was merged via PR #31 and launched in run #42342997198 with exact matching 24 IDs and no paid APIs. Historical original score/log unchanged. Of 18 incorrect original GSM8K samples, nine contained an explicit ANSWER marker and nine did not; therefore token truncation is not the only source of incorrect mathematics."
     },
     {
       "id": "inspect-local-generation-call-accounting-20261107",
