@@ -14,7 +14,7 @@ from pathlib import Path
 
 from .hf_model import APPROVED_MODEL, APPROVED_REVISION
 
-SCHEMA="plenum-upstream-public-science-benchmark-v1"
+SCHEMA="plenum-upstream-public-science-benchmark-v2"
 INSPECT_VERSION="0.3.287"
 EVALS_VERSION="0.27.0"
 TASKS=("arc_easy","arc_challenge")
@@ -30,6 +30,7 @@ def plan():
         "inspect_evals_version":EVALS_VERSION,
         "model_id":APPROVED_MODEL, "model_revision":APPROVED_REVISION,
         "tasks":list(TASKS), "sample_limit_per_task":SAMPLE_LIMIT,
+        "enable_thinking":False, "evaluation_variant":"nonthinking-v2",
         "max_generation_tokens":MAX_TOKENS, "max_model_connections":1,
         "paid_model_apis":False, "private_data_used":False,
         "model_training":False, "automatic_promotion":False,
@@ -43,6 +44,12 @@ def checked_path(raw):
         or not path.parts or path.parts[0]!="reports" or len(path.parts)>4):
         raise ValueError("Only short reports/*.json paths permitted")
     return path
+
+def canonical_task(name):
+    mapping={f"inspect_evals/{task}":task for task in TASKS}
+    if name not in mapping:
+        raise ValueError("Unknown or noncanonical upstream ARC task identifier")
+    return mapping[name]
 
 def audit(log_dir):
     """Read the official Inspect native scores; never reinterpret model text."""
@@ -64,7 +71,7 @@ def audit(log_dir):
         log=read_eval_log(entry.name)
         if log.status!="success" or log.error:
             raise ValueError("Upstream evaluation failed")
-        task=log.eval.task
+        task=canonical_task(log.eval.task)
         if task not in TASKS or task in summary:
             raise ValueError("Unexpected or duplicated benchmark task")
         if not log.samples or len(log.samples)!=SAMPLE_LIMIT:
