@@ -79,15 +79,7 @@ jobs:
           gcloud artifacts repositories describe plenum-browser --location="$REGION" --project="$GCP_PROJECT_ID" --format='value(name)' > /dev/null
           gcloud secrets describe computer-browser-token --project="$GCP_PROJECT_ID" --format='value(name)' > /dev/null
           gcloud secrets describe computer-browser-session-key --project="$GCP_PROJECT_ID" --format='value(name)' > /dev/null
-          gcloud storage buckets describe "gs://$BROWSER_PROFILE_BUCKET" --project "$GCP_PROJECT_ID" --format=json > "$RUNNER_TEMP/plenum-profile-bucket.json"
-          python - <<'PY'
-          import json,os
-          d=json.load(open(os.path.join(os.environ["RUNNER_TEMP"],"plenum-profile-bucket.json")))
-          iam=d.get("iamConfiguration",{})
-          assert iam.get("publicAccessPrevention") == "enforced", "Bucket must block all public access"
-          assert iam.get("uniformBucketLevelAccess",{}).get("enabled") is True, "Bucket must use uniform access"
-          print("Private browser bucket security verified.")
-          PY
+          gcloud storage buckets describe "gs://$BROWSER_PROFILE_BUCKET" --project "$GCP_PROJECT_ID" --format=json | python scripts/verify_browser_bucket_metadata.py
           echo "Required registry and encrypted session secrets exist."
       - name: Build isolated source image (may use billable Cloud Build)
         env:
