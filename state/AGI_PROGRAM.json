@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T21:18:54.823Z",
+  "last_reviewed_utc": "2026-11-07T21:21:13.444Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -529,7 +529,7 @@
     },
     {
       "priority": 4,
-      "action": "Verified free Computer-in-chat public browsing: GitHub connector issue #66 triggered live Playwright run #42415118221, HTTP 200 to https://example.com/, and ChatGPT fetched result from issue comment. Retain read-only public allowlist and avoid TinyFish charges. This cannot access private sessions or interact with remote forms yet; future work is safe scoped navigation and, with explicit owner permission and secure hosting, richer web actions. Requests/results are public. Not model autonomy or AGI."
+      "action": "Browser login workflow: user-facing TinyFish existing default browser-profile setup link for kaggle.com was generated and displayed Nov 7, 2026. User must complete site sign-in and Save profile; no signed-in site has been verified yet. Once stored, confirm with TinyFish list_profiles, then use profile-scoped browser automation for Kaggle and other sites only as authorized. Do not paste login secrets into ChatGPT/GitHub. Treat TinyFish interactive agent as metered; free public GitHub/Playwright browser remains for public-only reading. Get confirmation before real purchases, messaging, deletions or security changes."
     },
     {
       "priority": 5,
@@ -852,6 +852,10 @@
     {
       "decision": "TinyFish ordinary $8 introductory wallet does not renew daily or monthly.",
       "reason": "Current wallet check returned $8 and no auto reload. Official pricing says one-time signup funds, no recurring plan. Promotional credit may expire; Search/Fetch stay free."
+    },
+    {
+      "decision": "Use a user-authenticated TinyFish browser profile for ordinary ChatGPT website login and form completion, without collecting passwords in chat or storing sessions in GitHub.",
+      "reason": "Connected TinyFish has a reusable browser profile but zero currently recorded signed-in sites. Kaggle profile setup link was generated Nov 7, 2026; user must personally sign in and save through the secure page. This chat can then use profile-scoped browser automation; browser Agent/Browser is metered, unlike free public GitHub/Playwright reading. Require explicit approval before consequential external submissions, financial transactions, deletion or changing account/security settings. Store no cookies, session IDs, bearer URLs or passwords in public ledger."
     }
   ],
   "operating_rules": [
