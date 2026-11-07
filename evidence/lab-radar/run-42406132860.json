@@ -1,0 +1,24 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "42406132860",
+  "source_revision": "7ea42fabfa64882132120885669661f3b03d8c3f",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-07T19:25:45.899132+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 25,
+    "sources_returning_records": 21,
+    "source_outages": [
+      "un_climate_environment",
+      "gdelt_headlines"
+    ],
+    "new_public_links_before_limit": 0,
+    "signals": [],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
