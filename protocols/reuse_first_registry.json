@@ -1,0 +1,70 @@
+{
+  "schema": "plenum-reuse-first-registry-v1",
+  "purpose": "Avoid reimplementing widely validated software. Reuse validated external packages with license and provenance checks, and isolate Plenum-specific research logic.",
+  "reviewed_utc": "2026-11-07",
+  "software": [
+    {
+      "name": "EleutherAI LM Evaluation Harness",
+      "role": "standard_model_benchmark",
+      "origin": "https://github.com/EleutherAI/lm-evaluation-harness",
+      "release": "v0.4.13",
+      "commit": "ddd67220430a2470529f25fd5c05a576ca1057a0",
+      "license": "MIT",
+      "adoption": "guarded_optional_adapter",
+      "default_execution": false,
+      "preinstalled": false,
+      "model_api": "HuggingFace transformers",
+      "status": "reviewed_not_yet_benchmarked"
+    },
+    {
+      "name": "LangGraph",
+      "role": "bounded_agent_workflow_orchestration",
+      "origin": "https://github.com/langchain-ai/langgraph",
+      "locked_dependency": "langgraph==1.2.20",
+      "adoption": "already_present_optional",
+      "default_execution": false,
+      "notes": "Retain existing orchestration; do not rebuild graph execution engine."
+    },
+    {
+      "name": "scikit-learn",
+      "role": "reference statistical and regression evaluation",
+      "origin": "https://github.com/scikit-learn/scikit-learn",
+      "existing_dependency": "scikit-learn>=1.5,<2",
+      "adoption": "already_present_optional"
+    },
+    {
+      "name": "RDKit",
+      "role": "molecular geometry and chemistry descriptors",
+      "origin": "https://github.com/rdkit/rdkit",
+      "existing_dependency": "rdkit>=2025.9,<2027",
+      "adoption": "already_present_optional"
+    },
+    {
+      "name": "K-Dense scientific-agent-skills",
+      "role": "candidate reference skills",
+      "origin": "https://github.com/K-Dense-AI/scientific-agent-skills",
+      "adoption": "read_only_candidate_catalog",
+      "status": "not_approved_for_executing_third_party_skill_instructions"
+    }
+  ],
+  "rules": {
+    "evaluate_upstream_before_custom_code": true,
+    "check_license_and_provenance": true,
+    "pin_versions_or_commits": true,
+    "compare_against_fixed_and_historical_baselines": true,
+    "no_unreviewed_remote_code": true,
+    "no_secrets_sent_to_public_actions": true,
+    "no_auto_install_from_untrusted_skills": true,
+    "no_automatic_model_promotion": true,
+    "no_confidential_document_replication": true,
+    "security_and_functional_tests_required_before_merge": true,
+    "copying_external_code_requires_license_and_attribution_review": true
+  },
+  "costs": {
+    "full_model_benchmark_manual_only": true,
+    "default_runner": "CPU",
+    "external_paid_api": false,
+    "gpu_spend_authorized": false
+  },
+  "limitations": "Existing benchmark frameworks provide evaluation infrastructure, not intelligence or proof of AGI."
+}
