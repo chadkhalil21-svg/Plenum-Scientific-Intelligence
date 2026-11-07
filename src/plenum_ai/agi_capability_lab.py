@@ -46,7 +46,7 @@ def _num_prompt(problem):
 def _program_prompt(problem, examples):
     return (problem + "\nProduce a small arithmetic program using ONLY JSON: "
             '{"ops":[{"op":"add","value":integer},{"op":"mul","value":integer},'
-            '{"op":"square"}]}. These objects are illustrative TYPES, not a "
+            '{"op":"square"}]}. These objects are illustrative TYPES, not a '
             "suggested solution. Instructions operate on the current integer "
             "in their listed order. You may omit instructions and repeat "
             "allowed operations, with at most 6 total operations. "
