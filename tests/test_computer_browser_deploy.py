@@ -7,6 +7,11 @@ class PrivateCloudDeployGuardTests(unittest.TestCase):
         wf=(ROOT/".github/workflows/computer-browser-cloud-run-deploy.yml").read_text()
         for evidence in [
             "workflow_dispatch:", "DEPLOY_APPROVED",
+            "github.event.issue.user.login == 'chadkhalil21-svg'",
+            "github.event.issue.body == 'DEPLOY_APPROVED:plenum-computer-browser:us-east1:2026-11-07'",
+            "github.event.issue.title == 'Computer Browser: deploy private Cloud Run'",
+            "BROWSER_DEPLOY_REGION",
+
             "environment: computer-browser-production", "id-token: write",
             "workload_identity_provider:", "gcloud artifacts repositories describe",
             "gcloud secrets describe computer-browser-token",
