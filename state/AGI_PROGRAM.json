@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T19:01:55.013Z",
+  "last_reviewed_utc": "2026-11-07T19:08:00.130Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -433,7 +433,7 @@
   "next_actions": [
     {
       "priority": 1,
-      "action": "On the founder iPad, finish Kaggle phone verification if GPU access requires it; return to a saved draft under Your Work, select notebook Settings > Session options > Accelerator > GPU T4 x2 if available, and execute a no-download nvidia-smi preflight. Then review the manual Qwen3.6-27B Q4_K_M notebook and explicitly opt into bounded free inference. No GPU/model run has been verified yet; preserve failure, VRAM, memory, timing and output."
+      "action": "On Kaggle iPad, the founder has selected GPU T4 x2 in notebook Settings (screenshot Nov 7), but Internet was off and Draft Session explicitly off, so no GPU allocation or real model inference is yet confirmed. Enable notebook Internet, choose Run > Start session, add a new code cell `!nvidia-smi`, and preserve the reported GPU identity/VRAM. Then run the prepared manual Qwen3.6-27B preflight and explicitly approve bounded free inference only after checking hardware/storage/quotas. No paid service is approved."
     },
     {
       "priority": 2,
@@ -652,6 +652,10 @@
     {
       "decision": "Kaggle account-level Settings and notebook-level hardware configuration must not be confused.",
       "reason": "Founder screenshot shows account Settings and phone verification, not Session options. Kaggle notebook runtime was shown switched off. Account eligibility and actual GPU allocation remain unverified until the founder enables an accelerator and runs a GPU preflight."
+    },
+    {
+      "decision": "Reuse existing federated arXiv, OpenAlex, Semantic Scholar, Europe PMC and OSTI metadata adapters on demand rather than duplicating public scientific databases.",
+      "reason": "Founder clarifies that comprehensive research access must be preserved and expanded. Public APIs do not require reinstalling databases; standalone computational software may need isolated runtime installation. Free API availability, licensing and full-text rights vary."
     }
   ],
   "operating_rules": [
