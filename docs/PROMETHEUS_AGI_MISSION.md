@@ -50,3 +50,13 @@ The reference animation is user-provided and **not published** in this public re
 ## Continuity
 
 `research-memory/state/AGI_PROGRAM.json` is the authoritative public program ledger. Every significant decision, test, regression, verified change or blocker must be reflected there by an explicit checked-in update with source links. The ledger is not an automatically sentient memory and cannot continually update outside actual executed workflows or ChatGPT sessions.
+
+
+## Preferred embodiment and accurate operational status (2026-11-07)
+
+See [the preferred embodiment specification](PROMETHEUS_PREFERRED_EMBODIMENT.md).
+It selects **one orchestration framework** (LangGraph), one primary voice layer
+(LiveKit), the existing Inspect/LM Evaluation Harness, mature science packages,
+and approved, pinned specialist tools instead of cloning them. Import-only,
+CI-verified, actual model-inference, and deployed operational services are
+different statuses. The public GitHub repo is not a private AI memory server.
