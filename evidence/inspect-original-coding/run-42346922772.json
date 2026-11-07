@@ -1,0 +1,63 @@
+{
+  "schema": "plenum-original-inspect-humaneval-code-v1",
+  "framework": "original UK AISI Inspect AI / Inspect Evals",
+  "inspect_ai_version": "0.3.287",
+  "inspect_evals_version": "0.27.0",
+  "official_task": "inspect_evals/humaneval",
+  "official_dataset": "openai/openai_humaneval",
+  "official_dataset_revision": "7dce6050a7d6d172f3cc5c32aa97f52fa1a2e544",
+  "candidate_model": "Qwen/Qwen3-1.7B",
+  "candidate_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+  "expected_original_problems": 3,
+  "epochs": 1,
+  "maximum_output_tokens": 256,
+  "thinking_enabled": false,
+  "scoring": "unchanged original inspect_evals/humaneval verify() scorer",
+  "sandbox": "docker",
+  "default_container_network_disabled": true,
+  "run_timeout_minutes": 32,
+  "local_generation_requests": 3,
+  "paid_api_calls": 0,
+  "inference_executed": true,
+  "model_generated_code_executed": true,
+  "independent_function_tests_executed": true,
+  "original_scoring_verified": true,
+  "automatic_model_promotion": false,
+  "AGI_demonstrated": false,
+  "limitations": "Three public historical coding questions, possible pretraining overlap; one-shot program synthesis, not autonomous agentic coding, independent scientific discovery, or AGI.",
+  "attempted": 3,
+  "correct": 2,
+  "failures": [
+    "HumanEval/1"
+  ],
+  "samples": [
+    {
+      "id": "HumanEval/0",
+      "correct": true,
+      "question_and_original_test_sha256": "93ccb157137795fb7e0b1b05d7c60ccf65aa21348ce7bdd64d18c204acef6351",
+      "generated_text_sha256": "4aee133999af55f1c318e65ed0aedb80aa2f521b56958f5f12e409678f19b4a2",
+      "generated_chars": 546,
+      "scorer": "original Inspect Evals HumanEval verify()"
+    },
+    {
+      "id": "HumanEval/1",
+      "correct": false,
+      "question_and_original_test_sha256": "37386d19ed63bd7ac7c85852795cd97f2dc4f989d9a6667a54bfcb63e5fc8047",
+      "generated_text_sha256": "e8a7fbc0c9dc0f7bc061fe180b054c79b74264f202e49a754cc958b35c56ea7e",
+      "generated_chars": 1041,
+      "scorer": "original Inspect Evals HumanEval verify()"
+    },
+    {
+      "id": "HumanEval/2",
+      "correct": true,
+      "question_and_original_test_sha256": "a71574756985dda04e07c9c4701ef308ab953310864819ddcad17ca37bbdaff8",
+      "generated_text_sha256": "029220b47b8f0be3c68c840f5396b450f116e3c6da677a8f5d4853e808b098e4",
+      "generated_chars": 374,
+      "scorer": "original Inspect Evals HumanEval verify()"
+    }
+  ],
+  "source_sha": "a54a5490574e3d357442839d29dbf128bf51b4c6",
+  "original_eval_sha256": {
+    "2026-11-07T06-27-31-00-00_humaneval_6VyTwt4kxQVv8XwzD5PPTk.eval": "7a932a825f87d58f113e8a05fd7a97e0cf8e5f11c20f50e380b8a3eb21d02552"
+  }
+}
