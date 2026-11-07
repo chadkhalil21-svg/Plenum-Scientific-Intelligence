@@ -175,6 +175,69 @@ jobs:
               z.write(raw[0],arcname=raw[0].name)
           path.write_text(json.dumps(d,indent=2)+"\n",encoding="utf-8")
           PY
+      - name: Archive second genuine unscored ReAct tool-history CLI type failure
+        run: |
+          mkdir -p reports/second-react/
+          gh run download 42348876440 --repo "$GITHUB_REPOSITORY" \
+            -n corrected-qwen3-original-react-logs -D reports/second-react/
+          python - <<'PY'
+          import hashlib,json,zipfile
+          from pathlib import Path
+          from inspect_ai.log import read_eval_log
+          from plenum_ai.inspect_react_coding import count_actual_tools
+          logfiles=list(Path("reports/second-react/inspect-react-coding-logs").rglob("*.eval"))
+          if len(logfiles)!=1:
+              raise ValueError("Missing one original failed Qwen3 CLI transcript")
+          p=logfiles[0]
+          expected="104c928ca23178962446cf7fd929c7797dcd0618c8e2dfaa585394833b96037d"
+          if hashlib.sha256(p.read_bytes()).hexdigest()!=expected:
+              raise ValueError("Original second failed model log changed")
+          l=read_eval_log(str(p))
+          if (l.status!="error" or not l.error
+              or "Object of type Undefined is not JSON serializable" not in str(l.error.message)
+              or str(l.eval.task)!="react_original_humaneval"
+              or type((l.eval.model_args or {}).get("chat_template")) is not list):
+              raise ValueError("Not the original unscored comma-split template failure")
+          samples=l.samples or []
+          if len(samples)!=1 or str(samples[0].id)!="HumanEval/0" or samples[0].scores:
+              raise ValueError("Actual original coding question was graded or changed")
+          calls,returns=count_actual_tools(samples[0].messages or [])
+          if (calls,returns)!=(1,1):
+              raise ValueError("Real model tool events are not the original 1/1")
+          base=Path("ledger/evidence/inspect-react-failed")
+          base.mkdir(parents=True,exist_ok=True)
+          out=base/"run-42348876440.json"
+          raw=base/"run-42348876440-raw.zip"
+          summary={
+              "schema":"plenum-second-unscored-react-cli-compat-v1",
+              "original_run_id":"42348876440",
+              "original_source_sha":"6097cb3684459a3ed8c3f181477f548b5825fb45",
+              "original_eval_sha256":{p.name:expected},
+              "unscored_execution":True,
+              "independent_functional_grade_available":False,
+              "chat_template_model_arg_type":"list_instead_of_str",
+              "root_cause":"Inspect -M CLI parser split comma-containing Jinja despite JSON quoted YAML scalar",
+              "agent_tool_calls":calls,
+              "tool_result_messages":returns,
+              "AGI_demonstrated":False,
+              "model_promoted":False
+          }
+          if out.exists() or raw.exists():
+              if not out.is_file() or not raw.is_file():
+                  raise FileExistsError("Partial historical archive")
+              recorded=json.loads(out.read_text(encoding="utf-8"))
+              if recorded!=summary:
+                  raise ValueError("Archived second original failure changed")
+              with zipfile.ZipFile(raw) as z:
+                  if z.namelist()!=[p.name] or hashlib.sha256(z.read(p.name)).hexdigest()!=expected:
+                      raise ValueError("Preserved original raw model transcript changed")
+              print("Second original unscored failure unchanged; no rewritten evidence")
+          else:
+              with zipfile.ZipFile(raw,"x",zipfile.ZIP_DEFLATED) as z:
+                  z.write(p,arcname=p.name)
+              out.write_text(json.dumps(summary,indent=2)+"\n",encoding="utf-8")
+              print("Archived second original ReAct failure, never counted as coding success")
+          PY
       - name: Commit only public original failure evidence, no production edits
         run: |
           git -C ledger config user.name 'Plenum Scientific Evidence'
