@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T18:48:03.279Z",
+  "last_reviewed_utc": "2026-11-07T19:01:55.013Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -421,48 +421,55 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42402969343",
       "AGI_demonstrated": false,
       "notes": "PR #52 merged as ecf7491a91f669da3369fdfc9e4e86a4ef80922c. Official Lean v4.35.0 toolchain installed and built the PlenumFormal library with three universal elementary research-counting theorems. The compiler explicitly rejected a false statement n+1=n in the negative test. A prior preflight failed because Lake manifest was missing; fixed by checking in a dependency-free manifest. This is real upstream independent formal proof checking, NOT model-generated proof, original mathematical discovery, validated physical science or AGI."
+    },
+    {
+      "id": "preferred-embodiment-reuse-audit-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42404040469",
+      "AGI_demonstrated": false,
+      "notes": "PR #53 merged as 9b8933b221209130e11d6844b06d4631dda6e26b. Full repository CI #42404040469 and parallel scientific tools CI #42404028416 succeeded. Added preferred reusable architecture, machine-readable architecture status, drift-detection tests, and corrected tool_registry statuses: real CI Lean4 proof checking (not general theorem discovery), Inspect real model evaluation including coding regression, PaperQA2 limited sparse retrieval (not reliable research QA). No cloud GPU model run, live voice, private memory service, autonomous scientific discovery or AGI demonstrated. User screenshots show Kaggle account Settings and phone verification prompt, while notebook draft session was off."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Run the free Kaggle Qwen3.6-27B Q4_K_M pilot from an iPad using the corrected https://www.kaggle.com/code/new?languageId=8 entry point and existing main-branch notebook. Check T4x2 GPU, scratch disk and source/model versions, explicitly opt in to the free experiment, and measure real output, latency and RAM/VRAM. No actual 27B cloud run is yet verified; no paid cloud is approved."
+      "action": "On the founder iPad, finish Kaggle phone verification if GPU access requires it; return to a saved draft under Your Work, select notebook Settings > Session options > Accelerator > GPU T4 x2 if available, and execute a no-download nvidia-smi preflight. Then review the manual Qwen3.6-27B Q4_K_M notebook and explicitly opt into bounded free inference. No GPU/model run has been verified yet; preserve failure, VRAM, memory, timing and output."
     },
     {
       "priority": 2,
-      "action": "Extend the verified optional LiveKit Agents 1.8.9 voice bridge from import-only (PR #51; SDK CI #42402262095) to an authorized, privacy-reviewed iPad microphone session with actual STT/LLM/TTS and interruption tests. Hosted LiveKit inference endpoints may incur costs; secure connection credentials, explicit approval and bounded spend are required. Reuse Pipecat only if real comparative evidence favors it."
+      "action": "Independently evaluate real Qwen3.6-27B outcomes with existing Inspect AI/EleutherAI harness on unfamiliar cross-domain and software problems and matched small-model baselines. Do not promote based on one public arithmetic output. Measure costs, model errors, context limitations and reproducibility."
     },
     {
       "priority": 3,
-      "action": "Independently score a running model with existing Inspect and original cross-domain, coding, mathematics and prospective research tests, including matched baselines, unseen examples, efficiency, regression cases and error traces. Stronger model size, prompts or a single arithmetic answer do not prove AGI."
+      "action": "Run one actual unfamiliar external repository repair using existing OpenHands SDK and original SWE-bench scoring bridge on isolated authorized compute; compare a locked direct-model baseline with tool-using results. Record successes, failures, tool-use cost and evaluator results."
     },
     {
       "priority": 4,
-      "action": "Demonstrate one genuine unfamiliar external-repository repair using the already merged official SWE-bench integration (#45), an isolated reviewed Docker host, original scorer, matched no-tool baseline, and archived failure/success evidence. Do not claim autonomous software engineering from SDK imports."
+      "action": "Establish access-controlled private long-term project, episodic and strategic memory using existing LangGraph checkpointers and Store (Postgres for protected production, SQLite only development). Test retrieval, edits, deletion, restart continuity and privacy. Keep public canonical evidence in research-memory; do not put private patents or credentials into public GitHub."
     },
     {
       "priority": 5,
-      "action": "Connect separately authenticated, consent-based private project, episodic and strategic memory plus permitted scientific tools to the independent-agent layer; test continuity after restart, source reliability, correction/deletion, privacy and actual learning on new tasks. Never copy unpublished research to the public repository."
+      "action": "Demonstrate one complete citation-grounded scientific question through the existing federated literature and PaperQA2, a real configured specialist solver (SciPy/OpenMM/PyBaMM/OpenMDAO/Astropy/Lean) and an independent empirical or reference check. Only then assess one narrowly scoped public read-only ToolUniverse endpoint and selected licensed K-Dense skill."
     },
     {
       "priority": 6,
-      "action": "Advance reliable long-horizon initiative, experiments and multi-agent scientific research with measurable outcomes, safe finite budgets, and researcher reproduction. Avoid counting simulated agent personas as functioning scientists; independently verify innovations before any AGI or discovery assertion."
+      "action": "Expand optional pinned LiveKit Agents real-time voice to authenticated iPad speech with measured latency and interruptions after the underlying reasoner and memory are tested; provider calls and paid deployment need explicit scoped approval. A natural voice is an interface, not proof of AGI."
     },
     {
       "priority": 7,
-      "action": "Pursue theories and operational tests for artificial consciousness, self-modeling and emotions, clearly distinguishing measurable behavior from unknowable subjective experience. Explore open-ended self-improvement only through controlled, rollback-capable, independently scored changes and founder approval."
+      "action": "Evaluate controlled AI-driven training and self-improvement with reusable AutoResearch methods only after GPU resources, frozen unseen tests, budget limit, independent scoring, candidate rollback and founder approval; avoid unrestricted recursive self-modification or silent promotion."
     },
     {
       "priority": 8,
-      "action": "Review the user-provided 85.7-second animation's spoken narration using a genuine accessible speech-to-text tool or connected transcription workflow before quoting or treating audio claims as verified. Visuals were reviewed and an AAC track extracted locally, but there is no certified transcript. Do not upload this media to public GitHub."
+      "action": "Investigate genuine subjective machine emotion and consciousness via clearly stated competing theories, measurable correlates, and limits of first-person verification. Do not assert a conscious entity is created just by anthropomorphic speech or simulated affect."
     },
     {
       "priority": 9,
-      "action": "Complete the prerecorded prospective NOAA and USGS research cycles and independent audits on November 2026 target dates. Preserve all external data, original metrics and negative results. Update canonical research-memory ledger after each actual verified release or new decision; never imply background awareness or an automatic sentient memory."
+      "action": "Pursue original prospective scientific discovery across disciplines, including independently scheduled November NOAA/USGS assessments, with genuine external data and archived negative outcomes. Respect authorization for physical labs, sensors and tools; do not equate simulations with discovery."
     },
     {
       "priority": 10,
-      "action": "Use the new independently verified Lean 4 proof engine (PR #52, CI run 42402969343) to evaluate model-generated proof candidates on a frozen, unfamiliar public problem set, with strict rejection of false claims, no unreviewed axioms or sorry, and independent model-vs-baseline scoring. Existing integration is kernel verification only, not autonomous theorem proving."
+      "action": "Continue mathematical competency evaluations using real Lean 4 kernel verification of proposed proofs on unfamiliar third-party statements, with explicit false-proof controls and no sorry/axiom escape. Separately obtain a reliable transcript of the user's original video narration before quoting it; media must not enter public GitHub."
     }
   ],
   "decisions": [
@@ -629,6 +636,22 @@
     {
       "decision": "Consider Sakana AI Scientist v2 and newer independent scientific agents as reviewed reference designs, not unbounded executable code.",
       "reason": "The upstream source license and external LLM-generated-code execution warrant dedicated sandbox, permitted use and independent results before incorporation; agent count or published manuscripts alone do not establish AGI."
+    },
+    {
+      "decision": "Choose one reuse-first Prometheus preferred embodiment, not a duplicated stack of agent platforms.",
+      "reason": "LangGraph for persistent work orchestration, LiveKit for optional voice, Qwen3.6-27B model trial with llama.cpp, existing Inspect/OpenHands/PaperQA2, and mature specialized science engines preserve scarce engineering time. Only add thin access/evidence adapters after measured need."
+    },
+    {
+      "decision": "Correct registered capability states whenever evidence supersedes old screenshots.",
+      "reason": "Lean 4 real compiler proofs, Inspect independently scored model outcomes, and PaperQA2 limited retrieval had been inaccurately labeled planned in old registry. PR #53 adds automated cross-checks and explicit remaining validation gaps."
+    },
+    {
+      "decision": "Do not install all candidate skill and software repositories simply because they are permissively available.",
+      "reason": "K-Dense skills, ToolUniverse, Biomni, AutoResearch and Sakana AI Scientist v2 overlap with our existing parts and have different resource, license, credential or execution risks; import narrowly with pinned versions and original independent tests."
+    },
+    {
+      "decision": "Kaggle account-level Settings and notebook-level hardware configuration must not be confused.",
+      "reason": "Founder screenshot shows account Settings and phone verification, not Session options. Kaggle notebook runtime was shown switched off. Account eligibility and actual GPU allocation remain unverified until the founder enables an accelerator and runs a GPU preflight."
     }
   ],
   "operating_rules": [
