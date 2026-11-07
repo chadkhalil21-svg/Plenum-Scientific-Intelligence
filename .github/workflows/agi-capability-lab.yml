@@ -158,7 +158,8 @@ jobs:
           assert r['tasks_per_model']==6 and r['total_model_calls']==12
           assert r['independent_reference_calculations']
           assert r['heldout_program_cases_generated_only_by_auditor']
-          assert r['model_generated_code_executed'] is False
+          assert r['unrestricted_generated_code_executed'] is False
+          assert r['restricted_arithmetic_dsl_interpreted'] is True
           assert r['AGI_demonstrated'] is False
           assert r['scientific_discovery_verified'] is False
           assert r['auto_model_promotion'] is False
