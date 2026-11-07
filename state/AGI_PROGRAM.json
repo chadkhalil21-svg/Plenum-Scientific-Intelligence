@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T07:15:56.306Z",
+  "last_reviewed_utc": "2026-11-07T07:17:00Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -337,12 +337,19 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42350525122",
       "AGI_demonstrated": false,
       "notes": "Follow-up to verified bounded frozen Qwen3-1.7B original official Inspect HumanEval code baseline #42346922772 2/3 (HumanEval/1 incorrect) and original Inspect ReAct HumanEval/0 #42349665865 1/1 with four real Python tool calls and four results. PR #41 merged (79fb08d03c62d99c6a89c04efbb8b8e722370b2c) after full CI; one controlled publicly known original HumanEval/1 function is now being tested with same frozen model, original independent verify() scorer, existing Inspect react() and tool inside networkless disposable Docker, native JSON chat template config, six turns and fourteen messages. Job requires exact original two archived .eval SHA256 evidence sets before downloading model; no paid APIs, no training, no promotion or AGI claim. No new score verified."
+    },
+    {
+      "id": "inspect-react-three-matched-original-coding-20261107",
+      "status": "running_unverified",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42350599820",
+      "AGI_demonstrated": false,
+      "notes": "After verified original Qwen3-1.7B ReAct HumanEval/0 official correct 1/1 with four real model Python sandbox tool calls and replies, PR #42 passed offline and full foundation CI, merged as 3a2e1ded35c3e30b706676086f2ea1317c49a1c0. Launches ONE bounded identical three-original-problem ReAct comparison against frozen upstream Inspect Evals HumanEval original non-agent 2/3 baseline #42346922772; original prompts, targets, tests, IDs and raw source SHA256 must exactly match; counts actual per-case tool calls/replies, repairs/regressions and original functional correctness. Uses same frozen public Qwen3-1.7B/native JSON chat template, existing Inspect react()/Python/Docker, max 6 turns and 14 messages, CPU-only and zero paid model APIs. No true 3-case ReAct accuracy available until independently scored raw log and append-only archive. Concurrent separate original HumanEval/1 test run 42350525122 is independent and should not be overwritten or treated as three-case success."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Review original official Inspect ReAct HumanEval/1 run 42350525122, against its independently archived single-shot failure from run 42346922772. Require all original prompt/task-ID, checkpoint, native JSON model config, code-test score and actual tool call/result counts, archive raw .eval regardless of outcome. Do not claim broad reliability from one prior-public case."
+      "action": "Audit two bounded upstream Inspect ReAct coding experiments without duplicate reruns: matched original three-case HumanEval agent run #42350599820 (original one-shot reference 2/3, all original IDs/prompts/tests and SHA256, independent score + per-case tool calls/regressions), and existing isolated HumanEval/1 retest run #42350525122. Preserve original negative and positive full .eval artifacts separately, then move to unfamiliar repository repair with upstream SWE-bench Verified/Terminal-Bench; no AGI claims."
     },
     {
       "priority": 2,
