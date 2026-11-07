@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T04:50:00Z",
+  "last_reviewed_utc": "2026-11-07T04:59:00Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -122,12 +122,23 @@
       "metric": "top-1 intended document retrieved from two precommitted public scientific source questions",
       "AGI_demonstrated": false,
       "notes": "Real pinned PaperQA2 2026.8.12 offline SparseEmbeddingModel indexed two public records. Battery/SPM query retrieved battery correctly; NOAA Boston/Virginia Key tide question incorrectly retrieved battery (independent artifact 13561750015, run 42340104253). Score 1/2. No model or paid API; results are retrospective small-public-data failure and not AGI."
+    },
+    {
+      "id": "inspect-arc-24-v1-20261107",
+      "status": "measured_failure",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42340268831",
+      "result": {
+        "correct": 0,
+        "attempted": 24
+      },
+      "AGI_demonstrated": false,
+      "notes": "Original pinned Qwen3-0.6B official Inspect ARC Easy and ARC Challenge: 0/12 plus 0/12, strict multiple-choice format invalid due thinking text and 48-token cutoff. Raw .eval artifacts retained. Plenum custom post-hoc audit failed because it expected unqualified task IDs; a new separately versioned nonthinking comparison is required."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Run preregistered unseen cross-domain independent Inspect AI/EleutherAI tests with actual frozen models under approved bounded inference and cost limits; compare real correct outputs to baselines."
+      "action": "Repeat original published Inspect ARC Easy/Challenge as a separately recorded versioned CPU comparison with Qwen3-0.6B thinking disabled and valid response formatting; fix third-party task-ID normalization and audit original .eval grades. Preserve 0/24 prior evidence, avoid claiming AGI."
     },
     {
       "priority": 2,
@@ -182,6 +193,10 @@
     {
       "decision": "Do not promote PaperQA2 to a reliable scientific research answerer on current data.",
       "reason": "Real offline public source retrieval scored 1/2 top-1 questions (run 42340104253); import and workflow success do not establish accurate citation or scientific reasoning. Preserve errors and require new heldout evaluation."
+    },
+    {
+      "decision": "Preserve first actual Inspect ARC run as a measured failed configuration, not a general model verdict.",
+      "reason": "Original independently scored 0/24 with 48-token Qwen reasoning preamble and a separate custom task-ID audit error; official raw results are immutable for comparison."
     }
   ],
   "operating_rules": [
