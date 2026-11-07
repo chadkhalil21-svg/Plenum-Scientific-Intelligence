@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T20:47:26.295Z",
+  "last_reviewed_utc": "2026-11-07T21:03:29.737Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -498,16 +498,23 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42412589718",
       "AGI_demonstrated": false,
       "notes": "PR #63 merged SHA 65b3ea8ac5850cb63a750cedf62d67abe4a9334f. Reused LangGraph 1.2.20 orchestrator, ran fixed preapproved public Example Domain task via subprocess-isolated official Playwright MCP stdio, and independently verified MCP evidence (schema plenum-langgraph-browser-mcp-verified-v1). 4/4 Python policy/graph tests and 3/3 Node MCP policy tests passed; official Chrome browser navigation and snapshot confirmed. No LLM planning, arbitrary website agent, logins, private data, remote site modifications or AGI demonstrated."
+    },
+    {
+      "id": "kaggle-owner-private-draft-deployed-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42413145594",
+      "AGI_demonstrated": false,
+      "notes": "GitHub Actions #42413145594 completed owner-approved Kaggle CLI operation write-draft. The job log explicitly said 'Private Prometheus notebook draft saved on Kaggle, without running any cells' and 'Model inference: NOT executed. GPU allocation: NOT started by this command.' This proves actual notebook upload to authenticated private account, not model inference, Kaggle GUI session or model benchmark."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Priority Kaggle: GitHub workflow #42408852329 verified owner Kaggle API authentication; T4×2, 30.1 GiB RAM and reported /tmp 966.9 GiB free are screenshot-confirmed. Owner should restrict kaggle-access environment (main branch, required reviewers where supported, no admin bypass) and rotate token if revealed in screenshots. Then use existing manual GitHub Kaggle workflow 'write-draft' for fixed private notebook and explicitly approve free 27B Q4 inference from Kaggle; no model inference yet."
+      "action": "The private Kaggle Prometheus Qwen3.6-27B trial notebook was VERIFIED uploaded without execution via GitHub Actions #42413145594, after authenticated API verification #42408852329. Next OWNER ACTION on Kaggle: locate the private notebook under Your Work, choose free Tesla T4 x2 and enable Internet, verify quotas and /tmp space, set APPROVE_FREE_GPU_RUN=True, run the bounded smoke cells and preserve actual JSON report, model hash and failures. No inference or AGI proven; do not silently consume quotas or invoke paid agent/browser services."
     },
     {
       "priority": 2,
-      "action": "After actual 27B Kaggle inference, measure file hash/revision, latency, VRAM, accuracy and reliability against smaller model and strong baselines on held-out reasoning, STEM, coding and long-horizon tasks (Inspect AI). Only then bind one proven planner to the already verified LangGraph → Playwright MCP read-only gateway. PR #63 has real tool orchestration, not model-selected actions or autonomous web work."
+      "action": "Once real Kaggle Qwen3.6-27B inference is recorded, measure its exact revision/hash, actual performance/latency/memory, and independently benchmark unfamiliar reasoning, science and coding using existing Inspect AI. Then connect an evaluated model to already verified LangGraph → Playwright MCP public read-only workflow. Do not install another browser framework without a measured failure of the existing one; no paid TinyFish required for standard web science."
     },
     {
       "priority": 3,
@@ -810,6 +817,18 @@
     {
       "decision": "Prioritize genuine GPU model inference and held-out multi-step task evaluation over adding more redundant browser frameworks.",
       "reason": "Kaggle owner API authentication has succeeded, GPUs and free scratch were measured, but actual Qwen3.6-27B inference is not verified. Future model-directed browser tasks must be independently scored on unfamiliar scenarios and explicitly review account-affecting actions."
+    },
+    {
+      "decision": "Default to free-first public APIs, native ChatGPT web search and open-source browser tooling, and preserve TinyFish's promotional wallet for exceptional website automation.",
+      "reason": "Source-backed current TinyFish Search/Fetch are free; Agent/Browser/Monitor/Deep Research are wallet-metered. Public-repo standard GitHub Actions runners are free and already run official Playwright/MCP for Plenum. Native ChatGPT search and Work within eligible plan limits can replace many costs, but free software does not imply free persistent GPUs or hosted model inference."
+    },
+    {
+      "decision": "Treat the Kaggle Qwen3.6-27B private trial notebook as uploaded, but not executed.",
+      "reason": "The owner's second manual Kaggle bridge workflow #42413145594 was verified from actual job logs. The next gate remains explicit Kaggle-side free GPU opt-in and actual model report, with independent tests afterward."
+    },
+    {
+      "decision": "Reuse the existing LangGraph + Playwright MCP pipeline and Inspect AI rather than installing more browser agents or research evaluators.",
+      "reason": "Official Microsoft MCP, isolated real Chromium, independent source-limited tool gateway and LangGraph evidence chain were already tested. Additional browser-use or hosted agent frameworks would duplicate these functions until a measured capability deficiency warrants change."
     }
   ],
   "operating_rules": [
