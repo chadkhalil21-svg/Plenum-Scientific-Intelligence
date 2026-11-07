@@ -55,8 +55,10 @@
       "adoption": "optional_real_framework_ci_smoke",
       "default_execution": false,
       "preinstalled": false,
-      "status": "proposed_pending_CI",
-      "notes": "Pinned upstream API smoke with one correct and one incorrect fixed public replay. Zero model/API calls; not AGI evidence."
+      "status": "real_upstream_framework_smoke_verified",
+      "notes": "Real pinned Inspect Task/Sample/Solver/built-in scorer passed correct and incorrect public replay samples without model/API calls. This verifies integration only; it does not measure intelligence or AGI.",
+      "verified_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42336662799",
+      "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/20"
     }
   ],
   "rules": {
