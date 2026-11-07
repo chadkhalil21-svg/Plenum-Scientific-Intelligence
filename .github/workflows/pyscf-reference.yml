@@ -1,0 +1,53 @@
+name: PySCF Real Quantum Chemistry Reference
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/pyscf-reference.yml'
+      - 'src/plenum_ai/pyscf_engine.py'
+      - 'src/plenum_ai/tool_registry.py'
+      - 'tests/test_pyscf_engine.py'
+      - 'pyproject.toml'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/pyscf-reference.yml'
+      - 'src/plenum_ai/pyscf_engine.py'
+      - 'src/plenum_ai/tool_registry.py'
+      - 'tests/test_pyscf_engine.py'
+      - 'pyproject.toml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  h2-reference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install exact current released PySCF in isolated runner
+        run: python -m pip install -e '.[chemistry]'
+      - name: Run real H2 SCF energy and stretching controls
+        run: python -m unittest discover -s tests -p 'test_pyscf_engine.py' -v
+      - name: Archive original numeric reference outcome, not new physical discovery
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from plenum_ai.pyscf_engine import run_h2_reference
+          record=run_h2_reference()
+          assert record["known_reference_passed"] and not record["novel_chemical_discovery"]
+          assert record["isolated_cpu_scientific_solver"] and not record["AGI_demonstrated"]
+          dest=Path("reports/pyscf_h2_reference.json")
+          dest.parent.mkdir(parents=True,exist_ok=True)
+          dest.write_text(json.dumps(record,indent=2)+"\\n")
+          print("PySCF H2 reference error:",record["absolute_numerical_error_hartree"])
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: real-pyscf-h2-quantum-chemistry-reference
+          path: reports/
+          retention-days: 14
