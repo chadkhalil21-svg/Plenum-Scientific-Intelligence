@@ -1,0 +1,68 @@
+name: Reconcile Public Scientific Evidence Ledger
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '35 6 * * *'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/evidence-ledger-index.yml'
+      - 'src/plenum_ai/evidence_index.py'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-public-research-ledger-reconciliation
+  cancel-in-progress: false
+jobs:
+  reconcile-public-evidence:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Verify indexing integrity without paid or AI dependencies
+        run: |
+          python -m pip install -e .
+          python -m unittest discover -s tests -p 'test_evidence_index.py' -v
+      - name: Read the authoritative public research-memory branch
+        uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - name: Reconcile original immutable research records
+        run: |
+          python -m plenum_ai.evidence_index --root ledger/evidence --out ledger/state/evidence_index.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          mission=Path('ledger/state/mission_status.json')
+          if not mission.is_file():
+              raise RuntimeError('Founder goals missing from public ledger: reconcile manually first')
+          record=json.loads(mission.read_text('utf-8'))
+          assert record['schema']=='plenum-public-strategic-state-v1'
+          assert record['general_intelligence_demonstrated'] is False
+          assert record['automatic_model_promotion'] is False
+          evidence=json.loads(Path('ledger/state/evidence_index.json').read_text('utf-8'))
+          assert evidence['inventory_complete'] is True
+          assert evidence['record_count']>0
+          assert evidence['AGI_demonstrated'] is False
+          print('Public mission preserved; evidence records indexed:',evidence['record_count'])
+          PY
+      - name: Commit only changed evidence index, never rewrite experiments or goals
+        run: |
+          git -C ledger config user.name 'Plenum Public Evidence Ledger'
+          git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ledger add state/evidence_index.json
+          if git -C ledger diff --cached --quiet; then
+            echo 'Research evidence unchanged: no redundant commit'
+            exit 0
+          fi
+          git -C ledger commit -m 'Reconcile existing public research records without changing evidence'
+          git -C ledger pull --rebase origin research-memory
+          git -C ledger push origin HEAD:research-memory
