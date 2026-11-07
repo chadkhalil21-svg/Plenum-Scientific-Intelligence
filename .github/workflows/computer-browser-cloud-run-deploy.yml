@@ -79,7 +79,7 @@ jobs:
           gcloud artifacts repositories describe plenum-browser --location="$REGION" --project="$GCP_PROJECT_ID" --format='value(name)' > /dev/null
           gcloud secrets describe computer-browser-token --project="$GCP_PROJECT_ID" --format='value(name)' > /dev/null
           gcloud secrets describe computer-browser-session-key --project="$GCP_PROJECT_ID" --format='value(name)' > /dev/null
-          gcloud storage buckets describe "gs://$BROWSER_PROFILE_BUCKET" --project "$GCP_PROJECT_ID" --format=json > "$RUNNER_TEMP/plenum-profile-bucket.json"
+          gcloud storage buckets describe "gs://$BROWSER_PROFILE_BUCKET" --project "$GCP_PROJECT_ID" --raw --format=json > "$RUNNER_TEMP/plenum-profile-bucket.json"
           python - <<'PY'
           import json,os
           d=json.load(open(os.path.join(os.environ["RUNNER_TEMP"],"plenum-profile-bucket.json")))
