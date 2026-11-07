@@ -1,0 +1,55 @@
+name: Prometheus Controlled Browser Proof
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/controlled-browser.yml'
+      - 'src/plenum_ai/browser_worker.py'
+      - 'tests/test_browser_worker.py'
+      - 'pyproject.toml'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/controlled-browser.yml'
+      - 'src/plenum_ai/browser_worker.py'
+      - 'tests/test_browser_worker.py'
+      - 'pyproject.toml'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Isolated local interaction or approved public read-only page"
+        type: choice
+        options:
+          - local-smoke
+          - public-read-only
+        default: local-smoke
+        required: true
+      url:
+        description: "For public-read-only: exact allowlisted HTTPS page"
+        type: string
+        default: ""
+        required: false
+permissions:
+  contents: read
+jobs:
+  browser-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install official tested Playwright and its isolated Chromium
+        run: |
+          python -m pip install -e '.[browser]'
+          python -m playwright install --with-deps chromium
+      - name: Run real browser interaction and policy tests
+        run: python -m unittest discover -s tests -p test_browser_worker.py -v
+      - name: Use an isolated browser without any account secrets
+        env:
+          BROWSER_MODE: ${{ inputs.mode || 'local-smoke' }}
+          BROWSER_URL: ${{ inputs.url }}
+        run: |
+          python -m plenum_ai.browser_worker --mode "$BROWSER_MODE" --url "$BROWSER_URL"
