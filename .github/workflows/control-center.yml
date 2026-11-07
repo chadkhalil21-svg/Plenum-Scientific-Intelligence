@@ -10,6 +10,7 @@ on:
         type: choice
         required: true
         options:
+          - efficient
           - science
           - knowledge
           - licensed-article
@@ -71,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 18
     env:
-      TASK: ${{ github.event.inputs.operation || 'science' }}
+      TASK: ${{ github.event.inputs.operation || 'efficient' }}
       QUESTION: ${{ github.event.inputs.question || 'Evaluate orbit and thermal cooling' }}
       PMCID: ${{ github.event.inputs.pmcid || 'PMC12247565' }}
       YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
@@ -80,7 +81,8 @@ jobs:
       LANGGRAPH_STRICT_MSGPACK: "true"
     steps:
       - uses: actions/checkout@v7
-      - name: Read already archived verified public research memory
+      - name: Load archived research only when it will be used
+        if: ${{ github.event.inputs.operation == 'knowledge' || github.event.inputs.operation == 'discovery' }}
         uses: actions/checkout@v7
         with:
           ref: research-memory
@@ -89,9 +91,21 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
       - name: Install only the tools required by the chosen operation
         run: |
           case "$TASK" in
+            efficient)
+              python -m pip install -e .
+              python -m plenum_ai.cli efficient-research --query "$QUESTION" --dry-run --out reports/efficient_preflight.json
+              if python -c 'import json,sys; p=json.load(open("reports/efficient_preflight.json")); sys.exit(0 if p["decision"]=="approved_known_fixture" else 1)'; then
+                python -m pip install -e ".[numerical]"
+                if python -c 'import json,sys; p=json.load(open("reports/efficient_preflight.json")); sys.exit(0 if "molecules" in p["domains"] else 1)'; then
+                  python -m pip install "rdkit>=2025.9,<2027"
+                fi
+              fi
+              ;;
             science|durable-investigation) python -m pip install -e ".[science,orchestration]" ;;
             knowledge|licensed-article) python -m pip install -e . ;;
             verify) python -m pip install -e ".[science,ml,orchestration,astronomy,empirical]" ;;
@@ -109,6 +123,9 @@ jobs:
         run: |
           mkdir -p reports
           case "$TASK" in
+            efficient)
+              plenum efficient-research --query "$QUESTION" --out reports/efficient_research.json
+              ;;
             science)
               plenum parallel-research --auto --query "$QUESTION" --out reports/science.json
               ;;
@@ -222,6 +239,16 @@ jobs:
           import json, os
           from pathlib import Path
           task=os.environ["TASK"]
+          if task=="efficient":
+              r=json.loads(Path("reports/efficient_research.json").read_text())
+              assert r["schema"]=="plenum-efficient-execution-v1"
+              assert r["estimated_model_calls"]==0 and not r["paid_inference_authorized"]
+              assert not r["external_requests_authorized"]
+              assert not r["AGI_demonstrated"] and not r["scientific_discovery_verified"]
+              assert not r["user_specific_problem_solved"]
+              assert r["status"] in ("known_fixtures_completed","requires_review","fixture_failed")
+              print("Least-cost route:",r["decision"],"selected tools:",r["approved_tool_count"],
+                    "unnecessary fixtures avoided:",r["unnecessary_default_fixture_calls_avoided"])
           if task=="ecosystem":
               r=json.loads(Path("reports/scientific_ecosystem.json").read_text())
               assert r["all_external_execution_approved"] is False
