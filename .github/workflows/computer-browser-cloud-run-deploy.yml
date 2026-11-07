@@ -37,7 +37,9 @@ jobs:
           DEPLOY_SA: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
           BROWSER_RUNTIME_SA: ${{ vars.GCP_BROWSER_RUNTIME_SA }}
           BROWSER_PROFILE_BUCKET: ${{ vars.BROWSER_PROFILE_BUCKET }}
+          COMPUTER_OWNER_EMAIL: ${{ vars.COMPUTER_OWNER_EMAIL }}
         run: |
+          test -n "$COMPUTER_OWNER_EMAIL"
           test -n "$BROWSER_PROFILE_BUCKET"
           test -n "$GCP_PROJECT_ID"
           test -n "$WIF_PROVIDER"
@@ -82,7 +84,11 @@ jobs:
           REGION: ${{ inputs.region }}
           BROWSER_RUNTIME_SA: ${{ vars.GCP_BROWSER_RUNTIME_SA }}
           BROWSER_PROFILE_BUCKET: ${{ vars.BROWSER_PROFILE_BUCKET }}
+          COMPUTER_OWNER_EMAIL: ${{ vars.COMPUTER_OWNER_EMAIL }}
         run: |
+          PROJECT_NUMBER="$(gcloud projects describe "$GCP_PROJECT_ID" --format='value(projectNumber)')"
+          test -n "$PROJECT_NUMBER"
+          IAP_AUDIENCE="/projects/$PROJECT_NUMBER/locations/$REGION/services/plenum-computer-browser"
           IMAGE="$REGION-docker.pkg.dev/$GCP_PROJECT_ID/plenum-browser/computer-browser:$GITHUB_SHA"
           gcloud run deploy plenum-computer-browser \
             --project "$GCP_PROJECT_ID" \
@@ -94,8 +100,8 @@ jobs:
             --cpu=2 --memory=2Gi --concurrency=1 \
             --min-instances=0 --max-instances=1 \
             --timeout=300 \
-            --no-allow-unauthenticated \
+            --no-allow-unauthenticated --iap \
             --set-secrets COMPUTER_BROWSER_TOKEN=computer-browser-token:latest,BROWSER_SESSION_KEY=computer-browser-session-key:latest \
-            --set-env-vars "BROWSER_ALLOWED_ORIGINS=https://example.com,BROWSER_PROFILE_BUCKET=$BROWSER_PROFILE_BUCKET" \
+            --set-env-vars "BROWSER_ALLOWED_ORIGINS=https://example.com,BROWSER_PROFILE_BUCKET=$BROWSER_PROFILE_BUCKET,COMPUTER_IAP_AUDIENCE=$IAP_AUDIENCE,COMPUTER_OWNER_EMAIL=$COMPUTER_OWNER_EMAIL" \
             --quiet
           echo "Deployed IAM-private browser service; ChatGPT plugin OAuth not connected."
