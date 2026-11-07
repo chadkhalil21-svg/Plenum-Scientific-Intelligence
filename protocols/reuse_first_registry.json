@@ -55,10 +55,12 @@
       "adoption": "optional_real_framework_ci_smoke",
       "default_execution": false,
       "preinstalled": false,
-      "status": "real_upstream_framework_smoke_verified",
-      "notes": "Real pinned Inspect Task/Sample/Solver/built-in scorer passed correct and incorrect public replay samples without model/API calls. This verifies integration only; it does not measure intelligence or AGI.",
+      "status": "verified_real_model_science_evaluation",
+      "notes": "Pinned Inspect model evaluation framework worked and official independent scorers evaluated real locally inferred Qwen answers, raw logs archived. Tool smoke, model scoring, and evaluation configuration are different verified boundaries. No model promotion.",
       "verified_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42336662799",
-      "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/20"
+      "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/20",
+      "real_model_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42340974100",
+      "real_model_result": "Qwen3-0.6B non-thinking 17/24 across official ARC Easy and Challenge; original thinking-on run 0/24 due invalid output format. Not AGI or model learning."
     },
     {
       "name": "OpenHands Software Agent SDK",
