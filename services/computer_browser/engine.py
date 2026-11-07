@@ -9,7 +9,6 @@ import ipaddress
 import os
 import socket
 from urllib.parse import urlsplit
-from playwright.async_api import async_playwright
 
 MAX_TEXT = 900
 DEFAULT_ORIGINS = frozenset({"https://example.com"})
@@ -100,6 +99,7 @@ async def read_public(url, *, dns_check=True):
         raise PermissionError("URL outside owner's approved public origins")
     if dns_check:
         await asyncio.to_thread(public_dns_only, url)
+    from playwright.async_api import async_playwright
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch(headless=True)
         try:
