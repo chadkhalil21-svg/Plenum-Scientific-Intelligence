@@ -30,6 +30,36 @@ class PairedFrozenQwenTests(unittest.TestCase):
         with patch("importlib.metadata.version",return_value="unreviewed"):
             with self.assertRaisesRegex(RuntimeError,"release changed"):
                 q.audit("reports/inspect-paired-logs","ledger/evidence/inspect-cross-domain")
+    def test_matched_scoring_records_improvements_and_regressions(self):
+        past = {task:{f"{task}-{i}":i%2==0 for i in range(12)}
+                for task in q.TASKS}
+        now = {task:grades.copy() for task,grades in past.items()}
+        for task in q.TASKS:
+            now[task][f"{task}-0"] = False
+            now[task][f"{task}-1"] = True
+        result=q.compare_matched(past,now)
+        for task in q.TASKS:
+            row=result[task]
+            self.assertEqual(row["reference_correct"],6)
+            self.assertEqual(row["candidate_correct"],6)
+            self.assertEqual(row["candidate_minus_reference"],0)
+            self.assertEqual(row["paired_improved"],1)
+            self.assertEqual(row["paired_regressed"],1)
+            self.assertEqual(row["attempted"],12)
+
+    def test_mismatched_ids_and_unapproved_grades_fail_closed(self):
+        past = {task:{f"{task}-{i}":i%2==0 for i in range(12)}
+                for task in q.TASKS}
+        now = {task:grades.copy() for task,grades in past.items()}
+        del now["gsm8k"]["gsm8k-0"]
+        now["gsm8k"]["different"] = True
+        with self.assertRaisesRegex(ValueError,"example IDs"):
+            q.compare_matched(past,now)
+        now["gsm8k"] = past["gsm8k"].copy()
+        now["gsm8k"]["gsm8k-0"] = "C"
+        with self.assertRaisesRegex(ValueError,"grades"):
+            q.compare_matched(past,now)
+
     def test_no_reference_data_fails_closed(self):
         with self.assertRaises(FileNotFoundError):
             q.verify_reference("does-not-exist/inspect-cross-domain")
