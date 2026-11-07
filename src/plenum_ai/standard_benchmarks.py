@@ -39,7 +39,7 @@ def preflight(model, tasks, limit):
         "lm-eval", "run", "--model", "hf",
         "--model_args",
         "pretrained="+model+",revision="+MODELS[model]+",dtype=float32",
-        "--tasks", *tasks, "--num_fewshot", "0",
+        "--tasks", ",".join(tasks), "--num_fewshot", "0",
         "--device", "cpu", "--batch_size", "1",
         "--limit", str(limit), "--seed", "20261107",
         "--output_path", OUTPUT,
@@ -66,6 +66,11 @@ def preflight(model, tasks, limit):
 
 def invoke(configuration):
     """Only callable after an explicit manual owner-selected --execute."""
+    # Do not accept a caller-edited subprocess command or benchmark budget.
+    if not isinstance(configuration,dict) or configuration != preflight(
+            configuration.get("model"),configuration.get("benchmarks"),
+            configuration.get("limit_per_task")):
+        raise ValueError("Benchmark manifest was modified after approved preflight")
     try:
         found=importlib.metadata.version("lm_eval")
     except importlib.metadata.PackageNotFoundError as exc:
