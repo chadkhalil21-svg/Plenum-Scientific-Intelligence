@@ -1,0 +1,210 @@
+{
+  "source_revision": "ace3a91d947c8d7f0ca7b3d5ffce2d76ab3fd44b",
+  "frozen_proposals": {
+    "schema": "plenum-cross-domain-chemistry-biology-v1",
+    "stage": "frozen",
+    "protocol_sha256": "4bacf7cf679725972cb6f6eb412bf6ca7967082aaf111e1222af48ff27b94103",
+    "development": {
+      "schema": "plenum-cross-domain-chemistry-biology-v1",
+      "stage": "development",
+      "protocol_sha256": "4bacf7cf679725972cb6f6eb412bf6ca7967082aaf111e1222af48ff27b94103",
+      "domains": [
+        {
+          "domain": "chemistry",
+          "source_sha256": "970b0d32771f1d67175d4f4a630e13f446ba97a8",
+          "train_n": 790,
+          "dev_n": 170,
+          "holdout_n": 168,
+          "features": [
+            "Minimum Degree",
+            "Molecular Weight",
+            "Number of H-Bond Donors",
+            "Number of Rings",
+            "Number of Rotatable Bonds",
+            "Polar Surface Area"
+          ],
+          "metric": "MAE log(mol/L)",
+          "baseline_dev_errors": {
+            "linear": 1.0101393,
+            "forest": 0.8148759
+          },
+          "holdout_scored": false
+        },
+        {
+          "domain": "biology",
+          "source_sha256": "483f461de24a295af79f8b0ca11e07c96457833dd2d5ae57c99051d7284e2fe5",
+          "train_n": 364,
+          "dev_n": 91,
+          "holdout_n": 114,
+          "features": [
+            "mean radius",
+            "mean texture",
+            "mean perimeter",
+            "mean area",
+            "mean smoothness",
+            "mean compactness",
+            "mean concavity",
+            "mean concave points",
+            "mean symmetry",
+            "mean fractal dimension",
+            "radius error",
+            "texture error",
+            "perimeter error",
+            "area error",
+            "smoothness error",
+            "compactness error",
+            "concavity error",
+            "concave points error",
+            "symmetry error",
+            "fractal dimension error",
+            "worst radius",
+            "worst texture",
+            "worst perimeter",
+            "worst area",
+            "worst smoothness",
+            "worst compactness",
+            "worst concavity",
+            "worst concave points",
+            "worst symmetry",
+            "worst fractal dimension"
+          ],
+          "metric": "log_loss",
+          "baseline_dev_errors": {
+            "linear": 0.0827349,
+            "forest": 0.1668442
+          },
+          "holdout_scored": false
+        }
+      ],
+      "holdout_labels_exposed_to_models": false,
+      "AGI_verified": false
+    },
+    "qwen": {
+      "schema": "plenum-cross-domain-chemistry-biology-v1",
+      "role": "qwen",
+      "model_id": "Qwen/Qwen3-1.7B",
+      "model_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+      "development_sha256": "fa44f8e2ed3ce82ca3de318279752cad5ab6360d8d12fe9c3b935ee59ac06cb8",
+      "records": [
+        {
+          "domain": "chemistry",
+          "candidate": null,
+          "status": "invalid_claim",
+          "response_sha256": "b5ca35461f7a339d5990a2bdbcfd1b17ac8d541d5742b065790334ba1d6398e4"
+        },
+        {
+          "domain": "biology",
+          "candidate": null,
+          "status": "invalid_claim",
+          "response_sha256": "b5ca35461f7a339d5990a2bdbcfd1b17ac8d541d5742b065790334ba1d6398e4"
+        }
+      ],
+      "inference_calls": 2,
+      "holdout_scored": false,
+      "model_promoted": false
+    },
+    "critic": {
+      "schema": "plenum-cross-domain-chemistry-biology-v1",
+      "role": "critic",
+      "model_id": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+      "model_revision": "31b70e2e869a7173562077fd711b654946d38674",
+      "development_sha256": "fa44f8e2ed3ce82ca3de318279752cad5ab6360d8d12fe9c3b935ee59ac06cb8",
+      "records": [
+        {
+          "domain": "chemistry",
+          "candidate": null,
+          "status": "invalid_claim",
+          "response_sha256": "93124a9a62d4e3fd0f8b68daae7b2740a5c0e553282aef3a844997ed170d805e"
+        },
+        {
+          "domain": "biology",
+          "candidate": null,
+          "status": "invalid_claim",
+          "response_sha256": "5df25cc9dc0cd10a8a2de683e7434c4b0ddf7135440f5586eb159d4505af37f8"
+        }
+      ],
+      "inference_calls": 2,
+      "holdout_scored": false,
+      "model_promoted": false
+    },
+    "decisions": [
+      {
+        "domain": "chemistry",
+        "selection": {
+          "role": "baseline",
+          "method": "forest",
+          "score": 0.8148759
+        },
+        "qwen_dev_error": null,
+        "critic_dev_error": null,
+        "best_reference_dev_error": 0.8148759
+      },
+      {
+        "domain": "biology",
+        "selection": {
+          "role": "baseline",
+          "method": "linear",
+          "score": 0.0827349
+        },
+        "qwen_dev_error": null,
+        "critic_dev_error": null,
+        "best_reference_dev_error": 0.0827349
+      }
+    ],
+    "dev_sha256": "fa44f8e2ed3ce82ca3de318279752cad5ab6360d8d12fe9c3b935ee59ac06cb8",
+    "qwen_sha256": "c2e331171dedf75bcb2ed4bcb846d1a1f8206a4c4aa252e3d26e0375735250dc",
+    "critic_sha256": "9f917e22e334c80272038dfc90539f74de5a3c8da8c588bea5af7e1c29616fc3",
+    "holdout_used_in_selection": false,
+    "automatic_deployment": false
+  },
+  "independent_audit": {
+    "schema": "plenum-cross-domain-independent-audit-v1",
+    "frozen_sha256": "f2b73ff72170de15b5aa3e3961c69bcb1067f79ac7d68421b7bf54c56488ae77",
+    "results": [
+      {
+        "domain": "chemistry",
+        "holdout_n": 168,
+        "metric": "MAE log(mol/L)",
+        "selected_role": "baseline",
+        "selected_test_error": 0.6836012,
+        "qwen_test_error": null,
+        "critic_test_error": null,
+        "reference_test_errors": {
+          "linear": 0.9659629,
+          "forest": 0.6836012
+        },
+        "best_reference_error": 0.6836012,
+        "beats_strongest_reference": false,
+        "historical_public_dataset": true
+      },
+      {
+        "domain": "biology",
+        "holdout_n": 114,
+        "metric": "log_loss",
+        "selected_role": "baseline",
+        "selected_test_error": 0.0652553,
+        "qwen_test_error": null,
+        "critic_test_error": null,
+        "reference_test_errors": {
+          "linear": 0.0652553,
+          "forest": 0.1189032
+        },
+        "best_reference_error": 0.0652553,
+        "beats_strongest_reference": false,
+        "historical_public_dataset": true
+      }
+    ],
+    "tested_domains": 2,
+    "wins_against_strongest_baselines": 0,
+    "independent_holdout_audit": true,
+    "AGI_demonstrated": false,
+    "new_scientific_discovery_verified": false,
+    "clinical_diagnostic_capability_verified": false,
+    "recursive_self_improvement": false,
+    "model_weights_modified": false,
+    "model_promoted": false,
+    "limitations": "Historical public datasets possibly in model pretraining, bounded statistical hyperparameters, only two evaluation domains. No new scientific law, clinical validation, prospective prediction or AGI."
+  },
+  "verified_AGI": false,
+  "verified_new_scientific_law": false
+}
