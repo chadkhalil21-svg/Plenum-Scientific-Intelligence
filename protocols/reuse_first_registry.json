@@ -70,10 +70,11 @@
       "adoption": "optional_import_smoke_only",
       "default_execution": false,
       "preinstalled": false,
-      "status": "real_upstream_sdk_api_import_verified",
-      "notes": "Pinned 1.60.1 imported actual Agent/Conversation/LLM/Tool and AlwaysConfirm classes in separate Python 3.12 CI without running agent or code. Functional coding experiment needs isolated workspace, reviewed inference and tests.",
+      "status": "real_upstream_file_editor_verified",
+      "notes": "OpenHands SDK 1.60.1 + openhands-tools 1.60.1: real FileEditorExecutor created and edited a static public toy program and refused unauthorized write in an ephemeral temporary workspace; real tool behavior verified, no LLM, no autonomous agent or novel code generated. PR #25 merged.",
       "verified_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42339003588",
-      "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/21"
+      "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/21",
+      "functional_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42340592716"
     },
     {
       "name": "PaperQA2",
