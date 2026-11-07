@@ -1,0 +1,173 @@
+name: Inspect | Existing ReAct Coding Agent on Original HumanEval
+on:
+  pull_request:
+    paths:
+      - 'src/plenum_ai/inspect_react_coding.py'
+      - 'tests/test_inspect_react_coding.py'
+      - '.github/workflows/inspect-react-coding.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/plenum_ai/inspect_react_coding.py'
+      - 'tests/test_inspect_react_coding.py'
+      - '.github/workflows/inspect-react-coding.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: inspected-react-original-code-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  upstream-wiring-no-inference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Load actual upstream Inspect agent and original HumanEval grader, no model calls
+        run: |
+          python -m pip install -e '.[inspection]'
+          python -m pip install "inspect-evals==0.27.0"
+          python -m pip check
+          python -m unittest discover -s tests -p 'test_inspect_react_coding.py' -v
+          python -m plenum_ai.inspect_react_coding --out reports/react-coding-offline-plan.json
+  original-react-agent:
+    needs: upstream-wiring-no-inference
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release existing Inspect ReAct coding agent'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 37
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+      OPENAI_API_KEY: ''
+      ANTHROPIC_API_KEY: ''
+      GOOGLE_API_KEY: ''
+      HF_TOKEN: ''
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Require archival of original independent HumanEval code baseline before any model download
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path("ledger/evidence/inspect-original-coding/run-42346922772.json")
+          if not p.is_file():
+              raise SystemExit("Original code baseline not independently archived: no ReAct inference permitted")
+          r=json.loads(p.read_text())
+          assert r["original_scoring_verified"] and r["attempted"]==3
+          assert r["candidate_revision"]=="70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+          assert any(s["id"]=="HumanEval/0" for s in r["samples"])
+          assert not r["AGI_demonstrated"]
+          print("Original independent code baseline archived; ReAct loop may be tested")
+          PY
+      - name: Require disposable Docker isolation
+        run: |
+          docker info >/dev/null
+          docker compose version
+      - name: Install pinned official agent, scorer and CPU model backend
+        run: |
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[inspection]'
+          python -m pip install "inspect-evals==0.27.0" "transformers==5.22.1" "accelerate>=1.1,<2" "huggingface_hub>=1.2,<2" safetensors
+          python -m pip check
+      - name: Download one unchanged reviewed public Qwen3-1.7B model
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from huggingface_hub import HfApi,snapshot_download
+          from plenum_ai.inspect_react_coding import plan
+          p=plan()
+          info=HfApi().model_info(p["candidate_model"],revision=p["candidate_revision"])
+          assert info.sha==p["candidate_revision"]
+          Path("reports").mkdir(exist_ok=True)
+          Path("reports/model-path.txt").write_text(snapshot_download(repo_id=p["candidate_model"],revision=p["candidate_revision"]))
+          PY
+      - name: Run upstream Inspect ReAct against first original HumanEval function and its scorer
+        run: |
+          MODEL_PATH="$(cat reports/model-path.txt)"
+          inspect eval src/plenum_ai/inspect_react_coding.py --model hf/local \
+            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
+            --limit 1 --epochs 1 --max-samples 1 --max-sandboxes 1 \
+            --max-connections 1 --max-tokens 256 --temperature 0 \
+            --turn-limit 6 --message-limit 14 --time-limit 240 --max-retries 0 \
+            --log-dir reports/inspect-react-coding-logs --display none
+      - name: Audit original independent function test and actual tool loop transcript
+        run: |
+          python -m plenum_ai.inspect_react_coding \
+            --audit-dir reports/inspect-react-coding-logs \
+            --out reports/react-original-coding-result.json
+          python - <<'PY'
+          import json
+          x=json.load(open("reports/react-original-coding-result.json"))
+          assert x["agent_loop_verified"] and x["official_functional_test_scored"]
+          assert x["attempted"]==1 and x["paid_api_calls"]==0
+          assert not x["AGI_demonstrated"] and not x["automated_deployment"]
+          print("Original ReAct coding score",x["correct"],"/1; genuine tool calls",x["actual_model_tool_calls"],"and tool results",x["actual_tool_results"])
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: inspect-react-agent-original-function-evidence
+          path: |
+            reports/react-original-coding-result.json
+            reports/inspect-react-coding-logs/
+          retention-days: 90
+  archive-original:
+    needs: original-react-agent
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/download-artifact@v7
+        with:
+          name: inspect-react-agent-original-function-evidence
+          path: reports
+      - name: Append scorer and complete original tool transcript
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,zipfile
+          from pathlib import Path
+          d=json.loads(Path("reports/react-original-coding-result.json").read_text())
+          assert d["official_functional_test_scored"] and d["attempted"]==1
+          assert not d["automated_deployment"] and not d["AGI_demonstrated"]
+          base=Path("ledger/evidence/inspect-react-coding")
+          base.mkdir(parents=True,exist_ok=True)
+          name="run-"+os.environ["RUN_ID"]
+          out=base/(name+".json")
+          raw=base/(name+"-raw.zip")
+          if out.exists() or raw.exists():raise FileExistsError("No past agent transcript overwrites")
+          files=list(Path("reports/inspect-react-coding-logs").rglob("*.eval"))
+          if len(files)!=1:raise ValueError("Original tool-use eval log missing")
+          d["source_sha"]=os.environ["SOURCE_SHA"]
+          d["original_eval_sha256"]={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
+          with zipfile.ZipFile(raw,"x",zipfile.ZIP_DEFLATED) as z:
+              for p in files:z.write(p,arcname=p.name)
+          out.write_text(json.dumps(d,indent=2)+"\n")
+          PY
+      - name: Preserve evidence, never generated agent edits on production
+        run: |
+          git -C ledger config user.name 'Plenum Scientific Evidence'
+          git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ledger add evidence/inspect-react-coding/
+          git -C ledger commit -m 'Archive actual Inspect ReAct original sandbox coding evidence'
+          git -C ledger pull --rebase origin research-memory
+          git -C ledger push origin HEAD:research-memory
