@@ -91,3 +91,9 @@ run 42167232309; no real biomolecular modeling claims are warranted.
 - `creative_sources.py`: Openverse, Metropolitan Museum v1.1 and MusicBrainz public metadata only, rights labeled and independently retrievable.
 - `youtube_api.py`: optional official v3 video metadata search with owner-supplied `YOUTUBE_API_KEY` secret, redacted errors and no captions/downloads.
 - `docs/UNIVERSAL_DISCOVERY_AND_CREATIVITY.md`: consolidated connection requirements and status inventory for future creative/scientific resources.
+
+## Nov 7, 2026: authenticated Kaggle and real isolated browser tests
+
+- **Official Kaggle CLI, API authorization VERIFIED:** owner secret in GitHub `kaggle-access`, successful manual notebook-listing check ([run 42408852329](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42408852329)). Read/write code path exists but a remote Kaggle write and 27B trial have NOT yet been executed.
+- **Microsoft Playwright 1.64.1 + Chromium, real CI:** public `https://example.com/` opened with HTTP 200 and a local web-page interaction typed a field and clicked a button with the expected DOM result ([run 42409395480](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42409395480)). Whitelisted public GET sites only, no accounts or site mutations, no LLM-controlled action yet. Review [Browser Autonomy](BROWSER_AUTONOMY.md) for staged website-control roadmap.
+- **Service inventory:** [Connection Roadmap](CONNECTION_ROADMAP.md) marks working sources, optional owner credentials, security boundaries and expected costs. Do not install every third-party app, duplicate journal APIs, or confuse data adapters with AGI.
