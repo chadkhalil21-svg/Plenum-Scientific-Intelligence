@@ -19,7 +19,7 @@ self-improvement remain unestablished.
 
 | Domain | Engine | Current state | Verification and boundary |
 |---|---|---|---|
-| Mathematics | [Lean 4](https://github.com/leanprover/lean4) | Registry: planned | No local theorem-prover deployment; formal checking still needed |
+| Mathematics | [Lean 4](https://github.com/leanprover/lean4) | **Verified isolated real Lean 4 CI** | Three predefined general proofs compiled; deliberate false proof rejected in run 42402969343; no autonomous theorem discovery |
 | Drug discovery | [DiffDock](https://github.com/gcorso/DiffDock) | Registry: planned, license/weights review | No drug binding or efficacy claims |
 | Molecular dynamics | [OpenMM 8.6.1](https://github.com/openmm/openmm) | **Verified isolated CPU engine** | Two-particle harmonic reference, not protein folding |
 | Chemistry | [PySCF](https://github.com/pyscf/pyscf) | Registry: planned | Electronic structure models must be validated |
