@@ -47,6 +47,9 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Run real browser interaction and policy tests
         run: python -m unittest discover -s tests -p test_browser_worker.py -v
+      - name: Prove public HTTPS navigation with allowlisted source, no credentials
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        run: python -m plenum_ai.browser_worker --mode public-read-only --url 'https://example.com/'
       - name: Use an isolated browser without any account secrets
         env:
           BROWSER_MODE: ${{ inputs.mode || 'local-smoke' }}
