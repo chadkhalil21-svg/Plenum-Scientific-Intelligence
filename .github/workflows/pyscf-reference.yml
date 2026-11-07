@@ -42,8 +42,10 @@ jobs:
           assert record["isolated_cpu_scientific_solver"] and not record["AGI_demonstrated"]
           dest=Path("reports/pyscf_h2_reference.json")
           dest.parent.mkdir(parents=True,exist_ok=True)
-          dest.write_text(json.dumps(record,indent=2)+"\\n")
-          print("PySCF H2 reference error:",record["absolute_numerical_error_hartree"])
+          dest.write_text(json.dumps(record,indent=2)+"\n")
+          validated=json.loads(dest.read_text())
+          assert validated["schema"]=="plenum-pyscf-rhf-reference-v1"
+          print("PySCF H2 reference error:",validated["absolute_numerical_error_hartree"])
           PY
       - uses: actions/upload-artifact@v7
         if: always()
