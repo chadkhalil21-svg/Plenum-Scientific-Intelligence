@@ -67,7 +67,7 @@ class USGSDomainTests(unittest.TestCase):
         self.assertEqual(max(future),h.HOLDOUT_LAST)
 
     def test_reject_duplicate_or_wrong_units(self):
-        site="01668000"
+        site="01491000"
         x=payload(site)
         x["features"].append(copy.deepcopy(x["features"][0]))
         with self.assertRaisesRegex(ValueError,"duplicate"):
