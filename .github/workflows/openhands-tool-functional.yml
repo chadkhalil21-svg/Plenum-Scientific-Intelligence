@@ -34,7 +34,8 @@ jobs:
           python -m unittest discover -s tests -p 'test_openhands_tool_test.py' -v
           python -m plenum_ai.openhands_tool_test --out reports/openhands-tool-preflight.json
       - name: Install only previously verified pinned OpenHands SDK
-        run: python -m pip install -e '.[openhands_tools]'
+        run: |
+          python -m pip install -e '.[openhands_tools]'
           python -m pip check
       - name: Run actual upstream tool create, edit and unauthorized-write rejection in disposable workspace
         run: |
