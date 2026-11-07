@@ -7,6 +7,7 @@ on:
       - 'tests/test_browser_actions.py'
       - 'tests/test_computer_browser_iap.py'
       - 'tests/test_private_browser_profiles.py'
+      - 'tests/test_browser_private_login.py'
       - 'tests/test_computer_browser_gateway.py'
       - 'tests/test_computer_browser_deploy.py'
       - '.github/workflows/computer-browser-cloud-run-deploy.yml'
@@ -52,6 +53,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_browser_actions.py' -v
       - name: Verify owner IAP signing and private console identity boundaries
         run: python -m unittest discover -s tests -p 'test_computer_browser_iap.py' -v
+      - name: Verify IAP owner interactive Chromium and site-scoped cookie privacy
+        run: python -m unittest discover -s tests -p 'test_browser_private_login.py' -v
       - name: Verify real on-demand public navigation with actual Chromium
         run: |
           python - <<'PY'
