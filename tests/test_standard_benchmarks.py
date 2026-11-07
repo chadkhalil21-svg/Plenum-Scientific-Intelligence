@@ -59,6 +59,20 @@ class ProvenEvaluationAdapterTests(TestCase):
                 self.assertNotIn("shell",kwargs)
                 self.assertLessEqual(kwargs["timeout"],2400)
 
+    def test_task_lists_use_supported_comma_delimited_cli_argument(self):
+        plan=b.preflight("Qwen/Qwen3-1.7B",["arc_easy","hellaswag"],4)
+        i=plan["command"].index("--tasks")
+        self.assertEqual(plan["command"][i+1],"arc_easy,hellaswag")
+        self.assertEqual(plan["command"][i+2],"--num_fewshot")
+
+    def test_tampered_command_rejected_even_with_reviewed_library(self):
+        manifest=b.preflight("Qwen/Qwen3-1.7B",["arc_easy"],4)
+        manifest["command"].append("--trust_remote_code")
+        with patch.object(b.subprocess,"run") as runner:
+            with self.assertRaisesRegex(ValueError,"modified"):
+                b.invoke(manifest)
+            runner.assert_not_called()
+
     def test_failed_upstream_run_cannot_be_reported_as_success(self):
         manifest=b.preflight("Qwen/Qwen3-1.7B",["arc_easy"],4)
         with patch.object(b.importlib.metadata,"version",return_value=b.PACKAGE_VERSION):
