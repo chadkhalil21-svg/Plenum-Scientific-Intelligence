@@ -1,7 +1,7 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T18:25:34.966Z",
-  "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
+  "last_reviewed_utc": "2026-11-07T18:40:12.709Z",
+  "mission": "Develop full, independently evaluated Artificial General Intelligence for broad scientific and technological reasoning, autonomous authorized action, durable learning, creative invention, and open-ended capability improvement. Study machine consciousness and artificial affect without asserting unproven subjective experience.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
   "automatic_model_promotion": false,
@@ -400,36 +400,58 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/notebooks/prometheus_kaggle_qwen36_27b.ipynb",
       "AGI_demonstrated": false,
       "notes": "Founder-controlled next experiment: sign in to Kaggle from iPad, enable free T4x2 and Internet if available, run hardware preflight, then explicitly opt in to download/compile Qwen3.6-27B Q4_K_M (19.1 GB) and record actual process, output accuracy and hardware/latency. Free quota/storage/compatibility not guaranteed; no run has yet occurred. No payment, cloud credentials or private Plenum research authorized in public GitHub."
+    },
+    {
+      "id": "livekit-voice-sdk-real-import-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42402262095",
+      "AGI_demonstrated": false,
+      "notes": "PR #51 merged as b99d0aba30cb37a5409d08b8b2c35a08d1dc7e62. Pinned LiveKit Agents 1.8.9 installed in separate CI; actual AgentServer was constructed via optional upstream Python SDK with session registration, no credentials and no server started. General CI #42402262047 and independent preflight workflows passed. Voice microphone, iPad client, actual STT/LLM/TTS inference, latency, proprietary memory and AGI remain unverified. Guard requires explicit owner approval for potentially billed inference."
+    },
+    {
+      "id": "agi-mission-and-continuity-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/51",
+      "AGI_demonstrated": false,
+      "notes": "Public full-AGI mission charter merged with explicit independent reasoning, authorized loyal autonomy, research goals for consciousness and artificial affect, controlled open-ended improvement, prospective scientific testing, and a mandatory PR ledger evidence checklist. Existing Stage One plan corrected the outdated Kaggle link to https://www.kaggle.com/code/new?languageId=8 ; this documentation is not an AGI capability or real deployment result."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Run the founder-approved free-cloud Qwen3.6-27B Q4_K_M proof from the Kaggle T4x2 notebook (PR #50 merged, full CI run 42401051332 passed). An iPad can control Kaggle, but the founder must sign in, enable available GPU and Internet, check >=25 GiB temporary disk and explicitly opt in. Model execution is NOT DONE. Record exact revisions, model file SHA256, correctness, latency, host RAM and VRAM; stop without paid GPU."
+      "action": "Run the free Kaggle Qwen3.6-27B Q4_K_M pilot from an iPad using the corrected https://www.kaggle.com/code/new?languageId=8 entry point and existing main-branch notebook. Check T4x2 GPU, scratch disk and source/model versions, explicitly opt in to the free experiment, and measure real output, latency and RAM/VRAM. No actual 27B cloud run is yet verified; no paid cloud is approved."
     },
     {
       "priority": 2,
-      "action": "After a real model runs, benchmark independently on matched original Inspect tasks, external-repository repair cases and preregistered unseen cross-domain reasoning. Compare Qwen3.6-27B with existing 0.6B/1.7B public baselines; measure regression rate, inference speed, GPU memory, failure cases and dollar cost. One arithmetic response is never sufficient for general intelligence."
+      "action": "Extend the verified optional LiveKit Agents 1.8.9 voice bridge from import-only (PR #51; SDK CI #42402262095) to an authorized, privacy-reviewed iPad microphone session with actual STT/LLM/TTS and interruption tests. Hosted LiveKit inference endpoints may incur costs; secure connection credentials, explicit approval and bounded spend are required. Reuse Pipecat only if real comparative evidence favors it."
     },
     {
       "priority": 3,
-      "action": "Evaluate LiveKit Agents versus Pipecat for a consent-aware, iPad-accessible real-time voice and optional vision interface with interruption, privacy and access controls. Integrate separately with the existing LangGraph and research tools; no voice application has yet been deployed. Stage One may resemble a fictional conversational OS in interface but does not establish consciousness."
+      "action": "Independently score a running model with existing Inspect and original cross-domain, coding, mathematics and prospective research tests, including matched baselines, unseen examples, efficiency, regression cases and error traces. Stronger model size, prompts or a single arithmetic answer do not prove AGI."
     },
     {
       "priority": 4,
-      "action": "Run a measured unfamiliar external repository bug repair with the original SWE-bench evaluator, using the merged guarded bridge and existing issue #45. Requires a founder-approved isolated Docker host meeting published memory/storage needs; preserve both successful repairs and negative outcomes without automatic deployment."
+      "action": "Demonstrate one genuine unfamiliar external-repository repair using the already merged official SWE-bench integration (#45), an isolated reviewed Docker host, original scorer, matched no-tool baseline, and archived failure/success evidence. Do not claim autonomous software engineering from SDK imports."
     },
     {
       "priority": 5,
-      "action": "Develop securely stored, consent-based private project, episodic and strategic memories with provenance, deletion and correction; keep public research evidence in research-memory. Demonstrate actual gain on new tasks before claiming persistent learning or self-improvement."
+      "action": "Connect separately authenticated, consent-based private project, episodic and strategic memory plus permitted scientific tools to the independent-agent layer; test continuity after restart, source reliability, correction/deletion, privacy and actual learning on new tasks. Never copy unpublished research to the public repository."
     },
     {
       "priority": 6,
-      "action": "Complete preregistered NOAA and USGS prospective research and independent audits on their original schedules; build multidisciplinary scientific tool pipelines only where real source and experimental validation exist. Do not replace independent laboratories with speculative AI-generated findings."
+      "action": "Advance reliable long-horizon initiative, experiments and multi-agent scientific research with measurable outcomes, safe finite budgets, and researcher reproduction. Avoid counting simulated agent personas as functioning scientists; independently verify innovations before any AGI or discovery assertion."
     },
     {
       "priority": 7,
-      "action": "Review all capability improvements through independent tests and founder approval; avoid paid-cloud activation, public data leaks, unrestricted tool execution, model promotion and unbounded automated experiments. AGI remains NOT demonstrated."
+      "action": "Pursue theories and operational tests for artificial consciousness, self-modeling and emotions, clearly distinguishing measurable behavior from unknowable subjective experience. Explore open-ended self-improvement only through controlled, rollback-capable, independently scored changes and founder approval."
+    },
+    {
+      "priority": 8,
+      "action": "Review the user-provided 85.7-second animation's spoken narration using a genuine accessible speech-to-text tool or connected transcription workflow before quoting or treating audio claims as verified. Visuals were reviewed and an AAC track extracted locally, but there is no certified transcript. Do not upload this media to public GitHub."
+    },
+    {
+      "priority": 9,
+      "action": "Complete the prerecorded prospective NOAA and USGS research cycles and independent audits on November 2026 target dates. Preserve all external data, original metrics and negative results. Update canonical research-memory ledger after each actual verified release or new decision; never imply background awareness or an automatic sentient memory."
     }
   ],
   "decisions": [
@@ -548,6 +570,34 @@
     {
       "decision": "No public video upload, private memories, unpublished IP, paid cloud service or automatic model promotion without scoped authorization.",
       "reason": "The public research repository contains public plans and evidence only. Private episodic memory and consent-aware tool actions need separate controlled infrastructure."
+    },
+    {
+      "decision": "Full AGI is the overriding Plenum Prometheus ambition; natural voice or Her-like interaction is an early interface, not the product's ultimate purpose.",
+      "reason": "The founder prioritizes broadly independent scientific intelligence, learning, creation, invention and technology development, as depicted by an animated multi-agent science vision."
+    },
+    {
+      "decision": "Pursue loyal independence as faithful, confidential, transparent and corrigible execution of authorized founder objectives.",
+      "reason": "Agentic initiative should not require micromanagement but must include truthful disagreement, privacy, legitimate limits, human authorization for consequential actions and reversible changes."
+    },
+    {
+      "decision": "Treat actual machine consciousness, subjective emotions and open-ended self-evolution as ambitious research questions, never established properties.",
+      "reason": "There is no accepted test for artificial subjective experience or proof of unlimited capability. Develop and evaluate self-modeling, affect recognition, persistent preferences and improvement under finite resource and oversight constraints."
+    },
+    {
+      "decision": "Reuse native LiveKit Agents for optional voice integration, not a new media-transport framework.",
+      "reason": "Pinned upstream 1.8.9 was imported and an agent server registered successfully with no live provider usage. Provider billing and microphone connection require separate owner authorization and host deployment."
+    },
+    {
+      "decision": "Fix the iPad Kaggle navigation using the verified Python notebook shortcut and retain a homepage fallback.",
+      "reason": "The previous notebook welcome address did not work for the founder. Kaggle staff documented https://www.kaggle.com/code/new?languageId=8 for Python notebook creation."
+    },
+    {
+      "decision": "Require a source-linked canonical ledger update with each significant verified release, failure, decision or priority change.",
+      "reason": "A repository PR template now prompts evidence provenance and separate post-merge research-memory state updates. Automated CI is validation, not ongoing independent awareness."
+    },
+    {
+      "decision": "Do not assert having heard or transcribed a user video when only visuals and an audio track are confirmed.",
+      "reason": "The 85.7-second video contains an AAC audio stream and was locally extracted, but transcription was unavailable in the current runtime. Never publish this user media or fabricate audio quotations."
     }
   ],
   "operating_rules": [
