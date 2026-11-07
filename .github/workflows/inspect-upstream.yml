@@ -1,0 +1,54 @@
+name: Reuse Pinned Inspect AI Evaluator
+on:
+  pull_request:
+    paths:
+      - 'src/plenum_ai/inspect_bridge.py'
+      - 'tests/test_inspect_bridge.py'
+      - '.github/workflows/inspect-upstream.yml'
+      - 'pyproject.toml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/plenum_ai/inspect_bridge.py'
+      - 'tests/test_inspect_bridge.py'
+      - '.github/workflows/inspect-upstream.yml'
+      - 'pyproject.toml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect-zero-inference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Default behavior, no model or upstream install
+        run: |
+          python -m pip install -e .
+          python -m unittest discover -s tests -p 'test_inspect_bridge.py' -v
+          python -m plenum_ai.inspect_bridge --out reports/inspect-plan.json
+      - name: Install pinned MIT-licensed upstream Inspect
+        run: python -m pip install -e '.[inspection]'
+      - name: Run actual Inspect task and score correct and incorrect frozen replies
+        run: python -m plenum_ai.inspect_bridge --execute --out reports/inspect-smoke.json
+      - name: Verify no model/API calls or AGI claims
+        run: |
+          python - <<'PY'
+          import json
+          p=json.load(open('reports/inspect-smoke.json'))
+          assert p['inspect_executed'] and p['verified_samples']==2
+          assert p['model_calls']==0 and p['external_api_calls']==0
+          assert p['AGI_demonstrated'] is False
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: inspect-integration-public-offline-evidence
+          path: |
+            reports/inspect-plan.json
+            reports/inspect-smoke.json
+            reports/inspect-logs/
+          retention-days: 14

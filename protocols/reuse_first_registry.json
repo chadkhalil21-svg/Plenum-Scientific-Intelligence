@@ -45,6 +45,18 @@
       "origin": "https://github.com/K-Dense-AI/scientific-agent-skills",
       "adoption": "read_only_candidate_catalog",
       "status": "not_approved_for_executing_third_party_skill_instructions"
+    },
+    {
+      "name": "Inspect AI",
+      "role": "independent_agent_and_model_evaluation",
+      "origin": "https://github.com/UKGovernmentBEIS/inspect_ai",
+      "release": "0.3.287",
+      "license": "MIT",
+      "adoption": "optional_real_framework_ci_smoke",
+      "default_execution": false,
+      "preinstalled": false,
+      "status": "proposed_pending_CI",
+      "notes": "Pinned upstream API smoke with one correct and one incorrect fixed public replay. Zero model/API calls; not AGI evidence."
     }
   ],
   "rules": {
