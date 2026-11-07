@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T05:13:00Z",
+  "last_reviewed_utc": "2026-11-07T05:15:32Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -187,6 +187,13 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42341668858",
       "AGI_demonstrated": false,
       "notes": "Newly released bounded 96-question original Inspect Evals benchmark on frozen Qwen3-0.6B: 24 ARC Challenge science, 24 GSM8K math, 24 HellaSwag commonsense, 24 MMLU zero-shot multidisciplinary knowledge. As of this checkpoint CPU inference was queued; no score or evidence of novel/general intelligence may be claimed until all 96 original grades and raw artifacts are independently audited. Public historical questions may overlap pretraining. PR #29 merged."
+    },
+    {
+      "id": "qwen17-paired-inspect-preflight-20261107",
+      "status": "planned",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/30",
+      "AGI_demonstrated": false,
+      "notes": "Draft PR #30 adds real paired 0.6B-vs-1.7B Inspect evaluation on exactly the first 12 of each of four official benchmark tasks; 48 identical public questions required, exact raw original log SHA256 evidence from 96-case baseline run 42341668858 required before any 1.7B model download or inference. Offline CI run 42341958805 passed; candidate inference not run and no performance gain demonstrated."
     }
   ],
   "next_actions": [
@@ -196,7 +203,7 @@
     },
     {
       "priority": 2,
-      "action": "Once frozen 0.6B baseline is fully verified, compare one stronger preexisting pinned open-weight model using identical dataset split/tasks/format, record statistical uncertainty and inference cost. Do not retrain or auto-promote on public benchmarks."
+      "action": "Finish reference 96-case Inspect independent audit and append-only original raw-log archival; only then release pretested PR #30 paired Qwen3-1.7B on 48 identical questions, compare independent correctness, losses/gains and runtime without auto-promotion."
     },
     {
       "priority": 3,
