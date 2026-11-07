@@ -1,0 +1,38 @@
+name: USGS Hydrology Source Verification
+on:
+  push:
+    paths:
+      - '.github/workflows/usgs-source-check.yml'
+      - 'src/plenum_ai/usgs_hydrology.py'
+      - 'tests/test_usgs_hydrology.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-usgs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 11
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install lightweight numerical instrumentation
+        run: python -m pip install -e ".[empirical]"
+      - name: Verify offline source-integrity and forecasting tests
+        run: python -m unittest discover -s tests -p 'test_usgs_hydrology.py' -v
+      - name: Fetch REAL USGS discharge data with current non-deprecated API
+        run: |
+          python - <<'PY'
+          from plenum_ai import usgs_hydrology as h
+          for site,name in h.SITES.items():
+              observations,source=h.fetch_daily(site)
+              print('Monitoring station:',site,name)
+              print('Measured public records:',len(observations))
+              print('Observation days:',min(observations),max(observations))
+              print('USGS approval status:',source['statuses'])
+              print('Development SHA256:',h.development_digest(observations))
+              print('Rolling scientific baselines:',h.baseline_scores(observations))
+              assert max(observations) == h.DEVELOPMENT_LAST
+          print('Two distinct REAL USGS hydrology sources verified without future-date access')
+          PY
