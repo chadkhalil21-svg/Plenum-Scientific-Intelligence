@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T19:26:07.180Z",
+  "last_reviewed_utc": "2026-11-07T19:34:00.194Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -449,16 +449,30 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/56",
       "AGI_demonstrated": false,
       "notes": "PR #56 merged as 7ea42fabfa64882132120885669661f3b03d8c3f. Strict JSON archive output fixes and round-trip validation tests were added to the daily Lab Radar and PySCF workflows. Original first public radar JSON and link index were normalized in corrective commits with full Git history retained; parsed actual results were checked. Core CI and the revised isolated workflows passed. No scientific findings or model behavior changed."
+    },
+    {
+      "id": "kaggle-scratch-fallback-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42406474232",
+      "AGI_demonstrated": false,
+      "notes": "PR #57 merged as b75354ccf6b271d45e0ef72f1329ff44c3ca5ef0. Founder ran genuine notebook session with two idle Tesla T4 (15,360 MiB each) but a subsequent read-only storage check failed because /kaggle/temp did not exist. Notebook now enumerates existing /kaggle/temp,/kaggle/working,/tmp scratch paths and prints RAM before an explicit manual download gate. CI passed notebook schema and code compilation. This is code validation only; disk capacity, actual hosted inference and Kaggle read/write API authorization remain unverified. No direct Kaggle connector was discovered in ChatGPT."
+    },
+    {
+      "id": "china-public-research-adapters-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/58",
+      "AGI_demonstrated": false,
+      "notes": "PR #58 merged as 838ba8356caea7665e9e2d0206c2fec49959cd49 after full core CI success run 42406621122. Existing global World Horizon and Lab Radar now include official English Chinese Academy of Sciences research announcement links and OpenAlex works with CN institutional coauthors, rolling 30-day publication window (not a paid records-updated sync). Offline parsing and origin tests passed; as of ledger update, real public endpoint success/outage under scheduled live workflow is not yet validated. An author with China affiliation is not necessarily a China-only or institution-led discovery. No blocked full text, direct lab access or breakthrough verification is asserted."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Kaggle founder's iPad session has genuinely executed nvidia-smi with two Tesla T4 GPUs, 15,360 MiB each (screenshots Nov 7; not public in repo). NEXT: run read-only disk/RAM checks for /kaggle/temp and /kaggle/working. If sufficient (27B Q4 GGUF ~19.1 GB plus build/KV caches) import the approved Qwen3.6-27B notebook and manually enable free model download and inference; report actual revision, compatibility, memory, speed and measured correctness. No large-model execution yet."
+      "action": "Founder Kaggle iPad verified real 2x Tesla T4, 15,360 MiB each, via nvidia-smi, but /kaggle/temp was absent and memory/disk code aborted before measuring RAM. Run revised read-only preflight that probes existing /kaggle/working and /tmp folders and prints available RAM. Existing GitHub notebook scratch fallback was merged in PR #57. If any writable scratch volume has >=25 GiB, import notebook and manually approve Qwen3.6-27B Q4 download and timed inference. No private Kaggle API connection or model execution yet."
     },
     {
       "priority": 2,
-      "action": "Independently evaluate real Qwen3.6-27B outcomes with existing Inspect AI/EleutherAI harness on unfamiliar cross-domain and software problems and matched small-model baselines. Do not promote based on one public arithmetic output. Measure costs, model errors, context limitations and reproducibility."
+      "action": "Compare actually running Qwen3.6-27B to another practical open-weight candidate (e.g. Qwen3.6-35B-A3B if quantized runtime fits available GPUs) using independent Inspect and matched unfamiliar coding, reasoning, scientific, multimodal tasks. Establish initial quality/speed/memory and provenance; official benchmark publicity is not Plenum independent performance or AGI."
     },
     {
       "priority": 3,
@@ -486,7 +500,7 @@
     },
     {
       "priority": 9,
-      "action": "Review the daily public-world-horizon Lab Radar evidence/updates: initial real run 42405802931 tried 25 public sources, 21 returned data, 47 links were first seen, and archive JSON was repaired/tested in PR #56. Keep a running public-source record and daily briefing, monitor missing sources, and advance truly prospective NOAA/USGS research and independent cross-domain reproduction. Research announcements are not validated laboratory discoveries."
+      "action": "Review actual daily public World Horizon and incremental lab-radar archives including new PR #58 China research adapters (English CAS announcements, OpenAlex CN-affiliated scholarly works), check on live endpoint successes/outages and parseable archives, and extend to more Chinese-language university and lab sources only with verifiable dates and transparent translations. Continue rigorous scheduled prospective NOAA/USGS research with independent baseline tests; no unaudited laboratory or national breakthrough claims."
     },
     {
       "priority": 10,
@@ -697,6 +711,22 @@
     {
       "decision": "Require strict round-trip JSON validation and preserve provenance of any archived-research corrections.",
       "reason": "PR #56 fixed literal newline serialization errors exposed by a genuine live run; original faulty archive versions remain visible in Git history while corrected files parse reliably. Scientific evidence may never be silently rewritten."
+    },
+    {
+      "decision": "Use Kaggle only as a temporary first free model test; retain owner control of notebook and credentials.",
+      "reason": "The current ChatGPT GitHub connector can change repository notebooks but lacks authenticated Kaggle read/write. Official Kaggle CLI can pull/push notebooks with Kaggle credential stored in approved secret storage, not in conversation or public GitHub. ChatGPT Plugin Directory search returned no matching Kaggle connector."
+    },
+    {
+      "decision": "Add geographically broad China laboratory and scientific literature signals without conflating public releases with verified discoveries.",
+      "reason": "Chinese Academy of Sciences newsroom plus OpenAlex CN coauthor metadata are new read-only sources inside the same daily World Horizon source index. Tsinghua and further Chinese-language sources require separately reviewed translation, provenance and source coverage; no private Chinese institution access is implied."
+    },
+    {
+      "decision": "Keep Qwen3.6-27B as a strong affordable first test rather than asserting it is the best or AGI.",
+      "reason": "Official Qwen research publishes competitive coding and STEM results; rankings depend on tasks and upstream benchmark methodology. Evaluate open-weight variants and possibly the 35B-A3B candidate on measured quality, latency, memory, cost, multimodal ability and held-out tasks before adoption."
+    },
+    {
+      "decision": "Preserve distinct verification of actual GPU access, scratch disk, notebook execution, model inference and durable autonomous AGI service.",
+      "reason": "Screenshots verified two T4s and a live 14-minute notebook session, but /kaggle/temp was missing and no inference or persistence was established. Free Kaggle sessions and GitHub Actions are not always-on private AGI compute."
     }
   ],
   "operating_rules": [
