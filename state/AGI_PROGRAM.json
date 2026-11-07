@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T06:28:00Z",
+  "last_reviewed_utc": "2026-11-07T06:33:00Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -290,20 +290,31 @@
     },
     {
       "id": "inspect-original-human-eval-coding-20261107",
-      "status": "running_unverified",
+      "status": "verified_foundation",
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42346922772",
       "AGI_demonstrated": false,
-      "notes": "PR #35 merged at a54a5490574e3d357442839d29dbf128bf51b4c6. Started original upstream Inspect AI 0.3.287 / Inspect Evals 0.27.0 HumanEval code synthesis on frozen public Qwen3-1.7B, 3 historical tasks, 1 epoch, original independent functional verify() scorer. Model-generated Python executed only in disposable default networkless Docker sandbox, bounded CPU, zero paid external model APIs. Preflight successful; actual original code correctness not yet verified. Archive all raw original .eval artifacts append-only, never promote model or claim AGI."
+      "notes": "Actual original Inspect Evals 0.27.0 HumanEval first three public Python function programming tasks on frozen Qwen3-1.7B (Qwen revision 70d244cc86ccca08cf5af4e1e306ecf908b1ad5e). Generated Python executed against original independent functional verify() grader inside default networkless Docker. HumanEval/0 and /2 passed; /1 failed. CI job 42346922772 and append-only research-memory/evidence/inspect-original-coding/run-42346922772.json plus original .eval raw ZIP SHA256 hash. Exactly 3 local model calls, zero paid model API calls. Proves only tiny historical one-shot code synthesis, NOT autonomous code repair or AGI.",
+      "result": {
+        "correct": 2,
+        "attempted": 3
+      }
+    },
+    {
+      "id": "inspect-upstream-react-original-coding-20261107",
+      "status": "running_unverified",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42347377474",
+      "AGI_demonstrated": false,
+      "notes": "PR #36 merged as 054957ba0ce63004257f409d228da9f049f51680. True existing upstream Inspect react() agent uses upstream Python sandbox tool and original HumanEval function scorer on same first public question, max 6 turns/14 messages, 20 second tool limits, 256 tokens per turn, frozen public Qwen3-1.7B. Original independent 3-case HumanEval score 2/3 already archived; no custom planning engine, paid model API, production repo access or auto-promotion. Agentic tool usage and original independent score pending real log inspection; must NOT claim autonomy if tool call and result count is zero."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Run and independently audit original upstream HumanEval code-function test #42346922772 (3 historical published coding tasks) in disposable Docker; verify true model-generated code success/failure, original scorer and raw .eval archive. Then evaluate bounded Inspect ReAct or OpenHands on independent multi-step software repair."
+      "action": "Audit completed real Inspect ReAct agent original HumanEval run 42347377474: verify original functional test score AND actual model tool calls/observed tool responses in raw log. With genuine multi-turn failure repair, progress to validated software repository tasks (SWE-bench Verified/Terminal-Bench) rather than building new loops."
     },
     {
       "priority": 2,
-      "action": "Protect experimental comparability: Qwen3-1.7B fixed 12-question GSM8K 128 to 256 tokens rose 1/12 to 7/12 (6 repairs, zero regressions). Reassess models using equal output budgets, novel holdouts and actual tool/coding results; do not claim general-purpose model promotion from tiny public samples."
+      "action": "Review real original HumanEval Qwen3-1.7B coding baseline: 2/3 passed against original independent Docker functional tests, one failure archived; develop stronger prospective coding/research evaluations and compare with a reviewed stronger model under explicit compute/data limits."
     },
     {
       "priority": 3,
@@ -390,6 +401,10 @@
     {
       "decision": "Prioritize a fair original functional coding/agent test over new model training; change model output budget before assuming low math accuracy reflects reasoning deficiency.",
       "reason": "On 12 matched public Qwen3-1.7B GSM8K questions, independently scored 256 tokens improved 1/12 to 7/12 compared with 128 tokens (six repairs, no regressions, all fixed earlier cap-hits). This is a meaningful format confound and cannot establish AGI."
+    },
+    {
+      "decision": "Advance from original one-shot executable coding evaluation to existing Inspect ReAct agent, without a homegrown agent loop.",
+      "reason": "First independently scored Qwen3-1.7B HumanEval study produced two passing out of three original sandboxed function tests and archived one failure. A separate bounded agent with real tool-call transcripts and original scoring is needed before any autonomy claim."
     }
   ],
   "operating_rules": [
