@@ -1,0 +1,164 @@
+name: Compare Reasoning Models and Draft Falsifiable Hypotheses
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '47 10 1 * *'
+  push:
+    paths:
+      - '.github/workflows/model-challenge.yml'
+      - 'src/plenum_ai/model_challenge.py'
+      - 'tests/test_model_challenge.py'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-model-challenge
+  cancel-in-progress: false
+jobs:
+  propose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 32
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - model: Qwen/Qwen3-0.6B
+            tag: baseline
+          - model: Qwen/Qwen3-1.7B
+            tag: candidate
+    env:
+      MODEL_ID: ${{ matrix.model }}
+      MODEL_TAG: ${{ matrix.tag }}
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install existing verified SciPy and small public CPU inference dependencies
+        run: |
+          python -m pip install -e ".[science]"
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "transformers>=4.51,<5" "huggingface_hub>=0.30,<1" "accelerate>=1.1,<2" safetensors
+      - name: Prove independent comparison logic rejects altered data and invalid models
+        run: python -m unittest discover -s tests -p 'test_model_challenge.py' -v
+      - name: Use real open-weight model to choose predictions and draft a falsifiable idea
+        run: |
+          mkdir -p reports
+          python -m plenum_ai.model_challenge propose --model "$MODEL_ID" --out "reports/$MODEL_TAG.json"
+      - name: Audit candidate manifest without revealing withheld domain outcomes
+        run: |
+          python - <<'PY'
+          import os,json
+          from pathlib import Path
+          a=json.loads((Path('reports')/(os.environ['MODEL_TAG']+'.json')).read_text())
+          assert a['model_id'] == os.environ['MODEL_ID']
+          assert a['model_inference_executed'] and not a['holdout_executed']
+          assert not a['AGI_achieved'] and not a['scientific_discovery_verified']
+          assert not a['auto_model_promotion']
+          assert len(a['proposals'])==2
+          print('Model', a['model_id'], 'revision', a['model_revision'])
+          print('Structured original hypothesis draft:', a['draft']['status'])
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: plenum-${{ matrix.tag }}-sealed-predictions
+          path: reports/${{ matrix.tag }}.json
+          retention-days: 14
+  independent-auditor:
+    needs: propose
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e ".[science]"
+      - uses: actions/download-artifact@v7
+        with:
+          name: plenum-baseline-sealed-predictions
+          path: sealed/
+      - uses: actions/download-artifact@v7
+        with:
+          name: plenum-candidate-sealed-predictions
+          path: sealed/
+      - name: Reveal identical withheld numerical fixtures to independent evaluator only
+        run: |
+          python -m plenum_ai.model_challenge audit \
+            --baseline sealed/baseline.json --candidate sealed/candidate.json \
+            --out reports/comparison.json
+      - name: Require valid evidence, preserve losses, and prohibit automatic promotion
+        run: |
+          python - <<'PY'
+          import json
+          a=json.load(open('reports/comparison.json'))
+          assert a['same_holdout_evidence']
+          assert a['tasks_per_model']==2
+          assert not a['stronger_general_intelligence_proven']
+          assert not a['AGI_achieved']
+          assert not a['model_promoted']
+          assert not a['model_weights_modified']
+          print('Baseline correct:',a['baseline']['correct'],'/2')
+          print('Candidate correct:',a['candidate']['correct'],'/2')
+          print('This result is exploratory; NO model is promoted.')
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: plenum-independent-model-comparison
+          path: reports/comparison.json
+          retention-days: 14
+  archive-public-results:
+    needs: independent-auditor
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: archive
+      - uses: actions/download-artifact@v7
+        with:
+          name: plenum-baseline-sealed-predictions
+          path: sealed/
+      - uses: actions/download-artifact@v7
+        with:
+          name: plenum-candidate-sealed-predictions
+          path: sealed/
+      - uses: actions/download-artifact@v7
+        with:
+          name: plenum-independent-model-comparison
+          path: reports/
+      - name: Append only PUBLIC scientific model-comparison evidence
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import os, json
+          from pathlib import Path
+          a=json.load(open('reports/comparison.json'))
+          assert not a['model_promoted']
+          directory=Path('archive/evidence/reasoning-comparison')
+          directory.mkdir(parents=True, exist_ok=True)
+          target=directory/('run-'+os.environ['RUN_ID']+'.json')
+          if target.exists(): raise FileExistsError('Evidence cannot be replaced')
+          record={'source_revision':os.environ['SOURCE_SHA'], 'audit':a,
+                  'baseline':json.load(open('sealed/baseline.json')),
+                  'candidate':json.load(open('sealed/candidate.json')),
+                  'verified_general_improvement':False}
+          target.write_text(json.dumps(record,indent=2,ensure_ascii=False)+'\n')
+          print('Archived results, including unsuccessful predictions:',target)
+          PY
+      - name: Commit immutable public evidence to research-memory only
+        run: |
+          git -C archive config user.name 'Plenum Research Evidence'
+          git -C archive config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C archive add evidence/reasoning-comparison/
+          git -C archive commit -m 'Record independently audited candidate model evidence'
+          git -C archive pull --rebase origin research-memory
+          git -C archive push origin HEAD:research-memory
