@@ -1,0 +1,76 @@
+name: Private Cloud Run Browser Gateway Verification
+on:
+  pull_request:
+    paths:
+      - 'services/computer_browser/**'
+      - 'tests/test_computer_browser_gateway.py'
+      - 'tests/test_computer_browser_deploy.py'
+      - '.github/workflows/computer-browser-cloud-run-deploy.yml'
+      - '.github/workflows/computer-browser-cloud-run-ci.yml'
+      - 'pyproject.toml'
+  push:
+    branches: [main]
+    paths:
+      - 'services/computer_browser/**'
+      - 'tests/test_computer_browser_gateway.py'
+      - '.github/workflows/computer-browser-cloud-run-ci.yml'
+      - 'pyproject.toml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser-gateway:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install only existing browser engine and HTTP gateway
+        run: |
+          python -m pip install -e '.[browser]' fastapi==0.115.12 uvicorn==0.34.2 httpx==0.28.1
+          python -m playwright install --with-deps chromium
+      - name: Verify auth, public origins, no remote writes and real local Chromium interactions
+        env:
+          COMPUTER_BROWSER_TOKEN: 'not-a-real-production-browser-secret-0123456789'
+          BROWSER_ALLOWED_ORIGINS: https://example.com
+        run: python -m unittest discover -s tests -p 'test_computer_browser_gateway.py' -v
+      - name: Verify manual IAM-only cloud deployment safeguards
+        run: python -m unittest discover -s tests -p 'test_computer_browser_deploy.py' -v
+      - name: Verify real on-demand public navigation with actual Chromium
+        run: |
+          python - <<'PY'
+          import asyncio
+          from services.computer_browser.engine import read_public
+          x=asyncio.run(read_public("https://example.com/"))
+          assert x["status"]==200 and x["title_untrusted"]=="Example Domain"
+          assert x["external_site_changed"] is False
+          assert x["AGI_demonstrated"] is False
+          print("Real public browser navigation: PASS")
+          PY
+      - name: Build independent Cloud Run container without deploying or billing
+        run: docker build -t plenum-browser-ci -f services/computer_browser/Dockerfile .
+      - name: Smoke-test container health and unauthorized request rejection
+        run: |
+          docker run -d --name browser-ci -p 18080:8080 plenum-browser-ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:18080/healthz > /tmp/browser-health.json; then break; fi
+            sleep 1
+          done
+          python - <<'PY'
+          import json, urllib.request, urllib.error
+          d=json.load(open("/tmp/browser-health.json"))
+          assert d["ready"] and not d["remote_mutations_enabled"]
+          req=urllib.request.Request("http://localhost:18080/v1/plan",
+                  data=b'{"url":"https://example.com/"}',
+                  headers={"Content-Type":"application/json"},method="POST")
+          try: urllib.request.urlopen(req)
+          except urllib.error.HTTPError as x: assert x.code==401
+          else: raise AssertionError("Unauthenticated browser gateway accepted POST")
+          print("Production container auth fail-closed: PASS")
+          PY
+      - if: always()
+        run: docker rm -f browser-ci || true
