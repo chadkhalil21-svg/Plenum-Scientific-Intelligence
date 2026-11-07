@@ -3,6 +3,10 @@ on:
   issues:
     types: [opened]
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/computer-browser-cloud-readiness.yml'
+      - 'tests/test_browser_cloud_readiness.py'
 permissions:
   contents: read
 concurrency:
@@ -50,3 +54,13 @@ jobs:
           echo "=== Next steps ==="
           echo "If any item is NOT CONFIGURED, owner must first connect Google Cloud and set it up."
           echo "Passing this presence-only check is NOT proof of billing, roles, or site login readiness."
+  offline-check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Verify read-only workflow policy
+        run: python -m unittest discover -s tests -p 'test_browser_cloud_readiness.py' -v
