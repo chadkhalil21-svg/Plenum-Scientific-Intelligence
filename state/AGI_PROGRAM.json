@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T06:33:00Z",
+  "last_reviewed_utc": "2026-11-07T06:45:18.466Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -301,16 +301,16 @@
     },
     {
       "id": "inspect-upstream-react-original-coding-20261107",
-      "status": "running_unverified",
+      "status": "measured_failure",
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42347377474",
       "AGI_demonstrated": false,
-      "notes": "PR #36 merged as 054957ba0ce63004257f409d228da9f049f51680. True existing upstream Inspect react() agent uses upstream Python sandbox tool and original HumanEval function scorer on same first public question, max 6 turns/14 messages, 20 second tool limits, 256 tokens per turn, frozen public Qwen3-1.7B. Original independent 3-case HumanEval score 2/3 already archived; no custom planning engine, paid model API, production repo access or auto-promotion. Agentic tool usage and original independent score pending real log inspection; must NOT claim autonomy if tool call and result count is zero."
+      "notes": "Original run 42347377474 actually executed one Qwen3-1.7B generated Python tool call in Inspect's disposable Docker and received one tool error: NameError because its code referenced typing.List without import. On the next model response the original frozen Qwen3 Hugging Face Jinja tokenizer crashed TypeError('Object of type Undefined is not JSON serializable') because Inspect flat tool-call function string was interpreted as a nested function map. Original .eval header status=error and HumanEval/0 scores are EMPTY. Thus NO independent functional score and NO successful self-repair, although one true tool call+result observed. GitHub original raw .eval SHA256 c205cc78bf4cf341a6ea275ffd526ab6b2d24a3e7132bca4e1f68f0c427cce3d in artifact 13563854739. PR #37 implements minimal tokenizer compatibility patch, real-tokenizer smoke, original append-only failure archival and explicit gated single-case retest; no model training or AGI."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Audit completed real Inspect ReAct agent original HumanEval run 42347377474: verify original functional test score AND actual model tool calls/observed tool responses in raw log. With genuine multi-turn failure repair, progress to validated software repository tasks (SWE-bench Verified/Terminal-Bench) rather than building new loops."
+      "action": "Review PR #37 and confirm full repository CI plus actual pinned Qwen3 tokenizer tests on flat Inspect and nested tool-call shapes. Archive original failed one-call/one-result unscored ReAct transcript #42347377474 before any corrected inference, then run at most one bounded official HumanEval retest and audit actual model tool calls/results and functional grade."
     },
     {
       "priority": 2,
