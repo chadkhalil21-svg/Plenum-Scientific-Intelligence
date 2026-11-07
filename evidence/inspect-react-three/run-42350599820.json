@@ -1,0 +1,65 @@
+{
+  "schema": "plenum-inspect-upstream-react-3-functional-v1",
+  "upstream_agent": "Inspect AI react(), unchanged",
+  "upstream_scorer": "original inspect_evals/humaneval verify()",
+  "official_dataset": "openai/openai_humaneval",
+  "official_dataset_revision": "7dce6050a7d6d172f3cc5c32aa97f52fa1a2e544",
+  "inspect_ai_version": "0.3.287",
+  "inspect_evals_version": "0.27.0",
+  "model": "Qwen/Qwen3-1.7B",
+  "model_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+  "baseline_run_id": "42346922772",
+  "already_verified_single_agent_run_id": "42349665865",
+  "expected_original_questions": 3,
+  "max_turns_per_task": 6,
+  "max_messages_per_task": 14,
+  "max_output_tokens_per_turn": 256,
+  "sandbox": "original Inspect Docker with default network disabled",
+  "paid_api_calls": 0,
+  "local_generation_calls": "multiple_within_fixed_turn_budget_not_falsely_estimated",
+  "actual_tool_calls": 11,
+  "actual_tool_responses": 11,
+  "paired_original_questions_verified": true,
+  "original_scorer_verified": true,
+  "original_inference_executed": true,
+  "automatic_model_promotion": false,
+  "AGI_demonstrated": false,
+  "limitations": "Three historical public potentially contaminated programs; same-case one-shot comparison is not novel repository repair, sustained planning or AGI.",
+  "attempted": 3,
+  "one_shot_correct": 2,
+  "react_correct": 1,
+  "react_minus_one_shot": -1,
+  "original_cases_repaired": 0,
+  "original_cases_regressed": 1,
+  "by_original_problem": [
+    {
+      "original_id": "HumanEval/0",
+      "original_question_test_sha256": "1cd366a59f4838a9ebe74e3e07141ca96115640c21726f54342f408a3e56ccdb",
+      "one_shot_correct": true,
+      "agent_correct": true,
+      "agent_tool_calls": 4,
+      "agent_tool_responses": 4
+    },
+    {
+      "original_id": "HumanEval/1",
+      "original_question_test_sha256": "ff9a74e31a26ae5cbe0e644b01150ff7c9dfd07be98cf14aff1532897e9ac9ec",
+      "one_shot_correct": false,
+      "agent_correct": false,
+      "agent_tool_calls": 1,
+      "agent_tool_responses": 1
+    },
+    {
+      "original_id": "HumanEval/2",
+      "original_question_test_sha256": "acf16c71c0caffb6d076e584d5a6b4e48f9ca5c146ecef42450586ec4f4e8c01",
+      "one_shot_correct": true,
+      "agent_correct": false,
+      "agent_tool_calls": 6,
+      "agent_tool_responses": 6
+    }
+  ],
+  "original_source_log_sha256_verified": true,
+  "source_sha": "3a2e1ded35c3e30b706676086f2ea1317c49a1c0",
+  "original_eval_sha256": {
+    "2026-11-07T07-18-52-00-00_react-original-humaneval_TnowXb6FP4DVUkToHPbqVx.eval": "da6958c02a046aeb2ed5f4d8f913b2f42d56404db16befb3782bebb2aefb6e6e"
+  }
+}
