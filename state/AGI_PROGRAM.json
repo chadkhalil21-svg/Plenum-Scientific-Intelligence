@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T07:17:00Z",
+  "last_reviewed_utc": "2026-11-07T07:28:36.568Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -333,10 +333,14 @@
     },
     {
       "id": "inspect-react-original-humaneval1-posthoc-20261107",
-      "status": "running_unverified",
+      "status": "measured_failure",
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42350525122",
       "AGI_demonstrated": false,
-      "notes": "Follow-up to verified bounded frozen Qwen3-1.7B original official Inspect HumanEval code baseline #42346922772 2/3 (HumanEval/1 incorrect) and original Inspect ReAct HumanEval/0 #42349665865 1/1 with four real Python tool calls and four results. PR #41 merged (79fb08d03c62d99c6a89c04efbb8b8e722370b2c) after full CI; one controlled publicly known original HumanEval/1 function is now being tested with same frozen model, original independent verify() scorer, existing Inspect react() and tool inside networkless disposable Docker, native JSON chat template config, six turns and fourteen messages. Job requires exact original two archived .eval SHA256 evidence sets before downloading model; no paid APIs, no training, no promotion or AGI claim. No new score verified."
+      "notes": "Original frozen Qwen3-1.7B Inspect ReAct HumanEval/1 model run 42350525122 was independently scored INCORRECT 0/1 by original unchanged Inspect Evals verify() functional grader. The original .eval file was written with header status SUCCESS, no eval.error, one real Python tool call and one sandbox response; model code produced a Python syntax error and incorrect final implementation. GitHub runner subsequently aborted during teardown with exit code 134, so the outer job conclusion is FAILURE, distinct from already-recorded original independent scorer I. Append-only read-only recovery workflow 42351287833 independently verified and archived the ORIGINAL model run without any new inference at research-memory/evidence/inspect-react-humaneval1/run-42350525122.json and -raw.zip, exact raw SHA256 ecdb3f9e177534e5f04c8a17be9aae42a183d3a1c5547476b1ab45e8c8cb23dc. Same one-shot Qwen3-1.7B baseline also failed HumanEval/1; prior first ReAct HumanEval/0 passed 1/1 with four tool calls and four results. On two old public ReAct coding cases, 1/2 passed; not robust proof of cross-task error repair, code quality or AGI.",
+      "result": {
+        "correct": 0,
+        "attempted": 1
+      }
     },
     {
       "id": "inspect-react-three-matched-original-coding-20261107",
@@ -349,11 +353,11 @@
   "next_actions": [
     {
       "priority": 1,
-      "action": "Audit two bounded upstream Inspect ReAct coding experiments without duplicate reruns: matched original three-case HumanEval agent run #42350599820 (original one-shot reference 2/3, all original IDs/prompts/tests and SHA256, independent score + per-case tool calls/regressions), and existing isolated HumanEval/1 retest run #42350525122. Preserve original negative and positive full .eval artifacts separately, then move to unfamiliar repository repair with upstream SWE-bench Verified/Terminal-Bench; no AGI claims."
+      "action": "Stop repeating tiny public HumanEval until stronger model/compute justified. Reuse an existing upstream coding agent (mini-SWE-agent, OpenHands, or Inspect ReAct) on one rights-cleared public repository bug with independently runnable tests, an isolated workspace, no secrets and a fixed low-cost evaluation budget. Original ReAct HumanEval results: first 1/1 after four tool calls; second 0/1 with one tool call, original scorer independently verified and post-score host exit 134."
     },
     {
       "priority": 2,
-      "action": "Introduce real prospective held-out code and scientific research tasks with independent oracles; verify citation evidence, multi-step completion, retained skills and safe recovery. Avoid claiming AGI from a public single-question agent success."
+      "action": "Use existing PaperQA2/PaperBench and independent held-out scientific literature/reproduction rather than a new research agent framework. Require citation-faithfulness tests, source provenance, prospective outcomes and explicit founder approval before any model or research claim."
     },
     {
       "priority": 3,
@@ -456,6 +460,10 @@
     {
       "decision": "Mark actual tool-using coding as a verified narrow capability, not AGI; continue with more matched original coding problems and then unfamiliar validated tasks using existing Inspect ReAct.",
       "reason": "Original archived ReAct run #42349665865 independently passed 1/1 HumanEval/0 and has exactly four real Python tool requests and responses. One historical public task is too small and possibly in pretraining; no reliable long-horizon generalization was proven."
+    },
+    {
+      "decision": "Do not infer reliable autonomous coding from the first one-task ReAct success; retain second independently incorrect task and runner abort, then shift to real public repository-level independent tests.",
+      "reason": "Original Inspect HumanEval/0 ReAct passed 1/1 with four real sandbox tool calls; HumanEval/1 produced one tool call and official independent incorrect grade 0/1, with unrelated host exit 134 after scoring. The combined 1/2 tiny historical sample is insufficient for generalization or AGI."
     }
   ],
   "operating_rules": [
