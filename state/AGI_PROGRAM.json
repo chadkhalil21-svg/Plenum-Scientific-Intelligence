@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T04:59:00Z",
+  "last_reviewed_utc": "2026-11-07T05:02:07Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -140,6 +140,28 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42340592716",
       "AGI_demonstrated": false,
       "notes": "Real pinned OpenHands SDK FileEditorExecutor created and corrected a fixed synthetic Python file and blocked an unauthorized file edit in disposable temp workspace. No LLM, agent planning or model-generated program. PR #25 merged."
+    },
+    {
+      "id": "paperqa-sparse256-study-20261107",
+      "status": "measured_failure",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42340907824",
+      "result": {
+        "correct": 5,
+        "attempted": 8
+      },
+      "AGI_demonstrated": false,
+      "notes": "Real PaperQA2 SparseEmbeddingModel with 256 hashed dimensions on eight balanced, already-public Plenum source-selection questions (four battery, four NOAA), no LLM, no API. The variant scored 5/8. Comparisons were chosen after observing the first 1/2 miss; exploratory and not independently blinded. Historical 256 and 4096 results both retained; no automatic promotion."
+    },
+    {
+      "id": "paperqa-sparse4096-study-20261107",
+      "status": "measured_failure",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42340907824",
+      "result": {
+        "correct": 6,
+        "attempted": 8
+      },
+      "AGI_demonstrated": false,
+      "notes": "Real PaperQA2 SparseEmbeddingModel with 4096 hashed dimensions on eight balanced, already-public Plenum source-selection questions (four battery, four NOAA), no LLM, no API. The variant scored 6/8. Comparisons were chosen after observing the first 1/2 miss; exploratory and not independently blinded. Historical 256 and 4096 results both retained; no automatic promotion."
     }
   ],
   "next_actions": [
@@ -149,7 +171,7 @@
     },
     {
       "priority": 2,
-      "action": "Investigate the real PaperQA2 top-1 source retrieval failure (1/2; run 42340104253) and test on newly preregistered independent rights-cleared papers; use OpenHands only in an isolated coding sandbox with separately evaluated model inference and full approval gates."
+      "action": "Follow measured PaperQA2 5/8 at sparse dimension 256 and 6/8 at 4096 with a separate rights-cleared scientific-paper benchmark, stronger existing retrieval alternatives and citation-grounding checks; keep OpenHands agent coding restricted to isolated approved inference."
     },
     {
       "priority": 3,
@@ -208,6 +230,10 @@
     {
       "decision": "Upgrade OpenHands assessment from SDK imports to actual controlled tool functionality only.",
       "reason": "Real editor create/repair/deny evidence passed GitHub run 42340592716; intrinsic code-generation capability remains unmeasured until a restricted model-driven pilot."
+    },
+    {
+      "decision": "Do not promote PaperQA sparse dimension 4096 on an exploratory eight-question comparison.",
+      "reason": "Original public retrieval was 1/2; after inspecting its miss, upstream sparse-embedding settings scored 5/8 versus 6/8 on new but related queries. This is insufficient independent evidence of reliable retrieval gains."
     }
   ],
   "operating_rules": [
