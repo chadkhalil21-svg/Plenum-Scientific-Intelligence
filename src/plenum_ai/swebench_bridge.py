@@ -25,10 +25,10 @@ MIN_RAM_GIB = 16
 MAX_RUN_SECONDS = 1800
 
 
-def plan(stage="gold", run_id="plenum-repo-proof-v1"):
+def plan(stage="gold", run_id=None):
     if stage not in ("gold", "candidate"):
         raise ValueError("Only original upstream reference or model candidate")
-    if not isinstance(run_id, str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,47}", run_id):
+    if run_id is None:\n        run_id = "plenum-gold-v1" if stage == "gold" else "plenum-candidate-v1"\n    if not isinstance(run_id, str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,47}", run_id):
         raise ValueError("Short single-use slug required for independent cache key")
     # IMPORTANT: SWE-bench caches by run_id, not by candidate patch contents.
     argv = ["swebench", "eval", "verified"]
@@ -139,7 +139,7 @@ def execute(record, *, approved=False, installed_version=None, resources=None,
 def main():
     cli = argparse.ArgumentParser(description="Plan a bounded original SWE-bench single-issue run")
     cli.add_argument("--stage", choices=("gold", "candidate"), default="gold")
-    cli.add_argument("--run-id", default="plenum-repo-proof-v1")
+    cli.add_argument("--run-id", default=None)
     cli.add_argument("--execute", action="store_true")
     cli.add_argument("--out", default="reports/swebench/plan.json")
     args = cli.parse_args()
