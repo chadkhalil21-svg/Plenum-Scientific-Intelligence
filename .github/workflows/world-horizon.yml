@@ -175,9 +175,9 @@ jobs:
           dest.write_text(json.dumps({"schema":"plenum-public-lab-radar-evidence-v1",
              "run_id":os.environ["RUN_ID"],"source_revision":os.environ["REVISION"],
              "public_metadata_digest":digest,"automatic_code_or_model_changes":False},
-             indent=2,ensure_ascii=False)+"\\n")
+             indent=2,ensure_ascii=False)+"\n")
           history.write_text(json.dumps({"schema":INDEX_SCHEMA,
-                               "urls":update_seen(old,snapshot)},indent=2)+"\\n")
+                               "urls":update_seen(old,snapshot)},indent=2)+"\n")
           print("New public links:",digest["new_public_links_before_limit"])
           print("Source outages:",digest["source_outages"])
           PY
