@@ -36,6 +36,8 @@ on:
       - '.github/workflows/world-horizon.yml'
       - 'src/plenum_ai/world_horizon.py'
       - 'tests/test_world_horizon.py'
+      - 'src/plenum_ai/lab_radar.py'
+      - 'tests/test_lab_radar.py'
 permissions:
   contents: read
 concurrency:
@@ -56,6 +58,8 @@ jobs:
       - run: python -m pip install -e .
       - name: Verify parsing, restrictions and honest unavailable-source handling offline
         run: python -m unittest discover -s tests -p 'test_world_horizon.py' -v
+      - name: Verify incremental laboratory radar without network requests
+        run: python -m unittest discover -s tests -p 'test_lab_radar.py' -v
       - name: Retrieve public institutional, journal, economic and environmental source metadata
         run: |
           python -m plenum_ai.cli world-horizon \
@@ -102,6 +106,11 @@ jobs:
         with:
           ref: research-memory
           path: research-memory
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          path: source-code
+          persist-credentials: false
       - uses: actions/download-artifact@v7
         with:
           name: plenum-public-world-horizon-evidence
@@ -139,10 +148,44 @@ jobs:
           file.write_text(json.dumps(report,indent=2,ensure_ascii=False)+"\n")
           print("Wrote one bounded public snapshot to:",file)
           PY
+      - name: Archive new-to-us scientific signals from the SAME daily scan
+        env:
+          RUN_ID: ${{ github.run_id }}
+          REVISION: ${{ github.sha }}
+        run: |
+          PYTHONPATH=source-code/src python - <<'PY'
+          from plenum_ai.lab_radar import summarize,update_seen,INDEX_SCHEMA
+          from pathlib import Path
+          import json,os
+          snapshot=json.loads(Path("reports/world_horizon.json").read_text())
+          directory=Path("research-memory/evidence/lab-radar")
+          directory.mkdir(parents=True,exist_ok=True)
+          history=directory/"seen-links.json"
+          if history.exists():
+              previous=json.loads(history.read_text())
+              assert previous["schema"]==INDEX_SCHEMA
+              old=previous["urls"]
+          else:
+              old=None
+          digest=summarize(snapshot,old)
+          assert not digest["AGI_demonstrated"]
+          assert not digest["independent_laboratory_breakthrough_verified"]
+          dest=directory/("run-"+os.environ["RUN_ID"]+".json")
+          if dest.exists(): raise FileExistsError("Never replace source-linked history")
+          dest.write_text(json.dumps({"schema":"plenum-public-lab-radar-evidence-v1",
+             "run_id":os.environ["RUN_ID"],"source_revision":os.environ["REVISION"],
+             "public_metadata_digest":digest,"automatic_code_or_model_changes":False},
+             indent=2,ensure_ascii=False)+"\\n")
+          history.write_text(json.dumps({"schema":INDEX_SCHEMA,
+                               "urls":update_seen(old,snapshot)},indent=2)+"\\n")
+          print("New public links:",digest["new_public_links_before_limit"])
+          print("Source outages:",digest["source_outages"])
+          PY
       - name: Save evidence on research-memory, never modify main
         run: |
           git -C research-memory config user.name "Plenum Public Intelligence Ledger"
           git -C research-memory config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git -C research-memory add evidence/world-horizon/
-          git -C research-memory commit -m "Archive public read-only world intelligence snapshot"
+          git -C research-memory add evidence/world-horizon/ evidence/lab-radar/
+          git -C research-memory commit -m "Archive public worldwide research and incremental lab radar"
+          git -C research-memory pull --rebase origin research-memory
           git -C research-memory push origin HEAD:research-memory
