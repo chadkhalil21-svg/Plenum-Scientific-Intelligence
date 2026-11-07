@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T21:03:29.737Z",
+  "last_reviewed_utc": "2026-11-07T21:10:37.690Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -510,7 +510,7 @@
   "next_actions": [
     {
       "priority": 1,
-      "action": "The private Kaggle Prometheus Qwen3.6-27B trial notebook was VERIFIED uploaded without execution via GitHub Actions #42413145594, after authenticated API verification #42408852329. Next OWNER ACTION on Kaggle: locate the private notebook under Your Work, choose free Tesla T4 x2 and enable Internet, verify quotas and /tmp space, set APPROVE_FREE_GPU_RUN=True, run the bounded smoke cells and preserve actual JSON report, model hash and failures. No inference or AGI proven; do not silently consume quotas or invoke paid agent/browser services."
+      "action": "Avoid asking founder to copy notebook code. Verified official Kaggle API auth and private draft upload already completed (#42408852329, #42413145594). Available GitHub connector currently lacks workflow_dispatch and this ChatGPT session cannot access GitHub environment secret; TinyFish supports browser actions in chat but its default profile has no saved Kaggle/GitHub login. Next, with founder's consent, initialize a secure TinyFish website-login profile and directly inspect/control Kaggle UI; alternatively add an explicitly owner-approved GitHub Actions trigger path. Inference remains NOT executed; preserve scarce free GPU quota."
     },
     {
       "priority": 2,
@@ -829,6 +829,10 @@
     {
       "decision": "Reuse the existing LangGraph + Playwright MCP pipeline and Inspect AI rather than installing more browser agents or research evaluators.",
       "reason": "Official Microsoft MCP, isolated real Chromium, independent source-limited tool gateway and LangGraph evidence chain were already tested. Additional browser-use or hosted agent frameworks would duplicate these functions until a measured capability deficiency warrants change."
+    },
+    {
+      "decision": "Distinguish available ChatGPT TinyFish browser automation from authenticated website sessions and the GitHub/Kaggle API control boundary.",
+      "reason": "TinyFish browser automation is callable in ordinary ChatGPT chats but its default profile has no recorded signed-in sites. Current ChatGPT GitHub tools can edit/read GitHub resources but do not expose an Actions workflow-dispatch function. The Kaggle API key is protected in a GitHub environment secret, not readable in chat; it authenticated verified listing and private notebook upload, but no independent model run. One-time explicit TinyFish profile sign-in or an owner-approved workflow trigger is required before automating authenticated Kaggle UI/compute. Do not repeatedly instruct founder to paste code."
     }
   ],
   "operating_rules": [
