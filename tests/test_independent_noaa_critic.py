@@ -137,9 +137,10 @@ class IndependentScientificCriticTests(unittest.TestCase):
         frozen=frozen_record()
         original=critic.critique(frozen,critic_generator,fetcher=fake_source)
         for field,value in [
-            ("critic_development_mae_m",0.0),
+            ("critic_development_mae_m",-1.0),
             ("recommended_candidate",{"alpha":0.99,"gain":1.0}),
-            ("counterproposal_better_on_development",True),
+            ("counterproposal_better_on_development",
+             not original["critiques"][0]["counterproposal_better_on_development"]),
             ("holdout_seen",True),
         ]:
             bad=copy.deepcopy(original)
