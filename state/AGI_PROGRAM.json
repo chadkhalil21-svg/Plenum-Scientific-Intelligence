@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T04:37:00Z",
+  "last_reviewed_utc": "2026-11-07T04:50:00Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -110,6 +110,18 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42339003588",
       "AGI_demonstrated": false,
       "notes": "PaperQA2 2026.8.12 Docs/Settings/ask imports verified in Python3.11 CI; no document ingestion, embeddings, model calls or citation verification. PR #21 merged."
+    },
+    {
+      "id": "paperqa-real-retrieval-20261107",
+      "status": "measured_failure",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42340104253",
+      "result": {
+        "correct": 1,
+        "attempted": 2
+      },
+      "metric": "top-1 intended document retrieved from two precommitted public scientific source questions",
+      "AGI_demonstrated": false,
+      "notes": "Pinned PaperQA2 2026.8.12 completed actual local offline sparse-embedding retrieval over two existing public Plenum NOAA and battery notes. One of two source queries matched; not evidence of reliable retrieval or AGI. No language-model inference; outbound network blocked. PR #24 merged."
     }
   ],
   "next_actions": [
@@ -119,7 +131,7 @@
     },
     {
       "priority": 2,
-      "action": "Use verified optional OpenHands and PaperQA2 SDKs for isolated functional pilots: sandboxed public coding tasks and rights-cleared scientific citation challenges. Measure correctness, safety and cost; library imports alone do not count."
+      "action": "Investigate the real PaperQA2 top-1 source retrieval failure (1/2; run 42340104253) and test on newly preregistered independent rights-cleared papers; use OpenHands only in an isolated coding sandbox with separately evaluated model inference and full approval gates."
     },
     {
       "priority": 3,
@@ -166,6 +178,10 @@
     {
       "decision": "Adopt pinned OpenHands SDK and PaperQA2 rather than rebuild agent coding and paper QA frameworks.",
       "reason": "Separate real upstream import checks passed CI run 42339003588 with zero model calls. Real agent code and citation performance remain unmeasured and need controlled experiments."
+    },
+    {
+      "decision": "Do not promote PaperQA2 to a reliable scientific research answerer on current data.",
+      "reason": "Real offline public source retrieval scored 1/2 top-1 questions (run 42340104253); import and workflow success do not establish accurate citation or scientific reasoning. Preserve errors and require new heldout evaluation."
     }
   ],
   "operating_rules": [
