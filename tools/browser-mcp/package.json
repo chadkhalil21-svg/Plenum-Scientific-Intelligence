@@ -1,0 +1,15 @@
+{
+  "name": "plenum-playwright-mcp-pilot",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Isolated read-only public browser MCP integration test",
+  "scripts": {
+    "test:policy": "node --test policy.test.mjs",
+    "test:live": "node verify.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.25.2",
+    "@playwright/mcp": "0.0.84"
+  }
+}
