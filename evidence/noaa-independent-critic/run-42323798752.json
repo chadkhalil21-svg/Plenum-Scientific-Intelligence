@@ -1,0 +1,439 @@
+{
+  "source_revision": "463837ec96528be92ef24762b8fc958432cf860a",
+  "frozen_development": {
+    "schema": "plenum-noaa-frozen-proposals-v1",
+    "source_revision": "4ccd3fcbd3634721b46d23967fb44bb356a4dc49",
+    "archive_run_id": "42321911614",
+    "proposal": {
+      "schema": "plenum-noaa-revision-proposal-v1",
+      "model": "Qwen/Qwen3-1.7B",
+      "model_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+      "question": "Can continuous harmonic-persistence mixtures improve NOAA hourly forecasts?",
+      "cases": [
+        {
+          "station": "8443970",
+          "holdout_day": "2026-01-17",
+          "public_station": "Boston, MA",
+          "source_sha256_development_download": "ccc30860aba2a93cfc65b43dee7e29d3a0e548f0ac2f463d41eaaef4049fad16",
+          "development_observations_sha256": "62c6802d0082fbe6dc36935ef8c2bf4d066ccb2563f62cbe8375fc8cc27fa716",
+          "train_hours": 288,
+          "development_hours": 96,
+          "reference_dev_mae_m": {
+            "persistence_24h": 0.3290417,
+            "m2_s2": 0.352061,
+            "four_constituents": 0.3477905
+          },
+          "attempts": [
+            {
+              "round": "initial",
+              "status": "valid",
+              "candidate": {
+                "alpha": 0.7,
+                "gain": 1.2,
+                "hypothesis": "Continuous harmonic-persistence mixtures can improve NOAA hourly forecasts in Boston, MA, by combining persistence with harmonic components trained on historical data.",
+                "falsifier": "If the MAE does not improve by at least 0.6 meters within 12 days of training, the hypothesis is falsified."
+              },
+              "development_mae_m": 0.3906919,
+              "model_response_sha256": "bec03b4731d3cf56c094c8adf5600e207c2d1cb616398f7ab87eae850dd91eef"
+            },
+            {
+              "round": "revision",
+              "status": "valid",
+              "candidate": {
+                "alpha": 0.6,
+                "gain": 1.1,
+                "hypothesis": "Continuous harmonic-persistence mixtures can improve NOAA hourly forecasts in Boston, MA, by combining persistence with harmonic components trained on historical data.",
+                "falsifier": "If the MAE does not improve by at least 0.6 meters within 12 days of training, the hypothesis is falsified."
+              },
+              "development_mae_m": 0.3009992,
+              "model_response_sha256": "bc6c742e453d374ca3dcd76d1cdda60a042d9cf2f5e1d47e0d9d8494e1fbc459"
+            }
+          ],
+          "selected_round": "revision",
+          "selected_candidate": {
+            "alpha": 0.6,
+            "gain": 1.1,
+            "hypothesis": "Continuous harmonic-persistence mixtures can improve NOAA hourly forecasts in Boston, MA, by combining persistence with harmonic components trained on historical data.",
+            "falsifier": "If the MAE does not improve by at least 0.6 meters within 12 days of training, the hypothesis is falsified."
+          },
+          "selected_development_mae_m": 0.3009992,
+          "holdout_seen": false,
+          "seal_sha256": "9ca295b2b7112334fa23ef5094ffb15a883daa607166e63a796f42c8d7f4c184"
+        },
+        {
+          "station": "8723214",
+          "holdout_day": "2026-01-17",
+          "public_station": "Virginia Key, FL",
+          "source_sha256_development_download": "0805f1f81a516f346e2a20cdb66e581b99b9ceeb40c4d605eb6235c1812e72b4",
+          "development_observations_sha256": "2aa148d41d3a384332253ef8889f9ca079d8798078a5856b5f781a6faea47fbd",
+          "train_hours": 288,
+          "development_hours": 96,
+          "reference_dev_mae_m": {
+            "persistence_24h": 0.0782396,
+            "m2_s2": 0.0888745,
+            "four_constituents": 0.0754173
+          },
+          "attempts": [
+            {
+              "round": "initial",
+              "status": "valid",
+              "candidate": {
+                "alpha": 0.7,
+                "gain": 1.2,
+                "hypothesis": "Continuous harmonic-persistence mixtures can improve NOAA hourly forecasts on Virginia Key, FL, by combining persistence and harmonic components, with a gain of 1.2 and alpha of 0.7.",
+                "falsifier": "If the MAE does not improve by at least 0.15 meters within 2026-01-17, the hypothesis is falsified."
+              },
+              "development_mae_m": 0.0755954,
+              "model_response_sha256": "86414d929f4618f12787b50b1f58e3ac7eeeb14c0978522302fd4428d2dca923"
+            },
+            {
+              "round": "revision",
+              "status": "valid",
+              "candidate": {
+                "alpha": 0.6,
+                "gain": 1.1,
+                "hypothesis": "Continuous harmonic-persistence mixtures can improve NOAA hourly forecasts on Virginia Key, FL, by combining persistence and harmonic components, with a gain of 1.1 and alpha of 0.6.",
+                "falsifier": "If the MAE does not improve by at least 0.15 meters within 2026-01-17, the hypothesis is falsified."
+              },
+              "development_mae_m": 0.0607023,
+              "model_response_sha256": "594c90198103fe23fed6bc966b88a35f074b0e62e728b36972abd080d27845ac"
+            }
+          ],
+          "selected_round": "revision",
+          "selected_candidate": {
+            "alpha": 0.6,
+            "gain": 1.1,
+            "hypothesis": "Continuous harmonic-persistence mixtures can improve NOAA hourly forecasts on Virginia Key, FL, by combining persistence and harmonic components, with a gain of 1.1 and alpha of 0.6.",
+            "falsifier": "If the MAE does not improve by at least 0.15 meters within 2026-01-17, the hypothesis is falsified."
+          },
+          "selected_development_mae_m": 0.0607023,
+          "holdout_seen": false,
+          "seal_sha256": "0c5a66567c966c28b51a9049db5ed771b7c9a0f5b06368dd4225b8cded2e2657"
+        },
+        {
+          "station": "8443970",
+          "holdout_day": "2026-04-17",
+          "public_station": "Boston, MA",
+          "source_sha256_development_download": "a8d6fa9ae388f88bae7e8367ce2091e05bd2d64a5a082004de4ec40a93d95288",
+          "development_observations_sha256": "8735fe63c9331377f83db9a5eaaa39c98369b535f6034f102f335491749ef745",
+          "train_hours": 288,
+          "development_hours": 96,
+          "reference_dev_mae_m": {
+            "persistence_24h": 0.3417083,
+            "m2_s2": 0.3096126,
+            "four_constituents": 0.3093397
+          },
+          "attempts": [
+            {
+              "round": "initial",
+              "status": "valid",
+              "candidate": {
+                "alpha": 0.7,
+                "gain": 1.2,
+                "hypothesis": "Continuous harmonic-persistence mixtures can improve NOAA hourly forecasts in Boston, MA, by combining persistence with harmonic components trained on historical data.",
+                "falsifier": "If the MAE does not improve by at least 0.6 meters within 12 days of training, the hypothesis is falsified."
+              },
+              "development_mae_m": 0.1560488,
+              "model_response_sha256": "bec03b4731d3cf56c094c8adf5600e207c2d1cb616398f7ab87eae850dd91eef"
+            },
+            {
+              "round": "revision",
+              "status": "valid",
+              "candidate": {
+                "alpha": 0.6,
+                "gain": 1.1,
+                "hypothesis": "Continuous harmonic-persistence mixtures can improve NOAA hourly forecasts in Boston, MA, by combining persistence with harmonic components trained on historical data.",
+                "falsifier": "If the MAE does not improve by at least 0.6 meters within 12 days of training, the hypothesis is falsified."
+              },
+              "development_mae_m": 0.1375938,
+              "model_response_sha256": "bc6c742e453d374ca3dcd76d1cdda60a042d9cf2f5e1d47e0d9d8494e1fbc459"
+            }
+          ],
+          "selected_round": "revision",
+          "selected_candidate": {
+            "alpha": 0.6,
+            "gain": 1.1,
+            "hypothesis": "Continuous harmonic-persistence mixtures can improve NOAA hourly forecasts in Boston, MA, by combining persistence with harmonic components trained on historical data.",
+            "falsifier": "If the MAE does not improve by at least 0.6 meters within 12 days of training, the hypothesis is falsified."
+          },
+          "selected_development_mae_m": 0.1375938,
+          "holdout_seen": false,
+          "seal_sha256": "d60eeecbadbd3bc08c3ecc51994411ca099420f3b1c50d03d489812a114f0aba"
+        },
+        {
+          "station": "8723214",
+          "holdout_day": "2026-04-17",
+          "public_station": "Virginia Key, FL",
+          "source_sha256_development_download": "38f65e3260300c47a62df2fed011b14d840aaf227dd1f604dd82193e8503c427",
+          "development_observations_sha256": "916742df6c2244e89390997bb1cb73cd8db58691a9abb19bba67282443415656",
+          "train_hours": 288,
+          "development_hours": 96,
+          "reference_dev_mae_m": {
+            "persistence_24h": 0.0827917,
+            "m2_s2": 0.0900583,
+            "four_constituents": 0.0889288
+          },
+          "attempts": [
+            {
+              "round": "initial",
+              "status": "valid",
+              "candidate": {
+                "alpha": 0.6,
+                "gain": 1.2,
+                "hypothesis": "Continuous harmonic-persistence mixtures can improve NOAA hourly forecasts on Virginia Key, FL, by combining persistence and harmonic components, with a gain of 1.2 and alpha of 0.6.",
+                "falsifier": "If the MAE does not improve by at least 0.5 meters within 2026-04-17, the hypothesis is falsified."
+              },
+              "development_mae_m": 0.0437655,
+              "model_response_sha256": "b2f951903bcce71104622506e614df57f4aa791809fd985b40d8ba7799fa2d70"
+            },
+            {
+              "round": "revision",
+              "status": "valid",
+              "candidate": {
+                "alpha": 0.6,
+                "gain": 1.2,
+                "hypothesis": "Continuous harmonic-persistence mixtures can improve NOAA hourly forecasts on Virginia Key, FL, by combining persistence and harmonic components, with a gain of 1.2 and alpha of 0.6.",
+                "falsifier": "If the MAE does not improve by at least 0.5 meters within 2026-04-17, the hypothesis is falsified."
+              },
+              "development_mae_m": 0.0437655,
+              "model_response_sha256": "b2f951903bcce71104622506e614df57f4aa791809fd985b40d8ba7799fa2d70"
+            }
+          ],
+          "selected_round": "initial",
+          "selected_candidate": {
+            "alpha": 0.6,
+            "gain": 1.2,
+            "hypothesis": "Continuous harmonic-persistence mixtures can improve NOAA hourly forecasts on Virginia Key, FL, by combining persistence and harmonic components, with a gain of 1.2 and alpha of 0.6.",
+            "falsifier": "If the MAE does not improve by at least 0.5 meters within 2026-04-17, the hypothesis is falsified."
+          },
+          "selected_development_mae_m": 0.0437655,
+          "holdout_seen": false,
+          "seal_sha256": "3ce5e828706c1e68aaf5b5a630e299d14a8d791b987c35a26c8ba6ef7642a175"
+        }
+      ],
+      "model_calls": 8,
+      "source": "NOAA CO-OPS observed hourly water levels",
+      "model_inference_performed": true,
+      "independent_model_critic_used": false,
+      "heldout_measurements_accessed": false,
+      "generated_code_executed": false,
+      "verified_new_scientific_discovery": false,
+      "generalizable_improvement_proven": false,
+      "model_promoted": false
+    },
+    "proposal_sha256": "096185766cd2081f3b697daba768720688d50f4ca31e05e6231b3057738fb8f1",
+    "includes_holdout_measurements": false,
+    "historical_previously_public": true
+  },
+  "independent_critic": {
+    "schema": "plenum-independent-noaa-critic-v1",
+    "critic_model": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+    "critic_revision": "31b70e2e869a7173562077fd711b654946d38674",
+    "model_family_distinct_from_original": true,
+    "original_model": "Qwen/Qwen3-1.7B",
+    "original_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+    "original_proposal_sha256": "096185766cd2081f3b697daba768720688d50f4ca31e05e6231b3057738fb8f1",
+    "critique_calls": 4,
+    "critiques": [
+      {
+        "station": "8443970",
+        "day": "2026-01-17",
+        "original_selected": {
+          "alpha": 0.6,
+          "gain": 1.1,
+          "hypothesis": "Continuous harmonic-persistence mixtures can improve NOAA hourly forecasts in Boston, MA, by combining persistence with harmonic components trained on historical data.",
+          "falsifier": "If the MAE does not improve by at least 0.6 meters within 12 days of training, the hypothesis is falsified."
+        },
+        "original_development_mae_m": 0.3009992,
+        "critic_status": "valid",
+        "critic_alternative": {
+          "alpha": 0.4,
+          "gain": 1.2,
+          "hypothesis": "Continuous harmonic-persistence mixtures can improve NOAA hourly forecasts in Boston, MA, by combining persistence with harmonic components trained on historical data.",
+          "falsifier": "If the MAE does not improve by at least 0.6 meters within 12 days of training, the hypothesis is falsified."
+        },
+        "critic_development_mae_m": 0.2925903,
+        "critic_response_sha256": "052957bfcdff9d75a46008e6b381a0a61c9ea165cc42e75f003c9b3749f06111",
+        "counterproposal_better_on_development": true,
+        "recommended_candidate": {
+          "alpha": 0.4,
+          "gain": 1.2,
+          "hypothesis": "Continuous harmonic-persistence mixtures can improve NOAA hourly forecasts in Boston, MA, by combining persistence with harmonic components trained on historical data.",
+          "falsifier": "If the MAE does not improve by at least 0.6 meters within 12 days of training, the hypothesis is falsified."
+        },
+        "holdout_seen": false
+      },
+      {
+        "station": "8723214",
+        "day": "2026-01-17",
+        "original_selected": {
+          "alpha": 0.6,
+          "gain": 1.1,
+          "hypothesis": "Continuous harmonic-persistence mixtures can improve NOAA hourly forecasts on Virginia Key, FL, by combining persistence and harmonic components, with a gain of 1.1 and alpha of 0.6.",
+          "falsifier": "If the MAE does not improve by at least 0.15 meters within 2026-01-17, the hypothesis is falsified."
+        },
+        "original_development_mae_m": 0.0607023,
+        "critic_status": "valid",
+        "critic_alternative": {
+          "alpha": 0.7,
+          "gain": 1.2,
+          "hypothesis": "A continuous alternative to the proposed mixture model could be a combination of persistence and a harmonic-persistence model, with a gain of 1.2 and alpha of 0.7.",
+          "falsifier": "If the MAE does not improve by at least 0.15 meters within 2026-01-17, the hypothesis is falsified."
+        },
+        "critic_development_mae_m": 0.0755954,
+        "critic_response_sha256": "370d9a02a928fd6f8f3e0658fe4eac791a0dc5f4a66ffb8ab639d23df6d6e697",
+        "counterproposal_better_on_development": false,
+        "recommended_candidate": {
+          "alpha": 0.6,
+          "gain": 1.1,
+          "hypothesis": "Continuous harmonic-persistence mixtures can improve NOAA hourly forecasts on Virginia Key, FL, by combining persistence and harmonic components, with a gain of 1.1 and alpha of 0.6.",
+          "falsifier": "If the MAE does not improve by at least 0.15 meters within 2026-01-17, the hypothesis is falsified."
+        },
+        "holdout_seen": false
+      },
+      {
+        "station": "8443970",
+        "day": "2026-04-17",
+        "original_selected": {
+          "alpha": 0.6,
+          "gain": 1.1,
+          "hypothesis": "Continuous harmonic-persistence mixtures can improve NOAA hourly forecasts in Boston, MA, by combining persistence with harmonic components trained on historical data.",
+          "falsifier": "If the MAE does not improve by at least 0.6 meters within 12 days of training, the hypothesis is falsified."
+        },
+        "original_development_mae_m": 0.1375938,
+        "critic_status": "valid",
+        "critic_alternative": {
+          "alpha": 0.4,
+          "gain": 1.2,
+          "hypothesis": "A continuous alternative to the proposed mixture model could be a combination of persistence and a harmonic-persistence model with a gain of 1.2.",
+          "falsifier": "If the MAE does not improve by at least 0.6 meters within 12 days of training, the hypothesis is falsified."
+        },
+        "critic_development_mae_m": 0.1272717,
+        "critic_response_sha256": "dd399e947ebcc8a4882a99b4088f9f25cb5832fd9abf19556ec9b8047c9f0264",
+        "counterproposal_better_on_development": true,
+        "recommended_candidate": {
+          "alpha": 0.4,
+          "gain": 1.2,
+          "hypothesis": "A continuous alternative to the proposed mixture model could be a combination of persistence and a harmonic-persistence model with a gain of 1.2.",
+          "falsifier": "If the MAE does not improve by at least 0.6 meters within 12 days of training, the hypothesis is falsified."
+        },
+        "holdout_seen": false
+      },
+      {
+        "station": "8723214",
+        "day": "2026-04-17",
+        "original_selected": {
+          "alpha": 0.6,
+          "gain": 1.2,
+          "hypothesis": "Continuous harmonic-persistence mixtures can improve NOAA hourly forecasts on Virginia Key, FL, by combining persistence and harmonic components, with a gain of 1.2 and alpha of 0.6.",
+          "falsifier": "If the MAE does not improve by at least 0.5 meters within 2026-04-17, the hypothesis is falsified."
+        },
+        "original_development_mae_m": 0.0437655,
+        "critic_status": "valid",
+        "critic_alternative": {
+          "alpha": 0.7,
+          "gain": 1.3,
+          "hypothesis": "A continuous alternative to the proposed mixture model could be a combination of persistence and a harmonic-persistence model, with a gain of 1.3 and alpha of 0.7.",
+          "falsifier": "If the MAE does not improve by at least 0.5 meters within 2026-04-17, the hypothesis is falsified."
+        },
+        "critic_development_mae_m": 0.0511605,
+        "critic_response_sha256": "9a8527fa5d2ef1442f226a4008a5f1ce01f2ecc5c72c924e079f7d3782cb54d9",
+        "counterproposal_better_on_development": false,
+        "recommended_candidate": {
+          "alpha": 0.6,
+          "gain": 1.2,
+          "hypothesis": "Continuous harmonic-persistence mixtures can improve NOAA hourly forecasts on Virginia Key, FL, by combining persistence and harmonic components, with a gain of 1.2 and alpha of 0.6.",
+          "falsifier": "If the MAE does not improve by at least 0.5 meters within 2026-04-17, the hypothesis is falsified."
+        },
+        "holdout_seen": false
+      }
+    ],
+    "heldout_observations_seen_by_critic": false,
+    "retrospective_public_historical_data": true,
+    "original_hypotheses_changed": false,
+    "autonomous_model_promotion": false,
+    "independent_reviewer_is_human": false,
+    "AGI_demonstrated": false
+  },
+  "audit": {
+    "schema": "plenum-independent-noaa-critic-audit-v1",
+    "source_proposal_sha256": "096185766cd2081f3b697daba768720688d50f4ca31e05e6231b3057738fb8f1",
+    "critic_report_sha256": "69a9883ee057201a4f2961b4299ef9ec2f985d16ca7f8a08f39ba939a7dfd6b9",
+    "critic_model": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+    "cases": [
+      {
+        "station": "8443970",
+        "day": "2026-01-17",
+        "critic_status": "valid",
+        "development_selected_counterproposal": true,
+        "original_test_mae_m": 0.3101142,
+        "critic_alternative_test_mae_m": 0.3215083,
+        "revised_test_mae_m": 0.3215083,
+        "strongest_reference_mae_m": 0.296477,
+        "original_beats_best_baseline": false,
+        "critic_alternative_beats_original": false,
+        "revised_beats_original": false,
+        "revised_beats_strongest_baseline": false,
+        "previously_public_retrospective": true
+      },
+      {
+        "station": "8723214",
+        "day": "2026-01-17",
+        "critic_status": "valid",
+        "development_selected_counterproposal": false,
+        "original_test_mae_m": 0.0405566,
+        "critic_alternative_test_mae_m": 0.0567884,
+        "revised_test_mae_m": 0.0405566,
+        "strongest_reference_mae_m": 0.0562201,
+        "original_beats_best_baseline": true,
+        "critic_alternative_beats_original": false,
+        "revised_beats_original": false,
+        "revised_beats_strongest_baseline": true,
+        "previously_public_retrospective": true
+      },
+      {
+        "station": "8443970",
+        "day": "2026-04-17",
+        "critic_status": "valid",
+        "development_selected_counterproposal": true,
+        "original_test_mae_m": 0.1623122,
+        "critic_alternative_test_mae_m": 0.1721189,
+        "revised_test_mae_m": 0.1721189,
+        "strongest_reference_mae_m": 0.3211377,
+        "original_beats_best_baseline": true,
+        "critic_alternative_beats_original": false,
+        "revised_beats_original": false,
+        "revised_beats_strongest_baseline": true,
+        "previously_public_retrospective": true
+      },
+      {
+        "station": "8723214",
+        "day": "2026-04-17",
+        "critic_status": "valid",
+        "development_selected_counterproposal": false,
+        "original_test_mae_m": 0.0455934,
+        "critic_alternative_test_mae_m": 0.0418164,
+        "revised_test_mae_m": 0.0455934,
+        "strongest_reference_mae_m": 0.0716648,
+        "original_beats_best_baseline": true,
+        "critic_alternative_beats_original": true,
+        "revised_beats_original": false,
+        "revised_beats_strongest_baseline": true,
+        "previously_public_retrospective": true
+      }
+    ],
+    "total_cases": 4,
+    "valid_counterproposals": 4,
+    "development_recommended_changes": 2,
+    "actual_holdout_improvements": 0,
+    "wins_vs_strongest_baseline": 3,
+    "development_evidence_reproduced": true,
+    "separate_model_family_used": true,
+    "historical_public_data_not_prospectively_blind": true,
+    "new_scientific_discovery_verified": false,
+    "general_intelligence_verified": false,
+    "auto_model_promotion": false
+  },
+  "claims_new_discovery": false,
+  "claims_AGI": false
+}
