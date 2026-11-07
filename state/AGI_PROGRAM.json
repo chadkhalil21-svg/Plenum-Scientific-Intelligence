@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T07:04:09.687Z",
+  "last_reviewed_utc": "2026-11-07T07:11:57.034Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -322,20 +322,24 @@
     },
     {
       "id": "inspect-qwen3-react-native-json-config-retest-20261107",
-      "status": "running_unverified",
+      "status": "verified_foundation",
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42349665865",
       "AGI_demonstrated": false,
-      "notes": "PR #40 passed full foundation CI and no-model native-tokenizer compatibility tests, merged as 05c3c4a5e4fa046210373c83f08ca7e1e4fd6b5a. Uses UK AISI Inspect's documented --model-config JSON file, preserving entire reviewed original Qwen3 Jinja as one string instead of erroneous -M list of six fragments. Before a single bounded original HumanEval ReAct CPU inference, release gates on independent SHA256 archival of prior failed run 42348876440. Fresh original function score and real tool interactions remain unverified until completed raw .eval and archive. No trained model, paid model provider API, auto-promotion or AGI claim."
+      "notes": "Release run 42349665865 COMPLETED SUCCESS. Frozen Qwen3-1.7B with the original Inspect AI ReAct agent, original independent Inspect Evals HumanEval/0 functional scorer and Docker isolated Python, native --model-config JSON chat_template scalar verified. Original raw .eval SHA256 54aaa76d654740e74f2165d41fe34467b7ca6a95c0a11072e98ada3374b7edd0, permanently archived research-memory/evidence/inspect-react-coding/run-42349665865.json and -raw.zip. Original score 1/1, exactly 4 real Python tool calls and 4 observed sandbox responses. The actual original model transcript shows two early NameErrors when missing typing.List, two executions with the import added, and a final correct program verified independently. The observed repair demonstrates bounded model use of tool error feedback on ONE historical public code task. Six model turns, zero paid model API calls, no model training/weights change, no deployment, no AGI or reliable generalization established.",
+      "result": {
+        "correct": 1,
+        "attempted": 1
+      }
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Complete release run 42349665865: independently verify original failed ReAct 42348876440 archived SHA256 with 1 tool call/1 result and no score; then audit new native --model-config JSON scalar Qwen3-1.7B one-case HumanEval ReAct run for official functional grade, actual tool calls/returns and full raw .eval archive. If failure, preserve source and repair only reviewed configuration, not repeat unbounded inference."
+      "action": "Test the SAME frozen Qwen3-1.7B using existing Inspect ReAct and the ORIGINAL independent HumanEval/1 public task (which previously failed in one-shot baseline HumanEval 2/3). Require original fixed-scoring functional pass/fail, actual tool repair traces and complete original .eval archival under bounded Docker/no paid model API. This is an additional controlled diagnosis, not AGI."
     },
     {
       "priority": 2,
-      "action": "Review real original HumanEval Qwen3-1.7B coding baseline: 2/3 passed against original independent Docker functional tests, one failure archived; develop stronger prospective coding/research evaluations and compare with a reviewed stronger model under explicit compute/data limits."
+      "action": "Once one more independent original programming case is scored, move to existing SWE-bench Verified/mini-SWE-agent or OpenHands on public repository bugs with sandboxed tests and explicit compute budgets, and science reproduction using PaperBench/PaperQA2. No new homegrown agent framework or model promotion from tiny historical benchmarks."
     },
     {
       "priority": 3,
@@ -430,6 +434,10 @@
     {
       "decision": "Use UK AISI Inspect documented --model-config JSON file rather than -M CLI for a full Qwen3 Jinja chat template.",
       "reason": "Original real ReAct run 42348876440 stored the intended complete chat template as a list of six fragments despite passing tokenizer Jinja smoke, and failed on second turn before functional grading. The native file-based provider JSON preserves one scalar string, verified without inference."
+    },
+    {
+      "decision": "Record first independently verified bounded Inspect ReAct program-repair success, then test a different original published problem where the same frozen model previously failed without tools.",
+      "reason": "Run 42349665865 successfully scored HumanEval/0 1/1, four genuine model Python calls and four sandbox tool responses. The actual transcript shows error feedback (missing typing.List) then corrected import and tested code. One historical function cannot establish cross-task reliability or AGI."
     }
   ],
   "operating_rules": [
