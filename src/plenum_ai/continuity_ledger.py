@@ -13,12 +13,13 @@ SCHEMA="plenum-agi-program-continuity-v1"
 ALLOWED_STATUS={
     "verified_foundation", "measured_failure", "scheduled", "planned",
     "not_achieved", "running_unverified", "verified_diagnostic",
-    "correction_merged_for_future_runs",
+    "correction_merged_for_future_runs", "measured_regression",
 }
 TRUSTED="https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/"
 MAX_BYTES=250000
 MAX_EVIDENCE=128
 MAX_DECISIONS=100
+MAX_ACTION_CHARS=700
 
 
 
@@ -36,6 +37,26 @@ def _validate_result(score):
     """
     if not isinstance(score, dict):
         raise ValueError("Non-object evidence measurement")
+    comparative={
+        "attempted", "one_shot_correct", "react_correct", "delta_correct",
+        "repairs", "regressions", "actual_tool_calls", "actual_tool_responses",
+    }
+    if set(score)==comparative:
+        counts=("attempted", "one_shot_correct", "react_correct", "repairs",
+                "regressions", "actual_tool_calls", "actual_tool_responses")
+        if (any(not _count(score[k]) for k in counts)
+            or score["attempted"] == 0
+            or type(score["delta_correct"]) is not int
+            or not -100000 <= score["delta_correct"] <= 100000
+            or score["one_shot_correct"] > score["attempted"]
+            or score["react_correct"] > score["attempted"]
+            or score["repairs"] > score["attempted"]-score["one_shot_correct"]
+            or score["regressions"] > score["one_shot_correct"]
+            or score["actual_tool_responses"] > score["actual_tool_calls"]
+            or score["delta_correct"] != score["react_correct"]-score["one_shot_correct"]
+            or score["react_correct"] != score["one_shot_correct"]+score["repairs"]-score["regressions"]):
+            raise ValueError("Inconsistent matched coding regression audit")
+        return
     if "correct" in score or "attempted" in score:
         correct, attempted=score.get("correct"), score.get("attempted")
         if not (_count(correct) and _count(attempted)
@@ -118,7 +139,7 @@ def validate(value):
         if (not isinstance(row,dict)
             or row.get("priority")!=i
             or not isinstance(row.get("action"),str)
-            or not 8<=len(row["action"])<=300):
+            or not 8<=len(row["action"])<=MAX_ACTION_CHARS):
             raise ValueError("Unprioritized or ambiguous next action")
     decisions=value.get("decisions")
     if not isinstance(decisions,list) or not decisions or len(decisions)>MAX_DECISIONS:
@@ -151,6 +172,11 @@ def brief(state):
             ratio=""
         elif "correct" in measurement:
             ratio=" ("+str(measurement["correct"])+"/"+str(measurement["attempted"])+")"
+        elif "one_shot_correct" in measurement:
+            ratio=(" (matched one-shot "+str(measurement["one_shot_correct"])+"/"+
+                   str(measurement["attempted"])+", tool-using "+
+                   str(measurement["react_correct"])+"/"+str(measurement["attempted"])+
+                   ", delta "+str(measurement["delta_correct"])+")")
         else:
             ratio=(" (diagnostic baseline "+
                    str(measurement["baseline_correct"])+"/"+
