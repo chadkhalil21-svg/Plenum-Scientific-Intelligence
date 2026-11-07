@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T06:48:23.520Z",
+  "last_reviewed_utc": "2026-11-07T06:51:14.529Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -308,16 +308,16 @@
     },
     {
       "id": "inspect-react-qwen3-template-retest-20261107",
-      "status": "running_unverified",
+      "status": "measured_failure",
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42348424909",
       "AGI_demonstrated": false,
-      "notes": "PR #37 merged 5b085a05254e1773a7bebe09d93951022d3a5ff0. Genuine prior ReAct unscored source run 42347377474 verified 1 real Python tool call, 1 real tool response and Qwen template Undefined serialization failure. Original raw .eval SHA256 c205cc78bf4cf341a6ea275ffd526ab6b2d24a3e7132bca4e1f68f0c427cce3d archived append-only. Existing native pinned Qwen3 tokenizer patched only one tool-call shape normalization branch and successfully tested with both Inspect flat and nested OpenAI tool-call formats without model inference, no weight changes. One bounded corrected original Inspect HumanEval task is IN PROGRESS, actual independent score/tool results not yet verified."
+      "notes": "Initial corrected launch 42348424909 passed original 1.7B tokenizer/Inspect flat/nested tool Jinja smoke without model calls; the prior ReAct #42347377474 original failed trace was independently re-audited and archived unchanged. The attempted corrected model execution then FAILED BEFORE any model inference or functional score: Inspect CLI parsed raw Jinja `-M chat_template` using PyYAML and raised yaml.scanner.ScannerError at Jinja's {%- syntax. No new model outputs were produced. PR #38 adds JSON-quoted Jinja as a YAML string scalar, explicit no-inference roundtrip verification, and idempotent original archive checks before allowing one bounded retry. NO autonomous repair or AGI demonstrated."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Audit original corrected Inspect ReAct agent run 42348424909 after real tokenizer shape fix and archived original failure. Verify original HumanEval functional score, actual tool-call count/returned tool events and raw source SHA256; no AGI claim, automatic model promotion, private IP or unbounded rerun."
+      "action": "Review PR #38 with full foundation tests and actual pinned tokenizer JSON-quoted/YAML argument parser preflight. Previously corrected run #42348424909 failed before new inference due raw Jinja CLI YAML scanner; original ReAct #42347377474 one genuine tool call/one result was archived and remained unscored. Only after reviewed parser fix, run one new bounded original HumanEval ReAct evaluation, verify true functional grade and tool events, archive all logs."
     },
     {
       "priority": 2,
