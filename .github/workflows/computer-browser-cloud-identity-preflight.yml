@@ -1,0 +1,50 @@
+name: Verify Private Browser Cloud Identity (No Deployment)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  verify-auth:
+    runs-on: ubuntu-latest
+    environment: computer-browser-production
+    timeout-minutes: 8
+    steps:
+      - name: Require configured project and private browser bucket
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          BROWSER_PROFILE_BUCKET: ${{ vars.BROWSER_PROFILE_BUCKET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GCP_PROJECT_ID"
+          test -n "$BROWSER_PROFILE_BUCKET"
+          echo "Private browser configuration variables are present."
+      - name: Verify GitHub-to-Google workload identity federation
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+      - name: Install Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+      - name: Verify Google Cloud API identity and required resource metadata only
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          BROWSER_PROFILE_BUCKET: ${{ vars.BROWSER_PROFILE_BUCKET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROJECT_NUMBER="$(gcloud projects describe "$GCP_PROJECT_ID" --format='value(projectNumber)')"
+          test -n "$PROJECT_NUMBER"
+          test "$BROWSER_PROFILE_BUCKET" = "$GCP_PROJECT_ID-profiles-$PROJECT_NUMBER"
+          gcloud artifacts repositories describe plenum-browser \
+            --project="$GCP_PROJECT_ID" --location=us-east1 --format='value(name)' >/dev/null
+          gcloud secrets describe computer-browser-token --project="$GCP_PROJECT_ID" --format='value(name)' >/dev/null
+          gcloud secrets describe computer-browser-session-key --project="$GCP_PROJECT_ID" --format='value(name)' >/dev/null
+          gcloud storage buckets describe "gs://$BROWSER_PROFILE_BUCKET" \
+            --project="$GCP_PROJECT_ID" --format='value(name)' >/dev/null
+          gcloud storage buckets describe \
+            "gs://$GCP_PROJECT_ID-build-source-$PROJECT_NUMBER" \
+            --project="$GCP_PROJECT_ID" --format='value(name)' >/dev/null
+          echo "PASS: GitHub OIDC authentication and private browser resource metadata verified."
+          echo "NO DEPLOYMENT, NO BUILD, NO SECRET VALUES OR WEBSITE LOGINS ACCESSED."
