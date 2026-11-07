@@ -18,6 +18,7 @@ class OfficialSWEbenchGateTests(unittest.TestCase):
         p = b.plan()
         self.assertEqual(p["upstream_version"], "5.0.2")
         self.assertEqual(p["phase"], "gold")
+        self.assertNotEqual(p["run_id"], b.plan("candidate")["run_id"])
         self.assertEqual(p["official_dataset"], "SWE-bench/SWE-bench_Verified")
         self.assertEqual(p["command_argv"][:4], ["swebench", "eval", "verified", "--gold"])
         self.assertIn(b.INSTANCE, p["command_argv"])
