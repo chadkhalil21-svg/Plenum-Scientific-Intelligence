@@ -77,3 +77,26 @@ without modifying it. Both the preflight and explicit model job validate
 round-trip decoding with the actual previously pinned tokenizer source.
 The original failed run's append-only research record is checked for
 byte-for-byte agreement on each subsequent attempt, never overwritten.
+
+## Why the long CLI-encoded template still failed
+
+Run 42348876440 passed tokenizer template verification and the original
+failure's append-only evidence check, but failed again during its real
+agent's second model generation, before HumanEval grading. The raw
+Inspect evaluation showed the chat_template model argument stored as
+**a list, not a string**: Inspect CLI splits values containing commas
+before the model uses the override. The original Qwen Jinja template
+therefore continued to raise Undefined JSON serialization errors.
+The original .eval SHA256 from this second unscored run is
+104c928ca23178962446cf7fd929c7797dcd0618c8e2dfaa585394833b96037d.
+It remains a negative compatibility observation, not an independently
+failed programming test or proven autonomous repair.
+
+A native approach is preferable: Inspect's official Python eval() API
+accepts model_args as a dictionary. The typed adapter explicitly passes
+chat_template as one Python string, along with the same model_path,
+CPU, nonthinking and bounded execution limits. This removes YAML and
+comma-based CLI splitting entirely. New independent unit tests mock the
+upstream eval API to verify the exact argument types and limits WITHOUT
+any model inference. A single reviewed release may retry after its
+pinned upstream API signature and real tokenizer checks pass.
