@@ -41,12 +41,12 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          mission=Path('ledger/state/mission_status.json')
+          mission=Path('ledger/state/AGI_PROGRAM.json')
           if not mission.is_file():
               raise RuntimeError('Founder goals missing from public ledger: reconcile manually first')
           record=json.loads(mission.read_text('utf-8'))
-          assert record['schema']=='plenum-public-strategic-state-v1'
-          assert record['general_intelligence_demonstrated'] is False
+          assert record['schema']=='plenum-agi-program-continuity-v1'
+          assert record['AGI_achieved'] is False
           assert record['automatic_model_promotion'] is False
           evidence=json.loads(Path('ledger/state/evidence_index.json').read_text('utf-8'))
           assert evidence['inventory_complete'] is True
