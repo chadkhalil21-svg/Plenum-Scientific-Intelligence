@@ -78,7 +78,8 @@ class AGICapabilityLaboratoryTests(unittest.TestCase):
                 self.assertEqual(audit["models"][model]["domain_scores"][f],
                                  {"correct":2,"total":2})
         self.assertFalse(audit["AGI_demonstrated"])
-        self.assertFalse(audit["model_generated_code_executed"])
+        self.assertFalse(audit["unrestricted_generated_code_executed"])
+        self.assertTrue(audit["restricted_arithmetic_dsl_interpreted"])
         self.assertFalse(audit["auto_model_promotion"])
 
     def test_bad_program_fails_unseen_inputs_without_runtime_execution(self):
