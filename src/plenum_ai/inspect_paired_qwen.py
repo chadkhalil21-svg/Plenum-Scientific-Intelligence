@@ -205,6 +205,7 @@ def audit(candidate_dir, reference_dir):
         "reference_raw_log_fingerprints_checked": True,
         "inference_executed": True,
         "paired_scoring_verified": True,
+        "model_calls": 48,
         "total_matched_cases": 48,
         "reference_correct": sum(x["reference_correct"] for x in paired.values()),
         "candidate_correct": sum(x["candidate_correct"] for x in paired.values()),
