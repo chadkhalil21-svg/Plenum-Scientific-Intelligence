@@ -126,6 +126,37 @@ def audited_log(log, expected_rev, count):
     return normalized_task(log.eval.task), got
 
 
+def compare_matched(previous, current):
+    """Pure independent paired-grade arithmetic; both inputs are official grades."""
+    if set(previous) != set(TASKS) or set(current) != set(TASKS):
+        raise ValueError("Missing or unexpected official task family")
+    paired = {}
+    for name in TASKS:
+        past = previous[name]
+        now = current[name]
+        if (len(past) != SAMPLES_PER_TASK or len(now) != SAMPLES_PER_TASK
+            or set(past) != set(now)
+            or any(type(value) is not bool for value in list(past.values())+list(now.values()))):
+            raise ValueError("Reference/candidate example IDs, counts or grades differ")
+        better = sum((not past[k]) and now[k] for k in past)
+        worse = sum(past[k] and (not now[k]) for k in past)
+        prior_correct = sum(past.values())
+        candidate_correct = sum(now.values())
+        paired[name] = {
+            "attempted": SAMPLES_PER_TASK,
+            "reference_correct": prior_correct,
+            "candidate_correct": candidate_correct,
+            "candidate_minus_reference": candidate_correct-prior_correct,
+            "paired_improved": better,
+            "paired_regressed": worse,
+            "example_ids_sha256": sha256(
+                "\n".join(sorted(past)).encode("utf-8")).hexdigest(),
+            "candidate_incorrect_ids": [k for k in past if not now[k]],
+            "original_scorer": "Inspect Evals",
+        }
+    return paired
+
+
 def audit(candidate_dir, reference_dir):
     if importlib.metadata.version("inspect-ai") != INSPECT_AI:
         raise RuntimeError("Inspect AI upstream release changed")
@@ -167,28 +198,7 @@ def audit(candidate_dir, reference_dir):
     if set(previous) != set(TASKS) or set(current) != set(TASKS):
         raise ValueError("Missing one of four benchmark families")
 
-    paired = {}
-    for name in TASKS:
-        past = previous[name]
-        now = current[name]
-        if set(past) != set(now):
-            raise ValueError("Reference/candidate example IDs are not identical")
-        better = sum((not past[k]) and now[k] for k in past)
-        worse = sum(past[k] and (not now[k]) for k in past)
-        prior_correct = sum(past.values())
-        candidate_correct = sum(now.values())
-        paired[name] = {
-            "attempted": SAMPLES_PER_TASK,
-            "reference_correct": prior_correct,
-            "candidate_correct": candidate_correct,
-            "candidate_minus_reference": candidate_correct-prior_correct,
-            "paired_improved": better,
-            "paired_regressed": worse,
-            "example_ids_sha256": sha256(
-                "\n".join(sorted(past)).encode("utf-8")).hexdigest(),
-            "candidate_incorrect_ids": [k for k in past if not now[k]],
-            "original_scorer": "Inspect Evals",
-        }
+    paired = compare_matched(previous, current)
     return {
         **plan(),
         "reference_source_sha": baseline_summary["source_sha"],
