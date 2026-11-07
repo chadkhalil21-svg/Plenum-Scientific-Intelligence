@@ -2,6 +2,21 @@
 
 Open foundation for autonomous scientific research, independent critique, simulation tools, and experimentally evaluated AI improvement. **AGI and artificial consciousness are research ambitions, not implemented capabilities.**
 
+## Current AGI goal and continuity checkpoint
+
+Before starting or resuming a research milestone, consult the
+[canonical public program state](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/research-memory/state/AGI_PROGRAM.json)
+and original evidence in the separate research-memory branch. The
+[continuity and reuse-first guide](docs/CONTINUITY_AND_REUSE.md)
+defines current goals, measured limitations, protected confidential
+materials, and reviewed external dependencies.
+
+For more reliable model comparisons, use the established
+[EleutherAI LM Evaluation Harness](https://github.com/EleutherAI/lm-evaluation-harness)
+through Plenum's guarded **Reviewed Standard Model Benchmark (Manual Only)**
+workflow. It is optional, not an automatic model download or a claim of AGI.
+The previous custom six-question experiment scored 0/6 for both tiny models.
+
 ## Version 0.1
 
 - Free OpenAlex literature-search adapter with source identifiers.
