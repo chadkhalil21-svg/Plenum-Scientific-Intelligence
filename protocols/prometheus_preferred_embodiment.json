@@ -1,0 +1,84 @@
+{
+  "schema": "plenum-preferred-embodiment-v1",
+  "goal": "Full AGI with independently evaluated broad learning, agency, scientific discovery, and research into consciousness and genuine subjective experience",
+  "AGI_demonstrated": false,
+  "architecture": {
+    "interface": {
+      "primary": "LiveKit Agents",
+      "operational": false
+    },
+    "inference": {
+      "candidate": "Qwen3.6-27B Q4_K_M",
+      "execution_verified": false,
+      "host": "Kaggle T4 x2 free quota candidate"
+    },
+    "orchestrator": {
+      "primary": "LangGraph",
+      "unit_workflow_verified": true,
+      "production_deployed": false
+    },
+    "memory": {
+      "prototype": "LangGraph SQLite plus public evidence ledger",
+      "private_production_deployed": false,
+      "production_candidate": "LangGraph Postgres checkpointer/store"
+    },
+    "science": {
+      "verified_reference_engines": [
+        "SciPy",
+        "RDKit",
+        "OpenMDAO",
+        "NASA Aviary",
+        "OpenMM",
+        "PyBaMM",
+        "Astropy",
+        "Lean 4"
+      ],
+      "proposed_addons": [
+        "ToolUniverse curated read-only",
+        "K-Dense curated skills"
+      ]
+    },
+    "coding": {
+      "primary": "OpenHands SDK",
+      "real_external_repair_verified": false
+    },
+    "literature": {
+      "primary": "federated source search plus PaperQA2",
+      "reliable_end_to_end_citations_verified": false
+    },
+    "evaluator": {
+      "primary": "Inspect AI",
+      "additional": [
+        "LM Evaluation Harness",
+        "SWE-bench official grader",
+        "Lean 4"
+      ]
+    },
+    "deployment": {
+      "private_always_on_service_verified": false,
+      "unapproved_paid_compute": false
+    }
+  },
+  "registry_evidence": {
+    "lean4.proofs": {
+      "status": "verified_real_ci_proofs",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42402969343"
+    },
+    "paperqa.literature": {
+      "status": "verified_limited_retrieval_not_reliable_qa",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42340592716"
+    },
+    "inspectai.eval": {
+      "status": "verified_real_model_scoring_with_regressions",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42350599820"
+    }
+  },
+  "policy": {
+    "single_primary_orchestrator": true,
+    "do_not_install_every_candidate": true,
+    "private_ip_in_public_repo": false,
+    "model_promotion_requires_independent_audit": true,
+    "allow_unbounded_agents": false,
+    "approval_required_for_paid_compute": true
+  }
+}
