@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T07:50:53.493Z",
+  "last_reviewed_utc": "2026-11-07T07:59:15.816Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -365,27 +365,38 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42352849149",
       "AGI_demonstrated": false,
       "notes": "PR #44 merged as 38274fb84458fa7e519f5488e7c937a1dd4b1ca6, official SWE-bench v5.0.2 evaluator bridge for one historical publicly documented real repository issue, with read-only default plan, separate gold/candidate cache keys, env allowlist, original scorer only, x86_64/16GiB RAM/120GiB free disk manual host preflight, explicit execution gate, no credential or paid provider inference. PR CI 42352764376 and merged main CI 42352849149 completed successfully, including the bridge offline tests. **No SWE-bench Docker evaluation, real repository bug repair, agent inference or independent external coding score has run**; official harness and resource availability remain unverified on an actual host. GitHub issue #45 tracks next preregistered isolated live experiment. Historical SWE-bench problems may be contaminated or imperfectly graded."
+    },
+    {
+      "id": "edge-local-inference-bridge-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42353430569",
+      "AGI_demonstrated": false,
+      "notes": "PR #46 merged at 4c13fd9b82e8a655e16dcbe432ccc89979ba5291, added verified unit-tested offline-by-default local llama.cpp GGUF invocation contract with SHA256 provenance of locally supplied model and executable, exact model/engine paths, bounded CPU-only CLI flags and 180s time limit, symlink/tamper checks, restricted subprocess credentials, hash-only output report, and no automatic downloads/training/deployment. Original PR CI run #42353353428 and merged-main CI run #42353430569 completed SUCCESS, but all edge executor runner tests were mocked. NO llama.cpp binary/weights loaded, NO real device inference, NO physical/offline network isolation validated, NO model output accuracy scored, NO Qwen3.6-27B compatibility or AGI demonstrated. Hardware and independent capability evaluation tracked in issue #47. Public architecture roadmap docs/EDGE_FIRST_AGI_ROADMAP.md maps screenshots, Inspect/OpenHands/PaperQA2/ToolUniverse/AutoResearch and AGI evidence gates."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Run first independently scored unfamiliar real public-repository bug repair. Official SWE-bench v5.0.2 guarded integration merged in PR #44 with passing zero-inference CI #42352849149; next controlled execution is tracked in issue #45. On a founder-approved isolated host meeting upstream Docker hardware requirements, verify gold reference then run a frozen upstream coding agent on one preregistered public issue and compare against matched no-tool baseline; preserve all scorer errors and costs. Do not treat official-harness integration or small historical benchmark scores as AGI."
+      "action": "First establish a real on-device offline inference measurement with an owner-approved local machine and an independently reviewed pinned GGUF plus llama.cpp binary: merged edge runtime PR #46, successful main CI #42353430569; benchmark execution NOT DONE, tracked by issue #47. Verify host OS network isolation, device RAM/CPU/power, genuine model output correctness and unseen tasks. Evaluate stronger Qwen3.6-27B only after tokenizer/backend compatibility and hardware proof. Avoid downloading model files or exposing private Plenum IP in public CI."
     },
     {
       "priority": 2,
-      "action": "Use existing PaperQA2/PaperBench and independent held-out scientific literature/reproduction rather than a new research agent framework. Require citation-faithfulness tests, source provenance, prospective outcomes and explicit founder approval before any model or research claim."
+      "action": "Run first independently scored unfamiliar real public-repository bug repair. Official SWE-bench v5.0.2 guarded integration merged in PR #44 with passing zero-inference CI #42352849149; next controlled execution is tracked in issue #45. On a founder-approved isolated host meeting upstream Docker hardware requirements, verify gold reference then run a frozen upstream coding agent on one preregistered public issue and compare against matched no-tool baseline; preserve all scorer errors and costs. Do not treat official-harness integration or small historical benchmark scores as AGI."
     },
     {
       "priority": 3,
-      "action": "Establish durable retrievable project memory and context with strict separation of public and private information."
+      "action": "Use existing PaperQA2/PaperBench and independent held-out scientific literature/reproduction rather than a new research agent framework. Require citation-faithfulness tests, source provenance, prospective outcomes and explicit founder approval before any model or research claim."
     },
     {
       "priority": 4,
-      "action": "Implement sustained bounded planning, task repair, independent criticism, and self-evaluation across unrelated domains."
+      "action": "Establish durable retrievable project memory and context with strict separation of public and private information."
     },
     {
       "priority": 5,
+      "action": "Implement sustained bounded planning, task repair, independent criticism, and self-evaluation across unrelated domains."
+    },
+    {
+      "priority": 6,
       "action": "Accept new methods or model changes only after prospective independent evaluation and explicit human approval."
     }
   ],
