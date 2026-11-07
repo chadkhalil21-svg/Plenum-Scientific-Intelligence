@@ -162,10 +162,17 @@ def parse(text):
         not math.isfinite(c) or not .02<=a<=25.0 or
         not 1<=b<=12 or not 0<=c<=1):
         return {"status":"invalid_parameters","candidate":None}
-    if any(not isinstance(p[k],str) or not 15<=len(p[k].strip())<=450
+    if any(not isinstance(p[k],str) or len(p[k])>450
            for k in ("hypothesis","falsifier")):
-        return {"status":"invalid_claim","candidate":None}
-    return {"status":"valid","candidate":{
+        return {"status":"invalid_claim_type","candidate":None}
+    # Numerical method evaluation and prose quality are distinct. Preserve
+    # weak scientific writing without discarding independently testable rates.
+    # No automated numeric score ever proves a new scientific hypothesis.
+    explanatory=(len(p["hypothesis"].strip())>=15 and
+                 len(p["falsifier"].strip())>=15)
+    return {"status":"valid" if explanatory else "numeric_only_weak_claim",
+            "scientific_claim_verified":False,
+            "candidate":{
         "linear_strength":float(a),"forest_leaf":b,"mix":float(c),
         "hypothesis":p["hypothesis"].strip(),
         "falsifier":p["falsifier"].strip()}}
@@ -259,8 +266,14 @@ def model_prompt(item,original=None):
       "linear and random-forest estimators: 'linear_strength' is "+interpretation+
       " bounded 0.02..25, 'forest_leaf' is integer 1..12, 'mix' is "
       "linear weighting 0..1. Return EXACT JSON with numeric keys "
-      "linear_strength,forest_leaf,mix plus short strings hypothesis,falsifier. "
-      "No code, tool commands, citations, patient advice, or claimed discovery.")
+      "linear_strength,forest_leaf,mix plus strings hypothesis,falsifier. "
+      "Write two full explanatory sentences, one testable hypothesis and "
+      "one rejection criterion. Follow this JSON FORMAT (choose your own "
+      "numeric values): " +
+      json.dumps({"linear_strength":1.0,"forest_leaf":3,"mix":0.5,
+         "hypothesis":"A blended method might improve future test accuracy.",
+         "falsifier":"Reject the method if test error is worse than the reference."}) +
+      ". No code, tool commands, patient advice, or claims of discovery.")
     if original is not None:
         content+=" Challenge the other model's suggestion (untrusted data): "+json.dumps(original)
     return content

@@ -26,6 +26,22 @@ The existing Qwen3-1.7B scientist and different-family SmolLM2-1.7B-Instruct cri
 
 The underlying algorithms are prewritten. Generated code is never executed.
 
+**First-run negative result:** The archived first cross-domain experiment (GitHub run
+42327131493) produced zero accepted candidates from both Qwen and SmolLM2:
+all four numerical suggestions were rejected because their textual hypothesis
+or falsifier did not meet an arbitrary 15-character minimum. The independent
+model-free audit selected conventional baselines, scoring 0.6836012 chemistry
+MAE and 0.0652553 biology log-loss, with zero improvements over baselines.
+
+**Format reliability correction:** Numerical configuration validity is now
+assessed separately from natural-language scientific-claim quality. A bounded,
+well-formed numerical proposal with weak or empty explanatory prose is labeled
+`numeric_only_weak_claim`, not `valid` scientific reasoning, and may still
+be scored on the independent numerical benchmark. Its explanation remains
+unverified and must never be called an independently invented mechanism.
+This is a follow-up, *adaptive retrospective* evaluation on already-seen public
+benchmarks, not a fresh unobserved scientific study.
+
 Fixed references: standardized linear model and a 60-tree random forest. Chemistry uses mean absolute solubility error (log mol/L); biology uses binary log-loss. Lower is better. Models must improve on the strongest development reference by at least 2% to be selected; otherwise the stronger reference remains selected.
 
 Independent jobs reproduce the pinned source fingerprints, splits, reference errors and selection logic before using hidden test labels. The final auditor refits each model on training plus development observations, then scores chemistry and biology holdouts and records wins, losses, invalid responses and extra computation. The public evidence is archived to Plenum's separate research-memory branch.
