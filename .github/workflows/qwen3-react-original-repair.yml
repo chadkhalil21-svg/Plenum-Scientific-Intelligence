@@ -62,14 +62,18 @@ jobs:
             --template-out reports/qwen3-react-template.jinja \
             --out reports/qwen3-original-template-rendered.json
           python - <<'PY'
-          import json
+          import json,yaml
           from pathlib import Path
           p=json.loads(Path("reports/qwen3-original-template-rendered.json").read_text())
           assert p["tokenizer_render_verified"]
           assert p["original_flat_inspect_tools_render"] and p["original_nested_tools_render"]
           assert not p["model_weights_modified"] and p["local_model_calls"]==0
           assert not p["AGI_demonstrated"]
-          print("Original tokenizer tool history compatibility checked without inference")
+          template=Path("reports/qwen3-react-template.jinja").read_text()
+          encoded=json.dumps(template)
+          assert yaml.safe_load(encoded)==template
+          assert not isinstance(yaml.safe_load(encoded),dict)
+          print("Original tokenizer AND Inspect YAML CLI string serialization checked without model inference")
           PY
       - uses: actions/upload-artifact@v7
         if: always()
@@ -208,10 +212,10 @@ jobs:
       - name: Re-run ONE original official ReAct coding question with fixed history rendering
         run: |
           MODEL_PATH="$(cat reports/model-path.txt)"
-          CHAT_TEMPLATE="$(cat reports/qwen3-react-template.jinja)"
+          CHAT_TEMPLATE_JSON="$(python -c 'import json; from pathlib import Path; print(json.dumps(Path("reports/qwen3-react-template.jinja").read_text()))')"
           inspect eval src/plenum_ai/inspect_react_coding.py --model hf/local \
             -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
-            -M "chat_template=$CHAT_TEMPLATE" \
+            -M "chat_template=$CHAT_TEMPLATE_JSON" \
             --limit 1 --epochs 1 --max-samples 1 --max-sandboxes 1 \
             --max-connections 1 --max-tokens 256 --temperature 0 \
             --turn-limit 6 --message-limit 14 --time-limit 240 --max-retries 0 \
