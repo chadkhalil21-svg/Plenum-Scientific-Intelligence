@@ -1,0 +1,52 @@
+name: Verify Official Kaggle CLI Access Adapter Offline
+on:
+  pull_request:
+    paths:
+      - 'scripts/kaggle_bridge.py'
+      - 'tests/test_kaggle_bridge.py'
+      - '.github/workflows/kaggle-cli-offline-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/kaggle_bridge.py'
+      - 'tests/test_kaggle_bridge.py'
+      - '.github/workflows/kaggle-cli-offline-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-kaggle-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install official pinned CLI without authenticating
+        run: python -m pip install "kaggle @ git+https://github.com/Kaggle/kaggle-cli.git@fdc788faffe3f29ae317480325c44080a00a5434" six==1.17.0
+      - name: Confirm real CLI commands and manual no-run mode
+        env:
+          KAGGLE_API_TOKEN: ''
+        run: |
+          for command in push pull list; do
+            if ! kaggle kernels "$command" --help > "/tmp/kaggle-${command}-help.txt" 2>&1; then
+              echo "Official Kaggle CLI $command help could not initialize without credentials"
+              head -n 35 "/tmp/kaggle-${command}-help.txt"
+              exit 1
+            fi
+          done
+          echo "Official CLI offline help output (no credentials configured):"
+          head -n 40 /tmp/kaggle-push-help.txt
+          head -n 40 /tmp/kaggle-pull-help.txt
+          head -n 40 /tmp/kaggle-list-help.txt
+          grep -F -- '--no-run' /tmp/kaggle-push-help.txt
+          grep -F -- '--metadata' /tmp/kaggle-pull-help.txt
+          grep -F -- '--mine' /tmp/kaggle-list-help.txt
+          python scripts/kaggle_bridge.py --mode offline
+      - name: Exercise all safety contracts without network or token
+        env:
+          KAGGLE_API_TOKEN: ''
+        run: python -m unittest discover -s tests -p test_kaggle_bridge.py -v
