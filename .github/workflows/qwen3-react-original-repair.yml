@@ -1,0 +1,241 @@
+name: Recover Original ReAct Failure and Validate Qwen3 Tool Template
+on:
+  pull_request:
+    paths:
+      - 'src/plenum_ai/qwen3_chat_template.py'
+      - 'src/plenum_ai/react_original_failure.py'
+      - 'tests/test_qwen3_react_compat.py'
+      - '.github/workflows/qwen3-react-original-repair.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/plenum_ai/qwen3_chat_template.py'
+      - 'src/plenum_ai/react_original_failure.py'
+      - 'tests/test_qwen3_react_compat.py'
+      - '.github/workflows/qwen3-react-original-repair.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: qwen-original-react-compat-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  zero-inference-original-template-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      HF_TOKEN: ''
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Run no-model unit tests and original fail-closed source plans
+        run: |
+          python -m pip install -e '.[inspection]'
+          python -m pip install "inspect-evals==0.27.0" "transformers==5.22.1" "huggingface_hub>=1.2,<2" safetensors
+          python -m pip check
+          python -m unittest discover -s tests -p 'test_qwen3_react_compat.py' -v
+          python -m plenum_ai.qwen3_chat_template --out reports/original-template-preflight.json
+          python -m plenum_ai.react_original_failure --out reports/original-failure-preflight.json
+      - name: Download ONLY original pinned tokenizer files, not model weights
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from huggingface_hub import HfApi,snapshot_download
+          from plenum_ai.qwen3_chat_template import MODEL,REVISION
+          info=HfApi().model_info(MODEL,revision=REVISION)
+          assert info.sha==REVISION
+          folder=snapshot_download(repo_id=MODEL,revision=REVISION,
+              allow_patterns=["tokenizer*","chat_template.jinja",
+                              "special_tokens_map.json","added_tokens.json",
+                              "vocab.json","merges.txt"])
+          Path("reports/tokenizer-path.txt").write_text(str(folder))
+          print("Downloaded tokenizer only, no pretrained weights")
+          PY
+      - name: Confirm exact original Qwen tokenizer renders both Inspect flat and OpenAI nested tool calls
+        run: |
+          MODEL_PATH="$(cat reports/tokenizer-path.txt)"
+          python -m plenum_ai.qwen3_chat_template \
+            --model-path "$MODEL_PATH" \
+            --template-out reports/qwen3-react-template.jinja \
+            --out reports/qwen3-original-template-rendered.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path("reports/qwen3-original-template-rendered.json").read_text())
+          assert p["tokenizer_render_verified"]
+          assert p["original_flat_inspect_tools_render"] and p["original_nested_tools_render"]
+          assert not p["model_weights_modified"] and p["local_model_calls"]==0
+          assert not p["AGI_demonstrated"]
+          print("Original tokenizer tool history compatibility checked without inference")
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: qwen3-original-tokenizer-no-inference
+          path: |
+            reports/qwen3-original-template-rendered.json
+            reports/original-template-preflight.json
+          retention-days: 30
+  recover-original-failed-agent:
+    needs: zero-inference-original-template-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      actions: read
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Download original failed run 42347377474 model transcript only
+        run: |
+          gh run download 42347377474 --repo "$GITHUB_REPOSITORY" \
+            -n inspect-react-agent-original-function-evidence -D reports/
+          mkdir -p reports/inspect-react-failed-original
+          cp reports/inspect-react-coding-logs/*.eval reports/inspect-react-failed-original/
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          files=list(Path("reports/inspect-react-failed-original").glob("*.eval"))
+          assert len(files)==1
+          assert files[0].name=="2026-11-07T06-33-51-00-00_react-original-humaneval_9xvQJmZDqT6M9Lh6ziKj2s.eval"
+          assert hashlib.sha256(files[0].read_bytes()).hexdigest()=="c205cc78bf4cf341a6ea275ffd526ab6b2d24a3e7132bca4e1f68f0c427cce3d"
+          print("Actual original 1-tool-call/1-result failure retained unchanged")
+          PY
+      - name: Install only original independent Inspect readers, NO model libraries
+        run: |
+          python -m pip install -e '.[inspection]'
+          python -m pip install "inspect-evals==0.27.0"
+          python -m pip check
+      - name: Read actual unscored original model failure and count tool events
+        run: |
+          python -m plenum_ai.react_original_failure \
+            --audit-dir reports/inspect-react-failed-original \
+            --out reports/original-react-failure-report.json
+          python - <<'PY'
+          import json
+          d=json.load(open("reports/original-react-failure-report.json"))
+          assert d["original_log_reviewed"] and d["unscored_execution"]
+          assert d["agent_tool_calls"]==1 and d["tool_result_messages"]==1
+          assert d["chat_template_error_observed"] and d["sandbox_tool_error_observed"]
+          assert not d["independent_functional_grade_available"]
+          assert not d["model_error_recovery_demonstrated"] and not d["AGI_demonstrated"]
+          print("Negative original agent evidence confirmed; NOT a coding-score failure")
+          PY
+      - name: Append-only archive original failed model's exact raw log and factual summary
+        run: |
+          python - <<'PY'
+          import hashlib,json,zipfile
+          from pathlib import Path
+          d=json.loads(Path("reports/original-react-failure-report.json").read_text())
+          assert d["original_log_reviewed"] and not d["independent_functional_grade_available"]
+          root=Path("ledger/evidence/inspect-react-failed")
+          root.mkdir(parents=True,exist_ok=True)
+          path=root/"run-42347377474.json"
+          archive=root/"run-42347377474-raw.zip"
+          if path.exists() or archive.exists():
+              raise FileExistsError("Original historical failures are append-only")
+          raw=list(Path("reports/inspect-react-failed-original").glob("*.eval"))
+          if len(raw)!=1:raise ValueError("Original failed evaluation log missing")
+          d["original_eval_sha256"]={raw[0].name:hashlib.sha256(raw[0].read_bytes()).hexdigest()}
+          with zipfile.ZipFile(archive,"x",compression=zipfile.ZIP_DEFLATED) as z:
+              z.write(raw[0],arcname=raw[0].name)
+          path.write_text(json.dumps(d,indent=2)+"\n",encoding="utf-8")
+          PY
+      - name: Commit only public original failure evidence, no production edits
+        run: |
+          git -C ledger config user.name 'Plenum Scientific Evidence'
+          git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ledger add evidence/inspect-react-failed/
+          git -C ledger commit -m 'Preserve original unscored ReAct Qwen3 tool-template failure'
+          git -C ledger pull --rebase origin research-memory
+          git -C ledger push origin HEAD:research-memory
+  corrected-original-agent:
+    needs: recover-original-failed-agent
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release corrected Inspect Qwen3 ReAct agent')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+      OPENAI_API_KEY: ''
+      ANTHROPIC_API_KEY: ''
+      GOOGLE_API_KEY: ''
+      HF_TOKEN: ''
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Require disposable Docker isolation and pinned official scoring libraries
+        run: |
+          docker info >/dev/null
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[inspection]'
+          python -m pip install "inspect-evals==0.27.0" "transformers==5.22.1" "accelerate>=1.1,<2" "huggingface_hub>=1.2,<2" safetensors
+          python -m pip check
+      - name: Reuse exact original Qwen3-1.7B public checkpoint, no other model
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from huggingface_hub import HfApi,snapshot_download
+          from plenum_ai.qwen3_chat_template import MODEL,REVISION
+          info=HfApi().model_info(MODEL,revision=REVISION)
+          assert info.sha==REVISION
+          path=snapshot_download(repo_id=MODEL,revision=REVISION)
+          Path("reports").mkdir(exist_ok=True)
+          Path("reports/model-path.txt").write_text(path)
+          PY
+      - name: Patch only original Qwen tokenizer's flat tool-call history display; verify two shapes without model calls
+        run: |
+          MODEL_PATH="$(cat reports/model-path.txt)"
+          python -m plenum_ai.qwen3_chat_template \
+            --model-path "$MODEL_PATH" \
+            --template-out reports/qwen3-react-template.jinja \
+            --out reports/original-compatibility-check.json
+      - name: Re-run ONE original official ReAct coding question with fixed history rendering
+        run: |
+          MODEL_PATH="$(cat reports/model-path.txt)"
+          CHAT_TEMPLATE="$(cat reports/qwen3-react-template.jinja)"
+          inspect eval src/plenum_ai/inspect_react_coding.py --model hf/local \
+            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
+            -M "chat_template=$CHAT_TEMPLATE" \
+            --limit 1 --epochs 1 --max-samples 1 --max-sandboxes 1 \
+            --max-connections 1 --max-tokens 256 --temperature 0 \
+            --turn-limit 6 --message-limit 14 --time-limit 240 --max-retries 0 \
+            --log-dir reports/inspect-react-coding-logs --display none
+      - name: Verify original scorer and real tool calls and tool responses
+        run: |
+          python -m plenum_ai.inspect_react_coding \
+            --audit-dir reports/inspect-react-coding-logs \
+            --out reports/repaired-react-original-score.json
+          python - <<'PY'
+          import json
+          d=json.load(open("reports/repaired-react-original-score.json"))
+          assert d["official_functional_test_scored"] and d["agent_loop_verified"]
+          assert d["attempted"]==1
+          assert not d["AGI_demonstrated"] and not d["automated_deployment"]
+          print("Actual original functional score",d["correct"],"/1; tool calls",
+                d["actual_model_tool_calls"],"responses",d["actual_tool_results"])
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: corrected-qwen3-original-react-logs
+          path: |
+            reports/repaired-react-original-score.json
+            reports/inspect-react-coding-logs/
+            reports/original-compatibility-check.json
+          retention-days: 90
