@@ -28,6 +28,17 @@ class PublicScienceInspectTests(unittest.TestCase):
             with self.subTest(path=raw), self.assertRaises(ValueError):
                 b.checked_path(raw)
         self.assertEqual(str(b.checked_path("reports/score.json")),"reports/score.json")
+    def test_upstream_task_namespace_is_strict(self):
+        self.assertEqual(b.canonical_task("inspect_evals/arc_easy"),"arc_easy")
+        self.assertEqual(b.canonical_task("inspect_evals/arc_challenge"),"arc_challenge")
+        for invalid in ("arc_easy", "inspect_evals/other", "other/arc_easy", ""):
+            with self.subTest(name=invalid),self.assertRaises(ValueError):
+                b.canonical_task(invalid)
+
+    def test_nonthinking_variant_is_exposed_to_auditor(self):
+        self.assertFalse(b.plan()["enable_thinking"])
+        self.assertEqual(b.plan()["evaluation_variant"],"nonthinking-v2")
+
     def test_no_log_directory(self):
         with patch("importlib.metadata.version",return_value="unreviewed"):
             with self.assertRaisesRegex(RuntimeError,"version changed"):
