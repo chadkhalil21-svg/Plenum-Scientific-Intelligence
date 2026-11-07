@@ -1,0 +1,180 @@
+name: Inspect Evals | Four-Domain 96-Question Baseline
+on:
+  pull_request:
+    paths:
+      - 'src/plenum_ai/inspect_cross_domain.py'
+      - 'tests/test_inspect_cross_domain.py'
+      - '.github/workflows/inspect-cross-domain.yml'
+      - 'docs/INSPECT_CROSS_DOMAIN.md'
+  push:
+    branches: [main]
+    paths:
+      - 'src/plenum_ai/inspect_cross_domain.py'
+      - 'tests/test_inspect_cross_domain.py'
+      - '.github/workflows/inspect-cross-domain.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: cross-domain-96-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  offline-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Validate precommit, task allowlist and zero-inference default
+        run: |
+          python -m pip install -e .
+          python -m unittest discover -s tests -p 'test_inspect_cross_domain.py' -v
+          python -m plenum_ai.inspect_cross_domain --out reports/cross-domain-plan.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: inspect-cross-domain-precommit
+          path: reports/cross-domain-plan.json
+          retention-days: 30
+  frozen-public-model:
+    needs: offline-preflight
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release Inspect cross-domain 96'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+      OPENAI_API_KEY: ''
+      ANTHROPIC_API_KEY: ''
+      GOOGLE_API_KEY: ''
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install pinned Inspect framework and CPU model libraries
+        run: |
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[inspection]'
+          python -m pip install "inspect-evals==0.27.0" "transformers==5.22.1" "accelerate>=1.1,<2" "huggingface_hub>=1.2,<2" safetensors
+          python -m pip check
+      - name: Verify immutable public model and pin local path
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from huggingface_hub import HfApi, snapshot_download
+          from plenum_ai.hf_model import APPROVED_MODEL, APPROVED_REVISION
+          from plenum_ai.inspect_cross_domain import plan
+          assert plan()['model_revision'] == APPROVED_REVISION
+          data=HfApi().model_info(APPROVED_MODEL,revision=APPROVED_REVISION)
+          assert data.sha==APPROVED_REVISION
+          path=snapshot_download(repo_id=APPROVED_MODEL,revision=APPROVED_REVISION)
+          Path('reports').mkdir(exist_ok=True)
+          Path('reports/model-path.txt').write_text(str(path),encoding='utf-8')
+          print('Frozen Qwen3-0.6B model checksum revision confirmed.')
+          PY
+      - name: Inspect official ARC Challenge, 24 examples
+        run: |
+          MODEL_PATH="$(cat reports/model-path.txt)"
+          inspect eval inspect_evals/arc_challenge --model hf/local \
+            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
+            --limit 24 --max-connections 1 --max-tokens 128 --temperature 0 \
+            --log-dir reports/inspect-cross-logs --display none
+      - name: Inspect official GSM8K mathematics, 24 examples, no few-shot
+        run: |
+          MODEL_PATH="$(cat reports/model-path.txt)"
+          inspect eval inspect_evals/gsm8k -T fewshot=0 --model hf/local \
+            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
+            --limit 24 --max-connections 1 --max-tokens 128 --temperature 0 \
+            --log-dir reports/inspect-cross-logs --display none
+      - name: Inspect official HellaSwag commonsense, 24 examples
+        run: |
+          MODEL_PATH="$(cat reports/model-path.txt)"
+          inspect eval inspect_evals/hellaswag --model hf/local \
+            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
+            --limit 24 --max-connections 1 --max-tokens 128 --temperature 0 \
+            --log-dir reports/inspect-cross-logs --display none
+      - name: Inspect official MMLU zero-shot knowledge, 24 examples
+        run: |
+          MODEL_PATH="$(cat reports/model-path.txt)"
+          inspect eval inspect_evals/mmlu_0_shot --model hf/local \
+            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
+            --limit 24 --max-connections 1 --max-tokens 128 --temperature 0 \
+            --log-dir reports/inspect-cross-logs --display none
+      - name: Audit all original official independent Inspect grades
+        run: |
+          python -m plenum_ai.inspect_cross_domain \
+            --audit-dir reports/inspect-cross-logs \
+            --out reports/cross-domain-audit.json
+          python - <<'PY'
+          import json
+          d=json.load(open('reports/cross-domain-audit.json'))
+          assert d['inference_executed'] and d['independently_scored']
+          assert d['attempted']==96 and len(d['by_family'])==4
+          assert d['AGI_demonstrated'] is False
+          assert not d['trained_or_promoted_model']
+          print('Four-domain independently scored results:', {k: v['correct'] for k,v in d['by_family'].items()})
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: inspect-cross-domain-original-scored-evidence
+          path: |
+            reports/cross-domain-audit.json
+            reports/inspect-cross-logs/
+          retention-days: 90
+  archive-original-results:
+    needs: frozen-public-model
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/download-artifact@v7
+        with:
+          name: inspect-cross-domain-original-scored-evidence
+          path: reports/
+      - name: Append original model log files and audit with SHA256 hashes
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json, hashlib, os, zipfile
+          from pathlib import Path
+          report=Path('reports/cross-domain-audit.json')
+          d=json.loads(report.read_text())
+          assert d['inference_executed'] and d['independently_scored'] and d['attempted']==96
+          assert d['AGI_demonstrated'] is False
+          root=Path('ledger/evidence/inspect-cross-domain')
+          root.mkdir(parents=True,exist_ok=True)
+          name='run-'+os.environ['RUN_ID']
+          target=root/(name+'.json')
+          zipped=root/(name+'-raw.zip')
+          if target.exists() or zipped.exists():
+              raise FileExistsError('Never overwrite archived experimental evidence')
+          logfiles=sorted(Path('reports/inspect-cross-logs').rglob('*.eval'))
+          if len(logfiles)!=4:
+              raise ValueError('Missing four original Inspect evaluation logs')
+          d['source_sha']=os.environ['SOURCE_SHA']
+          d['original_eval_sha256']={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in logfiles}
+          with zipfile.ZipFile(zipped,'x',compression=zipfile.ZIP_DEFLATED) as z:
+              for p in logfiles:z.write(p,arcname=p.name)
+          target.write_text(json.dumps(d,indent=2)+'\n')
+          print('Archived exact original Inspect grades and model logs:',target,zipped)
+          PY
+      - name: Push append-only public evidence to research-memory branch
+        run: |
+          git -C ledger config user.name 'Plenum Scientific Evidence'
+          git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ledger add evidence/inspect-cross-domain/
+          git -C ledger commit -m 'Append independently scored four-domain Inspect 96-task evidence'
+          git -C ledger pull --rebase origin research-memory
+          git -C ledger push origin HEAD:research-memory
