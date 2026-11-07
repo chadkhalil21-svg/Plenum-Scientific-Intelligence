@@ -55,6 +55,7 @@ jobs:
         env:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
           REGION: ${{ inputs.region }}
+          BROWSER_PROFILE_BUCKET: ${{ vars.BROWSER_PROFILE_BUCKET }}
         run: |
           gcloud artifacts repositories describe plenum-browser --location="$REGION" --project="$GCP_PROJECT_ID" --format='value(name)' > /dev/null
           gcloud secrets describe computer-browser-token --project="$GCP_PROJECT_ID" --format='value(name)' > /dev/null
