@@ -1,0 +1,56 @@
+{
+  "schema": "plenum-reasoning-method-ablation-v1",
+  "precommitted_before_first_inference": true,
+  "description": "Model-size and verification-prompt comparison against newly seeded bounded math/science/program tasks, independently scored for accuracy and format.",
+  "task_generator": "src/plenum_ai/agi_capability_lab.py preexisting 6 synthetic math/science/program task families with fresh Actions run-id seed and 28 unseen program inputs",
+  "models": [
+    {
+      "id": "Qwen/Qwen3-1.7B",
+      "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+      "params_billions": 1.7
+    },
+    {
+      "id": "Qwen/Qwen3-4B-Instruct-2507",
+      "revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+      "params_billions": 4,
+      "license": "Apache-2.0",
+      "model_card": "https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507"
+    }
+  ],
+  "prompt_conditions": [
+    {
+      "key": "baseline",
+      "description": "Unmodified original frozen task prompt"
+    },
+    {
+      "key": "verify",
+      "description": "Original prompt plus instruction to silently verify arithmetic, units and program generalization before final JSON. No few-shot numerical examples."
+    }
+  ],
+  "generation": {
+    "cpu": true,
+    "bfloat16": true,
+    "max_new_tokens": 220,
+    "greedy": true,
+    "model_loaded_once_per_job": true,
+    "network_model_downloads_only_on_release_or_manual_dispatch": true
+  },
+  "scoring": {
+    "strict_exact_json": "Original JSON schema validity and independent numeric/program correctness",
+    "normalized_exact_json": "Accept a single whole-response fenced JSON object, otherwise original strict JSON; no inference from loose prose or multiple candidate answers",
+    "verifier": "Regenerate solutions from the fresh per-run seed; no model sees answer keys or hidden program cases",
+    "metrics": [
+      "strict_valid_count",
+      "normalized_valid_count",
+      "strict_correct_count",
+      "normalized_correct_count",
+      "per_family_correct",
+      "inference_wall_seconds",
+      "model_calls",
+      "inferred_reasoning_gain_under_paired_questions"
+    ],
+    "acceptance": "All failures counted; paired accuracy and compute costs published, no auto promotion; very small n cannot demonstrate AGI.",
+    "safety": "Only approved public Apache model and prior pinned Qwen; no arbitrary code, no paid API, no private founder research, no untrusted tool execution.",
+    "limits": "Six textbook-style templates, two prompt methods, no clinical diagnosis or scientific discoveries. Changing numeric seed within familiar templates does not establish genuine open-world transfer."
+  }
+}
