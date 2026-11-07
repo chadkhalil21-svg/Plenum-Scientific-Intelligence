@@ -3,8 +3,10 @@ on:
   pull_request:
     paths:
       - 'src/plenum_ai/qwen3_chat_template.py'
+      - 'src/plenum_ai/react_json_model_config.py'
       - 'src/plenum_ai/react_original_failure.py'
       - 'tests/test_qwen3_react_compat.py'
+      - 'tests/test_react_json_model_config.py'
       - '.github/workflows/qwen3-react-original-repair.yml'
   push:
     branches: [main]
@@ -37,6 +39,7 @@ jobs:
           python -m pip install "inspect-evals==0.27.0" "transformers==5.22.1" "huggingface_hub>=1.2,<2" safetensors
           python -m pip check
           python -m unittest discover -s tests -p 'test_qwen3_react_compat.py' -v
+          python -m unittest discover -s tests -p 'test_react_json_model_config.py' -v
           python -m plenum_ai.qwen3_chat_template --out reports/original-template-preflight.json
           python -m plenum_ai.react_original_failure --out reports/original-failure-preflight.json
       - name: Download ONLY original pinned tokenizer files, not model weights
@@ -181,8 +184,125 @@ jobs:
           git -C ledger commit -m 'Preserve original unscored ReAct Qwen3 tool-template failure'
           git -C ledger pull --rebase origin research-memory
           git -C ledger push origin HEAD:research-memory
-  corrected-original-agent:
+  archive-previous-json-list-failure:
     needs: recover-original-failed-agent
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      actions: read
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Obtain ONLY immutable original failed run 42348876440, no model download
+        run: |
+          gh run download 42348876440 --repo "$GITHUB_REPOSITORY" \
+            -n corrected-qwen3-original-react-logs -D reports/
+          mkdir -p reports/react-broken-model-args-original
+          cp reports/inspect-react-coding-logs/*.eval reports/react-broken-model-args-original/
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          files=list(Path("reports/react-broken-model-args-original").glob("*.eval"))
+          assert len(files)==1
+          assert files[0].name=="2026-11-07T06-55-46-00-00_react-original-humaneval_HqKJ4KkXLTBPkhwAaQwRag.eval"
+          assert hashlib.sha256(files[0].read_bytes()).hexdigest()=="104c928ca23178962446cf7fd929c7797dcd0618c8e2dfaa585394833b96037d"
+          PY
+      - name: Install only existing original Inspect reader to audit negative results
+        run: |
+          python -m pip install -e '.[inspection]'
+          python -m pip install "inspect-evals==0.27.0"
+          python -m pip check
+      - name: Verify original template was split into six strings and HumanEval remained unscored
+        run: |
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          from inspect_ai.log import read_eval_log
+          from plenum_ai.inspect_react_coding import count_actual_tools
+          file=list(Path("reports/react-broken-model-args-original").glob("*.eval"))[0]
+          log=read_eval_log(str(file))
+          assert log.status=="error" and log.error
+          assert "Object of type Undefined is not JSON serializable" in log.error.message
+          assert log.eval.task=="react_original_humaneval" and log.eval.model=="hf/local"
+          model=log.eval.model_args
+          assert model["device"]=="cpu" and model["enable_thinking"] is False
+          assert str(model["model_path"]).endswith("70d244cc86ccca08cf5af4e1e306ecf908b1ad5e")
+          assert type(model["chat_template"]) is list and len(model["chat_template"])==6
+          assert len(log.samples or [])==1
+          sample=log.samples[0]
+          assert str(sample.id)=="HumanEval/0" and not sample.scores
+          calls,results=count_actual_tools(sample.messages or [])
+          assert calls==1 and results==1
+          d={
+            "schema":"plenum-inspect-original-react-json-model-config-failure-v1",
+            "original_run_id":"42348876440",
+            "source_sha":"6097cb3684459a3ed8c3f181477f548b5825fb45",
+            "status":"unscored",
+            "original_independent_functional_grade_available":False,
+            "original_tool_calls":calls,
+            "original_tool_results":results,
+            "chat_template_model_args_type":"list",
+            "chat_template_segments":6,
+            "template_error":log.error.message,
+            "original_eval_sha256":{file.name:hashlib.sha256(file.read_bytes()).hexdigest()},
+            "model_training":False,
+            "automatic_model_promotion":False,
+            "AGI_demonstrated":False,
+          }
+          Path("reports/react-previous-json-list-failure.json").write_text(json.dumps(d,indent=2)+"\n")
+          print("Verified genuine original model execution and lossy CLI list of six Jinja fragments, with NO functional grade")
+          PY
+      - name: Append exact original negative evidence, refuse historical rewrites
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,zipfile,hashlib
+          source=Path("reports/react-previous-json-list-failure.json")
+          record=json.loads(source.read_text())
+          folder=Path("ledger/evidence/inspect-react-failed")
+          folder.mkdir(parents=True,exist_ok=True)
+          dest=folder/"run-42348876440.json"
+          raw_zip=folder/"run-42348876440-raw.zip"
+          logs=list(Path("reports/react-broken-model-args-original").glob("*.eval"))
+          assert len(logs)==1
+          if dest.exists() or raw_zip.exists():
+              if not dest.is_file() or not raw_zip.is_file():
+                  raise FileExistsError("Partial historical archive blocked")
+              old=json.loads(dest.read_text())
+              assert old==record, "Existing experiment evidence differs"
+              with zipfile.ZipFile(raw_zip) as z:
+                  assert z.namelist()==[logs[0].name]
+                  assert hashlib.sha256(z.read(logs[0].name)).hexdigest()==record["original_eval_sha256"][logs[0].name]
+              print("Already safely archived original failed run")
+          else:
+              with zipfile.ZipFile(raw_zip,"x",compression=zipfile.ZIP_DEFLATED) as z:
+                  z.write(logs[0],arcname=logs[0].name)
+              dest.write_text(json.dumps(record,indent=2)+"\n")
+          PY
+      - name: Commit historical failed original experiment only
+        run: |
+          git -C ledger config user.name 'Plenum Scientific Evidence'
+          git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ledger add evidence/inspect-react-failed/
+          if git -C ledger diff --cached --quiet; then
+            echo 'Original negative experiment already archived without change'
+            exit 0
+          fi
+          git -C ledger commit -m 'Archive original unscored Qwen3 six-fragment model-args failure'
+          git -C ledger pull --rebase origin research-memory
+          git -C ledger push origin HEAD:research-memory
+  corrected-original-agent:
+    needs: archive-previous-json-list-failure
     if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release corrected Inspect Qwen3 ReAct agent')))
     runs-on: ubuntu-latest
     timeout-minutes: 35
@@ -225,13 +345,29 @@ jobs:
             --model-path "$MODEL_PATH" \
             --template-out reports/qwen3-react-template.jinja \
             --out reports/original-compatibility-check.json
-      - name: Re-run ONE original official ReAct coding question with fixed history rendering
+      - name: Build NATIVE Inspect JSON model-config file; confirm complete patched template is one string
         run: |
           MODEL_PATH="$(cat reports/model-path.txt)"
-          CHAT_TEMPLATE_JSON="$(python -c 'import json; from pathlib import Path; print(json.dumps(Path("reports/qwen3-react-template.jinja").read_text()))')"
+          python -m plenum_ai.react_json_model_config \
+            --model-path "$MODEL_PATH" \
+            --original-template native \
+            --template reports/qwen3-react-template.jinja \
+            --out reports/qwen3-react-model-config.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          c=json.loads(Path("reports/qwen3-react-model-config.json").read_text())
+          assert isinstance(c["chat_template"], str)
+          assert c["chat_template"].count("tool_call.function is string")==1
+          assert c["chat_template"].count("tool_call.function is mapping")==1
+          assert c["model_path"].endswith("70d244cc86ccca08cf5af4e1e306ecf908b1ad5e")
+          assert c["device"]=="cpu" and c["do_sample"] is False and c["enable_thinking"] is False
+          print("Inspect original provider arguments preserve ONE complete Qwen3 Jinja string; no model generation")
+          PY
+      - name: Re-run ONE original official ReAct coding question with native model-config JSON scalar
+        run: |
           inspect eval src/plenum_ai/inspect_react_coding.py --model hf/local \
-            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
-            -M "chat_template=$CHAT_TEMPLATE_JSON" \
+            --model-config reports/qwen3-react-model-config.json \
             --limit 1 --epochs 1 --max-samples 1 --max-sandboxes 1 \
             --max-connections 1 --max-tokens 256 --temperature 0 \
             --turn-limit 6 --message-limit 14 --time-limit 240 --max-retries 0 \
@@ -258,6 +394,7 @@ jobs:
             reports/repaired-react-original-score.json
             reports/inspect-react-coding-logs/
             reports/original-compatibility-check.json
+            reports/qwen3-react-model-config.json
           retention-days: 90
   archive-corrected-original:
     needs: corrected-original-agent
