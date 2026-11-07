@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T07:41:48.267Z",
+  "last_reviewed_utc": "2026-11-07T07:50:53.493Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -358,12 +358,19 @@
         "actual_tool_calls": 11,
         "actual_tool_responses": 11
       }
+    },
+    {
+      "id": "swebench-v5-official-repo-bridge-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42352849149",
+      "AGI_demonstrated": false,
+      "notes": "PR #44 merged as 38274fb84458fa7e519f5488e7c937a1dd4b1ca6, official SWE-bench v5.0.2 evaluator bridge for one historical publicly documented real repository issue, with read-only default plan, separate gold/candidate cache keys, env allowlist, original scorer only, x86_64/16GiB RAM/120GiB free disk manual host preflight, explicit execution gate, no credential or paid provider inference. PR CI 42352764376 and merged main CI 42352849149 completed successfully, including the bridge offline tests. **No SWE-bench Docker evaluation, real repository bug repair, agent inference or independent external coding score has run**; official harness and resource availability remain unverified on an actual host. GitHub issue #45 tracks next preregistered isolated live experiment. Historical SWE-bench problems may be contaminated or imperfectly graded."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Measured paired coding result: same frozen Qwen3-1.7B scored 2/3 direct versus 1/3 with original Inspect ReAct, 11 genuine Python tool calls, zero repairs and one regression (run 42350599820). Stop optimizing these three old public samples. Reuse an established upstream coding agent or Inspect ReAct for a pre-registered rights-cleared public repository issue with independently runnable baseline/final tests, isolated disposable workspace, fixed CPU/cost budget and no secrets. Log all negative outcomes and measure both accuracy and actual tool expense before any model promotion."
+      "action": "Run first independently scored unfamiliar real public-repository bug repair. Official SWE-bench v5.0.2 guarded integration merged in PR #44 with passing zero-inference CI #42352849149; next controlled execution is tracked in issue #45. On a founder-approved isolated host meeting upstream Docker hardware requirements, verify gold reference then run a frozen upstream coding agent on one preregistered public issue and compare against matched no-tool baseline; preserve all scorer errors and costs. Do not treat official-harness integration or small historical benchmark scores as AGI."
     },
     {
       "priority": 2,
