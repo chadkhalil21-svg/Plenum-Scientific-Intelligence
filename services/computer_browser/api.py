@@ -70,3 +70,7 @@ async def read(task: BrowserRequest):
 @app.post("/v1/local-smoke", dependencies=[Depends(auth)])
 async def local_smoke():
     return await local_interaction_smoke()
+
+# Owner-facing Google IAP page is separate from the service's internal bearer API.
+from .owner_console import mount_owner_console
+mount_owner_console(app)
