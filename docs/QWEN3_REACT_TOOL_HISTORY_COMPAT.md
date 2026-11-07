@@ -59,3 +59,21 @@ Technical references:
 Limits: This is a formatting/serialization repair and an agent
 integration test, not evidence of general intelligence, autonomous
 programming reliability, proprietary discovery, or AGI.
+
+## Follow-up CLI argument finding
+
+The first patched-template release, run 42348424909, validated the real
+pinned tokenizer and independently archived the ORIGINAL ReAct failure
+successfully. Its corrected task did not reach model inference because
+Inspect's CLI uses YAML to parse model-specific arguments. Passing the
+raw native Jinja template on the command line caused a YAML ScannerError
+at the initial Jinja percent sign. This was a configuration transport
+error, not new model-generated code or a graded task failure.
+
+The revised workflow passes json.dumps(template) as the one shell-quoted
+model argument; JSON string literals are valid YAML scalar values, so
+Inspect's normal YAML parser decodes the exact original Jinja template
+without modifying it. Both the preflight and explicit model job validate
+round-trip decoding with the actual previously pinned tokenizer source.
+The original failed run's append-only research record is checked for
+byte-for-byte agreement on each subsequent attempt, never overwritten.
