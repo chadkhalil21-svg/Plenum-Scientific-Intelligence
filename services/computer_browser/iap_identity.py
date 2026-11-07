@@ -46,4 +46,6 @@ def verify_owner_token(token):
             not isinstance(iat,int) or not isinstance(exp,int) or
             exp-iat>660 or exp<=iat):
         raise PermissionError("Browser console restricted to authorized owner")
-    return {"owner_verified":True,"principal":"authorized-owner"}
+    import hashlib
+    return {"owner_verified":True,"principal":"authorized-owner",
+            "private_owner_id":hashlib.sha256(subject.encode("utf-8")).hexdigest()}
