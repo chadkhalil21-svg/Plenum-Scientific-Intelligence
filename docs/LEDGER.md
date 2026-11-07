@@ -1,6 +1,6 @@
 # Plenum Scientific Intelligence | Current Public Ledger
 
-**Updated: November 7, 2026 UTC.** This file is the public human-readable status. The machine-readable founder mission and priorities are in [state/mission_status.json](../state/mission_status.json). An independently generated [evidence index](../state/evidence_index.json) lists all archived public scientific records. **Plenum has not demonstrated AGI.**
+**Updated: November 7, 2026 UTC.** This file is the public human-readable status. The **single canonical machine-readable AGI status and founder-aligned priorities** are in [state/AGI_PROGRAM.json](../state/AGI_PROGRAM.json). The separately generated [evidence index](../state/evidence_index.json) inventories archived public scientific records without changing their content. **Plenum has not demonstrated AGI.**
 
 ## Verified progress and evidence
 
