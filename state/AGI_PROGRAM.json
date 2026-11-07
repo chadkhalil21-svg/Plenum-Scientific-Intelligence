@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T04:03:34Z",
+  "last_reviewed_utc": "2026-11-07T04:37:00Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -96,16 +96,30 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42336662799",
       "AGI_demonstrated": false,
       "notes": "Pinned UK AISI Inspect AI 0.3.287 Task/Sample/Solver/built-in scorer integration passed real CI with one correct and one incorrect frozen public replay, zero LLM calls. PR #20 merged. This is software integration, NOT an AI ability gain."
+    },
+    {
+      "id": "openhands-sdk-import-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42339003588",
+      "AGI_demonstrated": false,
+      "notes": "OpenHands 1.60.1 pinned SDK classes imported in Python3.12 CI; no agent execution, code generation, workspace commands or paid model calls. PR #21 merged."
+    },
+    {
+      "id": "paperqa-sdk-import-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42339003588",
+      "AGI_demonstrated": false,
+      "notes": "PaperQA2 2026.8.12 Docs/Settings/ask imports verified in Python3.11 CI; no document ingestion, embeddings, model calls or citation verification. PR #21 merged."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Reuse the now-verified optional Inspect AI evaluator and existing EleutherAI harness for preregistered unfamiliar multi-domain reasoning, programming and agent-tool tests with strong baselines and explicit compute budgets. No claim from six seeded textbook tasks."
+      "action": "Run preregistered unseen cross-domain independent Inspect AI/EleutherAI tests with actual frozen models under approved bounded inference and cost limits; compare real correct outputs to baselines."
     },
     {
       "priority": 2,
-      "action": "Investigate failed restricted program synthesis and quantitative reasoning without leaking answers; measure validity, exact correctness, paired differences, CPU time and independent tool-verified behavior separately."
+      "action": "Use verified optional OpenHands and PaperQA2 SDKs for isolated functional pilots: sandboxed public coding tasks and rights-cleared scientific citation challenges. Measure correctness, safety and cost; library imports alone do not count."
     },
     {
       "priority": 3,
@@ -148,6 +162,10 @@
     {
       "decision": "Use upstream Inspect AI rather than build another general-purpose evaluation framework.",
       "reason": "Pinned open-source v0.3.287 framework executed and independently scored a positive and negative public replay in CI run 42336662799, without model/API inference. Full multi-domain capability verification remains necessary."
+    },
+    {
+      "decision": "Adopt pinned OpenHands SDK and PaperQA2 rather than rebuild agent coding and paper QA frameworks.",
+      "reason": "Separate real upstream import checks passed CI run 42339003588 with zero model calls. Real agent code and citation performance remain unmeasured and need controlled experiments."
     }
   ],
   "operating_rules": [
