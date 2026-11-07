@@ -1,0 +1,38 @@
+name: Verify Real Playwright MCP Read-only Integration
+on:
+  pull_request:
+    paths:
+      - 'tools/browser-mcp/**'
+      - '.github/workflows/browser-mcp-readonly.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/browser-mcp/**'
+      - '.github/workflows/browser-mcp-readonly.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mcp-protocol:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned official Playwright MCP and client SDK
+        working-directory: tools/browser-mcp
+        run: npm install --ignore-scripts --no-fund --no-audit
+      - name: Run strict allowlist and action policy tests without browser
+        working-directory: tools/browser-mcp
+        run: npm run test:policy
+      - name: Install isolated official browser
+        working-directory: tools/browser-mcp
+        run: npx --no-install playwright install --with-deps chromium
+      - name: Exercise actual MCP stdio tools against static public page
+        working-directory: tools/browser-mcp
+        timeout-minutes: 3
+        run: npm run test:live
