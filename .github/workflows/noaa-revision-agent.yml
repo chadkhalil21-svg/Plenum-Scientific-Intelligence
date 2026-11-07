@@ -1,0 +1,150 @@
+name: Model-Revised Hypotheses on Real NOAA Observations
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/noaa-revision-agent.yml'
+      - 'src/plenum_ai/noaa_revision_agent.py'
+      - 'tests/test_noaa_revision_agent.py'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-noaa-revision-experiment
+  cancel-in-progress: false
+jobs:
+  blinded-model-proposer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install existing NOAA and public open-weight CPU inference dependencies
+        run: |
+          python -m pip install -e ".[empirical]"
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "transformers>=4.51,<5" "huggingface_hub>=0.30,<1" "accelerate>=1.1,<2" safetensors
+      - name: Test provenance and that model cannot access withheld NOAA measurements
+        run: python -m unittest discover -s tests -p 'test_noaa_revision_agent.py' -v
+      - name: Run actual 1.7B reasoning model on real development-only NOAA readings
+        run: |
+          python -m plenum_ai.noaa_revision_agent propose \
+            --question "Can continuous harmonic-persistence mixtures improve NOAA hourly forecasts?" \
+            --out reports/noaa_revision_proposals.json
+      - name: Verify all station-day proposals are sealed without hidden data
+        run: |
+          python - <<'PY'
+          import json
+          p=json.load(open('reports/noaa_revision_proposals.json'))
+          assert p['schema']=='plenum-noaa-revision-proposal-v1'
+          assert p['model']=='Qwen/Qwen3-1.7B'
+          assert p['model_revision']=='70d244cc86ccca08cf5af4e1e306ecf908b1ad5e'
+          assert p['model_calls']==8 and len(p['cases'])==4
+          assert p['model_inference_performed']
+          assert p['heldout_measurements_accessed'] is False
+          assert p['model_promoted'] is False
+          assert all(not c['holdout_seen'] for c in p['cases'])
+          print('Valid candidate experiments:', sum(c['selected_candidate'] is not None
+              for c in p['cases']), 'of 4 (invalid attempts retained)')
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sealed-noaa-real-measurement-proposals
+          path: reports/noaa_revision_proposals.json
+          retention-days: 14
+  independent-observation-audit:
+    needs: blinded-model-proposer
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e ".[empirical]"
+      - uses: actions/download-artifact@v7
+        with:
+          name: sealed-noaa-real-measurement-proposals
+          path: reports/
+      - name: Reproduce development scores THEN reveal the genuine NOAA heldout day
+        run: |
+          python -m plenum_ai.noaa_revision_agent audit \
+            --proposal reports/noaa_revision_proposals.json \
+            --out reports/noaa_revision_audit.json
+      - name: Report all four real-world experimental results without demanding success
+        run: |
+          python - <<'PY'
+          import json
+          a=json.load(open('reports/noaa_revision_audit.json'))
+          assert a['schema']=='plenum-noaa-revision-audit-v1'
+          assert a['station_day_cases']==4
+          assert a['real_observational_data_used']
+          assert a['evidence_verified_before_holdout']
+          assert a['blind_test_evaluated_independently']
+          assert a['all_failures_preserved']
+          assert a['general_intelligence_proven'] is False
+          assert a['autonomous_model_updates'] is False
+          for c in a['results']:
+              print(c['site'],c['date'],'AI MAE',c['test_mae_m'],
+                    'strongest baseline MAE',c['strongest_baseline_mae_m'],
+                    'beat baseline?',c['beats_best_baseline'])
+          print('Wins:',a['wins_vs_best_baseline'],'of',a['station_day_cases'])
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: independent-noaa-real-measurement-audit
+          path: reports/noaa_revision_*.json
+          retention-days: 14
+  public-research-memory:
+    needs: independent-observation-audit
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: evidence-branch
+      - uses: actions/download-artifact@v7
+        with:
+          name: independent-noaa-real-measurement-audit
+          path: reports/
+      - name: Append only public NOAA evidence and any failed predictions
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_REV: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=json.load(open('reports/noaa_revision_proposals.json'))
+          a=json.load(open('reports/noaa_revision_audit.json'))
+          assert p['schema']=='plenum-noaa-revision-proposal-v1'
+          assert a['schema']=='plenum-noaa-revision-audit-v1'
+          assert a['station_day_cases']==4
+          assert not a['autonomous_model_updates']
+          root=Path('evidence-branch/evidence/noaa-research-agent')
+          root.mkdir(parents=True,exist_ok=True)
+          dest=root/('run-'+os.environ['RUN_ID']+'.json')
+          if dest.exists(): raise FileExistsError('Public experiment already archived')
+          dest.write_text(json.dumps({'source_revision':os.environ['SOURCE_REV'],
+            'public_proposal':p, 'independent_audit':a,
+            'verified_new_discovery':False,'AGI_demonstrated':False},
+            indent=2,ensure_ascii=False)+'\n')
+          print('Archived real NOAA experiment, including failures:',dest)
+          PY
+      - name: Write evidence to research-memory only
+        run: |
+          git -C evidence-branch config user.name 'Plenum Public Research Ledger'
+          git -C evidence-branch config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C evidence-branch add evidence/noaa-research-agent/
+          git -C evidence-branch commit -m 'Archive bounded NOAA model hypotheses and blind public observations'
+          git -C evidence-branch pull --rebase origin research-memory
+          git -C evidence-branch push origin HEAD:research-memory
