@@ -1,0 +1,323 @@
+{
+  "source_revision": "c8db743cbb42065ed7ebcded0612c0033ca30c0b",
+  "proposal": {
+    "schema": "plenum-iterative-science-proposal-v1",
+    "model": "Qwen/Qwen3-1.7B",
+    "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+    "question": "Investigate numerical mechanisms across thermal, chemical and electronic systems",
+    "cases": [
+      {
+        "domain": "thermal",
+        "training": [
+          {
+            "t": 0,
+            "y": 1.4
+          },
+          {
+            "t": 1,
+            "y": 1.12352632
+          },
+          {
+            "t": 2,
+            "y": 0.90165099
+          },
+          {
+            "t": 3,
+            "y": 0.72359187
+          },
+          {
+            "t": 4,
+            "y": 0.58069608
+          }
+        ],
+        "baseline_models": {
+          "fitted_linear": {
+            "linear": -0.21999999843042417,
+            "quadratic": 0.0
+          },
+          "fitted_quadratic": {
+            "linear": 0.0,
+            "quadratic": -0.2519463734430091
+          }
+        },
+        "baseline_dev_errors": {
+          "fitted_linear": 4.2e-09,
+          "fitted_quadratic": 0.0730826829
+        },
+        "revision_history": [
+          {
+            "round": "initial",
+            "status": "valid",
+            "candidate": {
+              "linear": -0.12,
+              "quadratic": -0.05,
+              "hypothesis": "dy/dt = -0.12*y - 0.05*y^2",
+              "falsifier": "The observed data does not support the hypothesis, as the predicted values deviate significantly from the measured values."
+            },
+            "development_mae": 0.057687251,
+            "model_response_sha256": "56355705c4d8943ccc862f8d4ad36a9141974ce58e352bce03203c657863e46d"
+          },
+          {
+            "round": "revision",
+            "status": "valid",
+            "candidate": {
+              "linear": -0.12,
+              "quadratic": -0.05,
+              "hypothesis": "dy/dt = -0.12*y - 0.05*y^2",
+              "falsifier": "The observed data does not support the hypothesis, as the predicted values deviate significantly from the measured values."
+            },
+            "development_mae": 0.057687251,
+            "model_response_sha256": "56355705c4d8943ccc862f8d4ad36a9141974ce58e352bce03203c657863e46d"
+          }
+        ],
+        "chosen_round": "initial",
+        "chosen_hypothesis": {
+          "linear": -0.12,
+          "quadratic": -0.05,
+          "hypothesis": "dy/dt = -0.12*y - 0.05*y^2",
+          "falsifier": "The observed data does not support the hypothesis, as the predicted values deviate significantly from the measured values."
+        },
+        "chosen_dev_mae": 0.057687251,
+        "last_dev_time": 7,
+        "holdout_seen": false,
+        "seal_sha256": "39e88c263d6181229f6abbabd8c63eba1160b19d51647eab24e482a387eff875"
+      },
+      {
+        "domain": "chemical",
+        "training": [
+          {
+            "t": 0,
+            "y": 1.2
+          },
+          {
+            "t": 1,
+            "y": 0.93167702
+          },
+          {
+            "t": 2,
+            "y": 0.76142132
+          },
+          {
+            "t": 3,
+            "y": 0.64377682
+          },
+          {
+            "t": 4,
+            "y": 0.55762082
+          }
+        ],
+        "baseline_models": {
+          "fitted_linear": {
+            "linear": -0.1915994096082178,
+            "quadratic": 0.0
+          },
+          "fitted_quadratic": {
+            "linear": 0.0,
+            "quadratic": -0.23999999826644444
+          }
+        },
+        "baseline_dev_errors": {
+          "fitted_linear": 0.0584048406,
+          "fitted_quadratic": 2.3e-09
+        },
+        "revision_history": [
+          {
+            "round": "initial",
+            "status": "valid",
+            "candidate": {
+              "linear": -0.05,
+              "quadratic": -0.02,
+              "hypothesis": "dy/dt = -0.05*y - 0.02*y^2",
+              "falsifier": "At t=0, y=1.2; dy/dt = -0.05*1.2 - 0.02*(1.2)^2 = -0.06 - 0.0288 = -0.0888, which is not equal to the observed dy/dt of 0.0 (since dy/dt is not provided)."
+            },
+            "development_mae": 0.0515696971,
+            "model_response_sha256": "3841ba794e80456fb40ea63710b24d48c8e65814929c5c5fabdcd955f4448c75"
+          },
+          {
+            "round": "revision",
+            "status": "valid",
+            "candidate": {
+              "linear": -0.05,
+              "quadratic": -0.02,
+              "hypothesis": "dy/dt = -0.05*y - 0.02*y^2",
+              "falsifier": "At t=0, y=1.2; dy/dt = -0.05*1.2 - 0.02*(1.2)^2 = -0.06 - 0.0288 = -0.0888, which is not equal to the observed dy/dt of 0.0 (since dy/dt is not provided)."
+            },
+            "development_mae": 0.0515696971,
+            "model_response_sha256": "3841ba794e80456fb40ea63710b24d48c8e65814929c5c5fabdcd955f4448c75"
+          }
+        ],
+        "chosen_round": "initial",
+        "chosen_hypothesis": {
+          "linear": -0.05,
+          "quadratic": -0.02,
+          "hypothesis": "dy/dt = -0.05*y - 0.02*y^2",
+          "falsifier": "At t=0, y=1.2; dy/dt = -0.05*1.2 - 0.02*(1.2)^2 = -0.06 - 0.0288 = -0.0888, which is not equal to the observed dy/dt of 0.0 (since dy/dt is not provided)."
+        },
+        "chosen_dev_mae": 0.0515696971,
+        "last_dev_time": 7,
+        "holdout_seen": false,
+        "seal_sha256": "7d1baf1b5cb3aabe082826ae5560b62dac3d3355cdec5af343e2886490ec4f68"
+      },
+      {
+        "domain": "electrical",
+        "training": [
+          {
+            "t": 0,
+            "y": 1.5
+          },
+          {
+            "t": 1,
+            "y": 1.13429494
+          },
+          {
+            "t": 2,
+            "y": 0.89163451
+          },
+          {
+            "t": 3,
+            "y": 0.7197531
+          },
+          {
+            "t": 4,
+            "y": 0.59229861
+          }
+        ],
+        "baseline_models": {
+          "fitted_linear": {
+            "linear": -0.23230236764846504,
+            "quadratic": 0.0
+          },
+          "fitted_quadratic": {
+            "linear": 0.0,
+            "quadratic": -0.2554177275546874
+          }
+        },
+        "baseline_dev_errors": {
+          "fitted_linear": 0.0437364434,
+          "fitted_quadratic": 0.0362091857
+        },
+        "revision_history": [
+          {
+            "round": "initial",
+            "status": "valid",
+            "candidate": {
+              "linear": -0.12,
+              "quadratic": -0.05,
+              "hypothesis": "dy/dt = -0.12*y - 0.05*y^2",
+              "falsifier": "At t=4, y=0.59229861. Calculating dy/dt using the hypothesis: dy/dt = -0.12*(0.59229861) - 0.05*(0.59229861)^2 ≈ -0.0710758 - 0.017555 ≈ -0.0886308. The actual derivative is not equal to this value."
+            },
+            "development_mae": 0.0234186627,
+            "model_response_sha256": "c2d9826f90cd0278ee49e8438d42527e26fa4598cfe4df19c66b1b1492f2eb4e"
+          },
+          {
+            "round": "revision",
+            "status": "valid",
+            "candidate": {
+              "linear": -0.12,
+              "quadratic": -0.05,
+              "hypothesis": "dy/dt = -0.12*y - 0.05*y^2",
+              "falsifier": "At t=4, y=0.59229861. Calculating dy/dt using the hypothesis: dy/dt = -0.12*(0.59229861) - 0.05*(0.59229861)^2 ≈ -0.0710758 - 0.017555 ≈ -0.0886308. The actual derivative is not equal to this value."
+            },
+            "development_mae": 0.0234186627,
+            "model_response_sha256": "c2d9826f90cd0278ee49e8438d42527e26fa4598cfe4df19c66b1b1492f2eb4e"
+          }
+        ],
+        "chosen_round": "initial",
+        "chosen_hypothesis": {
+          "linear": -0.12,
+          "quadratic": -0.05,
+          "hypothesis": "dy/dt = -0.12*y - 0.05*y^2",
+          "falsifier": "At t=4, y=0.59229861. Calculating dy/dt using the hypothesis: dy/dt = -0.12*(0.59229861) - 0.05*(0.59229861)^2 ≈ -0.0710758 - 0.017555 ≈ -0.0886308. The actual derivative is not equal to this value."
+        },
+        "chosen_dev_mae": 0.0234186627,
+        "last_dev_time": 7,
+        "holdout_seen": false,
+        "seal_sha256": "077b10bf2aed1ba6c57b8ff47a6fdcb4b74abbd5d228c07af5f148b84317d51e"
+      }
+    ],
+    "model_calls": 6,
+    "model_inference": true,
+    "independent_model_critic": false,
+    "holdout_seen": false,
+    "generated_code_executed": false,
+    "AGI_demonstrated": false,
+    "new_physical_law_verified": false,
+    "model_promoted": false
+  },
+  "independent_audit": {
+    "schema": "plenum-iterative-science-audit-v1",
+    "source_sha256": "c17ac5df7c49e9a422f0c484079dd58e31b86248e65cb52499c2289d220d9ef1",
+    "model": "Qwen/Qwen3-1.7B",
+    "results": [
+      {
+        "domain": "thermal",
+        "chosen_hypothesis": {
+          "linear": -0.12,
+          "quadratic": -0.05,
+          "hypothesis": "dy/dt = -0.12*y - 0.05*y^2",
+          "falsifier": "The observed data does not support the hypothesis, as the predicted values deviate significantly from the measured values."
+        },
+        "test_mae": 0.0935880995,
+        "strongest_baseline_mae": 4.5e-09,
+        "baseline_test_mae": {
+          "fitted_linear": 4.5e-09,
+          "fitted_quadratic": 0.1460095114
+        },
+        "valid": true,
+        "better_than_strongest_baseline": false,
+        "physical_experiment_performed": false,
+        "novel_law_verified": false
+      },
+      {
+        "domain": "chemical",
+        "chosen_hypothesis": {
+          "linear": -0.05,
+          "quadratic": -0.02,
+          "hypothesis": "dy/dt = -0.05*y - 0.02*y^2",
+          "falsifier": "At t=0, y=1.2; dy/dt = -0.05*1.2 - 0.02*(1.2)^2 = -0.06 - 0.0288 = -0.0888, which is not equal to the observed dy/dt of 0.0 (since dy/dt is not provided)."
+        },
+        "test_mae": 0.0793458254,
+        "strongest_baseline_mae": 2.8e-09,
+        "baseline_test_mae": {
+          "fitted_linear": 0.1247332135,
+          "fitted_quadratic": 2.8e-09
+        },
+        "valid": true,
+        "better_than_strongest_baseline": false,
+        "physical_experiment_performed": false,
+        "novel_law_verified": false
+      },
+      {
+        "domain": "electrical",
+        "chosen_hypothesis": {
+          "linear": -0.12,
+          "quadratic": -0.05,
+          "hypothesis": "dy/dt = -0.12*y - 0.05*y^2",
+          "falsifier": "At t=4, y=0.59229861. Calculating dy/dt using the hypothesis: dy/dt = -0.12*(0.59229861) - 0.05*(0.59229861)^2 ≈ -0.0710758 - 0.017555 ≈ -0.0886308. The actual derivative is not equal to this value."
+        },
+        "test_mae": 0.0276285917,
+        "strongest_baseline_mae": 0.0768145878,
+        "baseline_test_mae": {
+          "fitted_linear": 0.0785914415,
+          "fitted_quadratic": 0.0768145878
+        },
+        "valid": true,
+        "better_than_strongest_baseline": true,
+        "physical_experiment_performed": false,
+        "novel_law_verified": false
+      }
+    ],
+    "domains_tested": 3,
+    "valid_hypotheses": 3,
+    "wins_over_strongest_baseline": 1,
+    "evidence_independently_reproduced": true,
+    "holdout_revealed_only_in_audit": true,
+    "AGI_demonstrated": false,
+    "independent_scientific_discovery": false,
+    "recursive_self_improvement": false,
+    "automatic_deployment": false,
+    "limitations": "Synthetic known equations, prewritten mathematical family; free continuous-valued AI hypotheses and one model self-revision. No laboratory validation, blind AGI benchmark or production model update."
+  },
+  "physical_discovery_verified": false,
+  "general_self_improvement_verified": false
+}
