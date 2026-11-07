@@ -133,6 +133,13 @@
       },
       "AGI_demonstrated": false,
       "notes": "Original pinned Qwen3-0.6B official Inspect ARC Easy and ARC Challenge: 0/12 plus 0/12, strict multiple-choice format invalid due thinking text and 48-token cutoff. Raw .eval artifacts retained. Plenum custom post-hoc audit failed because it expected unqualified task IDs; a new separately versioned nonthinking comparison is required."
+    },
+    {
+      "id": "openhands-editor-functional-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42340592716",
+      "AGI_demonstrated": false,
+      "notes": "Real pinned OpenHands SDK FileEditorExecutor created and corrected a fixed synthetic Python file and blocked an unauthorized file edit in disposable temp workspace. No LLM, agent planning or model-generated program. PR #25 merged."
     }
   ],
   "next_actions": [
@@ -197,6 +204,10 @@
     {
       "decision": "Preserve first actual Inspect ARC run as a measured failed configuration, not a general model verdict.",
       "reason": "Original independently scored 0/24 with 48-token Qwen reasoning preamble and a separate custom task-ID audit error; official raw results are immutable for comparison."
+    },
+    {
+      "decision": "Upgrade OpenHands assessment from SDK imports to actual controlled tool functionality only.",
+      "reason": "Real editor create/repair/deny evidence passed GitHub run 42340592716; intrinsic code-generation capability remains unmeasured until a restricted model-driven pilot."
     }
   ],
   "operating_rules": [
