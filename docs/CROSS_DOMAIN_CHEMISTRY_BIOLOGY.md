@@ -46,6 +46,20 @@ Fixed references: standardized linear model and a 60-tree random forest. Chemist
 
 Independent jobs reproduce the pinned source fingerprints, splits, reference errors and selection logic before using hidden test labels. The final auditor refits each model on training plus development observations, then scores chemistry and biology holdouts and records wins, losses, invalid responses and extra computation. The public evidence is archived to Plenum's separate research-memory branch.
 
+## Verified second-run outcome and adaptive-evaluation caution
+
+The independently audited second run (`42327817917`, commit `a027ab3057bd192956b32094d3c4a761f6276218`) completed with Qwen supplying 2/2 numerically valid proposals and SmolLM2 supplying 0/2 valid counterproposals (`invalid_json`). However, Qwen **copied the illustrative parameter example** exactly in both domains (linear_strength=1, forest_leaf=3, mix=0.5) instead of giving independently reasoned domain-specific values. The example has therefore been REMOVED from future prompts.
+
+The repeated heldout results were:
+
+- Chemistry: Qwen 0.7551566 MAE versus stronger reference 0.6836012 MAE; model not selected.
+- Biology: Qwen 0.0864139 log-loss versus stronger reference 0.0652553; model not selected.
+- Net heldout improvements: **zero of two**. The independent evidence gate kept both conventional baselines.
+
+Neither interface improvement, copying an example, nor a green evaluation job demonstrates scientific generalization. This was a *second adaptive retrospective assessment of the same public holdouts*, so future scientific capability claims require freshly precommitted unseen data.
+
+**Efficiency change:** The full historic two-model evaluation workflow is now **manual-dispatch only**. Automatic runs on unrelated code commits would spend CPU time repeating already viewed holdouts without adding independent evidence. Source-integrity and regression tests remain automatic.
+
 ## Production and privacy constraints
 
 No paid model API, persistent GPU, private Plenum patents, live clinical data, medical deployment, arbitrary model-generated Python execution or automatic self-modification is enabled. The workflow runs on temporary GitHub CPU runners with conservative timeouts. Green engineering tests never establish scientific accuracy or AGI.

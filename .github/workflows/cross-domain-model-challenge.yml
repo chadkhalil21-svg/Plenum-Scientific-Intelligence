@@ -1,13 +1,6 @@
 name: Independently Audited Chemistry and Biology Model Challenge
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/cross-domain-model-challenge.yml'
-      - 'src/plenum_ai/cross_domain_lab.py'
-      - 'protocols/cross-domain-chemistry-biology-v1.json'
 permissions:
   contents: read
 concurrency:
