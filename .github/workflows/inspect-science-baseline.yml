@@ -81,14 +81,14 @@ jobs:
         run: |
           MODEL_PATH="$(cat reports/model-path.txt)"
           inspect eval inspect_evals/arc_easy --model hf/local \
-            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false \
+            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
             --limit 12 --max-connections 1 --max-tokens 48 --temperature 0 \
             --log-dir reports/inspect-real-logs --display none
       - name: Run official ARC Challenge questions with actual CPU inference
         run: |
           MODEL_PATH="$(cat reports/model-path.txt)"
           inspect eval inspect_evals/arc_challenge --model hf/local \
-            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false \
+            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
             --limit 12 --max-connections 1 --max-tokens 48 --temperature 0 \
             --log-dir reports/inspect-real-logs --display none
       - name: Independently audit original Inspect scores
