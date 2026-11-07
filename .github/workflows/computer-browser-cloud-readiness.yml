@@ -1,0 +1,52 @@
+name: Computer Browser Cloud Setup Readiness (No Deployment)
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: computer-browser-setup-check
+  cancel-in-progress: false
+jobs:
+  inspect-only:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' &&
+       github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+       github.event.issue.user.login == 'chadkhalil21-svg' &&
+       github.event.issue.title == 'Computer Browser: check cloud readiness')
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    environment: computer-browser-production
+    steps:
+      - name: Check only whether configuration exists (no cloud actions or costs)
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          GCP_BROWSER_RUNTIME_SA: ${{ vars.GCP_BROWSER_RUNTIME_SA }}
+          BROWSER_PROFILE_BUCKET: ${{ vars.BROWSER_PROFILE_BUCKET }}
+          COMPUTER_OWNER_EMAIL: ${{ vars.COMPUTER_OWNER_EMAIL }}
+          GCP_WIF_PROVIDER: ${{ secrets.GCP_WIF_PROVIDER }}
+          GCP_BROWSER_DEPLOY_SA: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          check() {
+            local label="$1" name="$2"
+            if [[ -n "${!name:-}" ]]; then
+              printf '%s: CONFIGURED\n' "$label"
+            else
+              printf '%s: NOT CONFIGURED\n' "$label"
+            fi
+          }
+          echo "=== Computer Browser: read-only Google Cloud readiness ==="
+          echo "No Google Cloud service has been contacted, created, billed or deployed."
+          check "Google Cloud project" GCP_PROJECT_ID
+          check "Private browser runtime identity" GCP_BROWSER_RUNTIME_SA
+          check "Private encrypted login storage" BROWSER_PROFILE_BUCKET
+          check "Authorized Google account" COMPUTER_OWNER_EMAIL
+          check "GitHub-to-Google secure connection" GCP_WIF_PROVIDER
+          check "Cloud deployment identity" GCP_BROWSER_DEPLOY_SA
+          echo "=== Next steps ==="
+          echo "If any item is NOT CONFIGURED, owner must first connect Google Cloud and set it up."
+          echo "Passing this presence-only check is NOT proof of billing, roles, or site login readiness."
