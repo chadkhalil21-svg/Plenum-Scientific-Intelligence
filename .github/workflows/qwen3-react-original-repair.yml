@@ -148,11 +148,23 @@ jobs:
           root.mkdir(parents=True,exist_ok=True)
           path=root/"run-42347377474.json"
           archive=root/"run-42347377474-raw.zip"
-          if path.exists() or archive.exists():
-              raise FileExistsError("Original historical failures are append-only")
           raw=list(Path("reports/inspect-react-failed-original").glob("*.eval"))
           if len(raw)!=1:raise ValueError("Original failed evaluation log missing")
-          d["original_eval_sha256"]={raw[0].name:hashlib.sha256(raw[0].read_bytes()).hexdigest()}
+          expected={raw[0].name:hashlib.sha256(raw[0].read_bytes()).hexdigest()}
+          if path.exists() or archive.exists():
+              if not path.is_file() or not archive.is_file():
+                  raise FileExistsError("Partial historic archive would be unsafe")
+              existing=json.loads(path.read_text(encoding="utf-8"))
+              if (not existing.get("original_log_reviewed")
+                  or existing.get("independent_functional_grade_available") is not False
+                  or existing.get("original_eval_sha256")!=expected):
+                  raise ValueError("Existing original failure evidence differs")
+              with zipfile.ZipFile(archive) as z:
+                  if z.namelist()!=[raw[0].name] or hashlib.sha256(z.read(raw[0].name)).hexdigest()!=expected[raw[0].name]:
+                      raise ValueError("Archived raw original log differs from source")
+              print("Previously archived source is identical, historical evidence stays immutable")
+              raise SystemExit(0)
+          d["original_eval_sha256"]=expected
           with zipfile.ZipFile(archive,"x",compression=zipfile.ZIP_DEFLATED) as z:
               z.write(raw[0],arcname=raw[0].name)
           path.write_text(json.dumps(d,indent=2)+"\n",encoding="utf-8")
@@ -162,6 +174,10 @@ jobs:
           git -C ledger config user.name 'Plenum Scientific Evidence'
           git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git -C ledger add evidence/inspect-react-failed/
+          if git -C ledger diff --cached --quiet; then
+            echo 'Original evidence matches existing append-only archive; no duplicate commit'
+            exit 0
+          fi
           git -C ledger commit -m 'Preserve original unscored ReAct Qwen3 tool-template failure'
           git -C ledger pull --rebase origin research-memory
           git -C ledger push origin HEAD:research-memory
