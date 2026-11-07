@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T06:13:43.308Z",
+  "last_reviewed_utc": "2026-11-07T06:20:00Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -283,6 +283,13 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42346026034",
       "AGI_demonstrated": false,
       "notes": "Released PR #34 for one controlled original Inspect Evals Qwen3-1.7B math ablation: exact 12 original public GSM8K questions scored 1/12 at 128 max output tokens; 10/12 model outputs reached that limit (0 correct among 10). Only token cap becomes 256, all model weights/prompt/IDs/scorer held fixed, one CPU worker, original SHA256-verified source evidence and no paid APIs. Requires independent fresh log score and append-only archive before claiming any improvement. Preflight/full CI passed; this entry tracks running experiment, not AGI."
+    },
+    {
+      "id": "inspect-original-human-eval-coding-20261107",
+      "status": "running_unverified",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42346922772",
+      "AGI_demonstrated": false,
+      "notes": "PR #35 merged at a54a5490574e3d357442839d29dbf128bf51b4c6. Started original upstream Inspect AI 0.3.287 / Inspect Evals 0.27.0 HumanEval code synthesis on frozen public Qwen3-1.7B, 3 historical tasks, 1 epoch, original independent functional verify() scorer. Model-generated Python executed only in disposable default networkless Docker sandbox, bounded CPU, zero paid external model APIs. Preflight successful; actual original code correctness not yet verified. Archive all raw original .eval artifacts append-only, never promote model or claim AGI."
     }
   ],
   "next_actions": [
@@ -292,7 +299,7 @@
     },
     {
       "priority": 2,
-      "action": "After ablation, prioritize genuinely unfamiliar code creation and evidence-grounded scientific citation tasks using upstream Inspect/OpenHands/PaperQA2 under sandbox, with independent scorers and controlled CPU/API costs; do not repeatedly promote models from tiny public benchmarks."
+      "action": "Inspect original upstream HumanEval coding-proof release #42346922772: require real frozen Qwen3-1.7B model-generated Python run against original independent Docker-isolated functional tests, all three scores/failed cases and hash-verified raw .eval files. Then reuse existing Inspect react() or OpenHands/mini-SWE-agent for actual multi-step code repair; never rebuild agent loops."
     },
     {
       "priority": 3,
@@ -371,6 +378,10 @@
     {
       "decision": "Do not promote Qwen3-1.7B on the tiny public 48-question comparison; archive recovered official grades, all per-example regressions and original model outputs.",
       "reason": "21/48 versus 18/48 was accompanied by five regressions, especially GSM8K 1/12 versus 4/12. The larger model hit the 128-token cap on 10/12 math questions; more data and controlled evaluation needed."
+    },
+    {
+      "decision": "Reuse official Inspect HumanEval original functional scorer and Docker isolation rather than creating a custom coding benchmark.",
+      "reason": "Current verified Plenum OpenHands editor operation is not an autonomous code-generation result. Test actual model-written code using 3 original official independent tests before selecting a larger agent framework or model; this cannot prove general intelligence."
     }
   ],
   "operating_rules": [
