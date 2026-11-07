@@ -76,7 +76,15 @@ jobs:
           REGION: ${{ inputs.region }}
         run: |
           IMAGE="$REGION-docker.pkg.dev/$GCP_PROJECT_ID/plenum-browser/computer-browser:$GITHUB_SHA"
-          gcloud builds submit . --project "$GCP_PROJECT_ID" \
+          PROJECT_NUMBER="$(gcloud projects describe "$GCP_PROJECT_ID" --format='value(projectNumber)')"
+          test -n "$PROJECT_NUMBER"
+          BUILD_SA="plenum-browser-builder@$GCP_PROJECT_ID.iam.gserviceaccount.com"
+          BUILD_SOURCE_BUCKET="$GCP_PROJECT_ID-build-source-$PROJECT_NUMBER"
+          # Use a separate dedicated build source bucket. Never stage source in the private login vault.
+          gcloud storage buckets describe "gs://$BUILD_SOURCE_BUCKET" --project "$GCP_PROJECT_ID" --format='value(name)' >/dev/null
+          gcloud builds submit . --project "$GCP_PROJECT_ID" --region "$REGION" \
+            --service-account "projects/$GCP_PROJECT_ID/serviceAccounts/$BUILD_SA" \
+            --gcs-source-staging-dir "gs://$BUILD_SOURCE_BUCKET/source" \
             --config services/computer_browser/cloudbuild.yaml \
             --substitutions "_IMAGE=$IMAGE"
       - name: Deploy authenticated only, on-demand, bounded resource Cloud Run
