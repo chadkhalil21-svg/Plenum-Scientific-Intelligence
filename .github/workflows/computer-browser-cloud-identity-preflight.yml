@@ -18,6 +18,9 @@ jobs:
     environment: computer-browser-production
     timeout-minutes: 8
     steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: Require configured project and private browser bucket
         env:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
@@ -50,7 +53,7 @@ jobs:
           gcloud secrets describe computer-browser-token --project="$GCP_PROJECT_ID" --format='value(name)' >/dev/null
           gcloud secrets describe computer-browser-session-key --project="$GCP_PROJECT_ID" --format='value(name)' >/dev/null
           gcloud storage buckets describe "gs://$BROWSER_PROFILE_BUCKET" \
-            --project="$GCP_PROJECT_ID" --format='value(name)' >/dev/null
+            --project="$GCP_PROJECT_ID" --format=json | python scripts/verify_browser_bucket_metadata.py
           gcloud storage buckets describe \
             "gs://$GCP_PROJECT_ID-build-source-$PROJECT_NUMBER" \
             --project="$GCP_PROJECT_ID" --format='value(name)' >/dev/null
