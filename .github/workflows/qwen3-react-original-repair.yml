@@ -3,8 +3,10 @@ on:
   pull_request:
     paths:
       - 'src/plenum_ai/qwen3_chat_template.py'
+      - 'src/plenum_ai/react_json_model_config.py'
       - 'src/plenum_ai/react_original_failure.py'
       - 'tests/test_qwen3_react_compat.py'
+      - 'tests/test_react_json_model_config.py'
       - '.github/workflows/qwen3-react-original-repair.yml'
   push:
     branches: [main]
@@ -37,6 +39,7 @@ jobs:
           python -m pip install "inspect-evals==0.27.0" "transformers==5.22.1" "huggingface_hub>=1.2,<2" safetensors
           python -m pip check
           python -m unittest discover -s tests -p 'test_qwen3_react_compat.py' -v
+          python -m unittest discover -s tests -p 'test_react_json_model_config.py' -v
           python -m plenum_ai.qwen3_chat_template --out reports/original-template-preflight.json
           python -m plenum_ai.react_original_failure --out reports/original-failure-preflight.json
       - name: Download ONLY original pinned tokenizer files, not model weights
@@ -182,7 +185,7 @@ jobs:
           git -C ledger pull --rebase origin research-memory
           git -C ledger push origin HEAD:research-memory
   corrected-original-agent:
-    needs: recover-original-failed-agent
+    needs: archive-previous-json-list-failure
     if: github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release corrected Inspect Qwen3 ReAct agent')))
     runs-on: ubuntu-latest
     timeout-minutes: 35
@@ -225,13 +228,29 @@ jobs:
             --model-path "$MODEL_PATH" \
             --template-out reports/qwen3-react-template.jinja \
             --out reports/original-compatibility-check.json
-      - name: Re-run ONE original official ReAct coding question with fixed history rendering
+      - name: Build NATIVE Inspect JSON model-config file; confirm complete patched template is one string
         run: |
           MODEL_PATH="$(cat reports/model-path.txt)"
-          CHAT_TEMPLATE_JSON="$(python -c 'import json; from pathlib import Path; print(json.dumps(Path("reports/qwen3-react-template.jinja").read_text()))')"
+          python -m plenum_ai.react_json_model_config \
+            --model-path "$MODEL_PATH" \
+            --original-template native \
+            --template reports/qwen3-react-template.jinja \
+            --out reports/qwen3-react-model-config.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          c=json.loads(Path("reports/qwen3-react-model-config.json").read_text())
+          assert isinstance(c["chat_template"], str)
+          assert c["chat_template"].count("tool_call.function is string")==1
+          assert c["chat_template"].count("tool_call.function is mapping")==1
+          assert c["model_path"].endswith("70d244cc86ccca08cf5af4e1e306ecf908b1ad5e")
+          assert c["device"]=="cpu" and c["do_sample"] is False and c["enable_thinking"] is False
+          print("Inspect original provider arguments preserve ONE complete Qwen3 Jinja string; no model generation")
+          PY
+      - name: Re-run ONE original official ReAct coding question with native model-config JSON scalar
+        run: |
           inspect eval src/plenum_ai/inspect_react_coding.py --model hf/local \
-            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
-            -M "chat_template=$CHAT_TEMPLATE_JSON" \
+            --model-config reports/qwen3-react-model-config.json \
             --limit 1 --epochs 1 --max-samples 1 --max-sandboxes 1 \
             --max-connections 1 --max-tokens 256 --temperature 0 \
             --turn-limit 6 --message-limit 14 --time-limit 240 --max-retries 0 \
@@ -258,6 +277,7 @@ jobs:
             reports/repaired-react-original-score.json
             reports/inspect-react-coding-logs/
             reports/original-compatibility-check.json
+            reports/qwen3-react-model-config.json
           retention-days: 90
   archive-corrected-original:
     needs: corrected-original-agent
