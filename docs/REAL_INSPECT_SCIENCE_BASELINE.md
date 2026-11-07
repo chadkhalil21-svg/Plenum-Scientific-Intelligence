@@ -1,5 +1,24 @@
 # First actual upstream-model benchmark: ARC Easy and ARC Challenge
 
+## November 7 protocol correction
+
+The original first prospective CI run 42340268831 executed 12 ARC Easy
+and 12 ARC Challenge tasks on pinned Qwen3-0.6B. Inspect's original
+multiple-choice scorer marked **all 24 invalid response format** because
+the 48-token budget was consumed by the model's initial thinking text.
+The separate Plenum post-processing auditor also rejected correctly
+qualified task names: inspect_evals/arc_easy and
+inspect_evals/arc_challenge. The original failed run is preserved
+in the canonical AGI ledger and GitHub .eval log artifacts.
+
+Protocol v2 is **a separate follow-up designed after examining this
+failure**, not an unseen replication. It passes enable_thinking=false
+through the officially supported Inspect Hugging Face model argument,
+normalizes allowlisted qualified task names, and audits only the
+pinned checkpoint's official scorer results. Original tasks, question
+counts and response-length limits remain unchanged. The new run
+cannot be compared as proof of learning or general intelligence.
+
 **Goal:** stop treating SDK installation as evidence of intelligence. Use the
 established UK AISI Inspect Evals 0.27.0 benchmark implementations and
 Inspect AI 0.3.287 scoring to evaluate real frozen Qwen3-0.6B CPU responses.
