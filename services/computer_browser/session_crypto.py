@@ -4,6 +4,8 @@ This only tests preservation of synthetic cookies. It is not yet a persistent
 GCS/KMS vault or authenticated website login. NEVER return sealed state to
 ChatGPT, Github issues or model-visible tools.
 """
+import base64
+import binascii
 import json
 import time
 from urllib.parse import urlsplit
@@ -45,6 +47,12 @@ class PrivateSessionVault:
         from cryptography.fernet import InvalidToken
         if not isinstance(ciphertext,bytes) or len(ciphertext)>MAX_STATE_BYTES*2:
             raise PermissionError("Malformed session envelope")
+        try:
+            decoded=base64.b64decode(ciphertext,altchars=b"-_",validate=True)
+            if base64.urlsafe_b64encode(decoded) != ciphertext:
+                raise PermissionError("Noncanonical encrypted session encoding")
+        except (binascii.Error,ValueError) as exc:
+            raise PermissionError("Malformed encrypted session encoding") from exc
         try:
             data=json.loads(self._fernet.decrypt(ciphertext))
         except (InvalidToken, ValueError, TypeError) as exc:
