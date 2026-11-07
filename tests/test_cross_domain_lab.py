@@ -67,6 +67,23 @@ class CrossDomainScienceTests(unittest.TestCase):
                 self.assertIsNone(m.parse(s)["candidate"])
         self.assertIsNotNone(m.parse(generated("public"))["candidate"])
 
+    def test_short_explanation_does_not_discard_independently_testable_numbers(self):
+        text=json.dumps({"linear_strength":1.25,"forest_leaf":4,"mix":0.45,
+                         "hypothesis":"Weak","falsifier":""})
+        parsed=m.parse(text)
+        self.assertEqual(parsed["status"],"numeric_only_weak_claim")
+        self.assertFalse(parsed["scientific_claim_verified"])
+        self.assertEqual(parsed["candidate"]["forest_leaf"],4)
+        dev=prepare()
+        def poor_draft(_prompt):return text
+        q=m.propose(dev,poor_draft,m.QWEN,m.QWEN_SHA,"qwen")
+        c=m.propose(dev,poor_draft,m.CRITIC,m.CRITIC_SHA,"critic")
+        frozen=m.freeze(dev,q,c,loader)
+        self.assertEqual(len(frozen["decisions"]),2)
+        a=m.audit(frozen,loader)
+        self.assertFalse(a["new_scientific_discovery_verified"])
+        self.assertFalse(a["AGI_demonstrated"])
+
     def test_models_only_receive_development_summaries(self):
         dev=prepare()
         prompts=[]
