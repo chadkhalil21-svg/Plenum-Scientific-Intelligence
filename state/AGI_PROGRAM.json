@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T22:31:20.102Z",
+  "last_reviewed_utc": "2026-11-07T22:41:43.701Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -568,6 +568,12 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/75",
       "AGI_demonstrated": false,
       "notes": "Readiness GitHub issue #75 triggered no-cost workflow #42420846806. Real job logs report all six cloud settings NOT CONFIGURED: GCP project, browser runtime identity, profile storage bucket, authorized Google account, Github-GCP federation and deployment identity. No GCP contact, deployment or charges. Owner first must select/authorize Google Cloud project and billing; no authenticated cloud administration through current ChatGPT tools."
+    },
+    {
+      "id": "computer-browser-gcp-project-created-20261107",
+      "status": "user_screenshot_confirmed",
+      "AGI_demonstrated": false,
+      "notes": "Founder created and selected dedicated Google Cloud project Plenum Computer Browser. Exact project ID plenum-computer-browser; screenshot showed project number 98614162800 in Google Cloud Console Nov 7 2026. Google Cloud browser project now exists, separate from American Rider. Billing activation, IAM roles, encrypted GCS bucket, deployment secrets, GitHub WIF, Cloud Run deployment and browser login not yet verified. Next user-facing step: open Billing in newly selected project to confirm linked active account. Do not assume $0.00 charges proves billing enabled."
     }
   ],
   "next_actions": [
@@ -585,7 +591,7 @@
     },
     {
       "priority": 4,
-      "action": "CURRENT VERIFIED: PRs #69 (private encrypted GCS profiles), #70 (real Chromium offline forms/upload), #71 (signed Google owner console), #73 (WebSocket owner sign-in UI + save) are merged, with CI passing. Owner-triggered GitHub readiness #75/42420846806 found ALL six Google Cloud settings NOT CONFIGURED. No live host, no real saved login, no new cloud charge, no direct ChatGPT writeable browser tool. NEXT owner action: authorize a dedicated billing-enabled GCP project and least-privilege GitHub cloud identities; then provision private storage and manually deploy, test an approved staging login, and connect ChatGPT MCP where plan supports."
+      "action": "Founder created dedicated GCP project Plenum Computer Browser (project ID plenum-computer-browser, project number 98614162800). Next confirm active billing is linked on Google Cloud Console Billing page; then owner-authorize minimum roles/resources (secret vault, private GCS bucket, service accounts and GitHub Workload Identity). GH environment currently lacks all six deployment settings as proved by issue #74; the project existing does not mean deployed. Keep IAM-private Cloud Run deployment manual and protected; then verify IAP owner login, browser session UI and ChatGPT connectivity. No spend activated."
     },
     {
       "priority": 5,
