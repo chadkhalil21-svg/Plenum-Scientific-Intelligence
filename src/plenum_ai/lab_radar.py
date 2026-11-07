@@ -8,9 +8,13 @@ MAX_SEEN, MAX_DIGEST = 1024, 30
 
 def _safe_url(url):
     if not isinstance(url,str) or not 8<=len(url)<=900: return False
-    try: p=urlsplit(url)
-    except ValueError: return False
-    return p.scheme=="https" and bool(p.hostname) and not p.username and not p.password
+    try:
+        p=urlsplit(url)
+        port=p.port  # Resolve malformed numeric port values while validating.
+    except ValueError:
+        return False
+    return (p.scheme=="https" and bool(p.hostname) and port in (None, 443)
+            and not p.username and not p.password)
 
 def validated_history(urls):
     if not isinstance(urls,list) or len(urls)>MAX_SEEN or len(urls)!=len(set(urls)):
