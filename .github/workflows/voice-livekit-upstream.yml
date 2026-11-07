@@ -1,0 +1,48 @@
+name: Inspect LiveKit Voice SDK Bridge Without Connecting
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/voice-livekit-upstream.yml'
+      - 'src/plenum_ai/voice_livekit.py'
+      - 'tests/test_voice_livekit.py'
+      - 'pyproject.toml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  import-upstream:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install exact upstream SDK without model or service credentials
+        run: python -m pip install -e '.[voice_livekit]'
+      - name: Verify actual LiveKit SDK integration without server start
+        env:
+          PROMETHEUS_APPROVE_LIVE_VOICE_COST: ''
+          LIVEKIT_URL: ''
+          LIVEKIT_API_KEY: ''
+          LIVEKIT_API_SECRET: ''
+        run: |
+          python - <<'PY'
+          from importlib.metadata import version
+          from livekit.agents import AgentServer, AgentSession, Agent, inference
+          from plenum_ai.voice_livekit import build_server, preview, approval_check
+          assert version("livekit-agents") == "1.8.9"
+          server, agents = build_server()
+          assert isinstance(server, AgentServer)
+          assert hasattr(AgentSession, "start")
+          assert hasattr(Agent, "__init__")
+          assert hasattr(inference, "STT") and hasattr(inference, "TTS")
+          assert preview()["network_started"] is False
+          try:
+              approval_check()
+          except PermissionError:
+              pass
+          else:
+              raise AssertionError("Unsafe provider approval accepted")
+          print("Pinned LiveKit real SDK import and registered server: PASS; voice service was NOT started.")
+          PY
