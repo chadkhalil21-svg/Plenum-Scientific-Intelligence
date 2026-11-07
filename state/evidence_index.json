@@ -3,7 +3,7 @@
   "kind": "read_only_public_record_inventory",
   "source": "research-memory/evidence",
   "mission_reference": "research-memory/state/AGI_PROGRAM.json",
-  "record_count": 23,
+  "record_count": 28,
   "records": [
     {
       "track": "agent-experiments",
@@ -84,6 +84,30 @@
       "size_bytes": 4072
     },
     {
+      "track": "gsm8k-token-budget",
+      "path": "evidence/gsm8k-token-budget/run-42342997198.json",
+      "sha256": "7578b58c3b9a0f63889550b21610a293705346cea9d91e25a1e708d4a8039ce9",
+      "size_bytes": 1794
+    },
+    {
+      "track": "inspect-cross-domain",
+      "path": "evidence/inspect-cross-domain/run-42341668858.json",
+      "sha256": "cbe50c20fe038f22dc1a813d35e3dd178d3ba22da83149bbc64b79466af928c0",
+      "size_bytes": 4823
+    },
+    {
+      "track": "inspect-real-science",
+      "path": "evidence/inspect-real-science/run-42340268831-failure.json",
+      "sha256": "e679dae3075679f2d7b78e9571b18ca2107446ece9bc55ce7af773c4b6947389",
+      "size_bytes": 1633
+    },
+    {
+      "track": "inspect-real-science",
+      "path": "evidence/inspect-real-science/run-42340974100.json",
+      "sha256": "9c73ae59749a29ce91fd1ae89a27fcf3a038b9a01ae4a76e4d0e1ca95379cc24",
+      "size_bytes": 1362
+    },
+    {
       "track": "iterative-hypotheses",
       "path": "evidence/iterative-hypotheses/run-42320309673.json",
       "sha256": "07cbf697fff238c52cf8d69dd47ba71b0cae77dc2a76a5a6e371a382ab64859c",
@@ -100,6 +124,12 @@
       "path": "evidence/noaa-research-agent/run-42321911614.json",
       "sha256": "5f3af0628deb5c2aaea81a3067729b84fb3d44e3ccfedfff5c2fa59139c95534",
       "size_bytes": 16322
+    },
+    {
+      "track": "reasoning-ablation",
+      "path": "evidence/reasoning-ablation/run-42334750308.json",
+      "sha256": "3d94fb980bf6faeec3e0d7b724fbc8176c1452075797227b2d957ba5ff5cef24",
+      "size_bytes": 28942
     },
     {
       "track": "reasoning-comparison",
@@ -189,6 +219,28 @@
       ]
     },
     {
+      "track": "gsm8k-token-budget",
+      "records": 1,
+      "paths": [
+        "evidence/gsm8k-token-budget/run-42342997198.json"
+      ]
+    },
+    {
+      "track": "inspect-cross-domain",
+      "records": 1,
+      "paths": [
+        "evidence/inspect-cross-domain/run-42341668858.json"
+      ]
+    },
+    {
+      "track": "inspect-real-science",
+      "records": 2,
+      "paths": [
+        "evidence/inspect-real-science/run-42340268831-failure.json",
+        "evidence/inspect-real-science/run-42340974100.json"
+      ]
+    },
+    {
       "track": "iterative-hypotheses",
       "records": 1,
       "paths": [
@@ -207,6 +259,13 @@
       "records": 1,
       "paths": [
         "evidence/noaa-research-agent/run-42321911614.json"
+      ]
+    },
+    {
+      "track": "reasoning-ablation",
+      "records": 1,
+      "paths": [
+        "evidence/reasoning-ablation/run-42334750308.json"
       ]
     },
     {
@@ -243,7 +302,7 @@
   ],
   "unindexed_records": [],
   "inventory_complete": true,
-  "digest_sha256": "538957d6f7b611cc8ff1c4935bf8b1b45ae44e9d3079f118902e96110ed509b9",
+  "digest_sha256": "8101e61737d338dd54c0243e246e76d0ee06c66b431a8b57976c70733d1515a2",
   "scientific_claims_verified_by_index": false,
   "AGI_demonstrated": false,
   "automatic_model_promotion": false,
