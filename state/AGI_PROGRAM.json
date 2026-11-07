@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T05:02:07Z",
+  "last_reviewed_utc": "2026-11-07T05:04:00Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -162,12 +162,19 @@
       },
       "AGI_demonstrated": false,
       "notes": "Real PaperQA2 SparseEmbeddingModel with 4096 hashed dimensions on eight balanced, already-public Plenum source-selection questions (four battery, four NOAA), no LLM, no API. The variant scored 6/8. Comparisons were chosen after observing the first 1/2 miss; exploratory and not independently blinded. Historical 256 and 4096 results both retained; no automatic promotion."
+    },
+    {
+      "id": "inspect-arc-v2-execution-gate-20261107",
+      "status": "running_unverified",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42340974100",
+      "AGI_demonstrated": false,
+      "notes": "Corrected v2 run uses pinned Qwen3-0.6B, enable_thinking=false, and proper Inspect qualified task audit. Raw independently scored evaluation is still pending. Original 0/24 invalid-format run remains unchanged."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Repeat original published Inspect ARC Easy/Challenge as a separately recorded versioned CPU comparison with Qwen3-0.6B thinking disabled and valid response formatting; fix third-party task-ID normalization and audit original .eval grades. Preserve 0/24 prior evidence, avoid claiming AGI."
+      "action": "Review genuine Inspect ARC science v2 run 42340974100: independently confirm all 24 actual answers, correct source checkpoint, response formatting and complete archived evidence; the original v1 0/24 is preserved separately."
     },
     {
       "priority": 2,
