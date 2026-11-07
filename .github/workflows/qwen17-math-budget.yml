@@ -52,14 +52,15 @@ jobs:
         with:
           ref: research-memory
           path: ledger
-      - name: Require independently archived original 1.7B raw results BEFORE downloading any model
-        run: |
-          python -m plenum_ai.qwen17_math_budget \
-            --check-original ledger/evidence/paired-qwen \
-            --out reports/qwen17-original-archive-checked.json
       - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
+      - name: Require independently archived original 1.7B raw results BEFORE downloading any model
+        run: |
+          python -m pip install -e .
+          python -m plenum_ai.qwen17_math_budget \
+            --check-original ledger/evidence/paired-qwen \
+            --out reports/qwen17-original-archive-checked.json
       - name: Reuse exactly the original independent Inspect evaluator with local CPU libraries
         run: |
           python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
