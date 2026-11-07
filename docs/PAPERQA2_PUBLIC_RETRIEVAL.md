@@ -25,3 +25,9 @@ rights-cleared papers are available.
 
 Official upstream:
 https://github.com/Future-House/paper-qa
+
+## First independently scored result
+
+The original frozen retrieval run [42340104253](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42340104253) successfully executed the reviewed upstream library on the two existing public project documents. **Top-one correct source: 1 of 2.** The PyBaMM/SPM battery query returned the intended battery document, while the NOAA Boston/Virginia Key tide question incorrectly returned the battery document. The original output and input SHA-256 fingerprints are retained in workflow artifact `paperqa-original-public-retrieval-evidence`, ID 13561750015.
+
+This is negative evidence for reliable two-source retrieval, not an AGI or citation-quality result. No model-generated answers were tested and no network connection or paid model inference was permitted. Any subsequent adaptation to these *inspected* questions is retrospective debugging, not a fresh heldout gain; future performance claims require a preregistered independent unseen document set and baseline comparison.
