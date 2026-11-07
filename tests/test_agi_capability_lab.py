@@ -82,6 +82,15 @@ class AGICapabilityLaboratoryTests(unittest.TestCase):
         self.assertTrue(audit["restricted_arithmetic_dsl_interpreted"])
         self.assertFalse(audit["auto_model_promotion"])
 
+    def test_hidden_program_inputs_are_unique_and_strictly_unseen(self):
+        for seed in (1, 2, 12345, SEED, SEED+1, 42331449321):
+            with self.subTest(seed=seed):
+                hidden=lab._hidden_inputs(seed)
+                self.assertEqual(len(hidden),28)
+                self.assertEqual(len(set(hidden)),28)
+                self.assertTrue(set(hidden).isdisjoint(lab.PUBLIC_EXAMPLE_INPUTS))
+                self.assertTrue(all(-40<=x<=40 for x in hidden))
+
     def test_bad_program_fails_unseen_inputs_without_runtime_execution(self):
         manifest=lab.prepare(SEED)
         model_answers=iter(responses())
