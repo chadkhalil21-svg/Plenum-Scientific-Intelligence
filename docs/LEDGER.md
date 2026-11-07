@@ -1,5 +1,30 @@
-# Engineering and Scientific Ledger
-Established: 2026-11-05
+# Plenum Scientific Intelligence | Current Public Ledger
+
+**Updated: November 7, 2026 UTC.** This file is the public human-readable status. The **single canonical machine-readable AGI status and founder-aligned priorities** are in [state/AGI_PROGRAM.json](../state/AGI_PROGRAM.json). The separately generated [evidence index](../state/evidence_index.json) inventories archived public scientific records without changing their content. **Plenum has not demonstrated AGI.**
+
+## Verified progress and evidence
+
+| Milestone | Verified result | Original evidence |
+|---|---|---|
+| Narrow Qwen model comparison | Qwen3-1.7B beat 0.6B on 2/2 tiny held-out solver tasks; not generalization | [comparison](../evidence/reasoning-comparison/run-42318262589.json) |
+| Historical chemistry and biology | 0/2 model improvements over best conventional holdout baselines | [negative audit](../evidence/cross-domain-chemistry-biology/run-42327817917.json) |
+| First bounded AGI capability laboratory | Qwen3-1.7B 0/6 correct, SmolLM2-1.7B 0/6; schema validity 2/6 and 4/6 | [original model responses and audit](../evidence/agi-capability-lab/run-42331449321.json) |
+| Independent prospective NOAA/USGS studies | Source and engineering verification done; **future Nov 12–13 scientific outcomes not yet available** | Main-branch preregistered protocols |
+| Efficient research routing | Verified selected fixture execution with no model inference, not evidence of AGI | Main-branch engineering tests |
+
+## Active objectives
+
+1. Preserve validated scientific work and negative results. Reconcile the public evidence inventory automatically rather than editing individual audit records.
+2. Prefer proven, licensed, maintained frameworks and scientific packages, adding thin validated adapters instead of rebuilding them.
+3. Evaluate stronger reasoning models with broader independent tests and measure inference accuracy, reliability and resource use.
+4. Develop long-horizon task planning, typed knowledge/episodic/strategic state and cross-domain reasoning. These remain incomplete.
+5. Maintain human approval for sensitive external actions, secrets, paid services, deployment and any self-modification.
+
+**Privacy:** This is a *public* repository. The confidential Plenum Prometheus memorandum is not included, quoted or mirrored here. This file records only general, already-public principles and experiment outcomes.
+
+---
+
+## Historical snapshot: November 5, 2026 (retained for provenance; statuses may be outdated)
 
 | ID | Work | Status |
 |---|---|---|
