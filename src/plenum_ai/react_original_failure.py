@@ -10,7 +10,6 @@ import json
 from pathlib import Path
 
 from .inspect_cross_domain import INSPECT_AI,permitted_report
-from .inspect_react_coding import count_actual_tools
 
 SCHEMA="plenum-original-react-tool-failure-v1"
 ORIGINAL_RUN="42347377474"
@@ -35,6 +34,7 @@ def audit(log_dir):
     if importlib.metadata.version("inspect-ai")!=INSPECT_AI:
         raise RuntimeError("Unreviewed original Inspect reader")
     from inspect_ai.log import list_eval_logs,read_eval_log
+    from .inspect_react_coding import count_actual_tools
     directory=Path(log_dir)
     if (directory.is_absolute() or ".." in directory.parts
         or directory.name!="inspect-react-failed-original" or not directory.is_dir()):
