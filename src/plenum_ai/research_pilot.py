@@ -96,6 +96,32 @@ def make_proposal(question, domain, chooser, model_name,
             "code_or_model_deployed": False}
 
 
+
+def _matches_development(expected, actual):
+    """Compare sealed development observations across independent CPU runners.
+
+    Method identities and solver evaluation counts remain exact. Only tiny
+    numerical floating-point differences are tolerated.
+    """
+    if not isinstance(expected, list) or len(expected) != len(METHODS):
+        return False
+    if not isinstance(actual, list) or len(actual) != len(METHODS):
+        return False
+    for original, recomputed in zip(expected, actual):
+        if not isinstance(original, dict) or not isinstance(recomputed, dict):
+            return False
+        if (original.get("method") != recomputed.get("method")
+                or type(original.get("calls")) is not int
+                or original["calls"] != recomputed.get("calls")):
+            return False
+        for key in ("error", "invariant"):
+            a, b = original.get(key), recomputed.get(key)
+            if (not isinstance(a, (float, int)) or not isinstance(b, (float, int))
+                    or not math.isfinite(a) or not math.isfinite(b)
+                    or not math.isclose(a, b, rel_tol=1e-5, abs_tol=1e-13)):
+                return False
+    return True
+
 def independent_audit(proposal, solver=None):
     from .lab import solve
     if proposal.get("schema") != SCHEMA or proposal.get("holdout_seen_by_model") is not False:
@@ -110,7 +136,7 @@ def independent_audit(proposal, solver=None):
             or sealed.get("method") != METHODS["ABC".index(sealed["answer"])]):
         raise ValueError("Sealed model prediction changed")
     solver = solver or solve
-    if _measure(domain, solver) != sealed.get("development"):
+    if not _matches_development(sealed.get("development"), _measure(domain, solver)):
         raise ValueError("Development values not independently reproducible")
     heldout = _measure(PAIRS[domain], solver)
     selection = next(x for x in heldout if x["method"] == sealed["method"])
