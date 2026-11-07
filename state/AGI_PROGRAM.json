@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T05:04:00Z",
+  "last_reviewed_utc": "2026-11-07T05:05:36Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -169,12 +169,23 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42340974100",
       "AGI_demonstrated": false,
       "notes": "Corrected v2 run uses pinned Qwen3-0.6B, enable_thinking=false, and proper Inspect qualified task audit. Raw independently scored evaluation is still pending. Original 0/24 invalid-format run remains unchanged."
+    },
+    {
+      "id": "inspect-arc-24-nonthinking-v2-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42340974100",
+      "result": {
+        "correct": 17,
+        "attempted": 24
+      },
+      "AGI_demonstrated": false,
+      "notes": "Official Inspect 0.3.287/Inspect Evals 0.27.0 ARC Easy 9/12 and Challenge 8/12, same pinned Qwen3-0.6B model, fixed 48 tokens, enable_thinking=false, original independent scorer: 0 invalid response formats. Earlier thinking-on configuration 0/24 all failed format, so this demonstrates format/tool configuration improvement, not model learning or independent generalization. Full raw logs archived at research-memory evidence/inspect-real-science/run-42340974100.json."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Review genuine Inspect ARC science v2 run 42340974100: independently confirm all 24 actual answers, correct source checkpoint, response formatting and complete archived evidence; the original v1 0/24 is preserved separately."
+      "action": "Following the completed Qwen3-0.6B Inspect ARC v2 17/24 result, independently evaluate stronger and alternative frozen models on preregistered larger, unfamiliar cross-domain science, mathematics, code and tool-use tasks; separate format compliance, actual correctness, latency, costs and answer contamination before changing any model."
     },
     {
       "priority": 2,
@@ -241,6 +252,10 @@
     {
       "decision": "Do not promote PaperQA sparse dimension 4096 on an exploratory eight-question comparison.",
       "reason": "Original public retrieval was 1/2; after inspecting its miss, upstream sparse-embedding settings scored 5/8 versus 6/8 on new but related queries. This is insufficient independent evidence of reliable retrieval gains."
+    },
+    {
+      "decision": "Retain proven non-thinking response configuration for short exact-answer Qwen3-0.6B ARC tasks, without model promotion.",
+      "reason": "Official original Inspect scorer: prior thinking-on 0/24 all failed format versus non-thinking 17/24 (ARC Easy 9/12; Challenge 8/12), 0 invalid format cases, same model/checkpoint and task sample. Difference is task-response configuration; no model learning established."
     }
   ],
   "operating_rules": [
