@@ -1,0 +1,283 @@
+name: Prospective NOAA Research and Independent Model Criticism
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        type: choice
+        required: true
+        options:
+          - propose
+          - audit
+        description: 'Only permitted in precommitted UTC time windows'
+  schedule:
+    - cron: '17 11 10 11 *'
+    - cron: '33 11 16 11 *'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-once-2026-prospective-noaa
+  cancel-in-progress: false
+jobs:
+  eligibility:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      propose: ${{ steps.gate.outputs.propose }}
+      audit: ${{ steps.gate.outputs.audit }}
+    steps:
+      - id: gate
+        env:
+          SCHEDULE: ${{ github.event.schedule }}
+          PHASE: ${{ inputs.phase }}
+        run: |
+          python - <<'PY'
+          import os
+          from datetime import datetime,timezone
+          now=datetime.now(timezone.utc)
+          proposal=(datetime(2026,11,10,tzinfo=timezone.utc)<=now<
+                    datetime(2026,11,12,tzinfo=timezone.utc))
+          audit=(now>=datetime(2026,11,15,tzinfo=timezone.utc)
+                 and now.year==2026 and now.month==11)
+          requested=(os.getenv("PHASE") or
+             ("propose" if os.getenv("SCHEDULE")=="17 11 10 11 *" else "audit"))
+          with open(os.environ["GITHUB_OUTPUT"],"a") as f:
+              f.write("propose="+str(proposal and requested=="propose").lower()+"\n")
+              f.write("audit="+str(audit and requested=="audit").lower()+"\n")
+          print("Allowed phase for published 2026 research protocol:",
+                "propose" if proposal and requested=="propose" else
+                "audit" if audit and requested=="audit" else "none")
+          PY
+  frozen-qwen-proposer:
+    needs: eligibility
+    if: needs.eligibility.outputs.propose == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install only the predeclared open-weight model and NOAA scientific dependencies
+        run: |
+          python -m pip install -e ".[empirical]"
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "transformers>=4.51,<5" "huggingface_hub>=0.30,<1" "accelerate>=1.1,<2" safetensors
+      - name: Test frozen dates and future observation isolation
+        run: python -m unittest discover -s tests -p 'test_prospective_noaa.py' -v
+      - name: Create Qwen numerical hypotheses from historic development data ONLY
+        run: python -m plenum_ai.prospective_noaa propose --out reports/qwen.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: future-noaa-sealed-qwen
+          path: reports/qwen.json
+          retention-days: 21
+  separate-smollm2-critic:
+    needs: frozen-qwen-proposer
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v7
+        with:
+          name: future-noaa-sealed-qwen
+          path: reports/
+      - name: Install the different-family open-weight model and NOAA scientific dependencies
+        run: |
+          python -m pip install -e ".[empirical]"
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "transformers>=4.51,<5" "huggingface_hub>=0.30,<1" "accelerate>=1.1,<2" safetensors
+      - name: Review development-only Qwen proposals and freeze rolling-fold selections
+        run: python -m plenum_ai.prospective_noaa critique --original reports/qwen.json --out reports/critic.json
+      - name: Ensure no future observations were used and selections were not deployed
+        run: |
+          python - <<'PY'
+          import json
+          a=json.load(open('reports/qwen.json'))
+          b=json.load(open('reports/critic.json'))
+          assert not a['future_observations_seen'] and not b['future_observations_seen']
+          assert not a['auto_model_promotion'] and not b['auto_model_promotion']
+          assert len(a['stations'])==len(b['stations'])==2
+          print('Qwen hypotheses:',sum(bool(x['qwen_candidate']) for x in a['stations']))
+          print('Critic hypotheses:',sum(bool(x['critic_candidate']) for x in b['stations']))
+          print('Policy decisions:',[x['selected']['type'] for x in b['stations']])
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: future-noaa-sealed-critic
+          path: reports/critic.json
+          retention-days: 21
+  archive-before-future-observations:
+    needs: separate-smollm2-critic
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/download-artifact@v7
+        with:
+          name: future-noaa-sealed-qwen
+          path: reports/
+      - uses: actions/download-artifact@v7
+        with:
+          name: future-noaa-sealed-critic
+          path: reports/
+      - name: Preserve immutable original and critic research predictions BEFORE target days
+        env:
+          SOURCE_REV: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import hashlib,json,os
+          from datetime import datetime,timezone
+          from pathlib import Path
+          now=datetime.now(timezone.utc)
+          assert datetime(2026,11,10,tzinfo=timezone.utc)<=now<datetime(2026,11,12,tzinfo=timezone.utc)
+          data=lambda n:json.load(open('reports/'+n+'.json'))
+          q,c=data('qwen'),data('critic')
+          assert q['protocol_commit']=='45ac814869b9e47450c00ec55e83b29f02d3ca71'
+          assert q['future_observations_seen'] is False and c['future_observations_seen'] is False
+          assert q['auto_model_promotion'] is False and c['auto_model_promotion'] is False
+          dig=lambda x:hashlib.sha256(json.dumps(x,sort_keys=True,
+              ensure_ascii=False,separators=(',',':'),allow_nan=False).encode()).hexdigest()
+          record={'schema':'plenum-future-noaa-frozen-v1',
+                  'protocol_commit':q['protocol_commit'],
+                  'source_commit':os.environ['SOURCE_REV'],
+                  'originating_run_id':os.environ['RUN_ID'],
+                  'frozen_at_utc':now.isoformat(),
+                  'original':q,'critic':c,
+                  'original_sha256':dig(q),'critic_sha256':dig(c),
+                  'frozen_before_future_observations':True}
+          file=Path('ledger/evidence/prospective-noaa/frozen-2026-11.json')
+          file.parent.mkdir(parents=True,exist_ok=True)
+          if file.exists(): raise FileExistsError('Already frozen. Cannot refit after viewing test results.')
+          file.write_text(json.dumps(record,indent=2,ensure_ascii=False)+'\n')
+          print('Immutable pre-test scientific evidence frozen:',file)
+          PY
+      - name: Commit original predictions to separate research-memory branch
+        run: |
+          git -C ledger config user.name 'Plenum Prospective Science Ledger'
+          git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ledger add evidence/prospective-noaa/frozen-2026-11.json
+          git -C ledger commit -m 'Freeze pre-test NOAA forecasts and separate AI critic before Nov 12'
+          git -C ledger pull --rebase origin research-memory
+          git -C ledger push origin HEAD:research-memory
+  audit-new-real-observations:
+    needs: eligibility
+    if: needs.eligibility.outputs.audit == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - name: Verify the original forecast was committed before any test observations
+        run: |
+          python - <<'PY'
+          import json,subprocess
+          from datetime import datetime,timezone
+          from pathlib import Path
+          name='evidence/prospective-noaa/frozen-2026-11.json'
+          file=Path('ledger')/name
+          assert file.is_file(), 'Missing frozen forecast: no retroactive scientific scoring'
+          r=json.loads(file.read_text())
+          stamped=datetime.fromisoformat(r['frozen_at_utc']).astimezone(timezone.utc)
+          assert stamped < datetime(2026,11,12,tzinfo=timezone.utc)
+          recorded=subprocess.check_output(
+              ['git','-C','ledger','log','-1','--format=%cI','--',name],text=True).strip()
+          committed=datetime.fromisoformat(recorded).astimezone(timezone.utc)
+          assert committed < datetime(2026,11,12,tzinfo=timezone.utc), 'Forecast not publicly committed in time'
+          assert r['frozen_before_future_observations']
+          print('Verified pre-test Git commit and immutable forecast record:',recorded)
+          PY
+      - name: Install fixed numerical models; do NOT load AI models into the auditor
+        run: python -m pip install -e ".[empirical]"
+      - name: Recompute all development observations before viewing the later real test dates
+        run: |
+          python -m plenum_ai.prospective_noaa audit \
+            --frozen ledger/evidence/prospective-noaa/frozen-2026-11.json \
+            --out reports/prospective_audit.json
+      - name: Publish measured losses as well as gains without changing model weights
+        run: |
+          python - <<'PY'
+          import json
+          a=json.load(open('reports/prospective_audit.json'))
+          assert a['station_days']==4 and a['prospective_test']
+          assert a['heldout_evaluated_only_in_later_auditor']
+          assert a['model_or_code_deployed'] is False
+          assert not a['general_intelligence_demonstrated']
+          for row in a['results']:
+              print(row['site'],row['target_day_utc'],
+                    'policy',row['policy_mae_m'],'best baseline',row['best_baseline_mae_m'],
+                    'win',row['policy_beats_best_baseline'])
+          print('Wins:',a['wins_vs_best_baseline'],'out of 4 correlated station-day tests')
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: independently-audited-future-noaa-observations
+          path: reports/prospective_audit.json
+          retention-days: 90
+  archive-future-independent-results:
+    needs: audit-new-real-observations
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/download-artifact@v7
+        with:
+          name: independently-audited-future-noaa-observations
+          path: reports/
+      - name: Append future measured results alongside pre-test hypotheses
+        env:
+          SOURCE_REV: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          a=json.load(open('reports/prospective_audit.json'))
+          frozen=Path('ledger/evidence/prospective-noaa/frozen-2026-11.json')
+          assert frozen.is_file()
+          assert a['frozen_sha256']
+          assert not a['general_intelligence_demonstrated']
+          path=Path('ledger/evidence/prospective-noaa/audit-2026-11.json')
+          if path.exists(): raise FileExistsError('Prospective audit already recorded; immutable evidence')
+          path.write_text(json.dumps({
+              'source_revision':os.environ['SOURCE_REV'],
+              'audit_run_id':os.environ['RUN_ID'],
+              'audit':a,'claims_AGI':False,'claims_discovery':False
+          },indent=2,ensure_ascii=False)+'\n')
+          print('Archived independent prospective audit:',path)
+          PY
+      - name: Commit measured results without rewriting frozen hypotheses
+        run: |
+          git -C ledger config user.name 'Plenum Prospective Science Ledger'
+          git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ledger add evidence/prospective-noaa/audit-2026-11.json
+          git -C ledger commit -m 'Archive independent Nov 2026 prospective NOAA experiment'
+          git -C ledger pull --rebase origin research-memory
+          git -C ledger push origin HEAD:research-memory

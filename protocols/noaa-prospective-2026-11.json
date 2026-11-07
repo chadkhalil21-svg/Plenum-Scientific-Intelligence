@@ -1,0 +1,74 @@
+{
+  "protocol_id": "plenum-prospective-noaa-2026-11-v1",
+  "precommit_purpose": "Scientifically evaluate frozen model forecasts on future NOAA observations, with no access to target dates by proposing models",
+  "precommit_date_utc": "2026-11-07",
+  "public_only": true,
+  "stations": {
+    "8443970": "Boston, MA",
+    "8723214": "Virginia Key, FL"
+  },
+  "development_start_utc": "2026-10-24T00:00:00Z",
+  "development_end_exclusive_utc": "2026-11-09T00:00:00Z",
+  "rolling_development_folds": [
+    {
+      "train_days": 11,
+      "validation_start_day": 11,
+      "validation_end_day_exclusive": 13
+    },
+    {
+      "train_days": 13,
+      "validation_start_day": 13,
+      "validation_end_day_exclusive": 16
+    }
+  ],
+  "forecast_issue_scheduled_utc": "2026-11-10T11:17:00Z",
+  "forecast_issue_deadline_utc": "2026-11-12T00:00:00Z",
+  "test_days_utc": [
+    "2026-11-12",
+    "2026-11-13"
+  ],
+  "audit_scheduled_utc": "2026-11-16T11:33:00Z",
+  "audit_not_before_utc": "2026-11-15T00:00:00Z",
+  "agents": {
+    "proposer": {
+      "model": "Qwen/Qwen3-1.7B",
+      "immutable_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+    },
+    "separate_model_critic": {
+      "model": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+      "immutable_revision": "31b70e2e869a7173562077fd711b654946d38674"
+    }
+  },
+  "forecast_family": "forecast=(1-alpha)*24h-phase-repeat + alpha*(development-train-mean + gain*(four-constituent-harmonic-development-train-mean))",
+  "alpha_range": [
+    0,
+    1
+  ],
+  "gain_range": [
+    0.6,
+    1.4
+  ],
+  "baselines": [
+    "phase_repeat_of_last_training_UTC_day",
+    "m2_s2_harmonics",
+    "four_constituent_harmonics"
+  ],
+  "selection_rule": {
+    "metric": "mean_absolute_error_meters",
+    "candidate_must_beat_best_baseline_on_each_development_fold_by_at_least_m": 0.005,
+    "if_none_qualifies": "choose one of three baselines with lowest mean development-fold error",
+    "if_multiple_qualify": "choose candidate with lowest mean development-fold error; stable Qwen-before-critic tie break",
+    "holdout_must_not_guide_selection": true,
+    "report_original_and_critic_even_if_unselected": true
+  },
+  "evaluation": {
+    "count": "2 stations x 2 future UTC days; correlated days do not count as 4 independent scientific replications",
+    "scoring": "per-station per-day observed hourly water-level MAE, against all three precommitted baselines",
+    "empirical_scoring_only_after_utc": "2026-11-15T00:00:00Z",
+    "accept_failure": true,
+    "no_model_or_code_auto_promotion": true,
+    "not_agi": true
+  },
+  "privacy": "No Plenum patents, private records, credentials, or confidential data may enter public GitHub workflows.",
+  "note": "This protocol is committed before proposing models or downloading future test measurements. The validation data are historical, while the target-date observations are future as of the precommit."
+}
