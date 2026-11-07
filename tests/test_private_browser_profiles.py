@@ -2,6 +2,7 @@
 import os
 import unittest
 import importlib.util
+from types import SimpleNamespace
 from unittest.mock import patch
 
 HAS_CRYPTO=importlib.util.find_spec('cryptography') is not None
@@ -38,6 +39,12 @@ class FakeBlob:
 class FakeBucket:
     def __init__(self):
         self.blobs={}
+        self.iam_configuration=SimpleNamespace(
+            public_access_prevention="enforced",
+            uniform_bucket_level_access_enabled=True,
+        )
+    def reload(self):
+        return None
     def blob(self,name):
         if name not in self.blobs:
             self.blobs[name]=FakeBlob()
@@ -98,6 +105,15 @@ class SessionCloudStoreTests(unittest.TestCase):
                     self.store.status(owner="computer",origin=origin)
         with self.assertRaises(PermissionError):
             self.store.status(owner="other/owner",origin="https://example.com")
+
+    def test_refuse_public_bucket_even_if_blob_is_encrypted(self):
+        self.client.bucket_obj.iam_configuration.public_access_prevention="inherited"
+        with self.assertRaises(PermissionError):
+            self.store.save_new(owner="computer",origin="https://example.com",state=self.state)
+        self.client.bucket_obj.iam_configuration.public_access_prevention="enforced"
+        self.client.bucket_obj.iam_configuration.uniform_bucket_level_access_enabled=False
+        with self.assertRaises(PermissionError):
+            self.store.save_new(owner="computer",origin="https://example.com",state=self.state)
 
     def test_unconfigured_service_is_fail_closed(self):
         with patch.dict(os.environ,{"BROWSER_SESSION_KEY":"","BROWSER_PROFILE_BUCKET":""}):
