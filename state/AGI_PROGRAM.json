@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T07:11:57.034Z",
+  "last_reviewed_utc": "2026-11-07T07:12:00Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -304,7 +304,7 @@
       "status": "measured_failure",
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42347377474",
       "AGI_demonstrated": false,
-      "notes": "Original run 42347377474 actually executed one Qwen3-1.7B generated Python tool call in Inspect's disposable Docker and received one tool error: NameError because its code referenced typing.List without import. On the next model response the original frozen Qwen3 Hugging Face Jinja tokenizer crashed TypeError('Object of type Undefined is not JSON serializable') because Inspect flat tool-call function string was interpreted as a nested function map. Original .eval header status=error and HumanEval/0 scores are EMPTY. Thus NO independent functional score and NO successful self-repair, although one true tool call+result observed. GitHub original raw .eval SHA256 c205cc78bf4cf341a6ea275ffd526ab6b2d24a3e7132bca4e1f68f0c427cce3d in artifact 13563854739 and permanently archived research-memory/evidence/inspect-react-failed/run-42347377474.json and -raw.zip after independent audit. PR #37 implements minimal tokenizer compatibility patch, real-tokenizer smoke, original append-only failure archival and explicit gated single-case retest; no model training or AGI."
+      "notes": "Original run 42347377474 actually executed one Qwen3-1.7B generated Python tool call in Inspect's disposable Docker and received one tool error: NameError because its code referenced typing.List without import. On the next model response the original frozen Qwen3 Hugging Face Jinja tokenizer crashed TypeError('Object of type Undefined is not JSON serializable') because Inspect flat tool-call function string was interpreted as a nested function map. Original .eval header status=error and HumanEval/0 scores are EMPTY. Thus NO independent functional score and NO successful self-repair, although one true tool call+result observed. GitHub original raw .eval SHA256 c205cc78bf4cf341a6ea275ffd526ab6b2d24a3e7132bca4e1f68f0c427cce3d in artifact 13563854739 and permanently archived research-memory/evidence/inspect-react-failed/run-42347377474.json and -raw.zip after independent audit. PR #37 implements minimal tokenizer compatibility patch, real-tokenizer smoke, original append-only failure archival and explicit gated single-case retest; no model training or AGI. Original issue later resolved in NEW separately versioned run 42349665865: same ReAct system produced 4 genuine tool calls + 4 responses and passed original HumanEval/0, archived separately. Original unscored failure remains unchanged."
     },
     {
       "id": "inspect-react-qwen3-template-retest-20261107",
@@ -325,7 +325,7 @@
       "status": "verified_foundation",
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42349665865",
       "AGI_demonstrated": false,
-      "notes": "Release run 42349665865 COMPLETED SUCCESS. Frozen Qwen3-1.7B with the original Inspect AI ReAct agent, original independent Inspect Evals HumanEval/0 functional scorer and Docker isolated Python, native --model-config JSON chat_template scalar verified. Original raw .eval SHA256 54aaa76d654740e74f2165d41fe34467b7ca6a95c0a11072e98ada3374b7edd0, permanently archived research-memory/evidence/inspect-react-coding/run-42349665865.json and -raw.zip. Original score 1/1, exactly 4 real Python tool calls and 4 observed sandbox responses. The actual original model transcript shows two early NameErrors when missing typing.List, two executions with the import added, and a final correct program verified independently. The observed repair demonstrates bounded model use of tool error feedback on ONE historical public code task. Six model turns, zero paid model API calls, no model training/weights change, no deployment, no AGI or reliable generalization established.",
+      "notes": "Completed original UK AISI Inspect 0.3.287 ReAct agent plus original Inspect Evals 0.27.0 HumanEval/0 model-generated Python functional verification on pinned public Qwen3-1.7B, original release 42349665865 after native --model-config JSON scalar compatibility. Independent original official scorer 1/1 correct, actual model-to-Python sandbox tool calls 4 and real tool replies 4 in original unmodified transcript. Original .eval SHA256 54aaa76d654740e74f2165d41fe34467b7ca6a95c0a11072e98ada3374b7edd0, archived append-only at research-memory/evidence/inspect-react-coding/run-42349665865.json plus original raw ZIP. All three earlier failed compatibility executions are separate negative evidence, no suppressed errors, no paid model provider API, no weight training or promotion. THIS IS ONLY ONE PUBLIC HISTORICAL CODING TASK, NOT AGI.",
       "result": {
         "correct": 1,
         "attempted": 1
@@ -335,11 +335,11 @@
   "next_actions": [
     {
       "priority": 1,
-      "action": "Test the SAME frozen Qwen3-1.7B using existing Inspect ReAct and the ORIGINAL independent HumanEval/1 public task (which previously failed in one-shot baseline HumanEval 2/3). Require original fixed-scoring functional pass/fail, actual tool repair traces and complete original .eval archival under bounded Docker/no paid model API. This is an additional controlled diagnosis, not AGI."
+      "action": "Expand independently verified existing Inspect ReAct tool-using Python coding from one original public HumanEval/0 to all THREE matched original published code problems (compare real original model-generated functional correctness to frozen non-agent 2/3 baseline) and only after that evaluate broader unfamiliar code issue with upstream SWE-bench or Terminal-Bench, original scorers, strict Docker and CPU budget. Reuse upstream agent, not new loops."
     },
     {
       "priority": 2,
-      "action": "Once one more independent original programming case is scored, move to existing SWE-bench Verified/mini-SWE-agent or OpenHands on public repository bugs with sandboxed tests and explicit compute budgets, and science reproduction using PaperBench/PaperQA2. No new homegrown agent framework or model promotion from tiny historical benchmarks."
+      "action": "Introduce real prospective held-out code and scientific research tasks with independent oracles; verify citation evidence, multi-step completion, retained skills and safe recovery. Avoid claiming AGI from a public single-question agent success."
     },
     {
       "priority": 3,
@@ -438,6 +438,10 @@
     {
       "decision": "Record first independently verified bounded Inspect ReAct program-repair success, then test a different original published problem where the same frozen model previously failed without tools.",
       "reason": "Run 42349665865 successfully scored HumanEval/0 1/1, four genuine model Python calls and four sandbox tool responses. The actual transcript shows error feedback (missing typing.List) then corrected import and tested code. One historical function cannot establish cross-task reliability or AGI."
+    },
+    {
+      "decision": "Mark actual tool-using coding as a verified narrow capability, not AGI; continue with more matched original coding problems and then unfamiliar validated tasks using existing Inspect ReAct.",
+      "reason": "Original archived ReAct run #42349665865 independently passed 1/1 HumanEval/0 and has exactly four real Python tool requests and responses. One historical public task is too small and possibly in pretraining; no reliable long-horizon generalization was proven."
     }
   ],
   "operating_rules": [
