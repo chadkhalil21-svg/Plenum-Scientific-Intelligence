@@ -1,0 +1,48 @@
+name: Verify Real Chemistry and Biology Research Benchmarks
+on:
+  push:
+    paths:
+      - 'src/plenum_ai/cross_domain_lab.py'
+      - 'tests/test_cross_domain_lab.py'
+      - '.github/workflows/cross-domain-source-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install verified scientific software and source-reader dependencies
+        run: python -m pip install -e ".[science,ml]"
+      - name: Verify strict scientific source isolation and regression tests
+        run: python -m unittest discover -s tests -p 'test_cross_domain_lab.py' -v
+      - name: Load REAL precommitted chemistry and biology datasets and score development baselines
+        run: |
+          python -m plenum_ai.cross_domain_lab prepare --out reports/cross_domain_development.json
+          python - <<'PY'
+          import json
+          p=json.load(open('reports/cross_domain_development.json'))
+          assert p['stage']=='development'
+          assert p['schema']=='plenum-cross-domain-chemistry-biology-v1'
+          assert not p['holdout_labels_exposed_to_models']
+          assert [x['domain'] for x in p['domains']]==['chemistry','biology']
+          for case in p['domains']:
+              assert case['train_n']>=100 and case['dev_n']>=30 and case['holdout_n']>=30
+              assert case['baseline_dev_errors']['linear']>=0
+              assert case['baseline_dev_errors']['forest']>=0
+              assert not case['holdout_scored']
+              print(case['domain'],'measured source',case['source_sha256'],
+                    'split sizes:',case['train_n'],case['dev_n'],case['holdout_n'],
+                    'development-only baseline errors:',case['baseline_dev_errors'])
+          print('Public scientific source checks passed. No model inference or hidden-test scoring.')
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: cross-domain-source-and-development-validation
+          path: reports/cross_domain_development.json
+          retention-days: 14
