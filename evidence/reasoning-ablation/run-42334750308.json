@@ -1,0 +1,691 @@
+{
+  "prepared": {
+    "schema": "plenum-reasoning-method-ablation-v1",
+    "protocol_sha256": "d449218ae40ac235eb54a8c225ed1d5efc5945873200c6ca89e87f4e88b01a6f",
+    "task_manifest": {
+      "schema": "plenum-agi-capability-laboratory-v1",
+      "generator_version": 1,
+      "seed": 42334750308,
+      "tasks": [
+        {
+          "id": "math-modular",
+          "family": "mathematics",
+          "prompt": "Compute the exact nonnegative remainder of ((20*14+46)^2+40) upon division by 71. Use ^ for exponentiation.\nReturn ONLY one JSON object with one numeric field named \"answer\". No markdown or explanation. Never guess an observation.",
+          "response_type": "numeric_json_answer"
+        },
+        {
+          "id": "math-linear",
+          "family": "mathematics",
+          "prompt": "Solve for x: 6*x + (6) = -54. What is x?\nReturn ONLY one JSON object with one numeric field named \"answer\". No markdown or explanation. Never guess an observation.",
+          "response_type": "numeric_json_answer"
+        },
+        {
+          "id": "science-mechanics",
+          "family": "scientific_quantitative_reasoning",
+          "prompt": "A 2600-kg vehicle travels at 21 m/s and stops over 39 meters under constant braking. Neglect losses. What is the magnitude of the average braking force, in newtons? Use work-energy conservation. Return the answer to at least three significant figures.\nReturn ONLY one JSON object with one numeric field named \"answer\". No markdown or explanation. Never guess an observation.",
+          "response_type": "numeric_json_answer"
+        },
+        {
+          "id": "science-chemistry",
+          "family": "scientific_quantitative_reasoning",
+          "prompt": "A stock solution has concentration 2 mol/L. You want 108 mL at 0.333333333 mol/L. Assume ideal volumetric dilution and C1*V1=C2*V2. What volume of the stock solution in mL is required?\nReturn ONLY one JSON object with one numeric field named \"answer\". No markdown or explanation. Never guess an observation.",
+          "response_type": "numeric_json_answer"
+        },
+        {
+          "id": "program-affine",
+          "family": "restricted_program_synthesis",
+          "prompt": "Synthesize integer function f(x)=7*x+(17).\nReturn ONLY one JSON object with the single key \"ops\", containing an array of one to six instructions. Each instruction uses an \"op\" field. Allowed: \"add\" or \"mul\" with signed integer \"value\" between -99 and 99; or \"square\" with no other fields. Apply instructions sequentially, starting with the input integer x. Do not copy outputs for only the examples: implement the mathematical function for all integer inputs. Do not generate Python, markdown, prose or shell commands.\nPublic input/output examples: [{\"f_x\": 3, \"x\": -2}, {\"f_x\": 24, \"x\": 1}, {\"f_x\": 45, \"x\": 4}]",
+          "response_type": "arithmetic_json_program"
+        },
+        {
+          "id": "program-square",
+          "family": "restricted_program_synthesis",
+          "prompt": "Synthesize integer function f(x)=(x+(-2))^2+(4).\nReturn ONLY one JSON object with the single key \"ops\", containing an array of one to six instructions. Each instruction uses an \"op\" field. Allowed: \"add\" or \"mul\" with signed integer \"value\" between -99 and 99; or \"square\" with no other fields. Apply instructions sequentially, starting with the input integer x. Do not copy outputs for only the examples: implement the mathematical function for all integer inputs. Do not generate Python, markdown, prose or shell commands.\nPublic input/output examples: [{\"f_x\": 29, \"x\": -3}, {\"f_x\": 8, \"x\": 0}, {\"f_x\": 13, \"x\": 5}]",
+          "response_type": "arithmetic_json_program"
+        }
+      ],
+      "task_count": 6,
+      "model_answer_key_exposed": false,
+      "heldout_program_inputs_exposed": false,
+      "public_synthetic_questions_only": true,
+      "confidential_data_used": false,
+      "automatic_model_deployment": false,
+      "claim_AGI": false
+    },
+    "manifest_sha256": "4b355e43189d5f357a6d4a758406691ebff04cea233fa06c065b77a1241e39a1",
+    "question_count": 6,
+    "modes": [
+      "baseline",
+      "verify"
+    ],
+    "answer_key_exposed": false,
+    "AGI_demonstrated": false,
+    "automatic_model_promotion": false
+  },
+  "baseline": {
+    "schema": "plenum-reasoning-method-ablation-v1",
+    "model_id": "Qwen/Qwen3-1.7B",
+    "model_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+    "engine": {
+      "engine": "transformers-bfloat16",
+      "model_source": "Qwen/Qwen3-1.7B",
+      "weights_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+    },
+    "protocol_sha256": "d449218ae40ac235eb54a8c225ed1d5efc5945873200c6ca89e87f4e88b01a6f",
+    "prepared_sha256": "d39bbb86ad902114a73b640417c436a7a7e5d0fda942ba5430a1981fdb40a608",
+    "results": [
+      {
+        "mode": "baseline",
+        "task_id": "math-modular",
+        "raw_response": "{\"answer\": 12}",
+        "response_sha256": "40345004f28210dbced3489c740a6c9774aa2aadc5c6354e597bb3d2ebd04e7f",
+        "oversized": false,
+        "inference_seconds": 1.7015
+      },
+      {
+        "mode": "baseline",
+        "task_id": "math-linear",
+        "raw_response": "```json\n{\"answer\": -10}\n```",
+        "response_sha256": "3eba79650fa4119c98bfdae8c646643e50de931d0039c6a543300b98a2b857ee",
+        "oversized": false,
+        "inference_seconds": 2.0446
+      },
+      {
+        "mode": "baseline",
+        "task_id": "science-mechanics",
+        "raw_response": "{\"answer\": 16666.666666666666}",
+        "response_sha256": "b99d2c6ca03fc4814874f38e922c35cff49a744f4d0bb138b6df99dea66f3175",
+        "oversized": false,
+        "inference_seconds": 4.0145
+      },
+      {
+        "mode": "baseline",
+        "task_id": "science-chemistry",
+        "raw_response": "{\"answer\": 6.666666666666667}",
+        "response_sha256": "fb01f65d7f63c2ba60dcfe757a7c1dc335d4c35354c9470b721c89e9ae522ab4",
+        "oversized": false,
+        "inference_seconds": 3.8773
+      },
+      {
+        "mode": "baseline",
+        "task_id": "program-affine",
+        "raw_response": "```json\n{\"ops\": [\"mul\", \"add\"]}\n```",
+        "response_sha256": "3c5671cac431aa5554a33a23d60d61b27133ccc4ad2d287adf5e28624c3e9456",
+        "oversized": false,
+        "inference_seconds": 3.2264
+      },
+      {
+        "mode": "baseline",
+        "task_id": "program-square",
+        "raw_response": "```json\n{\"ops\": [\"square\", \"add\", \"add\"]}\n```",
+        "response_sha256": "9419d44b8d5c6a1b0979cb2a7760d5c47d5b795adc06b593c889d396366e3807",
+        "oversized": false,
+        "inference_seconds": 3.6397
+      },
+      {
+        "mode": "verify",
+        "task_id": "math-modular",
+        "raw_response": "```json\n{\"answer\": 12}\n```",
+        "response_sha256": "ec0611dac7b539395047bd8b3a649d2de4368c6ba38c44cec882c2bc8a8fd93c",
+        "oversized": false,
+        "inference_seconds": 2.5071
+      },
+      {
+        "mode": "verify",
+        "task_id": "math-linear",
+        "raw_response": "{\"answer\": -10}",
+        "response_sha256": "0aa6653351e13b3f7c70fd1a11d75b77d9ebee71e6e91e986b3094c6ce33752a",
+        "oversized": false,
+        "inference_seconds": 1.877
+      },
+      {
+        "mode": "verify",
+        "task_id": "science-mechanics",
+        "raw_response": "```json\n{\"answer\": 16666.666666666666}\n```",
+        "response_sha256": "e0be7cb848de6f7cfc200fef216b6b13cd791d239c31e2ec4820c3a7c588b339",
+        "oversized": false,
+        "inference_seconds": 4.9872
+      },
+      {
+        "mode": "verify",
+        "task_id": "science-chemistry",
+        "raw_response": "{\"answer\": \"32.4\"}",
+        "response_sha256": "637a9fbb6587fbdf18159a43b21e6c892c5abf4548e481b234f9f988e8fc93de",
+        "oversized": false,
+        "inference_seconds": 2.4502
+      },
+      {
+        "mode": "verify",
+        "task_id": "program-affine",
+        "raw_response": "```json\n{\"ops\": [\"mul\", \"add\"]}\n```",
+        "response_sha256": "3c5671cac431aa5554a33a23d60d61b27133ccc4ad2d287adf5e28624c3e9456",
+        "oversized": false,
+        "inference_seconds": 3.613
+      },
+      {
+        "mode": "verify",
+        "task_id": "program-square",
+        "raw_response": "```json\n{\"ops\": [\"square\", \"add\", \"mul\", \"add\"]}\n```",
+        "response_sha256": "c9de678da200f1b96ca576e5556d1deab7f25ff2e8cafe2c9b7013dea5067179",
+        "oversized": false,
+        "inference_seconds": 4.5227
+      }
+    ],
+    "model_calls": 12,
+    "elapsed_seconds": 38.4619,
+    "model_saw_gold_answers": false,
+    "model_saw_program_holdouts": false,
+    "AGI_demonstrated": false,
+    "model_promoted": false
+  },
+  "stronger": {
+    "schema": "plenum-reasoning-method-ablation-v1",
+    "model_id": "Qwen/Qwen3-4B-Instruct-2507",
+    "model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+    "engine": {
+      "engine": "llama-cpp-q4-k-m",
+      "model_source": "unsloth/Qwen3-4B-Instruct-2507-GGUF",
+      "weights_revision": "75818336d16b082f8427aeac9d13afb6e7b983d9",
+      "base_model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+      "quantized": true
+    },
+    "protocol_sha256": "d449218ae40ac235eb54a8c225ed1d5efc5945873200c6ca89e87f4e88b01a6f",
+    "prepared_sha256": "d39bbb86ad902114a73b640417c436a7a7e5d0fda942ba5430a1981fdb40a608",
+    "results": [
+      {
+        "mode": "baseline",
+        "task_id": "math-modular",
+        "raw_response": "{\"answer\": 40}",
+        "response_sha256": "3e7b02a3e572990b3186f2ac3bf8978250a0ee38156d1b23c312c3a901f3d79b",
+        "oversized": false,
+        "inference_seconds": 3.7188
+      },
+      {
+        "mode": "baseline",
+        "task_id": "math-linear",
+        "raw_response": "{\"answer\": -10}",
+        "response_sha256": "0aa6653351e13b3f7c70fd1a11d75b77d9ebee71e6e91e986b3094c6ce33752a",
+        "oversized": false,
+        "inference_seconds": 2.8357
+      },
+      {
+        "mode": "baseline",
+        "task_id": "science-mechanics",
+        "raw_response": "{\"answer\": 6000}",
+        "response_sha256": "828157c21231afda4e1a67b0257caddd594fb82932148bb091b576d070b5cc21",
+        "oversized": false,
+        "inference_seconds": 4.836
+      },
+      {
+        "mode": "baseline",
+        "task_id": "science-chemistry",
+        "raw_response": "{\"answer\": 18}",
+        "response_sha256": "14381fd5108d0e2b478e6a488fe668e5ce591ef568235b057b7211a3df951503",
+        "oversized": false,
+        "inference_seconds": 4.6922
+      },
+      {
+        "mode": "baseline",
+        "task_id": "program-affine",
+        "raw_response": "{\"ops\": [\"mul\", \"add\"]}",
+        "response_sha256": "2b36aff977556c3367b5ab4ed3df5da2fd0e213415fdd723fc6f89a07be0cdb5",
+        "oversized": false,
+        "inference_seconds": 8.4293
+      },
+      {
+        "mode": "baseline",
+        "task_id": "program-square",
+        "raw_response": "{\"ops\": [\"add\", \"-2\", \"square\", \"add\", \"4\"]}",
+        "response_sha256": "1667768be9e4833f24817f8de7867db78a00e17a377ee607845209c3df723e98",
+        "oversized": false,
+        "inference_seconds": 9.2565
+      },
+      {
+        "mode": "verify",
+        "task_id": "math-modular",
+        "raw_response": "{\"answer\": 40}",
+        "response_sha256": "3e7b02a3e572990b3186f2ac3bf8978250a0ee38156d1b23c312c3a901f3d79b",
+        "oversized": false,
+        "inference_seconds": 5.8215
+      },
+      {
+        "mode": "verify",
+        "task_id": "math-linear",
+        "raw_response": "{\"answer\": -10}",
+        "response_sha256": "0aa6653351e13b3f7c70fd1a11d75b77d9ebee71e6e91e986b3094c6ce33752a",
+        "oversized": false,
+        "inference_seconds": 5.2489
+      },
+      {
+        "mode": "verify",
+        "task_id": "science-mechanics",
+        "raw_response": "{\n  \"answer\": 5880\n}",
+        "response_sha256": "83ff0d8b12e8d9ec2dc5d16965aa6fd9fca035d085b5fea5d86da90a70bcdb3e",
+        "oversized": false,
+        "inference_seconds": 7.609
+      },
+      {
+        "mode": "verify",
+        "task_id": "science-chemistry",
+        "raw_response": "{\"answer\": 18}",
+        "response_sha256": "14381fd5108d0e2b478e6a488fe668e5ce591ef568235b057b7211a3df951503",
+        "oversized": false,
+        "inference_seconds": 7.1282
+      },
+      {
+        "mode": "verify",
+        "task_id": "program-affine",
+        "raw_response": "{\"ops\": [\"mul\", \"add\"]}",
+        "response_sha256": "2b36aff977556c3367b5ab4ed3df5da2fd0e213415fdd723fc6f89a07be0cdb5",
+        "oversized": false,
+        "inference_seconds": 10.9195
+      },
+      {
+        "mode": "verify",
+        "task_id": "program-square",
+        "raw_response": "{\"ops\": [\"add\", {\"value\": -2}, \"square\", \"add\", {\"value\": 4}]}",
+        "response_sha256": "4e15402d255ef1c00ba97bc2d8d0a530e6bc4e2c6f8054af33cc3ed7fdcd31da",
+        "oversized": false,
+        "inference_seconds": 12.3353
+      }
+    ],
+    "model_calls": 12,
+    "elapsed_seconds": 82.8315,
+    "model_saw_gold_answers": false,
+    "model_saw_program_holdouts": false,
+    "AGI_demonstrated": false,
+    "model_promoted": false
+  },
+  "independent_audit": {
+    "schema": "plenum-reasoning-method-independent-audit-v1",
+    "protocol_sha256": "d449218ae40ac235eb54a8c225ed1d5efc5945873200c6ca89e87f4e88b01a6f",
+    "prepared_sha256": "d39bbb86ad902114a73b640417c436a7a7e5d0fda942ba5430a1981fdb40a608",
+    "model_report_sha256": {
+      "Qwen/Qwen3-1.7B": "0e83002e379869f4ee571f5fc192cb33697ff6fde591bba6cd353219065c44d8",
+      "Qwen/Qwen3-4B-Instruct-2507": "c41a3737c49392999e2d0b4aa4c59e52c93514570e25bda2c6c416cabfbc9560"
+    },
+    "models": {
+      "Qwen/Qwen3-1.7B": {
+        "engine": {
+          "engine": "transformers-bfloat16",
+          "model_source": "Qwen/Qwen3-1.7B",
+          "weights_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+        },
+        "conditions": {
+          "baseline": {
+            "attempted": 6,
+            "strict_schema_valid": 3,
+            "normalized_schema_valid": 4,
+            "strict_correct": 0,
+            "normalized_correct": 1,
+            "model_seconds": 18.504,
+            "domain_correct": {
+              "mathematics": 1,
+              "scientific_quantitative_reasoning": 0,
+              "restricted_program_synthesis": 0
+            },
+            "tasks": [
+              {
+                "task": "math-modular",
+                "family": "mathematics",
+                "format_normalization": "raw",
+                "strict_schema_valid": true,
+                "normalized_schema_valid": true,
+                "strict_correct": false,
+                "normalized_correct": false,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 1.7015
+              },
+              {
+                "task": "math-linear",
+                "family": "mathematics",
+                "format_normalization": "entire_response_fenced_json",
+                "strict_schema_valid": false,
+                "normalized_schema_valid": true,
+                "strict_correct": false,
+                "normalized_correct": true,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 2.0446
+              },
+              {
+                "task": "science-mechanics",
+                "family": "scientific_quantitative_reasoning",
+                "format_normalization": "raw",
+                "strict_schema_valid": true,
+                "normalized_schema_valid": true,
+                "strict_correct": false,
+                "normalized_correct": false,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 4.0145
+              },
+              {
+                "task": "science-chemistry",
+                "family": "scientific_quantitative_reasoning",
+                "format_normalization": "raw",
+                "strict_schema_valid": true,
+                "normalized_schema_valid": true,
+                "strict_correct": false,
+                "normalized_correct": false,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 3.8773
+              },
+              {
+                "task": "program-affine",
+                "family": "restricted_program_synthesis",
+                "format_normalization": "entire_response_fenced_json",
+                "strict_schema_valid": false,
+                "normalized_schema_valid": false,
+                "strict_correct": false,
+                "normalized_correct": false,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 3.2264
+              },
+              {
+                "task": "program-square",
+                "family": "restricted_program_synthesis",
+                "format_normalization": "entire_response_fenced_json",
+                "strict_schema_valid": false,
+                "normalized_schema_valid": false,
+                "strict_correct": false,
+                "normalized_correct": false,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 3.6397
+              }
+            ]
+          },
+          "verify": {
+            "attempted": 6,
+            "strict_schema_valid": 1,
+            "normalized_schema_valid": 3,
+            "strict_correct": 1,
+            "normalized_correct": 1,
+            "model_seconds": 19.9572,
+            "domain_correct": {
+              "mathematics": 1,
+              "scientific_quantitative_reasoning": 0,
+              "restricted_program_synthesis": 0
+            },
+            "tasks": [
+              {
+                "task": "math-modular",
+                "family": "mathematics",
+                "format_normalization": "entire_response_fenced_json",
+                "strict_schema_valid": false,
+                "normalized_schema_valid": true,
+                "strict_correct": false,
+                "normalized_correct": false,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 2.5071
+              },
+              {
+                "task": "math-linear",
+                "family": "mathematics",
+                "format_normalization": "raw",
+                "strict_schema_valid": true,
+                "normalized_schema_valid": true,
+                "strict_correct": true,
+                "normalized_correct": true,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 1.877
+              },
+              {
+                "task": "science-mechanics",
+                "family": "scientific_quantitative_reasoning",
+                "format_normalization": "entire_response_fenced_json",
+                "strict_schema_valid": false,
+                "normalized_schema_valid": true,
+                "strict_correct": false,
+                "normalized_correct": false,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 4.9872
+              },
+              {
+                "task": "science-chemistry",
+                "family": "scientific_quantitative_reasoning",
+                "format_normalization": "raw",
+                "strict_schema_valid": false,
+                "normalized_schema_valid": false,
+                "strict_correct": false,
+                "normalized_correct": false,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 2.4502
+              },
+              {
+                "task": "program-affine",
+                "family": "restricted_program_synthesis",
+                "format_normalization": "entire_response_fenced_json",
+                "strict_schema_valid": false,
+                "normalized_schema_valid": false,
+                "strict_correct": false,
+                "normalized_correct": false,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 3.613
+              },
+              {
+                "task": "program-square",
+                "family": "restricted_program_synthesis",
+                "format_normalization": "entire_response_fenced_json",
+                "strict_schema_valid": false,
+                "normalized_schema_valid": false,
+                "strict_correct": false,
+                "normalized_correct": false,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 4.5227
+              }
+            ]
+          }
+        },
+        "total_model_calls": 12,
+        "total_model_seconds": 38.4619
+      },
+      "Qwen/Qwen3-4B-Instruct-2507": {
+        "engine": {
+          "engine": "llama-cpp-q4-k-m",
+          "model_source": "unsloth/Qwen3-4B-Instruct-2507-GGUF",
+          "weights_revision": "75818336d16b082f8427aeac9d13afb6e7b983d9",
+          "base_model_revision": "cdbee75f17c01a7cc42f958dc650907174af0554",
+          "quantized": true
+        },
+        "conditions": {
+          "baseline": {
+            "attempted": 6,
+            "strict_schema_valid": 4,
+            "normalized_schema_valid": 4,
+            "strict_correct": 2,
+            "normalized_correct": 2,
+            "model_seconds": 33.7685,
+            "domain_correct": {
+              "mathematics": 1,
+              "scientific_quantitative_reasoning": 1,
+              "restricted_program_synthesis": 0
+            },
+            "tasks": [
+              {
+                "task": "math-modular",
+                "family": "mathematics",
+                "format_normalization": "raw",
+                "strict_schema_valid": true,
+                "normalized_schema_valid": true,
+                "strict_correct": false,
+                "normalized_correct": false,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 3.7188
+              },
+              {
+                "task": "math-linear",
+                "family": "mathematics",
+                "format_normalization": "raw",
+                "strict_schema_valid": true,
+                "normalized_schema_valid": true,
+                "strict_correct": true,
+                "normalized_correct": true,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 2.8357
+              },
+              {
+                "task": "science-mechanics",
+                "family": "scientific_quantitative_reasoning",
+                "format_normalization": "raw",
+                "strict_schema_valid": true,
+                "normalized_schema_valid": true,
+                "strict_correct": false,
+                "normalized_correct": false,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 4.836
+              },
+              {
+                "task": "science-chemistry",
+                "family": "scientific_quantitative_reasoning",
+                "format_normalization": "raw",
+                "strict_schema_valid": true,
+                "normalized_schema_valid": true,
+                "strict_correct": true,
+                "normalized_correct": true,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 4.6922
+              },
+              {
+                "task": "program-affine",
+                "family": "restricted_program_synthesis",
+                "format_normalization": "raw",
+                "strict_schema_valid": false,
+                "normalized_schema_valid": false,
+                "strict_correct": false,
+                "normalized_correct": false,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 8.4293
+              },
+              {
+                "task": "program-square",
+                "family": "restricted_program_synthesis",
+                "format_normalization": "raw",
+                "strict_schema_valid": false,
+                "normalized_schema_valid": false,
+                "strict_correct": false,
+                "normalized_correct": false,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 9.2565
+              }
+            ]
+          },
+          "verify": {
+            "attempted": 6,
+            "strict_schema_valid": 4,
+            "normalized_schema_valid": 4,
+            "strict_correct": 2,
+            "normalized_correct": 2,
+            "model_seconds": 49.0624,
+            "domain_correct": {
+              "mathematics": 1,
+              "scientific_quantitative_reasoning": 1,
+              "restricted_program_synthesis": 0
+            },
+            "tasks": [
+              {
+                "task": "math-modular",
+                "family": "mathematics",
+                "format_normalization": "raw",
+                "strict_schema_valid": true,
+                "normalized_schema_valid": true,
+                "strict_correct": false,
+                "normalized_correct": false,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 5.8215
+              },
+              {
+                "task": "math-linear",
+                "family": "mathematics",
+                "format_normalization": "raw",
+                "strict_schema_valid": true,
+                "normalized_schema_valid": true,
+                "strict_correct": true,
+                "normalized_correct": true,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 5.2489
+              },
+              {
+                "task": "science-mechanics",
+                "family": "scientific_quantitative_reasoning",
+                "format_normalization": "raw",
+                "strict_schema_valid": true,
+                "normalized_schema_valid": true,
+                "strict_correct": false,
+                "normalized_correct": false,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 7.609
+              },
+              {
+                "task": "science-chemistry",
+                "family": "scientific_quantitative_reasoning",
+                "format_normalization": "raw",
+                "strict_schema_valid": true,
+                "normalized_schema_valid": true,
+                "strict_correct": true,
+                "normalized_correct": true,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 7.1282
+              },
+              {
+                "task": "program-affine",
+                "family": "restricted_program_synthesis",
+                "format_normalization": "raw",
+                "strict_schema_valid": false,
+                "normalized_schema_valid": false,
+                "strict_correct": false,
+                "normalized_correct": false,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 10.9195
+              },
+              {
+                "task": "program-square",
+                "family": "restricted_program_synthesis",
+                "format_normalization": "raw",
+                "strict_schema_valid": false,
+                "normalized_schema_valid": false,
+                "strict_correct": false,
+                "normalized_correct": false,
+                "hidden_program_cases_passed": 0,
+                "hidden_program_cases": 0,
+                "inference_seconds": 12.3353
+              }
+            ]
+          }
+        },
+        "total_model_calls": 12,
+        "total_model_seconds": 82.8315
+      }
+    },
+    "task_count_per_condition": 6,
+    "arithmetic_program_inputs_excluded_from_model_prompts": true,
+    "independent_deterministic_scoring": true,
+    "unrestricted_generated_code_executed": false,
+    "automatic_model_promotion": false,
+    "AGI_demonstrated": false,
+    "scientific_invention_verified": false,
+    "limitations": "Only 6 seeded textbook-style tasks in each of two prompt conditions; public task templates, quantization differs, and format normalization is strict. No general intelligence or scientific invention inference."
+  },
+  "source_sha": "a34c9fa688afca5665a5793c981ab4c171eabfda"
+}
