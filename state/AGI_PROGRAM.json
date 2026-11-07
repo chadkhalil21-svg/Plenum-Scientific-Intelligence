@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T05:05:36Z",
+  "last_reviewed_utc": "2026-11-07T05:13:00Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -180,16 +180,23 @@
       },
       "AGI_demonstrated": false,
       "notes": "Official Inspect 0.3.287/Inspect Evals 0.27.0 ARC Easy 9/12 and Challenge 8/12, same pinned Qwen3-0.6B model, fixed 48 tokens, enable_thinking=false, original independent scorer: 0 invalid response formats. Earlier thinking-on configuration 0/24 all failed format, so this demonstrates format/tool configuration improvement, not model learning or independent generalization. Full raw logs archived at research-memory evidence/inspect-real-science/run-42340974100.json."
+    },
+    {
+      "id": "inspect-four-domain-96-20261107",
+      "status": "scheduled",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42341668858",
+      "AGI_demonstrated": false,
+      "notes": "Newly released bounded 96-question original Inspect Evals benchmark on frozen Qwen3-0.6B: 24 ARC Challenge science, 24 GSM8K math, 24 HellaSwag commonsense, 24 MMLU zero-shot multidisciplinary knowledge. As of this checkpoint CPU inference was queued; no score or evidence of novel/general intelligence may be claimed until all 96 original grades and raw artifacts are independently audited. Public historical questions may overlap pretraining. PR #29 merged."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Following the completed Qwen3-0.6B Inspect ARC v2 17/24 result, independently evaluate stronger and alternative frozen models on preregistered larger, unfamiliar cross-domain science, mathematics, code and tool-use tasks; separate format compliance, actual correctness, latency, costs and answer contamination before changing any model."
+      "action": "Audit completed 96-question four-domain original Inspect Evals run 42341668858, require 24 graded answers for each official ARC Challenge, GSM8K, HellaSwag and MMLU task, verify original raw model logs and append-only archival; do not claim results while CPU run is pending."
     },
     {
       "priority": 2,
-      "action": "Follow measured PaperQA2 5/8 at sparse dimension 256 and 6/8 at 4096 with a separate rights-cleared scientific-paper benchmark, stronger existing retrieval alternatives and citation-grounding checks; keep OpenHands agent coding restricted to isolated approved inference."
+      "action": "Once frozen 0.6B baseline is fully verified, compare one stronger preexisting pinned open-weight model using identical dataset split/tasks/format, record statistical uncertainty and inference cost. Do not retrain or auto-promote on public benchmarks."
     },
     {
       "priority": 3,
@@ -256,6 +263,10 @@
     {
       "decision": "Retain proven non-thinking response configuration for short exact-answer Qwen3-0.6B ARC tasks, without model promotion.",
       "reason": "Official original Inspect scorer: prior thinking-on 0/24 all failed format versus non-thinking 17/24 (ARC Easy 9/12; Challenge 8/12), 0 invalid format cases, same model/checkpoint and task sample. Difference is task-response configuration; no model learning established."
+    },
+    {
+      "decision": "Expand from two ARC science families to four previously established third-party Inspect Evals task families on a fixed 96-item public benchmark.",
+      "reason": "The verified 17/24 initial ARC result only tested narrow school science; using published existing GSM8K, HellaSwag and MMLU permits broader independent scoring without reimplementing evaluator infrastructure. Small published tests may be contaminated, and are not unseen generalization or AGI."
     }
   ],
   "operating_rules": [
