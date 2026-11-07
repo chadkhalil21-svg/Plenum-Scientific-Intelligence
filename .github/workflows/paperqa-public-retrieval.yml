@@ -3,12 +3,16 @@ on:
   pull_request:
     paths:
       - 'src/plenum_ai/paperqa_public_retrieval.py'
+      - 'src/plenum_ai/paperqa_hash_study.py'
+      - 'tests/test_paperqa_hash_study.py'
       - 'tests/test_paperqa_public_retrieval.py'
       - '.github/workflows/paperqa-public-retrieval.yml'
   push:
     branches: [main]
     paths:
       - 'src/plenum_ai/paperqa_public_retrieval.py'
+      - 'src/plenum_ai/paperqa_hash_study.py'
+      - 'tests/test_paperqa_hash_study.py'
       - 'tests/test_paperqa_public_retrieval.py'
       - '.github/workflows/paperqa-public-retrieval.yml'
   workflow_dispatch:
@@ -39,6 +43,24 @@ jobs:
         run: |
           python -m plenum_ai.paperqa_public_retrieval \
             --execute --out reports/paperqa-real-retrieval.json
+      - name: Compare two existing upstream sparse-embedding configurations on a balanced exploratory question set
+        run: |
+          python -m unittest discover -s tests -p 'test_paperqa_hash_study.py' -v
+          python -m plenum_ai.paperqa_hash_study \
+            --execute --out reports/paperqa-dimensional-study.json
+      - name: Validate independent paired scoring without claiming generalization
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('reports/paperqa-dimensional-study.json'))
+          assert d['results_measured'] is True
+          assert len(d['results'])==2
+          for arm in d['results'].values():
+              assert arm['attempted']==8 and 0<=arm['correct']<=8
+          assert d['model_calls']==0 and d['paid_api_calls']==0
+          assert not d['AGI_demonstrated']
+          print('Paired exploratory retrieval:',{k:v['correct'] for k,v in d['results'].items()})
+          PY
       - name: Require independently checked original retrieval outputs and no inference
         run: |
           python - <<'PY'
