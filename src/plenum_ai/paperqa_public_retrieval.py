@@ -35,11 +35,11 @@ def plan():
 def _blocked_connect(*args,**kwargs):
     raise RuntimeError("Network access forbidden in offline PaperQA2 pilot")
 
-async def _index_and_score():
+async def _index_and_score(questions=QUERIES, ndim=256):
     from paperqa import Docs, SparseEmbeddingModel, Settings
 
     settings=Settings(parsing={"use_doc_details":False,"defer_embedding":False})
-    embedding=SparseEmbeddingModel(ndim=256)
+    embedding=SparseEmbeddingModel(ndim=ndim)
     docs=Docs()
     hashes={}
     for short,path,citation in DOCUMENTS:
@@ -56,7 +56,7 @@ async def _index_and_score():
         if not added:
             raise ValueError("PaperQA2 declined to index the reviewed public document")
     results=[]
-    for query,expected in QUERIES:
+    for query,expected in questions:
         matches=await docs.retrieve_texts(query,1,settings=settings,
                                          embedding_model=embedding)
         got=matches[0].doc.docname if matches else None
