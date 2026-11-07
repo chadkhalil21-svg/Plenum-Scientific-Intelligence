@@ -22,6 +22,11 @@ def save_json(path, value):
 def main():
     parser = argparse.ArgumentParser(prog="plenum")
     commands = parser.add_subparsers(dest="action", required=True)
+    efficient = commands.add_parser("efficient-research",
+        help="Low-cost deterministic preflight; approved fixed fixtures only, no AI calls")
+    efficient.add_argument("--query", required=True)
+    efficient.add_argument("--dry-run", action="store_true")
+    efficient.add_argument("--out", default="reports/efficient_research.json")
     research = commands.add_parser("research")
     research.add_argument("--query", required=True)
     research.add_argument("--out", default="reports/research.json")
@@ -199,6 +204,14 @@ def main():
     universal.add_argument("--limit", type=int, default=8)
     universal.add_argument("--out", default="reports/universal_brief.json")
     args = parser.parse_args()
+    if args.action == "efficient-research":
+        from .efficient_execution import execute
+        report = execute(args.query, dry_run=args.dry_run)
+        save_json(args.out, report)
+        print("Efficient public research:", report["status"],
+              "approved fixed tools:", report["approved_tool_count"],
+              "model calls:", report["estimated_model_calls"])
+        return
     if args.action == "research":
         papers = search_papers(args.query)
         report = make_report(args.query, papers, model=args.model)
