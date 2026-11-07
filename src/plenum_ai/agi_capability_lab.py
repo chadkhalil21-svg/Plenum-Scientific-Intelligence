@@ -44,16 +44,16 @@ def _num_prompt(problem):
 
 
 def _program_prompt(problem, examples):
-    return (problem + "\nProduce a small arithmetic program using ONLY JSON: "
-            '{"ops":[{"op":"add","value":integer},{"op":"mul","value":integer},'
-            '{"op":"square"}]}. These objects are illustrative TYPES, not a '
-            "suggested solution. Instructions operate on the current integer "
-            "in their listed order. You may omit instructions and repeat "
-            "allowed operations, with at most 6 total operations. "
-            "The program must work on unseen integer inputs, not just examples. "
-            "Return ONLY JSON, no markdown, text, Python or shell commands.\n"
-            "Public examples: " + json.dumps(examples, sort_keys=True))
-
+    return (problem + "\nReturn ONLY one JSON object with the single key "
+            '"ops", containing an array of one to six instructions. '
+            'Each instruction uses an "op" field. Allowed: "add" or "mul" '
+            'with signed integer "value" between -99 and 99; or "square" '
+            'with no other fields. Apply instructions sequentially, '
+            'starting with the input integer x. Do not copy outputs for '
+            'only the examples: implement the mathematical function for '
+            'all integer inputs. Do not generate Python, markdown, prose '
+            'or shell commands.\nPublic input/output examples: ' +
+            json.dumps(examples, sort_keys=True))
 
 def _cases(seed):
     """Generate ground truth locally; only _public_cases reaches model jobs."""
