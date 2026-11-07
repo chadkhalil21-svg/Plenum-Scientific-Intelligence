@@ -1,0 +1,82 @@
+{
+  "protocol_id": "plenum-prospective-usgs-hydrology-2026-11-v1",
+  "precommitted_at_utc": "2026-11-07",
+  "source": "https://api.waterdata.usgs.gov/ogcapi/v1/collections/daily/items",
+  "source_type": "USGS daily mean river discharge 00060/00003 ft^3/s; provisional values may be revised",
+  "stations": {
+    "01646500": "Potomac River near Washington DC Little Falls",
+    "01491000": "Choptank River near Greensboro MD"
+  },
+  "training_and_development_window_utc": [
+    "2026-10-01",
+    "2026-11-04"
+  ],
+  "rolling_folds": [
+    {
+      "last_training_day": "2026-10-24",
+      "validation_days": [
+        "2026-11-01",
+        "2026-11-02"
+      ]
+    },
+    {
+      "last_training_day": "2026-10-26",
+      "validation_days": [
+        "2026-11-03",
+        "2026-11-04"
+      ]
+    }
+  ],
+  "forecast_issue_on_utc": "2026-11-11",
+  "forecast_last_issue_instant_utc": "2026-11-12T00:00:00Z",
+  "target_days_utc": [
+    "2026-11-12",
+    "2026-11-13"
+  ],
+  "audit_no_earlier_than_utc": "2026-11-17T00:00:00Z",
+  "audit_scheduled_utc": "2026-11-18T10:40:00Z",
+  "models": {
+    "scientist": {
+      "id": "Qwen/Qwen3-1.7B",
+      "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+    },
+    "independent_critic": {
+      "id": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+      "revision": "31b70e2e869a7173562077fd711b654946d38674"
+    }
+  },
+  "candidate_mechanism": "(1-alpha)*mean(previous 7 train days)*exp(beta*forecast_horizon_days) + alpha*damped_14day_log_linear_trend",
+  "parameter_bounds": {
+    "alpha": [
+      0,
+      1
+    ],
+    "beta": [
+      -0.05,
+      0.05
+    ]
+  },
+  "baseline_models": [
+    "last_day",
+    "last_week_mean",
+    "damped_log_trend"
+  ],
+  "selection_rule": {
+    "metric": "mean absolute percentage error on each validation fold",
+    "model_must_beat_best_baseline_each_fold_by_relative_margin": 0.05,
+    "fallback": "use lowest average validation error of three fixed baselines",
+    "tie_break": "Qwen before independent critic; baseline listed order",
+    "report_rejected_candidates": true
+  },
+  "source_integrity": {
+    "verify_observation_values_and_dates_before_audit": true,
+    "require_unmodified_original_and_critic_predictions": true,
+    "require_git_commit_of_frozen_prediction_before_test": true,
+    "no_retroactive_substitution": true,
+    "require_at_least_20_approved_daily_train_values": true,
+    "avoid_unbounded_downloads": true
+  },
+  "evaluation": "two correlated target dates x two river sites; not four statistically independent scientific repetitions",
+  "limitations": "No meteorological predictors, unobserved rain events or hydrodynamic model. Strong benchmark results are not guaranteed. Not AGI or invention.",
+  "safety": "No private Plenum intellectual property, credentials, paid inference API, unrestricted code execution, or unreviewed model deployment"
+}
