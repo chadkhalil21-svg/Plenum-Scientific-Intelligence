@@ -1,0 +1,75 @@
+name: Prometheus Chat Public Browser Bridge
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    paths:
+      - '.github/workflows/chat-browser-bridge.yml'
+      - 'src/plenum_ai/chat_browser_issue.py'
+      - 'tests/test_chat_browser_issue.py'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/chat-browser-bridge.yml'
+      - 'src/plenum_ai/chat_browser_issue.py'
+      - 'tests/test_chat_browser_issue.py'
+permissions:
+  contents: read
+  issues: write
+concurrency:
+  group: chat-browser-${{ github.event.issue.number || github.run_id }}
+  cancel-in-progress: false
+jobs:
+  public-chat-browser:
+    if: >-
+      github.event_name == 'issues' &&
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == 'Prometheus Chat Browser: public-read'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install existing official public browser
+        run: |
+          python -m pip install -e '.[browser]'
+          python -m playwright install --with-deps chromium
+      - name: Execute owner-requested public read, no website writes
+        env:
+          BROWSER_AUTHOR: ${{ github.event.issue.user.login }}
+          BROWSER_TITLE: ${{ github.event.issue.title }}
+          BROWSER_BODY: ${{ github.event.issue.body }}
+        run: |
+          python -m plenum_ai.chat_browser_issue \
+            --author "$BROWSER_AUTHOR" \
+            --title "$BROWSER_TITLE" \
+            --body "$BROWSER_BODY" \
+            --output "$RUNNER_TEMP/prometheus-chat-browser.md"
+      - name: Post sanitized result to the original public issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body-file "$RUNNER_TEMP/prometheus-chat-browser.md"
+
+  offline-contract:
+    if: github.event_name != 'issues'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Exercise public issue parser and untrusted-content guards
+        run: |
+          python -m pip install -e .
+          python -m unittest discover -s tests -p test_chat_browser_issue.py -v
