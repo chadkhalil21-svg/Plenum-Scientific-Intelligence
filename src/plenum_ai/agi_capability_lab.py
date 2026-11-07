@@ -24,7 +24,8 @@ FAMILIES = ("mathematics", "scientific_quantitative_reasoning",
 MAX_RESPONSE_CHARS = 4000
 MAX_OPERATIONS = 6
 OPS = ("add", "mul", "square")
-PROGRAM_INPUTS = (-11, -7, -5, -1, 0, 1, 2, 3, 7, 11)
+PUBLIC_EXAMPLE_INPUTS = frozenset((-3, -2, 0, 1, 4, 5))
+PROGRAM_INPUTS = (-31, -17, -11, -7, -5, -1, 2, 3, 7, 11)
 
 
 def digest(value):
@@ -223,8 +224,12 @@ def interpret(program, x):
 def _hidden_inputs(seed):
     rng=random.Random(_seed(seed) ^ 0x3AD7C0DE)
     # Inputs beyond public examples, plus boundary, zero and negative cases.
-    random_inputs=[rng.randint(-40,40) for _ in range(18)]
-    return tuple(PROGRAM_INPUTS)+tuple(random_inputs)
+    inputs=list(PROGRAM_INPUTS)
+    while len(inputs)<28:
+        value=rng.randint(-40,40)
+        if value not in PUBLIC_EXAMPLE_INPUTS and value not in inputs:
+            inputs.append(value)
+    return tuple(inputs)
 
 
 def _gold_value(spec,x):
