@@ -15,7 +15,7 @@ from urllib.request import Request, urlopen
 API = "https://api.waterdata.usgs.gov/ogcapi/v1/collections/daily/items"
 SITES = {
     "01646500": "Potomac River near Washington DC, Little Falls",
-    "01668000": "Rappahannock River near Fredericksburg VA",
+    "01491000": "Choptank River near Greensboro MD",
 }
 PARAMETER = "00060"  # discharge, cubic feet per second
 STATISTIC = "00003"  # daily mean
