@@ -45,6 +45,84 @@ class PublicStrategicContinuityTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             ledger.validate(wrong)
 
+    def test_live_research_memory_status_and_four_domain_scores(self):
+        state=fixture()
+        state["evidence"].append({
+            "id":"inspect-four-domain-96-20261107",
+            "status":"verified_foundation",
+            "url":ledger.TRUSTED+"actions/runs/42341668858",
+            "result":{
+                "correct":35,"attempted":96,
+                "by_family":{
+                    "arc_challenge":{"correct":14,"attempted":24},
+                    "gsm8k":{"correct":6,"attempted":24},
+                    "hellaswag":{"correct":10,"attempted":24},
+                    "mmlu_0_shot":{"correct":5,"attempted":24},
+                },
+            },
+            "AGI_demonstrated":False,
+        })
+        state["evidence"].append({
+            "id":"gsm8k-output-cap-diagnostic-20261107",
+            "status":"verified_diagnostic",
+            "url":ledger.TRUSTED+"actions/runs/42341668858",
+            "result":{
+                "baseline_correct":6,
+                "baseline_attempted":24,
+                "outputs_at_128_token_cap":10,
+                "correct_among_at_cap":0,
+            },
+            "AGI_demonstrated":False,
+        })
+        state["evidence"].append({
+            "id":"gsm8k-256-token-release-20261107",
+            "status":"running_unverified",
+            "url":ledger.TRUSTED+"actions/runs/42342997198",
+            "AGI_demonstrated":False,
+        })
+        state["evidence"].append({
+            "id":"inspect-call-correction-20261107",
+            "status":"correction_merged_for_future_runs",
+            "url":ledger.TRUSTED+"pull/31",
+            "AGI_demonstrated":False,
+        })
+        checked=ledger.validate(state)
+        brief=ledger.brief(checked)
+        self.assertIn("35/96",brief)
+        self.assertIn("diagnostic baseline 6/24; 10 at token cap",brief)
+        self.assertIn("Verified AGI: NO",brief)
+
+    def test_domain_mismatch_and_bad_diagnostics_are_rejected(self):
+        state=fixture()
+        e=state["evidence"][0]
+        e["result"]={"correct":2,"attempted":3,
+                     "by_family":{"science":{"correct":1,"attempted":3}}}
+        with self.assertRaisesRegex(ValueError,"reconcile"):
+            ledger.validate(state)
+        e["result"]={
+            "baseline_correct":6,"baseline_attempted":24,
+            "outputs_at_128_token_cap":10,"correct_among_at_cap":11,
+        }
+        with self.assertRaisesRegex(ValueError,"contradict"):
+            ledger.validate(state)
+        e["result"]["correct_among_at_cap"]=True
+        with self.assertRaisesRegex(ValueError,"noninteger"):
+            ledger.validate(state)
+
+    def test_ledger_capacity_scales_with_evidence_not_unbounded(self):
+        state=fixture()
+        for n in range(1,99):
+            state["evidence"].append({
+                "id":"evidence-item-"+str(n),
+                "status":"planned",
+                "url":ledger.TRUSTED+"issues/"+str(n),
+                "AGI_demonstrated":False,
+            })
+        self.assertEqual(len(ledger.validate(state)["evidence"]),99)
+        state["evidence"] *= 2
+        with self.assertRaises(ValueError):
+            ledger.validate(state)
+
     def test_non_github_and_duplicate_evidence_are_rejected(self):
         wrong=fixture();wrong["evidence"][0]["url"]="https://example.com/not-verifiable"
         with self.assertRaises(ValueError):
@@ -66,7 +144,7 @@ class PublicStrategicContinuityTests(unittest.TestCase):
             f=Path(tmp)/"state.json"
             f.write_text(json.dumps(fixture()))
             self.assertEqual(ledger.load(f)["schema"],ledger.SCHEMA)
-            f.write_text("a"*50001)
+            f.write_text("a"*(ledger.MAX_BYTES+1))
             with self.assertRaises(ValueError):
                 ledger.load(f)
 

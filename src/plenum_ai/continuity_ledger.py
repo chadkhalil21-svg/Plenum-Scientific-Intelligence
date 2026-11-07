@@ -10,10 +10,69 @@ import json
 from pathlib import Path
 
 SCHEMA="plenum-agi-program-continuity-v1"
-ALLOWED_STATUS={"verified_foundation","measured_failure","scheduled","planned","not_achieved"}
+ALLOWED_STATUS={
+    "verified_foundation", "measured_failure", "scheduled", "planned",
+    "not_achieved", "running_unverified", "verified_diagnostic",
+    "correction_merged_for_future_runs",
+}
 TRUSTED="https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/"
-MAX_BYTES=50000
+MAX_BYTES=250000
+MAX_EVIDENCE=128
+MAX_DECISIONS=100
 
+
+
+def _count(value, maximum=100000):
+    """Only bounded nonnegative integer counts, never booleans or estimates."""
+    return type(value) is int and 0 <= value <= maximum
+
+
+def _validate_result(score):
+    """Accept only actual scored results or the separately labeled diagnostics.
+
+    The continuity ledger stores an append-only mixture of real independent
+    scores and observational diagnostics. A diagnostic must not be mistaken
+    for the verified answer-accuracy ratio it investigated.
+    """
+    if not isinstance(score, dict):
+        raise ValueError("Non-object evidence measurement")
+    if "correct" in score or "attempted" in score:
+        correct, attempted=score.get("correct"), score.get("attempted")
+        if not (_count(correct) and _count(attempted)
+                and correct <= attempted):
+            raise ValueError("Inconsistent independent benchmark score")
+        if set(score)-{"correct","attempted","by_family"}:
+            raise ValueError("Unreviewed independent score fields")
+        families=score.get("by_family")
+        if families is not None:
+            if not isinstance(families,dict) or not 1<=len(families)<=20:
+                raise ValueError("Missing or unbounded benchmark families")
+            summed_correct=summed_attempted=0
+            for key, family in families.items():
+                if (not isinstance(key,str) or not 1<=len(key)<=80
+                    or not isinstance(family,dict)
+                    or set(family)!={"correct","attempted"}
+                    or not _count(family["correct"]) or not _count(family["attempted"])
+                    or family["correct"]>family["attempted"]):
+                    raise ValueError("Invalid independent domain breakdown")
+                summed_correct+=family["correct"]
+                summed_attempted+=family["attempted"]
+            if (summed_correct!=correct or summed_attempted!=attempted):
+                raise ValueError("Domain scores do not reconcile to total")
+        return
+    expected={
+        "baseline_correct", "baseline_attempted",
+        "outputs_at_128_token_cap", "correct_among_at_cap",
+    }
+    if set(score)!=expected:
+        raise ValueError("Unreviewed or missing diagnostic count fields")
+    if any(not _count(v) for v in score.values()):
+        raise ValueError("Negative, boolean or noninteger diagnostic")
+    if not (score["correct_among_at_cap"] <= score["outputs_at_128_token_cap"]
+            <= score["baseline_attempted"]
+            and score["correct_among_at_cap"] <= score["baseline_correct"]
+            <= score["baseline_attempted"]):
+        raise ValueError("Diagnostic subsets contradict observed total")
 
 def validate(value):
     if not isinstance(value,dict) or value.get("schema")!=SCHEMA:
@@ -33,7 +92,7 @@ def validate(value):
     if timestamp.tzinfo is None or timestamp.utcoffset().total_seconds()!=0:
         raise ValueError("Review time must be UTC")
     items=value.get("evidence")
-    if not isinstance(items,list) or not items or len(items)>30:
+    if not isinstance(items,list) or not items or len(items)>MAX_EVIDENCE:
         raise ValueError("Missing bounded source-linked evidence")
     seen=set()
     for row in items:
@@ -49,11 +108,7 @@ def validate(value):
         seen.add(identifier)
         score=row.get("result")
         if score is not None:
-            if (not isinstance(score,dict)
-                or type(score.get("correct")) is not int
-                or type(score.get("attempted")) is not int
-                or not 0<=score["correct"]<=score["attempted"]<=100000):
-                raise ValueError("Inconsistent independent benchmark score")
+            _validate_result(score)
         if row.get("AGI_demonstrated") is not False:
             raise ValueError("Experiment cannot imply AGI")
     goals=value.get("next_actions")
@@ -66,7 +121,7 @@ def validate(value):
             or not 8<=len(row["action"])<=300):
             raise ValueError("Unprioritized or ambiguous next action")
     decisions=value.get("decisions")
-    if not isinstance(decisions,list) or not decisions or len(decisions)>25:
+    if not isinstance(decisions,list) or not decisions or len(decisions)>MAX_DECISIONS:
         raise ValueError("Missing decisions and outcomes")
     for d in decisions:
         if not isinstance(d,dict) or not all(isinstance(d.get(k),str)
@@ -92,7 +147,16 @@ def brief(state):
            "Source-linked evidence:"]
     for item in s["evidence"]:
         measurement=item.get("result")
-        ratio=" ("+str(measurement["correct"])+"/"+str(measurement["attempted"])+")" if measurement else ""
+        if measurement is None:
+            ratio=""
+        elif "correct" in measurement:
+            ratio=" ("+str(measurement["correct"])+"/"+str(measurement["attempted"])+")"
+        else:
+            ratio=(" (diagnostic baseline "+
+                   str(measurement["baseline_correct"])+"/"+
+                   str(measurement["baseline_attempted"])+
+                   "; "+str(measurement["outputs_at_128_token_cap"])+
+                   " at token cap)")
         lines.append("  - "+item["id"]+": "+item["status"]+ratio)
     lines.append("Next priorities:")
     for item in s["next_actions"]:
