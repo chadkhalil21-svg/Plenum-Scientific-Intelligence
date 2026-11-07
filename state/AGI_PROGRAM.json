@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T05:30:00Z",
+  "last_reviewed_utc": "2026-11-07T05:36:00Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -246,10 +246,14 @@
     },
     {
       "id": "gsm8k-256-token-release-20261107",
-      "status": "running_unverified",
+      "status": "verified_foundation",
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42342997198",
       "AGI_demonstrated": false,
-      "notes": "Controlled Qwen3-0.6B GSM8K 128 vs 256 max output token experiment launched after passing offline and complete repository tests. 24 original identical public math questions, zero paid model APIs, original Inspect scorer and matched sample IDs, complete independently hashed source evidence. No new result verified until original .eval audit and archival; comparison is exploratory and not AGI."
+      "notes": "Independently scored official Inspect Evals GSM8K same 24 Qwen3-0.6B model samples, greedy CPU no thinking and zero paid API calls. 128-token baseline 6/24; 256-token variant 7/24, two previously wrong improved, one previously correct regressed (net +1, not statistically meaningful). Original baseline 10/24 hit 128-token cap, with 0 correct in that group; at 256 tokens 1/10 in that subgroup correct and 2/24 hit new cap. Exact original candidate .eval log SHA256 archived at research-memory/evidence/gsm8k-token-budget/run-42342997198.json and -raw.zip. Local generation calls: 24; no model learning or AGI demonstrated.",
+      "result": {
+        "correct": 7,
+        "attempted": 24
+      }
     }
   ],
   "next_actions": [
@@ -259,7 +263,7 @@
     },
     {
       "priority": 2,
-      "action": "Audit controlled Qwen3-0.6B GSM8K 128-versus-256-token run #42342997198, compare original 24 identifiers/grades and 10 prior at-cap responses, preserve original scorer logs and archive separately. Do not attribute changes to general intelligence or model learning."
+      "action": "Review matched model-size outcomes from run #42342242561 and original raw .eval scores before any deployment. GSM8K 128-vs-256 official study #42342997198 finished 6/24 -> 7/24 (2 repairs, 1 regression); token budget alone is insufficient, avoid larger unbounded retries."
     },
     {
       "priority": 3,
@@ -330,6 +334,10 @@
     {
       "decision": "Expand from two ARC science families to four previously established third-party Inspect Evals task families on a fixed 96-item public benchmark.",
       "reason": "The verified 17/24 initial ARC result only tested narrow school science; using published existing GSM8K, HellaSwag and MMLU permits broader independent scoring without reimplementing evaluator infrastructure. Small published tests may be contaminated, and are not unseen generalization or AGI."
+    },
+    {
+      "decision": "Retain the original GSM8K 128-token baseline; archive the exploratory 256-token variant without changing model weights or promoting it.",
+      "reason": "Controlled official GSM8K study showed only 6/24 -> 7/24 on the same questions, with two repairs and one regression. Increased generation allowance did not establish a reliable reasoning improvement."
     }
   ],
   "operating_rules": [
