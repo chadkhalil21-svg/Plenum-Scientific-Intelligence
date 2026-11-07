@@ -1,0 +1,124 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "42406781760",
+  "source_revision": "838ba8356caea7665e9e2d0206c2fec49959cd49",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-07T19:36:34.643972+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 27,
+    "sources_returning_records": 23,
+    "source_outages": [
+      "un_climate_environment",
+      "un_global_news"
+    ],
+    "new_public_links_before_limit": 9,
+    "signals": [
+      {
+        "category": "discoveries",
+        "publisher": "Chinese Academy of Sciences, public institutional research news",
+        "source": "china_cas_research",
+        "url": "https://english.cas.cn/newsroom/research-news/202611/t20261106_1213515.shtml",
+        "title_untrusted": "Nov 06, 2026 Study Links Breast Milk Fatty Acids to Infant Motor Development Health",
+        "claimed_publication_date": "Nov 06, 2026",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "OpenAlex, China-affiliated scholarly publications",
+        "source": "china_openalex_works",
+        "url": "https://doi.org/10.5281/zenodo.23770438",
+        "title_untrusted": "Diet Composition and Trophic Interactions of Ladybird Beetles (Coccinellidae) Revealed by DNA Metabarcoding in Forest Ecosystems of Mongolia",
+        "claimed_publication_date": "2027-11-01",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41359743",
+        "title_untrusted": "M 0.7 - 19 km N of Ridgecrest, CA",
+        "claimed_publication_date": "1794079425270",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "Chinese Academy of Sciences, public institutional research news",
+        "source": "china_cas_research",
+        "url": "https://english.cas.cn/newsroom/research-news/202611/t20261106_1213314.shtml",
+        "title_untrusted": "Nov 06, 2026 Study Reveals Evolutionary History and Genetic Basis of Spruce Diversification Evolution;Biodiversity",
+        "claimed_publication_date": "Nov 06, 2026",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "OpenAlex, China-affiliated scholarly publications",
+        "source": "china_openalex_works",
+        "url": "https://doi.org/10.5281/zenodo.23535086",
+        "title_untrusted": "Microsatellites of Gazella subgutturosa",
+        "claimed_publication_date": "2027-10-21",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "Chinese Academy of Sciences, public institutional research news",
+        "source": "china_cas_research",
+        "url": "https://english.cas.cn/newsroom/research-news/202611/t20261106_1213313.shtml",
+        "title_untrusted": "Nov 06, 2026 Researchers Establish G0 Founder Population Carrying Targeted Mutations in Marine Mollusks Bioengineering;Biodiversity",
+        "claimed_publication_date": "Nov 06, 2026",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "OpenAlex, China-affiliated scholarly publications",
+        "source": "china_openalex_works",
+        "url": "https://doi.org/10.17632/6vxfnfrnr7",
+        "title_untrusted": "Green Service Innovation and CSR: Pathways to Sustainable Competitive Advantage",
+        "claimed_publication_date": "2027-10-15",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "Chinese Academy of Sciences, public institutional research news",
+        "source": "china_cas_research",
+        "url": "https://english.cas.cn/newsroom/research-news/202611/t20261105_1213292.shtml",
+        "title_untrusted": "Nov 05, 2026 Climate Shapes Microbial Nitrogen Pump in Forests, Not in Farmlands: Study Climate;Sustainable Development",
+        "claimed_publication_date": "Nov 05, 2026",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "OpenAlex, China-affiliated scholarly publications",
+        "source": "china_openalex_works",
+        "url": "https://doi.org/10.17632/r4mxwsr8k9",
+        "title_untrusted": "Processed RNA-seq data of LLC500 vs LLC10K",
+        "claimed_publication_date": "2027-10-11",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
