@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T06:51:14.529Z",
+  "last_reviewed_utc": "2026-11-07T06:54:50.435Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -312,12 +312,19 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42348424909",
       "AGI_demonstrated": false,
       "notes": "Initial corrected launch 42348424909 passed original 1.7B tokenizer/Inspect flat/nested tool Jinja smoke without model calls; the prior ReAct #42347377474 original failed trace was independently re-audited and archived unchanged. The attempted corrected model execution then FAILED BEFORE any model inference or functional score: Inspect CLI parsed raw Jinja `-M chat_template` using PyYAML and raised yaml.scanner.ScannerError at Jinja's {%- syntax. No new model outputs were produced. PR #38 adds JSON-quoted Jinja as a YAML string scalar, explicit no-inference roundtrip verification, and idempotent original archive checks before allowing one bounded retry. NO autonomous repair or AGI demonstrated."
+    },
+    {
+      "id": "inspect-qwen3-react-json-template-retest-20261107",
+      "status": "running_unverified",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42348876440",
+      "AGI_demonstrated": false,
+      "notes": "PR #38 merged as 6097cb3684459a3ed8c3f181477f548b5825fb45, releasing corrected original Inspect ReAct agent on one public HumanEval coding problem. Verified exact original Qwen3-1.7B tokenizer flat/nested tool-call render without model inference, corrected Jinja chat_template JSON-quoted YAML scalar parsing in offline preflight, and independently preserved original failed ReAct run 42347377474 with one genuine tool call/one error result and NO functional grade. Current run #42348876440 has preflight and original negative archival completed successfully; new bounded CPU model evaluation remains in progress, and no new functional score or autonomous error repair has been verified."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Review PR #38 with full foundation tests and actual pinned tokenizer JSON-quoted/YAML argument parser preflight. Previously corrected run #42348424909 failed before new inference due raw Jinja CLI YAML scanner; original ReAct #42347377474 one genuine tool call/one result was archived and remained unscored. Only after reviewed parser fix, run one new bounded original HumanEval ReAct evaluation, verify true functional grade and tool events, archive all logs."
+      "action": "Inspect bounded corrected original Inspect ReAct Qwen3-1.7B agent run 42348876440. Require full independent original HumanEval functional grade AND actual model tool calls and tool result transcript before a success claim; preserve negative outcomes and all raw .eval logs separately. No deployment or model promotion."
     },
     {
       "priority": 2,
