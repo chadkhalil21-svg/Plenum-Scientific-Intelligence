@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T05:18:35Z",
+  "last_reviewed_utc": "2026-11-07T05:24:00Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -223,6 +223,26 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42342242561",
       "AGI_demonstrated": false,
       "notes": "PR #30 merged, 48-case pinned Qwen3-1.7B versus exact archived baseline 0.6B sample-ID paired test released using official Inspect scorers. At ledger checkpoint no 1.7B scores yet; bounded GitHub CPU, no paid model APIs, no automatic model promotion."
+    },
+    {
+      "id": "gsm8k-output-cap-diagnostic-20261107",
+      "status": "verified_diagnostic",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42341668858",
+      "result": {
+        "baseline_correct": 6,
+        "baseline_attempted": 24,
+        "outputs_at_128_token_cap": 10,
+        "correct_among_at_cap": 0
+      },
+      "AGI_demonstrated": false,
+      "notes": "Independent second read of the 24 original Qwen3-0.6B GSM8K Inspect .eval sample outputs: 10 sample completions used exactly the hard 128-token output budget and all ten received incorrect original numeric-match grades; 6/24 overall. This association is not proof that truncation caused each error. A controlled 128-vs-256 study is drafted at PR #31 with exact matching 24 IDs and no paid APIs. Historical original score/log unchanged."
+    },
+    {
+      "id": "inspect-local-generation-call-accounting-20261107",
+      "status": "confirmed_reporting_issue",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/31",
+      "AGI_demonstrated": false,
+      "notes": "The cross-domain 96-task audit and paired audit inherit model_calls=0 from their offline plan even after actual local generations. That is an accounting presentation defect, NOT absence of inference or paid API use. PR #31 corrects future live audits to report local_generation_calls as real 96/48 sample-generation requests, with paid_api_calls=0; original immutable run reports remain preserved."
     }
   ],
   "next_actions": [
@@ -232,7 +252,7 @@
     },
     {
       "priority": 2,
-      "action": "After independently verifying model comparison, choose strongest cost-effective pretrained model for cautious isolated OpenHands coding test and PaperQA citation-faithfulness evaluation on rights-cleared scientific literature. Require prospective heldout benchmark before any model promotion."
+      "action": "Audit paired Qwen3-1.7B vs 0.6B run 42342242561 on identical 48 original questions. Then review draft PR #31 controlled GSM8K 128-vs-256 output budget study (10/24 original replies reached cap, none graded correct), rerun only after verifying pinned source and compute bounds."
     },
     {
       "priority": 3,
