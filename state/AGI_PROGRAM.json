@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T20:07:51.349Z",
+  "last_reviewed_utc": "2026-11-07T20:47:26.295Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -484,16 +484,30 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42409395480",
       "AGI_demonstrated": false,
       "notes": "PR #60 merged SHA 852acbe4016478510e325356912e26625ba66b5b; official Microsoft Playwright Python v1.64.1 + Chromium in isolated CPU GitHub Actions. Verified actual live public allowed HTTPS https://example.com status 200; verified real Chromium typed 'Tested source', clicked a LOCAL fixture button and observed 'Local preview: Tested source' without remote network requests. Public browser only allows exact curated hosts/read-only GET and enforces no login/download/persistent credentials. Separate core suite and all related CI passed. No remote-site clicks or posts, login/session, model-planned web control, or continuous autonomous web browsing demonstrated."
+    },
+    {
+      "id": "playwright-official-mcp-verified-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42412389018",
+      "AGI_demonstrated": false,
+      "notes": "PR #62 merged SHA 645cc8d168edf303b329f014ba1507e635638b60. Official @playwright/mcp@0.0.84 and @modelcontextprotocol/sdk@1.25.2 installed in ephemeral GitHub runner. Actual stdio ClientSession connected, tools discovered, browser_navigate opened https://example.com/ and browser_snapshot returned Example Domain. Strict gateway tested 3/3 denies remote site-changing MCP tools and arbitrary/credentialed URLs; no user account session, model-chosen tool, financial action, or persistent browser."
+    },
+    {
+      "id": "langgraph-guarded-playwright-mcp-e2e-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42412589718",
+      "AGI_demonstrated": false,
+      "notes": "PR #63 merged SHA 65b3ea8ac5850cb63a750cedf62d67abe4a9334f. Reused LangGraph 1.2.20 orchestrator, ran fixed preapproved public Example Domain task via subprocess-isolated official Playwright MCP stdio, and independently verified MCP evidence (schema plenum-langgraph-browser-mcp-verified-v1). 4/4 Python policy/graph tests and 3/3 Node MCP policy tests passed; official Chrome browser navigation and snapshot confirmed. No LLM planning, arbitrary website agent, logins, private data, remote site modifications or AGI demonstrated."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Kaggle account connection VERIFIED: GitHub manual workflow #42408852329 successfully authenticated official Kaggle CLI and listed private notebook metadata without disclosure. Founder provided 2x T4, 30.1 GiB RAM and /tmp 966.9 GiB reported free. NEXT owner restricts kaggle-access environment with required reviewers, main branch only, no admin bypass, and rotates exposed API token if necessary. Then manually run Kaggle write-draft for private plenum-prometheus-qwen-trial (never auto-run); explicitly opt in to 27B Q4 inference inside notebook. Actual model inference still NOT run."
+      "action": "Priority Kaggle: GitHub workflow #42408852329 verified owner Kaggle API authentication; T4×2, 30.1 GiB RAM and reported /tmp 966.9 GiB free are screenshot-confirmed. Owner should restrict kaggle-access environment (main branch, required reviewers where supported, no admin bypass) and rotate token if revealed in screenshots. Then use existing manual GitHub Kaggle workflow 'write-draft' for fixed private notebook and explicitly approve free 27B Q4 inference from Kaggle; no model inference yet."
     },
     {
       "priority": 2,
-      "action": "After real Kaggle quantized Qwen3.6-27B model inference, archive SHA/revisions, latency, memory and genuine output. Independently benchmark against small and competing open models with Inspect AI on unseen coding, science, mathematics and long-horizon tasks. Kaggle, Colab and Hugging Face ZeroGPU are temporary free compute; none is continuously available AGI hosting."
+      "action": "After actual 27B Kaggle inference, measure file hash/revision, latency, VRAM, accuracy and reliability against smaller model and strong baselines on held-out reasoning, STEM, coding and long-horizon tasks (Inspect AI). Only then bind one proven planner to the already verified LangGraph → Playwright MCP read-only gateway. PR #63 has real tool orchestration, not model-selected actions or autonomous web work."
     },
     {
       "priority": 3,
@@ -505,7 +519,7 @@
     },
     {
       "priority": 5,
-      "action": "Integrate existing authentic scientific engines (PySCF, OpenMM, PyBaMM, Lean, LangGraph) into evidence-linked hypothesis-to-verification cycles, and use the new verified isolated public-browser worker only where official research APIs are insufficient. Browser PR #60 passed real local click/type and external HTTPS read-only on CI #42409395480, but has NO LLM control, authenticated sessions or remote-site changes. Add one reviewed Playwright MCP-compatible orchestrator and policy after real model inference, not many overlapping browser agents."
+      "action": "Existing public science APIs and real tested solvers should be reused to execute a licensed, evidence-linked hypothesis-to-verification cycle. New milestones: PR #62 official Playwright MCP stdio read-only navigation+snapshot run #42412389018, and PR #63 existing LangGraph fixed plan → MCP browser → independent verifier run #42412589718. Next move to measured model-guided tool selection on safe public tasks, with network isolation and explicit approval before any remote writes."
     },
     {
       "priority": 6,
@@ -784,6 +798,18 @@
     {
       "decision": "Use one reviewed browser agent controller and require human confirmation for consequential website actions.",
       "reason": "Playwright Python worker is available; later Playwright MCP with existing LangGraph and a verified running model can plan/inspect. Never blindly let text on external sites trigger actions or grant financial, posting, private data and account mutation permissions."
+    },
+    {
+      "decision": "Separate ChatGPT browser plugin access from Prometheus independent browser execution.",
+      "reason": "TinyFish browser automation app is eligible for connection in ordinary ChatGPT chats; user must explicitly install and authorize it. Independently, Plenum now has official Playwright MCP v0.0.84 and a fixed LangGraph read-only browser proof. Neither gives this chat direct authorization to the owner's browser or proves AGI."
+    },
+    {
+      "decision": "Use existing Playwright MCP and a fail-closed tool gateway rather than recreate an AI browser protocol.",
+      "reason": "PR #62 verified official MCP stdio and public accessibility snapshot; PR #63 verified LangGraph end-to-end. Raw browser click/upload/evaluate tools must not be provided to untrusted model planners until a task policy, network sandbox, account scopes and approval gates exist."
+    },
+    {
+      "decision": "Prioritize genuine GPU model inference and held-out multi-step task evaluation over adding more redundant browser frameworks.",
+      "reason": "Kaggle owner API authentication has succeeded, GPUs and free scratch were measured, but actual Qwen3.6-27B inference is not verified. Future model-directed browser tasks must be independently scored on unfamiliar scenarios and explicitly review account-affecting actions."
     }
   ],
   "operating_rules": [
