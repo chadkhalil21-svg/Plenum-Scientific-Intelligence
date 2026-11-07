@@ -30,6 +30,18 @@ class BrowserProfileStore:
         self.vault=PrivateSessionVault(
             fernet_key if isinstance(fernet_key,bytes) else fernet_key.encode()
         )
+        self._bucket_verified=False
+
+    def _require_private_bucket(self):
+        """Refuse to store credentials in a bucket without explicit privacy controls."""
+        if self._bucket_verified:
+            return
+        self.bucket.reload()
+        iam=self.bucket.iam_configuration
+        if (getattr(iam,"public_access_prevention",None)!="enforced" or
+                getattr(iam,"uniform_bucket_level_access_enabled",False) is not True):
+            raise PermissionError("Browser profiles require enforced private bucket access")
+        self._bucket_verified=True
 
     @classmethod
     def from_environment(cls):
@@ -51,7 +63,9 @@ class BrowserProfileStore:
         return f"browser-profiles/v1/{o}/{site}.sealed"
 
     def _blob(self,owner,origin):
-        return self.bucket.blob(self._path(owner,origin))
+        path=self._path(owner,origin)
+        self._require_private_bucket()
+        return self.bucket.blob(path)
 
     def save_new(self, *, owner, origin, state, ttl_seconds=3600):
         """Create only. Browser context is never serialized without encryption."""
