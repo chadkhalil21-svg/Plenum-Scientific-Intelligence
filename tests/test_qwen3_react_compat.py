@@ -37,6 +37,19 @@ class OriginalAgentCompatibilityTests(unittest.TestCase):
             self.assertIn("python",rendered)
             self.assertIn("print(2+2)",rendered)
             self.assertNotIn("Undefined",rendered)
+    def test_yaml_cli_arg_accepts_json_quoted_original_jinja(self):
+        import json
+        try:
+            import yaml
+        except ModuleNotFoundError:
+            self.skipTest('PyYAML installed for real Inspect model-arg parser CI')
+        patch=t.patch_template(ORIGIN)
+        encoded=json.dumps(patch)
+        self.assertEqual(yaml.safe_load(encoded),patch)
+        self.assertTrue(encoded.startswith('"'))
+        with self.assertRaises(yaml.YAMLError):
+            yaml.safe_load(patch)
+
     def test_malformed_or_drifting_template_fails(self):
         with self.assertRaises(ValueError):t.patch_template("too small")
         with self.assertRaisesRegex(ValueError,"exactly once"):
