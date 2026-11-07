@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T06:04:00Z",
+  "last_reviewed_utc": "2026-11-07T06:13:43.308Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -276,16 +276,23 @@
         "correct": 7,
         "attempted": 24
       }
+    },
+    {
+      "id": "qwen17-gsm8k-256-release-20261107",
+      "status": "running_unverified",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42346026034",
+      "AGI_demonstrated": false,
+      "notes": "Released PR #34 for one controlled original Inspect Evals Qwen3-1.7B math ablation: exact 12 original public GSM8K questions scored 1/12 at 128 max output tokens; 10/12 model outputs reached that limit (0 correct among 10). Only token cap becomes 256, all model weights/prompt/IDs/scorer held fixed, one CPU worker, original SHA256-verified source evidence and no paid APIs. Requires independent fresh log score and append-only archive before claiming any improvement. Preflight/full CI passed; this entry tracks running experiment, not AGI."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Prioritize reproducible unseen-domain ability, coding correctness and research citation faithfulness over incremental public benchmark scores; Qwen3-1.7B versus 0.6B originally matched 21/48 vs 18/48 after offline independent recovery, 8 gains and 5 regressions."
+      "action": "Check actual independently scored Qwen3-1.7B GSM8K 128-vs-256-token ablation run 42346026034. Verify same 12 original question IDs, prompt/scorer targets, frozen checkpoint, original 128-token 1/12 with 10/12 capped, and raw Inspect log archive. Do not infer improvements until completed."
     },
     {
       "priority": 2,
-      "action": "Investigate Qwen3-1.7B GSM8K output-budget confound on fixed 12 original math examples (10/12 hit 128 tokens vs 4/12 for 0.6B), using one strictly bounded independently scored 256-token ablation if remaining free CPU budget permits; no model auto-promotion."
+      "action": "After ablation, prioritize genuinely unfamiliar code creation and evidence-grounded scientific citation tasks using upstream Inspect/OpenHands/PaperQA2 under sandbox, with independent scorers and controlled CPU/API costs; do not repeatedly promote models from tiny public benchmarks."
     },
     {
       "priority": 3,
