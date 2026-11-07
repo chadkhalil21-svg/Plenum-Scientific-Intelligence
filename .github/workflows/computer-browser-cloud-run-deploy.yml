@@ -1,0 +1,88 @@
+name: Deploy Private Computer Browser on Cloud Run (Owner Approval)
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type DEPLOY_APPROVED after reviewing pricing and security'
+        required: true
+        type: string
+      region:
+        description: 'Google Cloud region (check local free-tier rates)'
+        required: true
+        default: us-east1
+        type: choice
+        options:
+          - us-east1
+          - us-central1
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: plenum-private-browser-cloud-deploy
+  cancel-in-progress: false
+jobs:
+  private-deploy:
+    if: ${{ inputs.confirmation == 'DEPLOY_APPROVED' }}
+    runs-on: ubuntu-latest
+    environment: computer-browser-production
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Verify project and short-lived federated cloud identity configuration
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          WIF_PROVIDER: ${{ secrets.GCP_WIF_PROVIDER }}
+          DEPLOY_SA: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+          BROWSER_RUNTIME_SA: ${{ vars.GCP_BROWSER_RUNTIME_SA }}
+        run: |
+          test -n "$GCP_PROJECT_ID"
+          test -n "$WIF_PROVIDER"
+          test -n "$DEPLOY_SA"
+          test -n "$BROWSER_RUNTIME_SA"
+          echo "Cloud identity settings detected; no key printed."
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Verify preexisting Artifact Registry and Secret Manager configuration
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          REGION: ${{ inputs.region }}
+        run: |
+          gcloud artifacts repositories describe plenum-browser --location="$REGION" --project="$GCP_PROJECT_ID" --format='value(name)' > /dev/null
+          gcloud secrets describe computer-browser-token --project="$GCP_PROJECT_ID" --format='value(name)' > /dev/null
+          echo "Required repository and browser token secret exist."
+      - name: Build isolated source image (may use billable Cloud Build)
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          REGION: ${{ inputs.region }}
+        run: |
+          IMAGE="$REGION-docker.pkg.dev/$GCP_PROJECT_ID/plenum-browser/computer-browser:$GITHUB_SHA"
+          gcloud builds submit . --project "$GCP_PROJECT_ID" \
+            --config services/computer_browser/cloudbuild.yaml \
+            --substitutions "_IMAGE=$IMAGE"
+      - name: Deploy authenticated only, on-demand, bounded resource Cloud Run
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          REGION: ${{ inputs.region }}
+          BROWSER_RUNTIME_SA: ${{ vars.GCP_BROWSER_RUNTIME_SA }}
+        run: |
+          IMAGE="$REGION-docker.pkg.dev/$GCP_PROJECT_ID/plenum-browser/computer-browser:$GITHUB_SHA"
+          gcloud run deploy plenum-computer-browser \
+            --project "$GCP_PROJECT_ID" \
+            --region "$REGION" \
+            --image "$IMAGE" \
+            --platform managed \
+            --execution-environment gen2 \
+            --service-account "$BROWSER_RUNTIME_SA" \
+            --cpu=2 --memory=2Gi --concurrency=1 \
+            --min-instances=0 --max-instances=1 \
+            --timeout=300 \
+            --no-allow-unauthenticated \
+            --set-secrets COMPUTER_BROWSER_TOKEN=computer-browser-token:latest \
+            --set-env-vars BROWSER_ALLOWED_ORIGINS=https://example.com \
+            --quiet
+          echo "Deployed IAM-private browser service; ChatGPT plugin OAuth not connected."
