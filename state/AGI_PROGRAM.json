@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T03:12:00Z",
+  "last_reviewed_utc": "2026-11-07T03:40:25Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -65,16 +65,40 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/workflows/prospective-usgs-hydrology.yml",
       "AGI_demonstrated": false,
       "notes": "River test forecasts Nov 11; target days Nov 12–13; independent audit Nov 18 if source available."
+    },
+    {
+      "id": "paired-reasoning-qwen17-20261107",
+      "status": "measured_failure",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/research-memory/evidence/reasoning-ablation/run-42334750308.json",
+      "result": {
+        "correct": 1,
+        "attempted": 6
+      },
+      "metric": "normalized exact correct, baseline condition on six seeded textbook tasks",
+      "AGI_demonstrated": false,
+      "notes": "Qwen3-1.7B BF16: 1/6 baseline and 1/6 verification; 18.504 baseline inference seconds. No program-synthesis successes."
+    },
+    {
+      "id": "paired-reasoning-qwen4b-20261107",
+      "status": "measured_failure",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/research-memory/evidence/reasoning-ablation/run-42334750308.json",
+      "result": {
+        "correct": 2,
+        "attempted": 6
+      },
+      "metric": "normalized exact correct, baseline condition on same six seeded textbook tasks",
+      "AGI_demonstrated": false,
+      "notes": "Qwen3-4B-Instruct-2507 quantized GGUF: 2/6 baseline and 2/6 verification; 33.7685 baseline inference seconds. Zero program-synthesis successes. Relative gain over 1.7B is only one task on tiny test; not proof of generalization. BF16 versus Q4 is confounded."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Integrate a reviewed standard LLM evaluation harness; compare stronger reasoning methods on held-out tasks with baseline/cost reporting."
+      "action": "Compare stronger model reasoning on independent unfamiliar multi-domain held-out tasks and external standard benchmarks, with meaningful sample sizes, fixed costs, and precommitted pass criteria; six seeded textbook tasks are insufficient."
     },
     {
       "priority": 2,
-      "action": "Evaluate model accuracy separately from JSON formatting, context windows, inference speed, and reasoning prompt changes."
+      "action": "Investigate failed restricted program synthesis and quantitative reasoning without leaking answers; measure validity, exact correctness, paired differences, CPU time and independent tool-verified behavior separately."
     },
     {
       "priority": 3,
@@ -109,6 +133,10 @@
     {
       "decision": "Preserve append-only experiment archives; separately update concise strategic state.",
       "reason": "A durable project ledger must link original failed and successful runs while making current objectives easy to resume."
+    },
+    {
+      "decision": "Do not promote the Qwen3-4B model on the initial six-question comparison.",
+      "reason": "Independent audit recorded 2/6 versus Qwen3-1.7B at 1/6, no gain from verification prompting, no program-synthesis successes and ~1.8x baseline model seconds. Larger unseen tests are required."
     }
   ],
   "operating_rules": [
