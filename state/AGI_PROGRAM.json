@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T21:21:13.444Z",
+  "last_reviewed_utc": "2026-11-07T21:56:19.113Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -512,6 +512,13 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/66",
       "AGI_demonstrated": false,
       "notes": "PR #65 merged d7e73f7812ff458dcaec28b669fe9bf1aa6980b5. Ordinary ChatGPT GitHub connector created founder-owned public issue #66, which triggered live Actions run #42415118221. Playwright Chromium fetched https://example.com/ HTTP 200, title Example Domain, and posted sanitized result in Actions comment #6713134738. ChatGPT read the reply via the existing GitHub plugin. No TinyFish paid action, extra hosting, private login, real-site clicks, remote writes, model-directed browsing or AGI demonstrated."
+    },
+    {
+      "id": "computer-browser-private-cloud-run-container-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42417679501",
+      "AGI_demonstrated": false,
+      "notes": "PR #67 merged SHA 39dd805a6cab397439c2a4acac4b39a0348ec0d2. On-demand Cloud Run-ready non-root container reuses official Playwright. Real CI #42417679501 passed FastAPI auth/origin tests, real Chromium local click/type, public navigation, Docker build and container HTTP 401 smoke. Main CI #42417679626 passed. Manual gated deploy workflow prepared. NO Cloud Run instance, OAuth ChatGPT MCP connection, website login, persistent private session vault, live remote-site mutations or AGI deployed. Free tier not guaranteed."
     }
   ],
   "next_actions": [
@@ -529,7 +536,7 @@
     },
     {
       "priority": 4,
-      "action": "Browser login workflow: user-facing TinyFish existing default browser-profile setup link for kaggle.com was generated and displayed Nov 7, 2026. User must complete site sign-in and Save profile; no signed-in site has been verified yet. Once stored, confirm with TinyFish list_profiles, then use profile-scoped browser automation for Kaggle and other sites only as authorized. Do not paste login secrets into ChatGPT/GitHub. Treat TinyFish interactive agent as metered; free public GitHub/Playwright browser remains for public-only reading. Get confirmation before real purchases, messaging, deletions or security changes."
+      "action": "PR #67 shared Computer+Prometheus Cloud Run browser source and real CI passed; no cloud deployment. Next finish encrypted session proof PR #68, then owner-configured IAM-private Cloud Run WIF/Secret Manager, private sign-in UI, encrypted Cloud Storage vault, per-action approvals and an OAuth2 ChatGPT MCP plugin where supported. Only after staging tests enable remote account operations. Existing free GitHub/Playwright chat bridge remains PUBLIC read-only."
     },
     {
       "priority": 5,
@@ -856,6 +863,18 @@
     {
       "decision": "Use a user-authenticated TinyFish browser profile for ordinary ChatGPT website login and form completion, without collecting passwords in chat or storing sessions in GitHub.",
       "reason": "Connected TinyFish has a reusable browser profile but zero currently recorded signed-in sites. Kaggle profile setup link was generated Nov 7, 2026; user must personally sign in and save through the secure page. This chat can then use profile-scoped browser automation; browser Agent/Browser is metered, unlike free public GitHub/Playwright reading. Require explicit approval before consequential external submissions, financial transactions, deletion or changing account/security settings. Store no cookies, session IDs, bearer URLs or passwords in public ledger."
+    },
+    {
+      "decision": "Reuse one shared Cloud Run browser service for Computer and independent Prometheus with separate site-scoped identities.",
+      "reason": "PR #67 builds on tested Playwright in existing repo; no duplicate browser engine or new repo. Browser profiles and account privileges remain separate."
+    },
+    {
+      "decision": "Prefer Cloud Run scale-to-zero for authenticated browsing, with owner-approved costs.",
+      "reason": "Official Cloud Run supports Chromium and a monthly free tier but builds, storage, network and excess usage can incur charges. Render Free loses state when sleeping; Cloudflare Free Browser Run limits use to 10 minutes daily."
+    },
+    {
+      "decision": "Keep free public GitHub browser bridge until an authenticated private MCP plugin is actually connected.",
+      "reason": "GitHub issue #66 proved Computer-in-chat public browsing. Cloud Run container does not become a ChatGPT plugin itself. Private login, encrypted session vault, per-action approvals and OAuth2 MCP gateway are pending."
     }
   ],
   "operating_rules": [
