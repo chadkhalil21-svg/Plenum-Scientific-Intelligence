@@ -2,7 +2,7 @@
 
 ## What this connects
 
-The **official Kaggle CLI 2.2.4** is the existing read/write notebook engine.
+The **official Kaggle CLI source revision `fdc788f`** is the existing read/write notebook engine.
 No Kaggle client or REST stack is being reinvented.
 
 The repository includes `scripts/kaggle_bridge.py` and the manually invoked
