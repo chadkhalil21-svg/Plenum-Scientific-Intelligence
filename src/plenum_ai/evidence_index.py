@@ -57,7 +57,7 @@ def build_index(root):
         "schema":SCHEMA,
         "kind":"read_only_public_record_inventory",
         "source":"research-memory/evidence",
-        "mission_reference":"research-memory/state/mission_status.json",
+        "mission_reference":"research-memory/state/AGI_PROGRAM.json",
         "record_count":len(entries),
         "records":entries,
         "groups":grouped,
