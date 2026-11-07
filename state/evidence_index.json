@@ -1,0 +1,252 @@
+{
+  "schema": "plenum-public-evidence-index-v1",
+  "kind": "read_only_public_record_inventory",
+  "source": "research-memory/evidence",
+  "mission_reference": "research-memory/state/AGI_PROGRAM.json",
+  "record_count": 23,
+  "records": [
+    {
+      "track": "agent-experiments",
+      "path": "evidence/agent-experiments/run-42162579029.json",
+      "sha256": "7dd9b88c39cf50113f14820ccf2004ee19bc3d2ca6f789f9fbbe20ac236b0aae",
+      "size_bytes": 9584
+    },
+    {
+      "track": "agent-experiments",
+      "path": "evidence/agent-experiments/run-42163393864.json",
+      "sha256": "ce65efe1b5bd88d49f50db9d191d203b91b811050d67bc6ff22e4e0c9a797e5c",
+      "size_bytes": 9383
+    },
+    {
+      "track": "agi-capability-lab",
+      "path": "evidence/agi-capability-lab/run-42331449321.json",
+      "sha256": "9a803d077421cd300299310dad66a2baa038efb594c7a4a5034d86f0835d7d0f",
+      "size_bytes": 15042
+    },
+    {
+      "track": "cross-domain-chemistry-biology",
+      "path": "evidence/cross-domain-chemistry-biology/run-42327131493.json",
+      "sha256": "3a1d92d38581f91ff0ac6cb03643c452b88975925415768e2b30fbc738d2fc7b",
+      "size_bytes": 7048
+    },
+    {
+      "track": "cross-domain-chemistry-biology",
+      "path": "evidence/cross-domain-chemistry-biology/run-42327817917.json",
+      "sha256": "fd30b3c4b838dda4a0b428fa1b557d87cfb7092e664501e8ffd8343cd0eb028f",
+      "size_bytes": 7587
+    },
+    {
+      "track": "discovery",
+      "path": "evidence/discovery/2026-11-06-run-42168813339.json",
+      "sha256": "b076e304835d35f4be0aa7b5b5681cb25d43b10d47a6ec9f589f2c4e640a36fb",
+      "size_bytes": 17978
+    },
+    {
+      "track": "discovery",
+      "path": "evidence/discovery/2026-11-06-run-42169260144.json",
+      "sha256": "0d0232e4007108fc28f2e4727e8ac0a748d06e20921f7bf7619acff3597f326a",
+      "size_bytes": 17773
+    },
+    {
+      "track": "discovery",
+      "path": "evidence/discovery/2026-11-06-run-42169426817.json",
+      "sha256": "252cd87c31867b7a23757b69d0b11f74c8248380051f28d76c4cfb595ab1ab6a",
+      "size_bytes": 23761
+    },
+    {
+      "track": "discovery",
+      "path": "evidence/discovery/2026-11-06-run-42169739986.json",
+      "sha256": "ccf4391f1174393c1aed4aa546ce85eb23cea7b4653c5105c65109af0197d121",
+      "size_bytes": 38436
+    },
+    {
+      "track": "discovery",
+      "path": "evidence/discovery/2026-11-06-run-42170083885.json",
+      "sha256": "0c722da685bbe68817d94c914a952a61e82358043953816b6842d819ae845bc2",
+      "size_bytes": 48258
+    },
+    {
+      "track": "discovery",
+      "path": "evidence/discovery/2026-11-06-run-42263598305.json",
+      "sha256": "20576daacba9af1041e7ed8fae2f68732b9c6b376c4854554f44e85ce8829dbb",
+      "size_bytes": 53575
+    },
+    {
+      "track": "frontiers",
+      "path": "evidence/frontiers/run-42170871194.json",
+      "sha256": "c6b9faf684a785cf62a157a1ffd912a6312a8167d32d3fa0288542f7d5ae7422",
+      "size_bytes": 4072
+    },
+    {
+      "track": "frontiers",
+      "path": "evidence/frontiers/run-42265129530.json",
+      "sha256": "06a3cebb17fd8345e1e1904f1cf2b9d035eec3c10756e1cecaa475a86f58bd29",
+      "size_bytes": 4072
+    },
+    {
+      "track": "iterative-hypotheses",
+      "path": "evidence/iterative-hypotheses/run-42320309673.json",
+      "sha256": "07cbf697fff238c52cf8d69dd47ba71b0cae77dc2a76a5a6e371a382ab64859c",
+      "size_bytes": 11558
+    },
+    {
+      "track": "noaa-independent-critic",
+      "path": "evidence/noaa-independent-critic/run-42323798752.json",
+      "sha256": "4119bd0842fc73b28641d5b5f80ad10dcb2fff8e4e21775770c39fea25325a89",
+      "size_bytes": 22327
+    },
+    {
+      "track": "noaa-research-agent",
+      "path": "evidence/noaa-research-agent/run-42321911614.json",
+      "sha256": "5f3af0628deb5c2aaea81a3067729b84fb3d44e3ccfedfff5c2fa59139c95534",
+      "size_bytes": 16322
+    },
+    {
+      "track": "reasoning-comparison",
+      "path": "evidence/reasoning-comparison/run-42318262589.json",
+      "sha256": "b29f539e057d0f2327d0fda9657e5eb713c873df5758bb98d420e3992be34dd7",
+      "size_bytes": 15733
+    },
+    {
+      "track": "research-pilot",
+      "path": "evidence/research-pilot/run-42177590849.json",
+      "sha256": "32fd8f0ab0fbb87f2d591b5ed8a7e9bf59e95e88e3a9dcc4e7aa61f23827770c",
+      "size_bytes": 8628
+    },
+    {
+      "track": "research-pilot",
+      "path": "evidence/research-pilot/run-42318262466.json",
+      "sha256": "29d9b62f01629c31e79924fa04c31e68b0dca3c0d19f98d282bfea9cb5106f0a",
+      "size_bytes": 8628
+    },
+    {
+      "track": "universal-brief",
+      "path": "evidence/universal-brief/run-42174318660.json",
+      "sha256": "6a9a324bf39230c1fc917cacb493083ce5c0b98a145498c32a46619c289cfb8c",
+      "size_bytes": 114817
+    },
+    {
+      "track": "world-horizon",
+      "path": "evidence/world-horizon/2026-11-06-run-42173285138.json",
+      "sha256": "62e253fe8da76eba4de971560fdc09c18146d83aab56c90e8a27cd4bfcfaf4ae",
+      "size_bytes": 52572
+    },
+    {
+      "track": "world-horizon",
+      "path": "evidence/world-horizon/2026-11-06-run-42174424616.json",
+      "sha256": "8626b008caaa3688c273a896accc0cc96d42afbbd23fbeffd77e117277266a53",
+      "size_bytes": 98052
+    },
+    {
+      "track": "world-horizon",
+      "path": "evidence/world-horizon/2026-11-06-run-42281464473.json",
+      "sha256": "6a9454dcea815ff6297c11c0412b8f8b228f0e99e37987d718e2c700c3490ca1",
+      "size_bytes": 103079
+    }
+  ],
+  "groups": [
+    {
+      "track": "agent-experiments",
+      "records": 2,
+      "paths": [
+        "evidence/agent-experiments/run-42162579029.json",
+        "evidence/agent-experiments/run-42163393864.json"
+      ]
+    },
+    {
+      "track": "agi-capability-lab",
+      "records": 1,
+      "paths": [
+        "evidence/agi-capability-lab/run-42331449321.json"
+      ]
+    },
+    {
+      "track": "cross-domain-chemistry-biology",
+      "records": 2,
+      "paths": [
+        "evidence/cross-domain-chemistry-biology/run-42327131493.json",
+        "evidence/cross-domain-chemistry-biology/run-42327817917.json"
+      ]
+    },
+    {
+      "track": "discovery",
+      "records": 6,
+      "paths": [
+        "evidence/discovery/2026-11-06-run-42168813339.json",
+        "evidence/discovery/2026-11-06-run-42169260144.json",
+        "evidence/discovery/2026-11-06-run-42169426817.json",
+        "evidence/discovery/2026-11-06-run-42169739986.json",
+        "evidence/discovery/2026-11-06-run-42170083885.json",
+        "evidence/discovery/2026-11-06-run-42263598305.json"
+      ]
+    },
+    {
+      "track": "frontiers",
+      "records": 2,
+      "paths": [
+        "evidence/frontiers/run-42170871194.json",
+        "evidence/frontiers/run-42265129530.json"
+      ]
+    },
+    {
+      "track": "iterative-hypotheses",
+      "records": 1,
+      "paths": [
+        "evidence/iterative-hypotheses/run-42320309673.json"
+      ]
+    },
+    {
+      "track": "noaa-independent-critic",
+      "records": 1,
+      "paths": [
+        "evidence/noaa-independent-critic/run-42323798752.json"
+      ]
+    },
+    {
+      "track": "noaa-research-agent",
+      "records": 1,
+      "paths": [
+        "evidence/noaa-research-agent/run-42321911614.json"
+      ]
+    },
+    {
+      "track": "reasoning-comparison",
+      "records": 1,
+      "paths": [
+        "evidence/reasoning-comparison/run-42318262589.json"
+      ]
+    },
+    {
+      "track": "research-pilot",
+      "records": 2,
+      "paths": [
+        "evidence/research-pilot/run-42177590849.json",
+        "evidence/research-pilot/run-42318262466.json"
+      ]
+    },
+    {
+      "track": "universal-brief",
+      "records": 1,
+      "paths": [
+        "evidence/universal-brief/run-42174318660.json"
+      ]
+    },
+    {
+      "track": "world-horizon",
+      "records": 3,
+      "paths": [
+        "evidence/world-horizon/2026-11-06-run-42173285138.json",
+        "evidence/world-horizon/2026-11-06-run-42174424616.json",
+        "evidence/world-horizon/2026-11-06-run-42281464473.json"
+      ]
+    }
+  ],
+  "unindexed_records": [],
+  "inventory_complete": true,
+  "digest_sha256": "538957d6f7b611cc8ff1c4935bf8b1b45ae44e9d3079f118902e96110ed509b9",
+  "scientific_claims_verified_by_index": false,
+  "AGI_demonstrated": false,
+  "automatic_model_promotion": false,
+  "confidential_corporate_data_included": false,
+  "note": "An indexed file is not evidence its scientific claims are true. Refer to original independent audits."
+}
