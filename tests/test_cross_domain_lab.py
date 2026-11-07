@@ -84,6 +84,13 @@ class CrossDomainScienceTests(unittest.TestCase):
         self.assertFalse(a["new_scientific_discovery_verified"])
         self.assertFalse(a["AGI_demonstrated"])
 
+    def test_model_prompt_has_no_copyable_numeric_template(self):
+        row=prepare()["domains"][0]
+        prompt=m.model_prompt(row)
+        self.assertIn("YOUR OWN numerical values",prompt)
+        self.assertNotIn("A blended method might improve future test accuracy",prompt)
+        self.assertNotIn('"linear_strength": 1.0, "forest_leaf": 3',prompt)
+
     def test_models_only_receive_development_summaries(self):
         dev=prepare()
         prompts=[]
