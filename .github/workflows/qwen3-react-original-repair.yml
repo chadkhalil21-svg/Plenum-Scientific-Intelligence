@@ -4,14 +4,18 @@ on:
     paths:
       - 'src/plenum_ai/qwen3_chat_template.py'
       - 'src/plenum_ai/react_original_failure.py'
+      - 'src/plenum_ai/inspect_react_python_runner.py'
       - 'tests/test_qwen3_react_compat.py'
+      - 'tests/test_inspect_react_python_runner.py'
       - '.github/workflows/qwen3-react-original-repair.yml'
   push:
     branches: [main]
     paths:
       - 'src/plenum_ai/qwen3_chat_template.py'
       - 'src/plenum_ai/react_original_failure.py'
+      - 'src/plenum_ai/inspect_react_python_runner.py'
       - 'tests/test_qwen3_react_compat.py'
+      - 'tests/test_inspect_react_python_runner.py'
       - '.github/workflows/qwen3-react-original-repair.yml'
   workflow_dispatch:
 permissions:
@@ -37,6 +41,8 @@ jobs:
           python -m pip install "inspect-evals==0.27.0" "transformers==5.22.1" "huggingface_hub>=1.2,<2" safetensors
           python -m pip check
           python -m unittest discover -s tests -p 'test_qwen3_react_compat.py' -v
+          python -m unittest discover -s tests -p 'test_inspect_react_python_runner.py' -v
+          python -m plenum_ai.inspect_react_python_runner --out reports/typed-model-args-preflight.json
           python -m plenum_ai.qwen3_chat_template --out reports/original-template-preflight.json
           python -m plenum_ai.react_original_failure --out reports/original-failure-preflight.json
       - name: Download ONLY original pinned tokenizer files, not model weights
@@ -228,14 +234,10 @@ jobs:
       - name: Re-run ONE original official ReAct coding question with fixed history rendering
         run: |
           MODEL_PATH="$(cat reports/model-path.txt)"
-          CHAT_TEMPLATE_JSON="$(python -c 'import json; from pathlib import Path; print(json.dumps(Path("reports/qwen3-react-template.jinja").read_text()))')"
-          inspect eval src/plenum_ai/inspect_react_coding.py --model hf/local \
-            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
-            -M "chat_template=$CHAT_TEMPLATE_JSON" \
-            --limit 1 --epochs 1 --max-samples 1 --max-sandboxes 1 \
-            --max-connections 1 --max-tokens 256 --temperature 0 \
-            --turn-limit 6 --message-limit 14 --time-limit 240 --max-retries 0 \
-            --log-dir reports/inspect-react-coding-logs --display none
+          python -m plenum_ai.inspect_react_python_runner \
+            --execute --model-path "$MODEL_PATH" \
+            --template-path reports/qwen3-react-template.jinja \
+            --out reports/typed-original-react-invocation.json
       - name: Verify original scorer and real tool calls and tool responses
         run: |
           python -m plenum_ai.inspect_react_coding \
@@ -256,6 +258,7 @@ jobs:
           name: corrected-qwen3-original-react-logs
           path: |
             reports/repaired-react-original-score.json
+            reports/typed-original-react-invocation.json
             reports/inspect-react-coding-logs/
             reports/original-compatibility-check.json
           retention-days: 90
