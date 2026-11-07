@@ -95,7 +95,16 @@ def _runtime(model):
         runtime=CpuCandidate(model)
         if runtime.revision!=MODEL_REVISIONS[model]:
             raise ValueError("Existing model revision not pinned")
-        return runtime.generate,{"engine":"transformers-bfloat16",
+        def generate(prompt):
+            batch=runtime._inputs(prompt)
+            with runtime.torch.inference_mode():
+                output=runtime.model.generate(
+                    **batch, do_sample=False, max_new_tokens=220,
+                    pad_token_id=runtime.tokenizer.eos_token_id)
+            return runtime.tokenizer.decode(
+                output[0][batch["input_ids"].shape[1]:],
+                skip_special_tokens=True).strip()
+        return generate,{"engine":"transformers-bfloat16",
             "model_source":model,"weights_revision":runtime.revision}
     if model==QWEN_4:
         from huggingface_hub import hf_hub_download
