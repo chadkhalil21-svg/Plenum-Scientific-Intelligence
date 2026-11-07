@@ -6,7 +6,7 @@
 
 Develop a voice-first, multimodal, persistent and scientifically useful assistant as an interface layer for a longer-running **AGI research program**, without confusing fluent conversation with general intelligence. The founder's animated reference depicts a hypothetical transition from chatbots to very large populations of AI researchers, able to assist with software, engineering, scientific literature, laboratories and discovery. These images are a goal illustration, **not verified discoveries, a working million-agent system or proof of AGI**.
 
-**First user experience (Samantha-like, inspired by the fictional OS in `Her`, not a copy):**
+**First-stage interaction layer (not the AGI destination):**
 - Conversational voice with interruption handling and transparently disclosed AI identity.
 - Consent-based multimodal observation and user-controlled tools: research, coding, calendars and project oversight.
 - Private persistent project/task/episodic and strategic memory with provenance, correction and deletion controls; do not put this store in the public repository.
@@ -15,7 +15,7 @@ Develop a voice-first, multimodal, persistent and scientifically useful assistan
 
 **Beyond Stage One:** prospective replicated research, physical laboratory integrations, verifiable gains on unfamiliar problems, reliable long-horizon planning, persistent learning, robustness and trustworthy self-improvement. Fictional sentience or feelings are **not** an engineering milestone that can presently be guaranteed.
 
-## Reuse-first conversational architecture (planned, not installed)
+## Reuse-first conversational architecture (optional integration code; not deployed)
 
 ```
 iPad microphone / optional camera / typed requests
@@ -28,7 +28,7 @@ iPad microphone / optional camera / typed requests
   -> speech response plus project progress ledger
 ```
 
-- **LiveKit Agents** (https://github.com/livekit/agents) already implements streaming speech-to-text/model/text-to-speech, interruption and turn-taking, iOS/web clients and scoped tool integrations. Evaluate an isolated pilot before adoption. The open-source library and paid cloud service are distinct.
+- **LiveKit Agents** (https://github.com/livekit/agents) provides speech-to-text/model/text-to-speech sessions, interruption support, and iOS/web clients. An optional upstream 1.8.9 adapter and offline tests are under review in PR #51; no real host is deployed. The open-source library and paid cloud provider inference are distinct.
 - **Pipecat** (https://github.com/pipecat-ai/pipecat) is another mature open-source voice/multimodal framework. Compare rather than build two voice stacks. Choose based on original latency tests, accessibility and maintenance.
 - Existing Plenum **LangGraph**, scoped tool integrations, independent Inspect evaluations and project ledger remain the core research/agency layer. New voice components are interface technology and do not establish AGI or consciousness.
 - Free Kaggle sessions are too ephemeral to promise uninterrupted conversational availability, 24/7 proactivity, stable iPad streaming or secure private memory. Those are separate infrastructure design gates and can incur costs.
@@ -66,4 +66,4 @@ GitHub is our source-of-truth and CI controller. Standard hosted runners are not
 
 The canonical public status is `research-memory/state/AGI_PROGRAM.json`. This document is the public Stage-One design; it is **not** the AGI achievement record. The first live cloud experiment must add source-linked real evidence, preserve failures, and report specifically that AGI is not demonstrated.
 
-**Next human action:** On an iPad, sign into Kaggle, create/import the notebook, enable **GPU T4 x2** and **Internet** as the platform permits, execute the free preflight, and deliberately change `APPROVE_FREE_GPU_RUN` from `False` to `True` only after reviewing storage, quota and data-sensitivity warnings. This requires the user's account action; it cannot be launched from GitHub alone.
+**Verified notebook-entry workaround:** https://www.kaggle.com/code/new?languageId=8 (reported by Kaggle staff November 2026) or https://www.kaggle.com/code then **Create → Notebook**. The earlier `/notebooks/welcome` address may not open correctly, especially on iPad.\n\n**Next human action:** On an iPad, sign into Kaggle, create/import the notebook, enable **GPU T4 x2** and **Internet** as the platform permits, execute the free preflight, and deliberately change `APPROVE_FREE_GPU_RUN` from `False` to `True` only after reviewing storage, quota and data-sensitivity warnings. This requires the user's account action; it cannot be launched from GitHub alone.
