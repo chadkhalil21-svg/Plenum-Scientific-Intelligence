@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T21:10:37.690Z",
+  "last_reviewed_utc": "2026-11-07T21:18:54.823Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -505,6 +505,13 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42413145594",
       "AGI_demonstrated": false,
       "notes": "GitHub Actions #42413145594 completed owner-approved Kaggle CLI operation write-draft. The job log explicitly said 'Private Prometheus notebook draft saved on Kaggle, without running any cells' and 'Model inference: NOT executed. GPU allocation: NOT started by this command.' This proves actual notebook upload to authenticated private account, not model inference, Kaggle GUI session or model benchmark."
+    },
+    {
+      "id": "chat-github-issues-free-playwright-bridge-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/66",
+      "AGI_demonstrated": false,
+      "notes": "PR #65 merged d7e73f7812ff458dcaec28b669fe9bf1aa6980b5. Ordinary ChatGPT GitHub connector created founder-owned public issue #66, which triggered live Actions run #42415118221. Playwright Chromium fetched https://example.com/ HTTP 200, title Example Domain, and posted sanitized result in Actions comment #6713134738. ChatGPT read the reply via the existing GitHub plugin. No TinyFish paid action, extra hosting, private login, real-site clicks, remote writes, model-directed browsing or AGI demonstrated."
     }
   ],
   "next_actions": [
@@ -522,7 +529,7 @@
     },
     {
       "priority": 4,
-      "action": "Establish access-controlled private long-term project, episodic and strategic memory using existing LangGraph checkpointers and Store (Postgres for protected production, SQLite only development). Test retrieval, edits, deletion, restart continuity and privacy. Keep public canonical evidence in research-memory; do not put private patents or credentials into public GitHub."
+      "action": "Verified free Computer-in-chat public browsing: GitHub connector issue #66 triggered live Playwright run #42415118221, HTTP 200 to https://example.com/, and ChatGPT fetched result from issue comment. Retain read-only public allowlist and avoid TinyFish charges. This cannot access private sessions or interact with remote forms yet; future work is safe scoped navigation and, with explicit owner permission and secure hosting, richer web actions. Requests/results are public. Not model autonomy or AGI."
     },
     {
       "priority": 5,
@@ -833,6 +840,18 @@
     {
       "decision": "Distinguish available ChatGPT TinyFish browser automation from authenticated website sessions and the GitHub/Kaggle API control boundary.",
       "reason": "TinyFish browser automation is callable in ordinary ChatGPT chats but its default profile has no recorded signed-in sites. Current ChatGPT GitHub tools can edit/read GitHub resources but do not expose an Actions workflow-dispatch function. The Kaggle API key is protected in a GitHub environment secret, not readable in chat; it authenticated verified listing and private notebook upload, but no independent model run. One-time explicit TinyFish profile sign-in or an owner-approved workflow trigger is required before automating authenticated Kaggle UI/compute. Do not repeatedly instruct founder to paste code."
+    },
+    {
+      "decision": "Use existing GitHub Issues and Playwright as a zero-additional-subscription public browser bridge in ChatGPT chats.",
+      "reason": "Owner GitHub connector can create issue and read public comment. Real request #66 triggered Actions and returned HTTP 200. Requests/results remain public, not a logged-in secure browser."
+    },
+    {
+      "decision": "Keep public chat-browser reading distinct from a Work-style authenticated interactive browser.",
+      "reason": "The bridge reads selected public HTTPS URLs, not private sessions, remote click/forms, uploads or purchases. Stronger access needs explicit consent, secure hosting and action limits."
+    },
+    {
+      "decision": "TinyFish ordinary $8 introductory wallet does not renew daily or monthly.",
+      "reason": "Current wallet check returned $8 and no auto reload. Official pricing says one-time signup funds, no recurring plan. Promotional credit may expire; Search/Fetch stay free."
     }
   ],
   "operating_rules": [
