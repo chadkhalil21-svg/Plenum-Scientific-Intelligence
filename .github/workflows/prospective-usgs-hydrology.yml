@@ -1,0 +1,289 @@
+name: Prospective USGS Hydrology Scientific Transfer Test
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        type: choice
+        required: true
+        options:
+          - propose
+          - audit
+  schedule:
+    - cron: '20 9 11 11 *'
+    - cron: '40 11 18 11 *'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-prospective-usgs-rivers-2026
+  cancel-in-progress: false
+jobs:
+  date-gate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      proposal: ${{ steps.check.outputs.proposal }}
+      audit: ${{ steps.check.outputs.audit }}
+    steps:
+      - id: check
+        env:
+          REQUEST: ${{ inputs.phase }}
+          SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          python - <<'PY'
+          import os
+          from datetime import datetime,timezone
+          now=datetime.now(timezone.utc)
+          requested=os.environ.get('REQUEST') or (
+              'propose' if os.environ.get('SCHEDULE')=='20 9 11 11 *' else 'audit')
+          allow_propose=(requested=='propose' and
+              datetime(2026,11,11,tzinfo=timezone.utc)<=now<
+              datetime(2026,11,12,tzinfo=timezone.utc))
+          allow_audit=(requested=='audit' and
+              datetime(2026,11,17,tzinfo=timezone.utc)<=now<
+              datetime(2026,12,1,tzinfo=timezone.utc))
+          with open(os.environ['GITHUB_OUTPUT'],'a') as output:
+              output.write('proposal='+str(allow_propose).lower()+'\n')
+              output.write('audit='+str(allow_audit).lower()+'\n')
+          print('Approved protocol phase:', 'propose' if allow_propose else
+                'audit' if allow_audit else 'none')
+          PY
+  independent-qwen-researcher:
+    needs: date-gate
+    if: needs.date-gate.outputs.proposal == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install small preapproved open-weight model and public data reader
+        run: |
+          python -m pip install -e .
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "transformers>=4.51,<5" "huggingface_hub>=0.30,<1" "accelerate>=1.1,<2" safetensors
+      - name: Prove source isolation, future date guards and numerical tests
+        run: python -m unittest discover -s tests -p 'test_prospective_hydrology.py' -v
+      - name: Issue two original hypotheses without seeing future river data
+        run: python -m plenum_ai.prospective_hydrology propose --out reports/qwen.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sealed-usgs-qwen-proposals
+          path: reports/qwen.json
+          retention-days: 21
+  separate-smollm2-reviewer:
+    needs: independent-qwen-researcher
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v7
+        with:
+          name: sealed-usgs-qwen-proposals
+          path: reports/
+      - name: Install independent model family and public hydrology reader
+        run: |
+          python -m pip install -e .
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "transformers>=4.51,<5" "huggingface_hub>=0.30,<1" "accelerate>=1.1,<2" safetensors
+      - name: Critique two scientifically bounded river hypotheses on development-only readings
+        run: |
+          python -m plenum_ai.prospective_hydrology critique \
+            --original reports/qwen.json --out reports/critic.json
+      - name: Confirm both model families are restricted to reviewed candidates
+        run: |
+          python - <<'PY'
+          import json
+          a=json.load(open('reports/qwen.json'))
+          b=json.load(open('reports/critic.json'))
+          assert a['schema']=='plenum-usgs-river-proposer-v1'
+          assert b['schema']=='plenum-usgs-river-critic-v1'
+          assert a['protocol_commit']=='5599f4b8037e6d2a0dca78d0e3a03a034eb37c44'
+          assert a['model_calls']==2 and b['critic_calls']==2
+          assert not a['future_observations_seen'] and not b['future_observations_seen']
+          assert not a['automatic_model_promotion'] and not b['automatic_model_promotion']
+          print('Two Qwen candidates:',sum(x['candidate'] is not None for x in a['sites']))
+          print('Two critic candidates:',sum(x['candidate'] is not None for x in b['sites']))
+          print('Model/baseline selections:',[x['selection']['source'] for x in b['sites']])
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sealed-usgs-critic-proposals
+          path: reports/critic.json
+          retention-days: 21
+  freeze-public-forecasts:
+    needs: separate-smollm2-reviewer
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/download-artifact@v7
+        with:
+          name: sealed-usgs-qwen-proposals
+          path: reports/
+      - uses: actions/download-artifact@v7
+        with:
+          name: sealed-usgs-critic-proposals
+          path: reports/
+      - name: Publicly commit all predictions BEFORE first test date
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import json,os
+          from datetime import datetime,timezone
+          from pathlib import Path
+          from hashlib import sha256
+          now=datetime.now(timezone.utc)
+          assert datetime(2026,11,11,tzinfo=timezone.utc)<=now<datetime(2026,11,12,tzinfo=timezone.utc)
+          q=json.load(open('reports/qwen.json'))
+          c=json.load(open('reports/critic.json'))
+          assert q['protocol_commit']=='5599f4b8037e6d2a0dca78d0e3a03a034eb37c44'
+          assert not q['future_observations_seen'] and not c['future_observations_seen']
+          hash_of=lambda o:sha256(json.dumps(o,sort_keys=True,separators=(',',':'),
+              ensure_ascii=False,allow_nan=False).encode()).hexdigest()
+          record={'schema':'plenum-usgs-river-frozen-v1',
+             'protocol_commit':q['protocol_commit'],
+             'source_commit':os.environ['SOURCE_SHA'],
+             'run_id':os.environ['RUN_ID'],
+             'frozen_at_utc':now.isoformat(),
+             'original':q,'critic':c,
+             'original_sha256':hash_of(q),'critic_sha256':hash_of(c),
+             'frozen_before_test':True}
+          path=Path('ledger/evidence/prospective-usgs-hydrology/frozen-2026-11.json')
+          path.parent.mkdir(parents=True,exist_ok=True)
+          if path.exists(): raise FileExistsError('Already issued before test; no refitting')
+          path.write_text(json.dumps(record,indent=2,ensure_ascii=False)+'\n')
+          print('Frozen river research before outcomes:',path)
+          PY
+      - name: Record pre-test immutable commit on public research-memory branch
+        run: |
+          git -C ledger config user.name 'Plenum Scientific Evidence'
+          git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ledger add evidence/prospective-usgs-hydrology/frozen-2026-11.json
+          git -C ledger commit -m 'Freeze 2026 USGS hypotheses and critic before future river measurements'
+          git -C ledger pull --rebase origin research-memory
+          git -C ledger push origin HEAD:research-memory
+  independently-audit-future-river-discharge:
+    needs: date-gate
+    if: needs.date-gate.outputs.audit == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - name: Prove original hypotheses were committed before outcomes existed
+        run: |
+          python - <<'PY'
+          import json,subprocess
+          from pathlib import Path
+          from datetime import datetime,timezone
+          relative='evidence/prospective-usgs-hydrology/frozen-2026-11.json'
+          path=Path('ledger')/relative
+          assert path.is_file(),'No prospectively frozen hypothesis; do not invent science'
+          data=json.loads(path.read_text())
+          saved=datetime.fromisoformat(data['frozen_at_utc']).astimezone(timezone.utc)
+          committed=subprocess.check_output(
+              ['git','-C','ledger','log','-1','--format=%cI','--',relative],
+              text=True).strip()
+          commit_time=datetime.fromisoformat(committed).astimezone(timezone.utc)
+          target=datetime(2026,11,12,tzinfo=timezone.utc)
+          assert saved<target and commit_time<target
+          assert data['frozen_before_test'] is True
+          print('Validated original pre-observation commit:',committed)
+          PY
+      - name: Install only deterministic USGS scientific verifier, no model inference
+        run: python -m pip install -e .
+      - name: Independently recompute development evidence BEFORE reading Nov 12/13
+        run: |
+          python -m plenum_ai.prospective_hydrology audit \
+            --frozen ledger/evidence/prospective-usgs-hydrology/frozen-2026-11.json \
+            --out reports/usgs_river_audit.json
+      - name: Publish original, critic and baseline outcomes even if negative
+        run: |
+          python - <<'PY'
+          import json
+          a=json.load(open('reports/usgs_river_audit.json'))
+          assert a['station_days']==4
+          assert a['prospectively_frozen'] and a['independent_audit_with_future_data']
+          assert not a['scientific_discovery_verified'] and not a['general_intelligence_verified']
+          assert not a['automatic_code_or_model_change']
+          for x in a['results']:
+              print(x['site_name'],x['target_day'],
+                    'selected',x['selected_source'],
+                    'relative error',x['selected_relative_error'],
+                    'best reference',x['best_baseline_relative_error'],
+                    'beat best reference',x['selection_beats_strongest_baseline'])
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: independently-audited-usgs-river-forecast
+          path: reports/usgs_river_audit.json
+          retention-days: 90
+  archive-independent-science:
+    needs: independently-audit-future-river-discharge
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/download-artifact@v7
+        with:
+          name: independently-audited-usgs-river-forecast
+          path: reports/
+      - name: Append public measured river results, preserving failures
+        env:
+          SOURCE_REV: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          a=json.load(open('reports/usgs_river_audit.json'))
+          assert a['schema']=='plenum-usgs-river-prospective-audit-v1'
+          assert a['station_days']==4
+          target=Path('ledger/evidence/prospective-usgs-hydrology/audit-2026-11.json')
+          if target.exists(): raise FileExistsError('Do not overwrite scientific evidence')
+          target.parent.mkdir(parents=True,exist_ok=True)
+          target.write_text(json.dumps({
+              'source_revision':os.environ['SOURCE_REV'],
+              'run_id':os.environ['RUN_ID'],'audit':a,
+              'verified_AGI':False,'verified_new_scientific_law':False
+          },indent=2,ensure_ascii=False)+'\n')
+          print('Archived future independent river research:',target)
+          PY
+      - name: Commit measured results to research-memory without altering hypotheses
+        run: |
+          git -C ledger config user.name 'Plenum Scientific Evidence'
+          git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ledger add evidence/prospective-usgs-hydrology/audit-2026-11.json
+          git -C ledger commit -m 'Archive independently tested 2026 river-flow predictions'
+          git -C ledger pull --rebase origin research-memory
+          git -C ledger push origin HEAD:research-memory
