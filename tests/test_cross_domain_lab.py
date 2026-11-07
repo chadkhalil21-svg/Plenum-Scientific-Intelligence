@@ -75,7 +75,7 @@ class CrossDomainScienceTests(unittest.TestCase):
             return generated(prompt)
         out=m.propose(dev,spy,m.QWEN,m.QWEN_SHA,"qwen")
         self.assertEqual(len(prompts),2)
-        self.assertTrue(all("held-out labels are inaccessible" in x for x in prompts))
+        self.assertTrue(all("No held-out labels are provided" in x for x in prompts))
         self.assertTrue(all(x["candidate"] is not None for x in out["records"]))
         self.assertFalse(out["holdout_scored"])
 
