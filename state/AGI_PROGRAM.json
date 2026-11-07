@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T18:08:24.398Z",
+  "last_reviewed_utc": "2026-11-07T18:25:34.966Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -386,32 +386,50 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42399620346",
       "AGI_demonstrated": false,
       "notes": "PR #49 merged as ff5b1ebeeacb25ac1d06de8f85d25c587935b65a. Dedicated live-ledger CI successfully validated existing matched HumanEval regression (direct 2/3 versus tool-using 1/3, 11 paired sandbox calls) with strengthened count consistency checks and bounded longer priorities. Full repository CI also passed, run 42399620377. Historical scientific evidence unchanged; this is continuity reliability only."
+    },
+    {
+      "id": "ipad-free-cloud-stage1-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42401051332",
+      "AGI_demonstrated": false,
+      "notes": "PR #50 merged as 038e08f9820ac693602df69107269328d9330348. A manual-only Kaggle T4x2 notebook, Qwen3.6-27B Q4_K_M candidate, GPU/disk preflight, pinned-revision/smoke-test plan, explicit user opt-in, and iPad-first voice/AGI roadmap were added; full repository CI including structural Python notebook compilation passed. No Kaggle account accessed, cloud GPU started, weight downloaded, model inference or voice assistant deployed. This is planning and engineering readiness, not an AGI or model-performance result."
+    },
+    {
+      "id": "free-cloud-qwen36-run-pending-20261107",
+      "status": "planned",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/notebooks/prometheus_kaggle_qwen36_27b.ipynb",
+      "AGI_demonstrated": false,
+      "notes": "Founder-controlled next experiment: sign in to Kaggle from iPad, enable free T4x2 and Internet if available, run hardware preflight, then explicitly opt in to download/compile Qwen3.6-27B Q4_K_M (19.1 GB) and record actual process, output accuracy and hardware/latency. Free quota/storage/compatibility not guaranteed; no run has yet occurred. No payment, cloud credentials or private Plenum research authorized in public GitHub."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "First establish a real on-device offline inference measurement with an owner-approved local machine and an independently reviewed pinned GGUF plus llama.cpp binary: merged edge runtime PR #46, successful main CI #42353430569; benchmark execution NOT DONE, tracked by issue #47. Verify host OS network isolation, device RAM/CPU/power, genuine model output correctness and unseen tasks. Evaluate stronger Qwen3.6-27B only after tokenizer/backend compatibility and hardware proof. Avoid downloading model files or exposing private Plenum IP in public CI. One-case strict smoke check PR #48 merged but not yet run on actual device."
+      "action": "Run the founder-approved free-cloud Qwen3.6-27B Q4_K_M proof from the Kaggle T4x2 notebook (PR #50 merged, full CI run 42401051332 passed). An iPad can control Kaggle, but the founder must sign in, enable available GPU and Internet, check >=25 GiB temporary disk and explicitly opt in. Model execution is NOT DONE. Record exact revisions, model file SHA256, correctness, latency, host RAM and VRAM; stop without paid GPU."
     },
     {
       "priority": 2,
-      "action": "Run first independently scored unfamiliar real public-repository bug repair. Official SWE-bench v5.0.2 guarded integration merged in PR #44 with passing zero-inference CI #42352849149; next controlled execution is tracked in issue #45. On a founder-approved isolated host meeting upstream Docker hardware requirements, verify gold reference then run a frozen upstream coding agent on one preregistered public issue and compare against matched no-tool baseline; preserve all scorer errors and costs. Do not treat official-harness integration or small historical benchmark scores as AGI."
+      "action": "After a real model runs, benchmark independently on matched original Inspect tasks, external-repository repair cases and preregistered unseen cross-domain reasoning. Compare Qwen3.6-27B with existing 0.6B/1.7B public baselines; measure regression rate, inference speed, GPU memory, failure cases and dollar cost. One arithmetic response is never sufficient for general intelligence."
     },
     {
       "priority": 3,
-      "action": "Use existing PaperQA2/PaperBench and independent held-out scientific literature/reproduction rather than a new research agent framework. Require citation-faithfulness tests, source provenance, prospective outcomes and explicit founder approval before any model or research claim."
+      "action": "Evaluate LiveKit Agents versus Pipecat for a consent-aware, iPad-accessible real-time voice and optional vision interface with interruption, privacy and access controls. Integrate separately with the existing LangGraph and research tools; no voice application has yet been deployed. Stage One may resemble a fictional conversational OS in interface but does not establish consciousness."
     },
     {
       "priority": 4,
-      "action": "Establish durable retrievable project memory and context with strict separation of public and private information."
+      "action": "Run a measured unfamiliar external repository bug repair with the original SWE-bench evaluator, using the merged guarded bridge and existing issue #45. Requires a founder-approved isolated Docker host meeting published memory/storage needs; preserve both successful repairs and negative outcomes without automatic deployment."
     },
     {
       "priority": 5,
-      "action": "Implement sustained bounded planning, task repair, independent criticism, and self-evaluation across unrelated domains."
+      "action": "Develop securely stored, consent-based private project, episodic and strategic memories with provenance, deletion and correction; keep public research evidence in research-memory. Demonstrate actual gain on new tasks before claiming persistent learning or self-improvement."
     },
     {
       "priority": 6,
-      "action": "Accept new methods or model changes only after prospective independent evaluation and explicit human approval."
+      "action": "Complete preregistered NOAA and USGS prospective research and independent audits on their original schedules; build multidisciplinary scientific tool pipelines only where real source and experimental validation exist. Do not replace independent laboratories with speculative AI-generated findings."
+    },
+    {
+      "priority": 7,
+      "action": "Review all capability improvements through independent tests and founder approval; avoid paid-cloud activation, public data leaks, unrestricted tool execution, model promotion and unbounded automated experiments. AGI remains NOT demonstrated."
     }
   ],
   "decisions": [
@@ -510,6 +528,26 @@
     {
       "decision": "Distinguish actual edge model correctness from successful CLI invocation, and reconcile ledger validators with preserved negative outcomes.",
       "reason": "The one-case smoke checker and live-ledger regression validator are engineering checkpoints; neither demonstrates improved general intelligence. Original failed and successful records remain available."
+    },
+    {
+      "decision": "Make Plenum Prometheus iPad-first with free cloud inference experiments before any purchase or paid GPU.",
+      "reason": "The founder has an iPad and prefers free, efficient existing infrastructure. Kaggle T4x2 is a candidate for an explicitly launched bounded public trial, not a 24/7 production host."
+    },
+    {
+      "decision": "Build a natural multimodal voice-first, durable-memory assistant as Stage One, while maintaining actual AGI as a separate research objective.",
+      "reason": "The fictional Samantha experience in Her provides an interface direction; natural speech, initiative and memory can be engineered without evidence of consciousness or general intelligence."
+    },
+    {
+      "decision": "Reuse LiveKit Agents or Pipecat for realtime audio after a measured pilot instead of inventing a new voice transport.",
+      "reason": "Both existing open frameworks provide turn detection, streaming media and interruption handling. Choose one based on measured latency, reliability, licensing, privacy and total operational cost."
+    },
+    {
+      "decision": "Treat animation of very large AI-scientist populations as a high-level aspiration, not established scientific capability.",
+      "reason": "Software agent counts and generated hypotheses are not substitutes for original, reproducible experiments, independent physical measurements or reliable long-horizon reasoning."
+    },
+    {
+      "decision": "No public video upload, private memories, unpublished IP, paid cloud service or automatic model promotion without scoped authorization.",
+      "reason": "The public research repository contains public plans and evidence only. Private episodic memory and consent-aware tool actions need separate controlled infrastructure."
     }
   ],
   "operating_rules": [
