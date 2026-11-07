@@ -239,3 +239,52 @@ jobs:
             reports/inspect-react-coding-logs/
             reports/original-compatibility-check.json
           retention-days: 90
+  archive-corrected-original:
+    needs: corrected-original-agent
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/download-artifact@v7
+        with:
+          name: corrected-qwen3-original-react-logs
+          path: reports
+      - name: Preserve original official score and tool transcript append-only
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import json,hashlib,os,zipfile
+          from pathlib import Path
+          d=json.loads(Path("reports/repaired-react-original-score.json").read_text())
+          assert d["official_functional_test_scored"] and d["attempted"]==1
+          assert not d["AGI_demonstrated"] and not d["automated_deployment"]
+          files=list(Path("reports/inspect-react-coding-logs").rglob("*.eval"))
+          if len(files)!=1:raise ValueError("One original agent transcript required")
+          root=Path("ledger/evidence/inspect-react-coding")
+          root.mkdir(parents=True,exist_ok=True)
+          name="run-"+os.environ["RUN_ID"]
+          report=root/(name+".json")
+          original=root/(name+"-raw.zip")
+          if report.exists() or original.exists():raise FileExistsError("Never rewrite research evidence")
+          d["source_sha"]=os.environ["SOURCE_SHA"]
+          d["original_eval_sha256"]={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
+          with zipfile.ZipFile(original,"x",compression=zipfile.ZIP_DEFLATED) as z:
+              for file in files:z.write(file,arcname=file.name)
+          report.write_text(json.dumps(d,indent=2)+"\n",encoding="utf-8")
+          PY
+      - name: Commit only original research logs, never agent code to production
+        run: |
+          git -C ledger config user.name 'Plenum Scientific Evidence'
+          git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ledger add evidence/inspect-react-coding/
+          git -C ledger commit -m 'Archive independently scored repaired Inspect ReAct run'
+          git -C ledger pull --rebase origin research-memory
+          git -C ledger push origin HEAD:research-memory
