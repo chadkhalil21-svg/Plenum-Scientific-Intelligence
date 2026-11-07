@@ -1,0 +1,73 @@
+{
+  "id": "plenum-cross-domain-chemistry-biology-v1",
+  "goal": "Measure whether two distinct AI model families can choose numerical model parameters that generalize across molecular-solubility regression and public cell-morphology classification.",
+  "committed_before_model_inference": true,
+  "datasets": {
+    "chemistry": {
+      "source": "https://raw.githubusercontent.com/deepchem/deepchem/455d07f3e17e880a4d980b5b0365e4a02b417e14/datasets/delaney-processed.csv",
+      "source_commit": "455d07f3e17e880a4d980b5b0365e4a02b417e14",
+      "git_blob_sha1": "970b0d32771f1d67175d4f4a630e13f446ba97a8",
+      "records": 1128,
+      "target": "measured log solubility in mols per litre",
+      "features": [
+        "Minimum Degree",
+        "Molecular Weight",
+        "Number of H-Bond Donors",
+        "Number of Rings",
+        "Number of Rotatable Bonds",
+        "Polar Surface Area"
+      ],
+      "excluded_leakage_column": "ESOL predicted log solubility in mols per litre",
+      "split": "deterministic Bemis-Murcko scaffold groups (acyclic molecules grouped by exact canonical SMILES)",
+      "split_seed": "plenum-cross-domain-v1",
+      "metric": "mean absolute error (log mol/L)",
+      "task": "chemistry regression"
+    },
+    "biology": {
+      "source": "scikit-learn load_breast_cancer (public UCI Wisconsin Diagnostic data)",
+      "records": 569,
+      "features": 30,
+      "split": "stratified seeded train/development/test, target only used for training/evaluation",
+      "split_seed": 20261107,
+      "metric": "binary log-loss",
+      "task": "historical biomedical morphology classification, NOT clinical diagnosis"
+    }
+  },
+  "models": {
+    "proposer": {
+      "name": "Qwen/Qwen3-1.7B",
+      "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e"
+    },
+    "critic": {
+      "name": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+      "revision": "31b70e2e869a7173562077fd711b654946d38674"
+    }
+  },
+  "candidate_schema": {
+    "linear_strength": [
+      0.02,
+      25
+    ],
+    "forest_leaf": "integer 1–12",
+    "mix": [
+      0,
+      1
+    ],
+    "hypothesis": "falsifiable explanation",
+    "falsifier": "observed test condition"
+  },
+  "baselines": [
+    "scaled linear estimator (ridge for chemistry, logistic regression for biology)",
+    "80-tree random forest"
+  ],
+  "selection": "compare both candidate and baseline developmental metric on predefined splits; candidate must reduce validation error by >=2 percent relative to strongest baseline; otherwise retain baseline; preserve rejected proposals",
+  "execution": "CPU GitHub Actions with separate candidate jobs, independent development verification and held-out audit; archive successes and failures to research-memory",
+  "limitations": [
+    "historical public data can have appeared in model pretraining",
+    "bio data are research only, not clinically validated",
+    "ESOL scaffold split mitigates but does not eliminate analogue leakage",
+    "a better benchmark score is not scientific invention, autonomous general intelligence, or recursive self-improvement",
+    "no arbitrary generated code, no paid services, no model promotions",
+    "proposals are bounded hyperparameter choices in prewritten model classes"
+  ]
+}

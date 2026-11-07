@@ -1,0 +1,263 @@
+name: Independently Audited Chemistry and Biology Model Challenge
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/cross-domain-model-challenge.yml'
+      - 'src/plenum_ai/cross_domain_lab.py'
+      - 'protocols/cross-domain-chemistry-biology-v1.json'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-chem-bio-method-evaluation
+  cancel-in-progress: false
+jobs:
+  development-observations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e ".[science,ml]"
+      - name: Evaluate only development data and source-integrity checks
+        run: |
+          python -m unittest discover -s tests -p 'test_cross_domain_lab.py' -v
+          python -m plenum_ai.cross_domain_lab prepare --out reports/development.json
+      - name: Never publish heldout labels to AI models
+        run: |
+          python - <<'PY'
+          import json
+          r=json.load(open('reports/development.json'))
+          assert not r['holdout_labels_exposed_to_models']
+          assert len(r['domains'])==2
+          assert all(not x['holdout_scored'] for x in r['domains'])
+          print('Read-only safe model prompts for', [x['domain'] for x in r['domains']])
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: cross-domain-development-metrics-only
+          path: reports/development.json
+          retention-days: 14
+  model-qwen-scientist:
+    needs: development-observations
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v7
+        with:
+          name: cross-domain-development-metrics-only
+          path: reports/
+      - name: Install open-weight CPU inference without loading datasets
+        run: |
+          python -m pip install -e .
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "transformers>=4.51,<5" "huggingface_hub>=0.30,<1" "accelerate>=1.1,<2" safetensors
+      - name: Propose bounded chemistry and biology model configurations
+        run: |
+          python -m plenum_ai.cross_domain_lab propose \
+            --development reports/development.json --out reports/qwen.json
+      - name: Validate signed real model inference records
+        run: |
+          python - <<'PY'
+          import json
+          p=json.load(open('reports/qwen.json'))
+          assert p['role']=='qwen' and p['model_id']=='Qwen/Qwen3-1.7B'
+          assert p['model_revision']=='70d244cc86ccca08cf5af4e1e306ecf908b1ad5e'
+          assert p['inference_calls']==2 and not p['holdout_scored'] and not p['model_promoted']
+          print('Valid Qwen bounded proposals:',sum(r['candidate'] is not None for r in p['records']))
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: cross-domain-sealed-qwen-proposals
+          path: reports/qwen.json
+          retention-days: 14
+  independent-smollm-critic:
+    needs: model-qwen-scientist
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v7
+        with:
+          name: cross-domain-development-metrics-only
+          path: reports/
+      - uses: actions/download-artifact@v7
+        with:
+          name: cross-domain-sealed-qwen-proposals
+          path: reports/
+      - name: Install different-family CPU research critic
+        run: |
+          python -m pip install -e .
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "transformers>=4.51,<5" "huggingface_hub>=0.30,<1" "accelerate>=1.1,<2" safetensors
+      - name: Challenge bounded model decisions using development-only summaries
+        run: |
+          python -m plenum_ai.cross_domain_lab critic \
+            --development reports/development.json \
+            --qwen reports/qwen.json --out reports/critic.json
+      - name: Preserve actual unsuccessful scientific criticisms
+        run: |
+          python - <<'PY'
+          import json
+          p=json.load(open('reports/critic.json'))
+          assert p['role']=='critic'
+          assert p['model_id']=='HuggingFaceTB/SmolLM2-1.7B-Instruct'
+          assert p['model_revision']=='31b70e2e869a7173562077fd711b654946d38674'
+          assert p['inference_calls']==2 and not p['holdout_scored'] and not p['model_promoted']
+          print('Valid independent counterproposals:',sum(r['candidate'] is not None for r in p['records']))
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: cross-domain-sealed-critic-proposals
+          path: reports/critic.json
+          retention-days: 14
+  freeze-development-selection:
+    needs: independent-smollm-critic
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e ".[science,ml]"
+      - uses: actions/download-artifact@v7
+        with:
+          name: cross-domain-development-metrics-only
+          path: reports/
+      - uses: actions/download-artifact@v7
+        with:
+          name: cross-domain-sealed-qwen-proposals
+          path: reports/
+      - uses: actions/download-artifact@v7
+        with:
+          name: cross-domain-sealed-critic-proposals
+          path: reports/
+      - name: Reproduce development evidence and freeze model selection without seeing holdout outcomes
+        run: |
+          python -m plenum_ai.cross_domain_lab freeze \
+            --development reports/development.json --qwen reports/qwen.json \
+            --critic reports/critic.json --out reports/frozen.json
+      - name: Freeze independent-science selection
+        run: |
+          python - <<'PY'
+          import json
+          a=json.load(open('reports/frozen.json'))
+          assert a['stage']=='frozen'
+          assert not a['holdout_used_in_selection']
+          assert not a['automatic_deployment']
+          print('Predeclared decisions:',[(r['domain'],r['selection']['role']) for r in a['decisions']])
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: cross-domain-frozen-before-audit
+          path: reports/frozen.json
+          retention-days: 14
+  independent-heldout-audit:
+    needs: freeze-development-selection
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e ".[science,ml]"
+      - uses: actions/download-artifact@v7
+        with:
+          name: cross-domain-frozen-before-audit
+          path: reports/
+      - name: Check sealed development and selection BEFORE scoring heldout chemistry/biology samples
+        run: |
+          python -m plenum_ai.cross_domain_lab audit \
+            --frozen reports/frozen.json --out reports/audit.json
+      - name: Report positive and negative results; never claim AGI or clinical applicability
+        run: |
+          python - <<'PY'
+          import json
+          r=json.load(open('reports/audit.json'))
+          assert r['independent_holdout_audit']
+          assert r['tested_domains']==2 and not r['AGI_demonstrated']
+          assert not r['new_scientific_discovery_verified']
+          assert not r['clinical_diagnostic_capability_verified']
+          assert not r['model_promoted']
+          for d in r['results']:
+              print(d['domain'],d['metric'],'heldout_n',d['holdout_n'],
+                    'selected',d['selected_role'],'measured',d['selected_test_error'],
+                    'best baseline',d['best_reference_error'],
+                    'beats baseline',d['beats_strongest_reference'])
+          print('Measured wins:',r['wins_against_strongest_baselines'],'of 2')
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: independently-verified-chemistry-and-biology
+          path: reports/audit.json
+          retention-days: 90
+  archive-historical-research-results:
+    needs: independent-heldout-audit
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/download-artifact@v7
+        with:
+          name: cross-domain-frozen-before-audit
+          path: reports/
+      - uses: actions/download-artifact@v7
+        with:
+          name: independently-verified-chemistry-and-biology
+          path: reports/
+      - name: Preserve full public evidence and negative results
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          f=json.load(open('reports/frozen.json'))
+          a=json.load(open('reports/audit.json'))
+          assert a['tested_domains']==2 and not a['AGI_demonstrated']
+          path=Path('ledger/evidence/cross-domain-chemistry-biology')/(
+               'run-'+os.environ['RUN_ID']+'.json')
+          path.parent.mkdir(parents=True,exist_ok=True)
+          if path.exists(): raise FileExistsError('Never overwrite evidence')
+          path.write_text(json.dumps({'source_revision':os.environ['SOURCE_SHA'],
+               'frozen_proposals':f,'independent_audit':a,
+               'verified_AGI':False,'verified_new_scientific_law':False},
+               indent=2,ensure_ascii=False)+'\n')
+          print('Archived science evaluation including losses:',path)
+          PY
+      - name: Commit on research-memory, never production branch
+        run: |
+          git -C ledger config user.name 'Plenum Scientific Evidence'
+          git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ledger add evidence/cross-domain-chemistry-biology/
+          git -C ledger commit -m 'Archive independently audited historical chemistry and biology challenge'
+          git -C ledger pull --rebase origin research-memory
+          git -C ledger push origin HEAD:research-memory
