@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T22:23:05.091Z",
+  "last_reviewed_utc": "2026-11-07T22:28:04.785Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -533,6 +533,13 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42420220272",
       "AGI_demonstrated": false,
       "notes": "PR #71 merged to main ab00ef766207ccd50f108aa7bd45f526d301ed9a. Signed Google Cloud Run IAP JWT ES256 verified against Google JWK (audience, issuer, expiry, owner email); real HTTP owner console tests prove forged unsigned identity headers and wrong owner/signatures are denied, untrusted public page HTML escaped, status and public-preview gated. Full browser container CI #42420220272 and all nine repository workflows passed. Deployment workflow now requires --iap and owner email with Cloud Run audience. No IAP-enabled Cloud Run instance or signed-in website session has been deployed. Browser console does NOT yet log into third-party websites and cannot use arbitrary private accounts from ChatGPT."
+    },
+    {
+      "id": "computer-browser-free-founder-cloud-readiness-20261107",
+      "status": "verified_blocker",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/74",
+      "AGI_demonstrated": false,
+      "notes": "PR #72 merged c8a818fd9b8be87f0d86e2f216ef202927c5a2da, free read-only GitHub Actions readiness check triggered by owner-authored issue #74 and run #42420680864. Actual job log 2026-11-07 22:27 UTC confirms all six prerequisite config values NOT CONFIGURED in computer-browser-production GitHub environment: GCP_PROJECT_ID, GCP_BROWSER_RUNTIME_SA, BROWSER_PROFILE_BUCKET, COMPUTER_OWNER_EMAIL, GCP_WIF_PROVIDER, GCP_BROWSER_DEPLOY_SA. No Google Cloud calls, costs, authentication, cloud deploy or private browsing happened. This reports GitHub configuration presence only, not whether Google Cloud projects exist. Google Cloud management connector unavailable in ChatGPT; founder must identify/connect a billing-enabled Google Cloud project and authorize setup before deployment."
     }
   ],
   "next_actions": [
@@ -550,7 +557,7 @@
     },
     {
       "priority": 4,
-      "action": "Shared Computer+Prometheus browser: PRs #67-71 merged. Real Playwright actions, encrypted GCS profile adapter, and signed Google IAP private owner console all pass CI (#42420220272). NO live Cloud Run deployment or arbitrary site logins yet. Next owner must configure GCP project + Workload Identity Federation, private GCS bucket and Secret Manager, and first-time IAP Google login/role. Use manually approved workflow only after billing review. Then verify live owner console, private account login UI, session storage, approvals and ChatGPT connector as account supports."
+      "action": "Cloud deployment blocker independently verified: owner-initiated GitHub readiness check issue #74/run #42420680864 finds ALL six required GCP values missing from repository environment. Do not claim service online or spend credits. Founder next: open Google Cloud Console and choose suitable project (prefer isolated browser project), confirm billing, then give Computer the project name/ID or screenshots for guided setup; owner must authorize cloud permissions. Existing prepared IAM-private deployment workflow, code, encrypted vault and CI can then be activated. Free public chat browser remains usable; private site actions remain unverified."
     },
     {
       "priority": 5,
@@ -897,6 +904,10 @@
     {
       "decision": "Protect Computer's private browser console with Google Cloud Run IAP signed-owner identity, rather than custom passwords or unsigned headers.",
       "reason": "Direct Google Cloud Run IAP is officially supported; ES256 signed tokens are independently verified in the API. PR #71 and actual container tests passed. The initial owner dashboard can read approved public sites but real third-party logins and site actions remain separately gated pending live cloud setup and private session approvals."
+    },
+    {
+      "decision": "First use the free GitHub owner-only browser-cloud readiness check; do not claim a deployed service while Google Cloud setup is missing.",
+      "reason": "PR #72 + issue #74 produced live evidence that all six GitHub environment values for the IAM-private browser deployment are missing. The check consumes only ordinary GitHub Actions, has no GCP calls and does not use metered TinyFish. User must open their Google Cloud account and select a project; no connected GCP management action exists in chat."
     }
   ],
   "operating_rules": [
