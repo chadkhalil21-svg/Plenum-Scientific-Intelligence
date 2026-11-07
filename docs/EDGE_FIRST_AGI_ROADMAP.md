@@ -21,7 +21,7 @@ The source screenshots' older statuses ("OpenHands pilot planned", "PaperQA2 pil
 
 ## Proposed system
 
-\`\`\`
+```
 Scientific question / software objective / multimodal observation
    -> locally hosted reviewed model (fallback to approved remote only if authorized)
    -> existing LangGraph state and planning
@@ -30,26 +30,26 @@ Scientific question / software objective / multimodal observation
    -> original independent evaluator / external data / safety checks
    -> signed, append-only evidence with negative outcomes
    -> human-reviewed candidate capability change
-\`\`\`
+```
 
 Do NOT create a new agent framework, AI model architecture or general-purpose evaluator without a measured gap. Do NOT promote a good result on contaminated public tests to a general-intelligence claim.
 
 ## Edge runtime: what is actually implemented
 
-The optional \`plenum_ai.edge_runtime\` adapter executes an **already installed, local, hash-pinned** llama.cpp \`llama-cli\` executable against an **already present, hash-pinned GGUF** model. It contains no downloader, model weights, network API, private inputs or training code. Default command emits a plan only:
+The optional `plenum_ai.edge_runtime` adapter executes an **already installed, local, hash-pinned** llama.cpp `llama-cli` executable against an **already present, hash-pinned GGUF** model. It contains no downloader, model weights, network API, private inputs or training code. Default command emits a plan only:
 
-\`\`\`sh
+```sh
 python -m plenum_ai.edge_runtime --out reports/edge/plan.json
-\`\`\`
+```
 
-For a separately reviewed device, place an existing compatible local model at \`edge_assets/models/plenum.gguf\` and the matching reviewed executable at \`edge_assets/bin/llama-cli\`. Record their externally reviewed SHA256 hashes. With local device network disabled and suitable RAM, deliberately execute one bounded public arithmetic smoke test:
+For a separately reviewed device, place an existing compatible local model at `edge_assets/models/plenum.gguf` and the matching reviewed executable at `edge_assets/bin/llama-cli`. Record their externally reviewed SHA256 hashes. With local device network disabled and suitable RAM, deliberately execute one bounded public arithmetic smoke test:
 
-\`\`\`sh
+```sh
 python -m plenum_ai.edge_runtime \
   --model-sha256 <64-lowercase-hex-digest> \
   --engine-sha256 <64-lowercase-hex-digest> \
   --execute --out reports/edge/manual-run-001.json
-\`\`\`
+```
 
 **Important:** The two placeholders above are not genuine hashes; calculate them on the actual signed/reviewed files. Never insert any private research or patent into this public smoke prompt. The run sets CPU-only inference, 2 threads, 1024 context tokens, maximum 64 generated tokens and 180 seconds, with shell-free invocation and a restricted process environment. It records only hash/length of generated output, duration and process status. It **does not claim a correct answer or AGI**, and a successful CLI call does not certify offline isolation, model trust or scientific reliability. Device owner must establish physical/OS-level network isolation independently.
 
