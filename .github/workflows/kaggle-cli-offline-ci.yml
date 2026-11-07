@@ -38,6 +38,10 @@ jobs:
               exit 1
             fi
           done
+          echo "Official CLI offline help output (no credentials configured):"
+          head -n 40 /tmp/kaggle-push-help.txt
+          head -n 40 /tmp/kaggle-pull-help.txt
+          head -n 40 /tmp/kaggle-list-help.txt
           grep -F -- '--no-run' /tmp/kaggle-push-help.txt
           grep -F -- '--metadata' /tmp/kaggle-pull-help.txt
           grep -F -- '--mine' /tmp/kaggle-list-help.txt
