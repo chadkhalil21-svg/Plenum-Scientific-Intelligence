@@ -42,11 +42,12 @@ def _playwright():
     from playwright.async_api import async_playwright
     return async_playwright
 
-def _network_filter(route):
+async def _network_filter(route):
     request = route.request
     if request.method != "GET" or not allowed_public_url(request.url):
-        return route.abort()
-    return route.continue_()
+        await route.abort()
+    else:
+        await route.continue_()
 
 async def inspect_public(url):
     if not allowed_public_url(url):
