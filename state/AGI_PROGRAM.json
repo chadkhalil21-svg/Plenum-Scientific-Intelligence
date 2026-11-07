@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T19:50:55.088Z",
+  "last_reviewed_utc": "2026-11-07T20:07:51.349Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -470,12 +470,26 @@
       "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42408019998",
       "AGI_demonstrated": false,
       "notes": "PR #59 merged 81029c5b0c56a77a42b00dc4b566f43da7a096cb. Official Kaggle/kaggle-cli source pinned SHA fdc788faffe3f29ae317480325c44080a00a5434 (released v2.2.4 lacks --no-run), actual CLI and --no-run checked in isolated CI #42408019998; full foundation CI #42408020014 passed. Six isolated owner-bridge tests passed. Manual GitHub workflow offers authenticated verify/list/read/status and private fixed-slug write-draft with --no-run and no model approval. No Kaggle token connected, live account action performed, private source accessed, GPU inference or paid service activated. Founder screenshots: two T4s ~15GiB each, available RAM 30.1 GiB, reported /tmp free 966.9 GiB; do not infer durable quota."
+    },
+    {
+      "id": "kaggle-owner-authenticated-verify-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42408852329",
+      "AGI_demonstrated": false,
+      "notes": "Founder generated Kaggle API token and added it as GitHub kaggle-access environment secret. Manual GitHub workflow #42408852329 operation=verify completed success; authenticated official Kaggle CLI confirmed notebook listing succeeded. This verifies account API connectivity, NOT Kaggle notebook content read/write, 27B model inference or direct website session. Founder screenshot of environment showed required reviewers unchecked, admins may bypass, and deployment branch restrictions absent; rotate token if partially shown in screenshot and restrict environment before enabling broader actions."
+    },
+    {
+      "id": "playwright-isolated-browser-real-tests-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42409395480",
+      "AGI_demonstrated": false,
+      "notes": "PR #60 merged SHA 852acbe4016478510e325356912e26625ba66b5b; official Microsoft Playwright Python v1.64.1 + Chromium in isolated CPU GitHub Actions. Verified actual live public allowed HTTPS https://example.com status 200; verified real Chromium typed 'Tested source', clicked a LOCAL fixture button and observed 'Local preview: Tested source' without remote network requests. Public browser only allows exact curated hosts/read-only GET and enforces no login/download/persistent credentials. Separate core suite and all related CI passed. No remote-site clicks or posts, login/session, model-planned web control, or continuous autonomous web browsing demonstrated."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "To authorize Kaggle, founder should create a Kaggle API token and privately add it as GitHub `kaggle-access` environment secret `KAGGLE_API_TOKEN`; never paste token in chat. Then run manual GitHub workflow `Prometheus Kaggle Owner-Approved Notebook Access`, operation `verify`. PR #59 code and offline CLI tests passed, but Kaggle has NOT been authenticated or read/written by ChatGPT. Current hardware: two T4 GPUs, 30.1GiB RAM, /tmp reports 966.9GiB free. Next run the verified notebook with explicit human model approval to measure actual Qwen3.6-27B inference."
+      "action": "Kaggle account connection VERIFIED: GitHub manual workflow #42408852329 successfully authenticated official Kaggle CLI and listed private notebook metadata without disclosure. Founder provided 2x T4, 30.1 GiB RAM and /tmp 966.9 GiB reported free. NEXT owner restricts kaggle-access environment with required reviewers, main branch only, no admin bypass, and rotates exposed API token if necessary. Then manually run Kaggle write-draft for private plenum-prometheus-qwen-trial (never auto-run); explicitly opt in to 27B Q4 inference inside notebook. Actual model inference still NOT run."
     },
     {
       "priority": 2,
@@ -491,7 +505,7 @@
     },
     {
       "priority": 5,
-      "action": "Take the existing verified real PySCF H2 SCF reference (PR #55), OpenMM, PyBaMM, LangGraph and federated APIs and demonstrate one source-linked scientific question -> licensed methods/data -> authentic computational solver -> independent reference/empirical result. A daily Lab Radar now archives first-seen public metadata (PR #54); require scholarly-method review before labeling breakthroughs or automating downstream experiments."
+      "action": "Integrate existing authentic scientific engines (PySCF, OpenMM, PyBaMM, Lean, LangGraph) into evidence-linked hypothesis-to-verification cycles, and use the new verified isolated public-browser worker only where official research APIs are insufficient. Browser PR #60 passed real local click/type and external HTTPS read-only on CI #42409395480, but has NO LLM control, authenticated sessions or remote-site changes. Add one reviewed Playwright MCP-compatible orchestrator and policy after real model inference, not many overlapping browser agents."
     },
     {
       "priority": 6,
@@ -750,6 +764,26 @@
     {
       "decision": "Treat Hugging Face ZeroGPU as an on-demand short demo option, not permanent compute.",
       "reason": "Current free-user ZeroGPU shared GPU quota is 5 minutes daily, despite larger 48/96GB GPU configurations. Production AGI requires separate durable compute and memory."
+    },
+    {
+      "decision": "Recognize Kaggle as authenticated through the owner's protected GitHub environment secret, not as directly connected to ChatGPT's Kaggle browser.",
+      "reason": "Official GitHub workflow #42408852329 successfully used Kaggle CLI verify. Actual source read/write and model runs require separately authorized operations; no credentials must be disclosed in chat or public logs."
+    },
+    {
+      "decision": "Reuse Microsoft's official Playwright browser engine for a controlled first-phase Prometheus web capability.",
+      "reason": "Official PyPI package 1.64.1 and Chromium did live public read-only and local click/type proof on CI #42409395480; plugin or agent-driven browser execution and authenticated sessions are still separate milestones."
+    },
+    {
+      "decision": "Protect Kaggle and other external-account environments with environment reviewers and branch restrictions, and rotate if token was exposed.",
+      "reason": "Founder screenshot showed no required reviewers, administrator bypass enabled and deployment branches unrestricted. Public GitHub workflow code can be modified via merges, therefore secrets need strict owner approval and narrow workflows."
+    },
+    {
+      "decision": "Prefer public data APIs over web automation when official research services expose the information directly.",
+      "reason": "Existing arXiv, OpenAlex, Europe PMC, CAS, NOAA, NASA etc. adapters provide source-linked records. Browser automation should fill website-only gaps, with explicit domain and action permissions, not duplicate bulk scholarly ingestion."
+    },
+    {
+      "decision": "Use one reviewed browser agent controller and require human confirmation for consequential website actions.",
+      "reason": "Playwright Python worker is available; later Playwright MCP with existing LangGraph and a verified running model can plan/inspect. Never blindly let text on external sites trigger actions or grant financial, posting, private data and account mutation permissions."
     }
   ],
   "operating_rules": [
