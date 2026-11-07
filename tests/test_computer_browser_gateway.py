@@ -3,17 +3,25 @@ import asyncio
 import os
 import unittest
 from unittest.mock import patch
-from fastapi.testclient import TestClient
-from services.computer_browser.api import app
+import importlib.util
 from services.computer_browser.engine import (
     _origin_syntax, allowed_origins, safe_url, public_dns_only, local_interaction_smoke,
 )
 
+HAS_WEB = (importlib.util.find_spec("fastapi") is not None and
+           importlib.util.find_spec("httpx") is not None)
+HAS_BROWSER = importlib.util.find_spec("playwright") is not None
+if HAS_WEB:
+    from fastapi.testclient import TestClient
+    from services.computer_browser.api import app
+    client=TestClient(app)
+else:
+    client=None
 TOKEN="a" * 48
-client=TestClient(app)
 HEADERS={"Authorization":"Bearer " + TOKEN}
 
 class BrowserGatewayTests(unittest.TestCase):
+    @unittest.skipUnless(HAS_WEB, 'Optional gateway test dependencies installed in dedicated CI')
     def test_no_token_never_authorizes_account_actions(self):
         with patch.dict(os.environ,{"COMPUTER_BROWSER_TOKEN":TOKEN,"BROWSER_ALLOWED_ORIGINS":"https://example.com"}):
             self.assertEqual(client.post("/v1/read",json={"url":"https://example.com/"}).status_code,401)
@@ -22,6 +30,7 @@ class BrowserGatewayTests(unittest.TestCase):
             self.assertEqual(client.post("/v1/read",json={"url":"https://example.com/","extra":"x"},
                                          headers=HEADERS).status_code,422)
 
+    @unittest.skipUnless(HAS_WEB, 'Optional gateway test dependencies installed in dedicated CI')
     def test_missing_server_secret_is_never_open_by_default(self):
         with patch.dict(os.environ,{"COMPUTER_BROWSER_TOKEN":""}):
             r=client.post("/v1/read",json={"url":"https://example.com/"},headers=HEADERS)
@@ -50,6 +59,7 @@ class BrowserGatewayTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 allowed_origins()
 
+    @unittest.skipUnless(HAS_WEB, 'Optional gateway test dependencies installed in dedicated CI')
     def test_planner_stages_click_fill_login_without_running_them(self):
         with patch.dict(os.environ,{"COMPUTER_BROWSER_TOKEN":TOKEN,"BROWSER_ALLOWED_ORIGINS":"https://example.com"}):
             r=client.post("/v1/plan",headers=HEADERS,json={
@@ -64,6 +74,7 @@ class BrowserGatewayTests(unittest.TestCase):
             self.assertEqual(client.post("/v1/plan",headers=HEADERS,
                 json={"url":"https://example.com/","actions":[{"action":"read"}]}).json()["allowed_to_run_now"],True)
 
+    @unittest.skipUnless(HAS_WEB, 'Optional gateway test dependencies installed in dedicated CI')
     def test_health_does_not_expose_secret(self):
         with patch.dict(os.environ,{"COMPUTER_BROWSER_TOKEN":TOKEN}):
             r=client.get("/healthz")
@@ -71,6 +82,7 @@ class BrowserGatewayTests(unittest.TestCase):
             self.assertFalse(r.json()["remote_mutations_enabled"])
             self.assertNotIn(TOKEN,r.text)
 
+    @unittest.skipUnless(HAS_BROWSER, 'Official Playwright runs in dedicated CI')
     def test_real_local_chromium_interaction(self):
         result=asyncio.run(local_interaction_smoke())
         self.assertTrue(result["actual_chromium_input_and_click_verified"])
