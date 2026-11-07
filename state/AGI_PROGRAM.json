@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T03:40:25Z",
+  "last_reviewed_utc": "2026-11-07T04:03:34Z",
   "mission": "Develop increasingly capable, independently evaluated general-purpose scientific intelligence across mathematics, science, engineering, and software, maintaining durable verified evidence and founder-approved actions.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -89,12 +89,19 @@
       "metric": "normalized exact correct, baseline condition on same six seeded textbook tasks",
       "AGI_demonstrated": false,
       "notes": "Qwen3-4B-Instruct-2507 quantized GGUF: 2/6 baseline and 2/6 verification; 33.7685 baseline inference seconds. Zero program-synthesis successes. Relative gain over 1.7B is only one task on tiny test; not proof of generalization. BF16 versus Q4 is confounded."
+    },
+    {
+      "id": "inspect-upstream-integration-20261107",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42336662799",
+      "AGI_demonstrated": false,
+      "notes": "Pinned UK AISI Inspect AI 0.3.287 Task/Sample/Solver/built-in scorer integration passed real CI with one correct and one incorrect frozen public replay, zero LLM calls. PR #20 merged. This is software integration, NOT an AI ability gain."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Compare stronger model reasoning on independent unfamiliar multi-domain held-out tasks and external standard benchmarks, with meaningful sample sizes, fixed costs, and precommitted pass criteria; six seeded textbook tasks are insufficient."
+      "action": "Reuse the now-verified optional Inspect AI evaluator and existing EleutherAI harness for preregistered unfamiliar multi-domain reasoning, programming and agent-tool tests with strong baselines and explicit compute budgets. No claim from six seeded textbook tasks."
     },
     {
       "priority": 2,
@@ -137,6 +144,10 @@
     {
       "decision": "Do not promote the Qwen3-4B model on the initial six-question comparison.",
       "reason": "Independent audit recorded 2/6 versus Qwen3-1.7B at 1/6, no gain from verification prompting, no program-synthesis successes and ~1.8x baseline model seconds. Larger unseen tests are required."
+    },
+    {
+      "decision": "Use upstream Inspect AI rather than build another general-purpose evaluation framework.",
+      "reason": "Pinned open-source v0.3.287 framework executed and independently scored a positive and negative public replay in CI run 42336662799, without model/API inference. Full multi-domain capability verification remains necessary."
     }
   ],
   "operating_rules": [
