@@ -1,0 +1,163 @@
+name: Qwen3-1.7B | Same 12 GSM8K Questions, 128 vs 256 Tokens
+on:
+  pull_request:
+    paths:
+      - 'src/plenum_ai/qwen17_math_budget.py'
+      - 'src/plenum_ai/gsm8k_token_budget.py'
+      - 'tests/test_qwen17_math_budget.py'
+      - '.github/workflows/qwen17-math-budget.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/plenum_ai/qwen17_math_budget.py'
+      - 'src/plenum_ai/gsm8k_token_budget.py'
+      - 'tests/test_qwen17_math_budget.py'
+      - '.github/workflows/qwen17-math-budget.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: qwen17-math-budget-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  preflight-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Verify precise source and same-model controls without downloading model
+        run: |
+          python -m pip install -e .
+          python -m unittest discover -s tests -p 'test_qwen17_math_budget.py' -v
+          python -m unittest discover -s tests -p 'test_gsm8k_token_budget.py' -v
+          python -m plenum_ai.qwen17_math_budget --out reports/qwen17-math-plan.json
+  bounded-original-inference:
+    needs: preflight-only
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release Qwen3-1.7B GSM8K 256-token ablation'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+      OPENAI_API_KEY: ''
+      ANTHROPIC_API_KEY: ''
+      GOOGLE_API_KEY: ''
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - name: Require independently archived original 1.7B raw results BEFORE downloading any model
+        run: |
+          python -m plenum_ai.qwen17_math_budget \
+            --check-original ledger/evidence/paired-qwen \
+            --out reports/qwen17-original-archive-checked.json
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Reuse exactly the original independent Inspect evaluator with local CPU libraries
+        run: |
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[inspection]'
+          python -m pip install "inspect-evals==0.27.0" "transformers==5.22.1" "accelerate>=1.1,<2" "huggingface_hub>=1.2,<2" safetensors
+          python -m pip check
+      - name: Verify same pinned Qwen3-1.7B pretrained public model revision
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from huggingface_hub import HfApi, snapshot_download
+          from plenum_ai.qwen17_math_budget import plan
+          p=plan()
+          found=HfApi().model_info(p["model"],revision=p["model_revision"])
+          assert found.sha==p["model_revision"]
+          model=snapshot_download(repo_id=p["model"],revision=p["model_revision"])
+          Path("reports").mkdir(exist_ok=True)
+          Path("reports/model-path.txt").write_text(str(model))
+          print("Original public Qwen3-1.7B checkpoint fingerprint verified")
+          PY
+      - name: Run same twelve official GSM8K questions with only output cap changed to 256
+        run: |
+          MODEL_PATH="$(cat reports/model-path.txt)"
+          inspect eval inspect_evals/gsm8k -T fewshot=0 --model hf/local \
+            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
+            --limit 12 --max-connections 1 --max-tokens 256 --temperature 0 \
+            --log-dir reports/inspect-qwen17-math-budget-logs --display none
+      - name: Independently compare official scores, original IDs and unchanged prompts
+        run: |
+          python -m plenum_ai.qwen17_math_budget \
+            --audit-dir reports/inspect-qwen17-math-budget-logs \
+            --source-dir ledger/evidence/paired-qwen \
+            --out reports/qwen17-gsm8k-256-scores.json
+          python - <<'PY'
+          import json
+          r=json.load(open("reports/qwen17-gsm8k-256-scores.json"))
+          assert r["question_count"]==12 and r["baseline_correct"]==1
+          assert r["baseline_at_token_cap_count"]==10
+          assert r["original_question_contracts_verified"] and r["original_log_sha256_verified"]
+          assert r["independently_scored"] and r["local_generation_calls"]==12
+          assert r["paid_api_calls"]==0 and not r["automatic_model_promotion"]
+          assert not r["AGI_demonstrated"]
+          print("Original independent Inspect GSM8K 1.7B scores: 128 tokens 1/12; 256 tokens",r["candidate_correct"],"/12")
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: qwen17-math-256-original-score-and-logs
+          path: |
+            reports/qwen17-gsm8k-256-scores.json
+            reports/inspect-qwen17-math-budget-logs/
+          retention-days: 90
+  archive-original-results:
+    needs: bounded-original-inference
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/download-artifact@v7
+        with:
+          name: qwen17-math-256-original-score-and-logs
+          path: reports
+      - name: Preserve new original result and exact raw scorer log append-only
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json,hashlib,os,zipfile
+          from pathlib import Path
+          s=json.loads(Path("reports/qwen17-gsm8k-256-scores.json").read_text())
+          assert s["independently_scored"] and s["question_count"]==12
+          assert s["original_question_contracts_verified"] and not s["AGI_demonstrated"]
+          root=Path("ledger/evidence/qwen17-math-budget")
+          root.mkdir(parents=True,exist_ok=True)
+          name="run-"+os.environ["RUN_ID"]
+          out=root/(name+".json")
+          raw=root/(name+"-raw.zip")
+          if out.exists() or raw.exists():raise FileExistsError("Historical original scores cannot be overwritten")
+          logfiles=list(Path("reports/inspect-qwen17-math-budget-logs").rglob("*.eval"))
+          if len(logfiles)!=1:raise RuntimeError("Expected exactly one original Inspect candidate log")
+          s["source_sha"]=os.environ["SOURCE_SHA"]
+          s["original_eval_sha256"]={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in logfiles}
+          with zipfile.ZipFile(raw,"x",compression=zipfile.ZIP_DEFLATED) as z:
+              for p in logfiles:z.write(p,arcname=p.name)
+          out.write_text(json.dumps(s,indent=2)+"\n",encoding="utf-8")
+          PY
+      - name: Commit only public original evidence, never model weights
+        run: |
+          git -C ledger config user.name 'Plenum Scientific Evidence'
+          git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ledger add evidence/qwen17-math-budget/
+          git -C ledger commit -m 'Archive original Qwen3-1.7B 128-vs-256 math evidence'
+          git -C ledger pull --rebase origin research-memory
+          git -C ledger push origin HEAD:research-memory
