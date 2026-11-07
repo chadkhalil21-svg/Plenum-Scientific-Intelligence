@@ -19,7 +19,7 @@ Supported operations:
 
 No delete operation, arbitrary source editor, GPU launch, private-to-public
 export or self-modification operation is implemented. These would require
-separate authorization and review. **Verified status (Nov 7, 2026):** the founder configured the `kaggle-access` environment secret and manually ran GitHub Actions [42408852329](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42408852329). The official Kaggle CLI authenticated and listed owner notebook metadata successfully. This proves Kaggle API authorization for this workflow, **not** a Kaggle notebook write, model inference, or this chat's direct control of Kaggle's website.
+separate authorization and review. **Verified status (Nov 7, 2026):** the founder configured the `kaggle-access` environment secret and manually ran GitHub Actions [42408852329](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42408852329). The official Kaggle CLI authenticated and listed owner notebook metadata successfully. This initially proved only Kaggle API authorization. **Further verified progress:** on Nov 7 the owner ran [workflow #42413145594](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42413145594) with operation `write-draft`, and the logs explicitly confirm `Private Prometheus notebook draft saved on Kaggle, without running any cells`. The live model has not yet been executed, and this chat still does not directly control the Kaggle web interface.
 
 ## To enable the connection securely
 
@@ -68,3 +68,10 @@ account connection was activated by merging this documentation.
 ## Security follow-up from owner screenshots
 
 The founder's GitHub environment screenshot showed no required reviewer, admin bypass selected, and deployment-branch restriction set to no restriction. Before further notebook write or login automation, restrict the `kaggle-access` environment to the reviewed `main` branch, add a required human reviewer when supported, and disable administrator bypass. The API token screenshot appeared partly obscured, so rotating the token and replacing the environment secret is prudent. No API key value belongs in public repository files, build logs or chat.
+
+## Current operational state (Nov 7, 2026)
+
+- Authenticated Kaggle notebook **listing** succeeded in GitHub Action #42408852329.
+- Private Kaggle notebook **upload without execution** succeeded in Action #42413145594. This is not merely a green check; the saved-draft message was independently read from the job logs.
+- On the Kaggle notebook webpage, the owner still needs to start a free GPU session and explicitly approve the `APPROVE_FREE_GPU_RUN=True` cell. The real Qwen 27B model inference and result file do not yet have evidence.
+- There is no need to pay TinyFish to operate this public GitHub/Kaggle API workflow. Prefer official Kaggle CLI and existing GitHub Actions.
