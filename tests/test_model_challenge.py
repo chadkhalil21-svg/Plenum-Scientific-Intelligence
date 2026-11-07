@@ -45,7 +45,7 @@ class ModelChallengeTests(unittest.TestCase):
         self.assertFalse(p["auto_model_promotion"])
 
     def test_positive_and_negative_comparison_kept(self):
-        a = propose(MODELS[0], "A")
+        a = propose(MODELS[0], "C")
         b = propose(MODELS[1], "B")
         audit = audit_comparison(a, b, solver=solver)
         self.assertEqual(audit["baseline"]["correct"], 0)
