@@ -1,0 +1,170 @@
+name: Inspect | Original HumanEval Code Functionality
+on:
+  pull_request:
+    paths:
+      - 'src/plenum_ai/inspect_original_coding.py'
+      - 'tests/test_inspect_original_coding.py'
+      - '.github/workflows/inspect-original-coding.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/plenum_ai/inspect_original_coding.py'
+      - 'tests/test_inspect_original_coding.py'
+      - '.github/workflows/inspect-original-coding.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: human-eval-public-coding-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  zero-inference-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Check original source, frozen plan and zero model calls
+        run: |
+          python -m pip install -e .
+          python -m unittest discover -s tests -p 'test_inspect_original_coding.py' -v
+          python -m plenum_ai.inspect_original_coding --out reports/coding-preflight.json
+  real-sandboxed-code:
+    needs: zero-inference-preflight
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release original Inspect coding proof'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 32
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+      OPENAI_API_KEY: ''
+      ANTHROPIC_API_KEY: ''
+      GOOGLE_API_KEY: ''
+      HF_TOKEN: ''
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Require original isolated Docker host before any model download
+        run: |
+          docker info >/dev/null
+          docker compose version
+          echo 'Original Inspect Docker defaults to network disabled, with no production source mounts.'
+      - name: Install reviewed independent Inspect Evals and local CPU model libraries
+        run: |
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[inspection]'
+          python -m pip install "inspect-evals==0.27.0" "transformers==5.22.1" "accelerate>=1.1,<2" "huggingface_hub>=1.2,<2" safetensors
+          python -m pip check
+      - name: Confirm actual original HumanEval dataset and scorer rather than writing our own
+        run: |
+          python - <<'PY'
+          from importlib import import_module
+          import importlib.metadata
+          from plenum_ai.inspect_original_coding import plan,DATASET,DATASET_REV
+          p=plan()
+          upstream=import_module("inspect_evals.humaneval.humaneval")
+          assert importlib.metadata.version("inspect-evals")==p["inspect_evals_version"]
+          assert upstream.DATASET_PATH==DATASET
+          assert upstream.HUMANEVAL_DATASET_REVISION==DATASET_REV
+          assert upstream.VERIFY_TIMEOUT<=30
+          print("Frozen original public source and independent functional grader confirmed")
+          PY
+      - name: Download only previously reviewed immutable public Qwen3-1.7B
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from huggingface_hub import HfApi,snapshot_download
+          from plenum_ai.inspect_original_coding import plan
+          p=plan()
+          info=HfApi().model_info(p["candidate_model"],revision=p["candidate_revision"])
+          assert info.sha==p["candidate_revision"]
+          Path("reports").mkdir(exist_ok=True)
+          Path("reports/model-path.txt").write_text(snapshot_download(repo_id=p["candidate_model"],revision=p["candidate_revision"]))
+          print("Frozen CPU pretrained model source confirmed")
+          PY
+      - name: Original official HumanEval 3-code-problem execution in isolated Docker sandbox
+        run: |
+          MODEL_PATH="$(cat reports/model-path.txt)"
+          inspect eval inspect_evals/humaneval --model hf/local \
+            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
+            --limit 3 --epochs 1 --max-samples 1 --max-sandboxes 1 \
+            --max-connections 1 --max-subprocesses 1 --max-tokens 256 --temperature 0 \
+            --time-limit 240 --max-retries 0 \
+            --log-dir reports/inspect-original-coding-logs --display none
+      - name: Read original independent HumanEval scorer, successful and failed answers
+        run: |
+          python -m plenum_ai.inspect_original_coding \
+            --audit-dir reports/inspect-original-coding-logs \
+            --out reports/real-original-coding-scored.json
+          python - <<'PY'
+          import json
+          d=json.load(open("reports/real-original-coding-scored.json"))
+          assert d["original_scoring_verified"] and d["attempted"]==3
+          assert d["model_generated_code_executed"] and d["independent_function_tests_executed"]
+          assert d["local_generation_requests"]==3 and d["paid_api_calls"]==0
+          assert not d["automatic_model_promotion"] and not d["AGI_demonstrated"]
+          print("Original code tasks passed:",d["correct"],"/3. Failed:",d["failures"])
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: original-sandbox-human-eval-evidence
+          path: |
+            reports/real-original-coding-scored.json
+            reports/inspect-original-coding-logs/
+          retention-days: 90
+  preserve-original-evidence:
+    needs: real-sandboxed-code
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+      - uses: actions/download-artifact@v7
+        with:
+          name: original-sandbox-human-eval-evidence
+          path: reports
+      - name: Archive exactly one original official scorer log and all wrong answers
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,zipfile
+          from pathlib import Path
+          d=json.loads(Path("reports/real-original-coding-scored.json").read_text())
+          assert d["original_scoring_verified"] and d["attempted"]==3
+          assert not d["AGI_demonstrated"] and not d["automatic_model_promotion"]
+          root=Path("ledger/evidence/inspect-original-coding")
+          root.mkdir(parents=True,exist_ok=True)
+          name="run-"+os.environ["RUN_ID"]
+          out=root/(name+".json")
+          raw=root/(name+"-raw.zip")
+          if out.exists() or raw.exists():raise FileExistsError("No rewriting original evidence")
+          originals=list(Path("reports/inspect-original-coding-logs").rglob("*.eval"))
+          if len(originals)!=1:raise RuntimeError("Missing one original official scoring log")
+          d["source_sha"]=os.environ["SOURCE_SHA"]
+          d["original_eval_sha256"]={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in originals}
+          with zipfile.ZipFile(raw,"x",compression=zipfile.ZIP_DEFLATED) as z:
+              for p in originals:z.write(p,arcname=p.name)
+          out.write_text(json.dumps(d,indent=2)+"\n",encoding="utf-8")
+          print("Public original coding evidence archived append-only")
+          PY
+      - name: Commit original evidence, never generated code to live repository
+        run: |
+          git -C ledger config user.name 'Plenum Scientific Evidence'
+          git -C ledger config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C ledger add evidence/inspect-original-coding/
+          git -C ledger commit -m 'Preserve original independently graded coding-evaluation evidence'
+          git -C ledger pull --rebase origin research-memory
+          git -C ledger push origin HEAD:research-memory
