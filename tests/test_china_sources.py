@@ -4,7 +4,7 @@ from urllib.parse import parse_qs,urlsplit
 from plenum_ai.world_horizon import request_url,parse_public
 from plenum_ai.china_sources import cas_research_articles,china_affiliated_works
 
-CAS=b'''<a href="../research-news/202611/t20261106_1213515.shtml">Nov 06, 2026
+CAS=b'''<a href="/newsroom/research-news/202611/t20261106_1213515.shtml">Nov 06, 2026
  New study in moire superlattices</a><a href="https://evil.example/x">Do not collect me</a>'''
 OPEN=json.dumps({"results":[
  {"id":"https://openalex.org/W42","title":"China-affiliated photonics result",
