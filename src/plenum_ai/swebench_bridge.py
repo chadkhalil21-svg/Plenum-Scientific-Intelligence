@@ -74,8 +74,10 @@ def host_resources():
     }
 
 
-def validate_candidate(path=PREDICTIONS):
+def validate_candidate(path=None):
     """Check metadata/size only. Do not execute, import, or grade a candidate."""
+    if path is None:
+        path = PREDICTIONS
     expected = PREDICTIONS.resolve()
     file = Path(path)
     if file.resolve() != expected or file.is_symlink() or not file.is_file():
@@ -121,7 +123,7 @@ def execute(record, *, approved=False, installed_version=None, resources=None,
         validate_candidate()
     # Do not pass credentials to third-party evaluation process.
     safe_env = {k: v for k, v in os.environ.items()
-                if not re.search(r"(TOKEN|SECRET|PASSWORD|API_KEY|CREDENTIAL)", k, re.I)}
+                if k in ("PATH", "LANG", "LC_ALL", "TMPDIR")}
     docker_runner(["docker", "info"], check=True, timeout=20,
                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=safe_env)
     process = runner(expected["command_argv"], check=True,
