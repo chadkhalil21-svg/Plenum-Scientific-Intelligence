@@ -1,0 +1,358 @@
+{
+  "source_revision": "7cffe59439ffb483bf22e470c9ed733f7a046f24",
+  "manifest": {
+    "schema": "plenum-agi-capability-laboratory-v1",
+    "generator_version": 1,
+    "seed": 42331449321,
+    "tasks": [
+      {
+        "id": "math-modular",
+        "family": "mathematics",
+        "prompt": "Compute the exact nonnegative remainder of ((13*11+38)^2+21) upon division by 59. Use ^ for exponentiation.\nReturn ONLY one JSON object with one numeric field named \"answer\". No markdown or explanation. Never guess an observation.",
+        "response_type": "numeric_json_answer"
+      },
+      {
+        "id": "math-linear",
+        "family": "mathematics",
+        "prompt": "Solve for x: 3*x + (17) = 44. What is x?\nReturn ONLY one JSON object with one numeric field named \"answer\". No markdown or explanation. Never guess an observation.",
+        "response_type": "numeric_json_answer"
+      },
+      {
+        "id": "science-mechanics",
+        "family": "scientific_quantitative_reasoning",
+        "prompt": "A 800-kg vehicle travels at 17 m/s and stops over 53 meters under constant braking. Neglect losses. What is the magnitude of the average braking force, in newtons? Use work-energy conservation. Return the answer to at least three significant figures.\nReturn ONLY one JSON object with one numeric field named \"answer\". No markdown or explanation. Never guess an observation.",
+        "response_type": "numeric_json_answer"
+      },
+      {
+        "id": "science-chemistry",
+        "family": "scientific_quantitative_reasoning",
+        "prompt": "A stock solution has concentration 6 mol/L. You want 96 mL at 0.75 mol/L. Assume ideal volumetric dilution and C1*V1=C2*V2. What volume of the stock solution in mL is required?\nReturn ONLY one JSON object with one numeric field named \"answer\". No markdown or explanation. Never guess an observation.",
+        "response_type": "numeric_json_answer"
+      },
+      {
+        "id": "program-affine",
+        "family": "restricted_program_synthesis",
+        "prompt": "Synthesize integer function f(x)=2*x+(-15).\nReturn ONLY one JSON object with the single key \"ops\", containing an array of one to six instructions. Each instruction uses an \"op\" field. Allowed: \"add\" or \"mul\" with signed integer \"value\" between -99 and 99; or \"square\" with no other fields. Apply instructions sequentially, starting with the input integer x. Do not copy outputs for only the examples: implement the mathematical function for all integer inputs. Do not generate Python, markdown, prose or shell commands.\nPublic input/output examples: [{\"f_x\": -19, \"x\": -2}, {\"f_x\": -13, \"x\": 1}, {\"f_x\": -7, \"x\": 4}]",
+        "response_type": "arithmetic_json_program"
+      },
+      {
+        "id": "program-square",
+        "family": "restricted_program_synthesis",
+        "prompt": "Synthesize integer function f(x)=(x+(1))^2+(15).\nReturn ONLY one JSON object with the single key \"ops\", containing an array of one to six instructions. Each instruction uses an \"op\" field. Allowed: \"add\" or \"mul\" with signed integer \"value\" between -99 and 99; or \"square\" with no other fields. Apply instructions sequentially, starting with the input integer x. Do not copy outputs for only the examples: implement the mathematical function for all integer inputs. Do not generate Python, markdown, prose or shell commands.\nPublic input/output examples: [{\"f_x\": 19, \"x\": -3}, {\"f_x\": 16, \"x\": 0}, {\"f_x\": 51, \"x\": 5}]",
+        "response_type": "arithmetic_json_program"
+      }
+    ],
+    "task_count": 6,
+    "model_answer_key_exposed": false,
+    "heldout_program_inputs_exposed": false,
+    "public_synthetic_questions_only": true,
+    "confidential_data_used": false,
+    "automatic_model_deployment": false,
+    "claim_AGI": false
+  },
+  "qwen": {
+    "schema": "plenum-agi-capability-laboratory-v1",
+    "model_id": "Qwen/Qwen3-1.7B",
+    "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+    "manifest_sha256": "a8f0b7bcbbb73fc0666dc72b76b0125f0eb04af7d0b73a4c2e70b90f19792246",
+    "tasks_attempted": 6,
+    "records": [
+      {
+        "task_id": "math-modular",
+        "response": "```json\n{\n  \"answer\": 15\n}\n```",
+        "rejected_oversized": false,
+        "response_sha256": "65f6821eb263dbcc503401547515d01bed93932618913c98569fa4338d65b4af",
+        "inference_seconds": 11.9109
+      },
+      {
+        "task_id": "math-linear",
+        "response": "```json\n{\"answer\": 11}\n```",
+        "rejected_oversized": false,
+        "response_sha256": "e52bab99870710ab19bbd7c9c06113cda1503cb7877d315f3475993b9242003e",
+        "inference_seconds": 9.4741
+      },
+      {
+        "task_id": "science-mechanics",
+        "response": "{\"answer\": 13600}",
+        "rejected_oversized": false,
+        "response_sha256": "f4a724f1768f74cd0be1cfd5735cedeb32a2a4e7b462e7b83cf58b26ebffcfe6",
+        "inference_seconds": 14.1265
+      },
+      {
+        "task_id": "science-chemistry",
+        "response": "{\"answer\": 48}",
+        "rejected_oversized": false,
+        "response_sha256": "ecafa4d891f605f557667bbdf7cef8d145e362c7d6da1fca200f47acf2b5a17a",
+        "inference_seconds": 12.9098
+      },
+      {
+        "task_id": "program-affine",
+        "response": "```json\n{\"ops\": [\"add\", -15]}\n```",
+        "rejected_oversized": false,
+        "response_sha256": "33e1bf730d5dd604b80624d4ccc87fed7301ddec48547dfb8e1273608240bfdc",
+        "inference_seconds": 25.6884
+      },
+      {
+        "task_id": "program-square",
+        "response": "```json\n{\"ops\": [\"square\", \"add\", \"add\"]}\n```",
+        "rejected_oversized": false,
+        "response_sha256": "9419d44b8d5c6a1b0979cb2a7760d5c47d5b795adc06b593c889d396366e3807",
+        "inference_seconds": 26.4986
+      }
+    ],
+    "elapsed_seconds": 100.6086,
+    "solutions_observed": false,
+    "program_holdouts_evaluated": false,
+    "model_promoted": false,
+    "AGI_demonstrated": false
+  },
+  "critic": {
+    "schema": "plenum-agi-capability-laboratory-v1",
+    "model_id": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+    "revision": "31b70e2e869a7173562077fd711b654946d38674",
+    "manifest_sha256": "a8f0b7bcbbb73fc0666dc72b76b0125f0eb04af7d0b73a4c2e70b90f19792246",
+    "tasks_attempted": 6,
+    "records": [
+      {
+        "task_id": "math-modular",
+        "response": "{\n  \"answer\": 10\n}",
+        "rejected_oversized": false,
+        "response_sha256": "48c8e1f9597f4757b41a1bb3c200ac24d052edf9c867951cd2a56ba5066860f8",
+        "inference_seconds": 2.0516
+      },
+      {
+        "task_id": "math-linear",
+        "response": "{\n  \"answer\": 10\n}",
+        "rejected_oversized": false,
+        "response_sha256": "48c8e1f9597f4757b41a1bb3c200ac24d052edf9c867951cd2a56ba5066860f8",
+        "inference_seconds": 1.8822
+      },
+      {
+        "task_id": "science-mechanics",
+        "response": "{\n  \"answer\": 1000000.0\n}",
+        "rejected_oversized": false,
+        "response_sha256": "20233346a2d508b8aa7a4eb7c8331501b77ff2c2c700c017b687cec65f739b99",
+        "inference_seconds": 3.018
+      },
+      {
+        "task_id": "science-chemistry",
+        "response": "{\n  \"answer\": 14.4\n}",
+        "rejected_oversized": false,
+        "response_sha256": "8a20fd4db732d05e7fa3b6b1a6110908b1532c53062e2775266e0a682cf5a7ed",
+        "inference_seconds": 2.4123
+      },
+      {
+        "task_id": "program-affine",
+        "response": "{\n  \"ops\": [\n    {\"op\": \"add\", \"value\": 2},\n    {\"op\": \"square\", \"value\": -15}\n  ]\n}",
+        "rejected_oversized": false,
+        "response_sha256": "e82dbcd38dfb89baff84216cad745f8df6bf4d64595a59a818793e363d2a8510",
+        "inference_seconds": 6.297
+      },
+      {
+        "task_id": "program-square",
+        "response": "{\n  \"ops\": [\n    {\"op\": \"add\", \"value\": 1},\n    {\"op\": \"square\", \"value\": 15}\n  ]\n}",
+        "rejected_oversized": false,
+        "response_sha256": "8d356379cb14ac78d1102ef51ecb7cb68438ca018c8d7600a6bbd8b2c1257768",
+        "inference_seconds": 6.365
+      }
+    ],
+    "elapsed_seconds": 22.0265,
+    "solutions_observed": false,
+    "program_holdouts_evaluated": false,
+    "model_promoted": false,
+    "AGI_demonstrated": false
+  },
+  "independent_audit": {
+    "schema": "plenum-agi-capability-independent-audit-v1",
+    "seed": 42331449321,
+    "manifest_sha256": "a8f0b7bcbbb73fc0666dc72b76b0125f0eb04af7d0b73a4c2e70b90f19792246",
+    "proposal_digests": {
+      "Qwen/Qwen3-1.7B": "8e7b7d93997003cd8a17daa74a5c64b9948278e04e0c671bc760997b29362ac1",
+      "HuggingFaceTB/SmolLM2-1.7B-Instruct": "cc1b515ff0c1127bb75eed2e8b430b05e2324620e71a2708f4b72ac1192ec137"
+    },
+    "models": {
+      "Qwen/Qwen3-1.7B": {
+        "model_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+        "correct": 0,
+        "valid_json_schema": 2,
+        "attempted": 6,
+        "domain_scores": {
+          "mathematics": {
+            "correct": 0,
+            "total": 2
+          },
+          "scientific_quantitative_reasoning": {
+            "correct": 0,
+            "total": 2
+          },
+          "restricted_program_synthesis": {
+            "correct": 0,
+            "total": 2
+          }
+        },
+        "inference_calls": 6,
+        "total_inference_seconds": 100.6086,
+        "evaluations": [
+          {
+            "task_id": "math-modular",
+            "family": "mathematics",
+            "status": "invalid_json",
+            "correct": false,
+            "hidden_program_cases_passed": 0,
+            "hidden_program_cases": 0,
+            "inference_seconds": 11.9109
+          },
+          {
+            "task_id": "math-linear",
+            "family": "mathematics",
+            "status": "invalid_json",
+            "correct": false,
+            "hidden_program_cases_passed": 0,
+            "hidden_program_cases": 0,
+            "inference_seconds": 9.4741
+          },
+          {
+            "task_id": "science-mechanics",
+            "family": "scientific_quantitative_reasoning",
+            "status": "valid",
+            "correct": false,
+            "hidden_program_cases_passed": 0,
+            "hidden_program_cases": 0,
+            "response_numeric_value": 13600.0,
+            "reference_numeric_value": 2181.132075471698,
+            "inference_seconds": 14.1265
+          },
+          {
+            "task_id": "science-chemistry",
+            "family": "scientific_quantitative_reasoning",
+            "status": "valid",
+            "correct": false,
+            "hidden_program_cases_passed": 0,
+            "hidden_program_cases": 0,
+            "response_numeric_value": 48.0,
+            "reference_numeric_value": 12,
+            "inference_seconds": 12.9098
+          },
+          {
+            "task_id": "program-affine",
+            "family": "restricted_program_synthesis",
+            "status": "invalid_json",
+            "correct": false,
+            "hidden_program_cases_passed": 0,
+            "hidden_program_cases": 0,
+            "inference_seconds": 25.6884
+          },
+          {
+            "task_id": "program-square",
+            "family": "restricted_program_synthesis",
+            "status": "invalid_json",
+            "correct": false,
+            "hidden_program_cases_passed": 0,
+            "hidden_program_cases": 0,
+            "inference_seconds": 26.4986
+          }
+        ]
+      },
+      "HuggingFaceTB/SmolLM2-1.7B-Instruct": {
+        "model_revision": "31b70e2e869a7173562077fd711b654946d38674",
+        "correct": 0,
+        "valid_json_schema": 4,
+        "attempted": 6,
+        "domain_scores": {
+          "mathematics": {
+            "correct": 0,
+            "total": 2
+          },
+          "scientific_quantitative_reasoning": {
+            "correct": 0,
+            "total": 2
+          },
+          "restricted_program_synthesis": {
+            "correct": 0,
+            "total": 2
+          }
+        },
+        "inference_calls": 6,
+        "total_inference_seconds": 22.0265,
+        "evaluations": [
+          {
+            "task_id": "math-modular",
+            "family": "mathematics",
+            "status": "valid",
+            "correct": false,
+            "hidden_program_cases_passed": 0,
+            "hidden_program_cases": 0,
+            "response_numeric_value": 10.0,
+            "reference_numeric_value": 37,
+            "inference_seconds": 2.0516
+          },
+          {
+            "task_id": "math-linear",
+            "family": "mathematics",
+            "status": "valid",
+            "correct": false,
+            "hidden_program_cases_passed": 0,
+            "hidden_program_cases": 0,
+            "response_numeric_value": 10.0,
+            "reference_numeric_value": 9,
+            "inference_seconds": 1.8822
+          },
+          {
+            "task_id": "science-mechanics",
+            "family": "scientific_quantitative_reasoning",
+            "status": "valid",
+            "correct": false,
+            "hidden_program_cases_passed": 0,
+            "hidden_program_cases": 0,
+            "response_numeric_value": 1000000.0,
+            "reference_numeric_value": 2181.132075471698,
+            "inference_seconds": 3.018
+          },
+          {
+            "task_id": "science-chemistry",
+            "family": "scientific_quantitative_reasoning",
+            "status": "valid",
+            "correct": false,
+            "hidden_program_cases_passed": 0,
+            "hidden_program_cases": 0,
+            "response_numeric_value": 14.4,
+            "reference_numeric_value": 12,
+            "inference_seconds": 2.4123
+          },
+          {
+            "task_id": "program-affine",
+            "family": "restricted_program_synthesis",
+            "status": "invalid_square_instruction",
+            "correct": false,
+            "hidden_program_cases_passed": 0,
+            "hidden_program_cases": 0,
+            "inference_seconds": 6.297
+          },
+          {
+            "task_id": "program-square",
+            "family": "restricted_program_synthesis",
+            "status": "invalid_square_instruction",
+            "correct": false,
+            "hidden_program_cases_passed": 0,
+            "hidden_program_cases": 0,
+            "inference_seconds": 6.365
+          }
+        ]
+      }
+    },
+    "tasks_per_model": 6,
+    "total_model_calls": 12,
+    "heldout_program_cases_generated_only_by_auditor": true,
+    "independent_reference_calculations": true,
+    "unrestricted_generated_code_executed": false,
+    "restricted_arithmetic_dsl_interpreted": true,
+    "cost_measured_as_runtime_not_dollars": true,
+    "auto_model_promotion": false,
+    "recursive_self_improvement_proven": false,
+    "AGI_demonstrated": false,
+    "scientific_discovery_verified": false,
+    "limitations": "Six generated textbook-style problems across three families; not open-world science, not a standard AGI examination, and not enough trials to establish general competence. Program synthesis uses a tiny bounded arithmetic DSL."
+  },
+  "verified_AGI": false,
+  "verified_scientific_invention": false
+}
