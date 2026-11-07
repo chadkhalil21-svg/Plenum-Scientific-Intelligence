@@ -109,6 +109,37 @@ class PublicStrategicContinuityTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"noninteger"):
             ledger.validate(state)
 
+    def test_paired_coding_regression_from_live_public_state(self):
+        state=fixture()
+        state["evidence"].append({
+            "id":"inspect-react-three-matched-original-coding-20261107",
+            "status":"measured_regression",
+            "url":ledger.TRUSTED+"actions/runs/42350599820",
+            "result":{
+                "attempted":3,"one_shot_correct":2,"react_correct":1,
+                "delta_correct":-1,"repairs":0,"regressions":1,
+                "actual_tool_calls":11,"actual_tool_responses":11,
+            },
+            "AGI_demonstrated":False,
+        })
+        self.assertIn("tool-using 1/3",ledger.brief(ledger.validate(state)))
+        bad=copy.deepcopy(state)
+        bad["evidence"][-1]["result"]["repairs"]=1
+        with self.assertRaisesRegex(ValueError,"regression"):
+            ledger.validate(bad)
+        bad=copy.deepcopy(state)
+        bad["evidence"][-1]["result"]["actual_tool_responses"]=12
+        with self.assertRaisesRegex(ValueError,"regression"):
+            ledger.validate(bad)
+
+    def test_larger_real_priority_text_remains_bounded(self):
+        state=fixture()
+        state["next_actions"][0]["action"]="Review provenance and host prerequisites. "+"a"*548
+        self.assertEqual(ledger.validate(state)["AGI_achieved"],False)
+        state["next_actions"][0]["action"]="a"*(ledger.MAX_ACTION_CHARS+1)
+        with self.assertRaises(ValueError):
+            ledger.validate(state)
+
     def test_ledger_capacity_scales_with_evidence_not_unbounded(self):
         state=fixture()
         for n in range(1,99):
