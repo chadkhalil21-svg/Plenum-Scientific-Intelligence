@@ -3,7 +3,7 @@
   "kind": "read_only_public_record_inventory",
   "source": "research-memory/evidence",
   "mission_reference": "research-memory/state/AGI_PROGRAM.json",
-  "record_count": 28,
+  "record_count": 39,
   "records": [
     {
       "track": "agent-experiments",
@@ -72,6 +72,12 @@
       "size_bytes": 53575
     },
     {
+      "track": "discovery",
+      "path": "evidence/discovery/2026-11-07-run-42392121263.json",
+      "sha256": "b9998d75e65596116e9587d091d810106735c849486c577a93adfc4cb0b256eb",
+      "size_bytes": 57195
+    },
+    {
       "track": "frontiers",
       "path": "evidence/frontiers/run-42170871194.json",
       "sha256": "c6b9faf684a785cf62a157a1ffd912a6312a8167d32d3fa0288542f7d5ae7422",
@@ -81,6 +87,12 @@
       "track": "frontiers",
       "path": "evidence/frontiers/run-42265129530.json",
       "sha256": "06a3cebb17fd8345e1e1904f1cf2b9d035eec3c10756e1cecaa475a86f58bd29",
+      "size_bytes": 4072
+    },
+    {
+      "track": "frontiers",
+      "path": "evidence/frontiers/run-42392956799.json",
+      "sha256": "903705112b2516f6a91736d16937ca12f76feb9cf15cb5447c1b6a6eaf89807a",
       "size_bytes": 4072
     },
     {
@@ -94,6 +106,42 @@
       "path": "evidence/inspect-cross-domain/run-42341668858.json",
       "sha256": "cbe50c20fe038f22dc1a813d35e3dd178d3ba22da83149bbc64b79466af928c0",
       "size_bytes": 4823
+    },
+    {
+      "track": "inspect-original-coding",
+      "path": "evidence/inspect-original-coding/run-42346922772.json",
+      "sha256": "b8b4008a581d2168a260f64bbc8ce9fd33bbc670512dcadf61e186949c493ff4",
+      "size_bytes": 2642
+    },
+    {
+      "track": "inspect-react-coding",
+      "path": "evidence/inspect-react-coding/run-42349665865.json",
+      "sha256": "9aa54d4eed725b103634e3403adbf6490a01b3d52e636801c3d08a71aa51bcd8",
+      "size_bytes": 1569
+    },
+    {
+      "track": "inspect-react-failed",
+      "path": "evidence/inspect-react-failed/run-42347377474.json",
+      "sha256": "754ba02e9d41d83a4aa2f21c67ab51baab919861370b303a37559fb0fffffbf2",
+      "size_bytes": 1009
+    },
+    {
+      "track": "inspect-react-failed",
+      "path": "evidence/inspect-react-failed/run-42348876440.json",
+      "sha256": "a823aeb33738d181da44307df1df398b08b42efa82699ad9819886ebda1ce4c4",
+      "size_bytes": 755
+    },
+    {
+      "track": "inspect-react-humaneval1",
+      "path": "evidence/inspect-react-humaneval1/run-42350525122.json",
+      "sha256": "51825f22d0588462998ea9cf764744e62a025e8ba7fcf87f0e1165d6716b7095",
+      "size_bytes": 1823
+    },
+    {
+      "track": "inspect-react-three",
+      "path": "evidence/inspect-react-three/run-42350599820.json",
+      "sha256": "fcbb4c49be219f896883cf6aff3a25d6e1db4f9e530734fed50826877b83148b",
+      "size_bytes": 2612
     },
     {
       "track": "inspect-real-science",
@@ -124,6 +172,18 @@
       "path": "evidence/noaa-research-agent/run-42321911614.json",
       "sha256": "5f3af0628deb5c2aaea81a3067729b84fb3d44e3ccfedfff5c2fa59139c95534",
       "size_bytes": 16322
+    },
+    {
+      "track": "paired-qwen",
+      "path": "evidence/paired-qwen/run-42342242561.json",
+      "sha256": "4317280bc1e2b5663e2e1056bbf350c8abc9053c9f16f1e6fc9ddd1013f6e9c5",
+      "size_bytes": 4343
+    },
+    {
+      "track": "qwen17-math-budget",
+      "path": "evidence/qwen17-math-budget/run-42346026034.json",
+      "sha256": "31f1352d7ed2d07b49a9b8521f05e9055e1b909f4f74498142c78bf85ee96431",
+      "size_bytes": 2037
     },
     {
       "track": "reasoning-ablation",
@@ -172,6 +232,12 @@
       "path": "evidence/world-horizon/2026-11-06-run-42281464473.json",
       "sha256": "6a9454dcea815ff6297c11c0412b8f8b228f0e99e37987d718e2c700c3490ca1",
       "size_bytes": 103079
+    },
+    {
+      "track": "world-horizon",
+      "path": "evidence/world-horizon/2026-11-07-run-42398262189.json",
+      "sha256": "6999cdc011d9bfefd6ab8f8c82ce0162e3b0e0546a332334afe653261d626b38",
+      "size_bytes": 97577
     }
   ],
   "groups": [
@@ -200,22 +266,24 @@
     },
     {
       "track": "discovery",
-      "records": 6,
+      "records": 7,
       "paths": [
         "evidence/discovery/2026-11-06-run-42168813339.json",
         "evidence/discovery/2026-11-06-run-42169260144.json",
         "evidence/discovery/2026-11-06-run-42169426817.json",
         "evidence/discovery/2026-11-06-run-42169739986.json",
         "evidence/discovery/2026-11-06-run-42170083885.json",
-        "evidence/discovery/2026-11-06-run-42263598305.json"
+        "evidence/discovery/2026-11-06-run-42263598305.json",
+        "evidence/discovery/2026-11-07-run-42392121263.json"
       ]
     },
     {
       "track": "frontiers",
-      "records": 2,
+      "records": 3,
       "paths": [
         "evidence/frontiers/run-42170871194.json",
-        "evidence/frontiers/run-42265129530.json"
+        "evidence/frontiers/run-42265129530.json",
+        "evidence/frontiers/run-42392956799.json"
       ]
     },
     {
@@ -230,6 +298,42 @@
       "records": 1,
       "paths": [
         "evidence/inspect-cross-domain/run-42341668858.json"
+      ]
+    },
+    {
+      "track": "inspect-original-coding",
+      "records": 1,
+      "paths": [
+        "evidence/inspect-original-coding/run-42346922772.json"
+      ]
+    },
+    {
+      "track": "inspect-react-coding",
+      "records": 1,
+      "paths": [
+        "evidence/inspect-react-coding/run-42349665865.json"
+      ]
+    },
+    {
+      "track": "inspect-react-failed",
+      "records": 2,
+      "paths": [
+        "evidence/inspect-react-failed/run-42347377474.json",
+        "evidence/inspect-react-failed/run-42348876440.json"
+      ]
+    },
+    {
+      "track": "inspect-react-humaneval1",
+      "records": 1,
+      "paths": [
+        "evidence/inspect-react-humaneval1/run-42350525122.json"
+      ]
+    },
+    {
+      "track": "inspect-react-three",
+      "records": 1,
+      "paths": [
+        "evidence/inspect-react-three/run-42350599820.json"
       ]
     },
     {
@@ -259,6 +363,20 @@
       "records": 1,
       "paths": [
         "evidence/noaa-research-agent/run-42321911614.json"
+      ]
+    },
+    {
+      "track": "paired-qwen",
+      "records": 1,
+      "paths": [
+        "evidence/paired-qwen/run-42342242561.json"
+      ]
+    },
+    {
+      "track": "qwen17-math-budget",
+      "records": 1,
+      "paths": [
+        "evidence/qwen17-math-budget/run-42346026034.json"
       ]
     },
     {
@@ -292,17 +410,18 @@
     },
     {
       "track": "world-horizon",
-      "records": 3,
+      "records": 4,
       "paths": [
         "evidence/world-horizon/2026-11-06-run-42173285138.json",
         "evidence/world-horizon/2026-11-06-run-42174424616.json",
-        "evidence/world-horizon/2026-11-06-run-42281464473.json"
+        "evidence/world-horizon/2026-11-06-run-42281464473.json",
+        "evidence/world-horizon/2026-11-07-run-42398262189.json"
       ]
     }
   ],
   "unindexed_records": [],
   "inventory_complete": true,
-  "digest_sha256": "8101e61737d338dd54c0243e246e76d0ee06c66b431a8b57976c70733d1515a2",
+  "digest_sha256": "23e54f2bb43ec058aa78d78bd7a91f39fe264c503ded1a46282b7c2794260f3e",
   "scientific_claims_verified_by_index": false,
   "AGI_demonstrated": false,
   "automatic_model_promotion": false,
