@@ -121,3 +121,19 @@ Render free apps spin down and lose local state; Cloudflare Browser Run
 free offers just ten browser minutes daily. Cloud Run is the more flexible
 existing-Google-cloud path for bounded on-demand tasks, provided billing
 and correct auth are configured. It is not indefinitely free.
+
+## Encrypted session preservation proof
+
+The separate `services/computer_browser/session_crypto.py` component now
+uses official Python `cryptography==50.0.2` Fernet envelopes around
+Playwright's `storage_state`, with owner and site-origin binding and
+expiry. Real isolated Chromium must create a **synthetic test cookie**,
+encrypt its state, restore it into a new browser context, and verify the
+cookie survives. No real person signs in during this test.
+
+**This is not persistent private account access.** The encryption key in
+the offline test is ephemeral; production will need a KMS/Secret Manager
+protected key, a private Cloud Storage vault with versioning and TTL,
+human-operated sign-in UI, approved OAuth integration and ownership checks.
+Never return storage-state ciphertext, private cookies or passkeys to
+ChatGPT, model tools, public GitHub, browser logs or screenshots.
