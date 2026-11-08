@@ -427,3 +427,8 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [x] [PR #201](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/201) fixed a false-positive IAM success condition and two browser CI baseline errors; all five associated workflow runs passed before merge. This validates code/tests only.
 - [x] [Private gateway PR #16](https://github.com/chadkhalil21-svg/Sovereign-Gateway/pull/16) merged source-level instructions to read/update the shared canonical ledger for future changes. Superseded [PR #197](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/197) closed after incorporating its test isolation fix.
 - [ ] Confirm P1 exact Google IAM verifier access and real OAuth owner binding before touching production facade or live account actions. See [current browser progress ledger](COMPUTER_BROWSER_PROGRESS.md). Work/TinyFish equivalent private account automation remains unverified.
+
+## 2026-11-08: bounded owner approval for future browser writes, source-only
+- [x] Added `services/computer_browser/owner_approval.py`: signer and verifier for explicit exact-plan, owner-bound, origin-bound, expiring HMAC grants with one-time nonce claim via injectable atomic store; a GCS create-only marker adapter is supplied but **not live provisioned**.
+- [x] Added offline regression checks for tampering, replay, wrong owner, changed action, invalid target, TTL and missing store. PR CI is required before merging.
+- [ ] Owner UI consent, production durable nonce storage, real private session dispatch and actual authorized website writes remain unverified. Do not call this Work/TinyFish parity. See [Computer Browser progress](COMPUTER_BROWSER_PROGRESS.md).
