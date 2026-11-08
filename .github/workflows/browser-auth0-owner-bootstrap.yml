@@ -81,7 +81,7 @@ jobs:
             --cpu=2 --memory=2Gi --concurrency=1 --min-instances=0 --max-instances=1 \
             --timeout=900 \
             --set-secrets COMPUTER_BROWSER_TOKEN=computer-browser-token:latest \
-            --set-env-vars "^|^COMPUTER_OWNER_EMAIL=$OWNER_EMAIL|BROWSER_ALLOWED_ORIGINS=https://example.com,https://the-internet.herokuapp.com|AUTH0_OWNER_CLIENT_ID=" \
+            --set-env-vars "^|^COMPUTER_OWNER_EMAIL=$OWNER_EMAIL|BROWSER_ALLOWED_ORIGINS=https://example.com,https://the-internet.herokuapp.com" \
             --quiet >/dev/null
           URL="$(gcloud run services describe plenum-browser-owner-auth0 --project="$PROJECT" --region=us-east1 --format='value(status.url)')"
           case "$URL" in
