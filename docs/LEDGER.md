@@ -421,3 +421,9 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [x] Founder-facing progress and precise P1-P8 gates recorded in [Computer Browser progress ledger](COMPUTER_BROWSER_PROGRESS.md); the MCP identity workflow was fixed to require success of **all three** preflight/identity/verification gates before reporting PASS. Source change awaits CI until PR verification.
 
 - [x] PR #201 also addresses two previously failing CI assertions: optional FastAPI imports in science-only runner and obsolete OAuth facade Docker module name. This is test-suite maintenance only; browser account control is still blocked pending P1-P8.
+
+## 2026-11-08: Browser release verification and canonical continuity (green CI)
+- [x] [PR #198](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/198) established the enforced Computer Browser acceptance ledger and merged with its first real check passing.
+- [x] [PR #201](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/201) fixed a false-positive IAM success condition and two browser CI baseline errors; all five associated workflow runs passed before merge. This validates code/tests only.
+- [x] [Private gateway PR #16](https://github.com/chadkhalil21-svg/Sovereign-Gateway/pull/16) merged source-level instructions to read/update the shared canonical ledger for future changes. Superseded [PR #197](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/197) closed after incorporating its test isolation fix.
+- [ ] Confirm P1 exact Google IAM verifier access and real OAuth owner binding before touching production facade or live account actions. See [current browser progress ledger](COMPUTER_BROWSER_PROGRESS.md). Work/TinyFish equivalent private account automation remains unverified.
