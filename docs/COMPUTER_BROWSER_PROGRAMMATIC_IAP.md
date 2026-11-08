@@ -61,3 +61,13 @@ Consequently, the existing no-deployment health probe now executes two extra **r
 Official Google documentation: https://docs.cloud.google.com/run/docs/securing/identity-aware-proxy-cloud-run and https://docs.cloud.google.com/iap/docs/authentication-howto.
 
 **No permissions or deployment configuration have been changed by this audit.** After CI passes and the code is merged, inspect this audit's results before making any IAM changes.
+
+## November 7 22:59–23:00 ET: exact IAP grant, unchanged HTTP 404
+
+- GitHub [run #6](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42444165574) showed the IAP service agent already had `roles/run.invoker` explicitly on the Cloud Run service. The read-only IAP policy query was *unavailable*, not evidence of a missing grant.
+- The founder's saved Google Cloud browser session viewed the actual service-level IAP policy: only the founder was listed. TinyFish then added **only** `serviceAccount:plenum-browser-deploy@plenum-computer-browser.iam.gserviceaccount.com` to `roles/iap.httpsResourceAccessor` on this one Cloud Run IAP resource, preserved the founder's existing access, saved, and reopened the policy to verify both identities. No project IAM changes were made.
+- Owner-triggered [issues #113](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/113) and [#114](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/114) still returned HTTP 404 after the access grant.
+- Read-only [issue #116](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/116) compared one signed and one unsigned `GET /healthz`. Both returned **identical HTTP 404 HTML pages**, classified as generic not found. This makes a shared front-end/routing response plausible but does **not** prove the origin. Application repository source does include `@app.get("/healthz")`; deployed revision remains `plenum-computer-browser-00002-8xf`.
+- Next low-risk diagnostic: sign a new five-minute JWT for the Google Cloud Console-verified canonical Cloud Run domain `https://plenum-computer-browser-98614162800.us-east1.run.app/healthz`, rather than relying solely on `status.url` (which can have an alternate `.a.run.app` form). The owner-only workflow compares the canonical signed response without altering any IAM, IAP, ingress, service, or deployment configuration. The separate JWT can access **only this exact health URL**.
+
+**Do not claim private browser connectivity or fix the 404 until an actual signed health result validates.** 
