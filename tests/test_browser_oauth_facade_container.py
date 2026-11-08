@@ -1,11 +1,14 @@
 """Offline ASGI / OAuth Cloud Run packaging contract tests."""
 import importlib
+import importlib.util
 import os
 from pathlib import Path
 import unittest
 from unittest.mock import patch
 
-from starlette.testclient import TestClient
+HAS_MCP = importlib.util.find_spec('mcp') is not None and importlib.util.find_spec('starlette') is not None
+if HAS_MCP:
+    from starlette.testclient import TestClient
 
 ROOT=Path(__file__).resolve().parents[1]
 FAKE_ENV={
@@ -23,6 +26,7 @@ class OAuthContainerTests(unittest.TestCase):
         with patch.dict(os.environ,{},clear=True),self.assertRaises(ValueError):
             create_private_browser_mcp()
 
+    @unittest.skipUnless(HAS_MCP, 'Optional browser_mcp dependencies are installed in facade CI')
     def test_isolated_asgi_health_and_anonymous_401(self):
         with patch.dict(os.environ,FAKE_ENV,clear=True):
             module=importlib.import_module("services.computer_browser.oauth_asgi")
