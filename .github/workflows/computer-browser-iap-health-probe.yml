@@ -55,6 +55,20 @@ jobs:
             --cloud-run-url "$SERVICE_URL" --service-account "$BROWSER_DEPLOY_SA" \
             --claims-file "$RUNNER_TEMP/browser-iap-claims.json"
           echo "PASS: Cloud Run URL and non-secret scoped claim validated."
+      - name: Diagnose Cloud Run ingress and URL metadata without changing security
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run services describe plenum-computer-browser \
+            --project="$GCP_PROJECT_ID" --region=us-east1 --format=json \
+            > "$RUNNER_TEMP/browser-service-metadata.json"
+          python -m services.computer_browser.route_diagnostic \
+            "$RUNNER_TEMP/browser-service-metadata.json"
+          rm -f "$RUNNER_TEMP/browser-service-metadata.json"
+          echo "Read-only route metadata checked; no IAM or ingress changes."
+
       - name: Sign health-only JWT with Google IAMCredentials (never export a key)
         id: sign
         env:
@@ -100,7 +114,8 @@ jobs:
           rm -f "$RUNNER_TEMP/browser-iap-claims.json" "$RUNNER_TEMP/browser-iap.jwt" "$RUNNER_TEMP/browser-iap-header"
           if [ "$STATUS" != "200" ]; then
             echo "BLOCKED: IAP programmatic health request returned HTTP $STATUS."
-            echo "Check only the service account's IAP Web App User grant and authentication prerequisites."
+            echo "A 404 may mean restricted ingress, a disabled URL, missing route or an IAP problem."
+            echo "Review the redacted route diagnostic above before changing IAM permissions."
             exit 1
           fi
           python -m services.computer_browser.programmatic_iap_probe \
@@ -133,7 +148,7 @@ jobs:
           elif [ "$SIGN_RESULT" != "success" ]; then
             RESULT="NOT VERIFIED: Google IAMCredentials could not sign the health JWT. Check self-scoped signJwt permission on only the existing GitHub service account."
           elif [ "$HEALTH_RESULT" != "success" ]; then
-            RESULT="NOT VERIFIED: IAP did not authorize the signed Cloud Run health request. Check service-scoped IAP Web App User permission and JWT configuration."
+            RESULT="NOT VERIFIED: The signed Cloud Run health request failed. A 404 does not prove missing IAP permission; inspect the read-only routing diagnostic before any Google changes."
           else
             RESULT="NOT VERIFIED: Programmatic IAP health check did not complete. No deployment or private browser action occurred."
           fi

@@ -37,3 +37,13 @@ Cost: No build or deployment. One Cloud Run health request and ordinary GitHub A
 Next owner-controlled prerequisite: verify that the existing GitHub browser deployment service account is allowed to call `iam.serviceAccounts.signJwt` **on itself only** (e.g., target-resource-scoped `roles/iam.serviceAccountTokenCreator`), and that IAM Service Account Credentials API is enabled. Never grant Token Creator at the whole project level. Inspect the failed Actions step if the reason is uncertain; a failed signing step does not prove which IAM/API subcondition failed. After narrow permission verification, rerun the same owner-only health probe and check any subsequent IAP resource access grant separately.
 
 **Google browser IAP OAuth redirect error 9 remains unresolved for human login, but is not required for the machine-to-machine experiment.** This health probe is not a private logged-in browser or full ChatGPT Work replacement.
+
+## November 7 at 10:08 PM ET: signed request returned HTTP 404
+
+The founder granted the deployer service account **Service Account Token Creator on itself**. GitHub's manually dispatched *Verify Computer Browser Programmatic IAP Health* run #4 now passed the identity federation, service metadata, and JWT-signing stages. The signed `GET /healthz` returned **HTTP 404**. This proves signing succeeded, **not** that IAP authorization was granted or that the request reached the container.
+
+Google's Cloud Run troubleshooting guidance says 404 can arise from a wrong URL, an application route, **restricted ingress** or a **disabled default `run.app` endpoint**. Do not infer missing IAP Web App User access from HTTP 404 alone, and do not grant additional IAM roles yet.
+
+A read-only, redacted route metadata check has been added to the health probe. It reports only service readiness, ingress mode, whether the default URL is disabled, and a possible cause. It does not alter ingress, IAP, service identities, or deployments. Run the owner-only workflow again after the updated code is merged. If route metadata is normal, inspect provider request logs and the IAP authorization grant before proposing any changes.
+
+Evidence: GitHub Actions `Verify Computer Browser Programmatic IAP Health (No Deployment)` run #4, screenshot provided in chat. Google reference: https://docs.cloud.google.com/run/docs/troubleshooting
