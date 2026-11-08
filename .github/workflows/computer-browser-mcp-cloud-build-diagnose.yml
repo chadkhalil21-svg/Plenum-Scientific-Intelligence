@@ -1,0 +1,92 @@
+name: Diagnose MCP Facade Cloud Build (Read Only)
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+concurrency:
+  group: plenum-mcp-build-error-diagnostic
+  cancel-in-progress: false
+jobs:
+  read-error:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == 'Computer Browser: diagnose MCP image build' &&
+      github.event.issue.body == 'READ_MCP_BUILD_ERROR_2026-11-08'
+    environment: computer-browser-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Read one fixed failed build and classify nonsecret error
+        id: classify
+        shell: bash
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          test "$GCP_PROJECT_ID" = "plenum-computer-browser"
+          umask 077
+          trap 'rm -f "$RUNNER_TEMP/plenum-build.json" "$RUNNER_TEMP/plenum-build-logs.json"' EXIT
+          BUILD_ID="97f2b090-bed9-4f47-a8a8-0e20ff49102b"
+          if ! gcloud builds describe "$BUILD_ID" --project="$GCP_PROJECT_ID" --region=us-east1 --format=json > "$RUNNER_TEMP/plenum-build.json"; then
+            echo 'category=BUILD_METADATA_ACCESS_UNAVAILABLE' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! gcloud logging read "resource.type=build AND resource.labels.build_id=$BUILD_ID" \
+            --project="$GCP_PROJECT_ID" --freshness=4h --limit=800 --format=json > "$RUNNER_TEMP/plenum-build-logs.json"; then
+            echo 'category=LOG_ACCESS_UNAVAILABLE' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          python - "$RUNNER_TEMP/plenum-build.json" "$RUNNER_TEMP/plenum-build-logs.json" "$GITHUB_OUTPUT" <<'PY'
+          import json,sys
+          b=json.load(open(sys.argv[1]))
+          logs=json.load(open(sys.argv[2]))
+          text="\n".join(str(e.get("textPayload") or e.get("jsonPayload",{}).get("message") or "") for e in logs).lower()
+          if not logs: category="LOGS_EMPTY"
+          elif "permission denied" in text or "denied:" in text: category="REGISTRY_OR_BUILD_PERMISSION_DENIED"
+          elif "no matching distribution found" in text or "could not find a version that satisfies" in text: category="PYTHON_PACKAGE_UNAVAILABLE"
+          elif "resolutionimpossible" in text or "conflicting dependencies" in text: category="PYTHON_DEPENDENCY_CONFLICT"
+          elif "failed to fetch" in text or "network is unreachable" in text or "connection timed out" in text: category="BUILD_NETWORK_FAILURE"
+          elif "not found" in text and ("copy " in text or "dockerfile" in text): category="DOCKER_SOURCE_PATH_MISSING"
+          elif "error" in text and ("pip install" in text or "subprocess.calledprocesserror" in text): category="PYTHON_PACKAGE_INSTALL_FAILURE"
+          elif "failed to solve" in text: category="DOCKER_BUILD_FAILURE"
+          elif "unauthorized" in text or "authentication required" in text: category="BUILD_REGISTRY_AUTHORIZATION"
+          else: category="UNCLASSIFIED_BUILD_ERROR"
+          # Never echo raw Cloud Logging messages to this public repository.
+          allowed_packages=["mcp","httpx","httpx2","google-auth","pyjwt","uvicorn","requests"]
+          hints=[p for p in allowed_packages if ("no matching distribution found for "+p) in text or ("could not find a version that satisfies the requirement "+p) in text]
+          failure=b.get("failureInfo") or {}
+          failure_type=str(failure.get("type") or "").upper()
+          permitted_types={"USER_BUILD_STEP","FETCH_SOURCE","PUSH_IMAGE","INTERNAL","BUILD_STEP_FAILURE"}
+          if failure_type not in permitted_types: failure_type="OTHER"
+          with open(sys.argv[3],"a") as out:
+            out.write("category="+category+"\n")
+            out.write("failure_type="+failure_type+"\n")
+            out.write("dependency_hints="+(",".join(hints) or "none")+"\n")
+          print("PASS: Fixed Cloud Build read completed; only error categories emitted.")
+          PY
+      - name: Report only sanitized findings to owner
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          CATEGORY: ${{ steps.classify.outputs.category }}
+          FAILURE_TYPE: ${{ steps.classify.outputs.failure_type }}
+          DEPENDENCY_HINTS: ${{ steps.classify.outputs.dependency_hints }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$CATEGORY" ]; then
+            RESULT="BLOCKED: Read-only Cloud Build diagnostic did not finish. No cloud changes."
+          else
+            RESULT="READ-ONLY Cloud Build diagnosis: $CATEGORY; build failure type: ${FAILURE_TYPE:-unknown}; package hints: ${DEPENDENCY_HINTS:-none}. No credentials or raw logs published."
+          fi
+          gh issue comment "$ISSUE_NUMBER" --body "$RESULT"
