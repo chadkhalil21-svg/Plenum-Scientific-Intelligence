@@ -14,6 +14,7 @@ from fastapi import Depends, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from .engine import safe_url, public_dns_only
 from .iap_identity import verify_owner_token
+from .owner_auth0 import active as auth0_active, verified_session as auth0_verified_session
 from .owner_console import require_verified_owner
 from .private_profiles import BrowserProfileStore
 
