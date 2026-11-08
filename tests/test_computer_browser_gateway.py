@@ -77,8 +77,9 @@ class BrowserGatewayTests(unittest.TestCase):
     @unittest.skipUnless(HAS_WEB, 'Optional gateway test dependencies installed in dedicated CI')
     def test_health_does_not_expose_secret(self):
         with patch.dict(os.environ,{"COMPUTER_BROWSER_TOKEN":TOKEN}):
-            r=client.get("/healthz")
+            r=client.get("/health")
             self.assertEqual(r.status_code,200)
+            self.assertEqual(client.get("/healthz").json(),r.json())
             self.assertFalse(r.json()["remote_mutations_enabled"])
             self.assertNotIn(TOKEN,r.text)
 
