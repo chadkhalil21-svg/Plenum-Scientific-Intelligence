@@ -6,7 +6,8 @@ One-time human-operated website sign-in uses a separate IAP-protected page.
 This is not ChatGPT model-controlled website login.
 """
 from html import escape
-from fastapi import Depends, Header, HTTPException, Query
+from fastapi import Depends, Header, HTTPException, Query, Request
+from .owner_auth0 import active as auth0_active, verified_session as auth0_verified_session
 from fastapi.responses import HTMLResponse
 from .iap_identity import verify_owner_token
 from .engine import read_public, safe_url
