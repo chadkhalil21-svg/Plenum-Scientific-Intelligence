@@ -195,6 +195,43 @@ class IAMWorkerAdapterTests(unittest.TestCase):
             asyncio.run(read_fixed_public_fixture(replace(CFG,machine_url="https://attacker.example")))
 
 
+class MCPFacadeTransportTests(unittest.TestCase):
+    def test_sdk_publishes_resource_and_blocks_unsigned_mcp_tool_requests(self):
+        from fastapi.testclient import TestClient
+        from services.computer_browser.mcp_resource_server import create_private_browser_mcp
+        env={
+            "PLENUM_MCP_OAUTH_ISSUER":ISSUER,
+            "PLENUM_MCP_RESOURCE_URL":RESOURCE,
+            "PLENUM_MCP_OAUTH_JWKS_URL":CFG.jwks_url,
+            "PLENUM_MCP_OWNER_SUB":OWNER,
+            "PLENUM_MCP_ALLOWED_CLIENT_ID":CLIENT,
+            "PLENUM_MCP_MACHINE_URL":WORKER,
+        }
+        with patch.dict(os.environ,env,clear=True):
+            server=create_private_browser_mcp()
+            app=server.streamable_http_app()
+            with TestClient(app) as client:
+                metadata=client.get("/.well-known/oauth-protected-resource/mcp")
+                self.assertEqual(metadata.status_code,200)
+                self.assertEqual(metadata.json()["resource"],RESOURCE)
+                self.assertIn(ISSUER.rstrip("/"),[
+                    x.rstrip("/") for x in metadata.json()["authorization_servers"]
+                ])
+                request=client.post("/mcp",json={
+                    "jsonrpc":"2.0","id":1,
+                    "method":"tools/list","params":{}
+                },headers={"Accept":"application/json, text/event-stream"})
+                self.assertEqual(request.status_code,401)
+                self.assertIn("resource_metadata=",request.headers.get("www-authenticate","").lower())
+                self.assertNotIn("example.com",request.text)
+
+    def test_sdk_does_not_construct_server_with_missing_owner_config(self):
+        from services.computer_browser.mcp_resource_server import create_private_browser_mcp
+        with patch.dict(os.environ,{},clear=True):
+            with self.assertRaises(ValueError):
+                create_private_browser_mcp()
+
+
 class MCPFacadeSourceTests(unittest.TestCase):
     def test_no_std_io_or_unauthenticated_browser_tools(self):
         root=Path(__file__).resolve().parents[1]
