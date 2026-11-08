@@ -74,7 +74,7 @@ def _verified_owner(claims: dict) -> dict:
     pinned = os.environ.get("AUTH0_OWNER_SUB", "").strip()
     if pinned and not hmac.compare_digest(pinned, sub):
         raise PermissionError("Immutable owner identity did not match")
-    issuer = claims.get("iss", ISSUER)
+    issuer = claims.get("iss")
     if issuer != ISSUER:
         raise PermissionError("Untrusted owner identity issuer")
     return {
