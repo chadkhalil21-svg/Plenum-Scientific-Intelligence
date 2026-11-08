@@ -49,7 +49,7 @@ class RouteDiagnosticTests(unittest.TestCase):
     def test_security_controls_not_relaxed_in_workflow(self):
         wf = (ROOT/".github/workflows/computer-browser-iap-health-probe.yml").read_text()
         self.assertIn("services.computer_browser.route_diagnostic", wf)
-        self.assertIn("Review the redacted route diagnostic", wf)
+        self.assertIn("This read-only comparison does not prove whether IAP or the container rejected the request", wf)
         for unsafe in ("gcloud run services update", "gcloud run deploy",
                        "--no-iap", "--allow-unauthenticated", "set -x"):
             self.assertNotIn(unsafe, wf)
