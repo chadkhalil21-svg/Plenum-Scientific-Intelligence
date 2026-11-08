@@ -6,7 +6,7 @@
 2. Existing owner `plenum-computer-browser` remains behind Google IAP; no authentication or IAM changes are required for the private machine transport.
 3. The Computer Browser personal ChatGPT plugin presently binds **GitHub**, and its verified actions are **public** Playwright reading and bounded navigation. It has no custom private MCP server connection or authenticated private-action tool. Do not confuse a plugin skill with private browser controls.
 
-## Next live smoke (owner-gated; separate release)
+## Verified live smoke (owner-gated; 2026-11-08)
 
 `POST /machine/v1/public-read` starts **disabled**. If `MACHINE_IAM_PUBLIC_READ=true` is explicitly enabled on the independent machine service, it accepts **only** `{"url":"https://example.com/"}` or the same URL without the trailing slash. It invokes existing `read_public` Playwright, which creates a fresh cookie-free Chromium context, blocks non-GET traffic and non-approved origins, and returns a bounded text excerpt. Cloud Run IAM authorizes the one deployer caller and rejects anonymous requests **before** FastAPI sees them. The endpoint cannot read private sites, save cookies or modify external accounts.
 
@@ -45,3 +45,9 @@ Sources:
 - https://developers.openai.com/plugins/build/auth
 - https://docs.cloud.google.com/run/docs/authenticating/service-to-service
 - https://developers.openai.com/api/docs/mcp
+
+## Completed proof, 2026-11-08
+The fixed fixture feature and complete public-chat transport are now independently **live verified**:
+- [PR #133](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/133) and [owner issue #134](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/134): machine-only image and `MACHINE_IAM_PUBLIC_READ=true` passed real Playwright HTTPS `example.com` read, HTTP 200, anonymous IAM denial, strict no-cookie/no-write checks.
+- [PR #135](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/135) and [chat-created issue #137](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/137): **PASS** for an actual normal-chat owner request traversing connected GitHub → short-lived Google IAM token → private Cloud Run → real Playwright → sanitized public issue response.
+- No third-party website account session was used and no arbitrary remote browser action was enabled. Do not infer private MCP/Work parity from this proof.
