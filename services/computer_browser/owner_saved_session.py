@@ -5,6 +5,7 @@ vault. No credentials or decrypted Playwright state reach ChatGPT or GitHub.
 No remote site modification, uploads, or account actions are accepted here.
 """
 import asyncio
+import hashlib
 import hmac
 import os
 from html import escape
@@ -46,7 +47,8 @@ def _owner_form_signer(owner_id):
             or not 1<=len(owner_id)<=80):
         raise HTTPException(status_code=503,detail="Private owner form unavailable")
     key=hmac.digest(secret.encode(),("plenum.owner.form.v1:"+owner_id).encode(),"sha256")
-    return URLSafeTimedSerializer(key,salt="plenum-owner-saved-session-form-v1")
+    return URLSafeTimedSerializer(key,salt="plenum-owner-saved-session-form-v1",
+                                  signer_kwargs={"digest_method":hashlib.sha256})
 
 
 def _owner_form_token(owner_id, site, action):
