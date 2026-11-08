@@ -141,6 +141,7 @@ class MachinePublicReadTests(unittest.TestCase):
             "gcloud run services update plenum-computer-browser-machine",
             "gcloud run services get-iam-policy plenum-computer-browser-machine",
             "gcloud builds submit .",
+            "verify_service(m,expected_image=image,public_read_enabled=enabled)",
             "gcloud auth print-identity-token",
             "verify_service(read(service),expected_image=image,public_read_enabled=True)",
             "https://example.com/",
