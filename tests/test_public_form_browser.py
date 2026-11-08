@@ -65,5 +65,21 @@ class PublicFormBrowserContract(unittest.TestCase):
         self.assertNotIn("BrowserProfileStore",source)
         self.assertNotIn("COMPUTER_BROWSER_TOKEN",source)
 
+
+    def test_only_owner_can_inspect_public_form_metadata(self):
+        from plenum_ai.public_form_browser import (
+            INSPECT_TITLE, INSPECT_SCHEMA, validate_inspect_request, _public_html_attr
+        )
+        task={"schema":INSPECT_SCHEMA,"url":"https://arxiv.org/search/"}
+        self.assertEqual(validate_inspect_request(AUTHOR,INSPECT_TITLE,json.dumps(task)),task)
+        for bad in [
+            (AUTHOR,INSPECT_TITLE,{"schema":INSPECT_SCHEMA,"url":"https://private.example"}),
+            ("other",INSPECT_TITLE,task),
+            (AUTHOR,INSPECT_TITLE,{"schema":INSPECT_SCHEMA,"url":"https://arxiv.org/?token=abc"}),
+        ]:
+            with self.assertRaises((ValueError,PermissionError)):
+                validate_inspect_request(bad[0],bad[1],json.dumps(bad[2]))
+        self.assertEqual(_public_html_attr('query" SECRET <here>'),"querySECREThere")
+
 if __name__=="__main__":
     unittest.main()
