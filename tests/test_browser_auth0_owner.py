@@ -127,13 +127,22 @@ class Auth0OwnerTests(unittest.TestCase):
                 self.assertEqual(client.get("/owner", headers={
                     "cookie": headers["cookie"],
                 }).status_code, 200)
-                with patch.object(private_login, "public_dns_only",
-                                  side_effect=PermissionError("synthetic closed DNS")):
-                    with client.websocket_connect(ws_url, headers=headers) as ws:
-                        self.assertEqual(ws.receive_json()["type"], "status")
-                        stopped = ws.receive_json()
-                        self.assertTrue(stopped["failure"])
-                        self.assertIn("DNS safety checks", stopped["message"])
+                # The test never starts Playwright: DNS rejection is forced
+                # before async_playwright() is entered. Stub the optional import
+                # rather than downloading Chromium just for an auth-boundary test.
+                stub = types.ModuleType("playwright.async_api")
+                stub.async_playwright = lambda: None
+                with patch.dict(sys.modules, {
+                    "playwright": types.ModuleType("playwright"),
+                    "playwright.async_api": stub,
+                }):
+                    with patch.object(private_login, "public_dns_only",
+                                      side_effect=PermissionError("synthetic closed DNS")):
+                        with client.websocket_connect(ws_url, headers=headers) as ws:
+                            self.assertEqual(ws.receive_json()["type"], "status")
+                            stopped = ws.receive_json()
+                            self.assertTrue(stopped["failure"])
+                            self.assertIn("DNS safety checks", stopped["message"])
                 # Signed cookie alone cannot permit cross-origin browser use.
                 with self.assertRaises(Exception):
                     with client.websocket_connect(ws_url, headers={
