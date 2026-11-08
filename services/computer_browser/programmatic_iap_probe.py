@@ -13,7 +13,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 SERVICE = "plenum-computer-browser"
-SA_RE = re.compile(r"^[a-z][a-z0-9-]{1,60}@[a-z][a-z0-9-]{2,60}\\.iam\\.gserviceaccount\\.com$")
+SA_RE = re.compile(r"^[a-z][a-z0-9-]{1,60}@[a-z][a-z0-9-]{2,60}\.iam\.gserviceaccount\.com$")
 
 
 def health_url(cloud_run_url):
