@@ -108,8 +108,21 @@ def enforce_verified_claims(claims, config, *, now=None):
             or (claims.get("azp") or claims.get("client_id")) != config.client_id):
         raise PermissionError("OAuth owner identity or token lifetime rejected")
     audience = claims.get("aud")
-    if audience != config.resource and audience != [config.resource]:
-        raise PermissionError("OAuth token not minted exclusively for browser MCP")
+    # Auth0 can add its OWN /userinfo audience when ChatGPT asks for openid.
+    # Do not accept any arbitrary second API audience, even if ours is present.
+    userinfo = config.issuer.rstrip("/") + "/userinfo"
+    approved = {config.resource, userinfo}
+    if isinstance(audience, str):
+        audience_values = [audience]
+    elif (isinstance(audience, list) and 1 <= len(audience) <= 2
+          and all(isinstance(v, str) for v in audience)):
+        audience_values = audience
+    else:
+        raise PermissionError("Invalid OAuth access token audience")
+    if (config.resource not in audience_values
+            or len(set(audience_values)) != len(audience_values)
+            or not set(audience_values).issubset(approved)):
+        raise PermissionError("OAuth token audience is not limited to this browser MCP")
     scope = claims.get("scope")
     if not isinstance(scope, str) or READ_SCOPE not in scope.split():
         raise PermissionError("Required browser read scope unavailable")
