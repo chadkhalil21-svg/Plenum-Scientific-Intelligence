@@ -118,12 +118,9 @@ class MachinePublicReadTests(unittest.TestCase):
             "gcloud builds submit .",
             "gcloud auth print-identity-token",
             "verify_service(read(service),expected_image=image,public_read_enabled=True)",
-            'status","status"',
             "https://example.com/",
             "Anonymous access permitted",
         ):
-            if required == 'status","status"':
-                continue
             self.assertIn(required,wf)
         for forbidden in (
             "gcloud run deploy plenum-computer-browser ",
