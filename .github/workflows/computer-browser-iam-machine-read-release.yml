@@ -1,0 +1,196 @@
+name: Release IAM Machine Fixed Public Read (Owner Approved)
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+concurrency:
+  group: plenum-browser-machine-read-release
+  cancel-in-progress: false
+jobs:
+  release-read:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == 'Computer Browser: release IAM machine read' &&
+      github.event.issue.body == 'RELEASE_IAM_MACHINE_READ_APPROVED:2026-11-08'
+    environment: computer-browser-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Verify fixed public read policy and existing IAM guards
+        run: |
+          python -m unittest discover -s tests -p 'test_iam_machine_public_read.py' -v
+          python -m unittest discover -s tests -p 'test_iam_machine_health.py' -v
+          python -m unittest discover -s tests -p 'test_iam_machine_health_release.py' -v
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Verify original isolated machine service and existing policy
+        id: preflight
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          BROWSER_DEPLOY_SA: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCP_PROJECT_ID" = 'plenum-computer-browser'
+          test "$BROWSER_DEPLOY_SA" = 'plenum-browser-deploy@plenum-computer-browser.iam.gserviceaccount.com'
+          umask 077
+          trap 'rm -f "$RUNNER_TEMP/before-machine.json" "$RUNNER_TEMP/before-policy.json"' EXIT
+          gcloud run services describe plenum-computer-browser-machine \
+            --project="$GCP_PROJECT_ID" --region=us-east1 \
+            --format=json > "$RUNNER_TEMP/before-machine.json"
+          gcloud run services get-iam-policy plenum-computer-browser-machine \
+            --project="$GCP_PROJECT_ID" --region=us-east1 \
+            --format=json > "$RUNNER_TEMP/before-policy.json"
+          python - <<'PY'
+          import json,os
+          from services.computer_browser.iam_machine_guard import verify_service,verify_service_iam
+          root=os.environ["RUNNER_TEMP"]
+          m=json.load(open(root+"/before-machine.json"))
+          p=json.load(open(root+"/before-policy.json"))
+          image=m["spec"]["template"]["spec"]["containers"][0]["image"]
+          verify_service(m,expected_image=image)
+          verify_service_iam(p)
+          print("PASS: Current private machine service is IAM-only, one invoker, no secrets.")
+          PY
+          gcloud artifacts repositories describe plenum-browser \
+            --location=us-east1 --project="$GCP_PROJECT_ID" --format='value(name)' > /dev/null
+          gcloud storage buckets describe \
+            "gs://$GCP_PROJECT_ID-build-source-98614162800" \
+            --project="$GCP_PROJECT_ID" --format='value(name)' >/dev/null
+      - name: Build pinned read-only container from reviewed source
+        id: build
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE_REPOSITORY="us-east1-docker.pkg.dev/$GCP_PROJECT_ID/plenum-browser/computer-browser"
+          IMAGE_TAG="$IMAGE_REPOSITORY:machine-public-read-$GITHUB_SHA"
+          BUILD_SA="plenum-browser-builder@$GCP_PROJECT_ID.iam.gserviceaccount.com"
+          gcloud builds submit . \
+            --project="$GCP_PROJECT_ID" --region=us-east1 \
+            --service-account="projects/$GCP_PROJECT_ID/serviceAccounts/$BUILD_SA" \
+            --gcs-source-staging-dir="gs://$GCP_PROJECT_ID-build-source-98614162800/source" \
+            --config=services/computer_browser/cloudbuild.yaml \
+            --substitutions="_IMAGE=$IMAGE_TAG" --quiet
+          DIGEST="$(gcloud artifacts docker images describe "$IMAGE_TAG" \
+            --project="$GCP_PROJECT_ID" --format='value(image_summary.digest)')"
+          if ! [[ "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo "BLOCKED: cannot verify immutable image digest."
+            exit 1
+          fi
+          echo "image_ref=$IMAGE_REPOSITORY@$DIGEST" >> "$GITHUB_OUTPUT"
+      - name: Update isolated machine image and opt in ONLY to public fixture read
+        id: update
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          IMAGE_REF: ${{ steps.build.outputs.image_ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$IMAGE_REF"
+          case "$IMAGE_REF" in
+            us-east1-docker.pkg.dev/plenum-computer-browser/plenum-browser/computer-browser@sha256:*) ;;
+            *) echo "Unexpected artifact path"; exit 1 ;;
+          esac
+          gcloud run services update plenum-computer-browser-machine \
+            --project="$GCP_PROJECT_ID" --region=us-east1 \
+            --image="$IMAGE_REF" \
+            --update-env-vars="MACHINE_IAM_PUBLIC_READ=true" --quiet > /dev/null
+          echo "Only isolated machine service updated. No IAM, IAP or owner service modifications."
+      - name: Verify real Playwright public fixture from private IAM connection and deny anonymous
+        id: verify
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          BROWSER_DEPLOY_SA: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+          IMAGE_REF: ${{ steps.build.outputs.image_ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          trap 'rm -f "$RUNNER_TEMP/read-token" "$RUNNER_TEMP/read-header" "$RUNNER_TEMP/read-response.json" "$RUNNER_TEMP/anon-response" "$RUNNER_TEMP/machine-after.json" "$RUNNER_TEMP/iam-after.json"' EXIT
+          gcloud run services describe plenum-computer-browser-machine \
+            --project="$GCP_PROJECT_ID" --region=us-east1 --format=json > "$RUNNER_TEMP/machine-after.json"
+          gcloud run services get-iam-policy plenum-computer-browser-machine \
+            --project="$GCP_PROJECT_ID" --region=us-east1 --format=json > "$RUNNER_TEMP/iam-after.json"
+          SERVICE_URL="$(gcloud run services describe plenum-computer-browser-machine \
+            --project="$GCP_PROJECT_ID" --region=us-east1 --format='value(status.url)')"
+          case "$SERVICE_URL" in
+            https://plenum-computer-browser-machine-*.run.app) ;;
+            *) echo "Unexpected private machine origin"; exit 1 ;;
+          esac
+          gcloud auth print-identity-token \
+            --impersonate-service-account="$BROWSER_DEPLOY_SA" \
+            --audiences="$SERVICE_URL" --include-email > "$RUNNER_TEMP/read-token" 2>/dev/null
+          test -s "$RUNNER_TEMP/read-token"
+          printf 'Authorization: Bearer %s\n' "$(cat "$RUNNER_TEMP/read-token")" > "$RUNNER_TEMP/read-header"
+          AUTH_STATUS="$(curl --silent --show-error --max-time 60 --proto '=https' \
+            --header @"$RUNNER_TEMP/read-header" \
+            --header 'Content-Type: application/json' \
+            --data-binary '{"url":"https://example.com/"}' \
+            --output "$RUNNER_TEMP/read-response.json" --write-out '%{http_code}' \
+            "$SERVICE_URL/machine/v1/public-read" || true)"
+          ANON_STATUS="$(curl --silent --show-error --max-time 20 --proto '=https' \
+            --header 'Content-Type: application/json' \
+            --data-binary '{"url":"https://example.com/"}' \
+            --output "$RUNNER_TEMP/anon-response" --write-out '%{http_code}' \
+            "$SERVICE_URL/machine/v1/public-read" || true)"
+          echo "Authenticated Playwright fixture read HTTP $AUTH_STATUS"
+          echo "Anonymous Playwright fixture read HTTP $ANON_STATUS"
+          test "$AUTH_STATUS" = "200"
+          python - "$RUNNER_TEMP/machine-after.json" "$RUNNER_TEMP/iam-after.json" \
+            "$RUNNER_TEMP/read-response.json" "$ANON_STATUS" "$IMAGE_REF" <<'PY'
+          import json,sys
+          from services.computer_browser.iam_machine_guard import verify_service,verify_service_iam
+          service,policy,result,anon,image=sys.argv[1:]
+          read=lambda path:json.load(open(path))
+          verify_service(read(service),expected_image=image,public_read_enabled=True)
+          verify_service_iam(read(policy))
+          assert int(anon) not in range(200,300), "Anonymous access permitted"
+          data=read(result)
+          assert data.get("schema")=="plenum-private-browser-read-v1", "Wrong browser read schema"
+          assert data.get("status")==200, "Website not read successfully"
+          assert data.get("title_untrusted")=="Example Domain", "Wrong public fixture"
+          assert data.get("final_url") in ("https://example.com","https://example.com/"), "Wrong destination"
+          assert data.get("external_site_changed") is False, "Unexpected website modification"
+          assert data.get("authenticated_site_used") is False, "Unexpected website login"
+          assert data.get("AGI_demonstrated") is False
+          print("PASS: Real private IAM-to-Playwright public fixture read, no cookies, no site writes.")
+          PY
+      - name: Post sanitized proof result to founder issue
+        if: always() && github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          PREFLIGHT: ${{ steps.preflight.outcome }}
+          BUILD: ${{ steps.build.outcome }}
+          UPDATE: ${{ steps.update.outcome }}
+          VERIFY: ${{ steps.verify.outcome }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$VERIFY" = "success" ]; then
+            RESULT="PASS: Private IAM-authenticated request ran real Playwright against fixed PUBLIC example.com fixture; HTTP 200, expected page title, no site modifications; anonymous request denied. No private website sessions or arbitrary actions enabled."
+          elif [ "$PREFLIGHT" != "success" ]; then
+            RESULT="BLOCKED BEFORE BUILD: Machine service policy, identity or builder preflight failed; no deployment."
+          elif [ "$BUILD" != "success" ]; then
+            RESULT="BLOCKED BEFORE DEPLOY: Could not build and pin the machine read-only image."
+          elif [ "$UPDATE" != "success" ]; then
+            RESULT="NOT VERIFIED: Machine image or public-read setting update failed. Existing IAP owner service untouched."
+          else
+            RESULT="NOT VERIFIED: Machine read-only revision is deployed but live fixture read or IAM verification failed. Do not enable broader origins or private website credentials."
+          fi
+          gh issue comment "$ISSUE_NUMBER" --body "$RESULT"
