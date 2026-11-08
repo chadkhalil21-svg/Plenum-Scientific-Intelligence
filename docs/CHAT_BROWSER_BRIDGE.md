@@ -56,3 +56,18 @@ Only after successful public-source requests should we contemplate
 follow-on navigation, authenticated sessions or browser automation with a
 separate sandbox, approvals and a better interaction channel, and only if
 the user chooses to authorize those privileges.
+
+
+## November 7: private Computer Browser ChatGPT plugin
+
+A **private, skills-only** ChatGPT plugin named **Computer Browser** was created under the founder's own account. This is an instruction/integration layer that reuses the existing connected GitHub tools and the already-proven owner-created public issue workflow; it is not a new browser server or separate Playwright deployment.
+
+- Private plugin: https://chatgpt.com/plugins/plugins_6aefd5d509788191a201f947a254b3c0
+- Initial release: `0.1.0`; it contains the `computer-browser` skill.
+- The existing live public browser smoke test is GitHub issue #66 (owner issue -> GitHub Actions -> real Chromium -> HTTP 200 -> bot comment).
+- Costs: no TinyFish browser use; public GitHub Actions currently uses standard public-repo runner allowances/fair-use limits.
+- **Not verified:** that the new skill is available in every user's ChatGPT conversation until installed/enabled and invoked. It has no independent MCP tools.
+- **Not provided:** arbitrary-site navigation, ChatGPT remote clicking/typing on real sites, account login, private results, or site-changing operations.
+- **Remaining:** Google IAP OAuth redirect error 9 for the owner console, actual private browser profile/login test, securely scoped remote action queue and authorization, and a ChatGPT-compatible tool connection. Plan restrictions for full custom MCP write tools must be checked before relying on that route.
+
+**Do not send private tasks, URLs with tokens, credentials, sensitive requests, or authenticated data through the public GitHub issue bridge.** The plugin cannot remove those boundaries by itself.
