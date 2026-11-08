@@ -1,5 +1,10 @@
 name: Bootstrap Separate IAM-Private OAuth MCP Address (Owner Approved)
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/computer-browser-mcp-private-bootstrap.yml'
+      - 'services/computer_browser/facade-bootstrap.cloudbuild.yaml'
+      - 'tests/test_browser_oauth_private_bootstrap.py'
   issues:
     types: [opened]
 permissions:
@@ -10,6 +15,19 @@ concurrency:
   group: plenum-browser-mcp-facade-bootstrap
   cancel-in-progress: false
 jobs:
+  static-bootstrap-guard:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Verify owner gate, IAM private defaults and no session secrets
+        run: python -m unittest discover -s tests -p 'test_browser_oauth_private_bootstrap.py' -v
   private-mcp-address:
     if: >-
       github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
