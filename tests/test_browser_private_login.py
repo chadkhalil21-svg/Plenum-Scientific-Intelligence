@@ -147,8 +147,41 @@ class PrivateLoginTests(unittest.TestCase):
                 self.assertEqual(page.locator("#text").input_value(),
                                  "must-preserve-on-failure")
                 self.assertIn("NOT entered",page.locator("#field-status").inner_text())
+                # Model a mobile-network or Cloud Run WebSocket disconnect.
+                # A dead screenshot must not look interactive, and the
+                # diagnostics should report duration/code without secrets.
+                page.evaluate("""() => {
+                  window.__owner_ws.readyState=3;
+                  window.__owner_ws.onclose({code:1006});
+                }""")
+                self.assertTrue(page.locator("#enter").is_disabled())
+                self.assertTrue(page.locator("#type").is_disabled())
+                self.assertTrue(page.locator("#save").is_disabled())
+                self.assertIn("1006",page.locator("#status").inner_text())
+                self.assertIn("previous browser image has been cleared",
+                              page.locator("#field-status").inner_text())
+                self.assertEqual(page.locator("#text").input_value(),
+                                 "must-preserve-on-failure")
+                commands_before=page.evaluate("window.__owner_ws.commands.length")
+                page.locator("#display").click(force=True)
+                self.assertEqual(page.evaluate("window.__owner_ws.commands.length"),
+                                 commands_before)
+                self.assertIn("disconnected",
+                              page.locator("#status").inner_text().lower())
+                self.assertIn("previous browser image has been cleared",
+                              page.locator("#field-status").inner_text().lower())
             finally:
                 browser.close()
+
+    def test_auth0_release_bounded_websocket_timeout_and_no_public_bypass(self):
+        from pathlib import Path
+        wf=(Path(__file__).resolve().parents[1]/
+            ".github/workflows/browser-auth0-owner-websocket-release.yml").read_text()
+        self.assertIn("--timeout=600s",wf)
+        self.assertIn('int(spec.get("timeoutSeconds",0))==600',wf)
+        self.assertIn("github.event.issue.user.login == 'chadkhalil21-svg'",wf)
+        self.assertIn("environment: computer-browser-production",wf)
+        self.assertNotIn("--allow-unauthenticated",wf)
 
     def test_ci_demo_does_not_enable_without_flag(self):
         with patch.dict(os.environ,{"BROWSER_PUBLIC_ORIGIN":"https://example.com",
