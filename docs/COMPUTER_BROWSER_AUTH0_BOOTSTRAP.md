@@ -48,3 +48,9 @@ The repo now contains an **owner-gated, narrowly scoped** private Cloud Run addr
 
 After the bootstrap passes, create the Auth0 API with Identifier **exactly equal to the output `https://plenum-computer-browser-mcp-...run.app/mcp`** and scope `browser:read`. Use 600-second access tokens if the free tenant permits. No client secret should be copied into the repository, chat, or public GitHub issues.
 
+
+## Verified deployment checkpoint, 2026-11-08
+
+**Authoritative link:** [issue #160](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/160) reports separate IAM-private MCP service ready at `https://plenum-computer-browser-mcp-2lak3vl73q-ue.a.run.app/mcp`; signed health 200, anonymous denied, OAuth owner disabled placeholder. This supersedes earlier [issue #150](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/150), whose alternative bootstrap image build failed. Do not retry or create a duplicate facade.
+
+**Explicit next owner action:** Create the Auth0 API with the identifier above and `browser:read` permission. Do not turn on API Management grants, billing, DCR, or extra access for a fixed public-read proof. The private ChatGPT connection is not complete until actual owner login and signed OAuth token validation succeed.
