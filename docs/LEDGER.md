@@ -554,3 +554,8 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [x] Founder screenshot after #224 confirms browser WS **rejected before opening** even though Auth0 owner HTML session works. Source review found old Uvicorn 0.34.2 installed without explicit `websockets` / `wsproto`. This is a strong, not yet live-confirmed root cause; past TestClient auth test did not validate actual HTTP Upgrade.
 - [x] Staged one-line `websockets==13.1` in the **thin Auth0 image** and one real loopback Uvicorn WebSocket upgrade test that must return authenticated-policy HTTP 403 for anonymous connections. No Chromium rebuild, TinyFish spending, owner API changes, or public session exposure.
 - [ ] Gate: CI, merge, deploy only existing Auth0 service, and verify a real authenticated WS frame. Full protected browser sessions and chat-controlled Work/TinyFish parity still pending. See [Computer Browser progress](COMPUTER_BROWSER_PROGRESS.md).
+
+## 2026-11-08 ~16:53 ET: WebSocket dependency fixed; release blocked by GitHub workflow concurrency
+- [x] PR #225 merged: install missing `websockets==13.1` for Uvicorn browser backend; **real network HTTP Upgrade test PASSED**, without account credentials, public sites or Chromium recompile.
+- [x] Release attempts #226 and #227 were **CANCELLED BEFORE JOB START** due apparent shared run-level GitHub Actions concurrency group; **no production change**. Scoped concurrency fix staged at job level, with a unique group for exact founder-only Auth0 release.
+- [ ] Await passing PR merge, one successful Cloud Run update, then founder reopens existing `/owner/sign-in` and proves a real frame. See [Browser progress](COMPUTER_BROWSER_PROGRESS.md).

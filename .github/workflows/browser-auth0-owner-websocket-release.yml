@@ -6,9 +6,6 @@ permissions:
   contents: read
   id-token: write
   issues: write
-concurrency:
-  group: plenum-auth0-owner-portal-build
-  cancel-in-progress: false
 jobs:
   release-auth0-owner-websocket:
     if: >-
@@ -16,6 +13,11 @@ jobs:
       github.event.issue.user.login == 'chadkhalil21-svg' &&
       github.event.issue.title == 'Computer Browser: release Auth0 WebSocket diagnosis' &&
       github.event.issue.body == 'RELEASE_AUTH0_WS_DIAG:2026-11-08'
+    # Job-level scheduling only: other unrelated issue workflows must not
+    # cancel this job before its founder-only condition is evaluated.
+    concurrency:
+      group: plenum-auth0-owner-ws-deploy
+      cancel-in-progress: false
     environment: computer-browser-production
     runs-on: ubuntu-latest
     timeout-minutes: 25
