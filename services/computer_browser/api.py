@@ -47,7 +47,11 @@ def healthz():
 # fixed public fixture with no site cookies or browser-side writes.
 @app.post("/machine/v1/public-read")
 async def machine_public_read(task: BrowserRequest):
-    if os.environ.get("MACHINE_IAM_PUBLIC_READ") != "true":
+    if (os.environ.get("MACHINE_IAM_PUBLIC_READ") != "true"
+            or os.environ.get("K_SERVICE") != "plenum-computer-browser-machine"
+            or os.environ.get("COMPUTER_BROWSER_TOKEN")
+            or os.environ.get("BROWSER_SESSION_KEY")
+            or os.environ.get("BROWSER_PROFILE_BUCKET")):
         raise HTTPException(status_code=404, detail="Machine public read unavailable")
     if (os.environ.get("BROWSER_ALLOWED_ORIGINS") != "https://example.com"
             or task.url not in ("https://example.com", "https://example.com/")):
