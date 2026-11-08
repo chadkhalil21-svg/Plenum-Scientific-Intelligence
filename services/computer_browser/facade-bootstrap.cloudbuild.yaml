@@ -1,0 +1,15 @@
+# Build only the isolated OAuth MCP facade. The image has no browser, cookies,
+# private website session storage, service-account keys, or owner IAP app.
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --file
+      - services/computer_browser/facade.Dockerfile
+      - --tag
+      - ${_IMAGE}
+      - .
+images:
+  - ${_IMAGE}
+options:
+  logging: CLOUD_LOGGING_ONLY

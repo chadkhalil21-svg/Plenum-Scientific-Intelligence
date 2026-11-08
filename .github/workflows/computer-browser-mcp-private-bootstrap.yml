@@ -1,0 +1,207 @@
+name: Bootstrap Separate IAM-Private OAuth MCP Address (Owner Approved)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/computer-browser-mcp-private-bootstrap.yml'
+      - 'services/computer_browser/facade-bootstrap.cloudbuild.yaml'
+      - 'tests/test_browser_oauth_private_bootstrap.py'
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+concurrency:
+  group: plenum-browser-mcp-facade-bootstrap
+  cancel-in-progress: false
+jobs:
+  static-bootstrap-guard:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Verify owner gate, IAM private defaults and no session secrets
+        run: python -m unittest discover -s tests -p 'test_browser_oauth_private_bootstrap.py' -v
+  private-mcp-address:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == 'Computer Browser: bootstrap private MCP address' &&
+      github.event.issue.body == 'BOOTSTRAP_PRIVATE_MCP_FACADE:2026-11-08'
+    environment: computer-browser-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Preflight exact project and verify new service does not already exist
+        id: preflight
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          DEPLOYER: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCP_PROJECT_ID" = "plenum-computer-browser"
+          test "$DEPLOYER" = "plenum-browser-deploy@plenum-computer-browser.iam.gserviceaccount.com"
+          gcloud iam service-accounts describe \
+            plenum-browser-machine-runtime@plenum-computer-browser.iam.gserviceaccount.com \
+            --project="$GCP_PROJECT_ID" --format='value(email)' >/dev/null
+          gcloud iam service-accounts describe \
+            plenum-browser-builder@plenum-computer-browser.iam.gserviceaccount.com \
+            --project="$GCP_PROJECT_ID" --format='value(email)' >/dev/null
+          if gcloud run services describe plenum-browser-mcp-facade \
+              --project="$GCP_PROJECT_ID" --region=us-east1 >/dev/null 2>&1; then
+            echo "BLOCKED: MCP facade service already exists; no overwrite permitted."
+            exit 1
+          fi
+          gcloud storage buckets describe gs://plenum-computer-browser-build-source-98614162800 \
+            --project="$GCP_PROJECT_ID" --format='value(name)' >/dev/null
+          echo "PASS: Only the new IAM-private MCP address may be bootstrapped."
+      - name: Build only the independent, minimal OAuth facade image
+        id: build
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPO="us-east1-docker.pkg.dev/$GCP_PROJECT_ID/plenum-browser/computer-browser-oauth"
+          TAG="$REPO:private-bootstrap-$GITHUB_SHA"
+          BUILDER="plenum-browser-builder@$GCP_PROJECT_ID.iam.gserviceaccount.com"
+          gcloud builds submit . \
+            --project="$GCP_PROJECT_ID" --region=us-east1 \
+            --service-account="projects/$GCP_PROJECT_ID/serviceAccounts/$BUILDER" \
+            --gcs-source-staging-dir="gs://$GCP_PROJECT_ID-build-source-98614162800/source" \
+            --config=services/computer_browser/facade-bootstrap.cloudbuild.yaml \
+            --substitutions="_IMAGE=$TAG" --quiet
+          DIGEST="$(gcloud artifacts docker images describe "$TAG" \
+            --project="$GCP_PROJECT_ID" --format='value(image_summary.digest)')"
+          if ! [[ "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo "BLOCKED: Missing immutable registry image digest."
+            exit 1
+          fi
+          echo "image_ref=$REPO@$DIGEST" >> "$GITHUB_OUTPUT"
+      - name: Deploy one new IAM-PRIVATE, disabled-owner MCP facade address
+        id: deploy
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          IMAGE_REF: ${{ steps.build.outputs.image_ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCP_PROJECT_ID" = "plenum-computer-browser"
+          case "$IMAGE_REF" in
+            us-east1-docker.pkg.dev/plenum-computer-browser/plenum-browser/computer-browser-oauth@sha256:*) ;;
+            *) echo "BLOCKED: Unapproved image reference."; exit 1;;
+          esac
+          SERVICE="plenum-browser-mcp-facade"
+          URL="https://$SERVICE-98614162800.us-east1.run.app"
+          RUNTIME="plenum-browser-machine-runtime@plenum-computer-browser.iam.gserviceaccount.com"
+          gcloud run deploy "$SERVICE" \
+            --project="$GCP_PROJECT_ID" --region=us-east1 \
+            --image="$IMAGE_REF" --service-account="$RUNTIME" \
+            --ingress=all --no-allow-unauthenticated \
+            --min-instances=0 --max-instances=1 \
+            --cpu=1 --memory=512Mi --concurrency=5 --timeout=30 \
+            --set-env-vars="PLENUM_MCP_OAUTH_ISSUER=https://dev-8sylxsg44yh5kkhh.us.auth0.com/,PLENUM_MCP_OAUTH_JWKS_URL=https://dev-8sylxsg44yh5kkhh.us.auth0.com/.well-known/jwks.json,PLENUM_MCP_RESOURCE_URL=$URL/mcp,PLENUM_MCP_OWNER_SUB=PENDING_ACTIVATION_NO_OWNER_20261108,PLENUM_MCP_ALLOWED_CLIENT_ID=https://chatgpt.com/oauth/client.json,PLENUM_MCP_MACHINE_URL=https://plenum-computer-browser-machine-98614162800.us-east1.run.app" \
+            --quiet >/dev/null
+          ACTUAL="$(gcloud run services describe "$SERVICE" --project="$GCP_PROJECT_ID" \
+            --region=us-east1 --format='value(status.url)')"
+          if [ "$ACTUAL" != "$URL" ]; then
+            echo "BLOCKED: Service URL differs from expected resource audience; facade remains IAM private."
+            exit 1
+          fi
+          echo "mcp_resource=$URL/mcp" >> "$GITHUB_OUTPUT"
+          echo "PASS: New placeholder owner-disabled MCP facade address created. IAM still private."
+      - name: Verify exact private IAM settings and anonymous denial
+        id: verify
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          IMAGE_REF: ${{ steps.build.outputs.image_ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          trap 'rm -f "$RUNNER_TEMP/facade-metadata.json" "$RUNNER_TEMP/facade-policy.json" "$RUNNER_TEMP/facade-token" "$RUNNER_TEMP/facade-auth-header" "$RUNNER_TEMP/facade-auth-body" "$RUNNER_TEMP/facade-anon-body"' EXIT
+          SERVICE="plenum-browser-mcp-facade"
+          URL="https://$SERVICE-98614162800.us-east1.run.app"
+          gcloud run services describe "$SERVICE" --project="$GCP_PROJECT_ID" \
+            --region=us-east1 --format=json > "$RUNNER_TEMP/facade-metadata.json"
+          gcloud run services get-iam-policy "$SERVICE" --project="$GCP_PROJECT_ID" \
+            --region=us-east1 --format=json > "$RUNNER_TEMP/facade-policy.json"
+          python - "$RUNNER_TEMP/facade-metadata.json" "$RUNNER_TEMP/facade-policy.json" "$IMAGE_REF" "$URL" <<'PY'
+          import json,sys
+          meta,policy,image,url=[json.load(open(sys.argv[1])),json.load(open(sys.argv[2])),sys.argv[3],sys.argv[4]]
+          assert meta.get("metadata",{}).get("name")=="plenum-browser-mcp-facade"
+          assert meta.get("status",{}).get("url")==url
+          spec=meta.get("spec",{}).get("template",{}).get("spec",{})
+          assert spec.get("serviceAccountName")=="plenum-browser-machine-runtime@plenum-computer-browser.iam.gserviceaccount.com"
+          containers=spec.get("containers",[])
+          assert len(containers)==1 and containers[0].get("image")==image
+          env={e["name"]:e.get("value") for e in containers[0].get("env",[])}
+          assert env.get("PLENUM_MCP_OWNER_SUB")=="PENDING_ACTIVATION_NO_OWNER_20261108"
+          assert env.get("PLENUM_MCP_RESOURCE_URL")==url+"/mcp"
+          assert "BROWSER_SESSION_KEY" not in env and "COMPUTER_BROWSER_TOKEN" not in env
+          assert "BROWSER_PROFILE_BUCKET" not in env
+          annotations=meta.get("metadata",{}).get("annotations",{})
+          assert annotations.get("run.googleapis.com/invoker-iam-disabled")!="true"
+          assert annotations.get("run.googleapis.com/iap-enabled")!="true"
+          for binding in policy.get("bindings",[]):
+            assert not {"allUsers","allAuthenticatedUsers"}.intersection(binding.get("members",[]))
+          print("PASS: Exact separate runtime, synthetic non-owner, no session secrets, Cloud Run IAM enforced.")
+          PY
+          ANON="$(curl --silent --show-error --max-time 20 --proto '=https' \
+            -o "$RUNNER_TEMP/facade-anon-body" -w '%{http_code}' "$URL/mcp" || true)"
+          echo "Anonymous GET /mcp: HTTP $ANON"
+          if [[ "$ANON" =~ ^2 ]]; then
+            echo "BLOCKED: Anonymous MCP facade invocation is not denied."
+            exit 1
+          fi
+          gcloud auth print-identity-token \
+            --impersonate-service-account=plenum-browser-deploy@plenum-computer-browser.iam.gserviceaccount.com \
+            --audiences="$URL" --include-email > "$RUNNER_TEMP/facade-token" 2>/dev/null
+          printf 'Authorization: Bearer %s\n' "$(cat "$RUNNER_TEMP/facade-token")" > "$RUNNER_TEMP/facade-auth-header"
+          SIGNED="$(curl --silent --show-error --max-time 30 --proto '=https' \
+            --header @"$RUNNER_TEMP/facade-auth-header" \
+            -o "$RUNNER_TEMP/facade-auth-body" -w '%{http_code}' "$URL/health" || true)"
+          echo "Signed GET /health: HTTP $SIGNED"
+          test "$SIGNED" = "200"
+          python - "$RUNNER_TEMP/facade-auth-body" <<'PY'
+          import json,sys
+          body=json.load(open(sys.argv[1]))
+          assert body["configured"] is True
+          assert body["private_accounts_enabled"] is False
+          assert body["remote_website_writes_enabled"] is False
+          print("PASS: Placeholder facade is IAM-private, alive, and owner actions are disabled.")
+          PY
+      - name: Report result without provider secrets or tokens
+        if: always() && github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          DEPLOY_RESULT: ${{ steps.deploy.outcome }}
+          VERIFY_RESULT: ${{ steps.verify.outcome }}
+          MCP_RESOURCE: ${{ steps.deploy.outputs.mcp_resource }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$VERIFY_RESULT" = "success" ]; then
+            RESULT="PASS: Isolated IAM-private Plenum Browser MCP facade address prepared: $MCP_RESOURCE . Signed /health HTTP 200, anonymous rejected, no owner sessions or website actions. Auth0 API/client and real owner OAuth are NOT YET configured; do not enable public access."
+          elif [ "$DEPLOY_RESULT" = "success" ]; then
+            RESULT="NOT VERIFIED: New IAM-private facade created but final health/IAM checks failed; keep inaccessible. Check workflow logs; do not enable public access."
+          else
+            RESULT="BLOCKED: Dedicated private OAuth facade not created or not confirmed. Existing browser and IAP unchanged; review failed step, no public access authorized."
+          fi
+          gh issue comment "$ISSUE_NUMBER" --body "$RESULT"
