@@ -483,3 +483,7 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [x] Merged [PR #215](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/215), allowing only a dedicated `BROWSER_USE_OPENROUTER_FREE_KEY` with `openrouter/free`; unrelated paid OpenAI keys are ignored. Targeted policy/ledger CI passed. No Browser Use autonomous model step was run, because the key is not connected.
 - [x] Updated [private Computer Browser plugin](https://chatgpt.com/plugins/plugins_6aefd5d509788191a201f947a254b3c0) to 0.4.10; verified manifests, instructions and preserved GitHub integration. No new Cloud/IAM/TinyFish settings changed.
 - [ ] Next true release gate: authorized owner login and private persistent website session, then protected chat-initiated account task. Free-model route is optional and limited to public task proof.
+
+## 2026-11-08: nonsecret IAP redirect-client diagnosis instead of more setup loops
+- [x] Source staged for a single owner-triggered, no-cookie public redirect check that compares Google's live IAP OAuth client against the existing founder-registered client's SHA-256 fingerprint and checks callback shape. Does not read secrets, use the metered browser, modify IAM, publish a login or weaken private Cloud Run.
+- [ ] Pending one owner issue after CI/merge: read only boolean result; no confirmed Google 400 cause before that. Full personal website sessions and Work-equivalent browser execution remain blocked. See [Computer Browser progress ledger](COMPUTER_BROWSER_PROGRESS.md).
