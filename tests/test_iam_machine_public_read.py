@@ -12,6 +12,13 @@ from services.computer_browser.iam_machine_guard import (
     IMAGE, DEPLOYER, RUNTIME, verify_service, verify_service_iam
 )
 
+MACHINE_ENV = {
+    "K_SERVICE": "plenum-computer-browser-machine",
+    "COMPUTER_BROWSER_TOKEN": "",
+    "BROWSER_SESSION_KEY": "",
+    "BROWSER_PROFILE_BUCKET": "",
+}
+
 WEB_AVAILABLE = importlib.util.find_spec("fastapi") and importlib.util.find_spec("httpx")
 if WEB_AVAILABLE:
     from fastapi.testclient import TestClient
@@ -38,7 +45,7 @@ def metadata(enabled=False):
 class MachinePublicReadTests(unittest.TestCase):
     @unittest.skipUnless(WEB_AVAILABLE, "HTTP gateway dependencies installed in dedicated CI")
     def test_public_read_is_off_by_default_even_with_cloud_identity(self):
-        with patch.dict(os.environ, {"MACHINE_IAM_PUBLIC_READ": "false",
+        with patch.dict(os.environ, {**MACHINE_ENV, "MACHINE_IAM_PUBLIC_READ": "false",
                                      "BROWSER_ALLOWED_ORIGINS": "https://example.com"}):
             with patch("services.computer_browser.api.read_public", new_callable=AsyncMock) as mock:
                 r = client.post("/machine/v1/public-read",json={"url":"https://example.com/"})
@@ -51,7 +58,7 @@ class MachinePublicReadTests(unittest.TestCase):
                  "status":200, "title_untrusted":"Example Domain",
                  "external_site_changed":False, "authenticated_site_used":False,
                  "AGI_demonstrated":False}
-        with patch.dict(os.environ, {"MACHINE_IAM_PUBLIC_READ": "true",
+        with patch.dict(os.environ, {**MACHINE_ENV, "MACHINE_IAM_PUBLIC_READ": "true",
                                      "BROWSER_ALLOWED_ORIGINS": "https://example.com"}):
             with patch("services.computer_browser.api.read_public",new_callable=AsyncMock) as mock:
                 mock.return_value=fixture
@@ -62,7 +69,7 @@ class MachinePublicReadTests(unittest.TestCase):
 
     @unittest.skipUnless(WEB_AVAILABLE, "HTTP gateway dependencies installed in dedicated CI")
     def test_deny_private_website_paths_queries_and_extra_data_without_browser_launch(self):
-        with patch.dict(os.environ, {"MACHINE_IAM_PUBLIC_READ":"true",
+        with patch.dict(os.environ, {**MACHINE_ENV, "MACHINE_IAM_PUBLIC_READ":"true",
                                      "BROWSER_ALLOWED_ORIGINS":"https://example.com"}):
             with patch("services.computer_browser.api.read_public", new_callable=AsyncMock) as mock:
                 for url in ("https://example.com/login", "https://example.com/?token=x",
@@ -79,12 +86,30 @@ class MachinePublicReadTests(unittest.TestCase):
 
     @unittest.skipUnless(WEB_AVAILABLE, "HTTP gateway dependencies installed in dedicated CI")
     def test_configuration_cannot_accidentally_enable_broad_origin(self):
-        with patch.dict(os.environ, {"MACHINE_IAM_PUBLIC_READ":"true",
+        with patch.dict(os.environ, {**MACHINE_ENV, "MACHINE_IAM_PUBLIC_READ":"true",
                                      "BROWSER_ALLOWED_ORIGINS":"https://example.com,https://evil.org"}):
             with patch("services.computer_browser.api.read_public", new_callable=AsyncMock) as mock:
                 r=client.post("/machine/v1/public-read",json={"url":"https://example.com/"})
                 self.assertEqual(r.status_code,403)
                 mock.assert_not_awaited()
+
+    @unittest.skipUnless(WEB_AVAILABLE, "HTTP gateway dependencies installed in dedicated CI")
+    def test_wrong_cloud_run_service_or_session_secret_fails_closed(self):
+        from fastapi.testclient import TestClient
+        with patch("services.computer_browser.api.read_public", new_callable=AsyncMock) as mock:
+            for changes in (
+                {"K_SERVICE":"plenum-computer-browser"},
+                {"K_SERVICE":""},
+                {"COMPUTER_BROWSER_TOKEN":"sensitive"},
+                {"BROWSER_SESSION_KEY":"sensitive"},
+                {"BROWSER_PROFILE_BUCKET":"owner-private-sessions"},
+            ):
+                env={**MACHINE_ENV,"MACHINE_IAM_PUBLIC_READ":"true",
+                     "BROWSER_ALLOWED_ORIGINS":"https://example.com",**changes}
+                with self.subTest(changes=changes), patch.dict(os.environ,env,clear=True):
+                    r=client.post("/machine/v1/public-read",json={"url":"https://example.com/"})
+                    self.assertEqual(r.status_code,404)
+            mock.assert_not_awaited()
 
     def test_machine_metadata_policy_never_accept_unexpected_secrets_or_broad_callers(self):
         verify_service(metadata())
