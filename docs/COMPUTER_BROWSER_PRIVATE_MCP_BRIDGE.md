@@ -51,3 +51,24 @@ The fixed fixture feature and complete public-chat transport are now independent
 - [PR #133](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/133) and [owner issue #134](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/134): machine-only image and `MACHINE_IAM_PUBLIC_READ=true` passed real Playwright HTTPS `example.com` read, HTTP 200, anonymous IAM denial, strict no-cookie/no-write checks.
 - [PR #135](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/135) and [chat-created issue #137](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/137): **PASS** for an actual normal-chat owner request traversing connected GitHub → short-lived Google IAM token → private Cloud Run → real Playwright → sanitized public issue response.
 - No third-party website account session was used and no arbitrary remote browser action was enabled. Do not infer private MCP/Work parity from this proof.
+
+## OAuth MCP resource foundation (2026-11-08, offline only)
+
+The new `services/computer_browser/oauth_resource_boundary.py` and `mcp_resource_server.py` reuse official **MCP Python SDK 2.3.0** for the protected resource, tool metadata and HTTP bearer middleware; **there is no homegrown login system**. The offline tests in `tests/test_browser_oauth_resource_boundary.py` sign synthetic RS256 JWTs and reject wrong issuer, audience, owner, client, scope, token expiry, signing algorithm, and cryptographic signature. They also demand HTTP 401 for anonymous `/mcp` calls and verify protected-resource discovery metadata. No real owner account or Google credentials are read in CI.
+
+**Never deploy these files into the current IAP owner service or the IAM-only machine itself.** The eventual OAuth facade must be a **different hostname** and dedicated runtime identity. It must not store browser cookies; the only implemented worker method is the existing fixed public `example.com` fixture over short-lived Google IAM identity, after the dedicated facade identity receives exact-machine `roles/run.invoker` permission.
+
+A future deployment requires an **existing OAuth 2.1 provider**, configured with secure owner login and consent, **S256 PKCE**, supported CIMD or DCR client identification, a `resource` indicator reflected in access-token `aud`, and a provider JWKS. OpenAI's plugin guide: https://developers.openai.com/plugins/build/auth . Prepare only these **nonsecret configuration identifiers** after the provider is selected:
+
+| Setting | Purpose |
+|---|---|
+| `PLENUM_MCP_OAUTH_ISSUER` | Exact signed token issuer, HTTPS |
+| `PLENUM_MCP_RESOURCE_URL` | Full public HTTPS MCP endpoint on a separate hostname, ending in `/mcp` |
+| `PLENUM_MCP_OAUTH_JWKS_URL` | Provider's HTTPS JWKS endpoint on the same host as issuer |
+| `PLENUM_MCP_OWNER_SUB` | Exact immutable OAuth owner subject, not guessed from email |
+| `PLENUM_MCP_ALLOWED_CLIENT_ID` | Provider-recognized client metadata identifier for ChatGPT's OAuth client |
+| `PLENUM_MCP_MACHINE_URL` | Exact existing private `plenum-computer-browser-machine` Cloud Run URL |
+
+The source checks all six before creating an MCP server. Access tokens must be RS256, provider-signed, aud-bound **only** to this resource, issued to the configured subject and exact client ID, carry `browser:read`, and last at most **600 seconds**. Both MCP tools advertise OAuth2 `browser:read` with no write scope. The separate machine invoker identity is obtained from Cloud Run workload credentials, **never** from a JSON key.
+
+**Unfinished verification gates:** obtain the actual provider and founder OAuth authorization, connect the new facade privately to Google IAM with least privilege, deploy and test on an independent hostname, prove unauthorized/wrong-user and revoked-token rejection, verify provider redirects/consent and an actual tool invocation from ChatGPT. Then separately harden private session vault, DNS-rebinding/egress controls and per-action approvals for private accounts and writes. This source-only foundation is **not yet a usable private plugin or Work-like browser**.
