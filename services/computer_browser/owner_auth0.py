@@ -41,7 +41,7 @@ def _config() -> tuple[str, str]:
             and parsed.port in (None, 443)
             and parsed.username is None
             and parsed.password is None
-            and parsed.path in ("", "/")
+            and parsed.path == ""
             and not parsed.query and not parsed.fragment
             and bool(re.fullmatch(
                 r"plenum-browser-owner-auth0-[a-z0-9.-]+[.]run[.]app",
