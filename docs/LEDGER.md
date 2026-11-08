@@ -601,3 +601,8 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [x] [Founder issue #236](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/236) / [workflow #42531734232](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42531734232) **PASS**: previously 600-second temporary setting restored to verified original **900 seconds**. Configuration-only Cloud Run revision retained exact browser image, Auth0 owner identity and encrypted profile vault; anonymous owner routes 401 and Auth0 login 302. No TinyFish; no broader permission grants.
 - [ ] Redacted Cloud Logging probe was unavailable under existing deployment identity, so root cause of prior disconnect remains unconfirmed.
 - [ ] Actual founder screenshot proved demo input, but completing login and encrypted session save/restore remains the next live acceptance gate; custom authenticated browser tools callable directly from ordinary ChatGPT still not verified.
+
+## 2026-11-08 ~17:49 ET: real website login over private Plenum Chromium VERIFIED
+- [x] Founder iPad Edge production screenshot confirms the approved public demonstration website showed `You logged into a secure area!` and `Logged in as tomsmith` inside the authenticated streamed Chromium browser. Real live form fill + website login succeeded, beyond synthetic tests and deployment checks.
+- [ ] Explicit encrypted website session save and independent read-only session restoration remain NOT VERIFIED. Founder must save through existing `Save this website login` control, then inspect `/owner/sessions` preview.
+- [ ] Private authenticated website actions initiated directly in ordinary ChatGPT chat remain unfinished. Do not claim Work/TinyFish parity or AGI.
