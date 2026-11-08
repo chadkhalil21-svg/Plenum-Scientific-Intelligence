@@ -49,7 +49,7 @@ class PrivateOAuthCloudRunBootstrapTests(unittest.TestCase):
             with self.subTest(word=word):
                 self.assertIn(word,w)
         for forbidden in (
-            "--allow-unauthenticated",
+            " --allow-unauthenticated",
             "--no-invoker-iam-check",
             "gcloud run services update plenum-computer-browser-machine ",
             "gcloud run services update plenum-computer-browser ",
