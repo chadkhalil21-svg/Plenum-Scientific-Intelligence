@@ -106,3 +106,7 @@ mount_private_login(app)
 # IAP-only encrypted website session status, preview and revocation.
 from .owner_saved_session import mount_owner_saved_session
 mount_owner_saved_session(app)
+
+# Separate OAuth PKCE owner portal, activated ONLY on its dedicated Cloud Run service.
+from .owner_auth0 import mount_auth0_owner
+mount_auth0_owner(app)
