@@ -35,6 +35,10 @@ jobs:
           echo "Confirmed failed historical build ID and failure status."
           gcloud builds log "$ID" --project="$PROJECT_ID" --region=us-east1 \
             > "$RUNNER_TEMP/mcp-build-readonly.log" 2>&1 || true
+          # This project uses CLOUD_LOGGING_ONLY rather than Cloud Storage logs.
+          gcloud logging read 'resource.type="build" AND resource.labels.build_id="1a4c8fd6-2658-48f8-8957-82bc408389ef"' \
+            --project="$PROJECT_ID" --limit=80 --format='value(textPayload)' \
+            >> "$RUNNER_TEMP/mcp-build-readonly.log" 2>&1 || true
           python - <<'PY'
           import os,re
           lines=open(os.environ['RUNNER_TEMP']+'/mcp-build-readonly.log').read().splitlines()
@@ -43,8 +47,8 @@ jobs:
             r'(?i)(error|failed|failure|syntax|dockerfile|unknown flag|not found|denied|unauthorized|invalid|no such file|step 0)',s
           )]
           for s in selected[-18:]:
-              s=re.sub(r'(?i)(bearer\\s+)[^\\s]+',r'\\1[REDACTED]',s)
-              s=re.sub(r'(?i)(token|password|secret|apikey)\\s*[:=]\\s*[^\\s]+',r'\\1=[REDACTED]',s)
+              s=re.sub(r'(?i)(bearer\s+)[^\s]+',r'\\1[REDACTED]',s)
+              s=re.sub(r'(?i)(token|password|secret|apikey)\s*[:=]\s*[^\s]+',r'\\1=[REDACTED]',s)
               print("DIAGNOSTIC:",s)
           if not selected:
               print("No specific build error line visible; Cloud Logging may require separate Logs Viewer permission.")
