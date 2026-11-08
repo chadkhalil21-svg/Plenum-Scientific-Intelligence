@@ -158,3 +158,11 @@ Zero min instances reduces idle compute charges but does not guarantee zero tota
 Google documentation:
 - https://docs.cloud.google.com/run/docs/authenticating/service-to-service
 - https://docs.cloud.google.com/run/docs/securing/managing-access
+
+## November 7 live IAM machine-health preflight
+
+- [PR #119](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/119) merged successfully after both scientific and private-browser CI completed with success. The new feature is **not a production private browser**, only the IAM-only health connection scaffold.
+- Owner-created [issue #120](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/120) triggered the guarded workflow. It returned **BLOCKED at preflight**, specifically: `Dedicated runtime identity unavailable or machine service already exists. No deployment attempted.`
+- No new Cloud Run service has been confirmed deployed. The workflow's sanitized status does **not distinguish** missing service account, insufficient permissions to read it, or an existing service. Confirm that narrow prerequisite rather than changing the existing IAP service.
+- TinyFish's saved Google Cloud browser session subsequently required a fresh user sign-in; no automated access to Cloud Console is available until the owner signs in through TinyFish's secure profile setup. After sign-in, inspect and create only the dedicated zero-role runtime account if missing, and grant the existing deployer `roles/iam.serviceAccountUser` **on this single account**, not project-wide. Then rerun the same owner-gated workflow.
+- Service creation may incur usage charges despite min instances 0. Preserve owner Cloud Run IAP and all existing project IAM settings throughout.
