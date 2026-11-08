@@ -25,12 +25,13 @@ class MCPPermanentRuntimeIdentityGuard(unittest.TestCase):
             with self.subTest(value=value):
                 self.assertIn(value,text)
         self.assertLess(text.index("name: Require exact existing private"),
-                        text.index("name: Prepare only new keyless"))
+                        text.index("name: Verify existing keyless"))
 
     def test_no_website_access_or_iam_grants(self):
         text=WORKFLOW.read_text(encoding="utf-8")
         forbidden=[
             "gcloud run deploy ", "gcloud run services update ",
+            "gcloud iam service-accounts create",
             "gcloud run services add-iam-policy-binding",
             "gcloud projects add-iam-policy-binding",
             "gcloud iam service-accounts keys create",
