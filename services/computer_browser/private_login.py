@@ -1,4 +1,4 @@
-"""Private IAP-authenticated browser view for one-time site sign-ins.
+"""Privately authenticated browser view for one-time website sign-ins.
 
 The *human*, not ChatGPT, clicks and types into real websites through a
 short-lived Chromium stream. Credentials never enter ChatGPT or public GitHub.
