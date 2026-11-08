@@ -1,5 +1,7 @@
 # Prometheus integration strategy: do not clone everything
 
+**Computer Browser live status:** For the current authoritative capability checklist, evidence, founder mandate and next release gates, read [Computer Browser progress and acceptance ledger](COMPUTER_BROWSER_PROGRESS.md) before making any browser change. This progress file is updated with the associated code/deployment change; do not rely on older status paragraphs in this roadmap.
+
 **Founder mandate:** reuse proven external engines, APIs and connectors, while
 maximizing validated breadth and avoiding duplicated engineering, large bills
 or unnecessary access grants.
