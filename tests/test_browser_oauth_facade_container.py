@@ -51,6 +51,8 @@ class OAuthContainerTests(unittest.TestCase):
                      "COPY services/computer_browser/oauth_resource_boundary.py",
                      "COPY services/computer_browser/mcp_resource_server.py"):
             self.assertIn(item,docker)
+        self.assertNotIn("RUN python - <<",docker, "Cloud Build classic Docker parser must not need heredoc syntax")
+        self.assertIn('"mcp==2.3.0"',docker)
         for forbidden in ("playwright install","browser_cloud_storage","BROWSER_SESSION_KEY",
                           "COMPUTER_BROWSER_TOKEN","iap_identity","--allow-unauthenticated",
                           "COPY services/computer_browser ./services/computer_browser",
