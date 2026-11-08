@@ -114,7 +114,8 @@ jobs:
           rm -f "$RUNNER_TEMP/browser-iap-claims.json" "$RUNNER_TEMP/browser-iap.jwt" "$RUNNER_TEMP/browser-iap-header"
           if [ "$STATUS" != "200" ]; then
             echo "BLOCKED: IAP programmatic health request returned HTTP $STATUS."
-            echo "A 404 may mean restricted ingress, a disabled URL, missing route or an IAP problem."\n            echo "Review the redacted route diagnostic above before changing IAM permissions."
+            echo "A 404 may mean restricted ingress, a disabled URL, missing route or an IAP problem."
+            echo "Review the redacted route diagnostic above before changing IAM permissions."
             exit 1
           fi
           python -m services.computer_browser.programmatic_iap_probe \
