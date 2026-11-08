@@ -1,0 +1,106 @@
+name: Chat-to-IAM Machine Playwright Public Fixture (No Private Data)
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+concurrency:
+  group: plenum-chat-machine-fixture
+  cancel-in-progress: false
+jobs:
+  public-fixture:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == 'Computer Browser: machine public-read' &&
+      github.event.issue.body == 'READ_PUBLIC_EXAMPLE_ONLY:2026-11-08'
+    environment: computer-browser-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Run fixed public page using privately authenticated Chromium
+        id: browser
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          BROWSER_DEPLOY_SA: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCP_PROJECT_ID" = 'plenum-computer-browser'
+          test "$BROWSER_DEPLOY_SA" = 'plenum-browser-deploy@plenum-computer-browser.iam.gserviceaccount.com'
+          umask 077
+          trap 'rm -f "$RUNNER_TEMP/chat-service.json" "$RUNNER_TEMP/chat-policy.json" "$RUNNER_TEMP/chat-id" "$RUNNER_TEMP/chat-auth-header" "$RUNNER_TEMP/chat-response.json" "$RUNNER_TEMP/chat-unsigned"' EXIT
+          gcloud run services describe plenum-computer-browser-machine \
+            --project="$GCP_PROJECT_ID" --region=us-east1 --format=json > "$RUNNER_TEMP/chat-service.json"
+          gcloud run services get-iam-policy plenum-computer-browser-machine \
+            --project="$GCP_PROJECT_ID" --region=us-east1 --format=json > "$RUNNER_TEMP/chat-policy.json"
+          python - <<'PY'
+          import json,os
+          from services.computer_browser.iam_machine_guard import verify_service,verify_service_iam
+          p=os.environ["RUNNER_TEMP"]
+          d=json.load(open(p+"/chat-service.json"))
+          image=d["spec"]["template"]["spec"]["containers"][0]["image"]
+          verify_service(d,expected_image=image,public_read_enabled=True)
+          verify_service_iam(json.load(open(p+"/chat-policy.json")))
+          print("PASS: exact private IAM machine and fixed public-read setting verified.")
+          PY
+          SERVICE_URL="$(gcloud run services describe plenum-computer-browser-machine \
+            --project="$GCP_PROJECT_ID" --region=us-east1 --format='value(status.url)')"
+          case "$SERVICE_URL" in https://plenum-computer-browser-machine-*.run.app) ;; *) exit 1;; esac
+          gcloud auth print-identity-token \
+            --impersonate-service-account="$BROWSER_DEPLOY_SA" \
+            --audiences="$SERVICE_URL" --include-email > "$RUNNER_TEMP/chat-id" 2>/dev/null
+          test -s "$RUNNER_TEMP/chat-id"
+          printf 'Authorization: Bearer %s\n' "$(cat "$RUNNER_TEMP/chat-id")" > "$RUNNER_TEMP/chat-auth-header"
+          STATUS="$(curl --silent --show-error --max-time 60 --proto '=https' \
+            --header @"$RUNNER_TEMP/chat-auth-header" \
+            --header 'Content-Type: application/json' \
+            --data-binary '{"url":"https://example.com/"}' \
+            --output "$RUNNER_TEMP/chat-response.json" --write-out '%{http_code}' \
+            "$SERVICE_URL/machine/v1/public-read" || true)"
+          UNSIGNED="$(curl --silent --show-error --max-time 20 --proto '=https' \
+            --header 'Content-Type: application/json' \
+            --data-binary '{"url":"https://example.com/"}' \
+            --output "$RUNNER_TEMP/chat-unsigned" --write-out '%{http_code}' \
+            "$SERVICE_URL/machine/v1/public-read" || true)"
+          echo "Signed private Playwright HTTP $STATUS; unsigned HTTP $UNSIGNED"
+          test "$STATUS" = "200"
+          python - "$RUNNER_TEMP/chat-response.json" "$UNSIGNED" <<'PY'
+          import json,sys
+          result=json.load(open(sys.argv[1]))
+          anonymous=int(sys.argv[2])
+          assert anonymous not in range(200,300), "Anonymous invocation permitted"
+          assert result.get("schema")=="plenum-private-browser-read-v1"
+          assert result.get("status")==200
+          assert result.get("final_url") in ("https://example.com/","https://example.com")
+          assert result.get("title_untrusted")=="Example Domain"
+          assert result.get("external_site_changed") is False
+          assert result.get("authenticated_site_used") is False
+          assert result.get("AGI_demonstrated") is False
+          print("PASS: Real Microsoft Playwright read from private IAM Cloud Run; no private data or website changes.")
+          PY
+      - name: Publish only non-sensitive proof, never raw webpage content
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          OUTCOME: ${{ steps.browser.outcome }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$OUTCOME" = "success" ]; then
+            MSG="PASS: Chat-triggered private Google IAM machine executed Microsoft Playwright on fixed PUBLIC https://example.com/; HTTP 200, title Example Domain, anonymous access denied, no external changes or stored website session. No private content was placed in this public issue."
+          else
+            MSG="NOT VERIFIED: Fixed-public Playwright machine test failed. No website changes or private account actions requested. Inspect the GitHub workflow without expanding scopes."
+          fi
+          gh issue comment "$ISSUE_NUMBER" --body "$MSG"
