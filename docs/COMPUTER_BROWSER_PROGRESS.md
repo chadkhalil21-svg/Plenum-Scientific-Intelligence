@@ -97,3 +97,11 @@ The founder requires continuous progress awareness: **Before modifying a browser
 - **Latest provider attempt:** an explicitly scoped Google Cloud Console IAM edit through temporary TinyFish reached the existing service account but the permissions dialog stayed loading until the run ended; **no roles were granted**, and no private gateway permissions can be claimed. Continuing metered retries without changed prerequisites is not efficient.
 - **Cost/permissions:** no Cloud Run deployment or IAM grant in this change. TinyFish is not part of this code or its target architecture. Tests may use normal GitHub CI allowances.
 - **Next:** after static security tests pass, connect approval generation to an owner-authenticated private review screen and atomic secret-backed storage, then test a single safe staging-site mutation from private chat transport. P6 remains incomplete until real independent verification.
+
+### 2026-11-08: ChatGPT Computer Browser personal plugin v0.4.7 released and read back
+
+- **Objective:** make future ordinary ChatGPT browser/development requests consult this canonical ledger before work, avoid redoing completed setup, and append evidence-backed progress.
+- **Live verified:** existing personal/private `plenum-computer-browser` plugin upgraded from v0.4.6 to **v0.4.7** through Plugin Creator; exact current release `pluginrel_6af0c088460881919e6cff7e2685b80f`. Readback confirmed both package manifests identify v0.4.7; existing `.app.json` GitHub dependency retained; `skills/computer-browser/SKILL.md` now mandates fresh live GitHub ledger retrieval, explicit completion gates, PR/issue evidence and same-change progress updates.
+- **Limit:** this updates plugin instructions, not the user's ChatGPT plan, Google IAM, Auth0 owner token, installed native custom MCP write tools or real website sessions. The plugin remains GitHub-backed and public-website limited.
+- **Cost/permissions:** no additional browser provider, Cloud Run deployment or permissions granted. No ongoing TinyFish requirement.
+- **Next:** finish narrowly scoped Google service-account authorization from trusted owner control and independently verify the private ChatGPT->OAuth MCP->Cloud Run path; then integrate owner sessions and exact-action approvals, stage-site tests and egress isolation. Keep B9/B10 marked NOT VERIFIED until actual completion.
