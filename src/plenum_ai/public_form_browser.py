@@ -38,10 +38,22 @@ def validate_request(author, title, body):
         task = json.loads(body)
     except (ValueError, TypeError) as exc:
         raise ValueError("Strict JSON task envelope required") from exc
-    if not isinstance(task, dict) or set(task) != {
-        "schema", "url", "form_selector", "field_selector", "query"
-    } or task.get("schema") != SCHEMA:
+    required = {"schema", "url", "form_selector", "field_selector", "query"}
+    if (not isinstance(task, dict) or not required.issubset(task)
+            or not set(task).issubset(required | {"parameters"})
+            or task.get("schema") != SCHEMA):
         raise ValueError("Unexpected browser task shape")
+    params = task.get("parameters", {})
+    if not isinstance(params, dict) or len(params) > 4:
+        raise ValueError("Only four explicit public GET parameters supported")
+    for key, value in params.items():
+        if (not _text(key, 40) or not NAME_RE.fullmatch(key)
+                or any(p in key.lower() for p in (
+                    "token", "password", "secret", "auth", "cookie",
+                    "session", "credential", "nonce", "apikey"
+                ))
+                or not _text(value, 70)):
+            raise PermissionError("Sensitive or malformed public search parameter")
     url = task.get("url")
     if (not allowed_public_url(url) or "?" in url
             or urlsplit(url).fragment or len(url) > 800):
@@ -56,7 +68,7 @@ def validate_request(author, title, body):
     return task
 
 
-def build_public_get_target(page_url, action, method, input_name, query):
+def build_public_get_target(page_url, action, method, input_name, query, parameters=None):
     """Construct GET manually, never execute arbitrary form JavaScript."""
     if not _text(input_name, 60) or not NAME_RE.fullmatch(input_name):
         raise PermissionError("Public search field must have a safe name")
@@ -69,7 +81,11 @@ def build_public_get_target(page_url, action, method, input_name, query):
         raise PermissionError("Search action must stay on an approved public URL")
     if urlsplit(target).hostname != urlsplit(page_url).hostname:
         raise PermissionError("Cross-host form action denied")
-    url = target + ("&" if "?" in target else "?") + urlencode({input_name: query})
+    explicit = parameters or {}
+    if not isinstance(explicit, dict) or input_name in explicit:
+        raise PermissionError("Search query field cannot be overridden")
+    pairs = [(input_name, query)] + list(explicit.items())
+    url = target + "?" + urlencode(pairs)
     if not allowed_public_url(url):
         raise PermissionError("Constructed GET target not approved")
     return url
@@ -115,7 +131,8 @@ async def execute_public_search(task):
             method = await form.get_attribute("method")
             action = await form.get_attribute("action")
             target = build_public_get_target(
-                page.url, action, method, input_name, task["query"]
+                page.url, action, method, input_name, task["query"],
+                task.get("parameters", {})
             )
             await field.fill(task["query"], timeout=8000)
             # Never submit site JavaScript or click arbitrary buttons:
