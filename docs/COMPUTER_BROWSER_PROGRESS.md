@@ -1,6 +1,6 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
-Updated: 2026-11-08 (UTC)
+Updated: 2026-11-08 18:13 UTC
 Owner: Founder, Plenum Industries
 Status: **PARTIAL / NOT WORK-OR-TINYFISH-EQUIVALENT**
 Canonical browser-specific, append-only progress record; keep the broader scientific milestones in [LEDGER.md](LEDGER.md).
@@ -62,3 +62,13 @@ The founder requires continuous progress awareness: **Before modifying a browser
 - **Risk:** complete private authenticated browser and direct ChatGPT MCP tools are still unverified. The earlier five-system list overstates what must be built anew; these are integration, safety and release-validation gates.
 - **Money and permissions:** no extra subscriptions or blanket IAM grants are required merely to maintain this ledger. Cloud Run, storage, GitHub private Actions or temporary TinyFish can incur usage charges.
 - **Next:** validate the existing dedicated MCP runtime identity and least-privilege bridge, then Auth0 owner-token/transport verification; only after that integrate real session actions and approve a staging-site end-to-end test.
+
+### 2026-11-08 18:12 UTC: owner cloud-account verification; IAM bootstrap **blocked**
+
+- **Objective:** verify the already-created dedicated `plenum-browser-mcp-runtime` and minimally authorize the existing deployer and private worker transport, without changing IAP or exposing services publicly.
+- **Live positive evidence:** temporary authenticated browser read-only session accessed Google Cloud Console. The dedicated `plenum-browser-mcp-runtime@plenum-computer-browser.iam.gserviceaccount.com` was visible and **enabled**. Cloud Run service `plenum-computer-browser-mcp` was visible, though its attached runtime and grants were not readable on the loaded page.
+- **No verified permissions changed:** temporary Cloud Shell automation attempted exact resource-level IAM operations but returned no success message or policy readback; treat every requested IAM grant as **unverified**, not completed. Do not run repeated cloud permission grants merely because an automation timed out.
+- **Independent post-attempt proof:** [Founder issue #200](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/200) triggered the existing [Google WIF preflight run 42508804597](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42508804597). **Live Cloud Run service/worker IAM baseline passed**, meaning no unexpected second invoker was observed; **keyless facade account verification failed**, since the GitHub deployer still cannot independently complete its service-account describe and key-list gate. No service/deployment/permissions were changed by that workflow.
+- **Engineering fix in this change:** correct IAM workflow founder result selection so PASS requires all three stages `PREFLIGHT && IDENTITY && VERIFY`. Earlier logic could incorrectly report success if final verification succeeded after a failed identity check.
+- **Status:** P1 remains **BLOCKED**, despite owner confirmation that account exists. P2-P8 remain incomplete. No broad IAM changes, additional cloud deployments, remote website account writes or private ChatGPT MCP tools were enabled.
+- **Next:** from an authenticated owner environment, verify and grant only exactly scoped deployer `roles/iam.serviceAccountUser` on that one MCP runtime, ensure required service-account metadata/key visibility, and then owner-approved `roles/run.invoker` on the *machine service only* for the facade runtime. Independently verify the resulting policy before any facade runtime deployment. Replace P1 blocked only when real Google IAM output and protected workflow pass.
