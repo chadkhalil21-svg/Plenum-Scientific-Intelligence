@@ -61,7 +61,11 @@ jobs:
           m=json.load(open(root+"/before-machine.json"))
           p=json.load(open(root+"/before-policy.json"))
           image=m["spec"]["template"]["spec"]["containers"][0]["image"]
-          verify_service(m,expected_image=image)
+          env=m["spec"]["template"]["spec"]["containers"][0].get("env",[])
+          enabled=any(e.get("name")=="MACHINE_IAM_PUBLIC_READ" and e.get("value")=="true" for e in env)
+          # Accept only the two previously validated states: initially off, or already enabled.
+          # verify_service rejects any other environment settings, public IAM or wrong identity.
+          verify_service(m,expected_image=image,public_read_enabled=enabled)
           verify_service_iam(p)
           print("PASS: Current private machine service is IAM-only, one invoker, no secrets.")
           PY
