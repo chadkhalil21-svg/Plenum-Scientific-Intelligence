@@ -136,12 +136,13 @@ def mount_owner_saved_session(app):
             label = ("Saved encrypted profile exists" if exists is True
                      else "No saved profile" if exists is False
                      else "Unable to check saved profile securely")
+            base="<article><strong>"+escape(site)+"</strong> · "+escape(label)
+            if exists is None:
+                rows.append(base+"<p>Retry after the storage service is available.</p></article>")
+                continue
             rows.append(
-                "<article><strong>" + escape(site) + "</strong> · "
-                + escape(label) +
-                ("<p>Retry after the storage service is available.</p></article>"
-                 if exists is None else
-                "<form method='post' action='/owner/sessions/preview'>")
+                base+
+                "<form method='post' action='/owner/sessions/preview'>"
                 "<input type='hidden' name='site' value='" + escape(site, quote=True) + "'>"
                 "<button type='submit'>Preview saved session (read only)</button>"
                 "</form>"
