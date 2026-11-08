@@ -1,0 +1,151 @@
+name: Prepare Standalone Plenum MCP Runtime Identity (Owner Approved)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/computer-browser-mcp-runtime-identity.yml'
+      - 'tests/test_browser_mcp_runtime_identity.py'
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+concurrency:
+  group: plenum-mcp-keyless-identity
+  cancel-in-progress: false
+jobs:
+  static-policy:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - run: python -m unittest discover -s tests -p 'test_browser_mcp_runtime_identity.py' -v
+  prepare:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == 'Computer Browser: prepare keyless MCP identity' &&
+      github.event.issue.body == 'PREPARE_MCP_RUNTIME_NO_GRANTS:2026-11-08'
+    environment: computer-browser-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Check static scope before Google access
+        run: python -m unittest discover -s tests -p 'test_browser_mcp_runtime_identity.py' -v
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Require exact existing private Cloud Run identities
+        id: preflight
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          BROWSER_DEPLOY_SA: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCP_PROJECT_ID" = 'plenum-computer-browser'
+          test "$BROWSER_DEPLOY_SA" = 'plenum-browser-deploy@plenum-computer-browser.iam.gserviceaccount.com'
+          umask 077
+          trap 'rm -f "$RUNNER_TEMP/worker.json" "$RUNNER_TEMP/worker-iam.json" "$RUNNER_TEMP/facade.json" "$RUNNER_TEMP/facade-iam.json"' EXIT
+          gcloud run services describe plenum-computer-browser-machine --project="$GCP_PROJECT_ID" --region=us-east1 --format=json > "$RUNNER_TEMP/worker.json"
+          gcloud run services get-iam-policy plenum-computer-browser-machine --project="$GCP_PROJECT_ID" --region=us-east1 --format=json > "$RUNNER_TEMP/worker-iam.json"
+          gcloud run services describe plenum-computer-browser-mcp --project="$GCP_PROJECT_ID" --region=us-east1 --format=json > "$RUNNER_TEMP/facade.json"
+          gcloud run services get-iam-policy plenum-computer-browser-mcp --project="$GCP_PROJECT_ID" --region=us-east1 --format=json > "$RUNNER_TEMP/facade-iam.json"
+          python - <<'PY'
+          import json,os
+          from services.computer_browser.iam_machine_guard import verify_service,verify_service_iam
+          folder=os.environ["RUNNER_TEMP"]
+          load=lambda name:json.load(open(folder+"/"+name))
+          worker=load("worker.json")
+          container=worker["spec"]["template"]["spec"]["containers"][0]
+          read_on=any(x.get("name")=="MACHINE_IAM_PUBLIC_READ" and x.get("value")=="true" for x in container.get("env",[]))
+          verify_service(worker,expected_image=container["image"],public_read_enabled=read_on)
+          verify_service_iam(load("worker-iam.json"))
+          facade=load("facade.json")
+          assert facade["metadata"]["name"]=="plenum-computer-browser-mcp"
+          assert facade["status"]["url"]=="https://plenum-computer-browser-mcp-2lak3vl73q-ue.a.run.app"
+          runtime=facade["spec"]["template"]["spec"]
+          assert runtime["serviceAccountName"]=="plenum-browser-machine-runtime@plenum-computer-browser.iam.gserviceaccount.com"
+          assert len(runtime["containers"])==1
+          env={v.get("name"):v.get("value") for v in runtime["containers"][0].get("env",[])}
+          assert len(env)==6
+          assert env["PLENUM_MCP_OWNER_SUB"]=="auth0|bootstrap-locked-not-a-user"
+          assert env["PLENUM_MCP_ALLOWED_CLIENT_ID"]=="plenum-bootstrap-locked-not-a-client"
+          assert env["PLENUM_MCP_RESOURCE_URL"]==facade["status"]["url"]+"/mcp"
+          assert not any("valueFrom" in v for v in runtime["containers"][0].get("env",[]))
+          bindings=load("facade-iam.json").get("bindings",[])
+          assert not ({"allUsers","allAuthenticatedUsers"} & set(m for b in bindings for m in b.get("members",[])))
+          invokers=set(m for b in bindings if b.get("role")=="roles/run.invoker" for m in b.get("members",[]))
+          assert invokers=={"serviceAccount:plenum-browser-deploy@plenum-computer-browser.iam.gserviceaccount.com"}
+          print("PASS: Original worker and inactive gateway remain exactly IAM-private.")
+          PY
+      - name: Prepare only new keyless facade service identity
+        id: identity
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCP_PROJECT_ID" = 'plenum-computer-browser'
+          ACCOUNT="plenum-browser-mcp-runtime"
+          EMAIL="$ACCOUNT@$GCP_PROJECT_ID.iam.gserviceaccount.com"
+          if ! gcloud iam service-accounts describe "$EMAIL" --project="$GCP_PROJECT_ID" --format='value(email)' >/dev/null 2>&1; then
+            gcloud iam service-accounts create "$ACCOUNT" --project="$GCP_PROJECT_ID" \
+              --display-name='Plenum OAuth MCP dedicated runtime' \
+              --description='Keyless identity with no project roles, private browsing or sessions' >/dev/null
+          fi
+          test "$(gcloud iam service-accounts describe "$EMAIL" --project="$GCP_PROJECT_ID" --format='value(email)')" = "$EMAIL"
+          KEY_COUNT="$(gcloud iam service-accounts keys list --iam-account="$EMAIL" --project="$GCP_PROJECT_ID" --managed-by=user --format='value(name)' | wc -l)"
+          test "$KEY_COUNT" -eq 0
+          echo "PASS: Dedicated keyless identity exists. No roles or service invocation granted."
+      - name: Verify worker IAM unchanged
+        id: verify
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          gcloud run services get-iam-policy plenum-computer-browser-machine \
+            --project="$GCP_PROJECT_ID" --region=us-east1 --format=json > "$RUNNER_TEMP/worker-check.json"
+          python - <<'PY'
+          import json,os
+          from services.computer_browser.iam_machine_guard import verify_service_iam
+          p=os.path.join(os.environ["RUNNER_TEMP"],"worker-check.json")
+          verify_service_iam(json.load(open(p)))
+          os.remove(p)
+          print("PASS: Browser worker still has only its original invoker.")
+          PY
+      - name: Return sanitized result to founder issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: chadkhalil21-svg/Plenum-Scientific-Intelligence
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          PREFLIGHT: ${{ steps.preflight.outcome }}
+          IDENTITY: ${{ steps.identity.outcome }}
+          VERIFY: ${{ steps.verify.outcome }}
+        run: |
+          set -euo pipefail
+          if [ "$VERIFY" = "success" ]; then
+            MESSAGE='PASS: Dedicated keyless MCP runtime identity prepared. Existing Cloud Run services, worker IAM and private browser remain unchanged. Owner OAuth and browser writes are NOT activated.'
+          elif [ "$PREFLIGHT" != "success" ]; then
+            MESSAGE='BLOCKED: Existing IAM private service baseline failed; no runtime identity creation attempted.'
+          elif [ "$IDENTITY" != "success" ]; then
+            MESSAGE='BLOCKED: Current Google deployer cannot create or verify the dedicated keyless runtime identity. No Cloud Run service or IAM grants changed.'
+          else
+            MESSAGE='NOT VERIFIED: Dedicated identity may exist, but final IAM verification did not pass. No service or IAM grants changed.'
+          fi
+          gh issue comment "$ISSUE_NUMBER" --body "$MESSAGE"
