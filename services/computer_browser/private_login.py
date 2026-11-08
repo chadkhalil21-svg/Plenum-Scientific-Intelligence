@@ -69,10 +69,10 @@ def login_html(nonce):
     <p><input type="password" id="text" autocomplete="off"
     placeholder="Type privately into selected website field">
     <button id="type" disabled>Type</button>
-    <button id="enter">Enter</button>
-    <button id="tab">Tab</button>
-    <button id="reload">Reload</button>
-    <button id="save">Save this website login</button>
+    <button id="enter" disabled>Enter</button>
+    <button id="tab" disabled>Tab</button>
+    <button id="reload" disabled>Reload</button>
+    <button id="save" disabled>Save this website login</button>
     <button id="close">Close</button></p>
     <script nonce="__NONCE__">
     let ws=null,ready=false,selected="none",pendingText=null,frameNumber=0;
@@ -85,16 +85,24 @@ def login_html(nonce):
       typeButton=document.getElementById("type");
     function updateTypingEnabled(){
       typeButton.disabled=!ready||selected==="none"||pendingText!==null;
+      for(const id of ["enter","tab","reload","save"]){
+        document.getElementById(id).disabled=!ready;
+      }
+    }
+    function clearStalePreview(){
+      ++frameNumber;
+      ctx.clearRect(0,0,1024,720);
     }
     function send(m){
       if(ws&&ws.readyState===WebSocket.OPEN&&ready){
         ws.send(JSON.stringify(m));return true;
       }
-      status.textContent="Browser not connected. Open secure browser again; unsent text is preserved.";
+      fieldStatus.textContent="No live browser connection. Reopen secure browser to resume; previously typed website fields cannot be assumed saved.";
       return false;
     }
     document.getElementById("open").onclick=()=>{
       if(ws)ws.close();
+      clearStalePreview();
       const u=new URL("/owner/live",location.origin);
       u.protocol=location.protocol==="https:"?"wss:":"ws:";
       u.searchParams.set("site",document.getElementById("url").value.trim());
@@ -102,11 +110,12 @@ def login_html(nonce):
       ws=connection;ready=false;selected="none";pendingText=null;
       updateTypingEnabled();
       fieldStatus.textContent="Waiting for live browser picture.";
-      let connected=false,serverStopped=false;
+      let connected=false,serverStopped=false,openedAt=null;
       status.textContent="Connecting to private browser...";
       connection.onopen=()=>{
         if(ws!==connection)return;
-        connected=true;status.textContent="Connected. Starting private Chromium...";
+        connected=true;openedAt=Date.now();
+        status.textContent="Connected. Starting private Chromium...";
       };
       connection.onerror=()=>{
         if(ws!==connection||serverStopped)return;
@@ -115,27 +124,34 @@ def login_html(nonce):
       connection.onclose=e=>{
         if(ws!==connection)return;
         ready=false;selected="none";pendingText=null;updateTypingEnabled();
-        if(serverStopped)return;
-        if(e.code===4403||(!connected&&e.code===1006))
-          status.textContent="Browser connection rejected before opening. Refresh owner sign-in, then retry.";
-        else if(e.code===1000&&connected)
-          status.textContent="Private browser closed.";
-        else
-          status.textContent="Private browser connection interrupted (code "+e.code+").";
-        fieldStatus.textContent="Remote browser closed. Text not confirmed remains in the private box.";
+        clearStalePreview();
+        const elapsed=openedAt===null?"":", after "+Math.round((Date.now()-openedAt)/1000)+" seconds";
+        if(!serverStopped){
+          if(e.code===4403||(!connected&&e.code===1006))
+            status.textContent="Browser sign-in or connection was rejected (code "+e.code+"). Sign in again if needed.";
+          else if(e.code===1000)
+            status.textContent="Private browser session closed"+elapsed+".";
+          else
+            status.textContent="Private browser disconnected"+elapsed+" (code "+e.code+").";
+        }
+        fieldStatus.textContent="The previous browser image has been cleared. Reopen secure browser for a new session; unsaved website fields are not retained.";
       };
       connection.onmessage=e=>{
         if(ws!==connection)return;
         const m=JSON.parse(e.data);
         if(m.type==="status"){
           status.textContent=m.message;
-          if(m.failure===true){serverStopped=true;ready=false;updateTypingEnabled();}
+          if(m.failure===true){
+            serverStopped=true;ready=false;selected="none";updateTypingEnabled();
+            clearStalePreview();
+            fieldStatus.textContent="Browser operation ended; previous image cleared. Reopen secure browser.";
+          }
         }
         if(m.type==="ack"&&m.action==="click"){
           selected=["text","password"].includes(m.field)?m.field:"none";
           fieldStatus.textContent=selected==="password"?"Password field selected. Type privately below."
             :selected==="text"?"Text field selected. Type privately below."
-            :"No editable field selected. Tap the center of a website input.";
+            :"Website click received. For typing, tap the center of a text or password input.";
           updateTypingEnabled();
         }
         if(m.type==="ack"&&m.action==="type"){
@@ -161,6 +177,10 @@ def login_html(nonce):
       };
     };
     function selectInBrowser(e){
+      if(!ready){
+        fieldStatus.textContent="Browser preview is not connected. Open secure browser before tapping its fields.";
+        return;
+      }
       const r=canvas.getBoundingClientRect();
       if(!r.width||!r.height)return;
       const x=Math.max(0,Math.min(1023,Math.floor((e.clientX-r.left)*1024/r.width))),
@@ -339,6 +359,9 @@ def mount_private_login(app):
                     if demo=="0" and not safe_url(page.url):
                         raise PermissionError("Website redirected off authorized origins")
                     await _frame(ws,page)
+                else:
+                    await ws.send_json({"type":"status","failure":True,
+                                        "message":"Browser action limit reached; reopen a fresh browser."})
         except WebSocketDisconnect:
             pass
         except Exception:
