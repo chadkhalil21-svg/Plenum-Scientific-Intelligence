@@ -130,7 +130,7 @@ jobs:
             --timeout=900 \
             --no-allow-unauthenticated --iap \
             --set-secrets COMPUTER_BROWSER_TOKEN=computer-browser-token:latest,BROWSER_SESSION_KEY=computer-browser-session-key:latest \
-            --set-env-vars "BROWSER_ALLOWED_ORIGINS=https://example.com,BROWSER_PROFILE_BUCKET=$BROWSER_PROFILE_BUCKET,COMPUTER_IAP_AUDIENCE=$IAP_AUDIENCE,COMPUTER_OWNER_EMAIL=$COMPUTER_OWNER_EMAIL" \
+            --set-env-vars "^@^BROWSER_ALLOWED_ORIGINS=https://example.com,https://the-internet.herokuapp.com@BROWSER_PROFILE_BUCKET=$BROWSER_PROFILE_BUCKET@COMPUTER_IAP_AUDIENCE=$IAP_AUDIENCE@COMPUTER_OWNER_EMAIL=$COMPUTER_OWNER_EMAIL" \
             --quiet
           SERVICE_URL="$(gcloud run services describe plenum-computer-browser --region "$REGION" --project "$GCP_PROJECT_ID" --format='value(status.url)')"
           case "$SERVICE_URL" in
