@@ -24,6 +24,11 @@ class MCPPermanentRuntimeIdentityGuard(unittest.TestCase):
         for value in expected:
             with self.subTest(value=value):
                 self.assertIn(value,text)
+        self.assertIn(
+            'if [ "$PREFLIGHT" = "success" ] && [ "$IDENTITY" = "success" ] && [ "$VERIFY" = "success" ]; then',
+            text,
+        )
+        self.assertNotIn('if [ "$VERIFY" = "success" ]; then', text)
         self.assertLess(text.index("name: Require exact existing private"),
                         text.index("name: Verify existing keyless"))
 
