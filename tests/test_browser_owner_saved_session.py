@@ -57,6 +57,44 @@ class SavedWebsiteSessionRoutes(unittest.TestCase):
         store.status.assert_called_once_with(
             owner=owner["private_owner_id"], origin="https://example.com")
 
+    def test_approved_demo_preview_checks_protected_page(self):
+        self.assertEqual(
+            owner_saved_session.safe_session_preview_url("https://the-internet.herokuapp.com"),
+            "https://the-internet.herokuapp.com/secure")
+        self.assertEqual(
+            owner_saved_session.safe_session_preview_url("https://example.com"),
+            "https://example.com/")
+
+    def test_session_status_does_not_silently_claim_no_profile_on_storage_error(self):
+        store=self._store()
+        store.status.side_effect=PermissionError("synthetic-cloud-denial-hidden")
+        with patch.object(owner_saved_session.BrowserProfileStore,
+                          "from_environment",return_value=store):
+            resp=client.get("/owner/sessions")
+        self.assertEqual(resp.status_code,200)
+        self.assertIn("Unable to check saved profile securely",resp.text)
+        self.assertNotIn("synthetic-cloud-denial-hidden",resp.text)
+        self.assertNotIn("No saved profile",resp.text)
+        self.assertNotIn("action='/owner/sessions/preview'",resp.text)
+
+    def test_demo_authenticated_proof_requires_explicit_result(self):
+        with patch.dict(os.environ,{
+            "BROWSER_ALLOWED_ORIGINS":"https://the-internet.herokuapp.com"
+        }):
+            with patch.object(owner_saved_session,"read_saved_site",
+                              new_callable=AsyncMock,return_value={
+                "site":"https://the-internet.herokuapp.com",
+                "http_status":200,"title":"Secure Area",
+                "body":"Logged in as tomsmith",
+                "demo_authenticated_restored":True,
+            }):
+                resp=client.post("/owner/sessions/preview",
+                    data={"site":"https://the-internet.herokuapp.com"},
+                    headers={"origin":"https://computer.example.com"})
+                self.assertEqual(resp.status_code,200)
+                self.assertIn("Demo login restoration verified",resp.text)
+                self.assertNotIn("synthetic-secret-cookie",resp.text)
+
     def test_missing_vault_config_fails_closed(self):
         with patch.dict(os.environ, {"BROWSER_PROFILE_BUCKET": "",
                                      "BROWSER_SESSION_KEY": ""}):
