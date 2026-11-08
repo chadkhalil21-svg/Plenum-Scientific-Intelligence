@@ -47,6 +47,17 @@ async def _focused_editable_kind(page):
     }""")
 
 
+def _persist_encrypted_site_profile(*, owner_id, origin, state):
+    """Write only a site-scoped storage state; no secrets or profile IDs in output."""
+    store=BrowserProfileStore.from_environment()
+    generation=store.current_generation(owner=owner_id,origin=origin)
+    if generation is None:
+        store.save_new(owner=owner_id,origin=origin,state=state,ttl_seconds=86400)
+    else:
+        store.replace_if_current(owner=owner_id,origin=origin,state=state,
+                                 expected_generation=generation,ttl_seconds=86400)
+
+
 def login_html(nonce):
     return """<!doctype html><html lang="en"><head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -76,7 +87,7 @@ def login_html(nonce):
     <button id="close">Close</button></p>
     <script nonce="__NONCE__">
     let ws=null,ready=false,selected="none",pendingText=null,frameNumber=0;
-    let lastTouchAt=0;
+    let lastTouchAt=0,saveInFlight=false;
     const canvas=document.getElementById("display"),
       ctx=canvas.getContext("2d"),
       status=document.getElementById("status"),
@@ -85,9 +96,10 @@ def login_html(nonce):
       typeButton=document.getElementById("type");
     function updateTypingEnabled(){
       typeButton.disabled=!ready||selected==="none"||pendingText!==null;
-      for(const id of ["enter","tab","reload","save"]){
+      for(const id of ["enter","tab","reload"]){
         document.getElementById(id).disabled=!ready;
       }
+      document.getElementById("save").disabled=!ready||saveInFlight;
     }
     function clearStalePreview(){
       ++frameNumber;
@@ -107,7 +119,7 @@ def login_html(nonce):
       u.protocol=location.protocol==="https:"?"wss:":"ws:";
       u.searchParams.set("site",document.getElementById("url").value.trim());
       const connection=new WebSocket(u);
-      ws=connection;ready=false;selected="none";pendingText=null;
+      ws=connection;ready=false;selected="none";pendingText=null;saveInFlight=false;
       updateTypingEnabled();
       fieldStatus.textContent="Waiting for live browser picture.";
       let connected=false,serverStopped=false,openedAt=null;
@@ -123,7 +135,7 @@ def login_html(nonce):
       };
       connection.onclose=e=>{
         if(ws!==connection)return;
-        ready=false;selected="none";pendingText=null;updateTypingEnabled();
+        ready=false;selected="none";pendingText=null;saveInFlight=false;updateTypingEnabled();
         clearStalePreview();
         const elapsed=openedAt===null?"":", after "+Math.round((Date.now()-openedAt)/1000)+" seconds";
         if(!serverStopped){
@@ -142,10 +154,18 @@ def login_html(nonce):
         if(m.type==="status"){
           status.textContent=m.message;
           if(m.failure===true){
-            serverStopped=true;ready=false;selected="none";updateTypingEnabled();
+            serverStopped=true;ready=false;selected="none";saveInFlight=false;updateTypingEnabled();
             clearStalePreview();
             fieldStatus.textContent="Browser operation ended; previous image cleared. Reopen secure browser.";
           }
+        }
+        if(m.type==="save_result"){
+          saveInFlight=false;
+          updateTypingEnabled();
+          status.textContent=m.message||"Private session save did not complete.";
+          fieldStatus.textContent=m.ok===true
+            ?"Encrypted website session saved. Open Saved Website Sessions to verify restoration."
+            :"Browser remains open. Saving was not confirmed; do not assume this login is stored.";
         }
         if(m.type==="ack"&&m.action==="click"){
           selected=["text","password"].includes(m.field)?m.field:"none";
@@ -214,7 +234,13 @@ def login_html(nonce):
     document.getElementById("enter").onclick=()=>send({type:"key",key:"Enter"});
     document.getElementById("tab").onclick=()=>send({type:"key",key:"Tab"});
     document.getElementById("reload").onclick=()=>send({type:"reload"});
-    document.getElementById("save").onclick=()=>send({type:"save"});
+    document.getElementById("save").onclick=()=>{
+      if(saveInFlight||!ready)return;
+      if(send({type:"save"})){
+        saveInFlight=true;updateTypingEnabled();
+        status.textContent="Saving encrypted website session...";
+      }
+    };
     document.getElementById("close").onclick=()=>{send({type:"close"});if(ws)ws.close()};
     </script></body></html>""".replace("__NONCE__",nonce)
 
@@ -334,22 +360,27 @@ def mount_private_login(app):
                             await page.reload(wait_until="domcontentloaded",timeout=25000)
                     elif kind=="save":
                         if demo=="1":
-                            await ws.send_json({"type":"status","message":"Offline test does not save login state"})
+                            await ws.send_json({"type":"save_result","ok":False,
+                                "message":"Offline test does not save login state"})
                             continue
-                        origin="https://"+urlsplit(site).hostname
-                        storage=filter_site_storage(await context.storage_state(),origin)
-                        if not storage["cookies"] and not storage["origins"]:
-                            await ws.send_json({"type":"status","message":"No website session to save"})
+                        try:
+                            origin="https://"+urlsplit(site).hostname
+                            storage=filter_site_storage(await context.storage_state(),origin)
+                            if not storage["cookies"] and not storage["origins"]:
+                                await ws.send_json({"type":"save_result","ok":False,
+                                    "message":"No website session data to save. Browser remains open."})
+                                continue
+                            await asyncio.to_thread(_persist_encrypted_site_profile,
+                                owner_id=owner["private_owner_id"],
+                                origin=origin,state=storage)
+                        except Exception:
+                            # Storage errors are not browser failures: never
+                            # reveal GCS metadata, tokens, cookies or key values.
+                            # Keep the original authenticated Chromium live.
+                            await ws.send_json({"type":"save_result","ok":False,
+                                "message":"Encrypted session storage unavailable. Browser remains open; saving was not confirmed."})
                             continue
-                        store=BrowserProfileStore.from_environment()
-                        generation=store.current_generation(owner=owner["private_owner_id"],origin=origin)
-                        if generation is None:
-                            store.save_new(owner=owner["private_owner_id"],origin=origin,
-                                state=storage,ttl_seconds=86400)
-                        else:
-                            store.replace_if_current(owner=owner["private_owner_id"],origin=origin,
-                                state=storage,expected_generation=generation,ttl_seconds=86400)
-                        await ws.send_json({"type":"status",
+                        await ws.send_json({"type":"save_result","ok":True,
                             "message":"Website login saved privately in encrypted storage"})
                         continue
                     elif kind=="close":

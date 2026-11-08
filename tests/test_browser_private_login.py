@@ -29,6 +29,37 @@ class PrivateLoginTests(unittest.TestCase):
         self.assertEqual([c["name"] for c in result["cookies"]],["site"])
         self.assertEqual([x["origin"] for x in result["origins"]],["https://www.kaggle.com"])
 
+    def test_session_writer_uses_owner_origin_and_generation_cas(self):
+        from unittest.mock import MagicMock
+        fake=MagicMock()
+        data={"cookies":[{"name":"synthetic","value":"CI_ONLY"}],"origins":[]}
+        origin="https://example.com"
+        fake.current_generation.return_value=None
+        with patch.object(private_login.BrowserProfileStore,"from_environment",
+                          return_value=fake):
+            private_login._persist_encrypted_site_profile(
+                owner_id="test-owner",origin=origin,state=data)
+        fake.save_new.assert_called_once_with(
+            owner="test-owner",origin=origin,state=data,ttl_seconds=86400)
+        fake.replace_if_current.assert_not_called()
+        fake.reset_mock()
+        fake.current_generation.return_value=42
+        with patch.object(private_login.BrowserProfileStore,"from_environment",
+                          return_value=fake):
+            private_login._persist_encrypted_site_profile(
+                owner_id="test-owner",origin=origin,state=data)
+        fake.replace_if_current.assert_called_once_with(
+            owner="test-owner",origin=origin,state=data,
+            expected_generation=42,ttl_seconds=86400)
+
+    def test_session_writer_propagates_storage_failure_without_disclosing_data(self):
+        with patch.object(private_login.BrowserProfileStore,"from_environment",
+                          side_effect=PermissionError("synthetic storage permission error")):
+            with self.assertRaises(PermissionError):
+                private_login._persist_encrypted_site_profile(
+                    owner_id="test-owner",origin="https://example.com",
+                    state={"cookies":[],"origins":[]})
+
     def test_browser_rejects_anonymous_websocket(self):
         with patch.dict(os.environ,{"BROWSER_PUBLIC_ORIGIN":"http://testserver",
                                    "COMPUTER_BROWSER_CI_ONLY":"true"}):
@@ -72,6 +103,8 @@ class PrivateLoginTests(unittest.TestCase):
                                      {"type":"ack","action":"type","ok":False})
                     ws.send_json({"type":"save"})
                     response=ws.receive_json()
+                    self.assertEqual(response["type"],"save_result")
+                    self.assertFalse(response["ok"])
                     self.assertIn("Offline test",response["message"])
                     ws.send_json({"type":"close"})
 
@@ -147,6 +180,24 @@ class PrivateLoginTests(unittest.TestCase):
                 self.assertEqual(page.locator("#text").input_value(),
                                  "must-preserve-on-failure")
                 self.assertIn("NOT entered",page.locator("#field-status").inner_text())
+                # Save controls remain usable on the live connection while
+                # no secret is persisted by this synthetic browser.
+                page.locator("#save").click()
+                self.assertIn("Saving encrypted website session",
+                              page.locator("#status").inner_text())
+                self.assertTrue(page.locator("#save").is_disabled())
+                page.evaluate("""() => window.__owner_ws.onmessage({
+                  data: JSON.stringify({
+                    type:"save_result",ok:false,
+                    message:"Encrypted session storage unavailable. Browser remains open."
+                  })
+                })""")
+                self.assertFalse(page.locator("#save").is_disabled())
+                self.assertIn("Browser remains open",page.locator("#status").inner_text())
+                self.assertIn("not assume this login is stored",
+                              page.locator("#field-status").inner_text())
+                self.assertEqual(page.locator("#text").input_value(),
+                                 "must-preserve-on-failure")
                 # Model a mobile-network or Cloud Run WebSocket disconnect.
                 # A dead screenshot must not look interactive, and the
                 # diagnostics should report duration/code without secrets.

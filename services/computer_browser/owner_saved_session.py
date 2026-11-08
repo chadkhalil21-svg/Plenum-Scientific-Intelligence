@@ -63,6 +63,13 @@ def _HEADINGS():
     return dict(_HEADERS)
 
 
+def safe_session_preview_url(site):
+    """Use one audited login-protected demo fixture, never arbitrary paths."""
+    if site=="https://the-internet.herokuapp.com":
+        return site+"/secure"
+    return site+"/"
+
+
 async def read_saved_site(*, site, owner):
     """Decrypt only inside the trusted server and restore only one owner/site."""
     store = BrowserProfileStore.from_environment()
@@ -86,15 +93,23 @@ async def read_saved_site(*, site, owner):
                         await route.abort()
                 await context.route("**/*", constrain)
                 page = await context.new_page()
-                resp = await page.goto(site + "/", timeout=20000,
+                resp = await page.goto(safe_session_preview_url(site), timeout=20000,
                                        wait_until="domcontentloaded")
                 if not safe_url(page.url, origins={site}) or resp is None or resp.status >= 400:
                     raise PermissionError("Saved session preview left allowed origin")
                 title = " ".join((await page.title()).split())[:160]
                 body = " ".join((await page.locator("body").inner_text(
                     timeout=7000)).split())[:1200]
-                return {"title": title, "body": body,
-                        "site": site, "http_status": resp.status}
+                # An ordinary HTTP 200 login page is not an authenticated
+                # restore proof. Only the specific public demo fixture has
+                # a trustworthy narrow success check.
+                demo_restored=(site=="https://the-internet.herokuapp.com"
+                    and urlsplit(page.url).path=="/secure"
+                    and "Logged in as" in body
+                    and "Secure Area" in body)
+                return {"title":title,"body":body,
+                        "site":site,"http_status":resp.status,
+                        "demo_authenticated_restored":demo_restored}
             finally:
                 await context.close()
         finally:
@@ -117,11 +132,16 @@ def mount_owner_saved_session(app):
                 exists = bool(store.status(
                     owner=_owner["private_owner_id"], origin=site)["profile_exists"])
             except Exception:
-                exists = False
-            label = "Saved encrypted profile exists" if exists else "No saved profile"
+                exists = None
+            label = ("Saved encrypted profile exists" if exists is True
+                     else "No saved profile" if exists is False
+                     else "Unable to check saved profile securely")
+            base="<article><strong>"+escape(site)+"</strong> · "+escape(label)
+            if exists is None:
+                rows.append(base+"<p>Retry after the storage service is available.</p></article>")
+                continue
             rows.append(
-                "<article><strong>" + escape(site) + "</strong> · "
-                + escape(label) +
+                base+
                 "<form method='post' action='/owner/sessions/preview'>"
                 "<input type='hidden' name='site' value='" + escape(site, quote=True) + "'>"
                 "<button type='submit'>Preview saved session (read only)</button>"
@@ -149,11 +169,17 @@ def mount_owner_saved_session(app):
             raise HTTPException(
                 status_code=502, detail="Saved website preview unavailable"
             ) from exc
+        demo=(site=="https://the-internet.herokuapp.com")
+        verification=("<strong>Demo login restoration verified.</strong>"
+                      if result.get("demo_authenticated_restored")
+                      else "<strong>Demo login restoration NOT verified.</strong>"
+                      if demo else
+                      "<strong>Session preview is read-only; login status is not proven.</strong>")
         return _page("Owner-only saved-session preview",
-                     "<small>The site is read using your server-stored encrypted "
-                     "profile; no credentials are sent to ChatGPT. "
-                     "This does not establish that the site is still logged in.</small>"
-                     "<article><strong>" + escape(result["title"]) + "</strong>\n"
+                     "<small>Website state was loaded from the owner-scoped "
+                     "encrypted profile. No credentials are sent to ChatGPT.</small>"
+                     "<article>"+verification+"\n"
+                     + "<strong>" + escape(result["title"]) + "</strong>\n"
                      + escape(result["site"]) + "\n\n"
                      + escape(result["body"]) + "</article>")
 
