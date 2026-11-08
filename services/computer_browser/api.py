@@ -41,6 +41,26 @@ def healthz():
     return {"service": "plenum-computer-browser", "ready": True,
             "browser_profile_persistence": False, "remote_mutations_enabled": False}
 
+# IAM-only machine smoke route. It intentionally has no application bearer token
+# because Cloud Run already authenticates one exact service-level Invoker identity.
+# It MUST be disabled on the original owner/IAP service, and may only read a
+# fixed public fixture with no site cookies or browser-side writes.
+@app.post("/machine/v1/public-read")
+async def machine_public_read(task: BrowserRequest):
+    if os.environ.get("MACHINE_IAM_PUBLIC_READ") != "true":
+        raise HTTPException(status_code=404, detail="Machine public read unavailable")
+    if (os.environ.get("BROWSER_ALLOWED_ORIGINS") != "https://example.com"
+            or task.url not in ("https://example.com", "https://example.com/")):
+        raise HTTPException(status_code=403, detail="Only the public smoke origin is approved")
+    try:
+        result = await read_public(task.url)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail="Public smoke destination rejected") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Public machine browser smoke failed") from exc
+    return result
+
+
 @app.post("/v1/plan", dependencies=[Depends(auth)])
 async def plan(task: BrowserPlan):
     if not safe_url(task.url):

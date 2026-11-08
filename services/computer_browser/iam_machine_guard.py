@@ -18,7 +18,7 @@ IMAGE = ("us-east1-docker.pkg.dev/plenum-computer-browser/plenum-browser/"
          "a44497b72bc5ace7492838caf9dffb6c0559d985537774997884317b9519bbd0")
 
 
-def verify_service(metadata, expected_image=IMAGE):
+def verify_service(metadata, expected_image=IMAGE, public_read_enabled=False):
     image_prefix = ("us-east1-docker.pkg.dev/plenum-computer-browser/"
                     "plenum-browser/computer-browser@sha256:")
     if not (isinstance(expected_image, str)
@@ -42,10 +42,16 @@ def verify_service(metadata, expected_image=IMAGE):
            for v in containers[0].get("env", [])):
         raise ValueError("Machine smoke service must not receive website session secrets")
     environment = containers[0].get("env", [])
-    if (len(environment) != 1 or
-        environment[0].get("name") != "BROWSER_ALLOWED_ORIGINS" or
-        environment[0].get("value") != "https://example.com"):
-        raise ValueError("Machine health worker may receive only the approved public-origin setting")
+    if not isinstance(environment, list) or any(not isinstance(v, dict) for v in environment):
+        raise ValueError("Invalid machine environment")
+    settings = {v.get("name"): v.get("value") for v in environment}
+    expected_env = {"BROWSER_ALLOWED_ORIGINS": "https://example.com"}
+    if public_read_enabled is True:
+        expected_env["MACHINE_IAM_PUBLIC_READ"] = "true"
+    elif public_read_enabled is not False:
+        raise ValueError("Invalid browser activation flag")
+    if len(environment) != len(expected_env) or settings != expected_env:
+        raise ValueError("Machine environment may only expose the exact approved public fixture mode")
     annotations = m.get("annotations") or {}
     if (annotations.get("run.googleapis.com/iap-enabled", "false").lower() == "true"
         or annotations.get("run.googleapis.com/invoker-iam-disabled", "false").lower() == "true"):
