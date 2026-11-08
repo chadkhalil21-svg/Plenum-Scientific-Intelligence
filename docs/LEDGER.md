@@ -517,3 +517,7 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 ## 2026-11-08: saved browser profile does not equal saved Auth0 login
 - [x] Founder TinyFish profile Save confirmation observed. Read-only run `05cbfa63-7966-43ee-8bc3-90ef0999657b` confirmed `manage.auth0.com` still redirects to login, so Auth0 app setup/activation was **not** performed. Current reported balance approximately $3.24.
 - [ ] New TinyFish owner profile handoff opens Auth0 Applications first. Founder must complete Auth0 login, verify Applications are visible, THEN save profile; no secrets in chat or GitHub. Original Google IAP browser unchanged. Continue [canonical browser ledger](COMPUTER_BROWSER_PROGRESS.md).
+
+## 2026-11-08: Auth0 human-verification loop in remote TinyFish login
+- [x] Founder video shows `Verify you are human` changes briefly to `Verifying...` then resets repeatedly inside TinyFish profile setup. Saving the profile afterward does **not** save an authenticated Auth0 management session. This is consistent with bot challenge or blocked cookies/JS/redirect state, not proof of invalid account credentials.
+- [ ] Do not retry/automate CAPTCHA or turn off bot protection. Have founder log into **https://manage.auth0.com directly in Safari**, configure the existing/new owner PKCE SPA with exact locked portal callback and save public client ID to GitHub Actions variable `AUTH0_OWNER_CLIENT_ID`. Then activate the already prepared owner portal workflow and verify real sign-in. See [Browser Progress](COMPUTER_BROWSER_PROGRESS.md).
