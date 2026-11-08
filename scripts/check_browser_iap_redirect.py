@@ -75,13 +75,59 @@ def classify_oauth_url(url):
     }
 
 
-def inspect_live():
+def check_google_authorization_response(url):
+    """One anonymous request to Google, return ONLY status and a known error class.
+
+    The live OAuth URL contains opaque CSRF state. It stays in volatile memory:
+    no query, response headers, body, cookies or tokens are saved or printed.
+    A bot/anonymous response might differ from the owner's real browser.
+    """
+    if _safe_host(url) not in GOOGLE_OAUTH_HOSTS:
+        return {"google_request_status": "host_not_allowed"}
+    request = urllib.request.Request(
+        url, method="GET",
+        headers={"User-Agent": "Mozilla/5.0 Plenum-Nonsecret-OAuth-Check/1",
+                 "Cache-Control": "no-store", "Accept": "text/html"},
+    )
+    opener = urllib.request.build_opener(_NoRedirect)
+    try:
+        response = opener.open(request, timeout=15)
+        with response:
+            status = response.status
+            body = response.read(65536)
+    except urllib.error.HTTPError as exc:
+        status = exc.code
+        body = exc.read(65536)
+    except (OSError, ValueError) as exc:
+        return {"google_request_status": "network_unavailable",
+                "google_error_class": type(exc).__name__}
+    # Never return raw Google content or derived unrestricted text.
+    text = urllib.parse.unquote(body.decode("utf-8", errors="replace")).lower()
+    classes = (
+        "redirect_uri_mismatch", "deleted_client", "invalid_client",
+        "org_internal", "unauthorized_client", "invalid_request",
+        "invalid_scope", "disallowed_useragent",
+    )
+    matched = [name for name in classes if name in text]
+    return {
+        "google_request_status": int(status),
+        "google_known_error_class": matched[0] if len(matched) == 1 else (
+            "ambiguous" if matched else "not_visible"
+        ),
+        "google_response_may_differ_without_user_cookies": True,
+    }
+
+
+def inspect_live(*, check_google=False):
     opener = urllib.request.build_opener(_NoRedirect)
     current = OWNER_URL
     for hop in range(MAX_HOPS):
         host = _safe_host(current)
         if host in GOOGLE_OAUTH_HOSTS:
-            return {"hop": hop, **classify_oauth_url(current)}
+            result = {"hop": hop, **classify_oauth_url(current)}
+            if check_google:
+                result.update(check_google_authorization_response(current))
+            return result
         if current != OWNER_URL and host not in IAP_REDIRECT_HOSTS:
             return {"status": "non_iap_intermediate_redirect", "hop": hop}
         request = urllib.request.Request(current, method="GET",
@@ -113,4 +159,7 @@ def inspect_live():
 
 if __name__ == "__main__":
     # Never log URLs, secrets, OAuth state, cookie jars or response bodies.
-    print(json.dumps(inspect_live(), sort_keys=True))
+    import sys
+    if sys.argv[1:] not in ([], ["--check-google"]):
+        raise SystemExit("Only --check-google mode is supported")
+    print(json.dumps(inspect_live(check_google="--check-google" in sys.argv), sort_keys=True))
