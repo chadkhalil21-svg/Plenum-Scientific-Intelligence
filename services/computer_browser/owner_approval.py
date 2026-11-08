@@ -23,7 +23,7 @@ from urllib.parse import urlsplit
 MAX_TTL_SECONDS = 600
 MAX_PLAN_BYTES = 16384
 MAX_TOKEN_BYTES = 2048
-_HOST = re.compile(r"^(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z][a-z0-9-]{1,62}$")
+_HOST = re.compile(r"^(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z0-9-]{1,62}$")
 _ALLOWED_ACTIONS = frozenset({"fill", "select", "click", "submit", "upload", "download", "navigate", "delete"})
 
 
