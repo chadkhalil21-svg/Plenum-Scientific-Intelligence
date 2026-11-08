@@ -2,20 +2,28 @@
 
 No Auth0 network, credentials, Cloud Run, browser logins or real site writes.
 """
+import importlib.util
 import os
 import time
 import unittest
+import base64
+import json
+import sys
+import types
 from unittest.mock import patch
 
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-
-from services.computer_browser import owner_auth0
-from services.computer_browser.owner_console import mount_owner_console
+HAS_WEB_DEPS = all(importlib.util.find_spec(x) is not None
+                   for x in ("fastapi", "httpx", "itsdangerous", "authlib"))
+if HAS_WEB_DEPS:
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from itsdangerous import TimestampSigner
+    from services.computer_browser import private_login, owner_auth0
+    from services.computer_browser.owner_console import mount_owner_console
 
 ISSUER = "https://dev-8sylxsg44yh5kkhh.us.auth0.com/"
 SYNTHETIC_ENV = {
-    "K_SERVICE": owner_auth0.SERVICE_NAME,
+    "K_SERVICE": "plenum-browser-owner-auth0",
     "COMPUTER_BROWSER_TOKEN": "Synthetic-only-for-CI-32-byte-secret-unsafe-for-production",
     "COMPUTER_OWNER_EMAIL": "founder@example.org",
     "AUTH0_OWNER_CLIENT_ID": "",
@@ -23,6 +31,7 @@ SYNTHETIC_ENV = {
 }
 
 
+@unittest.skipUnless(HAS_WEB_DEPS, "Auth0 portal's optional web dependencies are not installed")
 class Auth0OwnerTests(unittest.TestCase):
     def test_disabled_in_original_iap_service(self):
         with patch.dict(os.environ, {"K_SERVICE": "plenum-computer-browser"}):
@@ -94,6 +103,62 @@ class Auth0OwnerTests(unittest.TestCase):
                 "x-goog-iap-jwt-assertion": "synthetic-fake-assertion",
                 "x-goog-authenticated-user-email": "founder@example.org",
             }).status_code, 401)
+
+    def test_real_auth0_session_cookie_authorizes_only_bound_websocket(self):
+        # Prove the same HTTPS-only, signed owner cookie can authorize the
+        # live WebSocket. No external site is contacted, and no Chromium starts.
+        with patch.dict(os.environ, {
+            **SYNTHETIC_ENV,
+            "BROWSER_PUBLIC_ORIGIN": "https://testserver",
+            "BROWSER_ALLOWED_ORIGINS": "https://example.com",
+        }, clear=False):
+            app = FastAPI()
+            mount_owner_console(app)
+            private_login.mount_private_login(app)
+            owner_auth0.mount_auth0_owner(app)
+            now = int(time.time())
+            record = {"plenum_auth0_owner_v1": {
+                "owner": "a" * 64, "iat": now - 5, "exp": now + 120,
+            }}
+            signed = TimestampSigner(owner_auth0._session_secret()).sign(
+                base64.b64encode(json.dumps(record).encode())
+            ).decode()
+            ws_url = "/owner/live?site=https%3A%2F%2Fexample.com%2F"
+            headers = {
+                "origin": "https://testserver",
+                "cookie": "__Host-plenum_browser_owner=" + signed,
+            }
+            with TestClient(app, base_url="https://testserver") as client:
+                self.assertEqual(client.get("/owner", headers={
+                    "cookie": headers["cookie"],
+                }).status_code, 200)
+                # The test never starts Playwright: DNS rejection is forced
+                # before async_playwright() is entered. Stub the optional import
+                # rather than downloading Chromium just for an auth-boundary test.
+                stub = types.ModuleType("playwright.async_api")
+                stub.async_playwright = lambda: None
+                with patch.dict(sys.modules, {
+                    "playwright": types.ModuleType("playwright"),
+                    "playwright.async_api": stub,
+                }):
+                    with patch.object(private_login, "public_dns_only",
+                                      side_effect=PermissionError("synthetic closed DNS")):
+                        with client.websocket_connect(ws_url, headers=headers) as ws:
+                            self.assertEqual(ws.receive_json()["type"], "status")
+                            stopped = ws.receive_json()
+                            self.assertTrue(stopped["failure"])
+                            self.assertIn("DNS safety checks", stopped["message"])
+                # Signed cookie alone cannot permit cross-origin browser use.
+                with self.assertRaises(Exception):
+                    with client.websocket_connect(ws_url, headers={
+                        **headers, "origin": "https://attacker.example",
+                    }):
+                        pass
+                with self.assertRaises(Exception):
+                    with client.websocket_connect(ws_url, headers={
+                        "origin": "https://testserver",
+                    }):
+                        pass
 
     def test_fixed_callback_origin_and_no_open_redirect(self):
         with patch.dict(os.environ, {

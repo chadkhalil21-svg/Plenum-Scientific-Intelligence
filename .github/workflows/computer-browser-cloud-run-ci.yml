@@ -71,7 +71,7 @@ jobs:
           python-version: '3.11'
       - name: Install only existing browser engine and HTTP gateway
         run: |
-          python -m pip install -e '.[browser,browser_secure]' fastapi==0.115.12 uvicorn==0.34.2 httpx==0.28.1 PyJWT[crypto]==2.10.1 python-multipart==0.0.20
+          python -m pip install -e '.[browser,browser_secure]' fastapi==0.115.12 uvicorn==0.34.2 httpx==0.28.1 PyJWT[crypto]==2.10.1 python-multipart==0.0.20 itsdangerous==2.2.0
           python -m playwright install --with-deps chromium
       - name: Verify auth, public origins, no remote writes and real local Chromium interactions
         env:

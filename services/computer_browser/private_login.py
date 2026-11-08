@@ -68,12 +68,33 @@ def login_html(nonce):
       if(ws)ws.close();const u=new URL("/owner/live",location.origin);
       u.protocol=location.protocol==="https:"?"wss:":"ws:";
       u.searchParams.set("site",document.getElementById("url").value.trim());
-      ws=new WebSocket(u);
-      ws.onopen=()=>status.textContent="Browser connected.";
-      ws.onclose=()=>status.textContent="Private browser closed.";
-      ws.onerror=()=>status.textContent="Browser unavailable or unauthorized.";
-      ws.onmessage=e=>{const m=JSON.parse(e.data);
-        if(m.type==="status")status.textContent=m.message;
+      const connection=new WebSocket(u);ws=connection;
+      let connected=false,serverStopped=false;
+      status.textContent="Connecting to private browser...";
+      connection.onopen=()=>{
+        if(ws!==connection)return;
+        connected=true;status.textContent="Connected. Starting private Chromium...";
+      };
+      connection.onerror=()=>{
+        if(ws!==connection||serverStopped)return;
+        status.textContent="Secure browser stream unavailable; check sign-in and connectivity.";
+      };
+      connection.onclose=e=>{
+        if(ws!==connection||serverStopped)return;
+        if(e.code===4403||(!connected&&e.code===1006))
+          status.textContent="Browser connection rejected before opening. Refresh owner sign-in, then retry.";
+        else if(e.code===1000&&connected)
+          status.textContent="Private browser closed.";
+        else
+          status.textContent="Private browser connection interrupted (code "+e.code+").";
+      };
+      connection.onmessage=e=>{
+        if(ws!==connection)return;
+        const m=JSON.parse(e.data);
+        if(m.type==="status"){
+          status.textContent=m.message;
+          if(m.failure===true)serverStopped=true;
+        }
         if(m.type==="frame"){const img=new Image();
           img.onload=()=>ctx.drawImage(img,0,0,1024,720);
           img.src="data:image/jpeg;base64,"+m.image;}
@@ -140,11 +161,13 @@ def mount_private_login(app):
             return
 
         browser=None
+        phase="destination_check"
         from playwright.async_api import async_playwright
         try:
             await ws.send_json({"type":"status","message":"Opening private browser"})
             if demo=="0":
                 await asyncio.to_thread(public_dns_only,site)
+            phase="chromium_start"
             async with async_playwright() as playwright:
                 browser=await playwright.chromium.launch(headless=True)
                 context=await browser.new_context(
@@ -163,6 +186,7 @@ def mount_private_login(app):
                 else:
                     await context.route("**/*",lambda route:route.abort())
                 page=await context.new_page()
+                phase="website_load"
                 if demo=="1":
                     await page.set_content("""<html><body>
                         <input id="entry" aria-label="Local field">
@@ -171,6 +195,7 @@ def mount_private_login(app):
                         <p id="out">None</p></body></html>""")
                 else:
                     await page.goto(site,wait_until="domcontentloaded",timeout=25000)
+                phase="live_interaction"
                 await _frame(ws,page)
                 for number in range(160):
                     command=await ws.receive_json()
@@ -225,9 +250,17 @@ def mount_private_login(app):
         except WebSocketDisconnect:
             pass
         except Exception:
+            # Only fixed, non-sensitive phases are shown. Never expose website
+            # URLs, remote page content, cookies, Cloud Run internals or tokens.
+            failures={
+                "destination_check":"Website destination could not pass DNS safety checks.",
+                "chromium_start":"Private Chromium could not start on the browser server.",
+                "website_load":"Approved website did not load in private Chromium.",
+                "live_interaction":"Private browser interaction ended unexpectedly.",
+            }
             try:
-                await ws.send_json({"type":"status",
-                    "message":"Browser session stopped; check site permissions or cloud setup"})
+                await ws.send_json({"type":"status","failure":True,
+                    "message":failures.get(phase,"Private browser operation failed.")})
             except Exception:
                 pass
         finally:

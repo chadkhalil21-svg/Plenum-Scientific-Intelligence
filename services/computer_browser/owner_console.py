@@ -1,8 +1,8 @@
-"""Minimal browser owner's private web console (IAP-verified, read-only).
+"""Minimal browser owner's private web console (verified owner only).
 
 No Javascript, cookies or login credentials reach ChatGPT or public GitHub.
 This is a useful authenticated owner surface for status and public inspection.
-One-time human-operated website sign-in uses a separate IAP-protected page.
+Human-operated website sign-in uses a separate protected browser page.
 This is not ChatGPT model-controlled website login.
 """
 from html import escape
@@ -50,7 +50,7 @@ overflow-wrap:anywhere}small{opacity:.75}a{color:inherit}
 <small>Owner-only verified sign-in · Plenum Prometheus</small>
 <h2>"""+escape(title)+"</h2>"+body+"""<hr>
 <small>Private login is available only after the owner enables the site,
-protected cloud storage and Google authentication. Computer cannot yet operate
+protected cloud storage and verified owner authentication. Computer cannot yet operate
 private websites directly from ordinary ChatGPT messages.</small>
 </body></html>""",headers=_HEADERS)
 
@@ -59,10 +59,10 @@ def mount_owner_console(app):
     @app.get("/owner",response_class=HTMLResponse)
     async def owner_home(_owner=Depends(require_verified_owner)):
         return _page("Connected as verified owner",
-            """<article>Google identity: verified.
+            """<article>Owner identity: verified.
 Browser software: built and tested.
-Private website login: owner-operated only, after cloud deployment.
-Saved sessions: encrypted cloud storage when connected and configured.
+Private website login: owner-operated through the secure sign-in link.
+Saved sessions: encrypted storage configured; live saving requires verification.
 ChatGPT direct website interaction: not yet connected.</article>
 <h2>Sign in to an approved website</h2>
 <p><a href="/owner/sign-in">Open secure website sign-in</a></p>
