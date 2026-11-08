@@ -16,6 +16,8 @@ on:
       - 'tests/test_http_response_diagnostic.py'
       - 'tests/test_iam_machine_health.py'
       - 'tests/test_iam_machine_bootstrap.py'
+      - 'tests/test_cloud_run_safe_health_route.py'
+      - '.github/workflows/computer-browser-iam-machine-route-probe.yml'
       - '.github/workflows/computer-browser-iam-machine-bootstrap.yml'
       - '.github/workflows/computer-browser-iam-machine-health.yml'
       - '.github/workflows/computer-browser-iap-health-probe.yml'
@@ -33,6 +35,8 @@ on:
       - 'tests/test_http_response_diagnostic.py'
       - 'tests/test_iam_machine_health.py'
       - 'tests/test_iam_machine_bootstrap.py'
+      - 'tests/test_cloud_run_safe_health_route.py'
+      - '.github/workflows/computer-browser-iam-machine-route-probe.yml'
       - '.github/workflows/computer-browser-iam-machine-bootstrap.yml'
       - '.github/workflows/computer-browser-iam-machine-health.yml'
       - '.github/workflows/computer-browser-iap-health-probe.yml'
@@ -67,6 +71,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_iam_machine_health.py' -v
       - name: Verify owner-gated machine runtime account bootstrap policy
         run: python -m unittest discover -s tests -p 'test_iam_machine_bootstrap.py' -v
+      - name: Verify Cloud Run-safe health and read-only machine route probe
+        run: python -m unittest discover -s tests -p 'test_cloud_run_safe_health_route.py' -v
       - name: Verify owner-approved programmatic IAP health probe without cloud access
         run: python -m unittest discover -s tests -p 'test_programmatic_iap_probe.py' -v
       - name: Verify 404 route metadata classifier and safe workflow

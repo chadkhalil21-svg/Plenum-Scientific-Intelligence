@@ -35,7 +35,8 @@ class BrowserPlan(BaseModel):
     url: str = Field(min_length=9, max_length=1200)
     actions: list[PlannedAction] = Field(default_factory=list, max_length=20)
 
-@app.get("/healthz")
+@app.get("/health")
+@app.get("/healthz", include_in_schema=False)
 def healthz():
     return {"service": "plenum-computer-browser", "ready": True,
             "browser_profile_persistence": False, "remote_mutations_enabled": False}
