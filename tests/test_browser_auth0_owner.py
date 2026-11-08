@@ -2,6 +2,7 @@
 
 No Auth0 network, credentials, Cloud Run, browser logins or real site writes.
 """
+import importlib.util
 import os
 import time
 import unittest
@@ -11,13 +12,14 @@ import sys
 import types
 from unittest.mock import patch
 
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-from itsdangerous import TimestampSigner
-from services.computer_browser import private_login
-
-from services.computer_browser import owner_auth0
-from services.computer_browser.owner_console import mount_owner_console
+HAS_WEB_DEPS = all(importlib.util.find_spec(x) is not None
+                   for x in ("fastapi", "httpx", "itsdangerous", "authlib"))
+if HAS_WEB_DEPS:
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from itsdangerous import TimestampSigner
+    from services.computer_browser import private_login, owner_auth0
+    from services.computer_browser.owner_console import mount_owner_console
 
 ISSUER = "https://dev-8sylxsg44yh5kkhh.us.auth0.com/"
 SYNTHETIC_ENV = {
@@ -29,6 +31,7 @@ SYNTHETIC_ENV = {
 }
 
 
+@unittest.skipUnless(HAS_WEB_DEPS, "Auth0 portal's optional web dependencies are not installed")
 class Auth0OwnerTests(unittest.TestCase):
     def test_disabled_in_original_iap_service(self):
         with patch.dict(os.environ, {"K_SERVICE": "plenum-computer-browser"}):
