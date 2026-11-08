@@ -69,6 +69,41 @@ jobs:
           rm -f "$RUNNER_TEMP/browser-service-metadata.json"
           echo "Read-only route metadata checked; no IAM or ingress changes."
 
+      - name: Audit only exact IAP and Cloud Run service bindings (no changes)
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROJECT_NUMBER="$(gcloud projects describe "$GCP_PROJECT_ID" --format='value(projectNumber)')"
+          test -n "$PROJECT_NUMBER"
+          IAP_FILE="$RUNNER_TEMP/exact-iap-policy.json"
+          RUN_FILE="$RUNNER_TEMP/exact-run-policy.json"
+          # Never echo raw policy documents containing user account names.
+          if gcloud iap web get-iam-policy \
+               --project="$GCP_PROJECT_ID" --resource-type=cloud-run \
+               --region=us-east1 --service=plenum-computer-browser \
+               --format=json > "$IAP_FILE" 2>/dev/null; then
+            echo "PASS: IAP service-specific policy read."
+          else
+            rm -f "$IAP_FILE"
+            echo "UNAVAILABLE: IAP service-specific policy could not be read."
+          fi
+          if gcloud run services get-iam-policy plenum-computer-browser \
+               --project="$GCP_PROJECT_ID" --region=us-east1 \
+               --format=json > "$RUN_FILE" 2>/dev/null; then
+            echo "PASS: Cloud Run service-specific policy read."
+          else
+            rm -f "$RUN_FILE"
+            echo "UNAVAILABLE: Cloud Run service-specific policy could not be read."
+          fi
+          args=(--project-number "$PROJECT_NUMBER")
+          if [ -f "$IAP_FILE" ]; then args+=(--iap-policy "$IAP_FILE"); fi
+          if [ -f "$RUN_FILE" ]; then args+=(--run-policy "$RUN_FILE"); fi
+          python -m services.computer_browser.iap_policy_audit "${args[@]}"
+          rm -f "$IAP_FILE" "$RUN_FILE"
+          echo "Read-only IAM audit complete. No access grants changed."
+
       - name: Sign health-only JWT with Google IAMCredentials (never export a key)
         id: sign
         env:

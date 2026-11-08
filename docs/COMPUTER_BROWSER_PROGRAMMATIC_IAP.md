@@ -47,3 +47,17 @@ Google's Cloud Run troubleshooting guidance says 404 can arise from a wrong URL,
 A read-only, redacted route metadata check has been added to the health probe. It reports only service readiness, ingress mode, whether the default URL is disabled, and a possible cause. It does not alter ingress, IAP, service identities, or deployments. Run the owner-only workflow again after the updated code is merged. If route metadata is normal, inspect provider request logs and the IAP authorization grant before proposing any changes.
 
 Evidence: GitHub Actions `Verify Computer Browser Programmatic IAP Health (No Deployment)` run #4, screenshot provided in chat. Google reference: https://docs.cloud.google.com/run/docs/troubleshooting
+
+## 2026-11-07: additional read-only findings and exact resource audit
+
+A TinyFish session using the founder-saved Google profile confirmed the active Cloud Run revision is `plenum-computer-browser-00002-8xf`, 100% of traffic, deployed at 19:02:47 EST. Ingress is `ALL`, the default run.app URL is enabled, and IAP plus Cloud Run IAM are both active.
+
+A targeted Logs Explorer search around 22:08–22:16 EST did not show matching Cloud Run revision request logs for the 404; IAMCredentials `GenerateAccessToken` and `SignJwt` entries were observed. No request log **suggests**, but does not prove, a rejection before the container.
+
+TinyFish's project IAM view did not list the deployer's IAP Web App User role or the IAP service agent's Cloud Run Invoker role. **Project-level IAM is not sufficient to conclude these grants are absent**, because they can be applied directly to the IAP Cloud Run resource and Cloud Run service. The IAP resource-policy principals were not fully expanded.
+
+Consequently, the existing no-deployment health probe now executes two extra **read-only** calls: `gcloud iap web get-iam-policy --resource-type=cloud-run --service=plenum-computer-browser --region=us-east1` and `gcloud run services get-iam-policy plenum-computer-browser --region=us-east1`. It prints only sanitized, exact resource-level grant statuses for the deployer and IAP agent; policy files and unrelated principal names are never printed. `unavailable` and `no_explicit_binding` are **not** interpreted as no effective access.
+
+Official Google documentation: https://docs.cloud.google.com/run/docs/securing/identity-aware-proxy-cloud-run and https://docs.cloud.google.com/iap/docs/authentication-howto.
+
+**No permissions or deployment configuration have been changed by this audit.** After CI passes and the code is merged, inspect this audit's results before making any IAM changes.
