@@ -27,3 +27,13 @@ If the health probe works, the GitHub service-to-service route can bypass the fa
 Cost: No build or deployment. One Cloud Run health request and ordinary GitHub Actions usage can still incur provider charges outside eligible allowances.
 
 **Verification status:** source/CI and a live invocation must be checked separately. Do not claim programmatic IAP access until an owner-triggered job genuinely returns PASS.
+
+## Real owner-triggered results (2026-11-07)
+
+- [Issue #105](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/105) ran the first probe but did not provide a result comment.
+- [Issue #107](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/107) returned `NOT VERIFIED` using the new sanitized callback.
+- [Issue #109](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/109) identifies the precise failed **step**: `gcloud iam service-accounts sign-jwt`. Earlier GitHub WIF authentication and service metadata/claim preparation succeeded. No signed request reached Cloud Run.
+
+Next owner-controlled prerequisite: verify that the existing GitHub browser deployment service account is allowed to call `iam.serviceAccounts.signJwt` **on itself only** (e.g., target-resource-scoped `roles/iam.serviceAccountTokenCreator`), and that IAM Service Account Credentials API is enabled. Never grant Token Creator at the whole project level. Inspect the failed Actions step if the reason is uncertain; a failed signing step does not prove which IAM/API subcondition failed. After narrow permission verification, rerun the same owner-only health probe and check any subsequent IAP resource access grant separately.
+
+**Google browser IAP OAuth redirect error 9 remains unresolved for human login, but is not required for the machine-to-machine experiment.** This health probe is not a private logged-in browser or full ChatGPT Work replacement.
