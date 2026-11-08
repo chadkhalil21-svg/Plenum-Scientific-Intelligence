@@ -12,6 +12,7 @@ import hmac
 import os
 import re
 import time
+from urllib.parse import urlsplit
 
 from fastapi import HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -33,10 +34,24 @@ def _config() -> tuple[str, str]:
         raise PermissionError("Auth0 owner gateway is not active in this service")
     client_id = os.environ.get("AUTH0_OWNER_CLIENT_ID", "")
     origin = os.environ.get("AUTH0_OWNER_PUBLIC_ORIGIN", "")
-    if (not REQUIRE_CLIENT_ID.fullmatch(client_id)
-            or not origin.startswith("https://plenum-browser-owner-auth0-")
-            or not origin.endswith(".run.app")
-            or any(ch in origin for ch in "@/?# \\n\\r\\t")):
+    try:
+        parsed = urlsplit(origin)
+        valid_origin = (
+            parsed.scheme == "https"
+            and parsed.port in (None, 443)
+            and parsed.username is None
+            and parsed.password is None
+            and parsed.path in ("", "/")
+            and not parsed.query and not parsed.fragment
+            and bool(re.fullmatch(
+                r"plenum-browser-owner-auth0-[a-z0-9.-]+[.]run[.]app",
+                parsed.hostname or "",
+            ))
+            and not any(ord(ch) < 33 or ord(ch) == 127 for ch in origin)
+        )
+    except ValueError:
+        valid_origin = False
+    if not REQUIRE_CLIENT_ID.fullmatch(client_id) or not valid_origin:
         raise PermissionError("Owner OAuth application is not configured")
     return client_id, origin
 
