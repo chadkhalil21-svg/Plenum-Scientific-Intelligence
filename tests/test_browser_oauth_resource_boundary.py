@@ -46,6 +46,7 @@ class ConfigAndPolicyTests(unittest.TestCase):
             ("client_id",""),
             ("machine_url","https://example.com"),
             ("machine_url", RESOURCE),
+            ("resource", WORKER + "/mcp"),
         ):
             with self.subTest(field=field,value=value),self.assertRaises(ValueError):
                 replace(CFG,**{field:value}).validate()
@@ -239,6 +240,7 @@ class MCPFacadeSourceTests(unittest.TestCase):
         self.assertIn('server.run(transport="streamable-http")',source)
         self.assertIn("validate_token_resource=True",source)
         self.assertIn("required_scopes=[READ_SCOPE]",source)
+        self.assertEqual(source.count('"securitySchemes"'),2)
         self.assertIn("require_owner()",source)
         self.assertIn("bearer.subject != config.owner_sub",source)
         self.assertIn("bearer.client_id != config.client_id",source)
