@@ -47,7 +47,7 @@ button{padding:10px 17px;font:inherit;cursor:pointer}article{padding:16px;
 border:1px solid #8888;border-radius:12px;margin:18px 0;white-space:pre-wrap;
 overflow-wrap:anywhere}small{opacity:.75}a{color:inherit}
 </style></head><body><h1>Computer · Private Browser</h1>
-<small>Owner-only Google sign-in · Plenum Prometheus</small>
+<small>Owner-only verified sign-in · Plenum Prometheus</small>
 <h2>"""+escape(title)+"</h2>"+body+"""<hr>
 <small>Private login is available only after the owner enables the site,
 protected cloud storage and Google authentication. Computer cannot yet operate
