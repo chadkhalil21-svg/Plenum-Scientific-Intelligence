@@ -182,3 +182,13 @@ Google documentation:
 - To separate routing from deployment, owner-only `.github/workflows/computer-browser-iam-machine-route-probe.yml` tests a real authenticated GET on an **existing non-reserved** POST-only `/v1/plan` path. A FastAPI JSON 405, paired with denied anonymous access, proves the Google IAM token reaches the application without invoking any browser task, modifying website content, or changing Google settings.
 - Do not claim the machine browser is operational from a successful deployment alone. After the non-reserved path passes, build/pin a new container image and update **only** the separate IAM machine service with `/health`, then verify signed 200 and anonymous non-2xx before enabling any private tasks.
 
+
+## November 7, late: non-reserved IAM route verified end-to-end
+
+The founder created dedicated `plenum-browser-machine-runtime` and granted existing deployer `roles/iam.serviceAccountUser` scoped to that service account. [Issue #125](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/125) deployed a separate IAM-only `plenum-computer-browser-machine` from the pinned existing image and granted exact service-level `roles/run.invoker`. Its GET `/healthz` probe failed HTTP 404 from both signed and unsigned requests.
+
+Official [Cloud Run known issues](https://docs.cloud.google.com/run/docs/known-issues) says some URL paths ending in `z` are reserved and recommends avoiding all such paths. This matches the failure. [PR #126](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/126) adds safe GET `/health` alias to source and a strictly read-only machine route probe. All CI passed and PR merged.
+
+**Confirmed live result:** [Issue #127](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/127) returned **PASS**: short-lived machine Google ID token authenticated through Cloud Run IAM and reached FastAPI via **GET `/v1/plan`**, receiving expected **JSON HTTP 405 Method Not Allowed** because the endpoint is POST-only; the anonymous request was denied. No browser task, login, site change, IAM update or deployment occurred in this test. This proves the machine-to-machine transport works independently of TinyFish and Google IAP.
+
+The currently deployed immutable image **does not yet contain** the newly merged `/health` route. Updating the machine service image and testing signed /health 200 is a separate release step requiring build/deploy approval and costs. Full private interactive browsing from ChatGPT and persistent sessions are **not yet verified or enabled**. Do not confuse connection verification with full autonomous browser access.
