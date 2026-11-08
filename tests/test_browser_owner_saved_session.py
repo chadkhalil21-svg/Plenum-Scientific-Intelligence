@@ -153,6 +153,19 @@ class SavedWebsiteSessionRoutes(unittest.TestCase):
                     self.assertEqual(response.status_code,403)
             read.assert_not_awaited()
 
+    def test_expired_signed_form_token_is_rejected(self):
+        site="https://example.com"
+        with patch.object(owner_saved_session.time,"time",return_value=1700000000):
+            token=owner_saved_session._owner_form_token(
+                owner["private_owner_id"],site,"preview")
+        with patch.object(owner_saved_session.time,"time",return_value=1700001801):
+            with patch.object(owner_saved_session,"read_saved_site",
+                              new_callable=AsyncMock) as read:
+                response=client.post("/owner/sessions/preview",
+                                     data={"site":site,"csrf_token":token})
+        self.assertEqual(response.status_code,403)
+        read.assert_not_awaited()
+
     def test_revoke_requires_distinct_signed_action_even_with_confirmation(self):
         site="https://example.com"
         store=self._store()
