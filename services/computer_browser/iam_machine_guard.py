@@ -18,7 +18,13 @@ IMAGE = ("us-east1-docker.pkg.dev/plenum-computer-browser/plenum-browser/"
          "a44497b72bc5ace7492838caf9dffb6c0559d985537774997884317b9519bbd0")
 
 
-def verify_service(metadata):
+def verify_service(metadata, expected_image=IMAGE):
+    image_prefix = ("us-east1-docker.pkg.dev/plenum-computer-browser/"
+                    "plenum-browser/computer-browser@sha256:")
+    if not (isinstance(expected_image, str)
+            and expected_image.startswith(image_prefix)
+            and re.fullmatch(r"[a-f0-9]{64}", expected_image[len(image_prefix):])):
+        raise ValueError("Machine image must be immutable and from approved registry")
     if not isinstance(metadata, dict):
         raise ValueError("Invalid Cloud Run metadata")
     m = metadata.get("metadata") or {}
@@ -29,12 +35,17 @@ def verify_service(metadata):
     containers = inner.get("containers") or []
     if (m.get("name") != SERVICE or len(containers) != 1 or
         inner.get("serviceAccountName") != RUNTIME or
-        containers[0].get("image") != IMAGE):
+        containers[0].get("image") != expected_image):
         raise ValueError("Unexpected machine-only service identity, runtime or image")
     if any(v.get("name") in ("COMPUTER_BROWSER_TOKEN", "BROWSER_SESSION_KEY",
                             "BROWSER_PROFILE_BUCKET") or v.get("valueFrom")
            for v in containers[0].get("env", [])):
         raise ValueError("Machine smoke service must not receive website session secrets")
+    environment = containers[0].get("env", [])
+    if (len(environment) != 1 or
+        environment[0].get("name") != "BROWSER_ALLOWED_ORIGINS" or
+        environment[0].get("value") != "https://example.com"):
+        raise ValueError("Machine health worker may receive only the approved public-origin setting")
     annotations = m.get("annotations") or {}
     if (annotations.get("run.googleapis.com/iap-enabled", "false").lower() == "true"
         or annotations.get("run.googleapis.com/invoker-iam-disabled", "false").lower() == "true"):
