@@ -88,7 +88,7 @@ def _verify_owner_form(request, owner_id, site, action, token):
         raise HTTPException(status_code=403,detail="Same-origin owner action required")
     if not isinstance(token,str) or len(token)>1000 or not token:
         raise HTTPException(status_code=403,detail="Owner form verification required")
-    match=re.fullmatch(r"v1\\.([0-9a-f]{8,10})\\.([0-9a-f]{16})\\.([0-9a-f]{64})",token)
+    match=re.fullmatch(r"v1[.]([0-9a-f]{8,10})[.]([0-9a-f]{16})[.]([0-9a-f]{64})",token)
     if match is None or action not in ("preview","revoke"):
         raise HTTPException(status_code=403,detail="Owner form verification required")
     issued_hex,nonce,signature=match.groups()
