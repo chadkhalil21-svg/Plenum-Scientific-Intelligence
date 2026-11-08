@@ -105,6 +105,11 @@ async def execute_public_search(task):
                 raise PermissionError("Expected one public GET search form")
             field = form.locator(task["field_selector"])
             if await field.count() != 1:
+                # Public sites often rename the query field. An unambiguous
+                # ordinary search/text input is safe to identify automatically.
+                # Never select password, hidden, file or arbitrary form fields.
+                field = form.locator('input[type="search"], input[type="text"]')
+            if await field.count() != 1:
                 raise PermissionError("Expected one named public search field")
             input_name = await field.get_attribute("name")
             method = await form.get_attribute("method")
