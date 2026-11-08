@@ -87,8 +87,8 @@ class ResourceConfig:
             raise ValueError("Exact trusted OAuth client ID required")
         if not MACHINE_URL_RE.fullmatch(self.machine_url):
             raise ValueError("Expected exact private IAM machine Cloud Run URL required")
-        if self.resource.rstrip("/") == self.machine_url.rstrip("/"):
-            raise ValueError("Public MCP facade must be separate from IAM-private browser worker")
+        if urlsplit(self.resource).netloc.lower() == urlsplit(self.machine_url).netloc.lower():
+            raise ValueError("Public MCP facade must run on a separate hostname from IAM-private worker")
         return self
 
 
