@@ -47,3 +47,11 @@ Connect the guarded tool interface to LangGraph with a real evaluated model
 and a *bounded* public question; score on clean unseen tasks before allowing
 more tools or automatic browsing. Use Kaggle only for temporary GPU inference
 until a durable provider and budget have been selected.
+
+## 2026-11-08: reuse official MCP from ordinary chats
+
+The official `@playwright/mcp@0.0.84` dependency, official SDK and real page snapshot policy already existed here before new framework comparison. **No new MCP server needs writing.** The `browser-mcp-readonly.yml` workflow now accepts only an owner-created issue with exact title `Computer Browser: run official Playwright MCP` and exact nonsecret body `RUN_VERIFIED_PUBLIC_MCP:example.com:2026-11-08`. It launches the existing pinned MCP stdio runner and posts a sanitized pass/fail result in that issue, with no token or account content. Real chat-to-MCP execution must be marked LIVE VERIFIED only after the issue run passes.
+
+For optional autonomous reasoning, see `../tools/browser-use/public_agent.py` and workflow `browser-use-public-agent.yml`: Browser Use 0.13.14 is an optional Python dependency requiring separately configured LLM API credentials. It is not part of public read tasks and never receives protected website sessions. No model charge occurs without an explicit, owner-scoped public-agent issue and configured model key.
+
+The Playwright tool list alone cannot overcome ChatGPT plan-specific native MCP tool restrictions, nor can it cure Google's owner IAP HTTP 400. Continue using private GitHub for public task commands and a separately authenticated private worker for eventual real accounts.
