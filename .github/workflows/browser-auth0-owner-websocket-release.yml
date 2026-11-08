@@ -1,0 +1,146 @@
+name: Release Existing Auth0 Owner Browser WebSocket Fix (Founder Approved)
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+concurrency:
+  group: plenum-auth0-owner-portal-build
+  cancel-in-progress: false
+jobs:
+  release-auth0-owner-websocket:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == 'Computer Browser: release Auth0 WebSocket diagnosis' &&
+      github.event.issue.body == 'RELEASE_AUTH0_WS_DIAG:2026-11-08'
+    environment: computer-browser-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Verify existing Auth0 portal and preserved owner session configuration
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+          OWNER_CLIENT_CONFIGURED: ${{ vars.AUTH0_OWNER_CLIENT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$PROJECT" = 'plenum-computer-browser'
+          test -n "$OWNER_CLIENT_CONFIGURED"
+          gcloud run services describe plenum-browser-owner-auth0 \
+            --project="$PROJECT" --region=us-east1 --format=json > "$RUNNER_TEMP/owner-before.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"owner-before.json"
+          d=json.loads(p.read_text())
+          assert d["metadata"]["name"]=="plenum-browser-owner-auth0"
+          assert d["status"]["url"]=="https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app"
+          spec=d["spec"]["template"]["spec"]
+          assert spec["serviceAccountName"]=="plenum-browser-runtime@plenum-computer-browser.iam.gserviceaccount.com"
+          env={e["name"]: e for e in spec["containers"][0].get("env",[])}
+          assert env["AUTH0_OWNER_PUBLIC_ORIGIN"].get("value")==d["status"]["url"]
+          assert env["BROWSER_PUBLIC_ORIGIN"].get("value")==d["status"]["url"]
+          assert env["AUTH0_OWNER_CLIENT_ID"].get("value")
+          assert env["BROWSER_PROFILE_BUCKET"].get("value")
+          assert "BROWSER_SESSION_KEY" in env
+          assert "COMPUTER_BROWSER_TOKEN" in env
+          assert "https://the-internet.herokuapp.com" in env["BROWSER_ALLOWED_ORIGINS"].get("value","")
+          p.unlink()
+          print("PASS: Separate Auth0 service, exact owner URL, allowlist, existing private profile vault and tokens present.")
+          PY
+          gcloud run services describe plenum-computer-browser --project="$PROJECT" \
+            --region=us-east1 --format='value(metadata.name)' > /dev/null
+          gcloud artifacts docker images describe \
+            "us-east1-docker.pkg.dev/$PROJECT/plenum-browser/computer-browser:b078968113f0c688873306258c30f1f7aa662457" \
+            --project="$PROJECT" --format='value(image_summary.digest)' > /dev/null
+      - name: Build only updated Auth0 Python layer over existing Chromium image
+        id: build
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE="us-east1-docker.pkg.dev/$PROJECT/plenum-browser/browser-auth0-owner:$GITHUB_SHA"
+          BUILDER="plenum-browser-builder@$PROJECT.iam.gserviceaccount.com"
+          gcloud builds submit . --project="$PROJECT" --region=us-east1 \
+            --service-account="projects/$PROJECT/serviceAccounts/$BUILDER" \
+            --gcs-source-staging-dir="gs://$PROJECT-build-source-98614162800/source" \
+            --config=services/computer_browser/owner-auth0.cloudbuild.yaml \
+            --substitutions="_IMAGE=$IMAGE" --quiet
+          test -n "$(gcloud artifacts docker images describe "$IMAGE" \
+            --project="$PROJECT" --format='value(image_summary.digest)')"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+      - name: Change image ONLY on the existing Auth0 owner portal
+        id: update
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+          IMAGE: ${{ steps.build.outputs.image }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$IMAGE"
+          gcloud run services update plenum-browser-owner-auth0 \
+            --project="$PROJECT" --region=us-east1 --image="$IMAGE" --quiet >/dev/null
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+      - name: Read back identity and verify anonymous denied with unchanged OAuth login
+        id: verify
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+          IMAGE: ${{ steps.update.outputs.image }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run services describe plenum-browser-owner-auth0 \
+            --project="$PROJECT" --region=us-east1 --format=json > "$RUNNER_TEMP/owner-after.json"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          d=json.loads((Path(os.environ["RUNNER_TEMP"])/"owner-after.json").read_text())
+          spec=d["spec"]["template"]["spec"]
+          assert d["status"]["url"]=="https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app"
+          assert spec["serviceAccountName"]=="plenum-browser-runtime@plenum-computer-browser.iam.gserviceaccount.com"
+          assert spec["containers"][0]["image"]==os.environ["IMAGE"]
+          env={e["name"]:e for e in spec["containers"][0]["env"]}
+          assert env["AUTH0_OWNER_PUBLIC_ORIGIN"].get("value")==d["status"]["url"]
+          assert env["BROWSER_PUBLIC_ORIGIN"].get("value")==d["status"]["url"]
+          assert env["AUTH0_OWNER_CLIENT_ID"].get("value")
+          assert env["BROWSER_PROFILE_BUCKET"].get("value")
+          assert "BROWSER_SESSION_KEY" in env
+          assert "COMPUTER_BROWSER_TOKEN" in env
+          (Path(os.environ["RUNNER_TEMP"])/"owner-after.json").unlink()
+          print("PASS: Existing Auth0 owner portal image replaced, identity/config and encrypted session vault preserved.")
+          PY
+          URL="https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app"
+          ROOT="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 "$URL/")"
+          LOGIN="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 "$URL/auth0/login")"
+          OWNER="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 "$URL/owner")"
+          SIGNIN="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 "$URL/owner/sign-in")"
+          test "$ROOT" = '200'
+          test "$LOGIN" = '302'
+          test "$OWNER" = '401'
+          test "$SIGNIN" = '401'
+          echo 'PASS: Auth0 login redirect still 302; anonymous browser endpoints still 401.'
+      - name: Report safe outcome to exact founder issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          RESULT: ${{ steps.verify.outcome }}
+        shell: bash
+        run: |
+          if [ "$RESULT" = 'success' ]; then
+            gh issue comment "$ISSUE" --body 'PASS: Separate Auth0 owner browser updated with bounded remote WebSocket failure-stage reporting and preserved existing secure sessions. Prior private Chromium image reused; IAP service unchanged; Auth0 login still 302, anonymous owner/sign-in 401. Real authenticated WebSocket and website login remain unverified until the founder completes one safe test on the refreshed portal. No TinyFish used.'
+          else
+            gh issue comment "$ISSUE" --body 'BLOCKED: Auth0 WebSocket diagnostic release failed a protected check. The deployment should not be called verified. Inspect the exact failed workflow stage; never open owner pages anonymously or copy login cookies to GitHub.'
+          fi
