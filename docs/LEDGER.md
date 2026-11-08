@@ -537,3 +537,7 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 ## 2026-11-08: browser owner console provider-neutral labels, pending release
 - [x] Prepared PR #223 correcting the stale `Google identity: verified` text in Auth0-protected owner page to `Owner identity: verified`. No security logic or runtime deployment changes. Founder screenshot already proves successful owner session. Source must pass CI and await normal portal redeployment before visual change is live.
 - [ ] Real remote Playwright stream, harmless demonstration website login and encrypted saved-session restore not yet shown. Founder can open `/owner/sign-in` now to verify them, without waiting for text-only release.
+
+## 2026-11-08 16:26 ET: Auth0 private Chromium WebSocket closes without frame
+- [x] Screenshots show `/owner/sign-in` accessible to verified founder but remote WebSocket closes with `Private browser closed` before displaying a frame; real website session not yet verified. Current UI masked the actual reason by overriding server errors.
+- [x] Prepared minimal safe failure-stage reporting for signed-owner WebSocket, Auth0 signer lazy import in original IAP base app, and isolated signed-cookie origin/denied-access test. Code still requires CI/merge and **separate Auth0 portal redeployment**. No TinyFish, sensitive log dumps or public session exposure. Refer to [Computer Browser progress](COMPUTER_BROWSER_PROGRESS.md).
