@@ -58,7 +58,7 @@ def create_private_browser_mcp():
                 or bearer.expires_at <= int(time.time())):
             raise PermissionError("Owner-authenticated browser scope required")
 
-    @server.tool()
+    @server.tool(meta={"securitySchemes": [{"type": "oauth2", "scopes": [READ_SCOPE]}]})
     async def browser_capabilities() -> dict:
         """Report verified read-only capabilities; no private account or writes."""
         require_owner()
@@ -72,7 +72,7 @@ def create_private_browser_mcp():
             "account_changes_available": False,
         }
 
-    @server.tool()
+    @server.tool(meta={"securitySchemes": [{"type": "oauth2", "scopes": [READ_SCOPE]}]})
     async def browser_read_public_fixture() -> dict:
         """Use Google IAM to privately read only the public Example Domain fixture."""
         require_owner()
