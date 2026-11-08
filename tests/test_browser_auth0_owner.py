@@ -7,6 +7,8 @@ import time
 import unittest
 import base64
 import json
+import sys
+import types
 from unittest.mock import patch
 
 from fastapi import FastAPI
