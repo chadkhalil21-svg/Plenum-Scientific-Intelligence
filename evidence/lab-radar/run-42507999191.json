@@ -1,0 +1,105 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "42507999191",
+  "source_revision": "5652742487925e047385a000c46687423db70af3",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-08T18:03:29.283020+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 27,
+    "sources_returning_records": 20,
+    "source_outages": [
+      "nih_biomedical_news",
+      "nature_journal_news",
+      "un_climate_environment",
+      "un_global_news",
+      "gdelt_headlines"
+    ],
+    "new_public_links_before_limit": 8,
+    "signals": [
+      {
+        "category": "discoveries",
+        "publisher": "NASA",
+        "source": "nasa_research",
+        "url": "https://www.nasa.gov/news-release/nasa-announces-1-million-to-students-for-moon-base-challenge/",
+        "title_untrusted": "NASA Announces $1 Million to Students for Moon Base Challenge",
+        "claimed_publication_date": "Sun, 08 Nov 2026 15:26:38 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75464037",
+        "title_untrusted": "M 1.2 - 15 km ENE of Alum Rock, CA",
+        "claimed_publication_date": "1794160460480",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "NASA",
+        "source": "nasa_research",
+        "url": "https://science.nasa.gov/image-article/apod-2026-november-8-major-fireball-meteor/",
+        "title_untrusted": "APOD: 2026 November 8 – Major Fireball Meteor",
+        "claimed_publication_date": "Sun, 08 Nov 2026 05:05:00 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41359983",
+        "title_untrusted": "M 0.7 - 7 km ENE of Anza, CA",
+        "claimed_publication_date": "1794159960480",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "NASA",
+        "source": "nasa_research",
+        "url": "https://www.nasa.gov/news-release/nasa-awards-moon-base-transportation-technology-science-projects/",
+        "title_untrusted": "NASA Awards Moon Base Transportation, Technology, Science Projects",
+        "claimed_publication_date": "Sat, 07 Nov 2026 22:47:03 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026wdudrt",
+        "title_untrusted": "M 1.7 - 32 km WNW of Willow, Alaska",
+        "claimed_publication_date": "1794159590089",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026wdubuj",
+        "title_untrusted": "M 1.7 - 16 km SE of Kasilof, Alaska",
+        "claimed_publication_date": "1794159459804",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
