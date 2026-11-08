@@ -1,0 +1,103 @@
+name: Verify Computer Browser Programmatic IAP Health (No Deployment)
+on:
+  workflow_dispatch:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: computer-browser-iap-health-only
+  cancel-in-progress: false
+jobs:
+  iap-health-only:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event_name == 'issues' &&
+        github.event.issue.user.login == 'chadkhalil21-svg' &&
+        github.event.issue.title == 'Computer Browser: verify programmatic IAP health' &&
+        github.event.issue.body == 'VERIFY_IAP_HEALTH_ONLY:2026-11-07'))
+    environment: computer-browser-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Test the strictly scoped IAP health claim builder
+        run: python -m unittest discover -s tests -p test_programmatic_iap_probe.py -v
+      - name: Authenticate existing short-lived GitHub OIDC to Google
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Verify private service metadata and write one bounded claim to scratch
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          BROWSER_DEPLOY_SA: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCP_PROJECT_ID" = "plenum-computer-browser"
+          test -n "$BROWSER_DEPLOY_SA"
+          SERVICE_URL="$(gcloud run services describe plenum-computer-browser --project="$GCP_PROJECT_ID" --region=us-east1 --format='value(status.url)')"
+          export SERVICE_URL
+          python -m services.computer_browser.programmatic_iap_probe \
+            --cloud-run-url "$SERVICE_URL" --service-account "$BROWSER_DEPLOY_SA" \
+            --claims-file "$RUNNER_TEMP/browser-iap-claims.json"
+          echo "PASS: Cloud Run URL and non-secret scoped claim validated."
+      - name: Sign health-only JWT with Google IAMCredentials (never export a key)
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          BROWSER_DEPLOY_SA: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          if ! gcloud iam service-accounts sign-jwt \
+                "$RUNNER_TEMP/browser-iap-claims.json" \
+                "$RUNNER_TEMP/browser-iap.jwt" \
+                --iam-account="$BROWSER_DEPLOY_SA" \
+                --project="$GCP_PROJECT_ID" --quiet > /dev/null 2>&1; then
+            echo "BLOCKED: the existing GitHub cloud identity lacks permission to sign a self-scoped JWT."
+            echo "Owner may grant roles/iam.serviceAccountTokenCreator on only this target service account, never at project level."
+            exit 1
+          fi
+          test -s "$RUNNER_TEMP/browser-iap.jwt"
+          chmod 600 "$RUNNER_TEMP/browser-iap.jwt"
+          echo "PASS: short-lived health-only service JWT signed without a key download."
+      - name: Verify IAP permits programmatic private Cloud Run health only
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          SERVICE_URL="$(gcloud run services describe plenum-computer-browser --project="$GCP_PROJECT_ID" --region=us-east1 --format='value(status.url)')"
+          export SERVICE_URL
+          python - <<'PY'
+          import os
+          from services.computer_browser.programmatic_iap_probe import health_url
+          assert health_url(os.environ["SERVICE_URL"]).endswith("/healthz")
+          PY
+          umask 077
+          printf 'Proxy-Authorization: Bearer %s\n' "$(cat "$RUNNER_TEMP/browser-iap.jwt")" > "$RUNNER_TEMP/browser-iap-header"
+          RESPONSE="$RUNNER_TEMP/browser-iap-response.json"
+          STATUS="$(curl --silent --show-error --max-time 20 --proto '=https' \
+            --header @"$RUNNER_TEMP/browser-iap-header" \
+            --output "$RESPONSE" --write-out '%{http_code}' \
+            "$SERVICE_URL/healthz" || true)"
+          rm -f "$RUNNER_TEMP/browser-iap-claims.json" "$RUNNER_TEMP/browser-iap.jwt" "$RUNNER_TEMP/browser-iap-header"
+          if [ "$STATUS" != "200" ]; then
+            echo "BLOCKED: IAP programmatic health request returned HTTP $STATUS."
+            echo "Check only the service account's IAP Web App User grant and authentication prerequisites."
+            exit 1
+          fi
+          python -m services.computer_browser.programmatic_iap_probe \
+            --health-response "$RESPONSE"
+          rm -f "$RESPONSE"
+          echo "No browser navigation, site login, writes, deployment, or secret values were used."

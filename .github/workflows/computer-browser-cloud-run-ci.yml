@@ -10,6 +10,8 @@ on:
       - 'tests/test_browser_private_login.py'
       - 'tests/test_computer_browser_gateway.py'
       - 'tests/test_computer_browser_deploy.py'
+      - 'tests/test_programmatic_iap_probe.py'
+      - '.github/workflows/computer-browser-iap-health-probe.yml'
       - '.github/workflows/computer-browser-cloud-run-deploy.yml'
       - '.github/workflows/computer-browser-cloud-run-ci.yml'
       - 'pyproject.toml'
@@ -18,6 +20,8 @@ on:
     paths:
       - 'services/computer_browser/**'
       - 'tests/test_computer_browser_gateway.py'
+      - 'tests/test_programmatic_iap_probe.py'
+      - '.github/workflows/computer-browser-iap-health-probe.yml'
       - '.github/workflows/computer-browser-cloud-run-ci.yml'
       - 'pyproject.toml'
   workflow_dispatch:
@@ -45,6 +49,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_computer_browser_gateway.py' -v
       - name: Verify manual IAM-only cloud deployment safeguards
         run: python -m unittest discover -s tests -p 'test_computer_browser_deploy.py' -v
+      - name: Verify owner-approved programmatic IAP health probe without cloud access
+        run: python -m unittest discover -s tests -p 'test_programmatic_iap_probe.py' -v
       - name: Test encrypted owner-scoped Playwright browser state restoration
         run: python -m unittest discover -s tests -p 'test_browser_session_crypto.py' -v
       - name: Verify encrypted cloud profile storage without real credentials
