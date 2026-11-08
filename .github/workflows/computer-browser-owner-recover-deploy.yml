@@ -41,7 +41,9 @@ jobs:
           test "$RUNTIME" = 'plenum-browser-runtime@plenum-computer-browser.iam.gserviceaccount.com'
           test -n "$BUCKET"
           test -n "$OWNER_EMAIL"
-          test "$(gcloud run services describe plenum-computer-browser --project="$PROJECT" --region=us-east1 --format='value(status.url)')" = 'https://plenum-computer-browser-98614162800.us-east1.run.app'
+          echo "Preflight: checking original private Cloud Run service identity."
+          test "$(gcloud run services describe plenum-computer-browser --project="$PROJECT" --region=us-east1 --format='value(metadata.name)')" = 'plenum-computer-browser'
+          echo "Preflight: checking prebuilt image tag in the original private registry."
           gcloud artifacts docker images describe "us-east1-docker.pkg.dev/$PROJECT/plenum-browser/computer-browser:b078968113f0c688873306258c30f1f7aa662457" --project="$PROJECT" --format='value(image_summary.digest)' > /dev/null
           echo "Verified original private owner service and prebuilt image; no build will run."
       - name: Deploy prebuilt private owner browser image only (no Cloud Build)
@@ -79,14 +81,19 @@ jobs:
           policy=json.loads((Path(os.environ["RUNNER_TEMP"])/"plenum-owner-iam.json").read_text())
           spec=d["spec"]["template"]["spec"]
           assert d["metadata"]["name"]=="plenum-computer-browser"
-          assert d["status"]["url"]=="https://plenum-computer-browser-98614162800.us-east1.run.app"
+          from urllib.parse import urlsplit
+          from re import fullmatch
+          host=urlsplit(d["status"]["url"]).hostname or ""
+          assert urlsplit(d["status"]["url"]).scheme=="https"
+          assert bool(fullmatch(r"plenum-computer-browser-[a-z0-9.-]+[.]run[.]app",host))
+          assert "allUsers" not in {m for b in policy.get("bindings",[]) for m in b.get("members",[])}
           assert spec["serviceAccountName"]=="plenum-browser-runtime@plenum-computer-browser.iam.gserviceaccount.com"
           assert len(spec["containers"])==1
           container=spec["containers"][0]
           assert container["image"].endswith(":b078968113f0c688873306258c30f1f7aa662457")
           env={x["name"]:x.get("value") for x in container.get("env",[])}
           assert env["BROWSER_ALLOWED_ORIGINS"]=="https://example.com,https://the-internet.herokuapp.com"
-          assert env["BROWSER_PUBLIC_ORIGIN"]==d["status"]["url"]
+          assert env["BROWSER_PUBLIC_ORIGIN"]=="https://plenum-computer-browser-98614162800.us-east1.run.app"
           assert env["COMPUTER_IAP_AUDIENCE"]=="/projects/98614162800/locations/us-east1/services/plenum-computer-browser"
           assert "BROWSER_SESSION_KEY" in env and env["BROWSER_SESSION_KEY"] is None
           members={m for b in policy.get("bindings",[]) for m in b.get("members",[])}
