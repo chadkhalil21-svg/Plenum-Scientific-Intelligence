@@ -1,5 +1,6 @@
 """Offline cryptographic and tool-boundary tests, no real OAuth or Cloud Run calls."""
 import asyncio
+import importlib.util
 from dataclasses import replace
 import json
 import os
@@ -99,6 +100,7 @@ class ConfigAndPolicyTests(unittest.TestCase):
                 validate_public_machine_result({**FIXTURE,**updates})
 
 
+@unittest.skipUnless(importlib.util.find_spec("jwt") and importlib.util.find_spec("cryptography"), "JWT signing test requires optional browser_mcp dependencies")
 class SignedJWTTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -158,6 +160,7 @@ def rsa_other_key():
     return rsa.generate_private_key(public_exponent=65537,key_size=2048)
 
 
+@unittest.skipUnless(importlib.util.find_spec("google") and importlib.util.find_spec("httpx") and importlib.util.find_spec("requests"), "IAM adapter test requires optional browser_mcp dependencies")
 class IAMWorkerAdapterTests(unittest.TestCase):
     def test_exact_iam_only_machine_route_no_key_file_no_session(self):
         import httpx
@@ -196,6 +199,7 @@ class IAMWorkerAdapterTests(unittest.TestCase):
             asyncio.run(read_fixed_public_fixture(replace(CFG,machine_url="https://attacker.example")))
 
 
+@unittest.skipUnless(importlib.util.find_spec("mcp") and importlib.util.find_spec("starlette"), "HTTP MCP integration requires official browser_mcp SDK")
 class MCPFacadeTransportTests(unittest.TestCase):
     def test_sdk_publishes_resource_and_blocks_unsigned_mcp_tool_requests(self):
         from starlette.testclient import TestClient
