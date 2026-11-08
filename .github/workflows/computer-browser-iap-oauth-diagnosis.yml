@@ -1,0 +1,75 @@
+name: Diagnose Computer Browser OAuth Redirect (Read Only)
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  diagnose-oauth:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == 'Computer Browser: diagnose OAuth redirect'
+    runs-on: ubuntu-latest
+    environment: computer-browser-production
+    timeout-minutes: 8
+    steps:
+      - name: GitHub short-lived federated Google identity
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+      - name: Install Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+      - name: Check IAP OAuth settings and access permissions without reading secrets aloud
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          OWNER_EMAIL: ${{ vars.COMPUTER_OWNER_EMAIL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCP_PROJECT_ID" = "plenum-computer-browser"
+          umask 077
+          folder="$(mktemp -d)"
+          trap 'rm -rf "$folder"' EXIT
+          for scope in project service; do
+            if [ "$scope" = "project" ]; then
+              args=(--project="$GCP_PROJECT_ID")
+            else
+              args=(--project="$GCP_PROJECT_ID" --resource-type=cloud-run --region=us-east1 --service=plenum-computer-browser)
+            fi
+            if gcloud iap settings get "${args[@]}" --format=json >"$folder/$scope.json" 2>"$folder/error"; then
+              python - "$folder/$scope.json" "$scope" <<'PY'
+          import json,sys
+          raw=json.load(open(sys.argv[1]))
+          a=raw.get("accessSettings",raw.get("access_settings",{}))
+          o=a.get("oauthSettings",a.get("oauth_settings",{}))
+          client=o.get("clientId",o.get("client_id",""))
+          # Print only sanitized booleans. NEVER show OAuth client ID or secret.
+          print(f"IAP_OAUTH_{sys.argv[2].upper()}_CLIENT_ID_PRESENT={bool(client)}")
+          PY
+            else
+              echo "IAP_OAUTH_${scope^^}_STATUS=NOT_AUTHORIZED_OR_UNAVAILABLE"
+            fi
+          done
+          for scope in service project; do
+            if [ "$scope" = "service" ]; then
+              args=(--project="$GCP_PROJECT_ID" --region=us-east1 --resource-type=cloud-run --service=plenum-computer-browser)
+            else
+              args=(--project="$GCP_PROJECT_ID")
+            fi
+            if gcloud iap web get-iam-policy "${args[@]}" --format=json >"$folder/iam-$scope.json" 2>"$folder/error"; then
+              python - "$folder/iam-$scope.json" "$scope" <<'PY'
+          import json,sys,os
+          policy=json.load(open(sys.argv[1]))
+          owner="user:"+os.environ["OWNER_EMAIL"].strip().lower()
+          roles=[b for b in policy.get("bindings",[]) if b.get("role")=="roles/iap.httpsResourceAccessor"]
+          found=any(owner in [x.lower() for x in b.get("members",[])] for b in roles)
+          print(f"IAP_OWNER_{sys.argv[2].upper()}_EXPLICIT_ACCESS={found}")
+          PY
+            else
+              echo "IAP_OWNER_${scope^^}_STATUS=NOT_AUTHORIZED_OR_UNAVAILABLE"
+            fi
+          done
+          echo "IAP diagnosis complete. No secret values printed; no settings changed."
