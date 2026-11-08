@@ -197,7 +197,7 @@ class IAMWorkerAdapterTests(unittest.TestCase):
 
 class MCPFacadeTransportTests(unittest.TestCase):
     def test_sdk_publishes_resource_and_blocks_unsigned_mcp_tool_requests(self):
-        from fastapi.testclient import TestClient
+        from starlette.testclient import TestClient
         from services.computer_browser.mcp_resource_server import create_private_browser_mcp
         env={
             "PLENUM_MCP_OAUTH_ISSUER":ISSUER,
