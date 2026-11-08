@@ -525,3 +525,7 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 ## 2026-11-08 16:05 ET: founder successfully registered dedicated Auth0 owner SPA callback
 - [x] Auth0 first-party `Plenum Computer Browser Owner` now exists and screenshot confirms **successfully saved** callback, logout URL and web origin for deployed alternate portal. Existing ChatGPT CIMD and M2M applications unchanged.
 - [ ] Founder must set public `AUTH0_OWNER_CLIENT_ID` in GitHub Actions repository **Variables** (not a secret). Then trigger already built owner-only activation workflow and verify live login. See [Computer Browser progress](COMPUTER_BROWSER_PROGRESS.md).
+
+## 2026-11-08 16:11 ET: Plenum Auth0 owner portal activated securely
+- [x] Founder Actions variable `AUTH0_OWNER_CLIENT_ID` configured; [issue #222](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/222) / [workflow #42524011270](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42524011270) **SUCCESS**. Separate Auth0 owner portal deployed with existing private GCS encrypted session vault. Live anonymous checks: login 302, protected owner endpoints 401. Original Google IAP browser unchanged; no TinyFish use.
+- [ ] Human founder Auth0 login still pending at https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app/ . Real persistent external website login, confidential chat task transport and full Work/TinyFish parity **not yet verified**. See [Computer Browser progress](COMPUTER_BROWSER_PROGRESS.md).
