@@ -41,6 +41,40 @@ def healthz():
     return {"service": "plenum-computer-browser", "ready": True,
             "browser_profile_persistence": False, "remote_mutations_enabled": False}
 
+def machine_public_read_allowed():
+    """Only the dedicated IAM machine service may run stateless public reading.
+
+    Cloud Run IAM grants invocation to one service account. This application
+    gate prevents the separate IAP owner browser from inheriting this route.
+    The machine has no session vault, browser bearer, or external account login.
+    """
+    return (os.environ.get("K_SERVICE") == "plenum-computer-browser-machine"
+            and os.environ.get("BROWSER_ALLOWED_ORIGINS") == "https://example.com"
+            and not os.environ.get("COMPUTER_BROWSER_TOKEN")
+            and not os.environ.get("BROWSER_PROFILE_BUCKET")
+            and not os.environ.get("BROWSER_SESSION_KEY"))
+
+
+@app.post("/machine/v1/read")
+async def machine_read(task: BrowserRequest):
+    """Machine IAM-only, example.com public GET; never a private account tool."""
+    if not machine_public_read_allowed():
+        raise HTTPException(status_code=404, detail="Not found")
+    if task.url != "https://example.com/":
+        raise HTTPException(status_code=403, detail="Only approved stateless public smoke is enabled")
+    try:
+        result = await read_public(task.url)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail="Destination denied") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Public browser task unavailable") from exc
+    return {"schema": "plenum-machine-public-read-v1",
+            "machine_private_transport": True,
+            "authenticated_website_used": False,
+            "remote_mutations_enabled": False,
+            "result": result}
+
+
 @app.post("/v1/plan", dependencies=[Depends(auth)])
 async def plan(task: BrowserPlan):
     if not safe_url(task.url):
