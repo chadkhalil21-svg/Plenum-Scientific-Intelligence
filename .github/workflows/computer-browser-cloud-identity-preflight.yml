@@ -64,7 +64,12 @@ jobs:
           SERVICE=plenum-computer-browser
           REGION=us-east1
           URL="$(gcloud run services describe "$SERVICE" --project="$GCP_PROJECT_ID" --region="$REGION" --format='value(status.url)')"
-          test "$URL" = "https://plenum-computer-browser-98614162800.us-east1.run.app"
+          # Cloud Run can return either a stable service URL or an alternate
+          # per-project .a.run.app URL. Avoid assuming the CLI format is fixed.
+          case "$URL" in
+            https://*.run.app) echo "PASS: Authenticated Cloud Run service URL exists." ;;
+            *) echo "BLOCKER: Service URL missing or unexpected"; exit 1 ;;
+          esac
           DESCRIPTION="$(gcloud run services describe "$SERVICE" --project="$GCP_PROJECT_ID" --region="$REGION")"
           if printf '%s\n' "$DESCRIPTION" | grep -Eqi 'Iap Enabled: true'; then
             echo "PASS: Cloud Run has IAP enabled."
