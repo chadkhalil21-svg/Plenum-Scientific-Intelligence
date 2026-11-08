@@ -521,3 +521,7 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 ## 2026-11-08: Auth0 human-verification loop in remote TinyFish login
 - [x] Founder video shows `Verify you are human` changes briefly to `Verifying...` then resets repeatedly inside TinyFish profile setup. Saving the profile afterward does **not** save an authenticated Auth0 management session. This is consistent with bot challenge or blocked cookies/JS/redirect state, not proof of invalid account credentials.
 - [ ] Do not retry/automate CAPTCHA or turn off bot protection. Have founder log into **https://manage.auth0.com directly in Safari**, configure the existing/new owner PKCE SPA with exact locked portal callback and save public client ID to GitHub Actions variable `AUTH0_OWNER_CLIENT_ID`. Then activate the already prepared owner portal workflow and verify real sign-in. See [Browser Progress](COMPUTER_BROWSER_PROGRESS.md).
+
+## 2026-11-08 16:05 ET: founder successfully registered dedicated Auth0 owner SPA callback
+- [x] Auth0 first-party `Plenum Computer Browser Owner` now exists and screenshot confirms **successfully saved** callback, logout URL and web origin for deployed alternate portal. Existing ChatGPT CIMD and M2M applications unchanged.
+- [ ] Founder must set public `AUTH0_OWNER_CLIENT_ID` in GitHub Actions repository **Variables** (not a secret). Then trigger already built owner-only activation workflow and verify live login. See [Computer Browser progress](COMPUTER_BROWSER_PROGRESS.md).
