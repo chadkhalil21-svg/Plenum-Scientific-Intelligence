@@ -4,6 +4,21 @@
 maximizing validated breadth and avoiding duplicated engineering, large bills
 or unnecessary access grants.
 
+## Standing founder priority: TinyFish replacement, NOT TinyFish integration
+
+**Non-negotiable destination:** allow the founder to say from an ordinary ChatGPT conversation, without switching to ChatGPT Work or the TinyFish site, "Computer, open this site, click, type, sign in with my authorized browser session, edit/upload/download, and complete this multi-step task." The browser execution must take place in **Plenum-controlled Playwright infrastructure**, with a secure ChatGPT-callable tool interface. TinyFish is **not** a required transport, runtime, session store, or fallback for the completed architecture. Avoid recommending more TinyFish use or spending without a specific owner request. Google Cloud Run/other compute can still incur hosting costs; optimize for idle-zero and strict budgets.
+
+**Accuracy gate (2026-11-08):** the existing `plenum-computer-browser-machine` Cloud Run worker has only a **fixed public example.com read fixture** callable privately; the personal Computer Browser plugin v0.4.1 is **GitHub-backed**, not a direct private MCP connection. The `plenum-computer-browser-mcp` Auth0 facade was deployed **IAM-private** with intentionally impossible owner/client placeholders and is NOT yet callable by ChatGPT. Auth0 CIMD client import and user-delegated `browser:read`/`browser:write` (2/2) are complete. A dedicated keyless MCP runtime service account was created directly by the founder's authenticated Cloud Console session, but the GitHub deployer lacks permission to describe that identity; PR #174 prevents unsafe recreate retries.
+
+**Technical completion gates, in order:**
+1. Verify the new dedicated MCP runtime identity and grant only the minimal service-specific permissions needed for the **facade** to use it, while preserving the worker's separate IAM boundary. Never expand project-wide roles simply to pass CI.
+2. Securely configure immutable Auth0 owner `sub` and registered client identity in protected server configuration; verify real short-lived RS256 Auth0 tokens, issuer, resource audience, scopes, client identity and denied/revoked principals. No credentials in public GitHub.
+3. Make a ChatGPT-reachable **authenticated** MCP endpoint via approved transport; keep the Playwright worker IAM-private. Confirm this ChatGPT account's actual custom MCP tool availability rather than claiming a plugin skill provides native remote tools. OpenAI's current documentation distinguishes full custom MCP availability by account/workspace tier.
+4. Implement and test a constrained **general-purpose** Playwright browser action API (navigate, inspect, click, fill, download/upload where authorized), persistent encrypted owner-bound sessions, URL allowlist/SSRF and DNS-rebinding protections, output isolation, audit logs, timeout/budget caps, and explicit authorization for consequential writes. Auth0's `browser:write` scope alone does not implement these actions.
+5. Prove an actual end-to-end task launched in a **normal ChatGPT chat** and executed on Plenum's browser **without TinyFish**. Do not label the objective completed until this passes.
+
+**User-experience constraint:** ask the founder only for unavoidable account authorization or narrow owner-only IAM operations. Do not repeat completed Auth0 API, scope, CIMD registration, Google IAP, or Playwright bootstrap steps. Avoid conflating an external TinyFish run with completion of the independent browser integration.
+
 ## Actual status as of 2026-11-07
 | Area | Already implemented or verified | Next worthwhile step | Permission/cost |
 |---|---|---|---|
