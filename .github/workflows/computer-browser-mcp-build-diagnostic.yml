@@ -13,9 +13,13 @@ jobs:
       github.event.issue.user.login == 'chadkhalil21-svg' &&
       github.event.issue.title == 'Computer Browser: inspect failed MCP build' &&
       github.event.issue.body == 'READ_CLOUD_BUILD_1a4c8fd6_20261108'
+    environment: computer-browser-production
     runs-on: ubuntu-latest
     timeout-minutes: 4
     steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
