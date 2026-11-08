@@ -16,7 +16,6 @@ from urllib.parse import urlsplit
 
 from fastapi import HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from starlette.middleware.sessions import SessionMiddleware
 
 SERVICE_NAME = "plenum-browser-owner-auth0"
 ISSUER = "https://dev-8sylxsg44yh5kkhh.us.auth0.com/"
@@ -127,6 +126,7 @@ def mount_auth0_owner(app) -> None:
     if not active():
         return
     from authlib.integrations.starlette_client import OAuth
+    from starlette.middleware.sessions import SessionMiddleware
 
     app.add_middleware(
         SessionMiddleware,
