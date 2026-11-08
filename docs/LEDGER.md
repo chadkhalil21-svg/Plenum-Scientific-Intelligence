@@ -533,3 +533,7 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 ## 2026-11-08 16:18 ET: founder owner login to separate Auth0 browser SUCCESS
 - [x] Founder screenshot shows Cloud Run `Computer · Private Browser` console displaying `Connected as verified owner` through the Auth0 owner portal. This proves the human owner authenticated and reached a previously protected owner page. Old `Google identity: verified` console label is stale; original broken Google IAP flow was not repaired.
 - [ ] Click `Open secure website sign-in` and prove live Playwright canvas, harmless demo website sign-in, encrypted saved session and restored preview. Private chat-to-session actions and full Work/TinyFish parity remain outstanding. Canonical [browser progress ledger](COMPUTER_BROWSER_PROGRESS.md) records next steps.
+
+## 2026-11-08: browser owner console provider-neutral labels, pending release
+- [x] Prepared PR #223 correcting the stale `Google identity: verified` text in Auth0-protected owner page to `Owner identity: verified`. No security logic or runtime deployment changes. Founder screenshot already proves successful owner session. Source must pass CI and await normal portal redeployment before visual change is live.
+- [ ] Real remote Playwright stream, harmless demonstration website login and encrypted saved-session restore not yet shown. Founder can open `/owner/sign-in` now to verify them, without waiting for text-only release.
