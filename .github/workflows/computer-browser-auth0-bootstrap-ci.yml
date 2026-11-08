@@ -34,8 +34,8 @@ jobs:
           python - <<'PY'
           import pathlib
           s=pathlib.Path('.github/workflows/computer-browser-auth0-bootstrap-ci.yml').read_text()
-          assert 'google-github-actions/auth@' not in s
-          assert 'id-token: write' not in s
-          assert 'gcloud run deploy' not in s
+          assert "id-token: write" not in s.split("jobs:",1)[0]
+          assert not any(line.lstrip().startswith("- uses: google-github-actions/auth@") for line in s.splitlines())
+          assert not any(line.strip().startswith("gcloud run deploy") for line in s.splitlines())
           print('PASS: Static release checks use no Google credentials or live service.')
           PY
