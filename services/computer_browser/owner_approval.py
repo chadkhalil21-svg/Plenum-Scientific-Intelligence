@@ -39,9 +39,14 @@ def _decode(value: str) -> bytes:
     if not re.fullmatch(r"[A-Za-z0-9_-]+", value):
         raise ApprovalRejected("Invalid approval encoding")
     try:
-        return base64.b64decode(value + ("=" * (-len(value) % 4)), altchars=b"-_", validate=True)
+        decoded=base64.b64decode(value + ("=" * (-len(value) % 4)), altchars=b"-_", validate=True)
     except (ValueError, base64.binascii.Error) as exc:
         raise ApprovalRejected("Invalid approval encoding") from exc
+    # Noncanonical base64url strings can have distinct trailing characters
+    # decoding to exactly the same HMAC bytes. Reject those textual mutations.
+    if _b64(decoded)!=value:
+        raise ApprovalRejected("Noncanonical approval encoding")
+    return decoded
 
 
 def _origin(value: str) -> str:
