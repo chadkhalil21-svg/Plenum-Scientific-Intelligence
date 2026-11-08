@@ -137,3 +137,24 @@ protected key, a private Cloud Storage vault with versioning and TTL,
 human-operated sign-in UI, approved OAuth integration and ownership checks.
 Never return storage-state ciphertext, private cookies or passkeys to
 ChatGPT, model tools, public GitHub, browser logs or screenshots.
+
+## November 7: parallel IAM-only machine connection (staged)
+
+The existing `plenum-computer-browser` Cloud Run deployment **remains IAP-protected**. The live signed IAP health probes returned HTTP 404 even after granting the existing deployment account access to that one IAP resource. We do **not** disable IAP on the owner service.
+
+A separate, purpose-built **health-only** Cloud Run machine endpoint is staged by `.github/workflows/computer-browser-iam-machine-health.yml`. The workflow is gated by owner-created GitHub issue with exact title `Computer Browser: deploy IAM machine health` and body `IAM_MACHINE_HEALTH_APPROVED:2026-11-07`, or manual dispatch with `IAM_MACHINE_HEALTH_APPROVED`.
+
+- New service: `plenum-computer-browser-machine` in `us-east1`. It reuses the **immutable, deployed and verified existing** Playwright image digest without rebuilding it.
+- New isolated runtime: `plenum-browser-machine-runtime@plenum-computer-browser.iam.gserviceaccount.com`. It must be explicitly created with **no project roles or keys**; the current GitHub deployer gets **Service Account User on this one account only**. The workflow fails without the prerequisite. It never creates or edits project-wide IAM policies.
+- Invoker: only the already-connected GitHub deployer service account gets `roles/run.invoker` **on the new machine service alone**.
+- Security: `--no-iap --invoker-iam-check --no-allow-unauthenticated`, on-demand min instances 0/max 1, no Cloud Run secrets, no login vault, no `COMPUTER_BROWSER_TOKEN` app secret. All existing browser endpoints requiring the app bearer fail closed; only `GET /healthz` may succeed for the IAM-authorized identity. The IAP owner console remains unavailable on the machine service without an IAP-signed owner assertion.
+- First live test obtains a short-lived **OIDC ID token** whose audience is exactly the new service's Cloud Run URL; it checks signed `GET /healthz` returns expected JSON and anonymous `GET /healthz` does **not** return 2xx. Tokens never appear in public GitHub issues or log output.
+- Fails closed if a service already exists, if any public invoker binding is present, if the runtime/image differs or if unexpected secret configuration appears. No existing Cloud Run service is modified.
+
+This **does not create a working remote browser tool in ordinary ChatGPT chats**. It tests the secure machine-to-machine transport, after which private read-only browser actions can be added with an independently authenticated app-layer gateway, approved origins, and a private task/result transport. Full authenticated browsing requires further profile isolation and explicit action approvals.
+
+Zero min instances reduces idle compute charges but does not guarantee zero total Google Cloud spending. No usage projections or user credits can be relied upon without current billing data. If this health-only service is not needed, it can be deleted separately without touching the IAP owner browser.
+
+Google documentation:
+- https://docs.cloud.google.com/run/docs/authenticating/service-to-service
+- https://docs.cloud.google.com/run/docs/securing/managing-access
