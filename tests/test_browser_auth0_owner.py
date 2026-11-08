@@ -23,7 +23,7 @@ if HAS_WEB_DEPS:
 
 ISSUER = "https://dev-8sylxsg44yh5kkhh.us.auth0.com/"
 SYNTHETIC_ENV = {
-    "K_SERVICE": owner_auth0.SERVICE_NAME,
+    "K_SERVICE": "plenum-browser-owner-auth0",
     "COMPUTER_BROWSER_TOKEN": "Synthetic-only-for-CI-32-byte-secret-unsafe-for-production",
     "COMPUTER_OWNER_EMAIL": "founder@example.org",
     "AUTH0_OWNER_CLIENT_ID": "",
