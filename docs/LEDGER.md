@@ -385,3 +385,10 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [x] Browser worker adapter is deliberately limited to the existing public `example.com` fixture; response strips unapproved fields. Dedicated facade identity must later obtain exact-service Google IAM Invoker; source code alone does not grant it.
 - [x] Synthetic RSA signature, forged/wrong-user/wrong-client/wrong-scope, HTTP anonymous 401, metadata-discovery, wrong worker and output-minimization tests run without website logins, Cloud Run changes or user credentials.
 - [ ] **Not operational:** provider OAuth consent/CIMD config, deployed facade on a separate HTTPS host, real Google workload identity grant, ChatGPT-to-facade connection, private sessions, arbitrary site actions and approvals. Do not claim ChatGPT Work equivalence or native private website access.
+
+## 2026-11-08: OAuth facade Cloud Run packaging and managed-provider readiness
+- [x] [PR #144](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/144) packages a separate nonroot OAuth MCP ASGI app and test-built container for later Cloud Run deployment; no browser, cookies, sessions, IAP changes or IAM grants are included.
+- [x] OAuth bearer policy updated for Auth0's documented optional issuer-owned `/userinfo` second audience, with synthetic RSA regression tests rejecting arbitrary other audiences.
+- [x] Detached container/HTTP checks validate its `/health` endpoint and anonymous `/mcp` refusal before any real deployment.
+- [ ] Managed identity provider tenant and owner consent still required. One-time nonsecret Auth0 tenant domain is the prerequisite; instructions are in `docs/COMPUTER_BROWSER_AUTH0_BOOTSTRAP.md`.
+- [ ] Distinct HTTPS Cloud Run facade, provider JWKS/API scope, exact owner subject/client ID, ChatGPT OAuth plugin connection and private browser approvals remain unverified; do not label as operational.

@@ -5,6 +5,9 @@ on:
       - 'services/computer_browser/oauth_resource_boundary.py'
       - 'services/computer_browser/mcp_resource_server.py'
       - 'tests/test_browser_oauth_resource_boundary.py'
+      - 'tests/test_browser_oauth_facade_container.py'
+      - 'services/computer_browser/facade.Dockerfile'
+      - 'services/computer_browser/oauth_asgi.py'
       - '.github/workflows/computer-browser-oauth-boundary-ci.yml'
       - 'pyproject.toml'
   push:
@@ -33,6 +36,39 @@ jobs:
         run: python -m pip install -e '.[browser_mcp]'
       - name: Exercise RSA verification, owner scopes, machine isolation and HTTP auth guardrails
         run: python -m unittest discover -s tests -p 'test_browser_oauth_resource_boundary.py' -v
+      - name: Verify isolated ASGI startup and OAuth-required MCP 401
+        run: python -m unittest discover -s tests -p 'test_browser_oauth_facade_container.py' -v
+      - name: Build isolated small OAuth facade image without Cloud Run deployment
+        run: docker build --file services/computer_browser/facade.Dockerfile --tag plenum-oauth-mcp-ci .
+      - name: Verify non-root container starts on the Cloud Run port and denies anonymous MCP requests
+        run: |
+          set -euo pipefail
+          docker run --rm --detach --name plenum-oauth-ci -p 18084:8080 \
+            -e PLENUM_MCP_OAUTH_ISSUER=https://plenum-synthetic.auth0.com/ \
+            -e PLENUM_MCP_RESOURCE_URL=https://mcp.example.org/mcp \
+            -e PLENUM_MCP_OAUTH_JWKS_URL=https://plenum-synthetic.auth0.com/.well-known/jwks.json \
+            -e 'PLENUM_MCP_OWNER_SUB=auth0|synthetic-owner' \
+            -e PLENUM_MCP_ALLOWED_CLIENT_ID=https://chatgpt.com/oauth/client.json \
+            -e PLENUM_MCP_MACHINE_URL=https://plenum-computer-browser-machine-98614162800.us-east1.run.app \
+            plenum-oauth-mcp-ci
+          for i in $(seq 1 20); do
+            if curl --silent --fail --max-time 2 http://127.0.0.1:18084/health >/tmp/plenum-oauth-health; then break; fi
+            sleep 1
+          done
+          python - <<'PY'
+          import json
+          data=json.load(open('/tmp/plenum-oauth-health'))
+          assert data['configured'] is True and data['private_accounts_enabled'] is False
+          PY
+          status="$(curl --silent --max-time 5 -o /tmp/plenum-oauth-body -w '%{http_code}' \
+            -X POST http://127.0.0.1:18084/mcp \
+            -H 'Accept: application/json, text/event-stream' \
+            -H 'Content-Type: application/json' \
+            -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}')"
+          test "$status" = "401"
+          echo "PASS: Isolated facade starts, no owner secrets, anonymous MCP tool call denied."
+      - if: always()
+        run: docker rm -f plenum-oauth-ci || true
       - name: Confirm live Cloud Run / GitHub issue / real website actions were NOT executed
         run: |
           python - <<'PY'

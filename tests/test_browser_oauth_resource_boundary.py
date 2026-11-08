@@ -62,10 +62,16 @@ class ConfigAndPolicyTests(unittest.TestCase):
         ok=enforce_verified_claims(claims,CFG,now=now)
         self.assertTrue(ok["subject_verified"])
         self.assertEqual(ok["scopes"],["browser:read"])
+        self.assertTrue(enforce_verified_claims({
+            **claims,"aud":[RESOURCE,ISSUER.rstrip("/")+"/userinfo"]
+        },CFG,now=now)["subject_verified"])
         for field,value in (
             ("iss","https://attacker.example/"),
             ("aud","https://other.example/mcp"),
             ("aud",[RESOURCE,"https://attacker.example/"]),
+            ("aud",[RESOURCE,ISSUER.rstrip("/")+"/userinfo","https://attacker.example/"]),
+            ("aud",[RESOURCE,RESOURCE]),
+            ("aud",["https://other.example/mcp",ISSUER.rstrip("/")+"/userinfo"]),
             ("sub","auth0|someone-else"),
             ("azp","https://other-client.example/client"),
             ("scope","browser:write"),
@@ -129,6 +135,9 @@ class SignedJWTTests(unittest.TestCase):
             verifier=OwnerJWTVerifier(CFG)
             ok=verifier.verify(self.make_token())
             self.assertTrue(ok["subject_verified"])
+            self.assertTrue(verifier.verify(self.make_token(
+                aud=[RESOURCE, ISSUER.rstrip("/")+"/userinfo"]
+            ))["subject_verified"])
             for changes in (
                 {"aud":"https://attacker.example/mcp"},
                 {"iss":"https://attacker.example/"},
