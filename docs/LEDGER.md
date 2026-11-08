@@ -622,3 +622,8 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 ## 2026-11-08 ~18:14 ET: live owner-scoped encrypted profile object EXISTS
 - [x] Founder iPad screenshot of protected `/owner/sessions` shows **`the-internet.herokuapp.com · Saved encrypted profile exists`** and distinct `example.com · No saved profile`. This verifies owner-scoped profile existence in live private storage, not restored authentication.
 - [ ] **Next:** click read-only **Preview saved session** for the public demo site and look for `Demo login restoration verified`. Decryptability, live cookie validity, and independent logged-in restore remain not yet proven.
+
+## 2026-11-08 ~18:16 ET: signed CSRF for iPad saved-profile forms staged
+- [x] Founder pressed read-only demo profile preview and received `Same-origin owner action required` (403) before session restoration code executed. Existing encrypted profile object was visible at 6:14 PM; decryptability and login persistence still not proven.
+- [x] Source review identified unconditional exact `Origin` header requirement on native POST. Staged signed, 30-minute, exact-owner+site+action CSRF hidden form tokens, preserving explicit cross-origin and Fetch-Metadata rejection and session authentication. No broad bypass or change to encrypted vault/IAM.
+- [ ] Require tests, merge, protected production release and live demo `/secure` restoration proof; only then mark authenticated session restoration verified.

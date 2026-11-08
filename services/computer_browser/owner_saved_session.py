@@ -5,7 +5,12 @@ vault. No credentials or decrypted Playwright state reach ChatGPT or GitHub.
 No remote site modification, uploads, or account actions are accepted here.
 """
 import asyncio
+import hashlib
+import hmac
 import os
+import re
+import secrets
+import time
 from html import escape
 from urllib.parse import urlsplit
 
@@ -33,13 +38,67 @@ def _require_allowed_origin(site):
     return site
 
 
-def _require_same_origin(request):
-    """No unsigned header can authorize the owner; IAP dependency is separate."""
-    origin = os.environ.get("BROWSER_PUBLIC_ORIGIN", "")
-    if (not origin.startswith("https://")
-            or not _origin_syntax(origin)
-            or request.headers.get("origin") != origin):
-        raise HTTPException(status_code=403, detail="Same-origin owner action required")
+def _owner_form_secret(owner_id):
+    """Derive exact-owner CSRF MAC key using standard-library SHA-256 only."""
+    secret=os.environ.get("COMPUTER_BROWSER_TOKEN","")
+    if len(secret)<32 or not isinstance(owner_id,str) or not 1<=len(owner_id)<=80:
+        raise HTTPException(status_code=503,detail="Private owner form unavailable")
+    return hmac.digest(secret.encode(),("plenum.owner.form.v1:"+owner_id).encode(),"sha256")
+
+
+def _owner_form_mac(owner_id, site, action, issued_hex, nonce):
+    scope="v1:"+issued_hex+":"+nonce+":"+action+":"+site
+    return hmac.digest(_owner_form_secret(owner_id),scope.encode(),"sha256").hex()
+
+
+def _owner_form_token(owner_id, site, action):
+    """Short-lived exact-owner/site/action CSRF token; no account data inside."""
+    if action not in ("preview","revoke"):
+        raise ValueError("Unrecognized owner form action")
+    issued=f"{int(time.time()):08x}"
+    nonce=secrets.token_hex(8)
+    signature=_owner_form_mac(owner_id,site,action,issued,nonce)
+    return "v1."+issued+"."+nonce+"."+signature
+
+
+def _verify_owner_form(request, owner_id, site, action, token):
+    """Support iPad forms which omit Origin, without accepting forged POSTs.
+
+    Origin, Referer and Fetch Metadata, when present, MUST be same origin.
+    Missing headers are permitted only with a verified owner-bound CSRF token,
+    since Referrer-Policy:no-referrer is required for private account pages.
+    """
+    origin=os.environ.get("BROWSER_PUBLIC_ORIGIN","")
+    if not origin.startswith("https://") or not _origin_syntax(origin):
+        raise HTTPException(status_code=403,detail="Same-origin owner action required")
+    supplied=request.headers.get("origin")
+    if supplied is not None and supplied!=origin:
+        raise HTTPException(status_code=403,detail="Same-origin owner action required")
+    referer=request.headers.get("referer")
+    if referer:
+        try:
+            p=urlsplit(referer)
+            ref_origin=f"{p.scheme}://{p.netloc}"
+        except ValueError:
+            ref_origin=""
+        if ref_origin!=origin:
+            raise HTTPException(status_code=403,detail="Same-origin owner action required")
+    fetch_site=request.headers.get("sec-fetch-site")
+    if fetch_site is not None and fetch_site!="same-origin":
+        raise HTTPException(status_code=403,detail="Same-origin owner action required")
+    if not isinstance(token,str) or len(token)>1000 or not token:
+        raise HTTPException(status_code=403,detail="Owner form verification required")
+    match=re.fullmatch(r"v1[.]([0-9a-f]{8,10})[.]([0-9a-f]{16})[.]([0-9a-f]{64})",token)
+    if match is None or action not in ("preview","revoke"):
+        raise HTTPException(status_code=403,detail="Owner form verification required")
+    issued_hex,nonce,signature=match.groups()
+    now=int(time.time())
+    issued=int(issued_hex,16)
+    if issued>now+10 or now-issued>1800:
+        raise HTTPException(status_code=403,detail="Owner form verification required")
+    expected=_owner_form_mac(owner_id,site,action,issued_hex,nonce)
+    if not hmac.compare_digest(signature,expected):
+        raise HTTPException(status_code=403,detail="Owner form verification required")
 
 
 def _page(title, body):
@@ -140,14 +199,18 @@ def mount_owner_saved_session(app):
             if exists is None:
                 rows.append(base+"<p>Retry after the storage service is available.</p></article>")
                 continue
+            preview_token=escape(_owner_form_token(_owner["private_owner_id"],site,"preview"),quote=True)
+            revoke_token=escape(_owner_form_token(_owner["private_owner_id"],site,"revoke"),quote=True)
             rows.append(
                 base+
                 "<form method='post' action='/owner/sessions/preview'>"
                 "<input type='hidden' name='site' value='" + escape(site, quote=True) + "'>"
+                "<input type='hidden' name='csrf_token' value='" + preview_token + "'>"
                 "<button type='submit'>Preview saved session (read only)</button>"
                 "</form>"
                 "<form method='post' action='/owner/sessions/revoke'>"
                 "<input type='hidden' name='site' value='" + escape(site, quote=True) + "'>"
+                "<input type='hidden' name='csrf_token' value='" + revoke_token + "'>"
                 "<label>Type REVOKE to delete saved session "
                 "<input name='confirmation' autocomplete='off' maxlength='6'></label>"
                 "<button type='submit'>Revoke session</button></form></article>"
@@ -158,10 +221,11 @@ def mount_owner_saved_session(app):
     async def owner_preview_session(
         request: Request,
         site: str = Form(),
+        csrf_token: str = Form(default=""),
         _owner=Depends(require_verified_owner),
     ):
-        _require_same_origin(request)
         site = _require_allowed_origin(site)
+        _verify_owner_form(request,_owner["private_owner_id"],site,"preview",csrf_token)
         try:
             result = await asyncio.wait_for(read_saved_site(
                 site=site, owner=_owner["private_owner_id"]), timeout=45)
@@ -188,10 +252,11 @@ def mount_owner_saved_session(app):
         request: Request,
         site: str = Form(),
         confirmation: str = Form(),
+        csrf_token: str = Form(default=""),
         _owner=Depends(require_verified_owner),
     ):
-        _require_same_origin(request)
         site = _require_allowed_origin(site)
+        _verify_owner_form(request,_owner["private_owner_id"],site,"revoke",csrf_token)
         if confirmation != "REVOKE":
             raise HTTPException(status_code=403, detail="Explicit revoke confirmation required")
         try:
