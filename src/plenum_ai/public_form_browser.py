@@ -147,6 +147,97 @@ async def execute_public_search(task):
             await browser.close()
 
 
+
+# Discovery never executes page input, clicks, form submission or user scripts.
+INSPECT_TITLE = "Prometheus Chat Browser: public-form-inspect"
+INSPECT_SCHEMA = "plenum-public-form-inspect-v1"
+
+
+def validate_inspect_request(author, title, body):
+    if author != AUTHOR or title != INSPECT_TITLE:
+        raise PermissionError("Only founder-created public inspect requests")
+    if not isinstance(body, str) or len(body) > 1000:
+        raise ValueError("Malformed public inspection task")
+    try:
+        task = json.loads(body)
+    except (ValueError, TypeError) as exc:
+        raise ValueError("Strict JSON task envelope required") from exc
+    if (not isinstance(task, dict) or set(task) != {"schema", "url"}
+            or task.get("schema") != INSPECT_SCHEMA
+            or not allowed_public_url(task.get("url"))
+            or "?" in task["url"]):
+        raise PermissionError("Only approved public pages may be inspected")
+    return task
+
+
+def _public_html_attr(value):
+    # HTML attributes are untrusted. Return only non-sensitive identifier chars.
+    if not isinstance(value, str):
+        return ""
+    return "".join(ch for ch in value[:100] if ch.isascii()
+                   and (ch.isalnum() or ch in "._/-"))[:64]
+
+
+async def inspect_public_forms(task):
+    from playwright.async_api import async_playwright
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch(headless=True)
+        try:
+            context = await browser.new_context(
+                accept_downloads=False, service_workers="block",
+                ignore_https_errors=False, permissions=[],
+            )
+            async def restrict(route):
+                if route.request.method != "GET" or not allowed_public_url(route.request.url):
+                    await route.abort()
+                else:
+                    await route.continue_()
+            await context.route("**/*", restrict)
+            page = await context.new_page()
+            response = await page.goto(task["url"], wait_until="domcontentloaded", timeout=25000)
+            if (response is None or not 200 <= response.status < 400
+                    or not allowed_public_url(page.url)):
+                raise PermissionError("Public form inspection destination rejected")
+            forms = page.locator("form")
+            count = await forms.count()
+            output = []
+            for i in range(min(count, 12)):
+                form = forms.nth(i)
+                controls = form.locator("input,textarea,select")
+                fields = []
+                for j in range(min(await controls.count(), 10)):
+                    element = controls.nth(j)
+                    fields.append({
+                        "name": _public_html_attr(await element.get_attribute("name")),
+                        "type": _public_html_attr(await element.get_attribute("type")),
+                        "id": _public_html_attr(await element.get_attribute("id")),
+                        "tag": _public_html_attr(await element.evaluate(
+                            "(el) => el.tagName.toLowerCase()"
+                        )),
+                    })
+                action = await form.get_attribute("action")
+                action_url = urlsplit(urljoin(page.url, action or page.url))
+                output.append({
+                    "index": i,
+                    "role": _public_html_attr(await form.get_attribute("role")),
+                    "method": _public_html_attr(await form.get_attribute("method")) or "get",
+                    "action_path": _public_html_attr(action_url.path),
+                    "fields": fields,
+                    "truncated": await controls.count() > 10,
+                })
+            return {
+                "schema": "plenum-public-form-inspect-result-v1",
+                "source_site": urlsplit(page.url).hostname,
+                "forms_seen": count,
+                "forms": output,
+                "cookies_or_private_sessions_used": False,
+                "inputs_or_form_submissions_executed": False,
+                "TinyFish_used": False,
+            }
+        finally:
+            await browser.close()
+
+
 def report(value):
     return (
         "### Plenum independent Playwright public search\n\n"
@@ -168,8 +259,12 @@ def main(argv=None):
     if not path.is_absolute():
         raise ValueError("Result path must be a private runner scratch path")
     try:
-        task = validate_request(args.author, args.title, args.body)
-        result = asyncio.run(execute_public_search(task))
+        if args.title == INSPECT_TITLE:
+            task = validate_inspect_request(args.author, args.title, args.body)
+            result = asyncio.run(inspect_public_forms(task))
+        else:
+            task = validate_request(args.author, args.title, args.body)
+            result = asyncio.run(execute_public_search(task))
         payload = report(result)
     except Exception as exc:
         # Only fixed application-controlled messages may appear on public GitHub.
