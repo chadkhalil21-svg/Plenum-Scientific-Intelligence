@@ -103,7 +103,7 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$PORTAL_URL"
-          ROOT_CODE="$(curl --silent --show-error --location-trusted=false --output /dev/null --write-out '%{http_code}' --max-time 25 "$PORTAL_URL/")"
+          ROOT_CODE="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 25 "$PORTAL_URL/")"
           OWNER_CODE="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 25 "$PORTAL_URL/owner")"
           LOGIN_CODE="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 25 "$PORTAL_URL/auth0/login")"
           test "$ROOT_CODE" = "200"
