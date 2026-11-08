@@ -1,11 +1,16 @@
 """Stateless machine-only browser endpoint: exact public URL, no site sessions."""
 import unittest
 import os
+import importlib.util
 from unittest.mock import patch,AsyncMock
-from fastapi.testclient import TestClient
-from services.computer_browser.api import app
 
-CLIENT=TestClient(app)
+HAS_WEB = importlib.util.find_spec("fastapi") is not None and importlib.util.find_spec("httpx") is not None
+if HAS_WEB:
+    from fastapi.testclient import TestClient
+    from services.computer_browser.api import app
+    CLIENT=TestClient(app)
+else:
+    CLIENT=None
 ENV={"K_SERVICE":"plenum-computer-browser-machine",
      "BROWSER_ALLOWED_ORIGINS":"https://example.com",
      "COMPUTER_BROWSER_TOKEN":"",
@@ -13,6 +18,7 @@ ENV={"K_SERVICE":"plenum-computer-browser-machine",
      "BROWSER_SESSION_KEY":""}
 
 
+@unittest.skipUnless(HAS_WEB, 'FastAPI and httpx are installed by browser gateway CI, not the scientific suite')
 class MachinePublicReadTests(unittest.TestCase):
     def test_exact_public_machine_read_without_credentials(self):
         output={"schema":"plenum-private-browser-read-v1",
