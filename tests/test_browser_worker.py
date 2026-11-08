@@ -37,7 +37,7 @@ class BrowserPolicy(unittest.TestCase):
             with self.subTest(href=href):
                 with self.assertRaises(PermissionError):
                     public_link_target("https://example.com/start", href)
-        for links in (["x"] * 4, ["line\\nfeed"], [""], [" x "], "Link"):
+        for links in (["x"] * 4, ["line\nfeed"], [""], [" x "], "Link"):
             with self.subTest(links=links):
                 with self.assertRaises(ValueError):
                     validate_public_links(links)
