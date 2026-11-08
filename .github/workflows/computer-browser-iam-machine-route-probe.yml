@@ -1,0 +1,115 @@
+name: Verify IAM Machine Browser via Non-Reserved Route (Read Only)
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Enter VERIFY_MACHINE_ROUTE_ONLY'
+        required: true
+        type: string
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+concurrency:
+  group: plenum-machine-route-readonly
+  cancel-in-progress: false
+jobs:
+  route-probe:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      ((github.event_name == 'issues' &&
+        github.event.issue.user.login == 'chadkhalil21-svg' &&
+        github.event.issue.title == 'Computer Browser: verify safe machine route' &&
+        github.event.issue.body == 'VERIFY_MACHINE_ROUTE_ONLY:2026-11-07') ||
+       (github.event_name == 'workflow_dispatch' && inputs.confirmation == 'VERIFY_MACHINE_ROUTE_ONLY'))
+    environment: computer-browser-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Verify exact service and non-public IAM policy (no modifications)
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          BROWSER_DEPLOY_SA: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCP_PROJECT_ID" = 'plenum-computer-browser'
+          test "$BROWSER_DEPLOY_SA" = 'plenum-browser-deploy@plenum-computer-browser.iam.gserviceaccount.com'
+          gcloud run services describe plenum-computer-browser-machine \
+            --project="$GCP_PROJECT_ID" --region=us-east1 --format=json > "$RUNNER_TEMP/machine-metadata.json"
+          gcloud run services get-iam-policy plenum-computer-browser-machine \
+            --project="$GCP_PROJECT_ID" --region=us-east1 --format=json > "$RUNNER_TEMP/machine-policy.json"
+          python - <<'PY'
+          import json, os
+          from services.computer_browser.iam_machine_guard import verify_service,verify_service_iam
+          root=os.environ["RUNNER_TEMP"]
+          m=json.load(open(root+"/machine-metadata.json"))
+          p=json.load(open(root+"/machine-policy.json"))
+          verify_service(m)
+          verify_service_iam(p)
+          print("PASS: Separate IAM-only machine service identity and private invocation policy verified.")
+          PY
+          rm -f "$RUNNER_TEMP/machine-metadata.json" "$RUNNER_TEMP/machine-policy.json"
+      - name: Request a non-reserved GET path with short-lived IAM token
+        id: route
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          BROWSER_DEPLOY_SA: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          trap 'rm -f "$RUNNER_TEMP/machine-route-token" "$RUNNER_TEMP/machine-route-header" "$RUNNER_TEMP/machine-route-body" "$RUNNER_TEMP/machine-anon-body"' EXIT
+          SERVICE_URL="$(gcloud run services describe plenum-computer-browser-machine \
+            --project="$GCP_PROJECT_ID" --region=us-east1 --format='value(status.url)')"
+          case "$SERVICE_URL" in https://plenum-computer-browser-machine-*.run.app) ;; *) echo "Unexpected service URL"; exit 1;; esac
+          gcloud auth print-identity-token \
+            --impersonate-service-account="$BROWSER_DEPLOY_SA" \
+            --audiences="$SERVICE_URL" --include-email > "$RUNNER_TEMP/machine-route-token" 2>/dev/null
+          printf 'Authorization: Bearer %s\n' "$(cat "$RUNNER_TEMP/machine-route-token")" > "$RUNNER_TEMP/machine-route-header"
+          # GET on an existing POST-only route; no task or browser action is executed.
+          STATUS="$(curl --silent --show-error --max-time 20 --proto '=https' \
+            --header @"$RUNNER_TEMP/machine-route-header" \
+            --output "$RUNNER_TEMP/machine-route-body" --write-out '%{http_code}' \
+            "$SERVICE_URL/v1/plan" || true)"
+          ANON_STATUS="$(curl --silent --show-error --max-time 20 --proto '=https' \
+            --output "$RUNNER_TEMP/machine-anon-body" --write-out '%{http_code}' \
+            "$SERVICE_URL/v1/plan" || true)"
+          echo "Authorized GET /v1/plan status: HTTP $STATUS"
+          echo "Anonymous GET /v1/plan status: HTTP $ANON_STATUS"
+          python - "$STATUS" "$ANON_STATUS" "$RUNNER_TEMP/machine-route-body" <<'PY'
+          import json,sys
+          status,anonymous=int(sys.argv[1]),int(sys.argv[2])
+          body=json.load(open(sys.argv[3]))
+          if status!=405 or body!={"detail":"Method Not Allowed"}:
+            raise SystemExit("NOT VERIFIED: signed request did not return FastAPI 405.")
+          if anonymous in range(200,300):
+            raise SystemExit("BLOCKED: anonymous request unexpectedly authorized.")
+          print("PASS: Google IAM token reaches FastAPI on non-reserved path; anonymous invocation denied.")
+          print("This is routing verification only, not remote browser or owner login permission.")
+          PY
+      - name: Report sanitized outcome to owner issue
+        if: always() && github.event_name == 'issues' && github.event.issue.user.login == 'chadkhalil21-svg'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          OUTCOME: ${{ steps.route.outcome }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$OUTCOME" = "success" ]; then
+            RESULT="PASS: IAM-authenticated GitHub request reached FastAPI at GET /v1/plan (expected 405); anonymous invocation denied. Cloud Run /healthz is a reserved-path suspect. No website action or deployment occurred."
+          else
+            RESULT="NOT VERIFIED: Read-only IAM machine route test failed or was blocked. No deployment or IAM changes occurred. Inspect the failed job step."
+          fi
+          gh issue comment "$ISSUE_NUMBER" --body "$RESULT"
