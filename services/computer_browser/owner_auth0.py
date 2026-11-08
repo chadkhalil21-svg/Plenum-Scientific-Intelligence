@@ -15,7 +15,9 @@ import time
 from urllib.parse import urlsplit
 
 from fastapi import HTTPException, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.responses import HTMLResponse, RedirectResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 SERVICE_NAME = "plenum-browser-owner-auth0"
 ISSUER = "https://dev-8sylxsg44yh5kkhh.us.auth0.com/"
@@ -137,6 +139,26 @@ def mount_auth0_owner(app) -> None:
         https_only=True,
         path="/",
     )
+
+    @app.exception_handler(StarletteHTTPException)
+    async def expired_owner_html_navigation(request: Request, exc: StarletteHTTPException):
+        """Give human browser navigations a safe login route instead of raw 401 JSON.
+
+        Keep the exact signed-session verification, non-browser 401 responses,
+        unsafe actions and the separate IAP service untouched. Only same-site
+        relative home is used; do not accept a user-supplied redirect target.
+        """
+        path=request.url.path
+        if (request.method=="GET"
+                and (path=="/owner" or path.startswith("/owner/"))
+                and exc.status_code==401
+                and exc.detail=="Verified owner sign-in required"
+                and "text/html" in request.headers.get("accept","").lower()):
+            return RedirectResponse("/",status_code=303,headers={
+                "Cache-Control":"no-store", "Referrer-Policy":"no-referrer",
+            })
+        return await http_exception_handler(request,exc)
+
     # A missing client ID is intentionally allowed only for a locked bootstrap
     # health page. No login, authenticated browser state or bearer tool works.
     client_id = os.environ.get("AUTH0_OWNER_CLIENT_ID", "")

@@ -18,7 +18,7 @@ if HAS_WEB_DEPS:
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
     from itsdangerous import TimestampSigner
-    from services.computer_browser import private_login, owner_auth0
+    from services.computer_browser import private_login, owner_auth0, owner_saved_session
     from services.computer_browser.owner_console import mount_owner_console
 
 ISSUER = "https://dev-8sylxsg44yh5kkhh.us.auth0.com/"
@@ -103,6 +103,40 @@ class Auth0OwnerTests(unittest.TestCase):
                 "x-goog-iap-jwt-assertion": "synthetic-fake-assertion",
                 "x-goog-authenticated-user-email": "founder@example.org",
             }).status_code, 401)
+
+    def test_expired_owner_html_navigation_redirects_only_with_signed_auth_required(self):
+        """A human in Edge gets sign-in rather than downloadable JSON; APIs stay 401."""
+        with patch.dict(os.environ,SYNTHETIC_ENV,clear=False):
+            app=FastAPI()
+            mount_owner_console(app)
+            private_login.mount_private_login(app)
+            owner_saved_session.mount_owner_saved_session(app)
+            owner_auth0.mount_auth0_owner(app)
+            with TestClient(app,base_url="https://testserver") as client:
+                for path in ("/owner","/owner/sign-in","/owner/sessions"):
+                    with self.subTest(path=path):
+                        nav=client.get(path,headers={"accept":"text/html"},
+                                       follow_redirects=False)
+                        self.assertEqual(nav.status_code,303)
+                        self.assertEqual(nav.headers["location"],"/")
+                        self.assertEqual(nav.headers["cache-control"],"no-store")
+                        self.assertNotIn("plenum_auth0_owner_v1",nav.text)
+                        # HTTP clients still receive normal 401, not a login redirect.
+                        api=client.get(path,headers={"accept":"application/json"},
+                                       follow_redirects=False)
+                        self.assertEqual(api.status_code,401)
+                home=client.get("/",headers={"accept":"text/html"})
+                self.assertEqual(home.status_code,200)
+                self.assertIn("Sign in securely with Auth0",home.text)
+                # POST, even with an HTML Accept header, must never redirect.
+                posted=client.post("/owner/sessions/preview",data={
+                    "site":"https://example.com","csrf_token":"fake"
+                },headers={"accept":"text/html"},follow_redirects=False)
+                self.assertEqual(posted.status_code,401)
+                # No HTML redirects for unrelated URLs or other 401 causes.
+                missing=client.get("/nonexistent",headers={"accept":"text/html"},
+                                   follow_redirects=False)
+                self.assertEqual(missing.status_code,404)
 
     def test_real_auth0_session_cookie_authorizes_only_bound_websocket(self):
         # Prove the same HTTPS-only, signed owner cookie can authorize the
