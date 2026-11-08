@@ -142,15 +142,26 @@ jobs:
           umask 077
           printf 'Proxy-Authorization: Bearer %s\n' "$(cat "$RUNNER_TEMP/browser-iap.jwt")" > "$RUNNER_TEMP/browser-iap-header"
           RESPONSE="$RUNNER_TEMP/browser-iap-response.json"
+          SIGNED_HEADERS="$RUNNER_TEMP/browser-iap-signed-headers"
           STATUS="$(curl --silent --show-error --max-time 20 --proto '=https' \
             --header @"$RUNNER_TEMP/browser-iap-header" \
+            --dump-header "$SIGNED_HEADERS" \
             --output "$RESPONSE" --write-out '%{http_code}' \
             "$SERVICE_URL/healthz" || true)"
           rm -f "$RUNNER_TEMP/browser-iap-claims.json" "$RUNNER_TEMP/browser-iap.jwt" "$RUNNER_TEMP/browser-iap-header"
           if [ "$STATUS" != "200" ]; then
             echo "BLOCKED: IAP programmatic health request returned HTTP $STATUS."
-            echo "A 404 may mean restricted ingress, a disabled URL, missing route or an IAP problem."
-            echo "Review the redacted route diagnostic above before changing IAM permissions."
+            # Compare only HTTP classes and status; never print response bodies or headers.
+            UNAUTH_BODY="$RUNNER_TEMP/browser-iap-unsigned-response"
+            UNAUTH_STATUS="$(curl --silent --show-error --max-time 20 --proto '=https' \
+              --output "$UNAUTH_BODY" --write-out '%{http_code}' \
+              "$SERVICE_URL/healthz" || true)"
+            python -m services.computer_browser.http_response_diagnostic \
+              --signed-status "$STATUS" --signed-response "$RESPONSE" \
+              --unsigned-status "$UNAUTH_STATUS" --unsigned-response "$UNAUTH_BODY" \
+              --signed-headers "$SIGNED_HEADERS"
+            rm -f "$UNAUTH_BODY" "$RESPONSE" "$SIGNED_HEADERS"
+            echo "This read-only comparison does not prove whether IAP or the container rejected the request."
             exit 1
           fi
           python -m services.computer_browser.programmatic_iap_probe \
