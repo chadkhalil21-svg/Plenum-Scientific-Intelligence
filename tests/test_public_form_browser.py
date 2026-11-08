@@ -36,6 +36,30 @@ class PublicFormBrowserContract(unittest.TestCase):
                 with self.assertRaises((ValueError,PermissionError)):
                     validate_request(author,title,json.dumps(payload))
 
+    def test_explicit_public_get_parameters_are_bounded_and_safe(self):
+        payload={**BASE,"parameters":{"searchtype":"all"}}
+        self.assertEqual(
+            validate_request(AUTHOR,TITLE,json.dumps(payload))["parameters"],
+            {"searchtype":"all"},
+        )
+        url=build_public_get_target(
+            "https://arxiv.org/search/","/search/","GET",
+            "query","dark energy",{"searchtype":"all"}
+        )
+        self.assertEqual(url,"https://arxiv.org/search/?query=dark+energy&searchtype=all")
+        for bad in [
+            {"token":"abc"},
+            {"session_id":"A"},
+            {"auth_code":"A"},
+            {"searchtype":"z"*71},
+            {"a":"v","b":"v","c":"v","d":"v","e":"v"},
+        ]:
+            with self.assertRaises((ValueError,PermissionError)):
+                validate_request(AUTHOR,TITLE,json.dumps({**BASE,"parameters":bad}))
+        with self.assertRaises(PermissionError):
+            build_public_get_target("https://arxiv.org/","/search","GET",
+                                    "query","hi",{"query":"override"})
+
     def test_never_submit_post_or_leave_public_host(self):
         result=build_public_get_target(
             "https://arxiv.org/", "/search", "GET", "query", "dark energy"
