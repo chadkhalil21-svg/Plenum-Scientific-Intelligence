@@ -1,6 +1,8 @@
 """Tiny zero-network contract test: no Browser Use install or model key needed."""
 import runpy
 import unittest
+import os
+from unittest.mock import patch
 from pathlib import Path
 
 MODULE = runpy.run_path(
@@ -22,6 +24,16 @@ class BrowserUsePolicyTest(unittest.TestCase):
         ]:
             with self.subTest(title=t, body=b):
                 self.assertFalse(check(author=a, title=t, body=b))
+
+    def test_no_key_never_falls_back_to_paid_model(self):
+        fn = MODULE["free_model_config"]
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "fake-paid-key"}, clear=True):
+            self.assertIsNone(fn())
+        with patch.dict(os.environ, {"BROWSER_USE_OPENROUTER_FREE_KEY": "fake-test-key"}, clear=True):
+            config = fn()
+            self.assertEqual(config["provider"], "openrouter_free")
+            self.assertEqual(config["model"], "openrouter/free")
+            self.assertEqual(config["base_url"], "https://openrouter.ai/api/v1")
 
     def test_upstream_is_optional_and_domain_is_frozen(self):
         s = MODULE["public_agent_settings"]()
