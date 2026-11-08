@@ -102,3 +102,7 @@ mount_owner_console(app)
 
 from .private_login import mount_private_login
 mount_private_login(app)
+
+# IAP-only encrypted website session status, preview and revocation.
+from .owner_saved_session import mount_owner_saved_session
+mount_owner_saved_session(app)
