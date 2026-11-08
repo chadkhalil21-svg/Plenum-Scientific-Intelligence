@@ -342,3 +342,9 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [x] Preserve existing creative SVG/MusicXML/parametric CAD, museum/art/music metadata, YouTube channel metadata and reviewable software program starters.
 - [ ] Add genuinely evaluated multi-domain reasoning, multimodal creative models with licensed sources, expanded university and journal affiliations, patent/standards retrieval and a persistent privately hosted intelligence worker.
 - [ ] Demonstrate general intelligence, reliable self-directed coding/invention or recursive AI model self-improvement. **Not achieved.**
+
+## 2026-11-07: Computer Browser programmatic IAP checkpoint
+- [x] Implemented owner-gated, no-deploy Cloud Run `/healthz` probe via existing GitHub OIDC and Google IAMCredentials; approved public chat Playwright path remains operational (issue #103).
+- [x] Offline security and browser CI passed on [PR #104](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/104); added sanitized chat issue callback and failure stage classification in [PR #106](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/106) and [PR #108](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/108).
+- [ ] Real programmatic private IAP authentication **not verified**: [owner issue #109](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/109) failed at Google IAMCredentials `sign-jwt`, before any private Cloud Run request. Owner must inspect **target-specific** signing permission/API; no IAM roles were changed automatically.
+- [ ] Independent private website sessions, per-action approvals, restricted network egress, authenticated chat tools, and actual account interactions remain unfinished. Google IAP human sign-in error 9 remains separate and unresolved.
