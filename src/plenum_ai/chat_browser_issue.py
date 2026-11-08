@@ -8,10 +8,12 @@ import argparse
 import asyncio
 import json
 from pathlib import Path
-from plenum_ai.browser_worker import inspect_public, allowed_public_url
+from plenum_ai.browser_worker import inspect_public, allowed_public_url, validate_public_links
 
 SCHEMA = "plenum-chat-browser-request-v1"
 TITLE = "Prometheus Chat Browser: public-read"
+NAV_TITLE = "Prometheus Chat Browser: public-navigate"
+NAV_SCHEMA = "plenum-chat-browser-navigate-v1"
 AUTHOR = "chadkhalil21-svg"
 MAX_BODY = 1300
 
@@ -34,14 +36,40 @@ def validate_request(author, title, body):
     return obj["url"]
 
 
+def validate_navigation_request(author, title, body):
+    """Public link-follow jobs from the owner; no forms or private URLs."""
+    if author != AUTHOR or title != NAV_TITLE:
+        raise PermissionError("Not an approved owner-created navigation request")
+    if not isinstance(body, str) or len(body) > MAX_BODY:
+        raise ValueError("Oversized navigation request")
+    try:
+        obj = json.loads(body)
+    except (ValueError, TypeError) as exc:
+        raise ValueError("Navigation request must be strict JSON") from exc
+    if not isinstance(obj, dict) or set(obj) != {"schema", "url", "links"}:
+        raise ValueError("Unexpected navigation fields")
+    url = obj["url"]
+    if obj["schema"] != NAV_SCHEMA or not allowed_public_url(url) or "?" in url:
+        raise PermissionError("Only approved queryless public HTTPS sources")
+    links = validate_public_links(obj["links"])
+    if not links:
+        raise ValueError("Navigation requires at least one exact link label")
+    return url, links
+
+
 def clean(value, limit=650):
     # Prevent source content from being interpreted as markdown control text
     return " ".join(str(value).replace("`", "'").replace("<", "‹").replace(">", "›").split())[:limit]
 
 
 async def public_read(author, title, body):
-    url = validate_request(author, title, body)
-    result = await inspect_public(url)
+    if title == NAV_TITLE:
+        url, links = validate_navigation_request(author, title, body)
+        result = await inspect_public(url, follow_links=links)
+    else:
+        url = validate_request(author, title, body)
+        links = ()
+        result = await inspect_public(url)
     if result.get("visited") is None or not allowed_public_url(result["visited"]):
         raise RuntimeError("Browser escaped allowed URL set")
     if result.get("remote_clicks_or_forms") is not False:
@@ -53,7 +81,10 @@ async def public_read(author, title, body):
         "title_untrusted": clean(result["title_untrusted"]),
         "headings_untrusted": [clean(x) for x in result["heading_untrusted"][:3]],
         "excerpt_untrusted": clean(result["body_excerpt_untrusted"]),
-        "scope": "public-read-only",
+        "scope": "public-link-navigation-read-only" if links else "public-read-only",
+        "navigation_hops": len(links),
+        "navigation_path_untrusted": [clean(x, 1200) for x in
+                                      result.get("navigation_path_untrusted", [])][:4],
         "external_website_modified": False,
         "logged_in_accounts_used": False,
         "browser_agent_autonomous": False,

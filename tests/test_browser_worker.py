@@ -2,7 +2,9 @@
 import asyncio
 import importlib.util
 import unittest
-from plenum_ai.browser_worker import allowed_public_url, test_local_interaction
+from plenum_ai.browser_worker import (
+    allowed_public_url, test_local_interaction, public_link_target, validate_public_links,
+)
 
 class BrowserPolicy(unittest.TestCase):
     def test_strict_public_domain_allowlist(self):
@@ -22,6 +24,23 @@ class BrowserPolicy(unittest.TestCase):
             "https://example.com/\nHeader:malicious",
         ]:
             self.assertFalse(allowed_public_url(url), url)
+
+    def test_public_link_navigation_only_allows_safe_links(self):
+        self.assertEqual(validate_public_links(["Research", "Next"]), ("Research", "Next"))
+        self.assertEqual(public_link_target("https://example.com/start",
+            "/research"), "https://example.com/research")
+        for href in (
+            "javascript:alert(1)", "file:///etc/passwd", "//evil.com/x",
+            "https://127.0.0.1/private", "/logout?token=hidden",
+            "/about#fragment", "https://example.com.evil.net/", "",
+        ):
+            with self.subTest(href=href):
+                with self.assertRaises(PermissionError):
+                    public_link_target("https://example.com/start", href)
+        for links in (["x"] * 4, ["line\nfeed"], [""], [" x "], "Link"):
+            with self.subTest(links=links):
+                with self.assertRaises(ValueError):
+                    validate_public_links(links)
 
     @unittest.skipUnless(importlib.util.find_spec("playwright") is not None,
                          "Dedicated isolated browser workflow installs official Playwright")
