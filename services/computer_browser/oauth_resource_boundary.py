@@ -54,6 +54,7 @@ class ResourceConfig:
     resource: str
     jwks_url: str
     owner_sub: str
+    client_id: str
     machine_url: str
 
     @classmethod
@@ -63,6 +64,7 @@ class ResourceConfig:
             resource=os.environ.get("PLENUM_MCP_RESOURCE_URL", ""),
             jwks_url=os.environ.get("PLENUM_MCP_OAUTH_JWKS_URL", ""),
             owner_sub=os.environ.get("PLENUM_MCP_OWNER_SUB", ""),
+            client_id=os.environ.get("PLENUM_MCP_ALLOWED_CLIENT_ID", ""),
             machine_url=os.environ.get("PLENUM_MCP_MACHINE_URL", ""),
         ).validate()
 
@@ -80,6 +82,9 @@ class ResourceConfig:
             raise ValueError("Dedicated issuer JWKS path required")
         if not isinstance(self.owner_sub, str) or not 3 <= len(self.owner_sub) <= 250:
             raise ValueError("Expected immutable authorized owner subject required")
+        if (not isinstance(self.client_id, str) or not 3 <= len(self.client_id) <= 420
+                or any(ord(c) < 33 or ord(c) == 127 for c in self.client_id)):
+            raise ValueError("Exact trusted OAuth client ID required")
         if not MACHINE_URL_RE.fullmatch(self.machine_url):
             raise ValueError("Expected exact private IAM machine Cloud Run URL required")
         if self.resource.rstrip("/") == self.machine_url.rstrip("/"):
@@ -99,7 +104,8 @@ def enforce_verified_claims(claims, config, *, now=None):
             or not (0 < expires - issued <= MAX_TOKEN_SECONDS)
             or issued > timestamp + 15 or expires <= timestamp
             or claims.get("iss") != config.issuer
-            or claims.get("sub") != config.owner_sub):
+            or claims.get("sub") != config.owner_sub
+            or (claims.get("azp") or claims.get("client_id")) != config.client_id):
         raise PermissionError("OAuth owner identity or token lifetime rejected")
     audience = claims.get("aud")
     if audience != config.resource and audience != [config.resource]:
@@ -109,6 +115,7 @@ def enforce_verified_claims(claims, config, *, now=None):
         raise PermissionError("Required browser read scope unavailable")
     return {
         "subject_verified": True,
+        "client_id_verified": True,
         "scopes": [READ_SCOPE],
         "expires_at": expires,
     }
