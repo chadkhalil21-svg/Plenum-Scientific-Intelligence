@@ -23,3 +23,11 @@ The next work is the owner sign-in interface, durable private workflow
 queue and human approval gate, followed by a real authorized staging
 account. Cloud Run deployment and ChatGPT plugin connectivity remain separate
 conditions. No TinyFish metered use or cloud resources are spent for tests.
+
+## Real chat-driven public form work, independently verified 2026-11-08
+
+`src/plenum_ai/public_form_browser.py` now includes **public-form-inspect** and **public-form-search**. They run actual Chromium on GitHub Actions from regular ChatGPT-connected GitHub issue creation, without TinyFish. Search form selection is explicit; public GET search may carry up to four user-specified harmless parameters (e.g. `searchtype=all`), and never imports arbitrary HTML hidden field values. All requests remain GET-only and the search destination must stay on the same approved public host.
+
+[Issue #185](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/185) returned a sanitized arXiv form inventory. [Issue #188](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/188) confirmed genuine search results: `Showing 1–50 of 47,582 results for all: dark energy`, HTTP 200. The worker never requested TinyFish. Consult `docs/CONNECTION_ROADMAP.md` for exact job titles and schemas.
+
+This is **not** our final full private browser. It must not accept private user inputs in PUBLIC GitHub issues, and it cannot act in logged-in accounts or write to websites. Existing bounded locator action engine and encrypted profile vault are source/test foundations awaiting a private owner-authenticated production pathway.
