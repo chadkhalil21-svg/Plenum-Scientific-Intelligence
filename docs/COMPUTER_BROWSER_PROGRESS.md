@@ -1,6 +1,6 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
-Updated: 2026-11-08 18:13 UTC
+Updated: 2026-11-08 18:16 UTC
 Owner: Founder, Plenum Industries
 Status: **PARTIAL / NOT WORK-OR-TINYFISH-EQUIVALENT**
 Canonical browser-specific, append-only progress record; keep the broader scientific milestones in [LEDGER.md](LEDGER.md).
@@ -72,3 +72,9 @@ The founder requires continuous progress awareness: **Before modifying a browser
 - **Engineering fix in this change:** correct IAM workflow founder result selection so PASS requires all three stages `PREFLIGHT && IDENTITY && VERIFY`. Earlier logic could incorrectly report success if final verification succeeded after a failed identity check.
 - **Status:** P1 remains **BLOCKED**, despite owner confirmation that account exists. P2-P8 remain incomplete. No broad IAM changes, additional cloud deployments, remote website account writes or private ChatGPT MCP tools were enabled.
 - **Next:** from an authenticated owner environment, verify and grant only exactly scoped deployer `roles/iam.serviceAccountUser` on that one MCP runtime, ensure required service-account metadata/key visibility, and then owner-approved `roles/run.invoker` on the *machine service only* for the facade runtime. Independently verify the resulting policy before any facade runtime deployment. Replace P1 blocked only when real Google IAM output and protected workflow pass.
+
+### 2026-11-08 18:16 UTC: repair preexisting browser tests blocking general CI
+
+- **Actual CI evidence:** [PR #201 general scientific suite](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42509004044) failed for two independently identified browser-specific test defects despite passing targeted MCP identity and browser-ledger checks: optional FastAPI package was absent from the science-only runner, and the facade Docker test still required an obsolete `browser_mcp` filename.
+- **Engineering change:** import browser session integration tests only if the separate browser-gateway dependencies exist; **do not skip** those tests when gateway CI actually installs FastAPI/HTTPX/JWT/multipart. Update Docker contract assertion to the actual `mcp_resource_server.py` being copied into the facade image; still prohibit browser/session code in facade.
+- **Status:** CI fixes are **source proposed**, not verified until the next full workflow. These repair test configuration; they do **not** enable website logins or change Cloud IAM.
