@@ -46,7 +46,7 @@ class OAuthContainerTests(unittest.TestCase):
 
     def test_dockerfile_is_separate_nonroot_and_never_starts_owner_browser(self):
         docker=(ROOT/"services/computer_browser/facade.Dockerfile").read_text()
-        for item in ("FROM python:3.11-slim-bookworm","browser_mcp",
+        for item in ("FROM python:3.11-slim-bookworm",'"mcp==2.3.0"',
                      "USER 10001:10001","oauth_asgi:app","$PORT",
                      "COPY services/computer_browser/oauth_resource_boundary.py",
                      "COPY services/computer_browser/mcp_resource_server.py"):
