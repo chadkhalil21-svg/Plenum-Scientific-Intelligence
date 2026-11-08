@@ -1,0 +1,62 @@
+name: Verify Existing Auth0 Tenant Public OAuth Discovery (No Login)
+on:
+  pull_request:
+    paths:
+      - 'scripts/verify_auth0_public_discovery.py'
+      - 'tests/test_auth0_public_discovery.py'
+      - '.github/workflows/computer-browser-auth0-public-discovery.yml'
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  issues: write
+jobs:
+  auth0-discovery:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      (github.event_name == 'pull_request' ||
+       (github.event_name == 'issues' &&
+        github.event.issue.user.login == 'chadkhalil21-svg' &&
+        github.event.issue.title == 'Computer Browser: verify Auth0 public discovery' &&
+        github.event.issue.body == 'CHECK_AUTH0_PUBLIC_METADATA_ONLY:2026-11-08'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Verify strict owner tenant metadata validation offline
+        run: python -m unittest discover -s tests -p 'test_auth0_public_discovery.py' -v
+      - name: Fetch only public Auth0 issuer/JWKS (no account actions)
+        if: github.event_name == 'issues'
+        id: probe
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/verify_auth0_public_discovery.py
+      - name: Report safe yes/no to founder issue
+        if: always() && github.event_name == 'issues' && github.event.issue.user.login == 'chadkhalil21-svg'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          PROBE_RESULT: ${{ steps.probe.outcome }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$PROBE_RESULT" = "success" ]; then
+            RESULT="PASS: Auth0 tenant public OIDC metadata, exact issuer, PKCE S256, and public RSA JWKS verified. No API resource/client configuration, owner OAuth sign-in, IAM or website actions performed. See sanitized job steps for CIMD/DCR capability booleans."
+          else
+            RESULT="NOT VERIFIED: Public Auth0 discovery could not validate issuer, PKCE S256 and RSA JWKS. No account changes or cloud deployment occurred. Verify the exact tenant domain and inspect redacted job diagnostics."
+          fi
+          gh issue comment "$ISSUE_NUMBER" --body "$RESULT"
+      - name: Surface discovery result to GitHub
+        if: github.event_name == 'issues'
+        env:
+          PROBE_RESULT: ${{ steps.probe.outcome }}
+        shell: bash
+        run: |
+          test "$PROBE_RESULT" = "success"
