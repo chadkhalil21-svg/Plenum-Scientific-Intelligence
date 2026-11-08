@@ -105,6 +105,7 @@ class BrowserOwnerApprovalTests(unittest.TestCase):
             "https://staging.example.org/private",
             "https://staging.example.org?token=x",
             "https://staging.example.org#top",
+            "https://staging.example.org\n",
         ):
             with self.subTest(origin=origin):
                 plan = dict(self.plan, origin=origin)
