@@ -28,3 +28,19 @@ Auth0's OpenID scope can add issuer-owned `/userinfo` as a second token audience
 Auth0's free plan has usage limits and may change. Google Cloud Run/Build and GitHub Actions have separate billing. No unlimited-free promise and no need to revisit Google's earlier IAP error 9 for the machine connection.
 
 This PR builds and verifies a facade container but **does not deploy** it, create third-party accounts, publish private data, grant IAM roles or authorize site writes. Verified public browser proofs: [issue #139](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/139) and [issue #141](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/141).
+
+## November 8: Private Cloud Run address bootstrap
+
+Your Auth0 tenant already exists at `dev-8sylxsg44yh5kkhh.us.auth0.com` (copied from the user-provided Auth0 application Settings screenshot). You confirmed the **Resource Parameter Compatibility Profile is enabled**. Leave CIMD and DCR unchanged until we know the ChatGPT connection registration method.
+
+The repo now contains an **owner-gated, narrowly scoped** private Cloud Run address bootstrap:
+- `.github/workflows/computer-browser-auth0-private-facade-bootstrap.yml` triggers only for the founder's exact owner issue (never for a push or arbitrary issue) and requires the existing protected production environment.
+- It FIRST requests public OIDC discovery and validates the **exact issuer and JWKS origin**. A typo or inaccessible tenant stops the workflow **before** Cloud Build spends credits.
+- It builds only `services/computer_browser/facade.Dockerfile` via the existing dedicated Cloud Build identity. The immutable image goes to a separate Artifact Registry name.
+- It creates only `plenum-computer-browser-mcp` in `us-east1`, with **Cloud Run authentication required**, IAM-private access and zero minimum instances. It uses the existing zero-project-role machine runtime account **only for bootstrap**, because creating a new user-managed service account still needs Cloud IAM owner rights. **Do not make this service public while it shares the machine runtime identity.**
+- Its registered OAuth owner and OAuth client are deliberately nonfunctional placeholders. Only after deployment does it resolve the real Cloud Run URL and update the MCP resource identifier to `<new-service-url>/mcp`. This final address can then be registered as an Auth0 API audience.
+- It grants only the existing GitHub deployer `roles/run.invoker` on **this new facade service**, strictly to test signed `GET /health` 200 and **OAuth-unsigned `POST /mcp` 401**; Cloud Run anonymous invocation must fail. No Google IAP settings, Playwright image, owner cookies or browser actions are modified.
+- This is **address reservation and secure smoke only**, not a working ChatGPT plugin. A dedicated facade service account, exact real owner `sub`, OAuth client identity, Auth0 API scopes, endpoint OAuth verification and ChatGPT sign-in/consent must precede any transition to an internet-callable OAuth MCP server.
+
+After the bootstrap passes, create the Auth0 API with Identifier **exactly equal to the output `https://plenum-computer-browser-mcp-...run.app/mcp`** and scope `browser:read`. Use 600-second access tokens if the free tenant permits. No client secret should be copied into the repository, chat, or public GitHub issues.
+
