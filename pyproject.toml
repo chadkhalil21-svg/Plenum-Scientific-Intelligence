@@ -30,6 +30,7 @@ browser = ["playwright==1.64.1"]
 browser_secure = ["cryptography==50.0.2"]
 browser_cloud_storage = ["google-cloud-storage>=3.0,<4"]
 browser_iap = ["PyJWT[crypto]==2.10.1"]
+browser_mcp = ["mcp==2.3.0", "PyJWT[crypto]==2.10.1", "google-auth>=2.30,<3", "httpx>=0.28,<1", "requests>=2.32,<3"]
 
 [project.scripts]
 plenum = "plenum_ai.cli:main"
