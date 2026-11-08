@@ -1,0 +1,111 @@
+name: Recover Private Computer Browser Existing Image (Owner Approved)
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+concurrency:
+  group: plenum-private-browser-cloud-deploy
+  cancel-in-progress: false
+jobs:
+  deploy-existing-image:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == 'Computer Browser: deploy existing private image' &&
+      github.event.issue.body == 'DEPLOY_BUILT_IMAGE:b078968113f0c688873306258c30f1f7aa662457:us-east1:2026-11-08'
+    environment: computer-browser-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Verify exact private owner service and existing build
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+          RUNTIME: ${{ vars.GCP_BROWSER_RUNTIME_SA }}
+          BUCKET: ${{ vars.BROWSER_PROFILE_BUCKET }}
+          OWNER_EMAIL: ${{ vars.COMPUTER_OWNER_EMAIL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$PROJECT" = 'plenum-computer-browser'
+          test "$RUNTIME" = 'plenum-browser-runtime@plenum-computer-browser.iam.gserviceaccount.com'
+          test -n "$BUCKET"
+          test -n "$OWNER_EMAIL"
+          test "$(gcloud run services describe plenum-computer-browser --project="$PROJECT" --region=us-east1 --format='value(status.url)')" = 'https://plenum-computer-browser-98614162800.us-east1.run.app'
+          gcloud artifacts docker images describe "us-east1-docker.pkg.dev/$PROJECT/plenum-browser/computer-browser:b078968113f0c688873306258c30f1f7aa662457" --project="$PROJECT" --format='value(image_summary.digest)' > /dev/null
+          echo "Verified original private owner service and prebuilt image; no build will run."
+      - name: Deploy prebuilt private owner browser image only (no Cloud Build)
+        id: release
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+          RUNTIME: ${{ vars.GCP_BROWSER_RUNTIME_SA }}
+          BUCKET: ${{ vars.BROWSER_PROFILE_BUCKET }}
+          OWNER_EMAIL: ${{ vars.COMPUTER_OWNER_EMAIL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE="us-east1-docker.pkg.dev/$PROJECT/plenum-browser/computer-browser:b078968113f0c688873306258c30f1f7aa662457"
+          SERVICE_URL='https://plenum-computer-browser-98614162800.us-east1.run.app'
+          PROJECT_NUMBER="$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')"
+          test "$PROJECT_NUMBER" = '98614162800'
+          IAP_AUDIENCE="/projects/$PROJECT_NUMBER/locations/us-east1/services/plenum-computer-browser"
+          # Use |, never @, as separator because the founder's email contains @.
+          # One deployment, not a second update, by passing the known service URL.
+          gcloud run deploy plenum-computer-browser \
+            --project "$PROJECT" --region=us-east1 \
+            --image "$IMAGE" --platform managed --execution-environment gen2 \
+            --service-account "$RUNTIME" \
+            --cpu=2 --memory=2Gi --concurrency=1 --min-instances=0 --max-instances=1 \
+            --timeout=900 --no-allow-unauthenticated --iap \
+            --set-secrets COMPUTER_BROWSER_TOKEN=computer-browser-token:latest,BROWSER_SESSION_KEY=computer-browser-session-key:latest \
+            --set-env-vars "^|^BROWSER_ALLOWED_ORIGINS=https://example.com,https://the-internet.herokuapp.com|BROWSER_PROFILE_BUCKET=$BUCKET|COMPUTER_IAP_AUDIENCE=$IAP_AUDIENCE|COMPUTER_OWNER_EMAIL=$OWNER_EMAIL|BROWSER_PUBLIC_ORIGIN=$SERVICE_URL" \
+            --quiet
+          gcloud run services describe plenum-computer-browser --project="$PROJECT" --region=us-east1 --format=json > "$RUNNER_TEMP/plenum-owner-release.json"
+          gcloud run services get-iam-policy plenum-computer-browser --project="$PROJECT" --region=us-east1 --format=json > "$RUNNER_TEMP/plenum-owner-iam.json"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          d=json.loads((Path(os.environ["RUNNER_TEMP"])/"plenum-owner-release.json").read_text())
+          policy=json.loads((Path(os.environ["RUNNER_TEMP"])/"plenum-owner-iam.json").read_text())
+          spec=d["spec"]["template"]["spec"]
+          assert d["metadata"]["name"]=="plenum-computer-browser"
+          assert d["status"]["url"]=="https://plenum-computer-browser-98614162800.us-east1.run.app"
+          assert spec["serviceAccountName"]=="plenum-browser-runtime@plenum-computer-browser.iam.gserviceaccount.com"
+          assert len(spec["containers"])==1
+          container=spec["containers"][0]
+          assert container["image"].endswith(":b078968113f0c688873306258c30f1f7aa662457")
+          env={x["name"]:x.get("value") for x in container.get("env",[])}
+          assert env["BROWSER_ALLOWED_ORIGINS"]=="https://example.com,https://the-internet.herokuapp.com"
+          assert env["BROWSER_PUBLIC_ORIGIN"]==d["status"]["url"]
+          assert env["COMPUTER_IAP_AUDIENCE"]=="/projects/98614162800/locations/us-east1/services/plenum-computer-browser"
+          assert "BROWSER_SESSION_KEY" in env and env["BROWSER_SESSION_KEY"] is None
+          members={m for b in policy.get("bindings",[]) for m in b.get("members",[])}
+          assert not (members & {"allUsers","allAuthenticatedUsers"})
+          Path(os.environ["RUNNER_TEMP"]).joinpath("plenum-owner-release.json").unlink()
+          Path(os.environ["RUNNER_TEMP"]).joinpath("plenum-owner-iam.json").unlink()
+          print("PASS: updated original owner service from existing image; no public access or Cloud Build.")
+          PY
+      - name: Report sanitized result in owner issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE: ${{ github.event.issue.number }}
+          RELEASE: ${{ steps.release.outcome }}
+        shell: bash
+        run: |
+          if [ "$RELEASE" = 'success' ]; then
+            gh issue comment "$ISSUE" --body 'PASS: The original IAP-private Plenum Computer Browser owner service was updated from an existing built image, with the test-login origin and private session vault. No public access and no TinyFish used. Human Google IAP sign-in and real saved session still require verification.'
+          else
+            gh issue comment "$ISSUE" --body 'BLOCKED: Existing-image owner browser deploy did not pass all protected checks. Inspect the workflow failure stage before retrying. No claim of live owner login or Work equivalence.'
+          fi
