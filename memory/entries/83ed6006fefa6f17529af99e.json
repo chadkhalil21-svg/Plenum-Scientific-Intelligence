@@ -1,0 +1,59 @@
+{
+  "candidate_deployed": false,
+  "candidate_holdout_accuracy": 1.0,
+  "candidate_ranker_weight": 0.5,
+  "hypotheses_status": "unverified",
+  "id": "83ed6006fefa6f17529af99e",
+  "independent_audit_passed": true,
+  "prior_memory_ids": [
+    "c2e0a01ce7ec4b500535e3e2",
+    "c918b152b538aa985e26bb71",
+    "f3dc816392da6eae50515aa0"
+  ],
+  "question": "artificial intelligence for scientific discovery",
+  "recorded_utc": "2026-11-08T16:02:35.737510+00:00",
+  "revision": "814c477cc5cb4015eaca2857490a917e592aafe2",
+  "run_id": "42497821416",
+  "schema": "plenum-memory-v1",
+  "scientific_discovery_verified": false,
+  "sha256": "83ed6006fefa6f17529af99e72d5d934708f406df644eb45684397cbcab95099",
+  "simulation_benchmark_passed": true,
+  "source_status": "retrieved_metadata",
+  "sources": [
+    {
+      "doi": "https://doi.org/10.1016/j.respol.2024.104989",
+      "id": "https://openalex.org/W4393124223",
+      "title": "Artificial intelligence and scientific discovery: a model of prioritized search",
+      "url": "https://doi.org/10.1016/j.respol.2024.104989",
+      "year": 2024
+    },
+    {
+      "doi": "https://doi.org/10.1098/rsta.2024.0591",
+      "id": "https://openalex.org/W7152457584",
+      "title": "The need for verification in artificial intelligence-driven scientific discovery",
+      "url": "https://doi.org/10.1098/rsta.2024.0591",
+      "year": 2026
+    },
+    {
+      "doi": "",
+      "id": "https://openalex.org/W7217921299",
+      "title": "The impact of artificial intelligence on scientific discovery and automation",
+      "url": "https://sibe.rpress.co.in/index.php/jimr/article/view/29",
+      "year": 2024
+    },
+    {
+      "doi": "",
+      "id": "https://openalex.org/W2566764188",
+      "title": "Artificial Intelligence for Scientific Discovery",
+      "url": "http://ci.nii.ac.jp/naid/110009900418/en/",
+      "year": 2015
+    },
+    {
+      "doi": "https://doi.org/10.1007/978-3-031-27019-2",
+      "id": "https://openalex.org/W4364856241",
+      "title": "Artificial Intelligence for Scientific Discoveries",
+      "url": "https://doi.org/10.1007/978-3-031-27019-2",
+      "year": 2023
+    }
+  ]
+}
