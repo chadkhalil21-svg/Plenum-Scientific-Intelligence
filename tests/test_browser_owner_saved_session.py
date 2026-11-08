@@ -1,19 +1,25 @@
 """IAP-only session restore UI tests. No real account, Cloud Run or GCS."""
+import importlib.util
 import os
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-from services.computer_browser.owner_console import require_verified_owner
-from services.computer_browser import owner_saved_session
+HAS_GATEWAY = all(
+    importlib.util.find_spec(name) is not None
+    for name in ("fastapi", "httpx", "jwt", "multipart")
+)
+if HAS_GATEWAY:
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from services.computer_browser.owner_console import require_verified_owner
+    from services.computer_browser import owner_saved_session
+    app = FastAPI()
+    owner_saved_session.mount_owner_saved_session(app)
+    owner = {"owner_verified": True, "private_owner_id": "synthetic-owner-sha"}
+    client = TestClient(app)
 
-app = FastAPI()
-owner_saved_session.mount_owner_saved_session(app)
-owner = {"owner_verified": True, "private_owner_id": "synthetic-owner-sha"}
-client = TestClient(app)
 
-
+@unittest.skipUnless(HAS_GATEWAY, "Browser gateway CI installs IAP and form dependencies")
 class SavedWebsiteSessionRoutes(unittest.TestCase):
     def setUp(self):
         app.dependency_overrides[require_verified_owner] = lambda: owner

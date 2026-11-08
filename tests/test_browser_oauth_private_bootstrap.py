@@ -42,7 +42,7 @@ class BootstrapGuardTests(unittest.TestCase):
         docker=(ROOT/"services/computer_browser/facade.Dockerfile").read_text()
         cloudbuild=(ROOT/"services/computer_browser/facade-bootstrap.cloudbuild.yaml").read_text()
         self.assertIn("facade.Dockerfile",cloudbuild)
-        self.assertIn("browser_mcp",docker)
+        self.assertIn("mcp_resource_server.py",docker)
         self.assertIn("USER 10001:10001",docker)
         for path in ("private_login.py","engine.py","session","profiles","storage"):
             self.assertNotIn("COPY services/computer_browser/"+path,docker)
