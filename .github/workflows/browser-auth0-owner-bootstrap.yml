@@ -1,0 +1,143 @@
+name: Bootstrap Alternative Auth0 Browser Owner Entrance (Founder Approved)
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+concurrency:
+  group: plenum-auth0-owner-portal-build
+  cancel-in-progress: false
+jobs:
+  bootstrap-owner-portal:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == 'Computer Browser: bootstrap Auth0 owner portal' &&
+      github.event.issue.body == 'OWNER_AUTH0_LOCKED_BOOTSTRAP:2026-11-08'
+    environment: computer-browser-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Verify previously deployed browser and exact cloud project
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+          RUNTIME: ${{ vars.GCP_BROWSER_RUNTIME_SA }}
+          OWNER_EMAIL: ${{ vars.COMPUTER_OWNER_EMAIL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$PROJECT" = 'plenum-computer-browser'
+          test "$RUNTIME" = 'plenum-browser-runtime@plenum-computer-browser.iam.gserviceaccount.com'
+          test -n "$OWNER_EMAIL"
+          gcloud run services describe plenum-computer-browser --project="$PROJECT" --region=us-east1 --format='value(metadata.name)' >/dev/null
+          gcloud artifacts docker images describe "us-east1-docker.pkg.dev/$PROJECT/plenum-browser/computer-browser:b078968113f0c688873306258c30f1f7aa662457" --project="$PROJECT" --format='value(image_summary.digest)' >/dev/null
+          gcloud secrets describe computer-browser-token --project="$PROJECT" --format='value(name)' >/dev/null
+          echo 'PASS: Previous browser base image and owner browser token secret available; original IAP unchanged.'
+      - name: Build only thin Auth0 layer from existing Chromium image
+        id: build
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE="us-east1-docker.pkg.dev/$PROJECT/plenum-browser/browser-auth0-owner:$GITHUB_SHA"
+          BUILDER="plenum-browser-builder@$PROJECT.iam.gserviceaccount.com"
+          gcloud builds submit . --project="$PROJECT" --region=us-east1 \
+            --service-account="projects/$PROJECT/serviceAccounts/$BUILDER" \
+            --gcs-source-staging-dir="gs://$PROJECT-build-source-98614162800/source" \
+            --config=services/computer_browser/owner-auth0.cloudbuild.yaml \
+            --substitutions="_IMAGE=$IMAGE" --quiet
+          test -n "$(gcloud artifacts docker images describe "$IMAGE" --project="$PROJECT" --format='value(image_summary.digest)')"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+          echo 'PASS: Existing Playwright image reused, only Authlib portal layer built.'
+      - name: Deploy separately as LOCKED login-only bootstrap
+        id: deploy
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+          RUNTIME: ${{ vars.GCP_BROWSER_RUNTIME_SA }}
+          OWNER_EMAIL: ${{ vars.COMPUTER_OWNER_EMAIL }}
+          IMAGE: ${{ steps.build.outputs.image }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$IMAGE"
+          # This is a SEPARATE service, not the existing Google IAP owner browser.
+          # Public HTTPS is necessary for Auth0 redirects. Protected routes
+          # are application-authenticated; without a client ID, login is 503.
+          gcloud run deploy plenum-browser-owner-auth0 \
+            --project="$PROJECT" --region=us-east1 --platform=managed \
+            --image="$IMAGE" --service-account="$RUNTIME" \
+            --allow-unauthenticated --ingress=all --port=8080 \
+            --cpu=2 --memory=2Gi --concurrency=1 --min-instances=0 --max-instances=1 \
+            --timeout=900 \
+            --set-secrets COMPUTER_BROWSER_TOKEN=computer-browser-token:latest \
+            --set-env-vars "^|^COMPUTER_OWNER_EMAIL=$OWNER_EMAIL|BROWSER_ALLOWED_ORIGINS=https://example.com,https://the-internet.herokuapp.com|AUTH0_OWNER_CLIENT_ID=" \
+            --quiet >/dev/null
+          URL="$(gcloud run services describe plenum-browser-owner-auth0 --project="$PROJECT" --region=us-east1 --format='value(status.url)')"
+          case "$URL" in
+            https://plenum-browser-owner-auth0-*.run.app) ;;
+            *) echo 'BLOCKED: Unexpected Auth0 owner URL'; exit 1 ;;
+          esac
+          gcloud run services update plenum-browser-owner-auth0 \
+            --project="$PROJECT" --region=us-east1 \
+            --update-env-vars "AUTH0_OWNER_PUBLIC_ORIGIN=$URL,BROWSER_PUBLIC_ORIGIN=$URL" \
+            --quiet >/dev/null
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo 'PASS: New Auth0 login-only portal deployed. Original IAP service unchanged.'
+      - name: Verify public bootstrap cannot expose owner accounts
+        id: check
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+          PORTAL_URL: ${{ steps.deploy.outputs.url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$PORTAL_URL"
+          ROOT_CODE="$(curl --silent --show-error --location-trusted=false --output /dev/null --write-out '%{http_code}' --max-time 25 "$PORTAL_URL/")"
+          OWNER_CODE="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 25 "$PORTAL_URL/owner")"
+          LOGIN_CODE="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 25 "$PORTAL_URL/auth0/login")"
+          test "$ROOT_CODE" = "200"
+          test "$OWNER_CODE" = "401"
+          test "$LOGIN_CODE" = "503"
+          gcloud run services describe plenum-browser-owner-auth0 --project="$PROJECT" --region=us-east1 --format=json > "$RUNNER_TEMP/plenum-auth0-owner.json"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"plenum-auth0-owner.json"
+          d=json.loads(p.read_text())
+          assert d["metadata"]["name"]=="plenum-browser-owner-auth0"
+          spec=d["spec"]["template"]["spec"]
+          assert spec["serviceAccountName"]=="plenum-browser-runtime@plenum-computer-browser.iam.gserviceaccount.com"
+          env={e["name"]: e.get("value") for e in spec["containers"][0].get("env",[])}
+          assert env.get("AUTH0_OWNER_CLIENT_ID","")==""
+          assert env.get("AUTH0_OWNER_PUBLIC_ORIGIN","").startswith("https://plenum-browser-owner-auth0-")
+          assert "BROWSER_PROFILE_BUCKET" not in env
+          assert "BROWSER_SESSION_KEY" not in env
+          assert "COMPUTER_BROWSER_TOKEN" in env
+          p.unlink()
+          print("PASS: Public login splash, protected owner 401, disabled Auth0 503, no private website session vault.")
+          PY
+      - name: Report only sanitized outcome in founder issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          URL: ${{ steps.deploy.outputs.url }}
+          RESULT: ${{ steps.check.outcome }}
+        shell: bash
+        run: |
+          if [ "$RESULT" = 'success' ]; then
+            gh issue comment "$ISSUE" --body "PASS: A separate zero-idle Plenum Auth0 owner portal is available at $URL/ with public greeting (200), blocked owner pages (401), and intentionally disabled login (503) pending exact registered Auth0 SPA client ID and redirect URI. Existing Google IAP browser was not modified. No website sessions, cookies, account writes, or TinyFish used in deployment. Auth0 callback URL for founder's registered SPA app: $URL/auth0/callback."
+          else
+            gh issue comment "$ISSUE" --body 'BLOCKED: Alternate Auth0 portal did not pass its least-privilege bootstrap checks. Original Google IAP browser unchanged. Do not claim login or private account access.'
+          fi
