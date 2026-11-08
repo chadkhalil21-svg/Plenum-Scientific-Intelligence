@@ -45,7 +45,8 @@ def _decode(value: str) -> bytes:
 
 
 def _origin(value: str) -> str:
-    if not isinstance(value, str) or len(value) > 253:
+    if (not isinstance(value, str) or len(value) > 253
+            or any(ord(ch) < 33 or ord(ch) == 127 for ch in value)):
         raise ApprovalRejected("Invalid website origin")
     try:
         p = urlsplit(value)
