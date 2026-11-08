@@ -34,6 +34,19 @@ def filter_site_storage(state,site_origin):
     }
 
 
+async def _focused_editable_kind(page):
+    """Return only an editable field class; never expose DOM text or typed secrets."""
+    return await page.evaluate("""() => {
+      const el = document.activeElement;
+      if (!el || el.disabled || el.readOnly) return "none";
+      if (el.isContentEditable || el.tagName === "TEXTAREA") return "text";
+      if (el.tagName !== "INPUT") return "none";
+      if (el.type === "password") return "password";
+      return ["text", "email", "search", "url", "tel", "number"].includes(el.type)
+          ? "text" : "none";
+    }""")
+
+
 def login_html(nonce):
     return """<!doctype html><html lang="en"><head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -41,8 +54,9 @@ def login_html(nonce):
     <style>body{font:16px system-ui;margin:16px auto;padding:0 12px;max-width:1060px}
     button,input{font:inherit;padding:9px;margin:3px}
     input#url{width:78%;max-width:720px}input#text{width:64%;max-width:680px}
-    canvas{border:1px solid gray;width:100%;max-width:1024px;background:#eee}
-    #status{white-space:pre-wrap}h1{font-size:23px}</style></head><body>
+    canvas{border:1px solid gray;width:100%;max-width:1024px;background:#eee;
+    touch-action:manipulation;cursor:crosshair}
+    #status,#field-status{white-space:pre-wrap}h1{font-size:23px}</style></head><body>
     <h1>Computer · Private Website Sign-in</h1>
     <p>Open an approved website. Sign in here rather than sharing passwords
     in ChatGPT. This browser runs only while the private session is connected.</p>
@@ -50,25 +64,44 @@ def login_html(nonce):
     maxlength="1200" autocomplete="off"></label>
     <button id="open">Open secure browser</button>
     <p id="status" role="status">Not connected</p>
-    <canvas width="1024" height="720" id="display" aria-label="Remote Chromium view"></canvas>
+    <canvas width="1024" height="720" id="display" tabindex="0" aria-label="Remote Chromium view: tap or click a field to select it"></canvas>
+    <p id="field-status" role="status">Tap a field in the picture to select it. The private text box will not clear until typing is confirmed.</p>
     <p><input type="password" id="text" autocomplete="off"
     placeholder="Type privately into selected website field">
-    <button id="type">Type</button>
+    <button id="type" disabled>Type</button>
     <button id="enter">Enter</button>
     <button id="tab">Tab</button>
     <button id="reload">Reload</button>
     <button id="save">Save this website login</button>
     <button id="close">Close</button></p>
     <script nonce="__NONCE__">
-    let ws=null;const canvas=document.getElementById("display"),
-    ctx=canvas.getContext("2d"),status=document.getElementById("status");
-    function send(m){if(ws&&ws.readyState===1)ws.send(JSON.stringify(m));
-      else status.textContent="Open a website first."}
+    let ws=null,ready=false,selected="none",pendingText=null,frameNumber=0;
+    let lastTouchAt=0;
+    const canvas=document.getElementById("display"),
+      ctx=canvas.getContext("2d"),
+      status=document.getElementById("status"),
+      fieldStatus=document.getElementById("field-status"),
+      textInput=document.getElementById("text"),
+      typeButton=document.getElementById("type");
+    function updateTypingEnabled(){
+      typeButton.disabled=!ready||selected==="none"||pendingText!==null;
+    }
+    function send(m){
+      if(ws&&ws.readyState===WebSocket.OPEN&&ready){
+        ws.send(JSON.stringify(m));return true;
+      }
+      status.textContent="Browser not connected. Open secure browser again; unsent text is preserved.";
+      return false;
+    }
     document.getElementById("open").onclick=()=>{
-      if(ws)ws.close();const u=new URL("/owner/live",location.origin);
+      if(ws)ws.close();
+      const u=new URL("/owner/live",location.origin);
       u.protocol=location.protocol==="https:"?"wss:":"ws:";
       u.searchParams.set("site",document.getElementById("url").value.trim());
-      const connection=new WebSocket(u);ws=connection;
+      const connection=new WebSocket(u);
+      ws=connection;ready=false;selected="none";pendingText=null;
+      updateTypingEnabled();
+      fieldStatus.textContent="Waiting for live browser picture.";
       let connected=false,serverStopped=false;
       status.textContent="Connecting to private browser...";
       connection.onopen=()=>{
@@ -80,32 +113,84 @@ def login_html(nonce):
         status.textContent="Secure browser stream unavailable; check sign-in and connectivity.";
       };
       connection.onclose=e=>{
-        if(ws!==connection||serverStopped)return;
+        if(ws!==connection)return;
+        ready=false;selected="none";pendingText=null;updateTypingEnabled();
+        if(serverStopped)return;
         if(e.code===4403||(!connected&&e.code===1006))
           status.textContent="Browser connection rejected before opening. Refresh owner sign-in, then retry.";
         else if(e.code===1000&&connected)
           status.textContent="Private browser closed.";
         else
           status.textContent="Private browser connection interrupted (code "+e.code+").";
+        fieldStatus.textContent="Remote browser closed. Text not confirmed remains in the private box.";
       };
       connection.onmessage=e=>{
         if(ws!==connection)return;
         const m=JSON.parse(e.data);
         if(m.type==="status"){
           status.textContent=m.message;
-          if(m.failure===true)serverStopped=true;
+          if(m.failure===true){serverStopped=true;ready=false;updateTypingEnabled();}
         }
-        if(m.type==="frame"){const img=new Image();
-          img.onload=()=>ctx.drawImage(img,0,0,1024,720);
-          img.src="data:image/jpeg;base64,"+m.image;}
+        if(m.type==="ack"&&m.action==="click"){
+          selected=["text","password"].includes(m.field)?m.field:"none";
+          fieldStatus.textContent=selected==="password"?"Password field selected. Type privately below."
+            :selected==="text"?"Text field selected. Type privately below."
+            :"No editable field selected. Tap the center of a website input.";
+          updateTypingEnabled();
+        }
+        if(m.type==="ack"&&m.action==="type"){
+          if(m.ok===true){
+            if(pendingText!==null&&textInput.value===pendingText)textInput.value="";
+            fieldStatus.textContent="Text entered into the selected website field.";
+          }else{
+            selected="none";
+            fieldStatus.textContent="Text was NOT entered. Tap a website input first; your text is preserved.";
+          }
+          pendingText=null;updateTypingEnabled();
+        }
+        if(m.type==="frame"){
+          if(!ready){
+            ready=true;
+            status.textContent="Browser ready. Tap a website input inside the picture.";
+            updateTypingEnabled();
+          }
+          const seq=++frameNumber,img=new Image();
+          img.onload=()=>{if(seq===frameNumber)ctx.drawImage(img,0,0,1024,720);};
+          img.src="data:image/jpeg;base64,"+m.image;
+        }
       };
     };
-    canvas.onclick=e=>{let r=canvas.getBoundingClientRect();
-      send({type:"click",x:Math.floor((e.clientX-r.left)*1024/r.width),
-        y:Math.floor((e.clientY-r.top)*720/r.height)})};
-    document.getElementById("type").onclick=()=>{
-      const inp=document.getElementById("text");
-      send({type:"type",value:inp.value});inp.value="";};
+    function selectInBrowser(e){
+      const r=canvas.getBoundingClientRect();
+      if(!r.width||!r.height)return;
+      const x=Math.max(0,Math.min(1023,Math.floor((e.clientX-r.left)*1024/r.width))),
+        y=Math.max(0,Math.min(719,Math.floor((e.clientY-r.top)*720/r.height)));
+      if(send({type:"click",x:x,y:y})){
+        selected="none";updateTypingEnabled();
+        fieldStatus.textContent="Selecting website field...";
+      }
+    }
+    // Pointer-up supports touch selection in iPad browsers. Ignore its
+    // subsequent synthetic click to avoid accidentally submitting twice.
+    canvas.addEventListener("pointerup",e=>{
+      if(e.pointerType==="touch"){
+        e.preventDefault();lastTouchAt=Date.now();selectInBrowser(e);
+      }
+    });
+    canvas.onclick=e=>{
+      if(Date.now()-lastTouchAt>800)selectInBrowser(e);
+    };
+    typeButton.onclick=()=>{
+      if(pendingText!==null||selected==="none"||!textInput.value){
+        fieldStatus.textContent="Select a website field and enter text before typing.";
+        return;
+      }
+      const value=textInput.value;
+      if(send({type:"type",value:value})){
+        pendingText=value;updateTypingEnabled();
+        fieldStatus.textContent="Sending to selected field. Waiting for browser confirmation...";
+      }
+    };
     document.getElementById("enter").onclick=()=>send({type:"key",key:"Enter"});
     document.getElementById("tab").onclick=()=>send({type:"key",key:"Tab"});
     document.getElementById("reload").onclick=()=>send({type:"reload"});
@@ -208,11 +293,18 @@ def mount_private_login(app):
                                 not 0<=x<1024 or not 0<=y<720):
                             raise PermissionError("Click coordinates outside visible browser")
                         await page.mouse.click(x,y)
+                        await ws.send_json({"type":"ack","action":"click",
+                                            "field":await _focused_editable_kind(page)})
                     elif kind=="type":
                         text=command.get("value","")
                         if not isinstance(text,str) or len(text)>2000:
                             raise PermissionError("Invalid typed input")
+                        field=await _focused_editable_kind(page)
+                        if field=="none":
+                            await ws.send_json({"type":"ack","action":"type","ok":False})
+                            continue
                         await page.keyboard.insert_text(text)
+                        await ws.send_json({"type":"ack","action":"type","ok":True})
                     elif kind=="key":
                         if command.get("key") not in {"Enter","Tab","Backspace"}:
                             raise PermissionError("Unsupported key combination")
