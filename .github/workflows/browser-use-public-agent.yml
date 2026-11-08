@@ -1,0 +1,92 @@
+name: Optional Browser Use AI Public Agent (Founder Approved)
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    paths:
+      - 'tools/browser-use/**'
+      - 'tests/test_browser_use_public_agent.py'
+      - '.github/workflows/browser-use-public-agent.yml'
+permissions:
+  contents: read
+  issues: write
+jobs:
+  policy:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Validate public founder task boundary without installing model dependencies
+        run: python -m unittest discover -s tests -p test_browser_use_public_agent.py -v
+  owner-public-agent:
+    if: >-
+      github.event_name == 'issues' &&
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == 'Computer Browser: optional Browser Use public agent' &&
+      github.event.issue.body == 'RUN_BROWSER_USE_PUBLIC:example.com:MAX_STEPS_5:2026-11-08'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Require founder-approved model key before any agent package or browser starts
+        id: preflight
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -n "$OPENAI_API_KEY" ]; then
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+            echo 'Owner-approved agent model connection exists (value not printed).'
+          else
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+            echo 'No dedicated model API key configured; no model usage or browser startup.'
+          fi
+      - name: Install pinned open-source Browser Use only when model configured
+        if: steps.preflight.outputs.ready == 'true'
+        run: |
+          python -m pip install --disable-pip-version-check 'browser-use==0.13.14'
+          browser-use install
+      - name: Run at most 5 public browser agent steps with no credentials
+        if: steps.preflight.outputs.ready == 'true'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          BROWSER_TASK_AUTHOR: ${{ github.event.issue.user.login }}
+          BROWSER_TASK_TITLE: ${{ github.event.issue.title }}
+          BROWSER_TASK_BODY: ${{ github.event.issue.body }}
+          BROWSER_REPORT_PATH: ${{ runner.temp }}/plenum-browser-use-report.json
+          ANONYMIZED_TELEMETRY: 'false'
+        timeout-minutes: 3
+        run: python tools/browser-use/public_agent.py
+      - name: Report status only to exact founder issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          READY: ${{ steps.preflight.outputs.ready }}
+          REPORT_PATH: ${{ runner.temp }}/plenum-browser-use-report.json
+        shell: bash
+        run: |
+          if [ "$READY" != 'true' ]; then
+            gh issue comment "$ISSUE" --body 'NOT CONFIGURED: official Browser Use autonomous agent is integrated as an optional library, but no dedicated OpenAI API key exists in this repository. Zero model steps executed; no TinyFish or Browser Use hosted subscription used. ChatGPT Plus does not automatically supply an API key.'
+          elif [ ! -s "$REPORT_PATH" ]; then
+            gh issue comment "$ISSUE" --body 'BLOCKED: Browser Use optional agent did not produce a verified public result. Inspect only the isolated setup stage, not website credentials. No account actions enabled.'
+          else
+            STATUS="$(python -c 'import json,sys; print(json.load(open(sys.argv[1])).get("status","unknown"))' "$REPORT_PATH")"
+            case "$STATUS" in
+              verified_public_heading)
+                gh issue comment "$ISSUE" --body 'PASS: open-source Browser Use agent used a separately configured model, navigated the isolated public example.com site and independently reported the Example Domain heading in <=5 agent steps. No login, site write, hosted Browser Use, or TinyFish dependency.' ;;
+              *)
+                gh issue comment "$ISSUE" --body 'NOT VERIFIED: Browser Use agent was installed/run but did not independently establish the expected public heading. No authenticated account access or site writes were approved.' ;;
+            esac
+          fi
