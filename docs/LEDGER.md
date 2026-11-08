@@ -513,3 +513,7 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 ## 2026-11-08: computer-browser plugin 0.4.11 reflects new separate Auth0 owner portal
 - [x] Updated [private Computer Browser plugin](https://chatgpt.com/plugins/plugins_6aefd5d509788191a201f947a254b3c0) to v0.4.11, verified release `pluginrel_6af0dbbc798c81918e641793de6e0841` and preserved GitHub app link. Instructions now direct future chats to deployed LOCKED alternate Auth0 portal at `https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app/`, setup guide and founder-only activation gate without incorrectly repeating Google IAP client assignment setup.
 - [ ] Real owner Auth0 sign-in and saved third-party website session await founder's authenticated Auth0 client registration. No private site writes or full Work parity claimed.
+
+## 2026-11-08: saved browser profile does not equal saved Auth0 login
+- [x] Founder TinyFish profile Save confirmation observed. Read-only run `05cbfa63-7966-43ee-8bc3-90ef0999657b` confirmed `manage.auth0.com` still redirects to login, so Auth0 app setup/activation was **not** performed. Current reported balance approximately $3.24.
+- [ ] New TinyFish owner profile handoff opens Auth0 Applications first. Founder must complete Auth0 login, verify Applications are visible, THEN save profile; no secrets in chat or GitHub. Original Google IAP browser unchanged. Continue [canonical browser ledger](COMPUTER_BROWSER_PROGRESS.md).
