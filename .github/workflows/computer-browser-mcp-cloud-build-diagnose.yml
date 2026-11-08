@@ -77,6 +77,7 @@ jobs:
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: chadkhalil21-svg/Plenum-Scientific-Intelligence
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           CATEGORY: ${{ steps.classify.outputs.category }}
           FAILURE_TYPE: ${{ steps.classify.outputs.failure_type }}
