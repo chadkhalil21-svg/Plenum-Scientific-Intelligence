@@ -6,6 +6,7 @@ on:
 permissions:
   contents: read
   id-token: write
+  issues: write
 concurrency:
   group: computer-browser-iap-health-only
   cancel-in-progress: false
@@ -101,3 +102,19 @@ jobs:
             --health-response "$RESPONSE"
           rm -f "$RESPONSE"
           echo "No browser navigation, site login, writes, deployment, or secret values were used."
+
+      - name: Post non-sensitive verification result to founder's GitHub issue
+        if: always() && github.event_name == 'issues' && github.event.issue.user.login == 'chadkhalil21-svg'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = "success" ]; then
+            RESULT="PASS: Programmatic service-account IAP authentication reached the existing private Cloud Run /healthz endpoint. No website action was performed."
+          else
+            RESULT="NOT VERIFIED: Programmatic IAP health check did not pass. Review the named failed GitHub Actions step for required narrow IAM permissions. No deployment or private browser action was attempted."
+          fi
+          gh issue comment "$ISSUE_NUMBER" --body "$RESULT"
