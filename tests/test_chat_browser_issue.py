@@ -56,7 +56,7 @@ class ChatBrowserIssueTests(unittest.TestCase):
             (AUTHOR, NAV_TITLE, json.dumps({"schema": NAV_SCHEMA,
                 "url": "https://example.com/", "links": ["Page"] * 4})),
             (AUTHOR, NAV_TITLE, json.dumps({"schema": NAV_SCHEMA,
-                "url": "https://example.com/", "links": ["Page\\nInjected"]})),
+                "url": "https://example.com/", "links": ["Page\nInjected"]})),
             (AUTHOR, NAV_TITLE, json.dumps({"schema": NAV_SCHEMA,
                 "url": "https://example.com/", "links": ["Page"], "script": "x"})),
         ]
