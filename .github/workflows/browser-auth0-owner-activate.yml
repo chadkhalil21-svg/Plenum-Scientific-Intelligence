@@ -1,0 +1,107 @@
+name: Activate Existing Auth0 Browser Owner Client and Encrypted Demo Sessions (Founder Approved)
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+concurrency:
+  group: plenum-auth0-owner-portal-build
+  cancel-in-progress: false
+jobs:
+  activate-owner-portal:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == 'Computer Browser: activate Auth0 owner portal' &&
+      github.event.issue.body == 'ACTIVATE_AUTH0_OWNER_CLIENT:2026-11-08'
+    environment: computer-browser-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Require founder-configured existing Auth0 SPA public client
+        id: preflight
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+          AUTH0_CLIENT: ${{ vars.AUTH0_OWNER_CLIENT_ID }}
+          BUCKET: ${{ vars.BROWSER_PROFILE_BUCKET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$PROJECT" = 'plenum-computer-browser'
+          [[ "$AUTH0_CLIENT" =~ ^[A-Za-z0-9_-]{10,160}$ ]] || {
+            echo 'BLOCKED: Auth0 SPA client ID not configured in GitHub Actions variable AUTH0_OWNER_CLIENT_ID.'; exit 1;
+          }
+          test -n "$BUCKET"
+          test "$(gcloud run services describe plenum-browser-owner-auth0 --project="$PROJECT" --region=us-east1 --format='value(metadata.name)')" = 'plenum-browser-owner-auth0'
+          gcloud secrets describe computer-browser-session-key --project="$PROJECT" --format='value(name)' >/dev/null
+          gcloud storage buckets describe "gs://$BUCKET" --project="$PROJECT" --raw --format=json > "$RUNNER_TEMP/plenum-auth0-vault.json"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          f=Path(os.environ["RUNNER_TEMP"])/"plenum-auth0-vault.json"
+          b=json.loads(f.read_text())
+          iam=b.get("iamConfiguration",{})
+          assert iam.get("publicAccessPrevention")=="enforced"
+          assert iam.get("uniformBucketLevelAccess",{}).get("enabled") is True
+          f.unlink()
+          print("PASS: Existing separately registered Auth0 SPA client variable and encrypted private vault confirmed.")
+          PY
+      - name: Update ONLY the new Auth0 portal, never original IAP service
+        id: activate
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+          AUTH0_CLIENT: ${{ vars.AUTH0_OWNER_CLIENT_ID }}
+          BUCKET: ${{ vars.BROWSER_PROFILE_BUCKET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run services update plenum-browser-owner-auth0 \
+            --project="$PROJECT" --region=us-east1 \
+            --update-env-vars "AUTH0_OWNER_CLIENT_ID=$AUTH0_CLIENT,BROWSER_PROFILE_BUCKET=$BUCKET" \
+            --update-secrets "BROWSER_SESSION_KEY=computer-browser-session-key:latest" \
+            --quiet >/dev/null
+          URL="$(gcloud run services describe plenum-browser-owner-auth0 --project="$PROJECT" --region=us-east1 --format='value(status.url)')"
+          case "$URL" in
+            https://plenum-browser-owner-auth0-*.run.app) ;;
+            *) exit 1 ;;
+          esac
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+      - name: Verify Auth0 login initiates and owner pages remain denied to anonymous users
+        id: verify
+        env:
+          URL: ${{ steps.activate.outputs.url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$URL"
+          LOGIN_STATUS="$(curl --silent --show-error --max-time 20 --output /dev/null --write-out '%{http_code}' "$URL/auth0/login")"
+          PRIVATE_STATUS="$(curl --silent --show-error --max-time 20 --output /dev/null --write-out '%{http_code}' "$URL/owner")"
+          WS_LOGIN_STATUS="$(curl --silent --show-error --max-time 20 --output /dev/null --write-out '%{http_code}' "$URL/owner/sign-in")"
+          test "$LOGIN_STATUS" = '302'
+          test "$PRIVATE_STATUS" = '401'
+          test "$WS_LOGIN_STATUS" = '401'
+          echo 'PASS: Auth0 OIDC login redirect active; signed owner session still required for private browser pages.'
+      - name: Report completion without client ID or session information
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          URL: ${{ steps.activate.outputs.url }}
+          RESULT: ${{ steps.verify.outcome }}
+        shell: bash
+        run: |
+          if [ "$RESULT" = 'success' ]; then
+            gh issue comment "$ISSUE" --body "PASS: Existing Auth0 SPA owner client was activated on the separate Plenum browser portal at $URL/. Anonymous cannot reach private owner pages, OAuth login starts with PKCE, and only the encrypted existing private GCS session vault is attached. The founder must complete actual Auth0 login from their iPad before website sessions or account automation can be called live verified. Original Google IAP service unchanged."
+          else
+            gh issue comment "$ISSUE" --body 'BLOCKED: Auth0 owner activation could not verify all configured prerequisites or public login protections. No claim of successful website account login. Inspect the exact failing step before retrying; original Google IAP browser unchanged.'
+          fi
