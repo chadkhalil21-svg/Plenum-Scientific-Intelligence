@@ -478,3 +478,8 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 ## 2026-11-08: optional autonomous browser model can use OpenRouter zero-priced route
 - [x] Source staged to replace Browser Use's OPENAI_API_KEY-only path with strict `BROWSER_USE_OPENROUTER_FREE_KEY` and `openrouter/free`. Paid model fallback disabled, founder public task still bounded to max 5 steps. Exact free model routing subject to OpenRouter limits. This code does not change the independently LIVE verified official Playwright MCP.
 - [ ] The separate free model key is not yet configured, and no live AI-planned Browser Use navigation is claimed. Adding an API key privately under GitHub Actions Secrets is a founder-controlled step; never ask for keys in chat. Authenticated website access remains blocked; see [Browser Progress](COMPUTER_BROWSER_PROGRESS.md).
+
+## 2026-11-08: optional Browser Use free-model boundary live in code, plugin 0.4.10
+- [x] Merged [PR #215](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/215), allowing only a dedicated `BROWSER_USE_OPENROUTER_FREE_KEY` with `openrouter/free`; unrelated paid OpenAI keys are ignored. Targeted policy/ledger CI passed. No Browser Use autonomous model step was run, because the key is not connected.
+- [x] Updated [private Computer Browser plugin](https://chatgpt.com/plugins/plugins_6aefd5d509788191a201f947a254b3c0) to 0.4.10; verified manifests, instructions and preserved GitHub integration. No new Cloud/IAM/TinyFish settings changed.
+- [ ] Next true release gate: authorized owner login and private persistent website session, then protected chat-initiated account task. Free-model route is optional and limited to public task proof.
