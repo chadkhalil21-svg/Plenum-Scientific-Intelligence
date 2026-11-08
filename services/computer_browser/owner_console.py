@@ -14,9 +14,13 @@ from .engine import read_public, safe_url
 
 
 def require_verified_owner(
+    request: Request,
     x_goog_iap_jwt_assertion: str | None=Header(default=None),
 ):
     try:
+        if auth0_active():
+            return auth0_verified_session(request.scope)
+        # The original IAP owner service retains its ES256-only validation.
         return verify_owner_token(x_goog_iap_jwt_assertion)
     except PermissionError as exc:
         raise HTTPException(status_code=401,detail="Verified owner sign-in required") from exc
