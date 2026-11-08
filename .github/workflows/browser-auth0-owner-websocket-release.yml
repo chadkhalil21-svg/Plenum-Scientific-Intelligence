@@ -96,7 +96,7 @@ jobs:
           set -euo pipefail
           test -n "$IMAGE"
           gcloud run services update plenum-browser-owner-auth0 \
-            --project="$PROJECT" --region=us-east1 --image="$IMAGE"             --timeout=600s --quiet >/dev/null
+            --project="$PROJECT" --region=us-east1 --image="$IMAGE"             --timeout=900s --quiet >/dev/null
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
       - name: Read back identity and verify anonymous denied with unchanged OAuth login
         id: verify
@@ -116,8 +116,8 @@ jobs:
           assert d["status"]["url"]=="https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app"
           assert spec["serviceAccountName"]=="plenum-browser-runtime@plenum-computer-browser.iam.gserviceaccount.com"
           assert spec["containers"][0]["image"]==os.environ["IMAGE"]
-          assert int(spec.get("timeoutSeconds",0))==600
-          print("PASS: Stream request timeout configured at 600 seconds (10 minutes).")
+          assert int(spec.get("timeoutSeconds",0))==900
+          print("PASS: Stream request timeout configured at 900 seconds (15 minutes).")
           env={e["name"]:e for e in spec["containers"][0]["env"]}
           assert env["AUTH0_OWNER_PUBLIC_ORIGIN"].get("value")==d["status"]["url"]
           assert env["BROWSER_PUBLIC_ORIGIN"].get("value")==d["status"]["url"]
