@@ -474,3 +474,7 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 ## 2026-11-08: Computer Browser personal plugin v0.4.9 verified
 - [x] Updated existing private [Computer Browser plugin](https://chatgpt.com/plugins/plugins_6aefd5d509788191a201f947a254b3c0) to v0.4.9, release `pluginrel_6af0d120447081918dd8cc79e4bd8b7d`, retaining GitHub dependency and mandatory browser ledger instructions. Live official MCP ChatGPT issue #213 and optional Browser Use no-model-key issue #214 are documented for future chats; manifests and skill read-back verified.
 - [ ] This is plugin continuity only, not native write tool availability or full Work/TinyFish equivalence. Owner IAP sign-in HTTP 400 and private account session transport remain the next gate.
+
+## 2026-11-08: optional autonomous browser model can use OpenRouter zero-priced route
+- [x] Source staged to replace Browser Use's OPENAI_API_KEY-only path with strict `BROWSER_USE_OPENROUTER_FREE_KEY` and `openrouter/free`. Paid model fallback disabled, founder public task still bounded to max 5 steps. Exact free model routing subject to OpenRouter limits. This code does not change the independently LIVE verified official Playwright MCP.
+- [ ] The separate free model key is not yet configured, and no live AI-planned Browser Use navigation is claimed. Adding an API key privately under GitHub Actions Secrets is a founder-controlled step; never ask for keys in chat. Authenticated website access remains blocked; see [Browser Progress](COMPUTER_BROWSER_PROGRESS.md).

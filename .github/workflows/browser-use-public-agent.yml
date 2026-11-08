@@ -40,17 +40,17 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-      - name: Require founder-approved model key before any agent package or browser starts
+      - name: Require dedicated zero-priced model key before agent startup
         id: preflight
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          BROWSER_USE_OPENROUTER_FREE_KEY: ${{ secrets.BROWSER_USE_OPENROUTER_FREE_KEY }}
         run: |
-          if [ -n "$OPENAI_API_KEY" ]; then
+          if [ -n "$BROWSER_USE_OPENROUTER_FREE_KEY" ]; then
             echo 'ready=true' >> "$GITHUB_OUTPUT"
-            echo 'Owner-approved agent model connection exists (value not printed).'
+            echo 'Dedicated OpenRouter free-model key exists (not printed); no paid fallback.'
           else
             echo 'ready=false' >> "$GITHUB_OUTPUT"
-            echo 'No dedicated model API key configured; no model usage or browser startup.'
+            echo 'No free-model key; no agent install, inference, or browser startup.'
           fi
       - name: Install pinned open-source Browser Use only when model configured
         if: steps.preflight.outputs.ready == 'true'
@@ -60,7 +60,7 @@ jobs:
       - name: Run at most 5 public browser agent steps with no credentials
         if: steps.preflight.outputs.ready == 'true'
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          BROWSER_USE_OPENROUTER_FREE_KEY: ${{ secrets.BROWSER_USE_OPENROUTER_FREE_KEY }}
           BROWSER_TASK_AUTHOR: ${{ github.event.issue.user.login }}
           BROWSER_TASK_TITLE: ${{ github.event.issue.title }}
           BROWSER_TASK_BODY: ${{ github.event.issue.body }}
@@ -78,14 +78,14 @@ jobs:
         shell: bash
         run: |
           if [ "$READY" != 'true' ]; then
-            gh issue comment "$ISSUE" --body 'NOT CONFIGURED: official Browser Use autonomous agent is integrated as an optional library, but no dedicated OpenAI API key exists in this repository. Zero model steps executed; no TinyFish or Browser Use hosted subscription used. ChatGPT Plus does not automatically supply an API key.'
+            gh issue comment "$ISSUE" --body 'NOT CONFIGURED: optional Browser Use agent has no dedicated BROWSER_USE_OPENROUTER_FREE_KEY secret. No paid model fallback, no agent/model steps executed, and no TinyFish or Browser Use hosted subscription required. Only zero-priced OpenRouter free router is eligible; owner must supply an API key privately via GitHub Actions secrets.'
           elif [ ! -s "$REPORT_PATH" ]; then
             gh issue comment "$ISSUE" --body 'BLOCKED: Browser Use optional agent did not produce a verified public result. Inspect only the isolated setup stage, not website credentials. No account actions enabled.'
           else
             STATUS="$(python -c 'import json,sys; print(json.load(open(sys.argv[1])).get("status","unknown"))' "$REPORT_PATH")"
             case "$STATUS" in
               verified_public_heading)
-                gh issue comment "$ISSUE" --body 'PASS: open-source Browser Use agent used a separately configured model, navigated the isolated public example.com site and independently reported the Example Domain heading in <=5 agent steps. No login, site write, hosted Browser Use, or TinyFish dependency.' ;;
+                gh issue comment "$ISSUE" --body 'PASS: Browser Use with OpenRouter zero-priced free model completed the isolated public example.com heading in <=5 agent steps, without a paid model, private accounts, site write, Browser Use hosted cloud, or TinyFish.' ;;
               *)
                 gh issue comment "$ISSUE" --body 'NOT VERIFIED: Browser Use agent was installed/run but did not independently establish the expected public heading. No authenticated account access or site writes were approved.' ;;
             esac

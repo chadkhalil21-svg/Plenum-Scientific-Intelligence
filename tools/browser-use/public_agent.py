@@ -42,13 +42,30 @@ def public_agent_settings() -> dict:
     }
 
 
+def free_model_config() -> dict | None:
+    """Use only OpenRouter's zero-priced free router with a dedicated key.
+
+    Existing OPENAI_API_KEY is deliberately ignored to avoid accidental
+    spending, and no site credentials may be provided to this public agent.
+    """
+    key = os.environ.get("BROWSER_USE_OPENROUTER_FREE_KEY", "")
+    if not key or not key.strip():
+        return None
+    return {
+        "provider": "openrouter_free",
+        "model": "openrouter/free",
+        "base_url": "https://openrouter.ai/api/v1",
+        "key": key,
+    }
+
+
 async def run_public_agent() -> dict:
-    if not os.environ.get("OPENAI_API_KEY"):
+    llm_config = free_model_config()
+    if llm_config is None:
         return {"status": "not_configured", "browser_use_used": False,
                 "model_called": False, "website_changed": False,
-                "explanation": "A separate model API key is required; ChatGPT Plus does not supply one."}
-    # Import only inside authorized paid path so ordinary policy checks
-    # run with zero provider dependencies and zero model/API costs.
+                "explanation": "Optional OpenRouter free-model key not configured. No paid model fallback."}
+    # Import only inside the explicit founder-authorized, key-scoped path.
     from browser_use import Agent, Browser, ChatOpenAI
     settings = public_agent_settings()
     browser = Browser(
@@ -58,7 +75,11 @@ async def run_public_agent() -> dict:
     try:
         agent = Agent(
             task=settings["task"],
-            llm=ChatOpenAI(model="gpt-4.1-mini"),
+            llm=ChatOpenAI(
+                model=llm_config["model"],
+                base_url=llm_config["base_url"],
+                api_key=llm_config["key"],
+            ),
             browser=browser,
             use_vision=False,
         )
@@ -71,6 +92,7 @@ async def run_public_agent() -> dict:
         return {
             "status": "verified_public_heading" if observed else "unverified_public_heading",
             "browser_use_used": True, "model_called": True,
+            "model_provider": "openrouter_free",
             "expected_public_heading_observed_in_agent_output": observed,
             "website_changed": False, "account_access_enabled": False,
         }
