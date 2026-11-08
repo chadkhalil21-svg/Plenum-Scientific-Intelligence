@@ -53,8 +53,8 @@ triggered workflow, then read a response comment with a real HTTP status.
 Do **not** claim operational chat access until that test succeeds.
 
 ## Next iteration
-Only after successful public-source requests should we contemplate
-follow-on navigation, authenticated sessions or browser automation with a
+The public-source and limited link-follow pathways are now live-verified.
+Only then should we contemplate authenticated sessions or browser automation with a
 separate sandbox, approvals and a better interaction channel, and only if
 the user chooses to authorize those privileges.
 
@@ -64,7 +64,7 @@ the user chooses to authorize those privileges.
 A **private, skills-only** ChatGPT plugin named **Computer Browser** was created under the founder's own account. This is an instruction/integration layer that reuses the existing connected GitHub tools and the already-proven owner-created public issue workflow; it is not a new browser server or separate Playwright deployment.
 
 - Private plugin: https://chatgpt.com/plugins/plugins_6aefd5d509788191a201f947a254b3c0
-- Initial release: `0.1.0`; it contains the `computer-browser` skill.
+- Initial release: `0.1.0`; **current verified release: `0.2.0`** with the `computer-browser` skill and public link-follow instructions.
 - The existing live public browser smoke test is GitHub issue #66 (owner issue -> GitHub Actions -> real Chromium -> HTTP 200 -> bot comment).
 - Costs: no TinyFish browser use; public GitHub Actions currently uses standard public-repo runner allowances/fair-use limits.
 - **Not verified:** that the new skill is available in every user's ChatGPT conversation until installed/enabled and invoked. It has no independent MCP tools.
@@ -88,4 +88,4 @@ Create a new issue whose title is exactly `Prometheus Chat Browser: public-navig
 - The browser reads the anchor's `href` and navigates directly to the independently validated HTTPS URL. It **does not run click handlers or submit a form**.
 - Query-string and fragment URLs, non-GET traffic, other domains, private networks and unapproved origins remain prohibited. A destination can fail safely if the external website changes.
 - This is **not** a private browsing workflow: requests and sanitized results reside in public GitHub issues, and no credentials, user records, cookies, form input, uploads, purchases or authenticated operations are authorized.
-- Successful CI alone proves code integrity, not a complete live two-page navigation. Complete a real owner-created issue with a link-follow result before claiming live verification.
+- **Live end-to-end verified, 2026-11-07:** owner-created [GitHub issue #100](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/100) opened `https://arxiv.org/`, followed the unique `Astrophysics` anchor to `https://arxiv.org/archive/astro-ph`, and the Actions bot posted the real Chromium HTTP 200 result with `navigation_hops=1` and `external_website_modified=false`. [PR #99](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/99) was merged after the dedicated test workflows passed. This is public read-only navigation, **not** authenticated, arbitrary-site, or site-changing browser control.

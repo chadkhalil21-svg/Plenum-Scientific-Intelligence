@@ -15,6 +15,8 @@ Established: 2026-11-05
 | 010 | Local model fine-tuning and generalized capability evaluation | Planned |
 | 011 | Verified AGI | Unsolved research goal |
 | 012 | Machine consciousness | Unsolved research goal |
+| 013 | Computer Browser chat bridge: public reading and link navigation | Verified actual Playwright/Chromium issues [#66](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/66) and [#100](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/100); 200 HTTP, no external modifications |
+| 014 | Authenticated arbitrary-site browser from ordinary ChatGPT chats | Not operational. Google IAP owner login error 9 persists; private session + approved action queue and ChatGPT connection require verification |
 
 ## Working rules
 A passing test only proves what it actually exercised. Each improvement must be compared with a baseline and unseen evaluation cases. Unverified hypotheses must never be labeled discoveries.
