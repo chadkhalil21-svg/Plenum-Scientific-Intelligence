@@ -1,0 +1,63 @@
+name: Inspect Failed MCP Facade Cloud Build Without Changes
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+jobs:
+  inspect-mcp-build:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == 'Computer Browser: inspect failed MCP build' &&
+      github.event.issue.body == 'READ_CLOUD_BUILD_1a4c8fd6_20261108'
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Read only build failure metadata and redacted build log diagnostics
+        id: inspect
+        env:
+          PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$PROJECT_ID" = "plenum-computer-browser"
+          ID="1a4c8fd6-2658-48f8-8957-82bc408389ef"
+          STATUS="$(gcloud builds describe "$ID" --project="$PROJECT_ID" --region=us-east1 --format='value(status)')"
+          test "$STATUS" = "FAILURE"
+          echo "Confirmed failed historical build ID and failure status."
+          gcloud builds log "$ID" --project="$PROJECT_ID" --region=us-east1 \
+            > "$RUNNER_TEMP/mcp-build-readonly.log" 2>&1 || true
+          python - <<'PY'
+          import os,re
+          lines=open(os.environ['RUNNER_TEMP']+'/mcp-build-readonly.log').read().splitlines()
+          # Only error/signature lines; redact possible tokens and key-value secrets defensively.
+          selected=[s[:320] for s in lines if re.search(
+            r'(?i)(error|failed|failure|syntax|dockerfile|unknown flag|not found|denied|unauthorized|invalid|no such file|step 0)',s
+          )]
+          for s in selected[-18:]:
+              s=re.sub(r'(?i)(bearer\\s+)[^\\s]+',r'\\1[REDACTED]',s)
+              s=re.sub(r'(?i)(token|password|secret|apikey)\\s*[:=]\\s*[^\\s]+',r'\\1=[REDACTED]',s)
+              print("DIAGNOSTIC:",s)
+          if not selected:
+              print("No specific build error line visible; Cloud Logging may require separate Logs Viewer permission.")
+          PY
+      - name: Report only diagnostic location, no changes
+        if: always() && github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          RESULT: ${{ steps.inspect.outcome }}
+        run: |
+          if [ "$RESULT" = "success" ]; then
+            gh issue comment "$ISSUE" --body "Read-only Cloud Build diagnostic completed. Inspect this workflow job's sanitized DIAGNOSTIC lines. No role, image, billing, account or Cloud Run changes occurred."
+          else
+            gh issue comment "$ISSUE" --body "Read-only Cloud Build diagnostic unavailable. No changes occurred."
+          fi
