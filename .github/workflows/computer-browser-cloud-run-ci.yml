@@ -19,6 +19,7 @@ on:
       - 'tests/test_cloud_run_safe_health_route.py'
       - 'tests/test_iam_machine_health_release.py'
       - 'tests/test_machine_public_read.py'
+      - 'tests/test_machine_public_read_release.py'
       - '.github/workflows/computer-browser-iam-machine-read-release.yml'
       - '.github/workflows/computer-browser-iam-machine-health-release.yml'
       - '.github/workflows/computer-browser-iam-machine-route-probe.yml'
@@ -42,6 +43,7 @@ on:
       - 'tests/test_cloud_run_safe_health_route.py'
       - 'tests/test_iam_machine_health_release.py'
       - 'tests/test_machine_public_read.py'
+      - 'tests/test_machine_public_read_release.py'
       - '.github/workflows/computer-browser-iam-machine-read-release.yml'
       - '.github/workflows/computer-browser-iam-machine-health-release.yml'
       - '.github/workflows/computer-browser-iam-machine-route-probe.yml'
@@ -85,6 +87,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_iam_machine_health_release.py' -v
       - name: Test IAM-only stateless machine public read and session isolation
         run: python -m unittest discover -s tests -p 'test_machine_public_read.py' -v
+      - name: Test owner-only production release of stateless machine browser read
+        run: python -m unittest discover -s tests -p 'test_machine_public_read_release.py' -v
       - name: Verify owner-approved programmatic IAP health probe without cloud access
         run: python -m unittest discover -s tests -p 'test_programmatic_iap_probe.py' -v
       - name: Verify 404 route metadata classifier and safe workflow
