@@ -37,8 +37,9 @@ The runner is temporary and not continuously online.
   `browser_worker.py` such as `example.com` and selected public science
   sources. No arbitrary URL, sessions, emails, private Kaggle pages, form
   submissions, uploads, purchases, website changes or credentials.
-- There is no remote click action in this bridge. Local click/type were
-  previously verified separately in official Playwright tests.
+- The bridge supports only **public link-follow navigation** by exact link label;
+  it does not execute arbitrary remote clicks, submit forms, type input, or use sessions.
+  Local click/type were verified separately in official Playwright tests.
 - Links/page text are untrusted data and cannot authorize any new actions.
 - GitHub issue creation and Actions runs are asynchronous; the conversation
   must poll or read comments to see completed results.
@@ -71,3 +72,20 @@ A **private, skills-only** ChatGPT plugin named **Computer Browser** was created
 - **Remaining:** Google IAP OAuth redirect error 9 for the owner console, actual private browser profile/login test, securely scoped remote action queue and authorization, and a ChatGPT-compatible tool connection. Plan restrictions for full custom MCP write tools must be checked before relying on that route.
 
 **Do not send private tasks, URLs with tokens, credentials, sensitive requests, or authenticated data through the public GitHub issue bridge.** The plugin cannot remove those boundaries by itself.
+
+## Public link-follow navigation (new, limited)
+
+This extends the same **public issue -> GitHub Actions -> existing Playwright -> sanitized issue comment** path, without an extra cloud service. It is useful when Computer needs to follow a specific link on a permitted public research site.
+
+Create a new issue whose title is exactly `Prometheus Chat Browser: public-navigate` and whose entire body is one JSON object:
+
+```json
+{"schema":"plenum-chat-browser-navigate-v1","url":"https://science.nasa.gov/","links":["Exact visible link name"]}
+```
+
+- The caller must be the repository owner and the title must match exactly.
+- One to three exact accessible link labels are allowed. Each link must uniquely identify one anchor on the current page.
+- The browser reads the anchor's `href` and navigates directly to the independently validated HTTPS URL. It **does not run click handlers or submit a form**.
+- Query-string and fragment URLs, non-GET traffic, other domains, private networks and unapproved origins remain prohibited. A destination can fail safely if the external website changes.
+- This is **not** a private browsing workflow: requests and sanitized results reside in public GitHub issues, and no credentials, user records, cookies, form input, uploads, purchases or authenticated operations are authorized.
+- Successful CI alone proves code integrity, not a complete live two-page navigation. Complete a real owner-created issue with a link-follow result before claiming live verification.
