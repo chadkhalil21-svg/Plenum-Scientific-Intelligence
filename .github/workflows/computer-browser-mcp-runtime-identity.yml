@@ -145,12 +145,12 @@ jobs:
           VERIFY: ${{ steps.verify.outcome }}
         run: |
           set -euo pipefail
-          if [ "$VERIFY" = "success" ]; then
+          if [ "$PREFLIGHT" = "success" ] && [ "$IDENTITY" = "success" ] && [ "$VERIFY" = "success" ]; then
             MESSAGE='PASS: Dedicated keyless MCP runtime identity prepared. Existing Cloud Run services, worker IAM and private browser remain unchanged. Owner OAuth and browser writes are NOT activated.'
           elif [ "$PREFLIGHT" != "success" ]; then
             MESSAGE='BLOCKED: Existing IAM private service baseline failed; no runtime identity creation attempted.'
           elif [ "$IDENTITY" != "success" ]; then
-            MESSAGE='BLOCKED: Current Google deployer cannot create or verify the dedicated keyless runtime identity. No Cloud Run service or IAM grants changed.'
+            MESSAGE='BLOCKED: GitHub deployment identity cannot independently verify existing keyless MCP account; do not recreate it or widen IAM. No Cloud Run or IAM mutations were made by this workflow.'
           else
             MESSAGE='NOT VERIFIED: Dedicated identity may exist, but final IAM verification did not pass. No service or IAM grants changed.'
           fi
