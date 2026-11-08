@@ -61,6 +61,8 @@ Saved sessions: encrypted cloud storage when connected and configured.
 ChatGPT direct website interaction: not yet connected.</article>
 <h2>Sign in to an approved website</h2>
 <p><a href="/owner/sign-in">Open secure website sign-in</a></p>
+<h2>Existing saved website sessions</h2>
+<p><a href="/owner/sessions">View, preview or revoke an approved session</a></p>
 <h2>Read an approved public website</h2>
 <form method="get" action="/owner/public-preview">
 <label for="url">Website address</label>
