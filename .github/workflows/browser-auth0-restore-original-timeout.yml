@@ -1,0 +1,131 @@
+name: Restore Auth0 Owner Browser Original Timeout (Founder Approved)
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+jobs:
+  restore-original-timeout:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == 'Computer Browser: restore original 15-minute stream timeout' &&
+      github.event.issue.body == 'RESTORE_AUTH0_ORIGINAL_TIMEOUT:2026-11-08'
+    concurrency:
+      group: plenum-auth0-owner-timeout-restore
+      cancel-in-progress: false
+    environment: computer-browser-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Verify exact existing owner portal before config-only repair
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$PROJECT" = 'plenum-computer-browser'
+          gcloud run services describe plenum-browser-owner-auth0 \
+            --project="$PROJECT" --region=us-east1 --format=json > "$RUNNER_TEMP/owner-before.json"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          d=json.loads((Path(os.environ["RUNNER_TEMP"])/"owner-before.json").read_text())
+          spec=d["spec"]["template"]["spec"]
+          assert d["metadata"]["name"]=="plenum-browser-owner-auth0"
+          assert d["status"]["url"]=="https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app"
+          assert spec["serviceAccountName"]=="plenum-browser-runtime@plenum-computer-browser.iam.gserviceaccount.com"
+          env={x["name"]:x for x in spec["containers"][0]["env"]}
+          for name in ("AUTH0_OWNER_CLIENT_ID","BROWSER_PUBLIC_ORIGIN","BROWSER_PROFILE_BUCKET","BROWSER_SESSION_KEY","COMPUTER_BROWSER_TOKEN"):
+              assert name in env
+          current=int(spec.get("timeoutSeconds",0))
+          assert current in (600,900), "Unexpected config drift; no changes authorized"
+          print("PASS: Target is exact Auth0 owner service. Current timeoutSeconds:",current)
+          PY
+      - name: Restore originally verified 900-second owner WebSocket timeout only
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run services update plenum-browser-owner-auth0 \
+            --project="$PROJECT" --region=us-east1 --timeout=900s --quiet >/dev/null
+      - name: Verify original timeout restored with unchanged image, owner scope and vault
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run services describe plenum-browser-owner-auth0 \
+            --project="$PROJECT" --region=us-east1 --format=json > "$RUNNER_TEMP/owner-after.json"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          t=Path(os.environ["RUNNER_TEMP"])
+          a=json.loads((t/"owner-before.json").read_text())
+          b=json.loads((t/"owner-after.json").read_text())
+          old=a["spec"]["template"]["spec"]
+          new=b["spec"]["template"]["spec"]
+          assert b["status"]["url"]==a["status"]["url"]
+          assert old["serviceAccountName"]==new["serviceAccountName"]
+          assert old["containers"][0]["image"]==new["containers"][0]["image"]
+          assert old["containers"][0]["env"]==new["containers"][0]["env"]
+          assert int(new["timeoutSeconds"])==900
+          for name in ("owner-before.json","owner-after.json"):
+              (t/name).unlink()
+          print("PASS: Original 900-second timeout restored with identical image, identity, Auth0 and encrypted profile configuration.")
+          PY
+          URL="https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app"
+          test "$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$URL/auth0/login")" = '302'
+          test "$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$URL/owner")" = '401'
+          test "$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$URL/owner/sign-in")" = '401'
+          echo 'PASS: Owner-only access remains enforced.'
+      - name: Optional safe aggregate of previous browser request outcomes
+        if: success()
+        continue-on-error: true
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILTER='resource.type="cloud_run_revision" AND resource.labels.service_name="plenum-browser-owner-auth0" AND logName="projects/plenum-computer-browser/logs/run.googleapis.com%2Frequests" AND timestamp>="2026-11-08T22:18:00Z" AND timestamp<="2026-11-08T22:33:00Z"'
+          if gcloud logging read "$FILTER" --project="$PROJECT" --limit=250 --format=json > "$RUNNER_TEMP/request-log-private.json" 2>/dev/null; then
+            python - <<'PY'
+          import json,os,collections
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"request-log-private.json"
+          d=json.loads(p.read_text())
+          # Do not print URLs, source IPs, owner identifiers, cookies or raw log bodies.
+          ws=[x for x in d if "/owner/live" in x.get("httpRequest",{}).get("requestUrl","")]
+          statuses=collections.Counter(str(x.get("httpRequest",{}).get("status","unknown")) for x in ws)
+          print("REDACTED owner/live request outcomes in founder screenshot window:",
+                "count",len(ws),"statuses",dict(sorted(statuses.items())))
+          p.unlink()
+          PY
+          else
+            rm -f "$RUNNER_TEMP/request-log-private.json"
+            echo "Cloud Logging request read unavailable for this identity; no IAM change made."
+          fi
+      - name: Report only nonsecret configuration outcome to the founder issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          if [ "$STATUS" = 'success' ]; then
+            gh issue comment "$ISSUE" --body 'PASS: Original 15-minute Auth0 owner browser timeout restored using a configuration-only revision, no Chromium rebuild. Owner OAuth, service image, runtime identity and encrypted session vault preserved; login 302, anonymous owner routes 401. Remote iPad disconnect cause still requires a passing live session or redacted Cloud request evidence.'
+          else
+            gh issue comment "$ISSUE" --body 'BLOCKED: Original timeout restoration could not be independently verified. Do not claim config restored; check protected workflow stage. No IAM change or credentials were exposed.'
+          fi

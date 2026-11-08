@@ -177,10 +177,25 @@ class PrivateLoginTests(unittest.TestCase):
         from pathlib import Path
         wf=(Path(__file__).resolve().parents[1]/
             ".github/workflows/browser-auth0-owner-websocket-release.yml").read_text()
-        self.assertIn("--timeout=600s",wf)
-        self.assertIn('int(spec.get("timeoutSeconds",0))==600',wf)
+        self.assertIn("--timeout=900s",wf)
+        self.assertIn('int(spec.get("timeoutSeconds",0))==900',wf)
         self.assertIn("github.event.issue.user.login == 'chadkhalil21-svg'",wf)
         self.assertIn("environment: computer-browser-production",wf)
+        self.assertNotIn("--allow-unauthenticated",wf)
+
+    def test_config_only_timeout_restoration_remains_exact_owner_and_immutable_image(self):
+        from pathlib import Path
+        wf=(Path(__file__).resolve().parents[1]/
+            ".github/workflows/browser-auth0-restore-original-timeout.yml").read_text()
+        self.assertIn("github.event.issue.user.login == 'chadkhalil21-svg'",wf)
+        self.assertIn("github.event.issue.body == 'RESTORE_AUTH0_ORIGINAL_TIMEOUT:2026-11-08'",wf)
+        self.assertIn("environment: computer-browser-production",wf)
+        self.assertIn("--timeout=900s",wf)
+        self.assertIn('int(new["timeoutSeconds"])==900',wf)
+        self.assertIn('old["containers"][0]["image"]==new["containers"][0]["image"]',wf)
+        self.assertIn('old["containers"][0]["env"]==new["containers"][0]["env"]',wf)
+        self.assertIn("Do not print URLs",wf)
+        self.assertNotIn("gcloud builds submit",wf)
         self.assertNotIn("--allow-unauthenticated",wf)
 
     def test_ci_demo_does_not_enable_without_flag(self):
