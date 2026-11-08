@@ -45,7 +45,7 @@ def login_html(nonce):
     <h1>Computer · Private Website Sign-in</h1>
     <p>Open an approved website. Sign in here rather than sharing passwords
     in ChatGPT. This browser runs only while the private session is connected.</p>
-    <label>Website <input id="url" value="https://example.com/"
+    <label>Website <input id="url" value="https://the-internet.herokuapp.com/login"
     maxlength="1200" autocomplete="off"></label>
     <button id="open">Open secure browser</button>
     <p id="status" role="status">Not connected</p>

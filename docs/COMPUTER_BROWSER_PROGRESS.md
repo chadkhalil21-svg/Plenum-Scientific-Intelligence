@@ -1,6 +1,6 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
-Updated: 2026-11-08 18:18 UTC
+Updated: 2026-11-08 (live public form proof and owner-login release pending)
 Owner: Founder, Plenum Industries
 Status: **PARTIAL / NOT WORK-OR-TINYFISH-EQUIVALENT**
 Canonical browser-specific, append-only progress record; keep the broader scientific milestones in [LEDGER.md](LEDGER.md).
@@ -16,7 +16,7 @@ The founder requires continuous progress awareness: **Before modifying a browser
 | Gate | Current status | Evidence | Exact missing proof |
 | --- | --- | --- | --- |
 | B1. Actual independent Playwright engine | **Verified** | [Private Sovereign Gateway issue #4](https://github.com/chadkhalil21-svg/Sovereign-Gateway/issues/4), [public issue #188](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/188) | No additional bootstrap |
-| B2. Ordinary-chat command transport | **Verified, limited public-site operations** | Private GitHub-owned issue -> Actions -> Chromium -> private issue result; supported navigate/inspect/extract/screenshot, bounded safe GET search, public fill and non-submit button | General direct private MCP transport and protected results |
+| B2. Ordinary-chat command transport | **LIVE VERIFIED: public browsing, echo form POST and public file download** | Private [Sovereign Gateway issue #18](https://github.com/chadkhalil21-svg/Sovereign-Gateway/issues/18) through Playwright without TinyFish; bound public demo POST and 64-byte file digest | General protected account actions, real owner sessions and arbitrary file uploads remain disabled |
 | B3. Cloud Run IAM-private browser worker | **Verified for fixed public fixture** | [Owner issue #134](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/134), [chat issue #137](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/137) | Owner-specific arbitrary site tools and account sessions |
 | B4. Auth0 API and ChatGPT CIMD permission registration | **Registered; not end-to-end operational** | Founder-verified Auth0 API, RS256 and 2/2 read/write delegated scopes, described in [private MCP bridge](COMPUTER_BROWSER_PRIVATE_MCP_BRIDGE.md) | Real owner-bound short-lived bearer and production ChatGPT MCP invocation |
 | B5. Cloud Run MCP facade | **Deployed but intentionally IAM-private and disabled** | [Owner issue #160](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/160): signed health 200, no bearer 401 | Separate scoped facade identity, Google-to-worker invoker, Auth0 owner config, secure ChatGPT reachability |
@@ -117,3 +117,17 @@ The founder requires continuous progress awareness: **Before modifying a browser
 - **Deferred until first full workflow passes:** extra IAM gateway architectures, broad cross-site parity benchmarking, many optional integrations, new tests of already verified public reading, and custom equivalents of official Playwright tools.
 - **Proposed next engineering step:** choose one consolidated ordinary-chat task transport (private GitHub issue only as an *instruction* route, with confidential data staying in an encrypted owner-bound service), wire the already built Playwright action/session modules end-to-end, and inspect/fix the smallest real blocker. Do not claim authenticated browsing or full Work/TinyFish parity until verified.
 - **Status:** This is a verified architecture review / priority decision, *not* a deployment or capability change. P1-P8 still have unfinished gates, but are no longer treated as eight mandatory sequential implementation projects for the first useful release.
+
+### 2026-11-08: real independent public web POST and download LIVE VERIFIED
+
+- **Objective:** stop re-proving simple public reads and exercise new real website operations directly from an ordinary ChatGPT chat.
+- **Released:** [Private Sovereign Gateway PR #17](https://github.com/chadkhalil21-svg/Sovereign-Gateway/pull/17), merged as `e6240b0014ab3a79358df84cbd5962c3edeebf0e`, adds a public-staging-only schema v2 to the existing authenticated-founder private issue -> official Playwright/Chromium workflow. Its exact public echo document POST target is `https://httpbin.org/post`, and the only bounded downloaded object is public 64-byte data; original v1 GET-only route remains intact.
+- **Actual live proof from this chat:** [Private owner issue #18](https://github.com/chadkhalil21-svg/Sovereign-Gateway/issues/18), [GitHub Actions run #42511832155](https://github.com/chadkhalil21-svg/Sovereign-Gateway/actions/runs/42511832155) **PASS**, HTTP 200 from a real webpage after `fill_text`, `submit_echo_form`, `read`, `download_public`; return shows exact step list, true submitted/download flags, SHA-256 `5d4000dc8a1fcea1006dd352d03878cfd94edf1254a0b746f411bcd8fd1dba5b`, `TinyFish_used=false`. One day private artifact `plenum-browser-public-download-18` exists in the run. No accounts or personal credentials.
+- **Boundary:** this is a real public network write **to a deliberately disposable echo service**, not logged-in account modification, not generic POST automation, and no private files. Do not advertise general Work/TinyFish equivalence. The goal remains protected authenticated sessions, file actions and owner-confirmed writes.
+
+### 2026-11-08: reuse already built encrypted owner sign-in; single Cloud Run release PREPARED
+
+- **Objective:** bypass additional MCP facade/IAM development while activating the **existing** owner-operated sign-in UI and encrypted profile vault on the original IAP-private Cloud Run service, rather than creating a new browser product.
+- **Proposed source:** existing `computer-browser-cloud-run-deploy.yml` continues deploying only service `plenum-computer-browser`, using approved existing service account, private encrypted GCS profile bucket and Secret Manager key; adds `https://the-internet.herokuapp.com` as a **non-sensitive test login origin** alongside `https://example.com` with Google's documented alternate `--set-env-vars` delimiter. It never changes the separate private machine or Auth0 MCP facade. The owner sign-in web page starts at the documented staging-login page to shorten manual navigation; the founder can still enter other owner-approved URLs.
+- **Status:** branch source staged; **NOT PRODUCTION DEPLOYED UNTIL CLOUD RUN OWNER TRIGGER PASSES**. User approval in this conversation authorizes completing the minimum necessary deployment and cloud build; cloud usage may be billable. Only mark this as live after GitHub Actions reports a completed deploy and exact service/readback. IAP human sign-in may still require owner intervention, and no real account credentials should be sent to chat or GitHub.
+- **Next:** merge with CI; invoke the existing owner-approved deploy workflow *once* and verify release. If service responds with IAP login blocker, record the exact blocker instead of repeatedly burning TinyFish credits.
