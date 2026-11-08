@@ -1,0 +1,170 @@
+name: Deploy IAM-only Machine Browser Health (Owner Approved)
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type IAM_MACHINE_HEALTH_APPROVED to create isolated private smoke service'
+        required: true
+        type: string
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+concurrency:
+  group: plenum-browser-machine-health-deploy
+  cancel-in-progress: false
+jobs:
+  iam-machine-health:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      ((github.event_name == 'workflow_dispatch' && inputs.confirmation == 'IAM_MACHINE_HEALTH_APPROVED') ||
+       (github.event_name == 'issues' &&
+        github.event.issue.user.login == 'chadkhalil21-svg' &&
+        github.event.issue.title == 'Computer Browser: deploy IAM machine health' &&
+        github.event.issue.body == 'IAM_MACHINE_HEALTH_APPROVED:2026-11-07'))
+    environment: computer-browser-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Verify independent service and no-public-IAM policy tests
+        run: python -m unittest discover -s tests -p 'test_iam_machine_health.py' -v
+      - name: Authenticate short-lived existing GitHub WIF to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Check exact project, dedicated least-privileged identity and immutable existing image
+        id: preflight
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          BROWSER_DEPLOY_SA: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCP_PROJECT_ID" = 'plenum-computer-browser'
+          test "$BROWSER_DEPLOY_SA" = 'plenum-browser-deploy@plenum-computer-browser.iam.gserviceaccount.com'
+          RUNTIME_SA="plenum-browser-machine-runtime@$GCP_PROJECT_ID.iam.gserviceaccount.com"
+          if ! gcloud iam service-accounts describe "$RUNTIME_SA" \
+                 --project="$GCP_PROJECT_ID" --format='value(email)' > /dev/null 2>&1; then
+            echo "BLOCKED: dedicated machine runtime account missing or not readable."
+            echo "Use exact account plenum-browser-machine-runtime with no project roles; grant deployer Service Account User on that account only."
+            exit 1
+          fi
+          # Never create or update an existing service through this smoke workflow.
+          if gcloud run services describe plenum-computer-browser-machine \
+                 --project="$GCP_PROJECT_ID" --region=us-east1 \
+                 --format='value(metadata.name)' > /dev/null 2>&1; then
+            echo "BLOCKED: machine service already exists; inspect it before any update."
+            exit 1
+          fi
+          echo "Dedicated runtime account found. Existing IAP owner service will not be modified."
+      - name: Deploy single on-demand IAM-only health service from existing immutable image
+        id: deploy
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE="us-east1-docker.pkg.dev/plenum-computer-browser/plenum-browser/computer-browser@sha256:a44497b72bc5ace7492838caf9dffb6c0559d985537774997884317b9519bbd0"
+          RUNTIME_SA="plenum-browser-machine-runtime@$GCP_PROJECT_ID.iam.gserviceaccount.com"
+          # No build, vault, Google IAP, user credentials, exposed site actions or app bearer token.
+          # Cloud Run checks the caller's OIDC ID token against resource-scoped roles/run.invoker.
+          gcloud run deploy plenum-computer-browser-machine \
+            --project="$GCP_PROJECT_ID" --region=us-east1 \
+            --platform=managed --image="$IMAGE" \
+            --service-account="$RUNTIME_SA" \
+            --execution-environment=gen2 \
+            --cpu=2 --memory=2Gi --concurrency=1 \
+            --min-instances=0 --max-instances=1 --timeout=120 \
+            --ingress=all --default-url \
+            --no-iap --invoker-iam-check --no-allow-unauthenticated \
+            --set-env-vars='BROWSER_ALLOWED_ORIGINS=https://example.com' \
+            --clear-secrets --quiet
+          echo "Private IAM-only machine smoke service deployed with zero idle instances."
+      - name: Grant only deployer Cloud Run Invoker on the new machine service
+        id: invoker
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          BROWSER_DEPLOY_SA: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run services add-iam-policy-binding plenum-computer-browser-machine \
+            --project="$GCP_PROJECT_ID" --region=us-east1 \
+            --member="serviceAccount:$BROWSER_DEPLOY_SA" \
+            --role='roles/run.invoker' --quiet > /dev/null
+          echo "Deployer granted exact-resource Cloud Run Invoker; no project IAM changes."
+      - name: Verify signed GET health plus rejected anonymous caller
+        id: health
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          BROWSER_DEPLOY_SA: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          trap 'rm -f "$RUNNER_TEMP/machine-id-token" "$RUNNER_TEMP/machine-auth-header" "$RUNNER_TEMP/machine-service.json" "$RUNNER_TEMP/machine-iam.json" "$RUNNER_TEMP/machine-health.json" "$RUNNER_TEMP/machine-anonymous-response"' EXIT
+          SERVICE_URL="$(gcloud run services describe plenum-computer-browser-machine \
+            --project="$GCP_PROJECT_ID" --region=us-east1 --format='value(status.url)')"
+          test -n "$SERVICE_URL"
+          gcloud run services describe plenum-computer-browser-machine \
+            --project="$GCP_PROJECT_ID" --region=us-east1 \
+            --format=json > "$RUNNER_TEMP/machine-service.json"
+          gcloud run services get-iam-policy plenum-computer-browser-machine \
+            --project="$GCP_PROJECT_ID" --region=us-east1 \
+            --format=json > "$RUNNER_TEMP/machine-iam.json"
+          # Token never appears in logs, public issues, or a committed repository.
+          gcloud auth print-identity-token \
+            --impersonate-service-account="$BROWSER_DEPLOY_SA" \
+            --audiences="$SERVICE_URL" --include-email \
+            > "$RUNNER_TEMP/machine-id-token" 2>/dev/null
+          test -s "$RUNNER_TEMP/machine-id-token"
+          printf 'Authorization: Bearer %s\n' "$(cat "$RUNNER_TEMP/machine-id-token")" > "$RUNNER_TEMP/machine-auth-header"
+          AUTH_STATUS="$(curl --silent --show-error --max-time 30 \
+            --proto '=https' --header @"$RUNNER_TEMP/machine-auth-header" \
+            --output "$RUNNER_TEMP/machine-health.json" --write-out '%{http_code}' \
+            "$SERVICE_URL/healthz" || true)"
+          ANON_STATUS="$(curl --silent --show-error --max-time 15 \
+            --proto '=https' --output "$RUNNER_TEMP/machine-anonymous-response" \
+            --write-out '%{http_code}' "$SERVICE_URL/healthz" || true)"
+          echo "Signed IAM-only GET /healthz returned HTTP $AUTH_STATUS."
+          echo "Anonymous GET /healthz returned HTTP $ANON_STATUS."
+          test "$AUTH_STATUS" = "200"
+          python -m services.computer_browser.iam_machine_guard \
+            --service-metadata "$RUNNER_TEMP/machine-service.json" \
+            --service-iam "$RUNNER_TEMP/machine-iam.json" \
+            --health "$RUNNER_TEMP/machine-health.json" \
+            --anonymous-status "$ANON_STATUS"
+      - name: Return sanitized final result to owner issue
+        if: always() && github.event_name == 'issues' && github.event.issue.user.login == 'chadkhalil21-svg'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          PREFLIGHT_OUTCOME: ${{ steps.preflight.outcome }}
+          DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+          INVOKER_OUTCOME: ${{ steps.invoker.outcome }}
+          HEALTH_OUTCOME: ${{ steps.health.outcome }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$HEALTH_OUTCOME" = "success" ]; then
+            RESULT="PASS: Independent IAM-only Cloud Run machine health was authenticated using a short-lived identity token; anonymous access denied. Existing owner IAP browser was not changed. Private website actions remain disabled."
+          elif [ "$PREFLIGHT_OUTCOME" != "success" ]; then
+            RESULT="BLOCKED: Dedicated runtime identity unavailable or machine service already exists. No deployment attempted."
+          elif [ "$DEPLOY_OUTCOME" != "success" ]; then
+            RESULT="BLOCKED: IAM-only machine service deployment failed. Existing owner IAP service unaffected; inspect workflow details."
+          elif [ "$INVOKER_OUTCOME" != "success" ]; then
+            RESULT="BLOCKED: New service exists but its exact Invoker binding was not verified. No browser task executed."
+          else
+            RESULT="NOT VERIFIED: Private machine service smoke failed after deployment. Anonymous access and IAM grants must be inspected; no website task executed."
+          fi
+          gh issue comment "$ISSUE_NUMBER" --body "$RESULT"

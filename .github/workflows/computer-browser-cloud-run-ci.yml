@@ -14,6 +14,8 @@ on:
       - 'tests/test_browser_route_diagnostic.py'
       - 'tests/test_iap_policy_audit.py'
       - 'tests/test_http_response_diagnostic.py'
+      - 'tests/test_iam_machine_health.py'
+      - '.github/workflows/computer-browser-iam-machine-health.yml'
       - '.github/workflows/computer-browser-iap-health-probe.yml'
       - '.github/workflows/computer-browser-cloud-run-deploy.yml'
       - '.github/workflows/computer-browser-cloud-run-ci.yml'
@@ -27,6 +29,8 @@ on:
       - 'tests/test_browser_route_diagnostic.py'
       - 'tests/test_iap_policy_audit.py'
       - 'tests/test_http_response_diagnostic.py'
+      - 'tests/test_iam_machine_health.py'
+      - '.github/workflows/computer-browser-iam-machine-health.yml'
       - '.github/workflows/computer-browser-iap-health-probe.yml'
       - '.github/workflows/computer-browser-cloud-run-ci.yml'
       - 'pyproject.toml'
@@ -55,6 +59,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_computer_browser_gateway.py' -v
       - name: Verify manual IAM-only cloud deployment safeguards
         run: python -m unittest discover -s tests -p 'test_computer_browser_deploy.py' -v
+      - name: Verify separate IAM-only machine health service security
+        run: python -m unittest discover -s tests -p 'test_iam_machine_health.py' -v
       - name: Verify owner-approved programmatic IAP health probe without cloud access
         run: python -m unittest discover -s tests -p 'test_programmatic_iap_probe.py' -v
       - name: Verify 404 route metadata classifier and safe workflow
