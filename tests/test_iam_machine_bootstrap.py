@@ -20,7 +20,7 @@ class MachineRuntimeBootstrapTests(unittest.TestCase):
             "--member=\"$MEMBER\"",
             "serviceAccount:$DEPLOY_SA",
             "plenum-browser-deploy@plenum-computer-browser.iam.gserviceaccount.com",
-            "no project IAM roles",
+            "No project IAM",
             "No keys",
         ):
             self.assertIn(required,workflow)
