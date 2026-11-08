@@ -4,14 +4,16 @@ FROM python:3.11-slim-bookworm
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONPATH=/app PORT=8080
 WORKDIR /app
 COPY pyproject.toml ./
-RUN python - <<'PY'
-import subprocess
-import sys
-import tomllib
-with open("pyproject.toml", "rb") as f:
-    requirements=tomllib.load(f)["project"]["optional-dependencies"]["browser_mcp"]
-subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-cache-dir", *requirements])
-PY
+# Use portable standard Dockerfile shell syntax: Cloud Build's Docker builder does
+# not necessarily enable BuildKit heredoc parsing used in local CI.
+RUN python -m pip install --no-cache-dir \
+    "mcp==2.3.0" \
+    "PyJWT[crypto]==2.10.1" \
+    "google-auth>=2.30,<3" \
+    "httpx>=0.28,<1" \
+    "requests>=2.32,<3" \
+    "uvicorn==0.34.2"
+
 RUN mkdir -p /app/services/computer_browser
 COPY services/__init__.py ./services/__init__.py
 COPY services/computer_browser/__init__.py ./services/computer_browser/__init__.py
