@@ -1,10 +1,29 @@
+## Verified live private MCP endpoint (November 8, 2026)
+
+- **Endpoint:** `https://plenum-computer-browser-mcp-2lak3vl73q-ue.a.run.app/mcp` (this is the exact Auth0 API audience to register, not a guess).
+- **Project:** `plenum-computer-browser`; region `us-east1`; separate Cloud Run service `plenum-computer-browser-mcp`.
+- **Verification:** [owner issue #160](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/160) confirms GitHub short-lived identity-token **signed /health HTTP 200**, anonymous Cloud Run denied, and an IAM-authenticated but OAuth-unsigned `/mcp` request returned **401**. The Auth0 issuer `https://dev-8sylxsg44yh5kkhh.us.auth0.com/` and JWKS origin were verified by live discovery before deployment.
+- **Safe staging only:** Auth0 owner subject and OAuth client values are intentionally locked placeholders, no browser accounts or writes enabled. This private service temporarily shares the existing zero-project-role keyless **machine-runtime service account**. A dedicated MCP facade service identity and actual owner OAuth must be configured **before** opening this service for ChatGPT OAuth bearer traffic.
+- **No original browser changes:** independent IAP browser and IAM Playwright machine remain untouched. Cloud Build's first portable-Dockerfile attempt failed before any deployment ([#148](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/148)); the corrected portable build passed CI and live deployment ([#160](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/160)).
+
+### Next one-time Auth0 API registration
+
+In your authenticated Auth0 dashboard: **Applications → APIs → Create API**. Use:
+- **Name:** `Plenum Computer Browser MCP`
+- **Identifier (Audience):** `https://plenum-computer-browser-mcp-2lak3vl73q-ue.a.run.app/mcp`
+- **Signing algorithm:** `RS256`
+
+Then open the API's **Permissions** tab, add `browser:read` (description: `Read authorized public browser pages`), and in **Settings**, set Access Token Expiration and Browser Flow Expiration to `600` seconds, where supported. Do **not** select a paid plan. Auth0's tenant-level Resource Parameter Compatibility Profile has already been confirmed enabled; leave DCR and CIMD unchanged until ChatGPT's client registration method is verified.
+
+**Do not yet make Cloud Run public or send client secrets, access tokens or cookies to ChatGPT or GitHub.** Once the API exists, the following steps remain: dedicated facade runtime identity, Auth0 OAuth client registration and actual founder user `sub`, server environment update with immutable allowlisted OAuth client, Cloud Run public OAuth-only route verification, ChatGPT connection sign-in and tool smoke, then separate private session and per-action approval work.
+
 # Plenum Computer Browser: one-time managed OAuth activation
 
 ## Status
 
-The `services/computer_browser/oauth_resource_boundary.py`, `mcp_resource_server.py`, `oauth_asgi.py` and `facade.Dockerfile` implement an **isolated, not-yet-deployed** MCP resource server. Nothing here changes the existing IAP owner browser, private Cloud Run Playwright machine, or GitHub bridge. Public machine read is verified; **private account automation is not**.
+The separate `plenum-computer-browser-mcp` Cloud Run service has now been **deployed privately** and verified. Its OAuth resource code comes from `services/computer_browser/oauth_resource_boundary.py`, `mcp_resource_server.py`, `oauth_asgi.py` and `facade.Dockerfile`. Nothing here changes the existing IAP owner browser, private Cloud Run Playwright machine, or GitHub bridge. Public machine read is verified; **private account automation is not**.
 
-## The one step that cannot be completed in source code
+## Tenant created: next required owner action is Auth0 API registration
 
 The owner must authorize a managed OAuth tenant, because ChatGPT's user-bound OAuth needs genuine sign-in and consent. Use official Auth0 Free (currently advertised at $0 with no credit card needed to sign up): https://auth0.com/signup
 
