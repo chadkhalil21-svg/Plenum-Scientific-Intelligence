@@ -432,3 +432,7 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [x] Added `services/computer_browser/owner_approval.py`: signer and verifier for explicit exact-plan, owner-bound, origin-bound, expiring HMAC grants with one-time nonce claim via injectable atomic store; a GCS create-only marker adapter is supplied but **not live provisioned**.
 - [x] Added offline regression checks for tampering, replay, wrong owner, changed action, invalid target, TTL and missing store. PR CI is required before merging.
 - [ ] Owner UI consent, production durable nonce storage, real private session dispatch and actual authorized website writes remain unverified. Do not call this Work/TinyFish parity. See [Computer Browser progress](COMPUTER_BROWSER_PROGRESS.md).
+
+## 2026-11-08: Computer Browser plugin continuity release v0.4.7
+- [x] Updated existing private ChatGPT Computer Browser personal plugin to v0.4.7. Plugin Creator read-back verified updated manifest/version, canonical browser-progress-ledger retrieval instructions, and preserved existing GitHub app dependency. Plugin link: https://chatgpt.com/plugins/plugins_6aefd5d509788191a201f947a254b3c0
+- [ ] Live account login, ChatGPT custom private MCP website-action tools and complete Work/TinyFish equivalent functions are not yet available. Plugin instruction updates do not themselves confer host tool permissions. See [Browser Progress Ledger](COMPUTER_BROWSER_PROGRESS.md).
