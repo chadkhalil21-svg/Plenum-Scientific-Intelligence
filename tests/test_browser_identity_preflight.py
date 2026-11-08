@@ -20,6 +20,9 @@ class BrowserIdentityPreflightPolicyTests(unittest.TestCase):
             "gcloud secrets describe",
             "gcloud storage buckets describe",
             "NO DEPLOYMENT, NO BUILD",
+            "gcloud run services describe",
+            "gcloud run services get-iam-policy",
+            "No public invoker permissions",
         ):
             self.assertIn(expected, flow)
         for forbidden in (

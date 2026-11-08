@@ -55,4 +55,33 @@ jobs:
             "gs://$GCP_PROJECT_ID-build-source-$PROJECT_NUMBER" \
             --project="$GCP_PROJECT_ID" --format='value(name)' >/dev/null
           echo "PASS: GitHub OIDC authentication and private browser resource metadata verified."
+      - name: Read-only verification of deployed private Cloud Run service
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          SERVICE=plenum-computer-browser
+          REGION=us-east1
+          URL="$(gcloud run services describe "$SERVICE" --project="$GCP_PROJECT_ID" --region="$REGION" --format='value(status.url)')"
+          test "$URL" = "https://plenum-computer-browser-98614162800.us-east1.run.app"
+          DESCRIPTION="$(gcloud run services describe "$SERVICE" --project="$GCP_PROJECT_ID" --region="$REGION")"
+          if printf '%s\n' "$DESCRIPTION" | grep -Eqi 'Iap Enabled: true'; then
+            echo "PASS: Cloud Run has IAP enabled."
+          else
+            echo "BLOCKER: Cloud Run does not report IAP enabled."
+            exit 1
+          fi
+          gcloud run services get-iam-policy "$SERVICE" --project="$GCP_PROJECT_ID" --region="$REGION" --format=json > "$RUNNER_TEMP/browser-invoker-iam.json"
+          python - <<'PY'
+          import json,os
+          path=os.path.join(os.environ["RUNNER_TEMP"],"browser-invoker-iam.json")
+          policy=json.load(open(path))
+          for binding in policy.get("bindings",[]):
+              if binding.get("role") in {"roles/run.invoker","roles/run.admin"}:
+                  assert not ({"allUsers","allAuthenticatedUsers"} & set(binding.get("members",[]))), "Unexpected public Cloud Run invoker policy"
+          print("PASS: No public invoker permissions on browser Cloud Run service.")
+          PY
+          echo "Cloud Run private service identity and security verified. Owner OAuth/IAP sign-in and ChatGPT connection remain untested."
+
           echo "NO DEPLOYMENT, NO BUILD, NO SECRET VALUES OR WEBSITE LOGINS ACCESSED."
