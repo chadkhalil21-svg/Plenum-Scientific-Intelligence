@@ -8,10 +8,11 @@ import asyncio
 import hashlib
 import hmac
 import os
+import re
+import secrets
+import time
 from html import escape
 from urllib.parse import urlsplit
-
-from itsdangerous import URLSafeTimedSerializer, BadSignature
 
 from fastapi import Depends, HTTPException, Request, Form
 from fastapi.responses import HTMLResponse
@@ -37,25 +38,27 @@ def _require_allowed_origin(site):
     return site
 
 
-def _owner_form_signer(owner_id):
-    """Derive a domain-separated owner-bound CSRF signer from the private key.
-
-    The key and the decrypted profile never reach HTML, GitHub or ChatGPT.
-    """
+def _owner_form_secret(owner_id):
+    """Derive exact-owner CSRF MAC key using standard-library SHA-256 only."""
     secret=os.environ.get("COMPUTER_BROWSER_TOKEN","")
-    if (len(secret)<32 or not isinstance(owner_id,str)
-            or not 1<=len(owner_id)<=80):
+    if len(secret)<32 or not isinstance(owner_id,str) or not 1<=len(owner_id)<=80:
         raise HTTPException(status_code=503,detail="Private owner form unavailable")
-    key=hmac.digest(secret.encode(),("plenum.owner.form.v1:"+owner_id).encode(),"sha256")
-    return URLSafeTimedSerializer(key,salt="plenum-owner-saved-session-form-v1",
-                                  signer_kwargs={"digest_method":hashlib.sha256})
+    return hmac.digest(secret.encode(),("plenum.owner.form.v1:"+owner_id).encode(),"sha256")
+
+
+def _owner_form_mac(owner_id, site, action, issued_hex, nonce):
+    scope="v1:"+issued_hex+":"+nonce+":"+action+":"+site
+    return hmac.digest(_owner_form_secret(owner_id),scope.encode(),"sha256").hex()
 
 
 def _owner_form_token(owner_id, site, action):
-    """Short-lived, exact action/site/owner signed token for native HTML forms."""
+    """Short-lived exact-owner/site/action CSRF token; no account data inside."""
     if action not in ("preview","revoke"):
         raise ValueError("Unrecognized owner form action")
-    return _owner_form_signer(owner_id).dumps({"site":site,"action":action})
+    issued=f"{int(time.time()):08x}"
+    nonce=secrets.token_hex(8)
+    signature=_owner_form_mac(owner_id,site,action,issued,nonce)
+    return "v1."+issued+"."+nonce+"."+signature
 
 
 def _verify_owner_form(request, owner_id, site, action, token):
@@ -85,11 +88,16 @@ def _verify_owner_form(request, owner_id, site, action, token):
         raise HTTPException(status_code=403,detail="Same-origin owner action required")
     if not isinstance(token,str) or len(token)>1000 or not token:
         raise HTTPException(status_code=403,detail="Owner form verification required")
-    try:
-        payload=_owner_form_signer(owner_id).loads(token,max_age=1800)
-    except BadSignature:
+    match=re.fullmatch(r"v1\\.([0-9a-f]{8,10})\\.([0-9a-f]{16})\\.([0-9a-f]{64})",token)
+    if match is None or action not in ("preview","revoke"):
         raise HTTPException(status_code=403,detail="Owner form verification required")
-    if payload!={"site":site,"action":action}:
+    issued_hex,nonce,signature=match.groups()
+    now=int(time.time())
+    issued=int(issued_hex,16)
+    if issued>now+10 or now-issued>1800:
+        raise HTTPException(status_code=403,detail="Owner form verification required")
+    expected=_owner_form_mac(owner_id,site,action,issued_hex,nonce)
+    if not hmac.compare_digest(signature,expected):
         raise HTTPException(status_code=403,detail="Owner form verification required")
 
 
