@@ -21,6 +21,7 @@ FAKE_ENV={
 }
 
 class OAuthContainerTests(unittest.TestCase):
+    @unittest.skipUnless(HAS_MCP, 'Requires optional browser_mcp dependencies in facade CI')
     def test_inactive_or_missing_provider_fails_process_creation(self):
         from services.computer_browser.mcp_resource_server import create_private_browser_mcp
         with patch.dict(os.environ,{},clear=True),self.assertRaises(ValueError):
