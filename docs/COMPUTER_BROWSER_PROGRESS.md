@@ -1,6 +1,6 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
-Updated: 2026-11-08 18:16 UTC
+Updated: 2026-11-08 18:18 UTC
 Owner: Founder, Plenum Industries
 Status: **PARTIAL / NOT WORK-OR-TINYFISH-EQUIVALENT**
 Canonical browser-specific, append-only progress record; keep the broader scientific milestones in [LEDGER.md](LEDGER.md).
@@ -78,3 +78,11 @@ The founder requires continuous progress awareness: **Before modifying a browser
 - **Actual CI evidence:** [PR #201 general scientific suite](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42509004044) failed for two independently identified browser-specific test defects despite passing targeted MCP identity and browser-ledger checks: optional FastAPI package was absent from the science-only runner, and the facade Docker test still required an obsolete `browser_mcp` filename.
 - **Engineering change:** import browser session integration tests only if the separate browser-gateway dependencies exist; **do not skip** those tests when gateway CI actually installs FastAPI/HTTPX/JWT/multipart. Update Docker contract assertion to the actual `mcp_resource_server.py` being copied into the facade image; still prohibit browser/session code in facade.
 - **Status:** CI fixes are **source proposed**, not verified until the next full workflow. These repair test configuration; they do **not** enable website logins or change Cloud IAM.
+
+### 2026-11-08 18:18 UTC: continuity and CI repairs live merged
+
+- **Verified release:** [PR #198](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/198) merged the mandatory browser ledger and `AGENTS.md` with the actual [ledger guard CI passing](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42507350583).
+- **Verified release:** [PR #201](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/201), merged at `40d37373cd0bd45229769e94c1d41a884c8772da`, passed **five** workflow suites: [scientific foundation](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42509297410), [browser-gateway CI](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42509297463), [mandatory ledger check](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42509297423), [MCP IAM static policy](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42509297981), and [OAuth bootstrap static policy](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42509297413).
+- **Private gateway continuity:** [Sovereign Gateway PR #16](https://github.com/chadkhalil21-svg/Sovereign-Gateway/pull/16) merged; the private Playwright source now requires engineers to retrieve and update this canonical ledger. Earlier stale overlapping [PR #197](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/197) closed as superseded by #201, with explanation.
+- **Scope of green checks:** source/regression/offline tests passed. **No production OAuth owner binding, IAM facade invoker change, real login restoration, external site write or direct work-like ChatGPT connection was deployed or verified.** Owner subject and issuer-bound live OAuth proof remain absent. P1-P8 must stay uncompleted.
+- **Next dependency:** only after exact least-privilege Google service-account visibility and identity/invoker binding are verified should the owner-authenticated MCP facade be connected. Full write-capable ChatGPT MCP tools also depend on the current ChatGPT host/account capability; use working private GitHub public browser functions until that is confirmed.
