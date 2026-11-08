@@ -167,10 +167,24 @@ def main(argv=None):
         result = asyncio.run(execute_public_search(task))
         payload = report(result)
     except Exception as exc:
-        # Never echo task body, query contents or exception body to public GitHub.
+        # Only fixed application-controlled messages may appear on public GitHub.
+        # Playwright/network exception strings can contain sensitive URL data.
+        safe_reasons = {
+            "Initial page outside public read scope",
+            "Expected one public GET search form",
+            "Expected one named public search field",
+            "Public search field must have a safe name",
+            "Only GET search forms are supported",
+            "Invalid search form action",
+            "Search action must stay on an approved public URL",
+            "Cross-host form action denied",
+            "Constructed GET target not approved",
+            "Public GET search escaped its allowed host",
+        }
+        reason = str(exc) if type(exc) is PermissionError and str(exc) in safe_reasons else type(exc).__name__
         payload = ("### Plenum independent Playwright public search\n\n"
                    "Task rejected or public site unavailable: "
-                   + type(exc).__name__ + ". No website write occurred.\n")
+                   + reason + ". No website write occurred.\n")
     path.write_text(payload, encoding="utf-8")
     print("Public browser search safely executed or rejected.")
 
