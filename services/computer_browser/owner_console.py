@@ -6,16 +6,21 @@ One-time human-operated website sign-in uses a separate IAP-protected page.
 This is not ChatGPT model-controlled website login.
 """
 from html import escape
-from fastapi import Depends, Header, HTTPException, Query
+from fastapi import Depends, Header, HTTPException, Query, Request
+from .owner_auth0 import active as auth0_active, verified_session as auth0_verified_session
 from fastapi.responses import HTMLResponse
 from .iap_identity import verify_owner_token
 from .engine import read_public, safe_url
 
 
 def require_verified_owner(
+    request: Request,
     x_goog_iap_jwt_assertion: str | None=Header(default=None),
 ):
     try:
+        if auth0_active():
+            return auth0_verified_session(request.scope)
+        # The original IAP owner service retains its ES256-only validation.
         return verify_owner_token(x_goog_iap_jwt_assertion)
     except PermissionError as exc:
         raise HTTPException(status_code=401,detail="Verified owner sign-in required") from exc
@@ -42,7 +47,7 @@ button{padding:10px 17px;font:inherit;cursor:pointer}article{padding:16px;
 border:1px solid #8888;border-radius:12px;margin:18px 0;white-space:pre-wrap;
 overflow-wrap:anywhere}small{opacity:.75}a{color:inherit}
 </style></head><body><h1>Computer · Private Browser</h1>
-<small>Owner-only Google sign-in · Plenum Prometheus</small>
+<small>Owner-only verified sign-in · Plenum Prometheus</small>
 <h2>"""+escape(title)+"</h2>"+body+"""<hr>
 <small>Private login is available only after the owner enables the site,
 protected cloud storage and Google authentication. Computer cannot yet operate

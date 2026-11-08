@@ -1,0 +1,131 @@
+"""Only the separate Auth0 service can use signed owner sessions.
+
+No Auth0 network, credentials, Cloud Run, browser logins or real site writes.
+"""
+import os
+import time
+import unittest
+from unittest.mock import patch
+
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from services.computer_browser import owner_auth0
+from services.computer_browser.owner_console import mount_owner_console
+
+ISSUER = "https://dev-8sylxsg44yh5kkhh.us.auth0.com/"
+SYNTHETIC_ENV = {
+    "K_SERVICE": owner_auth0.SERVICE_NAME,
+    "COMPUTER_BROWSER_TOKEN": "Synthetic-only-for-CI-32-byte-secret-unsafe-for-production",
+    "COMPUTER_OWNER_EMAIL": "founder@example.org",
+    "AUTH0_OWNER_CLIENT_ID": "",
+    "AUTH0_OWNER_PUBLIC_ORIGIN": "https://plenum-browser-owner-auth0-98614162800.us-east1.run.app",
+}
+
+
+class Auth0OwnerTests(unittest.TestCase):
+    def test_disabled_in_original_iap_service(self):
+        with patch.dict(os.environ, {"K_SERVICE": "plenum-computer-browser"}):
+            self.assertFalse(owner_auth0.active())
+            with self.assertRaises(PermissionError):
+                owner_auth0.verified_session({})
+            self.assertRaises(PermissionError, owner_auth0._config)
+
+    def test_only_verified_owner_claims_are_accepted(self):
+        with patch.dict(os.environ, SYNTHETIC_ENV, clear=False):
+            valid = {
+                "sub": "auth0|synthetic-owner-subject",
+                "iss": ISSUER,
+                "email": "FOUNDER@example.org",
+                "email_verified": True,
+            }
+            who = owner_auth0._verified_owner(valid)
+            self.assertTrue(who["owner_verified"])
+            self.assertEqual(len(who["private_owner_id"]), 64)
+            self.assertNotIn("email", who)
+            for bad in [
+                dict(valid, email="intruder@example.org"),
+                dict(valid, email_verified=False),
+                dict(valid, sub="x"),
+                dict(valid, iss="https://other.example.org/"),
+                dict(valid, email_verified="true"),
+                dict(valid, email=None),
+            ]:
+                with self.subTest(bad=bad), self.assertRaises(PermissionError):
+                    owner_auth0._verified_owner(bad)
+            with patch.dict(os.environ, {"AUTH0_OWNER_SUB": "auth0|another-identity"}):
+                with self.assertRaises(PermissionError):
+                    owner_auth0._verified_owner(valid)
+
+    def test_expiring_signed_session_scope(self):
+        with patch.dict(os.environ, SYNTHETIC_ENV, clear=False):
+            now = int(time.time())
+            owner = "a" * 64
+            session = {"session": {"plenum_auth0_owner_v1": {
+                "owner": owner, "iat": now - 10, "exp": now + 200,
+            }}}
+            self.assertEqual(owner_auth0.verified_session(session)["private_owner_id"], owner)
+            for record in [
+                {"owner": owner, "iat": now - 1810, "exp": now + 200},
+                {"owner": owner, "iat": now - 100, "exp": now - 1},
+                {"owner": "not-digest", "iat": now - 2, "exp": now + 10},
+                {"owner": owner, "iat": now + 300, "exp": now + 600},
+                {"owner": owner, "iat": True, "exp": now + 100},
+            ]:
+                with self.subTest(record=record), self.assertRaises(PermissionError):
+                    owner_auth0.verified_session({
+                        "session": {"plenum_auth0_owner_v1": record}
+                    })
+            with self.assertRaises(PermissionError):
+                owner_auth0.verified_session({"session": {}})
+
+    def test_locked_bootstrap_is_public_only_for_login_prompt(self):
+        with patch.dict(os.environ, SYNTHETIC_ENV, clear=False):
+            app = FastAPI()
+            mount_owner_console(app)
+            owner_auth0.mount_auth0_owner(app)
+            client = TestClient(app)
+            home = client.get("/", follow_redirects=False)
+            self.assertEqual(home.status_code, 200)
+            self.assertIn("Sign in securely with Auth0", home.text)
+            self.assertEqual(client.get("/auth0/login").status_code, 503)
+            self.assertEqual(client.get("/owner").status_code, 401)
+            self.assertEqual(client.get("/owner", headers={
+                "x-goog-iap-jwt-assertion": "synthetic-fake-assertion",
+                "x-goog-authenticated-user-email": "founder@example.org",
+            }).status_code, 401)
+
+    def test_fixed_callback_origin_and_no_open_redirect(self):
+        with patch.dict(os.environ, {
+            **SYNTHETIC_ENV,
+            "AUTH0_OWNER_CLIENT_ID": "TESTonlyClient1234",
+        }, clear=False):
+            cid, origin = owner_auth0._config()
+            self.assertEqual(cid, "TESTonlyClient1234")
+            self.assertEqual(
+                origin, "https://plenum-browser-owner-auth0-98614162800.us-east1.run.app"
+            )
+            for dangerous in [
+                "http://plenum-browser-owner-auth0-98614162800.us-east1.run.app",
+                "https://user@plenum-browser-owner-auth0-98614162800.us-east1.run.app",
+                "https://plenum-browser-owner-auth0-98614162800.us-east1.run.app/evil",
+                "https://attacker.example.org",
+                "https://plenum-browser-owner-auth0-98614162800.us-east1.run.app?x=1",
+            ]:
+                with self.subTest(dangerous=dangerous), patch.dict(
+                    os.environ, {"AUTH0_OWNER_PUBLIC_ORIGIN": dangerous}
+                ), self.assertRaises(PermissionError):
+                    owner_auth0._config()
+
+    def test_signer_requires_existing_secret(self):
+        with patch.dict(os.environ, {"COMPUTER_BROWSER_TOKEN": ""}):
+            with self.assertRaises(RuntimeError):
+                owner_auth0._session_secret()
+        with patch.dict(os.environ, SYNTHETIC_ENV, clear=False):
+            secret = owner_auth0._session_secret()
+            self.assertEqual(len(secret), 64)
+            self.assertNotIn(SYNTHETIC_ENV["COMPUTER_BROWSER_TOKEN"], secret)
+
+
+if __name__ == "__main__":
+    unittest.main()

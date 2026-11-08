@@ -1,4 +1,4 @@
-"""Private IAP-authenticated browser view for one-time site sign-ins.
+"""Privately authenticated browser view for one-time website sign-ins.
 
 The *human*, not ChatGPT, clicks and types into real websites through a
 short-lived Chromium stream. Credentials never enter ChatGPT or public GitHub.
@@ -14,6 +14,7 @@ from fastapi import Depends, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from .engine import safe_url, public_dns_only
 from .iap_identity import verify_owner_token
+from .owner_auth0 import active as auth0_active, verified_session as auth0_verified_session
 from .owner_console import require_verified_owner
 from .private_profiles import BrowserProfileStore
 
@@ -117,7 +118,11 @@ def mount_private_login(app):
     async def live(ws:WebSocket,site:str,demo:str="0"):
         # IAP's unsigned email headers can be forged; accept only its signed JWT.
         try:
-            owner=verify_owner_token(ws.headers.get("x-goog-iap-jwt-assertion",""))
+            # Auth0 portal accepts only Authlib-verified and signed owner
+            # session. The original Google IAP service still requires ES256.
+            owner = (auth0_verified_session(ws.scope) if auth0_active()
+                     else verify_owner_token(
+                         ws.headers.get("x-goog-iap-jwt-assertion","")))
             expected=os.environ.get("BROWSER_PUBLIC_ORIGIN","")
             ci=(os.environ.get("COMPUTER_BROWSER_CI_ONLY","")=="true")
             if (not expected or ws.headers.get("origin")!=expected or
