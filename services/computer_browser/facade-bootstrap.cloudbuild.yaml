@@ -11,5 +11,6 @@ steps:
       - .
 images:
   - ${_IMAGE}
+logsBucket: gs://plenum-computer-browser-build-source-98614162800
 options:
-  logging: CLOUD_LOGGING_ONLY
+  logging: GCS_ONLY
