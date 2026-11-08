@@ -1,0 +1,15 @@
+# Build only a thin Authlib layer over our existing pinned Playwright image.
+# Never rebuild Chromium, use the project-local private Artifact Registry.
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --file
+      - services/computer_browser/owner-auth0.Dockerfile
+      - --tag
+      - ${_IMAGE}
+      - .
+images:
+  - ${_IMAGE}
+options:
+  logging: CLOUD_LOGGING_ONLY
