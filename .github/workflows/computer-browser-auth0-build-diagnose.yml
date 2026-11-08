@@ -1,0 +1,97 @@
+name: Diagnose Failed OAuth MCP Cloud Build (Read Only)
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+jobs:
+  diagnose:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == 'Computer Browser: diagnose failed Auth0 MCP build' &&
+      github.event.issue.body == 'DIAGNOSE_AUTH0_MCP_BUILD_38fd4d79:2026-11-08'
+    environment: computer-browser-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Inspect only fixed failed build metadata and sanitized Cloud Logging records
+        id: inspect
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCP_PROJECT_ID" = 'plenum-computer-browser'
+          umask 077
+          trap 'rm -f "$RUNNER_TEMP/mcp-build.json" "$RUNNER_TEMP/mcp-build-logs.json" "$RUNNER_TEMP/mcp-build-log-errors"' EXIT
+          gcloud builds describe 38fd4d79-ceca-489d-aabb-bd71f3d3fe49 \
+            --project="$GCP_PROJECT_ID" --region=us-east1 \
+            --format=json > "$RUNNER_TEMP/mcp-build.json"
+          if ! gcloud logging read \
+            'resource.type="build" AND resource.labels.build_id="38fd4d79-ceca-489d-aabb-bd71f3d3fe49"' \
+            --project="$GCP_PROJECT_ID" --limit=200 --format=json \
+            > "$RUNNER_TEMP/mcp-build-logs.json" 2> "$RUNNER_TEMP/mcp-build-log-errors"; then
+            echo 'Unable to retrieve Cloud Logging details with existing deployer permissions.'
+            printf 'LOG_READ_UNAVAILABLE\n' > "$RUNNER_TEMP/mcp-build-logs.json"
+          fi
+          python - <<'PY'
+          import json,os,re
+          root=os.environ["RUNNER_TEMP"]
+          build=json.load(open(root+"/mcp-build.json"))
+          assert build.get("id")=="38fd4d79-ceca-489d-aabb-bd71f3d3fe49"
+          assert build.get("status")=="FAILURE"
+          print("Build status: FAILURE; step 0: "+str(build.get("steps",[{}])[0].get("status","unknown")))
+          raw=open(root+"/mcp-build-logs.json").read()
+          if raw=="LOG_READ_UNAVAILABLE\n":
+              label="CLOUD_LOGS_UNAVAILABLE"
+          else:
+              try:
+                  records=json.loads(raw)
+              except json.JSONDecodeError:
+                  records=[]
+              chunks=[]
+              for record in records:
+                  chunks.append(str(record.get("textPayload","")))
+                  chunks.append(str(record.get("jsonPayload",{}).get("message","")))
+              message="\n".join(chunks).lower()
+              if "unknown instruction" in message or "dockerfile parse error" in message or "heredoc" in message:
+                  label="DOCKERFILE_PARSER_OR_HEREDOC"
+              elif "failed to solve" in message or "failed to compute cache key" in message or "copy failed" in message:
+                  label="DOCKERFILE_BUILD_CONTEXT_OR_COPY"
+              elif "no matching distribution" in message or "could not find a version" in message or "pip install" in message and "error" in message:
+                  label="PYTHON_DEPENDENCY_RESOLUTION"
+              elif "permission denied" in message or "unauthorized" in message:
+                  label="BUILD_PERMISSION"
+              elif "timed out" in message or "network is unreachable" in message or "temporary failure" in message:
+                  label="BUILD_NETWORK"
+              elif not records:
+                  label="CLOUD_LOGS_EMPTY"
+              else:
+                  label="OTHER_BUILD_STEP_ERROR"
+          print("SANITIZED_FAILURE_CATEGORY="+label)
+          with open(os.environ["GITHUB_OUTPUT"],"a") as f:
+              f.write("category="+label+"\n")
+          PY
+          echo "Read-only build diagnosis complete, no IAM changes or deployments."
+      - name: Post only non-sensitive failure classification to owner issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          CATEGORY: ${{ steps.inspect.outputs.category }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$CATEGORY" in
+            DOCKERFILE_PARSER_OR_HEREDOC|DOCKERFILE_BUILD_CONTEXT_OR_COPY|PYTHON_DEPENDENCY_RESOLUTION|BUILD_PERMISSION|BUILD_NETWORK|CLOUD_LOGS_EMPTY|CLOUD_LOGS_UNAVAILABLE|OTHER_BUILD_STEP_ERROR) ;;
+            *) CATEGORY="DIAGNOSTIC_UNAVAILABLE" ;;
+          esac
+          gh issue comment "$ISSUE_NUMBER" --body "OAuth MCP Cloud Build 38fd4d79 read-only failure classification: $CATEGORY. No public service, browser action, IAM grants, or Cloud Run changes performed."
