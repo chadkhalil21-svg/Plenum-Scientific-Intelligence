@@ -5,10 +5,14 @@ No Auth0 network, credentials, Cloud Run, browser logins or real site writes.
 import os
 import time
 import unittest
+import base64
+import json
 from unittest.mock import patch
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from itsdangerous import TimestampSigner
+from services.computer_browser import private_login
 
 from services.computer_browser import owner_auth0
 from services.computer_browser.owner_console import mount_owner_console
@@ -94,6 +98,53 @@ class Auth0OwnerTests(unittest.TestCase):
                 "x-goog-iap-jwt-assertion": "synthetic-fake-assertion",
                 "x-goog-authenticated-user-email": "founder@example.org",
             }).status_code, 401)
+
+    def test_real_auth0_session_cookie_authorizes_only_bound_websocket(self):
+        # Prove the same HTTPS-only, signed owner cookie can authorize the
+        # live WebSocket. No external site is contacted, and no Chromium starts.
+        with patch.dict(os.environ, {
+            **SYNTHETIC_ENV,
+            "BROWSER_PUBLIC_ORIGIN": "https://testserver",
+            "BROWSER_ALLOWED_ORIGINS": "https://example.com",
+        }, clear=False):
+            app = FastAPI()
+            mount_owner_console(app)
+            private_login.mount_private_login(app)
+            owner_auth0.mount_auth0_owner(app)
+            now = int(time.time())
+            record = {"plenum_auth0_owner_v1": {
+                "owner": "a" * 64, "iat": now - 5, "exp": now + 120,
+            }}
+            signed = TimestampSigner(owner_auth0._session_secret()).sign(
+                base64.b64encode(json.dumps(record).encode())
+            ).decode()
+            ws_url = "/owner/live?site=https%3A%2F%2Fexample.com%2F"
+            headers = {
+                "origin": "https://testserver",
+                "cookie": "__Host-plenum_browser_owner=" + signed,
+            }
+            with TestClient(app, base_url="https://testserver") as client:
+                self.assertEqual(client.get("/owner", headers={
+                    "cookie": headers["cookie"],
+                }).status_code, 200)
+                with patch.object(private_login, "public_dns_only",
+                                  side_effect=PermissionError("synthetic closed DNS")):
+                    with client.websocket_connect(ws_url, headers=headers) as ws:
+                        self.assertEqual(ws.receive_json()["type"], "status")
+                        stopped = ws.receive_json()
+                        self.assertTrue(stopped["failure"])
+                        self.assertIn("DNS safety checks", stopped["message"])
+                # Signed cookie alone cannot permit cross-origin browser use.
+                with self.assertRaises(Exception):
+                    with client.websocket_connect(ws_url, headers={
+                        **headers, "origin": "https://attacker.example",
+                    }):
+                        pass
+                with self.assertRaises(Exception):
+                    with client.websocket_connect(ws_url, headers={
+                        "origin": "https://testserver",
+                    }):
+                        pass
 
     def test_fixed_callback_origin_and_no_open_redirect(self):
         with patch.dict(os.environ, {
