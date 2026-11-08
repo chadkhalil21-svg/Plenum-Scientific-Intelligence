@@ -166,7 +166,9 @@ class PrivateLoginTests(unittest.TestCase):
                 page.locator("#display").click(force=True)
                 self.assertEqual(page.evaluate("window.__owner_ws.commands.length"),
                                  commands_before)
-                self.assertIn("not connected",
+                self.assertIn("disconnected",
+                              page.locator("#status").inner_text().lower())
+                self.assertIn("previous browser image has been cleared",
                               page.locator("#field-status").inner_text().lower())
             finally:
                 browser.close()
