@@ -169,6 +169,55 @@ jobs:
           rm -f "$RESPONSE"
           echo "No browser navigation, site login, writes, deployment, or secret values were used."
 
+      - name: Compare canonical Cloud Run URL with a newly signed scoped JWT (read only)
+        id: canonical
+        if: always() && steps.health.outcome == 'failure' && steps.sign.outcome == 'success'
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          BROWSER_DEPLOY_SA: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCP_PROJECT_ID" = "plenum-computer-browser"
+          PROJECT_NUMBER="$(gcloud projects describe "$GCP_PROJECT_ID" --format='value(projectNumber)')"
+          test "$PROJECT_NUMBER" = "98614162800"
+          test -n "$BROWSER_DEPLOY_SA"
+          CANONICAL_URL="https://plenum-computer-browser-$PROJECT_NUMBER.us-east1.run.app"
+          umask 077
+          trap 'rm -f "$RUNNER_TEMP/canonical-claims.json" "$RUNNER_TEMP/canonical.jwt" "$RUNNER_TEMP/canonical-header" "$RUNNER_TEMP/canonical-response" "$RUNNER_TEMP/canonical-headers" "$RUNNER_TEMP/canonical-unsigned"' EXIT
+          python -m services.computer_browser.programmatic_iap_probe \
+            --cloud-run-url "$CANONICAL_URL" --service-account "$BROWSER_DEPLOY_SA" \
+            --claims-file "$RUNNER_TEMP/canonical-claims.json"
+          if ! gcloud iam service-accounts sign-jwt \
+             "$RUNNER_TEMP/canonical-claims.json" "$RUNNER_TEMP/canonical.jwt" \
+             --iam-account="$BROWSER_DEPLOY_SA" --project="$GCP_PROJECT_ID" \
+             --quiet > /dev/null 2>&1; then
+            echo "Canonical probe: scoped JWT signing failed. No access settings changed."
+            exit 1
+          fi
+          printf 'Proxy-Authorization: Bearer %s\n' "$(cat "$RUNNER_TEMP/canonical.jwt")" > "$RUNNER_TEMP/canonical-header"
+          SIGNED_STATUS="$(curl --silent --show-error --max-time 20 --proto '=https' \
+            --header @"$RUNNER_TEMP/canonical-header" \
+            --dump-header "$RUNNER_TEMP/canonical-headers" \
+            --output "$RUNNER_TEMP/canonical-response" --write-out '%{http_code}' \
+            "$CANONICAL_URL/healthz" || true)"
+          echo "Canonical service URL signed GET /healthz: HTTP $SIGNED_STATUS"
+          if [ "$SIGNED_STATUS" = "200" ]; then
+            python -m services.computer_browser.programmatic_iap_probe \
+              --health-response "$RUNNER_TEMP/canonical-response"
+            echo "PASS: Canonical domain succeeded with an exact health-only JWT."
+            exit 0
+          fi
+          UNSIGNED_STATUS="$(curl --silent --show-error --max-time 20 --proto '=https' \
+            --output "$RUNNER_TEMP/canonical-unsigned" --write-out '%{http_code}' \
+            "$CANONICAL_URL/healthz" || true)"
+          python -m services.computer_browser.http_response_diagnostic \
+            --signed-status "$SIGNED_STATUS" --signed-response "$RUNNER_TEMP/canonical-response" \
+            --unsigned-status "$UNSIGNED_STATUS" --unsigned-response "$RUNNER_TEMP/canonical-unsigned" \
+            --signed-headers "$RUNNER_TEMP/canonical-headers"
+          echo "Canonical and current URL differencing did not establish a verified login."
+          exit 1
+
       - name: Post non-sensitive verification result to founder's GitHub issue
         if: always() && github.event_name == 'issues' && github.event.issue.user.login == 'chadkhalil21-svg'
         env:
@@ -180,11 +229,14 @@ jobs:
           CLAIM_RESULT: ${{ steps.claim.outcome }}
           SIGN_RESULT: ${{ steps.sign.outcome }}
           HEALTH_RESULT: ${{ steps.health.outcome }}
+          CANONICAL_RESULT: ${{ steps.canonical.outcome }}
         shell: bash
         run: |
           set -euo pipefail
           if [ "$JOB_STATUS" = "success" ]; then
             RESULT="PASS: Programmatic service-account IAP authentication reached the existing private Cloud Run /healthz endpoint. No website action was performed."
+          elif [ "$CANONICAL_RESULT" = "success" ]; then
+            RESULT="PARTIAL PASS: canonical Cloud Run URL accepted the signed private health request; configured service status URL returned an error. No website action was performed."
           elif [ "$POLICY_RESULT" != "success" ]; then
             RESULT="NOT VERIFIED: Offline IAP claim-policy test failed. No Google permissions or service access were attempted."
           elif [ "$OIDC_RESULT" != "success" ]; then

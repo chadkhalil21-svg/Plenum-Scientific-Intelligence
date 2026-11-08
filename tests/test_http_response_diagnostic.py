@@ -33,6 +33,20 @@ class HttpDifferentialTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             describe(404,b"",None,b"",b"")
 
+    def test_canonical_url_probe_is_bound_to_existing_service(self):
+        w=(ROOT/".github/workflows/computer-browser-iap-health-probe.yml").read_text()
+        self.assertIn("id: canonical", w)
+        self.assertIn("steps.health.outcome == 'failure'", w)
+        self.assertIn('test "$PROJECT_NUMBER" = "98614162800"', w)
+        self.assertIn('CANONICAL_URL="https://plenum-computer-browser-$PROJECT_NUMBER.us-east1.run.app"', w)
+        self.assertIn('Proxy-Authorization: Bearer %s', w)
+        self.assertIn('--claims-file "$RUNNER_TEMP/canonical-claims.json"', w)
+        self.assertIn('trap \'rm -f "$RUNNER_TEMP/canonical-claims.json"', w)
+        self.assertIn("CANONICAL_RESULT: ", w)
+        for unsafe in ("gcloud run deploy", "gcloud run services update", "--no-iap",
+                       "gcloud iap web add-iam-policy-binding", "--allow-unauthenticated"):
+            self.assertNotIn(unsafe, w)
+
     def test_workflow_only_safe_read_only_request_and_cleanup(self):
         w=(ROOT/".github/workflows/computer-browser-iap-health-probe.yml").read_text()
         self.assertIn("services.computer_browser.http_response_diagnostic",w)
