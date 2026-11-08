@@ -21,7 +21,7 @@ class BootstrapGuardTests(unittest.TestCase):
             '"allUsers","allAuthenticatedUsers"',
             "test \"$SIGNED\" = \"200\"",
             "MCP_RESOURCE",
-            "No owner sessions or website actions",
+            "no owner sessions or website actions",
         ):
             with self.subTest(required=required):
                 self.assertIn(required,w)
