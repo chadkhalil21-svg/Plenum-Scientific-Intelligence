@@ -97,7 +97,7 @@ jobs:
           test -n "$IMAGE"
           gcloud run services update plenum-browser-owner-auth0 \
             --project="$PROJECT" --region=us-east1 --image="$IMAGE" --timeout=900s \
-            --update-env-vars "PLENUM_SEALED_CHAT_READ_ENABLED=true,PLENUM_RUNTIME_SITE_GRANTS_ENABLED=true" --quiet >/dev/null
+            --update-env-vars "PLENUM_SEALED_CHAT_READ_ENABLED=true,PLENUM_RUNTIME_SITE_GRANTS_ENABLED=true,PLENUM_PINNED_PUBLIC_PREVIEW_ENABLED=true" --quiet >/dev/null
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
       - name: Read back identity and verify anonymous denied with unchanged OAuth login
         id: verify
@@ -128,6 +128,7 @@ jobs:
           assert "COMPUTER_BROWSER_TOKEN" in env
           assert env.get("PLENUM_SEALED_CHAT_READ_ENABLED",{}).get("value")=="true"
           assert env.get("PLENUM_RUNTIME_SITE_GRANTS_ENABLED",{}).get("value")=="true"
+          assert env.get("PLENUM_PINNED_PUBLIC_PREVIEW_ENABLED",{}).get("value")=="true"
           assert env.get("PLENUM_CHAT_RELAY_ENABLED",{}).get("value")=="true"
           (Path(os.environ["RUNNER_TEMP"])/"owner-after.json").unlink()
           print("PASS: Existing Auth0 owner portal image replaced, identity/config and encrypted session vault preserved.")
@@ -151,6 +152,8 @@ jobs:
           test "$SITE_REGISTRY" = '401'
           test "$REGISTER" = '401'
           test "$REVOKE" = '401'
+          SITE_PREVIEW="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 -X POST "$URL/owner/sites/preview")"
+          test "$SITE_PREVIEW" = '401'
           echo 'PASS: Auth0 login redirect still 302; anonymous browser endpoints still 401.'
       - name: Report safe outcome to exact founder issue
         if: always()
