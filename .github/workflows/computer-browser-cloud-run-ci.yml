@@ -12,6 +12,7 @@ on:
       - 'tests/test_browser_chat_pairing.py'
       - 'tests/test_browser_chat_relay.py'
       - 'tests/test_browser_adaptive_owner.py'
+      - 'tests/test_browser_exact_owner_form.py'
       - 'tests/test_browser_chat_workflow_static.py'
       - '.github/workflows/chat-browser-owner-read.yml'
       - '.github/workflows/chat-browser-owner-read-activate.yml'
@@ -137,6 +138,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_browser_sealed_chat_read.py' -v
       - name: Verify owner consent, signed adaptive navigation, CAS expiry/revocation, and no private writes
         run: python -m unittest discover -s tests -p 'test_browser_adaptive_owner.py' -v
+      - name: Verify new exact owner form POST consent, OIDC, isolation, and offline Chromium
+        run: python -m unittest discover -s tests -p 'test_browser_exact_owner_form.py' -v
       - name: Verify issue-bound OIDC workflow, owner activation and rollback contracts
         run: python -m unittest discover -s tests -p 'test_browser_chat_workflow_static.py' -v
       - name: Verify real on-demand public navigation with actual Chromium
