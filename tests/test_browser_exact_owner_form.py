@@ -146,6 +146,33 @@ class ExactFormApprovalTests(unittest.TestCase):
         with patch.dict(os.environ,{forms.FLAG:"false"}), self.assertRaises(PermissionError):
             forms.require_enabled()
 
+
+    def test_broader_checkbox_and_multi_control_plan_has_strict_refusals(self):
+        steps = [
+            {"op":"fill","selector":"textarea[name=message]","value":"Reviewed text"},
+            {"op":"select","selector":"select[name=category]","value":"general"},
+            {"op":"check","selector":"input[name=contact_ok]"},
+            {"op":"uncheck","selector":"input[name=notify]"},
+            OPS[-1],
+        ]
+        accepted = forms.validate_plan(**self.plan(operations=steps))
+        self.assertEqual([x.operation for x in accepted.steps],
+                         ["fill", "select", "check", "uncheck", "click"])
+        invalid = [
+            [{"op":"check","selector":"input[name=password]"}, OPS[-1]],
+            [{"op":"check","selector":"button[type=submit]"}, OPS[-1]],
+            [{"op":"check","selector":"input[name=contact_ok]","value":"yes"}, OPS[-1]],
+            [{"op":"uncheck","selector":"select[name=category]"}, OPS[-1]],
+            [{"op":"press","selector":"input[name=note]","value":"Enter"}, OPS[-1]],
+            [steps[0],steps[0],OPS[-1]],
+            [*steps[:4],*steps[:4],*steps[:4],OPS[-1]],
+        ]
+        for case in invalid:
+            with self.subTest(case=str(case)[:90]), self.assertRaises(
+                (PermissionError,ValueError)
+            ):
+                forms.validate_plan(**self.plan(operations=case))
+
     def test_owner_form_grant_is_encrypted_one_time_and_can_be_revoked(self):
         _, pub = keys()
         args=self.plan(recipient_public_key=pub)
