@@ -1,5 +1,22 @@
 # Project working instructions
 
+## Permanent founder operating doctrine: AGI/ASI capability first (2026-11-08)
+
+**This applies across the entire project, not only to browser development.**
+Plenum Prometheus's mission is independently evaluated progress toward AGI and eventually ASI, including grounded world models, reliable planning, learning, scientific discovery, simulations, and adaptation. Browser access, voice, plugins, dashboards and orchestration are supporting tools, never substitutes for that mission.
+
+**Before any feature or significant tool call:**
+1. Re-read `docs/LEDGER.md` (current top decision), `docs/CONTINUITY_AND_REUSE.md`, the canonical public `research-memory/state/AGI_PROGRAM.json`, the relevant existing source, and completed/active PRs, issues and workflows. Do not ask the founder to repeat information in those records.
+2. **Reuse first.** Search established upstream implementations, versions, licenses and existing integrations. Select **one suitable proven tool per role**, not multiple overlapping engines. Prefer the smallest adapter to another homegrown framework; do not create a new browser, simulator, agent scheduler, evaluator or memory system without a demonstrated gap.
+3. State a **single missing capability, frozen baseline, independent acceptance test, failure criteria, real cost and next small step** before coding. Distinguish source present, installed, tested with mocks, real inference, externally validated and deployed. A green CI test is not AGI and an imported package is not an ability.
+4. Optimize **verified capability gained per hour, compute cost, and complexity introduced**. Avoid circular infrastructure work, duplicated projects, excessive workflows and prolonged troubleshooting once a usable path exists; make the smallest measured change and promptly return to scientific/AGI experiments.
+5. For world models, use the reference `docs/JEPA_WORLD_MODELS_AND_SIMULATION.md`: JEPA latent prediction, action-conditioned outcomes, physical simulators and true calibrated digital twins are **different levels**. Reuse SciPy/OpenMM/PyBaMM/OpenMDAO/MuJoCo/V-JEPA upstream when a specific test calls for them; require train/holdout separation, action-ablation, OOD/counterfactual tests and observed-real-world validation before claims of physical intelligence.
+6. At the end of each meaningful execution, immediately update **both** the main public program ledger and the appropriate domain progress/evidence file. Update the canonical research-memory state on a supported verified outcome. Explicitly label **measured success, measured failure, source only, scheduled, pending, or blocked**; retain past negative results. Never claim background work or continuous memory updates without a real automation or executed workflow.
+7. Protect confidential Plenum IP, personal data, credentials, owner session secrets and sensitive research; the GitHub repository is **public**. Keep unpublished information in approved private storage. Do not promote models, trigger unbounded training/cost or perform consequential physical operations without appropriate review.
+
+The answer to "what next?" is the **highest-information, lowest-cost independently verifiable AGI research experiment**, not automatically another browser or connector build. Keep responses concise, intelligible and decision-oriented.
+
+
 **Repository continuity requirement.** For every task involving Plenum Computer Browser, Prometheus browser automation, browser-backed plugin tools, browser Cloud Run services, session storage, authorization or the associated GitHub workflows:
 
 1. Read `docs/COMPUTER_BROWSER_PROGRESS.md` and `docs/LEDGER.md` before proposing further engineering.

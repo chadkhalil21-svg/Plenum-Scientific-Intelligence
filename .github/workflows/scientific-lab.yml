@@ -11,6 +11,9 @@ on:
       - '.github/workflows/scientific-lab.yml'
       - 'src/plenum_ai/lab.py'
       - 'tests/test_lab.py'
+      - 'src/plenum_ai/world_model_probe.py'
+      - 'tests/test_world_model_probe.py'
+      - 'docs/JEPA_WORLD_MODELS_AND_SIMULATION.md'
 permissions:
   contents: read
 concurrency:
@@ -39,6 +42,8 @@ jobs:
           fi
           python -m plenum_ai.cli lab --query "$QUESTION" --domains mechanics,chemistry,materials,electronics,molecules --out reports/scientific_lab.json
           python -m plenum_ai.cli solver-benchmark --out reports/solver_benchmark.json
+      - name: Evaluate action-conditioned dynamics on sealed synthetic holdouts
+        run: python -m plenum_ai.world_model_probe --output reports/world_model_synthetic_probe.json
       - name: Verify standards, provenance and no deployment
         run: |
           python - <<'PY'
@@ -53,7 +58,17 @@ jobs:
           assert len(b["methods"]) == 3
           assert b["candidate_deployed"] is False
           assert b["least_calls_in_known_fixtures"]
-          print("Known models passed independent numerical/analytic fixture checks.")
+          w=json.loads(Path("reports/world_model_synthetic_probe.json").read_text())
+          assert w["schema"]=="plenum-world-model-synthetic-probe-v1"
+          assert w["JEPA_model_trained"] is False
+          assert w["real_world_digital_twin_verified"] is False
+          assert w["general_intelligence_demonstrated"] is False
+          for horizon in ("1","8","32"):
+              nominal=w["heldout_action_sequences"][horizon]
+              shifted=w["shifted_physics"][horizon]
+              assert 0 < nominal["action_conditioned_rmse"] < nominal["action_blind_rmse"]
+              assert shifted["action_conditioned_rmse"] > nominal["action_conditioned_rmse"]
+          print("Known solvers verified; action-conditioned synthetic heldout metrics recorded, not AGI.")
           PY
       - uses: actions/upload-artifact@v7
         with:

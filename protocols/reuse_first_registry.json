@@ -1,7 +1,7 @@
 {
   "schema": "plenum-reuse-first-registry-v1",
   "purpose": "Avoid reimplementing widely validated software. Reuse validated external packages with license and provenance checks, and isolate Plenum-specific research logic.",
-  "reviewed_utc": "2026-11-07",
+  "reviewed_utc": "2026-11-08",
   "software": [
     {
       "name": "EleutherAI LM Evaluation Harness",
@@ -126,6 +126,49 @@
       "default_execution": false,
       "prerequisites": "verified Docker isolation, source-approved model backend and compute ceiling, independent test-based task scoring",
       "notes": "Do not build new planning/agent loop or claim self-improvement. Prefer existing Inspect react(), OpenHands Software Agent SDK, SWE-bench Verified and PaperBench. A completed multistep task is needed, not library import."
+    },
+    {
+      "name": "Meta FAIR V-JEPA 2 / V-JEPA 2.1",
+      "role": "self_supervised_latent_visual_world_model_and_action_conditioned_prediction",
+      "origin": "https://github.com/facebookresearch/vjepa2",
+      "code_license": "MIT (verify separate checkpoint terms)",
+      "candidate": "V-JEPA 2.1 ViT-B/16 ~80M",
+      "adoption": "upstream_candidate_not_installed",
+      "status": "source_reviewed_2026-11-08_no_model_inference_or_training",
+      "next_gate": "separately authorized checkpoint/license/weight SHA, GPU budget, frozen encoder video prediction and OOD baseline",
+      "default_execution": false,
+      "notes": "Official released training code and checkpoints. Do not clone/retrain multiple giant models or claim latent prediction is proven causality."
+    },
+    {
+      "name": "Google DeepMind MuJoCo",
+      "role": "physical_interactions_robotics_digital_twin_reference_simulator",
+      "origin": "https://github.com/google-deepmind/mujoco",
+      "license": "Apache-2.0",
+      "adoption": "approved_candidate_not_installed",
+      "status": "upstream_review_only",
+      "next_gate": "install exact version for one articulated robot experiment if existing SciPy solver is insufficient, compare controlled dynamics and heldout outcomes",
+      "default_execution": false
+    },
+    {
+      "name": "NVIDIA Isaac Lab",
+      "role": "GPU_robot_learning_and_synthetic_data_when_required",
+      "origin": "https://github.com/isaac-sim/IsaacLab",
+      "license": "BSD-3-Clause framework; review Isaac Sim/additional asset terms",
+      "adoption": "deferred_higher_cost_candidate",
+      "status": "upstream_review_only_no_GPU_or_simulation",
+      "next_gate": "requires justified photorealistic or massively parallel robot learning study plus rights, machine and budget approval",
+      "default_execution": false
+    },
+    {
+      "name": "Existing SciPy plus scikit-learn action-conditioned world-model probe",
+      "role": "low_cost_synthetic_dynamics_holdout_baseline",
+      "origin": "local:src/plenum_ai/world_model_probe.py",
+      "dependencies": "existing optional science/ML extras: SciPy solve_ivp, NumPy, scikit-learn Ridge",
+      "adoption": "source_only_proposed_in_this_PR",
+      "status": "local_offline_evaluation_done_CI_and_merge_pending",
+      "next_gate": "existing scientific-lab workflow independently checks action conditioning, holdout action sequences, shifted physics and negative claims",
+      "default_execution": false,
+      "notes": "Not JEPA, not empirical validation, not a verified real-world digital twin."
     }
   ],
   "rules": {
@@ -147,5 +190,6 @@
     "external_paid_api": false,
     "gpu_spend_authorized": false
   },
-  "limitations": "Existing benchmark frameworks provide evaluation infrastructure, not intelligence or proof of AGI."
+  "limitations": "Existing benchmark frameworks provide evaluation infrastructure, not intelligence or proof of AGI.",
+  "world_model_decision_record": "docs/JEPA_WORLD_MODELS_AND_SIMULATION.md"
 }
