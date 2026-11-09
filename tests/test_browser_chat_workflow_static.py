@@ -35,6 +35,9 @@ class SignedChatWorkflowTests(unittest.TestCase):
         self.assertNotIn("pull_request_target:",s)
         self.assertNotIn("workflow_dispatch:",s)
         self.assertIn("timeout-minutes: 4",s)
+        self.assertIn("class NoRedirect(urllib.request.HTTPRedirectHandler):",s)
+        self.assertIn("NoRedirect(),urllib.request.ProxyHandler({})",s)
+        self.assertNotIn("urllib.request.urlopen(request",s)
 
     def test_activation_remains_exact_founder_protected_environment_and_rolls_back(self):
         s=ACTIVATE.read_text(encoding="utf-8")
