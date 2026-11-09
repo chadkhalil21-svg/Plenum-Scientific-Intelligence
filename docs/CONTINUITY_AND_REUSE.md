@@ -1,5 +1,16 @@
 # Reuse-first development and program continuity
 
+## Current program decision: AGI and ASI first (founder audit, 2026-11-08)
+
+**Plenum Prometheus's mission is general intelligence research, advancing toward AGI and ultimately ASI. The computer browser is a supporting tool, not the current research objective.** The public program's canonical research state remains `research-memory/state/AGI_PROGRAM.json`, with results scored by independent evaluators and held-out evidence. Do not convert integration tests or installed packages into AGI capability claims.
+
+The browser audit confirmed: (a) official Playwright MCP already integrated and tested in [public founder issue #213](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/213); (b) ordinary ChatGPT -> GitHub -> Playwright public link navigation proven again by [arXiv Astrophysics issue #254](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/254); (c) a live owner-operated, Auth0-protected browser successfully logged into the public test site and independently restored its encrypted saved session (founder 8:09 PM screenshot; [PR #245](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/245)); (d) Browser Use is already incorporated as an optional public agent but lacks a separately configured model key ([issue #214](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/214)); (e) private signed-in ChatGPT -> browser actions, uploads, arbitrary approved writes and Work/TinyFish equivalence **remain unproven**. Earlier screenshots stating no official Playwright MCP incorporation are historical and were superseded.
+
+**Duplicate-work correction:** Two source-only private connection approaches already exist: OAuth/MCP ([PR #248](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/248)) and signed GitHub relay ([PR #249](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/249), hardened by [#252](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/252)). A third round of relay work [PR #253](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/253) is parked in DRAFT rather than merged or deployed; an OIDC audience mismatch across the workflow and verifier is independently visible despite unit tests. Do not create another browser or transport stack. Do not enable a private relay until one existing path passes real authorization, replay and output-boundary tests, with one explicit owner approval. Use existing public browsing now when sufficient.
+
+**Mandatory decision gate before any code:** 1. Read the canonical program state, existing modules, active PRs, and recent verified runs. 2. Search upstream for a licensed supported component, and reuse a preexisting adapter when available. 3. Name the exact missing capability and a single independent acceptance test before writing code. 4. Avoid parallel architectures and open-ended browser refactoring; keep AGI research tasks moving. 5. Record only meaningful completion evidence and failures; avoid a new claim of completion based on CI alone.
+
+
 ## Canonical public program checkpoint
 
 The source of truth for the publicly discloseable AGI research program is
