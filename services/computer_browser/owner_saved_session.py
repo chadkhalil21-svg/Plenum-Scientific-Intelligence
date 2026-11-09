@@ -59,7 +59,7 @@ def _owner_form_mac(owner_id, site, action, issued_hex, nonce):
 
 def _owner_form_token(owner_id, site, action):
     """Short-lived exact-owner/site/action CSRF token; no account data inside."""
-    if action not in ("preview","browse","revoke","demo_refresh","chat_demo_read","sealed_read"):
+    if action not in ("preview","browse","revoke","demo_refresh","chat_demo_read","sealed_read","site_register","site_revoke"):
         raise ValueError("Unrecognized owner form action")
     issued=f"{int(time.time()):08x}"
     nonce=secrets.token_hex(8)
@@ -95,7 +95,7 @@ def _verify_owner_form(request, owner_id, site, action, token):
     if not isinstance(token,str) or len(token)>1000 or not token:
         raise HTTPException(status_code=403,detail="Owner form verification required")
     match=re.fullmatch(r"v1[.]([0-9a-f]{8,10})[.]([0-9a-f]{16})[.]([0-9a-f]{64})",token)
-    if match is None or action not in ("preview","browse","revoke","demo_refresh","chat_demo_read","sealed_read"):
+    if match is None or action not in ("preview","browse","revoke","demo_refresh","chat_demo_read","sealed_read","site_register","site_revoke"):
         raise HTTPException(status_code=403,detail="Owner form verification required")
     issued_hex,nonce,signature=match.groups()
     now=int(time.time())
