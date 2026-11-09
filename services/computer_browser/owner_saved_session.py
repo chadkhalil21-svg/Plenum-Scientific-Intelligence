@@ -21,6 +21,8 @@ from .engine import _origin_syntax, allowed_origins, safe_url, public_dns_only
 from .owner_console import require_verified_owner
 from .private_profiles import BrowserProfileStore
 
+PUBLIC_DEMO_ORIGIN = "https://the-internet.herokuapp.com"
+
 _HEADERS = {
     "Cache-Control": "no-store",
     "X-Content-Type-Options": "nosniff",
@@ -57,7 +59,7 @@ def _owner_form_mac(owner_id, site, action, issued_hex, nonce):
 
 def _owner_form_token(owner_id, site, action):
     """Short-lived exact-owner/site/action CSRF token; no account data inside."""
-    if action not in ("preview","revoke"):
+    if action not in ("preview","revoke","demo_refresh"):
         raise ValueError("Unrecognized owner form action")
     issued=f"{int(time.time()):08x}"
     nonce=secrets.token_hex(8)
@@ -93,7 +95,7 @@ def _verify_owner_form(request, owner_id, site, action, token):
     if not isinstance(token,str) or len(token)>1000 or not token:
         raise HTTPException(status_code=403,detail="Owner form verification required")
     match=re.fullmatch(r"v1[.]([0-9a-f]{8,10})[.]([0-9a-f]{16})[.]([0-9a-f]{64})",token)
-    if match is None or action not in ("preview","revoke"):
+    if match is None or action not in ("preview","revoke","demo_refresh"):
         raise HTTPException(status_code=403,detail="Owner form verification required")
     issued_hex,nonce,signature=match.groups()
     now=int(time.time())
@@ -128,7 +130,7 @@ def _HEADINGS():
 
 def safe_session_preview_url(site):
     """Use one audited login-protected demo fixture, never arbitrary paths."""
-    if site=="https://the-internet.herokuapp.com":
+    if site==PUBLIC_DEMO_ORIGIN:
         return site+"/secure"
     return site+"/"
 
@@ -166,7 +168,7 @@ async def read_saved_site(*, site, owner):
                 # An ordinary HTTP 200 login page is not an authenticated
                 # restore proof. Only the specific public demo fixture has
                 # a trustworthy narrow success check.
-                demo_restored=(site=="https://the-internet.herokuapp.com"
+                demo_restored=(site==PUBLIC_DEMO_ORIGIN
                     and urlsplit(page.url).path=="/secure"
                     and "Logged in as" in body
                     and "Secure Area" in body)
@@ -177,6 +179,70 @@ async def read_saved_site(*, site, owner):
                 await context.close()
         finally:
             await browser.close()
+
+
+async def _public_demo_login_snapshot(browser, *, fixture_route=None):
+    """Get session state for ONLY the public Sauce Labs test account.
+
+    Never opens a user-supplied destination or reads private credentials.
+    Production routes are limited to exact approved demo HTTPS origin.
+    """
+    from .private_login import filter_site_storage
+    demo=PUBLIC_DEMO_ORIGIN
+    context=await browser.new_context(
+        accept_downloads=False,ignore_https_errors=False,
+        service_workers="block",permissions=[])
+    try:
+        async def restrict(route):
+            request=route.request
+            if (request.method not in ("GET","HEAD","POST","OPTIONS")
+                    or not safe_url(request.url,origins={demo})):
+                await route.abort()
+            elif fixture_route is not None:
+                await fixture_route(route)
+            else:
+                await route.continue_()
+        await context.route("**/*",restrict)
+        page=await context.new_page()
+        await page.goto(demo+"/login",wait_until="domcontentloaded",timeout=25000)
+        # These demonstration credentials are intentionally published by
+        # Sauce Labs in their public source, not supplied by the user.
+        await page.locator("#username").fill("tomsmith")
+        await page.locator("#password").fill("SuperSecretPassword!")
+        await page.locator("button[type=submit]").click(timeout=12000)
+        await page.wait_for_url(demo+"/secure",timeout=15000)
+        body=" ".join((await page.locator("body").inner_text(timeout=7000)).split())
+        if not ("Secure Area" in body and "Logged in as tomsmith" in body):
+            return None
+        state=filter_site_storage(await context.storage_state(),demo)
+        if not state["cookies"]:
+            return None
+        return state
+    finally:
+        await context.close()
+
+
+async def _refresh_and_verify_public_demo(owner):
+    """One owner-authorized demo-only login, encrypted write and fresh restore."""
+    demo=PUBLIC_DEMO_ORIGIN
+    _require_allowed_origin(demo)
+    await asyncio.to_thread(public_dns_only,demo)
+    from playwright.async_api import async_playwright
+    async with async_playwright() as pw:
+        browser=await pw.chromium.launch(headless=True)
+        try:
+            state=await _public_demo_login_snapshot(browser)
+        finally:
+            await browser.close()
+    if state is None:
+        return "demo_login_not_verified"
+    from .private_login import _persist_encrypted_site_profile
+    await asyncio.to_thread(_persist_encrypted_site_profile,
+                            owner_id=owner,origin=demo,state=state)
+    result=await read_saved_site(site=demo,owner=owner)
+    if result.get("demo_authenticated_restored") is True:
+        return "verified"
+    return "saved_but_not_restored"
 
 
 def mount_owner_saved_session(app):
@@ -205,6 +271,14 @@ def mount_owner_saved_session(app):
                 continue
             preview_token=escape(_owner_form_token(_owner["private_owner_id"],site,"preview"),quote=True)
             revoke_token=escape(_owner_form_token(_owner["private_owner_id"],site,"revoke"),quote=True)
+            demo_refresh_form=(
+                "<form method='post' action='/owner/sessions/demo-refresh'>"
+                "<input type='hidden' name='csrf_token' value='"
+                + escape(_owner_form_token(_owner["private_owner_id"],site,
+                                           "demo_refresh"),quote=True)
+                + "'><button type='submit'>Refresh and verify public demo login</button>"
+                "</form>"
+                if site==PUBLIC_DEMO_ORIGIN else "")
             rows.append(
                 base+
                 "<form method='post' action='/owner/sessions/preview'>"
@@ -217,7 +291,8 @@ def mount_owner_saved_session(app):
                 "<input type='hidden' name='csrf_token' value='" + revoke_token + "'>"
                 "<label>Type REVOKE to delete saved session "
                 "<input name='confirmation' autocomplete='off' maxlength='6'></label>"
-                "<button type='submit'>Revoke session</button></form></article>"
+                "<button type='submit'>Revoke session</button></form>"
+                + demo_refresh_form + "</article>"
             )
         return _page("Saved website sessions", "".join(rows))
 
@@ -237,7 +312,7 @@ def mount_owner_saved_session(app):
             raise HTTPException(
                 status_code=502, detail="Saved website preview unavailable"
             ) from exc
-        demo=(site=="https://the-internet.herokuapp.com")
+        demo=(site==PUBLIC_DEMO_ORIGIN)
         verification=("<strong>Demo login restoration verified.</strong>"
                       if result.get("demo_authenticated_restored")
                       else "<strong>Demo login restoration NOT verified.</strong>"
@@ -250,6 +325,43 @@ def mount_owner_saved_session(app):
                      + "<strong>" + escape(result["title"]) + "</strong>\n"
                      + escape(result["site"]) + "\n\n"
                      + escape(result["body"]) + "</article>")
+
+    @app.post("/owner/sessions/demo-refresh", response_class=HTMLResponse)
+    async def owner_refresh_public_demo(
+        request: Request,
+        csrf_token: str = Form(default=""),
+        _owner=Depends(require_verified_owner),
+    ):
+        """Explicit owner click refreshes only a published demo account."""
+        demo=PUBLIC_DEMO_ORIGIN
+        _require_allowed_origin(demo)
+        _verify_owner_form(request,_owner["private_owner_id"],demo,
+                           "demo_refresh",csrf_token)
+        try:
+            result=await asyncio.wait_for(_refresh_and_verify_public_demo(
+                _owner["private_owner_id"]),timeout=90)
+        except Exception as exc:
+            raise HTTPException(status_code=502,
+                detail="Public demo session refresh unavailable; private profiles not disclosed") from exc
+        if result=="verified":
+            return _page("Public demo session independently verified",
+                "<article><strong>Demo login restoration verified.</strong> "
+                "The published demonstration account was logged in afresh, "
+                "its website state saved in owner-scoped encrypted storage, "
+                "and an independent read-only Chromium session reached "
+                "the protected demo Secure Area. "
+                "This does not authorize other websites or connect ChatGPT actions."
+                "</article>")
+        if result=="demo_login_not_verified":
+            return _page("Public demo website login unavailable",
+                "<article>The published demonstration login did not succeed, "
+                "so no replacement website session was saved. "
+                "The existing saved profile was not changed.</article>")
+        return _page("Public demo session saved but not restored",
+            "<article>The demonstration login state was saved, "
+            "but the public website did not accept it in an independent "
+            "read-only Chromium session. Do not treat it as a valid login."
+            "</article>")
 
     @app.post("/owner/sessions/revoke", response_class=HTMLResponse)
     async def owner_revoke_session(
