@@ -1,0 +1,54 @@
+{
+  "schema": "plenum-noaa-shadow-replay-summary-v1",
+  "evidence_class": "real_noaa_historical_sensor_replay",
+  "date_replayed_utc": "2025-06-17",
+  "observed_run_utc": "2026-11-09T03:40:14Z",
+  "workflow_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42557644772",
+  "source_revision": "5af7c4bf7870a0af187c4f9e9a8808e19afb04bb",
+  "source_workflow": ".github/workflows/noaa-empirical.yml",
+  "full_evidence_artifact": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42557644772/artifacts/13648390728",
+  "test_steps_status": "offline original tests, 5 new shadow tests, real NOAA observed fetch, replay, reference comparison and artifact all passed",
+  "historical_dataset_already_inspected_in_prior_experiments": true,
+  "newly_precommitted_future_predictions": false,
+  "experimental_online_residual_gain": 0.25,
+  "next_hour_forecast_uses_only_prior_observation": true,
+  "real_time_synchronization_verified": false,
+  "calibrated_operational_twin_verified": false,
+  "measured_uncertainty_quantification_verified": false,
+  "scientific_discovery_or_AGI_verified": false,
+  "stations": [
+    {
+      "id": "8443970",
+      "name": "Boston, MA",
+      "raw_payload_sha256": "b59ae8738ad41beda3228424b55f588339be1f1c4ed5267dc244cdad16468de4",
+      "training_samples": 384,
+      "one_hour_comparisons": 23,
+      "shadow_mae_m": 0.3198791277908438,
+      "frozen_harmonic_mae_m": 0.3204207634726116,
+      "persistence_1h_mae_m": 0.4161739130434783,
+      "shadow_rmse_m": 0.35246016623754656,
+      "frozen_harmonic_rmse_m": 0.35479677809964855,
+      "persistence_1h_rmse_m": 0.45766933193224163
+    },
+    {
+      "id": "8723214",
+      "name": "Virginia Key, FL",
+      "raw_payload_sha256": "44d0df8738f68c79d1fe3ebd59b455625a6e14776c20810fad770ed92f17464d",
+      "training_samples": 384,
+      "one_hour_comparisons": 23,
+      "shadow_mae_m": 0.06256253225827904,
+      "frozen_harmonic_mae_m": 0.06575036305284719,
+      "persistence_1h_mae_m": 0.09613043478260869,
+      "shadow_rmse_m": 0.06967895230414202,
+      "frozen_harmonic_rmse_m": 0.07683814320129276,
+      "persistence_1h_rmse_m": 0.10362075501348761
+    }
+  ],
+  "caveats": [
+    "This is retrospective playback of real NOAA 2025 hourly gauge measurements, not continuous real-time synchronization or a calibrated digital twin.",
+    "The underlying four-constituent June 17 forecast was previously evaluated. The added 0.25 gain is exploratory, not blinded future research.",
+    "A small MAE improvement on two sites does not establish transferable forecast skill, causal physics or actual sensor quality.",
+    "Official NOAA predictions and future heldout prospective observations remain required comparators.",
+    "Not for navigation, coastal safety, flood warnings or unattended physical action."
+  ]
+}
