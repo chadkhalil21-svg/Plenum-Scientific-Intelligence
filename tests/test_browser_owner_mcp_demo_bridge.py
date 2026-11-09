@@ -1,17 +1,18 @@
 """No-network security tests for source-only ChatGPT -> saved-demo read adapter."""
 import asyncio
 import hashlib
+import importlib.util
 import os
 import unittest
 from unittest.mock import AsyncMock, patch
 
-from services.computer_browser.owner_auth0 import ISSUER
 from services.computer_browser.oauth_resource_boundary import ResourceConfig
 from services.computer_browser.owner_mcp_demo_bridge import (
-    DEMO_ORIGIN, FEATURE_FLAG, OWNER_SERVICE,
+    DEMO_ORIGIN, FEATURE_FLAG, OWNER_SERVICE, EXPECTED_OWNER_ISSUER,
     derive_vault_owner_id, verified_saved_demo_status,
 )
 
+ISSUER=EXPECTED_OWNER_ISSUER
 OWNER_SUB="auth0|synthetic-founders-only-identity"
 CFG=ResourceConfig(
     issuer=ISSUER,
@@ -47,6 +48,8 @@ class OwnerMCPDemoBridgeTests(unittest.TestCase):
             with self.subTest(issuer=issuer),self.assertRaises(PermissionError):
                 derive_vault_owner_id(replace(CFG,issuer=issuer,jwks_url=keys))
 
+    @unittest.skipUnless(importlib.util.find_spec("fastapi") is not None,
+                         "Browser integration requires optional FastAPI")
     def test_feature_disabled_or_wrong_service_never_reaches_profile(self):
         from services.computer_browser import owner_saved_session
         scenarios=[
@@ -71,6 +74,8 @@ class OwnerMCPDemoBridgeTests(unittest.TestCase):
                             asyncio.run(verified_saved_demo_status(CFG))
                         remote.assert_not_awaited()
 
+    @unittest.skipUnless(importlib.util.find_spec("fastapi") is not None,
+                         "Browser integration requires optional FastAPI")
     def test_protected_demo_read_redacts_body_cookies_and_storage_metadata(self):
         from services.computer_browser import owner_saved_session
         mock_result={
@@ -98,6 +103,8 @@ class OwnerMCPDemoBridgeTests(unittest.TestCase):
         self.assertEqual(out["website_writes_executed"],False)
         self.assertEqual(out["private_page_content_disclosed"],False)
 
+    @unittest.skipUnless(importlib.util.find_spec("fastapi") is not None,
+                         "Browser integration requires optional FastAPI")
     def test_stale_cookie_malformed_result_and_vault_error_fail_closed(self):
         from services.computer_browser import owner_saved_session
         results=[
