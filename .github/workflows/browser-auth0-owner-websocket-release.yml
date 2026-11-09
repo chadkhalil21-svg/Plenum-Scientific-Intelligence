@@ -97,7 +97,7 @@ jobs:
           test -n "$IMAGE"
           gcloud run services update plenum-browser-owner-auth0 \
             --project="$PROJECT" --region=us-east1 --image="$IMAGE" --timeout=900s \
-            --update-env-vars "PLENUM_SEALED_CHAT_READ_ENABLED=true,PLENUM_RUNTIME_SITE_GRANTS_ENABLED=true,PLENUM_PINNED_PUBLIC_PREVIEW_ENABLED=true" --quiet >/dev/null
+            --update-env-vars "PLENUM_SEALED_CHAT_READ_ENABLED=true,PLENUM_RUNTIME_SITE_GRANTS_ENABLED=true,PLENUM_PINNED_PUBLIC_PREVIEW_ENABLED=true,PLENUM_ADAPTIVE_OWNER_READ_ENABLED=true" --quiet >/dev/null
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
       - name: Read back identity and verify anonymous denied with unchanged OAuth login
         id: verify
@@ -127,6 +127,7 @@ jobs:
           assert "BROWSER_SESSION_KEY" in env
           assert "COMPUTER_BROWSER_TOKEN" in env
           assert env.get("PLENUM_SEALED_CHAT_READ_ENABLED",{}).get("value")=="true"
+          assert env.get("PLENUM_ADAPTIVE_OWNER_READ_ENABLED",{}).get("value")=="true"
           assert env.get("PLENUM_RUNTIME_SITE_GRANTS_ENABLED",{}).get("value")=="true"
           assert env.get("PLENUM_PINNED_PUBLIC_PREVIEW_ENABLED",{}).get("value")=="true"
           assert env.get("PLENUM_CHAT_RELAY_ENABLED",{}).get("value")=="true"
@@ -146,6 +147,8 @@ jobs:
           SEALED_INTERNAL="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 -X POST "$URL/internal/chat-sealed-read")"
           test "$SEALED_OWNER" = '401'
           test "$SEALED_INTERNAL" = '401'
+          ADAPTIVE_REVOKE="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 -X POST "$URL/owner/chat-adaptive-revoke")"
+          test "$ADAPTIVE_REVOKE" = '401'
           SITE_REGISTRY="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 "$URL/owner/sites")"
           REGISTER="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 -X POST "$URL/owner/sites/authorize")"
           REVOKE="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 -X POST "$URL/owner/sites/revoke")"
