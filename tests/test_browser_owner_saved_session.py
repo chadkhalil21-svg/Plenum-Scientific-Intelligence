@@ -345,7 +345,7 @@ class SavedWebsiteSessionRoutes(unittest.TestCase):
                                 " Path=/; Secure; HttpOnly; SameSite=Lax"
                         },body="")
                 elif req.method=="GET" and path=="/secure":
-                    if "rack.session=CI_FAKE_COOKIE" not in req.headers.get("cookie",""):
+                    if "rack.session=CI_FAKE_COOKIE" not in (await req.all_headers()).get("cookie",""):
                         await route.fulfill(status=302,headers={"location":"/login"},body="")
                     else:
                         await route.fulfill(status=200,content_type="text/html",
