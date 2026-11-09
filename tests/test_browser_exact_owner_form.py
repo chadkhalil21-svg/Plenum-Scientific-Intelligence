@@ -96,7 +96,7 @@ class Store:
         return self.obj
 
 
-@unittest.skipUnless(CRYPTO, "Existing recipient encryption required")
+@unittest.skipUnless(CRYPTO and FASTAPI, "Existing owner portal and recipient crypto required")
 class ExactFormApprovalTests(unittest.TestCase):
     def setUp(self):
         self.env = patch.dict(os.environ, ENV)
