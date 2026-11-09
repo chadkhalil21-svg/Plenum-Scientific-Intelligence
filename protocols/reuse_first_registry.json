@@ -171,6 +171,31 @@
       "notes": "Actual SciPy/sklearn synthetic mass-spring action-conditioned holdout benchmark and altered-physics error check passed existing scientific CI. No V-JEPA, real calibrated twin, independent empirical physics or AGI.",
       "verified_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42551923254",
       "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/257"
+    },
+    {
+      "name": "PCSE / LINGRA / WOFOST / LINTUL3",
+      "role": "official_upstream_plant_grassland_crop_simulation",
+      "origin": "https://github.com/ajwdewit/pcse",
+      "documentation": "https://pcse.readthedocs.io/en/latest/code.html",
+      "upstream_release": "6.0.13",
+      "package_specification": "pcse==6.0.13",
+      "dependency_extra": "plant",
+      "license": "EUPL-1.2",
+      "adoption": "declared_optional_pip_dependency_no_fork_or_copy",
+      "status": "declared_not_installed_or_executed_in_plenum",
+      "preinstalled": false,
+      "default_execution": false,
+      "upstream_validation": "Upstream repo includes LINGRA Michamps/Zegveld 1986 regression datasets and irrigated/rainfed ryegrass experiments comparing to measurements; do not reproduce upstream numerical tests merely because imported.",
+      "native_model_classes": [
+        "Lingra10_PP",
+        "Lingra10_WLP_CWB",
+        "Lingra10_NWLP_CWB_CNB"
+      ],
+      "direct_install": "python -m pip install -e '.[plant]'",
+      "one_time_check": "When first used, verify package import and native model classes; no redundant published experiments.",
+      "requires_new_evidence_only_for": "New data/adapter/field conditions/species, model calibration, original predictive or digital-twin claims; no extrapolation of ryegrass to bahiagrass.",
+      "upstream_model_evidence": "https://github.com/ajwdewit/pcse#testing-pcse",
+      "upstream_experiment_evidence": "https://github.com/ajwdewit/pcse#comparing-pcse-models-against-experiments"
     }
   ],
   "rules": {
