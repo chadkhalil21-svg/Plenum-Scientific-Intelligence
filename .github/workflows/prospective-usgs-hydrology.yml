@@ -10,6 +10,7 @@ on:
           - audit
   schedule:
     - cron: '20 9 11 11 *'
+    - cron: '17 18 11 11 *' # One fallback same day; skip if published frozen forecast exists
     - cron: '40 11 18 11 *'
 permissions:
   contents: read
@@ -24,6 +25,11 @@ jobs:
       proposal: ${{ steps.check.outputs.proposal }}
       audit: ${{ steps.check.outputs.audit }}
     steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: prior
+          persist-credentials: false
       - id: check
         env:
           REQUEST: ${{ inputs.phase }}
@@ -31,11 +37,14 @@ jobs:
         run: |
           python - <<'PY'
           import os
+          from pathlib import Path
           from datetime import datetime,timezone
           now=datetime.now(timezone.utc)
+          frozen=Path("prior/evidence/prospective-usgs-hydrology/frozen-2026-11.json").is_file()
           requested=os.environ.get('REQUEST') or (
-              'propose' if os.environ.get('SCHEDULE')=='20 9 11 11 *' else 'audit')
-          allow_propose=(requested=='propose' and
+              'propose' if os.environ.get('SCHEDULE') in
+                 ('20 9 11 11 *','17 18 11 11 *') else 'audit')
+          allow_propose=(requested=='propose' and not frozen and
               datetime(2026,11,11,tzinfo=timezone.utc)<=now<
               datetime(2026,11,12,tzinfo=timezone.utc))
           allow_audit=(requested=='audit' and
@@ -44,8 +53,9 @@ jobs:
           with open(os.environ['GITHUB_OUTPUT'],'a') as output:
               output.write('proposal='+str(allow_propose).lower()+'\n')
               output.write('audit='+str(allow_audit).lower()+'\n')
-          print('Approved protocol phase:', 'propose' if allow_propose else
-                'audit' if allow_audit else 'none')
+          print('Approved original protocol phase:', 'propose' if allow_propose else
+                'audit' if allow_audit else 'none',
+                '; immutable original forecast already archived:',frozen)
           PY
   independent-qwen-researcher:
     needs: date-gate
