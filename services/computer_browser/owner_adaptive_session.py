@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import secrets
 import time
 
 CURSOR_BLOB = "browser-chat-read/v3/owner-adaptive-cursor.sealed"
@@ -87,10 +88,12 @@ def _cipher():
 def _check_scope(record, now):
     from .sealed_chat_read import _validate_intent
     from .owner_chat_pairing import _owner
+    keys = {"schema", "session_id", "owner", "site",
+            "path", "recipient_public_key", "issued",
+            "expires", "remaining", "links"}
     if (not isinstance(record, dict)
-            or set(record) != {"schema", "session_id", "owner", "site",
-                                "path", "recipient_public_key", "issued",
-                                "expires", "remaining", "links"}
+            or set(record) not in (keys, keys | {"lease"})
+            or ("lease" in record and _ID.fullmatch(str(record["lease"])) is None)
             or record.get("schema") != "plenum-adaptive-read-cursor-v1"
             or not _ID.fullmatch(str(record.get("session_id", "")))
             or type(record.get("issued")) is not int
@@ -178,15 +181,26 @@ def consume_follow(session_id, link_index, *, now=None):
         sealed = blob.download_as_bytes(if_generation_match=generation)
         state = json.loads(_cipher().decrypt(sealed, ttl=TTL))
         _check_scope(state, t)
-        if (state["session_id"] != session_id
+        if ("lease" in state
+                or state["session_id"] != session_id
                 or state["remaining"] < 1
                 or link_index > len(state["links"])):
             raise PermissionError("Unapproved browser link or expired scope")
         path = state["links"][link_index - 1]["path"]
         if path == state["path"]:
             raise PermissionError("Repeated private link navigation")
-        blob.delete(if_generation_match=generation)
-        return {**state, "path": path, "remaining": state["remaining"] - 1}
+        # Atomic lease prevents replay, and permits owner revocation while a
+        # Chromium read is running. The worker must complete against THIS
+        # generation; it cannot resurrect a revoked cursor.
+        lease = secrets.token_hex(16)
+        in_flight = {**state, "lease": lease}
+        blob.upload_from_string(
+            _cipher().encrypt(json.dumps(in_flight, separators=(",", ":")).encode()),
+            content_type="application/octet-stream",
+            if_generation_match=generation,
+        )
+        return {**state, "path": path, "remaining": state["remaining"] - 1,
+                "lease": lease}
     except Exception as exc:
         raise PermissionError("Owner-approved browser link unavailable") from exc
 
@@ -198,18 +212,35 @@ def save_follow(cursor, result, *, now=None):
     if not isinstance(cursor, dict):
         raise PermissionError("Invalid active browser cursor")
     links = _safe_links(cursor["site"], cursor["path"], result)
-    if cursor.get("remaining", 0) < 1:
-        return {"remaining": 0, "links_untrusted": links}
-    state = {**cursor, "links": links}
-    _check_scope(state, t)
+    if not _ID.fullmatch(str(cursor.get("lease", ""))):
+        raise PermissionError("Signed navigation lease missing")
     blob = _cursor_blob()
-    # Previous generation was atomically consumed BEFORE the website read.
-    # Fail closed if another browser workflow or an owner reset created it.
-    blob.upload_from_string(
-        _cipher().encrypt(json.dumps(state, separators=(",", ":")).encode()),
-        content_type="application/octet-stream",
-        if_generation_match=0,
-    )
+    try:
+        blob.reload()
+        generation = int(blob.generation)
+        leased = json.loads(_cipher().decrypt(
+            blob.download_as_bytes(if_generation_match=generation), ttl=TTL
+        ))
+        _check_scope(leased, t)
+        if (leased.get("lease") != cursor["lease"]
+                or leased["session_id"] != cursor["session_id"]
+                or leased["owner"] != cursor["owner"]
+                or leased["site"] != cursor["site"]
+                or leased["remaining"] != cursor["remaining"] + 1):
+            raise PermissionError("Owner revoked or changed navigation lease")
+        state = {**cursor, "links": links}
+        state.pop("lease")
+        _check_scope(state, t)
+        if state["remaining"] == 0:
+            blob.delete(if_generation_match=generation)
+        else:
+            blob.upload_from_string(
+                _cipher().encrypt(json.dumps(state, separators=(",", ":")).encode()),
+                content_type="application/octet-stream",
+                if_generation_match=generation,
+            )
+    except Exception as exc:
+        raise PermissionError("Adaptive follow-up was revoked or expired") from exc
     return {"remaining": state["remaining"], "links_untrusted": links}
 
 
