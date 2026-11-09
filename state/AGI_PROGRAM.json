@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-09T05:03:45.468Z",
+  "last_reviewed_utc": "2026-11-09T05:05:00Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -733,7 +733,7 @@
   "next_actions": [
     {
       "priority": 1,
-      "action": "Underlying reasoning is the current priority: already proved Qwen3-1.7B ReAct tools regressed 1/3 vs direct 2/3 on original HumanEval while making 11 tool calls. Frozen Qwen3-0.6B GPQA 1/3; do NOT rerun it. New Qwen3.5-4B original quantized CPU via official llama.cpp + original GPQA independent same three IDs launched main #42565079525 after fixing original Inspect provider required OpenAI 3.4 HTTPX2. Check live result and model SHA; preserve correct/incorrect and any failure, no automatic promotion. Once a stronger reasoner actually demonstrates value, evaluate a distinct genuinely new multi-step OpenHands/Inspect task, not more tool-wrapper infrastructure."
+      "action": "Focus reasoning QUALITY, not additional infrastructure: existing Qwen3-1.7B ReAct 1/3 vs one-shot 2/3 on matched original HumanEval, and Qwen3-0.6B GPQA 1/3 are verified. Main PR #268 introduced SHA-pinned upstream llama.cpp Qwen3.5-4B quant and original GPQA scorer for EXACT old three IDs with no old model rerun. First run #42564670475 verified model load but failed at Inspect API integration before scoring. Main PR #270 corrected OpenAI SDK 3.4.0/httpx2 with pre-download original get_model smoke, preflight passed. Confirm live main original 4B job result (existing #42565079525 and any later main run for commit 9292b63a03bffdc7e4b7ac147a29ccdc86e63b73) and archive original independent grades or actual blocker; do not infer an unmeasured score. Only after valid 4B result compare actual task value/cost and move to tool-using unfamiliar open-ended science/coding."
     },
     {
       "priority": 2,
@@ -1152,6 +1152,10 @@
     {
       "decision": "2026-11-08 strategic model-strength gate: existing ReAct regressed, trial Qwen3.5-4B via official llama.cpp and original Inspect without baseline rerun",
       "reason": "Source: original #42350599820 real 3-case HumanEval Qwen3-1.7B ReAct with 11 tool calls scored 1/3, vs one-shot 2/3. Therefore adding agent layers is not the immediate bottleneck fix; invest in stronger already pretrained reasoner. PR #268 merged a one-time model comparison using official ggml-org llama.cpp b11146 and SHA256-verified unsloth Qwen3.5-4B Q4_K_M, original Inspect 0.3.287 GPQA scorer, same three frozen 0.6B questions, with no baseline rerun, no paid API, no TinyFish or Kaggle GPU. Initial run #42564670475 fully verified original model and local server but failed before scoring because OpenAI-compatible provider was installed with old openai 2.x contrary to Inspect's optional openai>=3.4.0 HTTPX2 dependency. PR #269 upgraded to openai==3.4.0 with get_model compatibility check before downloads, merged main and new run #42565079525 started. No candidate score yet; use actual logs and preserve failures. Model/software import is not AGI evidence."
+    },
+    {
+      "decision": "2026-11-09 model quality first: original Qwen3.5-4B quant loaded; Inspect OpenAI 3.4 provider fixed; await actual scored results",
+      "reason": "Qwen3-1.7B ReAct HumanEval was measured 1/3 vs one-shot 2/3 with 11 genuine tool calls, so improve underlying model before agents. Main PR #268 added one-shot upstream Qwen3.5-4B GGUF via SHA256-pinned llama.cpp and original unchanged Inspect GPQA scorer, preserving old Qwen3-0.6B 1/3 baseline. Real run #42564670475 confirmed quant hash, original CPU server ready, then failed before independent original score because original Inspect API provider used OpenAI-compatible 3.x and new job installed openai>=2,<3. Main PR #270 merged exact upstream openai==3.4.0 with httpx2 and a fail-fast get_model compatibility check BEFORE download. Preflight PR checks passed. One main run #42565079525 was already running; newer post-merge evaluation not yet independently graded. Do NOT claim 4B accuracy or AGI; inspect original logs and commit evidence only after scores are verified. Avoid duplicate re-runs of the same baseline or upstream software tests."
     }
   ],
   "operating_rules": [
