@@ -21,7 +21,6 @@ import time
 
 from .engine import allowed_origins
 from .owner_chat_pairing import _owner, _cipher, _store, require_enabled as require_demo_relay
-from .owner_saved_session import _approved_read_target
 from .private_profiles import BrowserProfileStore
 
 FLAG = "PLENUM_SEALED_CHAT_READ_ENABLED"
@@ -57,6 +56,8 @@ def parse_recipient(value: str):
 
 
 def _validate_intent(*, site, path, recipient_public_key):
+    # Keep scientific CI independent of optional FastAPI/browser dependencies.
+    from .owner_saved_session import _approved_read_target
     if not isinstance(site, str) or site not in allowed_origins():
         raise PermissionError("Owner website is not on the existing allowlist")
     _approved_read_target(site, path)
