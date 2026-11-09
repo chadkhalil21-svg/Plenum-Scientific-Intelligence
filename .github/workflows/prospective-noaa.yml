@@ -11,6 +11,7 @@ on:
         description: 'Only permitted in precommitted UTC time windows'
   schedule:
     - cron: '17 11 10 11 *'
+    - cron: '17 20 10 11 *' # One fallback same issue window; skip if frozen file exists
     - cron: '33 11 16 11 *'
 permissions:
   contents: read
@@ -25,6 +26,11 @@ jobs:
       propose: ${{ steps.gate.outputs.propose }}
       audit: ${{ steps.gate.outputs.audit }}
     steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: prior
+          persist-credentials: false
       - id: gate
         env:
           SCHEDULE: ${{ github.event.schedule }}
@@ -32,20 +38,27 @@ jobs:
         run: |
           python - <<'PY'
           import os
+          from pathlib import Path
           from datetime import datetime,timezone
           now=datetime.now(timezone.utc)
+          # GitHub scheduled events can be delayed/dropped. One late same-day
+          # trigger protects the original Nov 12 holdout WITHOUT rerunning
+          # forecasts after their evidence has already been committed.
+          frozen=Path("prior/evidence/prospective-noaa/frozen-2026-11.json").is_file()
           proposal=(datetime(2026,11,10,tzinfo=timezone.utc)<=now<
-                    datetime(2026,11,12,tzinfo=timezone.utc))
+                    datetime(2026,11,12,tzinfo=timezone.utc) and not frozen)
           audit=(now>=datetime(2026,11,15,tzinfo=timezone.utc)
                  and now.year==2026 and now.month==11)
           requested=(os.getenv("PHASE") or
-             ("propose" if os.getenv("SCHEDULE")=="17 11 10 11 *" else "audit"))
+             ("propose" if os.getenv("SCHEDULE") in
+                ("17 11 10 11 *","17 20 10 11 *") else "audit"))
           with open(os.environ["GITHUB_OUTPUT"],"a") as f:
               f.write("propose="+str(proposal and requested=="propose").lower()+"\n")
               f.write("audit="+str(audit and requested=="audit").lower()+"\n")
-          print("Allowed phase for published 2026 research protocol:",
+          print("Original 2026 protocol phase:",
                 "propose" if proposal and requested=="propose" else
-                "audit" if audit and requested=="audit" else "none")
+                "audit" if audit and requested=="audit" else "none",
+                "; immutable original forecast already archived:",frozen)
           PY
   frozen-qwen-proposer:
     needs: eligibility
