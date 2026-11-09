@@ -33,6 +33,7 @@ def _check_provisioned(config):
     if (os.environ.get("K_SERVICE")!=OWNER_SERVICE
             or os.environ.get(FEATURE_FLAG)!="true"
             or os.environ.get("BROWSER_ALLOWED_ORIGINS","").split(",").count(DEMO_ORIGIN)!=1
+            or os.environ.get("AUTH0_OWNER_SUB","")!=config.owner_sub
             or not os.environ.get("BROWSER_PROFILE_BUCKET")
             or not os.environ.get("BROWSER_SESSION_KEY")
             or len(os.environ.get("COMPUTER_BROWSER_TOKEN",""))<32
