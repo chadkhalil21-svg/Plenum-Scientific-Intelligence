@@ -1,0 +1,103 @@
+name: Owner-Paired Public Demo Browser Read (Signed Workflow)
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+jobs:
+  public-demo-only:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.user.id == 251133044 &&
+      github.event.issue.title == 'Computer Browser: read paired public demo session' &&
+      github.event.issue.body == 'READ_PAIRED_PUBLIC_DEMO:2026-11-08'
+    runs-on: ubuntu-latest
+    environment: computer-browser-production
+    timeout-minutes: 4
+    concurrency:
+      group: plenum-chat-demo-read
+      cancel-in-progress: false
+    steps:
+      - name: Verify exact signed workflow owner and fixed demo request
+        env:
+          REPO: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+          EVENT: ${{ github.event_name }}
+          OWNER_ID: ${{ github.event.issue.user.id }}
+        run: |
+          set -euo pipefail
+          test "$REPO" = 'chadkhalil21-svg/Plenum-Scientific-Intelligence'
+          test "$ACTOR" = 'chadkhalil21-svg'
+          test "$EVENT" = 'issues'
+          test "$OWNER_ID" = '251133044'
+          echo 'PASS: Fixed public-demo read requested by exact GitHub founder identity.'
+      - name: Request bound GitHub OIDC token and consume one-time owner approval
+        id: read
+        env:
+          AUDIENCE: https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app/internal/chat-demo-read
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json,os,urllib.parse,urllib.request,urllib.error
+          from pathlib import Path
+          target=os.environ['AUDIENCE']
+          outcome='blocked'
+          try:
+              id_url=os.environ['ACTIONS_ID_TOKEN_REQUEST_URL']
+              auth=os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']
+              req=urllib.request.Request(
+                  id_url+'&audience='+urllib.parse.quote(target,safe=''),
+                  headers={'Authorization':'Bearer '+auth},
+                  method='GET')
+              with urllib.request.urlopen(req,timeout=10) as response:
+                  identity=json.loads(response.read(15000))
+              signed=identity.get('value','')
+              if not isinstance(signed,str) or len(signed)<80:
+                  raise ValueError('GitHub signed token unavailable')
+              request=urllib.request.Request(
+                  target,method='POST',data=b'',
+                  headers={'Authorization':'Bearer '+signed,
+                           'Content-Type':'application/octet-stream'})
+              with urllib.request.urlopen(request,timeout=65) as response:
+                  if response.status!=200:
+                      raise ValueError('Read-only browser unavailable')
+                  body=json.loads(response.read(2200))
+              if (set(body)!={'schema','demo_login_restored','read_only',
+                               'website_modified','private_contents_exposed',
+                               'approval_consumed'}
+                      or body['schema']!='plenum-owner-paired-public-demo-read-v1'
+                      or type(body['demo_login_restored']) is not bool
+                      or body['read_only'] is not True
+                      or body['website_modified'] is not False
+                      or body['private_contents_exposed'] is not False
+                      or body['approval_consumed'] is not True):
+                  raise ValueError('Untrusted browser response')
+              outcome=('verified' if body['demo_login_restored']
+                       else 'not_verified')
+          except (urllib.error.URLError,TimeoutError,ValueError,KeyError,OSError,
+                  json.JSONDecodeError):
+              # Never log JWT, browser cookies, owner IDs, page text or
+              # server error bodies to public workflow logs.
+              outcome='blocked'
+          with open(os.environ['GITHUB_OUTPUT'],'a') as file:
+              file.write('outcome='+outcome+'\n')
+          print('Completed bounded demo check; result='+outcome)
+          PY
+      - name: Report only sanitized public demo verification result
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          RESULT: ${{ steps.read.outputs.outcome }}
+        run: |
+          set -euo pipefail
+          if [ "$RESULT" = 'verified' ]; then
+            gh issue comment "$ISSUE" --body 'VERIFIED: One owner-approved GitHub-signed browser task independently restored the public demonstration website login. No page contents or credentials disclosed; approval consumed.'
+          elif [ "$RESULT" = 'not_verified' ]; then
+            gh issue comment "$ISSUE" --body 'NOT VERIFIED: Owner approval was consumed, but the demonstration website did not accept the restored login. No page content or credentials disclosed.'
+          else
+            gh issue comment "$ISSUE" --body 'BLOCKED: One-time owner approval or signed browser service unavailable. No private website data disclosed. Approve once in the authenticated Computer portal and retry with a fresh founder-issued request.'
+          fi
