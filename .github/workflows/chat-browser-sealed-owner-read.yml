@@ -13,7 +13,10 @@ jobs:
       github.event.issue.user.login == 'chadkhalil21-svg' &&
       github.event.issue.user.id == 251133044 &&
       github.event.issue.title == 'Computer Browser: one encrypted approved page read' &&
-      github.event.issue.body == 'READ_ONE_OWNER_APPROVED_ENCRYPTED_PAGE:2026-11-09'
+      (
+        github.event.issue.body == 'READ_ONE_OWNER_APPROVED_ENCRYPTED_PAGE:2026-11-09' ||
+        startsWith(github.event.issue.body, 'FOLLOW_SEALED_LINK:')
+      )
     environment: computer-browser-production
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -32,12 +35,21 @@ jobs:
         id: sealed
         env:
           AUDIENCE: https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app/internal/chat-sealed-read
+          STEP_ACTION: ${{ github.event.issue.body }}
         run: |
           set -euo pipefail
           python - <<'PY'
           import json, os, re, urllib.request, urllib.parse
           from pathlib import Path
           target=os.environ['AUDIENCE']
+          command=os.environ.get('STEP_ACTION','')
+          navigation=None
+          if command!='READ_ONE_OWNER_APPROVED_ENCRYPTED_PAGE:2026-11-09':
+              match=re.fullmatch(r'FOLLOW_SEALED_LINK:([0-9a-f]{32}):([1-6])',command)
+              if match is None:
+                  print('BLOCKED: Invalid owner-private navigation command.')
+                  raise SystemExit(1)
+              navigation=match.group(1)+':'+match.group(2)
           class NoRedirect(urllib.request.HTTPRedirectHandler):
               def redirect_request(self,*args,**kwargs):return None
           opener=urllib.request.build_opener(NoRedirect(),urllib.request.ProxyHandler({}))
@@ -50,8 +62,12 @@ jobs:
                   signed=json.loads(reply.read(15000)).get('value','')
               if not isinstance(signed,str) or not 80<=len(signed)<=12000:
                   raise ValueError('Unverified signed identity')
+              headers={'Authorization':'Bearer '+signed,
+                       'Content-Type':'application/octet-stream'}
+              if navigation is not None:
+                  headers['X-Plenum-Navigation']=navigation
               req=urllib.request.Request(target,data=b'',method='POST',
-                  headers={'Authorization':'Bearer '+signed,'Content-Type':'application/octet-stream'})
+                  headers=headers)
               with opener.open(req,timeout=145) as reply:
                   if reply.status!=200:raise ValueError('No approved read')
                   envelope=json.loads(reply.read(8100))
