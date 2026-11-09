@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-09T05:11:31.973Z",
+  "last_reviewed_utc": "2026-11-09T05:22:23.124Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -816,12 +816,39 @@
       },
       "AGI_demonstrated": false,
       "notes": "Exact posthoc read of original native Inspect .eval archived in GitHub Actions artifact, no repeat benchmark or model inference. Revises earlier oversimplification that model size alone was bottleneck. Both native tool-call schema/finalization protocol and reasoning matter. Candidate code not submitted cannot be retroactively counted correct. When selecting new original task, prefer existing upstream structured tool APIs and explicit submit action, not ad-hoc graders/frameworks."
+    },
+    {
+      "id": "original-inspect-no-submit-new-humaneval3-verified-20261109",
+      "status": "verified_original_new_task_native_tool_use_and_final_submission",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42566367059",
+      "artifact_id": 13651149697,
+      "artifact_sha256": "8aa774499aba5bd74eabe63a92e1639d458c16481469eb6c42dc271106de3fe4",
+      "original_native_eval_sha256": "d1ab31ccf3616a5a5395231743a893f433984fbcb7389ec1b23a23633eeb09bf",
+      "permanent_evidence": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/evidence/inspect-react-no-submit/2026-11-09-humaneval3-original-grade.json",
+      "result": {
+        "original_task": "HumanEval/3",
+        "original_scorer": "inspect_evals/humaneval verify()",
+        "official_agent": "inspect_ai.react(submit=False)",
+        "model": "Qwen/Qwen3-1.7B",
+        "model_sha": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+        "attempted": 1,
+        "correct": 1,
+        "final_answer_nonempty": true,
+        "literal_tool_marker_in_final_answer": false,
+        "actual_tool_calls": 5,
+        "actual_tool_responses": 5,
+        "previous_HumanEval_0_1_2_not_rerun": true,
+        "paid_model_api_calls": 0,
+        "previous_submit_mode_paired_on_this_problem": false
+      },
+      "AGI_demonstrated": false,
+      "notes": "External original HumanEval/3 not previously attempted by Plenum; previous different HumanEval/0-2 tasks with required submit() had tool-use regression 1/3 versus direct 2/3, and posthoc native logs identified missing/malformed terminal submission. Exact original Inspect agent react(submit=False) removed need for separate submit() tool; original independent unchanged functional scorer graded 1/1, final code nonempty and model used five real Python sandbox tools with five returns. Single publicly known task and no matched prior mode on HumanEval/3, so cannot infer general advantage, novel intelligence, or broad generalization. Source run #42566367059 and original artifact SHA recorded; no repeated old model inference."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "NO additional benchmark replay on existing models or original questions. Completed direct frozen Qwen3-0.6B original GPQA 1/3, Qwen3.5-4B Q4_K_M same IDs 0/3 (source run 42565079525, SHA-verified, no promotion) and Qwen3-1.7B original HumanEval tool agent 1/3 vs direct 2/3. Exact original ReAct native trace review now shows HumanEval/1 repeated literal tool-call markup and HumanEval/2 six Python tool calls but NO final submitted candidate, while HumanEval/0 recovered from Python NameError and submitted correctly. See main evidence/inspect-react-three/2026-11-09-original-failure-mode-audit.json. Highest leverage next: use existing Inspect native tool-call protocol/final submit with appropriate supported pretrained model, on a NEW original independently scored multi-step public coding/science task, measuring actual completed submissions and tool-feedback handling; cap resources, don't invent graders, don't make source/weights count into AGI, don't waste CPU/GPU if capability not demonstrated. Continue separate prospective physical science at its precommitted dates."
+      "action": "Verified 2026-11-09 one NEW original coding problem via existing official Inspect react(submit=False), original HumanEval/3 scored 1/1 with real Qwen3-1.7B model, five Python tool calls and five responses and nonblank final source, run #42566367059. Exact original eval hash + artifact linked in main evidence/inspect-react-no-submit/2026-11-09-humaneval3-original-grade.json. Prior ReAct submit() test on /0-/2 was 1/3 with submission failures; NO paired baseline on /3, so not robust advantage. Do NOT rerun published old tasks, build a new agent framework, add a scorer or promote a model. NEXT DISTINCT capability: use already integrated original Inspect react(no-submit)/OpenHands and frozen checkpoint to complete one truly unfamiliar, multi-step real source-repair/science task with external independently verifiable outcome, documented resource budget, no private IP/production writes; preserve failure if any. Keep prospective NOAA/USGS separate and untouched."
     },
     {
       "priority": 2,
@@ -1256,6 +1283,10 @@
     {
       "decision": "Repair native tool-call protocol and terminal submission before multiplying agents or assuming bigger pretrained model solves regression",
       "reason": "Re-analysis of immutable original Inspect ReAct #42350599820 native sample logs, archived provenance in main/evidence/inspect-react-three/2026-11-09-original-failure-mode-audit.json, shows HumanEval/1 repeated textual <tool_call> instead of valid final code (and flawed nesting approach); HumanEval/2 made six Python tool calls with plausible code but final answer empty, never submitted; HumanEval/0 succeeded after a NameError recovery. Thus earlier claim 'model size only' was too simple. Need first repair finalization/tool-response alignment with existing Inspect native APIs and proper structured model output, retain unchanged original tests for new independently scored task only. Do not force-submit candidate code or upgrade historical grader failures. New Qwen3.5-4B actual original GPQA 0/3 versus frozen Qwen3-0.6B 1/3 also argues against blind model scaling."
+    },
+    {
+      "decision": "2026-11-09 reuse original Inspect react(submit=False) to solve new HumanEval/3 with five actual sandbox tool calls and correct final source",
+      "reason": "Reviewed source Inspect AI 0.3.287 has built-in react_no_submit, which ends on plain final message instead of requiring structured submit() (the archived ReAct trace showed missing final submissions for /1 and /2). Merged main PR #271 with small isolated single-task adapter, preserving all old code/evidence and using existing Inspect, Python tool, original HumanEval scorer, network-disabled Docker, and frozen Qwen3-1.7B. Main Actions #42566367059 scored NEW Plenum HumanEval/3 1/1, 5 actual tool calls and 5 responses, nonempty final answer, no literal tool marker. Original native artifact #13651149697 and permanent evidence. No paid APIs or repeated old tests. This establishes one specific terminal-submission success, not general reliable autonomy, AGI, ASI or statistically verified superiority. Next: unfamiliar multi-step real coding/science task with independent outcome and preserved logs using this existing agent option, not adding frameworks or repeating HumanEval."
     }
   ],
   "operating_rules": [
@@ -1271,6 +1302,7 @@
     "Inherit the scientific/regression evidence of maintained peer-reviewed/upstream engines; never rerun their full original numerical validation without a concrete software-change/integration hazard. Use official pinned package on demand and cite original experiments. A new species/region, calibration, custom adapter, digital twin or novel biological claim deserves its own specifically scoped empirical check. Declared package is not equal to installed or scientifically verified.",
     "At every Plenum session read live docs/AGI_ASI_CAPABILITY_ATLAS.md in addition to AGENTS.md, docs/LEDGER.md, docs/CONTINUITY_AND_REUSE.md and canonical program state. The source-reviewed candidate registry (61 software entries as of 2026-11-08) is NOT installed software. Do not install everything, rerun upstream validation, add a second simulator/browse/agent/evaluator stack or spin up hundreds of agents to claim progress. Select ONE source-licensed upstream component for a named missing task, use original benchmark scoring, real measured outcome and reported cost; consider hardware/data/security/permissions constraints.",
     "Treat archived valid original scorer logs as evidence even when a downstream report exporter fails. Correct the smallest reporting-layer defect or recover the original immutable artifact; never rerun model inference or published upstream scientific tests solely to repair a file URI/format issue.",
-    "Before increasing agents or frameworks, audit whether stronger original pretrained model reasoning can solve the task; actual Qwen3-1.7B ReAct three-case regression (1/3 tool vs 2/3 direct) makes reasoning the near-term bottleneck. Use official original release, verify weight and engine SHA, reuse existing Inspect grader and exact archived baseline without rereading/modeling it, check provider compatibility before large downloads, and do not automatically promote any candidate on three public questions."
+    "Before increasing agents or frameworks, audit whether stronger original pretrained model reasoning can solve the task; actual Qwen3-1.7B ReAct three-case regression (1/3 tool vs 2/3 direct) makes reasoning the near-term bottleneck. Use official original release, verify weight and engine SHA, reuse existing Inspect grader and exact archived baseline without rereading/modeling it, check provider compatibility before large downloads, and do not automatically promote any candidate on three public questions.",
+    "When an existing pretrained tool-using model produces valid intermediate Python calls but fails to call terminal submit(), prefer the official Inspect react(submit=False) no-submit behavior over writing a new parser/finalizer or adding agents. Preserve original task and scorer; record actual final-answer presence and tool-call/result counts separately from independent correctness. One successful original public function does not prove broad agent capability, and a different problem is not a matched-mode comparison."
   ]
 }
