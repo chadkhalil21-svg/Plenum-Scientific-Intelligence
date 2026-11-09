@@ -330,20 +330,16 @@ class SavedWebsiteSessionRoutes(unittest.TestCase):
                 path=req.url[len(demo):]
                 if req.method=="GET" and path=="/login":
                     await route.fulfill(status=200,content_type="text/html",
-                        body="<form action='/authenticate' method='POST'>"
+                        body="<form id='demo-form' action='/authenticate' method='POST'>"
                              "<input id='username' name='username'>"
                              "<input id='password' name='password' type='password'>"
-                             "<button type='submit'>Login</button></form>")
-                elif req.method=="POST" and path=="/authenticate":
-                    if ("username=tomsmith" not in (req.post_data or "")
-                            or "password=SuperSecretPassword" not in (req.post_data or "")):
-                        await route.fulfill(status=403,body="Invalid synthetic request")
-                    else:
-                        await route.fulfill(status=302,headers={
-                            "location":"/secure",
-                            "set-cookie":"rack.session=CI_FAKE_COOKIE;"
-                                " Path=/; Secure; HttpOnly; SameSite=Lax"
-                        },body="")
+                             "<button type='submit'>Login</button></form>"
+                             "<script>document.getElementById('demo-form')"
+                             ".addEventListener('submit',function(e){"
+                             "e.preventDefault();"
+                             "document.cookie='rack.session=CI_FAKE_COOKIE; Path=/; Secure; SameSite=Lax';"
+                             "window.location.assign('/secure');"
+                             "});</script>")
                 elif req.method=="GET" and path=="/secure":
                     if "rack.session=CI_FAKE_COOKIE" not in (await req.all_headers()).get("cookie",""):
                         await route.fulfill(status=302,headers={"location":"/login"},body="")
