@@ -68,7 +68,13 @@ jobs:
               shifted=w["shifted_physics"][horizon]
               assert 0 < nominal["action_conditioned_rmse"] < nominal["action_blind_rmse"]
               assert shifted["action_conditioned_rmse"] > nominal["action_conditioned_rmse"]
-          print("Known solvers verified; action-conditioned synthetic heldout metrics recorded, not AGI.")
+          for horizon in ("1","8","32"):
+              effect=w["counterfactual_action_reversal"][horizon]
+              shifted_effect=w["shifted_counterfactual"][horizon]
+              assert 0 < effect["action_conditioned_effect_rmse"] < effect["action_blind_effect_rmse"]
+              assert shifted_effect["action_conditioned_effect_rmse"] > effect["action_conditioned_effect_rmse"]
+          assert w["real_observational_data_used"] is False
+          print("Solvers and heldout simulated action-intervention effects verified; not JEPA or AGI.")
           PY
       - uses: actions/upload-artifact@v7
         with:

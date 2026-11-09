@@ -4,6 +4,7 @@ import unittest
 
 from plenum_ai.world_model_probe import (
     SCHEMA, experiment, fit_transition, trajectory, rollout_rmse,
+    paired_action_interventions, counterfactual_effect_rmse,
 )
 
 
@@ -45,6 +46,38 @@ class ActionConditionedSimulationProbeTests(unittest.TestCase):
                 self.assertGreater(
                     changed[horizon]["action_conditioned_rmse"],
                     nominal[horizon]["action_conditioned_rmse"])
+
+    def test_same_initial_state_opposite_actions_counterfactuals(self):
+        pairs = paired_action_interventions(409)
+        self.assertEqual(len(pairs), 6)
+        for (left, left_actions), (right, right_actions) in pairs:
+            self.assertTrue((left[0] == right[0]).all())
+            self.assertTrue((left_actions == -right_actions).all())
+            self.assertFalse((left[-1] == right[-1]).all())
+
+    def test_counterfactual_action_effects_not_just_motion_fit(self):
+        # Freeze models trained on entirely separate episodes and compare
+        # intervention effects, not merely predicted absolute positions.
+        nominal = self.report["counterfactual_action_reversal"]
+        shifted = self.report["shifted_counterfactual"]
+        for horizon in ("1", "8", "32"):
+            with self.subTest(horizon=horizon):
+                actual = nominal[horizon]
+                self.assertGreater(actual["action_conditioned_effect_rmse"], 0)
+                self.assertLess(actual["action_conditioned_effect_rmse"],
+                                actual["action_blind_effect_rmse"])
+                self.assertGreater(shifted[horizon]["action_conditioned_effect_rmse"],
+                                   actual["action_conditioned_effect_rmse"])
+        self.assertFalse(self.report["real_observational_data_used"])
+        self.assertFalse(self.report["JEPA_model_trained"])
+
+    def test_counterfactual_estimator_rejects_nonmatching_starts(self):
+        training = trajectory(141, episodes=2)
+        model = fit_transition(training, with_actions=True)
+        a = trajectory(409, episodes=1)[0]
+        b = trajectory(410, episodes=1)[0]
+        with self.assertRaises(ValueError):
+            counterfactual_effect_rmse(model, [(a, b)], 1, True)
 
     def test_invalid_physical_constants_rejected(self):
         for changes in (
