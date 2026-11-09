@@ -1,5 +1,10 @@
 # Plenum Prometheus: Digital twins across physical, biological and engineered sciences
 
+## Cross-domain decision and on-demand simulation atlas (2026-11-08)
+
+**Digital twins are one component of the much larger tool spectrum.** The comprehensive [AGI/ASI capability atlas](AGI_ASI_CAPABILITY_ATLAS.md) distinguishes mature original **simulation engines**, original **testing/agent environments**, **active scientific experimental design**, **sensitivity/causal inference**, **sensor-state middleware** (Eclipse Ditto, not physics), **world models**, genuine synchronized **digital twins**, public datasets and basic reasoning/long-horizon agent capacity. Do not implement duplicate simulators, run original upstream validation again, or install every candidate. NOAA is a verified **historical** shadow replay, PCSE LINGRA is **optional declared but not running**, and no general real-time digital-twin platform is operational. Actual new domains/field conditions warrant their own measured evidence before claims.
+
+
 **Founder directive (November 8, 2026):** Scientific intelligence must reason about, simulate, predict and test the real world across **all disciplines**, including the living world. Always adopt the best maintained upstream solver for a *specific problem* rather than constructing a universal homegrown simulator. This inventory is source-reviewed **candidate software**, not a claim of installed or operational twins. Main policy: [LEDGER](LEDGER.md).
 
 ## PCSE LINGRA adopted as an official optional dependency (November 8, 2026)
