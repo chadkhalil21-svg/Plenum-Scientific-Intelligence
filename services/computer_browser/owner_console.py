@@ -50,9 +50,9 @@ overflow-wrap:anywhere}small{opacity:.75}a{color:inherit}
 </style></head><body><h1>Computer · Private Browser</h1>
 <small>Owner-only verified sign-in · Plenum Prometheus</small>
 <h2>"""+escape(title)+"</h2>"+body+"""<hr>
-<small>Private login is available only after the owner enables the site,
-protected cloud storage and verified owner authentication. Computer cannot yet operate
-private websites directly from ordinary ChatGPT messages.</small>
+<small>Website logins and approvals remain private to the verified owner browser.
+ChatGPT can request only the specific read or write operations already approved
+and supported by the signed GitHub bridge. No unrestricted account access is granted.</small>
 </body></html>""",headers=_HEADERS)
 
 
@@ -63,12 +63,15 @@ def mount_owner_console(app):
             """<article>Owner identity: verified.
 Browser software: built and tested.
 Private website login: owner-operated through the secure sign-in link.
-Saved sessions: encrypted storage configured; live saving requires verification.
-ChatGPT direct website interaction: not yet connected.</article>
+Saved sessions: encrypted storage configured; saving is checked per site.
+ChatGPT automation: available through the connected, signed GitHub bridge
+for specifically approved read and write actions, NOT unrestricted account control.</article>
 <h2>Sign in to an approved website</h2>
 <p><a href="/owner/sign-in">Open secure website sign-in</a></p>
 <h2>Existing saved website sessions</h2>
 <p><a href="/owner/sessions">View, preview or revoke an approved session</a></p>
+<p><small>On iPad, open the owner portal in Edge when possible. ChatGPT's
+in-app browser may have separate sign-in cookies and ask you to log in again.</small></p>
 <h2>Read an approved public website</h2>
 <form method="get" action="/owner/public-preview">
 <label for="url">Website address</label>
@@ -91,6 +94,15 @@ value="https://example.com/" maxlength="1200">
 verified network execution gate is enabled.</small>"""
                 if (os.environ.get("K_SERVICE")=="plenum-browser-owner-auth0"
                     and os.environ.get("PLENUM_RUNTIME_SITE_GRANTS_ENABLED")=="true")
+                else "") + (
+                """<h2>Authenticated website actions · Write Approval</h2>
+<p><a href="/owner/chat-exact-form">Review and approve one signed-in form submission</a></p>
+<p><a href="/owner/chat-exact-form-revoke">Cancel an unused approved form action</a></p>
+<small>A website must have an existing authorized saved login. Review the
+exact form before approval. One native HTML form submission is supported;
+payments, deletions, permission changes and unrestricted writes are not.</small>"""
+                if (os.environ.get("K_SERVICE")=="plenum-browser-owner-auth0"
+                    and os.environ.get("PLENUM_EXACT_OWNER_FORM_POST_ENABLED")=="true")
                 else ""))
 
     @app.get("/owner/public-preview",response_class=HTMLResponse)
