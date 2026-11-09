@@ -1,0 +1,94 @@
+{
+  "schema": "plenum-public-invention-opportunity-triage-v1",
+  "triage_date": "2026-11-09",
+  "evidence_level": "primary_source_and_institutional_announcement_read; no independent reproduction of experiments",
+  "topic": "Public worldwide research opportunities across independent scientific fields",
+  "review_type": "human-guided synthesis of public research, NOT automatic AGI invention",
+  "copyrighted_full_text_copied": false,
+  "confidential_plenum_IP_included": false,
+  "original_invention_claimed": false,
+  "patentability_verified": false,
+  "commercial_feasibility_established": false,
+  "source_date_policy": "Differentiate original journal date, institutional announcement date, and third-party news syndication. News appearing today may refer to results published weeks/months earlier.",
+  "leads": [
+    {
+      "area": "quantum_photonics",
+      "headline": "Room-temperature spin-orbit-coupled exciton-polariton supersolidity",
+      "science_publication_date": "2026-10-16",
+      "institution_announcement_date": "2026-11-03",
+      "sciencedaily_featured_date": "2026-11-09",
+      "primary_urls": [
+        "https://research.ibm.com/publications/observation-of-a-supersolid-phase-in-a-spin-orbit-coupled-exciton-polariton-bose-einstein-condensate",
+        "https://www.science.org/doi/10.1126/sciadv.aee4875",
+        "https://m.fuw.edu.pl/press-release/news10489.html"
+      ],
+      "discovery_alert": "https://www.sciencedaily.com/releases/2026/11/261105224536.htm",
+      "observed": "Organic MeLPPP excitonic semiconductor and voltage-controllable liquid-crystal microcavity at room temperature produce reported condensation, spatial stripes and polarization order. No photonic computer demonstrated.",
+      "known_limitations": "University reports reactive semiconductor/liquid-crystal interface causing sample lifetime measured in hours; polaritons short-lived and device-scale robustness unproven.",
+      "public_review_question": "How is interface stability measured without losing optical coupling, dispersion, polarization and repeated-shot stripe/vortex observables?",
+      "low_risk_first_evidence": "Read full public experimental methods, verify baseline optical observables and lifetime definition, compare only published compatible material properties, specify required controls prior to proposing a new fabricated device.",
+      "independent_falsifier": "A candidate stabilizing condition that improves lifetime but removes the published polaritonic strong coupling/supersolid signature does not solve the device problem.",
+      "status": "lead_only_not_a_plenum_invention"
+    },
+    {
+      "area": "adaptive_materials",
+      "headline": "Spontaneous valency and lower-coordination superlattices from flexible charged nanoparticle ligands",
+      "science_publication_date": "2026-11-02",
+      "institution_announcement_date": "not independently dated in review",
+      "sciencedaily_featured_date": "2026-11-04",
+      "primary_urls": [
+        "https://www.nature.com/articles/s41563-026-02787-0"
+      ],
+      "discovery_alert": "https://www.sciencedaily.com/releases/2026/11/261104012248.htm",
+      "observed": "Nature Materials authors report experiments and simulations in which deformable charged polymer ligands permit effective particle valency and superlattice structures beyond densely packed neighbors.",
+      "known_limitations": "Transfer to other nanoparticle chemistries and manufacturing-scale defects has not been independently demonstrated by Plenum; source access and supplementary data rights should be checked.",
+      "public_review_question": "Can already published coarse-grained ligand flexibility and electrostatic models predict relative coordination versus a rigid-ligand control without post-hoc parameter fitting?",
+      "low_risk_first_evidence": "Reproduce a published qualitative trend on existing licensed/released datasets using mature simulation software only if compatible parameters are disclosed; require baseline, uncertainty and independent heldout topology class.",
+      "independent_falsifier": "No reproducible change in coordination/distribution when ligand flexibility is varied under otherwise controlled published boundary conditions.",
+      "status": "lead_only_not_a_plenum_invention"
+    },
+    {
+      "area": "space_robotics_and_construction",
+      "headline": "Automated on-orbit truss assembly with robotic gantry and mesh deployment",
+      "science_publication_date": "not a new peer-reviewed paper verified in this review",
+      "institution_announcement_date": "2026-11-05",
+      "sciencedaily_featured_date": "2026-11-09",
+      "primary_urls": [
+        "https://www.caltech.edu/about/news/caltech-robotic-space-demo-successfully-builds-in-space",
+        "https://www.darpa.mil/news/2026/nom4d-program-demonstrates-automated-in-space-assembly"
+      ],
+      "discovery_alert": "https://www.sciencedaily.com/releases/2026/11/261108233043.htm",
+      "observed": "Caltech/DARPA report actual on-orbit assembly of a section of a modular truss by a gantry robot, not construction of a full proposed large spacecraft; the complete design remains unfinished.",
+      "known_limitations": "Complete mission-scale assembly, robust recovery from misaligned connections, mass/energy performance and generalized component geometries not independently established by source demonstration.",
+      "public_review_question": "What closed-loop checks are needed to detect and recover from a failed strut/joint connection without additional launches or destructive loads?",
+      "low_risk_first_evidence": "Use existing open licensed digital robotic workcell simulator where available; define part-pose error, placement success, cycle time, failure recovery and baseline deterministic sequence on unfamiliar geometries before any hardware.",
+      "independent_falsifier": "The recovery policy does not improve heldout placement success and cost versus pre-specified deterministic control while obeying load/position safety limits.",
+      "status": "lead_only_not_a_plenum_invention"
+    },
+    {
+      "area": "biology_and_food_science",
+      "headline": "Digestion-resistant plant proteins and dietary fiber modulate microbiome metabolite sources",
+      "science_publication_date": "2026 PNAS volume 123 issue 32 (not a November 9 first publication)",
+      "institution_announcement_date": "not independently dated in review",
+      "sciencedaily_featured_date": "2026-11-09",
+      "primary_urls": [
+        "https://doi.org/10.1073/pnas.2605226123",
+        "https://doi.org/10.1038/s42255-026-01550-8"
+      ],
+      "discovery_alert": "https://www.sciencedaily.com/releases/2026/11/261105083622.htm",
+      "observed": "Ludwig/Princeton investigators report labeled dietary substrate/host protein contributions to gut phenol metabolites and production of certain compounds by mammalian metabolism independent of microbes.",
+      "known_limitations": "Animal and cellular studies do not establish dietary interventions' efficacy in people, and many metabolite interpretations are associative or context-dependent.",
+      "public_review_question": "Can published stable-isotope mass-balance and metabolic-pathway evidence separately identify host and microbial sources with negative tracer controls?",
+      "low_risk_first_evidence": "Analyze only licensed published aggregate isotope-tracing data; define reproducibility, missing-data and metabolite-assignment confidence; clinician or biosafety review before biological experiments.",
+      "independent_falsifier": "Independent traced material balance fails to distinguish host from microbial production reliably or does not reproduce paper's claimed directional result.",
+      "status": "lead_only_not_a_plenum_invention"
+    }
+  ],
+  "next_gate": "For a selected lead, read permitted primary methods/data, define one original quantitative discriminating question with comparator and failure criterion, check established simulations and prior art, then conduct an independently reviewed model/bench test. Novel confidential design details should be kept in founder-private work, not this public repository.",
+  "caveats": [
+    "A secondary headline is an alert, not an independent scientific replication.",
+    "No claims that Plenum has developed or patented the devices or treatments described.",
+    "This public research record is not a grant proposal or clinical/engineering protocol.",
+    "Rough prospective ideas do not demonstrate AGI, and coverage is not exhaustive."
+  ]
+}
