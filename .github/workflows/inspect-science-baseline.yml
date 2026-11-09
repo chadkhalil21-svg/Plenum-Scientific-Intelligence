@@ -370,3 +370,135 @@ jobs:
           name: recovered-original-gpqa-three-science-scores-no-inference
           path: reports/original-gpqa-three-sciences.json
           retention-days: 90
+
+  qwen35-official-science-paired:
+    if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release Qwen3.5-4B original paired science')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      HF_TOKEN: ''
+      LOCAL_API_KEY: 'local-only'
+      LOCAL_BASE_URL: 'http://127.0.0.1:18080/v1'
+      OPENAI_API_KEY: ''
+      OMP_NUM_THREADS: '2'
+      TOKENIZERS_PARALLELISM: 'false'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Reuse existing original Inspect science grader, not another evaluator
+        run: |
+          python -m pip install -e '.[inspection]'
+          python -m pip install 'inspect-evals==0.27.0' 'huggingface_hub>=1.2,<2' 'openai>=2,<3'
+          python -m pip check
+          python - <<'PY'
+          from importlib.metadata import version
+          from inspect_evals.gpqa import gpqa_diamond
+          import acp.helpers
+          assert version('inspect-ai')=='0.3.287' and version('inspect-evals')=='0.27.0'
+          assert callable(gpqa_diamond)
+          PY
+      - name: Download SHA256 pinned official llama.cpp CPU binary and existing published quantization
+        run: |
+          mkdir -p reports/bin
+          curl -fsSL --retry 2 --max-time 150 https://github.com/ggml-org/llama.cpp/releases/download/b11146/llama-b11146-bin-ubuntu-x64.tar.gz -o reports/llama-b11146.tar.gz
+          echo 'c150306eb16b5ab696f76a8bdf810c35fd98a24e82158742e6fa28f420ff8410  reports/llama-b11146.tar.gz' | sha256sum -c
+          tar -xzf reports/llama-b11146.tar.gz -C reports/bin
+          find reports/bin -type f -name llama-server -executable | head -1 > reports/llama-server-path.txt
+          test -s reports/llama-server-path.txt
+          python - <<'PY'
+          from huggingface_hub import HfApi,hf_hub_download
+          from pathlib import Path
+          from hashlib import sha256
+          repo='unsloth/Qwen3.5-4B-GGUF'
+          revision=HfApi().model_info(repo).sha
+          model=Path(hf_hub_download(repo_id=repo,filename='Qwen3.5-4B-Q4_K_M.gguf',revision=revision))
+          if sha256(model.read_bytes()).hexdigest()!='00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4':
+              raise SystemExit('Quantized-model checksum mismatch; inference forbidden')
+          Path('reports/model-path.txt').write_text(str(model))
+          Path('reports/quant-commit.txt').write_text(revision)
+          print('Verified Qwen3.5-4B Q4_K_M and exact source revision',revision)
+          PY
+      - name: Start existing llama.cpp model API bound only to loopback
+        run: |
+          SERVER="$(cat reports/llama-server-path.txt)"
+          MODEL="$(cat reports/model-path.txt)"
+          export LD_LIBRARY_PATH="$(dirname "$SERVER")"
+          "$SERVER" --help > reports/server-help.txt 2>&1
+          grep -F -- '--reasoning' reports/server-help.txt >/dev/null
+          "$SERVER" -m "$MODEL" --host 127.0.0.1 --port 18080 --ctx-size 4096 --threads 2 --gpu-layers 0 --jinja --reasoning off --alias qwen35-4b > reports/server.log 2>&1 &
+          python - <<'PY'
+          import json,time,urllib.request
+          for _ in range(110):
+              try:
+                  with urllib.request.urlopen('http://127.0.0.1:18080/health',timeout=2) as r:
+                      if json.loads(r.read()).get('status')=='ok':break
+              except Exception:pass
+              time.sleep(2)
+          else:raise SystemExit('Original model local server not ready; no grade claimed')
+          print('Original 4B pretrained model listening on localhost only')
+          PY
+      - name: Score EXACT same original biology chemistry physics questions, only NEW model
+        run: |
+          for DOMAIN in Biology Chemistry Physics; do
+            inspect eval inspect_evals/gpqa_diamond --model openai-api/local/qwen35-4b -T high_level_domain="$DOMAIN" -T cot=false --limit 1 --epochs 1 --max-samples 1 --max-connections 1 --max-tokens 256 --max-retries 0 --temperature 0 --time-limit 390 --log-dir "reports/qwen35-original-gpqa/$DOMAIN" --display none
+          done
+      - name: Preserve original independent grades and difference from PREEXISTING Qwen0.6 evidence
+        run: |
+          python - <<'PY'
+          from inspect_ai.log import list_eval_logs,read_eval_log
+          from inspect_ai.scorer import CORRECT,INCORRECT
+          from pathlib import Path
+          from urllib.parse import urlsplit,unquote
+          from hashlib import sha256
+          import json
+          reference={'Biology':('rec2ZTsqazBZ3LTWZ',False),'Chemistry':('rec0Arme2jcXQZnAW',True),'Physics':('rec06pnAkLOr2t2mp',False)}
+          rows={}
+          for domain,(id,old) in reference.items():
+              logs=list_eval_logs(log_dir='reports/qwen35-original-gpqa/'+domain)
+              assert len(logs)==1
+              log=read_eval_log(logs[0].name)
+              assert log.status=='success' and not log.error
+              assert log.eval.model=='openai-api/local/qwen35-4b'
+              assert len(log.samples or [])==1
+              sample=log.samples[0]
+              assert str(sample.id)==id and sample.metadata['high_level_domain']==domain
+              scores=list((sample.scores or {}).values())
+              assert len(scores)==1 and scores[0].value in (CORRECT,INCORRECT)
+              uri=logs[0].name
+              file=Path(unquote(urlsplit(uri).path)) if uri.startswith('file:') else Path(uri)
+              assert file.is_file()
+              rows[domain]={'original_id':id,'prior_qwen06_correct':old,'qwen35_4b_correct':scores[0].value==CORRECT,'native_eval_sha256':sha256(file.read_bytes()).hexdigest()}
+          right=sum(x['qwen35_4b_correct'] for x in rows.values())
+          d={'schema':'plenum-qwen35-original-gpqa-three-paired-v1',
+             'candidate':'Qwen/Qwen3.5-4B, Unsloth GGUF Q4_K_M',
+             'quant_sha256':'00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4',
+             'model_source_revision':Path('reports/quant-commit.txt').read_text(),
+             'original_engine':'ggml-org/llama.cpp b11146, official binary digest verified',
+             'original_scorer':'inspect_evals/gpqa_diamond 0.27.0',
+             'previous_reference':'main evidence/inspect-gpqa/2026-11-09-original-three-sciences.json',
+             'previous_model_NOT_rerun':True,'same_original_three_IDs':True,
+             'prior_qwen06_3_questions_correct':1,'candidate_qwen35_3_questions_correct':right,
+             'paired_difference':right-1,'rows':rows,
+             'paid_model_api_calls':0,'auto_model_promotion':False,'AGI_demonstrated':False,
+             'limitations':['Three public examples cannot prove statistical improvement or AGI',
+             'Quantized 4B and nonquantized 0.6B are not controlled for architecture or inference compute',
+             'No novel science or autonomous tool selection has yet been shown']}
+          Path('reports/qwen35-original-paired-score.json').write_text(json.dumps(d,indent=2)+'\n')
+          print('Original Qwen3.5-4B independent scores:',right,'/3; existing older Qwen3-0.6B 1/3, no repeated baseline inference')
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: qwen35-4b-original-paired-scientific-evidence
+          path: |
+            reports/qwen35-original-paired-score.json
+            reports/qwen35-original-gpqa/
+            reports/server.log
+            reports/quant-commit.txt
+          retention-days: 90
