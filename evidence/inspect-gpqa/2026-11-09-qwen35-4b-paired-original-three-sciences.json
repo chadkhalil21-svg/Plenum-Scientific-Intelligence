@@ -1,0 +1,53 @@
+{
+  "schema": "plenum-qwen35-original-gpqa-three-paired-v1",
+  "status": "verified_original_scorer_0_of_3",
+  "evaluated_utc": "2026-11-09",
+  "candidate": "Qwen/Qwen3.5-4B Unsloth GGUF Q4_K_M",
+  "quant_sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+  "model_source_revision": "e87f176479d0855a907a41277aca2f8ee7a09523",
+  "inference_engine": "ggml-org/llama.cpp b11146 CPU, official release archive SHA256 c150306eb16b5ab696f76a8bdf810c35fd98a24e82158742e6fa28f420ff8410",
+  "original_scorer": "inspect_evals/gpqa_diamond 0.27.0",
+  "source_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42565079525",
+  "source_original_artifact_id": 13651326628,
+  "source_original_artifact_digest": "sha256:a3abff5ec135759c8ac0fb1e4f05d0a623bc37bade9649737da6ebbe8fa9668b",
+  "source_artifact_link": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42565079525/artifacts/13651326628",
+  "previously_scored_reference": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/evidence/inspect-gpqa/2026-11-09-original-three-sciences.json",
+  "previous_model": "Qwen/Qwen3-0.6B",
+  "previous_model_not_rerun": true,
+  "same_original_three_question_ids": true,
+  "prior_0_6b_score": 1,
+  "candidate_4b_score": 0,
+  "paired_difference": -1,
+  "domain_scores": {
+    "Biology": {
+      "question_id": "rec2ZTsqazBZ3LTWZ",
+      "prior_0_6b_correct": false,
+      "new_4b_correct": false,
+      "native_eval_sha256": "bc4cc985baede651ec87f2bec4c419b01a40caf69e975b98e83d1dbfb87ca5b9"
+    },
+    "Chemistry": {
+      "question_id": "rec0Arme2jcXQZnAW",
+      "prior_0_6b_correct": true,
+      "new_4b_correct": false,
+      "native_eval_sha256": "f45ebb51e878d8b7ff3987c7fb3698851eda728a20517efae0ccaf180c587c07"
+    },
+    "Physics": {
+      "question_id": "rec06pnAkLOr2t2mp",
+      "prior_0_6b_correct": false,
+      "new_4b_correct": false,
+      "native_eval_sha256": "87fd7222cecd4790e983c7072113a20a40fe9ffd3f9390867f82a2407f0dc7f6"
+    }
+  },
+  "prior_model_result_is_worse_for_candidate_on_this_sample": true,
+  "paid_model_api_calls": 0,
+  "candidate_promoted": false,
+  "original_scientific_discovery_demonstrated": false,
+  "real_world_plant_or_physical_twin_demonstrated": false,
+  "AGI_or_ASI_demonstrated": false,
+  "limitations": [
+    "Three historical public questions; too few for model ranking or statistical conclusions, and potential benchmark contamination.",
+    "The new 4B model is Q4_K_M quantized and served by llama.cpp, whereas prior Qwen3-0.6B was not; execution configurations and underlying model families differ.",
+    "No evidence about a stronger model's tool-using agent performance, long-horizon scientific research or actual measured physical outcomes.",
+    "The original evaluator has been used to assess a new Plenum model choice, not rerun to revalidate the external benchmark implementation."
+  ]
+}
