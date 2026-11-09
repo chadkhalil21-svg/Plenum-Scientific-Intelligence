@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-09T04:49:30.464Z",
+  "last_reviewed_utc": "2026-11-09T05:03:45.468Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -733,7 +733,7 @@
   "next_actions": [
     {
       "priority": 1,
-      "action": "External scientific baseline has NOW actually completed: frozen Qwen3-0.6B GPQA Diamond original third-party scorer 1/3 (biology 0/1, chemistry 1/1, physics 0/1), source actual model run #42563122617 and no-model-inference recovery #42563663980; source/hash and permanent summary in main evidence/inspect-original-gpqa/2026-11-09-original-three-sciences.json. SciCode run #42562773900 was EXTERNAL Google Drive quota blocked before model grading. Do not repeat these published original cases, build new scoring infrastructure or infer AGI from three questions. Next SPECIFIC competence step: choose better existing model with verifiable legal weights and bounded compute, evaluate on independent original unseen science/coding task with unchanged upstream scorer, and measure tool-using multi-step scientific task reliability; decide whether upgrade actually improves science per dollar."
+      "action": "Underlying reasoning is the current priority: already proved Qwen3-1.7B ReAct tools regressed 1/3 vs direct 2/3 on original HumanEval while making 11 tool calls. Frozen Qwen3-0.6B GPQA 1/3; do NOT rerun it. New Qwen3.5-4B original quantized CPU via official llama.cpp + original GPQA independent same three IDs launched main #42565079525 after fixing original Inspect provider required OpenAI 3.4 HTTPX2. Check live result and model SHA; preserve correct/incorrect and any failure, no automatic promotion. Once a stronger reasoner actually demonstrates value, evaluate a distinct genuinely new multi-step OpenHands/Inspect task, not more tool-wrapper infrastructure."
     },
     {
       "priority": 2,
@@ -1148,6 +1148,10 @@
     {
       "decision": "Use actual original benchmark grades, preserve results without model reruns and prioritize improving intelligence over further evaluator infrastructure",
       "reason": "The original SciCode one-case run #42562773900 hit upstream Google Drive quota before inference, so no SciCode grade. Existing Inspect GPQA fallback #42563122617 successfully produced original three grader logs, but own summary step failed due a `file:` URI path. Original artifact was retained; instead of rerunning model, main PR #266 recovered original scores from archive with no inference (#42563663980). Actual GPQA Qwen3-0.6B outcomes: biology 0/1, chemistry 1/1, physics 0/1 = 1/3; exact original scorer and source digests archived permanently in evidence/inspect-original-gpqa/2026-11-09-original-three-sciences.json. Three public questions do not validate AGI or broad scientific competence; next distinct stage is stronger existing pretrained model and tool-using open-ended science on independent problems under compute limits, not more test engines."
+    },
+    {
+      "decision": "2026-11-08 strategic model-strength gate: existing ReAct regressed, trial Qwen3.5-4B via official llama.cpp and original Inspect without baseline rerun",
+      "reason": "Source: original #42350599820 real 3-case HumanEval Qwen3-1.7B ReAct with 11 tool calls scored 1/3, vs one-shot 2/3. Therefore adding agent layers is not the immediate bottleneck fix; invest in stronger already pretrained reasoner. PR #268 merged a one-time model comparison using official ggml-org llama.cpp b11146 and SHA256-verified unsloth Qwen3.5-4B Q4_K_M, original Inspect 0.3.287 GPQA scorer, same three frozen 0.6B questions, with no baseline rerun, no paid API, no TinyFish or Kaggle GPU. Initial run #42564670475 fully verified original model and local server but failed before scoring because OpenAI-compatible provider was installed with old openai 2.x contrary to Inspect's optional openai>=3.4.0 HTTPX2 dependency. PR #269 upgraded to openai==3.4.0 with get_model compatibility check before downloads, merged main and new run #42565079525 started. No candidate score yet; use actual logs and preserve failures. Model/software import is not AGI evidence."
     }
   ],
   "operating_rules": [
@@ -1162,6 +1166,7 @@
     "Scientific digital twins include plants, biology, cells, ecosystems, organisms, chemistry, engineering and planetary systems. Prefer reviewed upstream per-domain simulators and real observations; distinguish retrospective shadow-state updates from synchronized uncertainty-quantified twins, from action-conditioned physics and from general intelligence. Require prospective blind observations and meaningful strong baselines before upgrading status.",
     "Inherit the scientific/regression evidence of maintained peer-reviewed/upstream engines; never rerun their full original numerical validation without a concrete software-change/integration hazard. Use official pinned package on demand and cite original experiments. A new species/region, calibration, custom adapter, digital twin or novel biological claim deserves its own specifically scoped empirical check. Declared package is not equal to installed or scientifically verified.",
     "At every Plenum session read live docs/AGI_ASI_CAPABILITY_ATLAS.md in addition to AGENTS.md, docs/LEDGER.md, docs/CONTINUITY_AND_REUSE.md and canonical program state. The source-reviewed candidate registry (61 software entries as of 2026-11-08) is NOT installed software. Do not install everything, rerun upstream validation, add a second simulator/browse/agent/evaluator stack or spin up hundreds of agents to claim progress. Select ONE source-licensed upstream component for a named missing task, use original benchmark scoring, real measured outcome and reported cost; consider hardware/data/security/permissions constraints.",
-    "Treat archived valid original scorer logs as evidence even when a downstream report exporter fails. Correct the smallest reporting-layer defect or recover the original immutable artifact; never rerun model inference or published upstream scientific tests solely to repair a file URI/format issue."
+    "Treat archived valid original scorer logs as evidence even when a downstream report exporter fails. Correct the smallest reporting-layer defect or recover the original immutable artifact; never rerun model inference or published upstream scientific tests solely to repair a file URI/format issue.",
+    "Before increasing agents or frameworks, audit whether stronger original pretrained model reasoning can solve the task; actual Qwen3-1.7B ReAct three-case regression (1/3 tool vs 2/3 direct) makes reasoning the near-term bottleneck. Use official original release, verify weight and engine SHA, reuse existing Inspect grader and exact archived baseline without rereading/modeling it, check provider compatibility before large downloads, and do not automatically promote any candidate on three public questions."
   ]
 }
