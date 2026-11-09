@@ -121,6 +121,24 @@ class ProspectiveNOAATests(unittest.TestCase):
         self.assertFalse(p.usable_six_minute_observation(None))
         self.assertFalse(p.usable_six_minute_observation(ok("unknown","0,0,0,0")))
 
+    def test_source_amendment_sealed_in_original_and_critic(self):
+        q=original()
+        c=criticism(q)
+        self.assertEqual(q["observation_source_product"],"water_level")
+        self.assertEqual(c["observation_source_product"],"water_level")
+        self.assertEqual(q["observation_source_sampling"],p.NOAA_SOURCE_SAMPLING)
+        self.assertEqual(c["observation_source_sampling"],p.NOAA_SOURCE_SAMPLING)
+        self.assertEqual(q["source_amendment"],p.NOAA_SOURCE_AMENDMENT)
+        self.assertEqual(c["source_amendment"],p.NOAA_SOURCE_AMENDMENT)
+        changed=copy.deepcopy(q)
+        changed["observation_source_product"]="predictions"
+        with self.assertRaisesRegex(ValueError,"Invalid sealed"):
+            p.verify_original(changed)
+        tampered=copy.deepcopy(c)
+        tampered["source_amendment"]="after-the-fact"
+        with self.assertRaisesRegex(ValueError,"Unverified independent"):
+            p.verify_critic(q,tampered,synthetic_source)
+
     def test_real_noaa_adapter_rejects_invalid_flags_duplicates_and_oversize(self):
         def fake(rows):
             return lambda request,timeout: BytesIO(json.dumps({"data":rows}).encode())
