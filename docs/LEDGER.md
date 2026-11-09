@@ -1,5 +1,14 @@
 # Engineering and Scientific Ledger
 
+## USGS PROSPECTIVE SOURCE QUERY FIX | 2026-11-09: correct official OGC date interval before Nov 11
+
+**Second authentic, time-critical source issue identified BEFORE any future model proposals:** Our own `src/plenum_ai/usgs_hydrology.py` previously passed `time=2026-10-01/2026-11-04` to the current USGS `ogcapi/v1/collections/daily/items` endpoint. The official USGS [OGC API documentation](https://api.waterdata.usgs.gov/docs/ogcapi/) explicitly requires **`datetime=START/END`** for a range filter, while **`time`** is a property **returned inside each observation**. The old query could return no usable daily observations or an invalid filter while our mock tests repeated the wrong query. Existing 2026 USGS field data source has not been directly fetched in this chat.
+
+**Minimal pre-issuance repair:** Change ONLY the original source query key `"time"` → `"datetime"`; retain returned observation property `p["time"]`, original two river gauges, official `00060` discharge/`00003` mean identifiers, `ft^3/s` validation, original Oct 1–Nov 4 development window, Nov 12–13 prospective holdout, original Qwen/SmolLM2 hypotheses, scoring baselines, no-future-data isolation and original Nov 18 audit. Improve our existing mock-source integration check so it rejects `time=...` as an interval request. No upstream USGS software tests repeated and no newly constructed agent/provider/framework. Original November 7 protocol file is **untouched**, with versioned [public pre-issuance USGS source clarification](USGS_2026_PROSPECTIVE_SOURCE_CLARIFICATION.md) recording the exact rationale.
+
+**Limitations:** This is a source-contract bug fix, not a new observed scientific result or verified live daily data response. The scheduled Nov 11 first/backup model issuer must still fetch actual USGS daily development observations, with real source SHA256 and pre-Nov 12 publication of immutable original forecasts. Provisional daily values may subsequently revise. Do not silently refit or claim AGI.
+
+
 ## PROSPECTIVE SCIENCE SOURCE FIX | 2026-11-09, before issuance: NOAA preliminary observed hourly sampling
 
 **Actual upstream data-availability problem identified BEFORE the November 10 forecast:** Official [NOAA CO-OPS Data API](https://api.tidesandcurrents.noaa.gov/api/prod/) explicitly states `hourly_height` contains **verified** hourly values, released after monthly verification; November 12–13 verified hourly data may **not** exist by the precommitted November 16 audit. The original November 7 study's `src/plenum_ai/prospective_noaa.py` mistakenly reused `hourly_height` from an older **historical** verified study. That threatened both Nov 10 model development and Nov 16 prospective scoring. Do not infer current product availability from green historical tests or build another NOAA service.
