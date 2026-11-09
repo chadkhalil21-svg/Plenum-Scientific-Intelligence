@@ -1,0 +1,109 @@
+name: Activate One-Use Owner-Paired Chat Demo Read (Founder Approved)
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+jobs:
+  activate-locked-read:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.user.id == 251133044 &&
+      github.event.issue.title == 'Computer Browser: activate one-use chat demo read' &&
+      github.event.issue.body == 'ACTIVATE_SIGNED_DEMO_RELAY:2026-11-08'
+    runs-on: ubuntu-latest
+    environment: computer-browser-production
+    timeout-minutes: 10
+    concurrency:
+      group: plenum-auth0-owner-ws-deploy
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Confirm existing isolated Auth0 browser image and vault protections
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          test "$PROJECT" = 'plenum-computer-browser'
+          gcloud run services describe plenum-browser-owner-auth0             --project="$PROJECT" --region=us-east1 --format=json > "$RUNNER_TEMP/owner-before.json"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          d=json.loads((Path(os.environ['RUNNER_TEMP'])/'owner-before.json').read_text())
+          assert d['metadata']['name']=='plenum-browser-owner-auth0'
+          t=d['spec']['template']['spec']
+          assert t['serviceAccountName']=='plenum-browser-runtime@plenum-computer-browser.iam.gserviceaccount.com'
+          assert int(t.get('timeoutSeconds',0))==900
+          c=t['containers'][0]
+          assert c['image'].startswith('us-east1-docker.pkg.dev/plenum-computer-browser/plenum-browser/browser-auth0-owner:')
+          env={e['name']:e for e in c.get('env',[])}
+          assert env['BROWSER_PUBLIC_ORIGIN']['value']=='https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app'
+          assert env['AUTH0_OWNER_PUBLIC_ORIGIN']['value']=='https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app'
+          assert env['BROWSER_PROFILE_BUCKET']['value']
+          assert 'BROWSER_SESSION_KEY' in env and 'COMPUTER_BROWSER_TOKEN' in env
+          assert 'https://the-internet.herokuapp.com' in env['BROWSER_ALLOWED_ORIGINS']['value']
+          print('PASS: Existing browser image and owner-scoped encrypted vault preserved.')
+          PY
+      - name: Enable only fixed signed one-use public demo relay in current owner service
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          gcloud run services update plenum-browser-owner-auth0             --project="$PROJECT" --region=us-east1             --update-env-vars='PLENUM_CHAT_RELAY_ENABLED=true,PLENUM_CHAT_RELAY_REPO_ID=1447724141,PLENUM_CHAT_RELAY_ACTOR_ID=251133044'             --quiet > /dev/null
+      - name: Verify signed-only endpoint and original owner authentication still closed
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          gcloud run services describe plenum-browser-owner-auth0             --project="$PROJECT" --region=us-east1 --format=json > "$RUNNER_TEMP/owner-after.json"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          d=json.loads((Path(os.environ['RUNNER_TEMP'])/'owner-after.json').read_text())
+          t=d['spec']['template']['spec']
+          assert t['serviceAccountName']=='plenum-browser-runtime@plenum-computer-browser.iam.gserviceaccount.com'
+          assert int(t.get('timeoutSeconds',0))==900
+          env={e['name']:e for e in t['containers'][0].get('env',[])}
+          assert env['PLENUM_CHAT_RELAY_ENABLED']['value']=='true'
+          assert env['PLENUM_CHAT_RELAY_REPO_ID']['value']=='1447724141'
+          assert env['PLENUM_CHAT_RELAY_ACTOR_ID']['value']=='251133044'
+          assert env['BROWSER_PROFILE_BUCKET']['value']
+          assert 'BROWSER_SESSION_KEY' in env
+          assert 'COMPUTER_BROWSER_TOKEN' in env
+          print('PASS: Exact GitHub workflow identity added without changing owner vault or runtime.')
+          PY
+          URL='https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app'
+          health="$(curl -sS --max-time 15 -o /dev/null -w '%{http_code}' "$URL/")"
+          login="$(curl -sS --max-time 15 -o /dev/null -w '%{http_code}' "$URL/auth0/login")"
+          owner="$(curl -sS --max-time 15 -o /dev/null -w '%{http_code}' "$URL/owner")"
+          approval="$(curl -sS --max-time 15 -o /dev/null -w '%{http_code}' "$URL/owner/chat-demo-approval")"
+          signed="$(curl -sS --max-time 15 -o /dev/null -w '%{http_code}' -X POST "$URL/internal/chat-demo-read")"
+          test "$health" = '200'
+          test "$login" = '302'
+          test "$owner" = '401'
+          test "$approval" = '401'
+          test "$signed" = '401'
+          echo 'PASS: Owner login, anonymous denial and signed-only relay verified.'
+      - name: Post public nonsecret release result
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: chadkhalil21-svg/Plenum-Scientific-Intelligence
+          ISSUE: ${{ github.event.issue.number }}
+          SUCCESS: ${{ steps.verify.outcome }}
+        run: |
+          if [ "$SUCCESS" = 'success' ]; then
+            gh issue comment "$ISSUE" --body 'PASS: Owner-paired public-demo-only relay enabled. Existing Auth0 login and encrypted vault preserved; anonymous owner/approval and unsigned relay endpoints denied. A real owner-approved signed GitHub chat browser test is still required.'
+          else
+            gh issue comment "$ISSUE" --body 'BLOCKED: Owner-paired read activation did not complete all safety checks. Do not treat the relay as live until Cloud Run and anonymous-denial probes are verified.'
+          fi
