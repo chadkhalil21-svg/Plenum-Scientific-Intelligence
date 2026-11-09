@@ -11,6 +11,7 @@ import re
 
 DEMO_ORIGIN="https://the-internet.herokuapp.com"
 OWNER_SERVICE="plenum-browser-owner-auth0"
+EXPECTED_OWNER_ISSUER="https://dev-8sylxsg44yh5kkhh.us.auth0.com/"
 FEATURE_FLAG="PLENUM_MCP_PRIVATE_DEMO_READ_ENABLED"
 
 
@@ -20,9 +21,8 @@ def derive_vault_owner_id(config):
     This function MUST only be reached after OwnerJWTVerifier verified a
     signature, issuer, audience, scope, client, owner-sub and short expiry.
     """
-    from .owner_auth0 import ISSUER
     config.validate()
-    if (config.issuer != ISSUER
+    if (config.issuer != EXPECTED_OWNER_ISSUER
             or not isinstance(config.owner_sub,str)
             or not 8 <= len(config.owner_sub) <= 240):
         raise PermissionError("MCP identity cannot be mapped to owner vault")
