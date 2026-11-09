@@ -119,3 +119,7 @@ mount_owner_chat_relay(app)
 # Optional owner-only, signed one-shot X25519 encrypted chat read.
 from .owner_sealed_relay import mount_owner_sealed_relay
 mount_owner_sealed_relay(app)
+
+# Dedicated Auth0 owner-only website registration. No navigation enabled by this.
+from .runtime_site_grants import mount_runtime_site_grants
+mount_runtime_site_grants(app)
