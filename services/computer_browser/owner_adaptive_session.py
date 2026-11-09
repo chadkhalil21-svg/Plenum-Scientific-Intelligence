@@ -244,104 +244,43 @@ def save_follow(cursor, result, *, now=None):
     return {"remaining": state["remaining"], "links_untrusted": links}
 
 
-def revoke_session(*, now=None):
-    """Trusted owner-authenticated portal ONLY, never a GitHub issue command."""
-    require_enabled()
-    blob = _cursor_blob()
-    if not blob.exists():
-        return False
-    blob.reload()
-    gen = int(blob.generation)
-    blob.delete(if_generation_match=gen)
-    return True
+def revoke_session(*, owner=None):
+    """Owner-only cancellation of BOTH pending and active adaptive consent.
 
-
-async def read_hardened_saved_site(*, site, owner, path):
-    """Restore original encrypted profile in Chromium with ONE pinned HTTPS egress.
-
-    Read-only, no JavaScript, no external subresources, GET exact document only.
-    This uses the existing Playwright runtime and existing public-preview
-    pinned-IP CONNECT broker, never a second browser architecture.
+    This also rejects a stale in-flight worker's attempt to republish a
+    deleted CAS lease. A pending fixed-batch read is deliberately unaffected.
     """
-    import asyncio
-    from urllib.parse import urlsplit
-    from .owner_saved_session import (
-        _approved_read_target, _validated_read_links, PUBLIC_DEMO_ORIGIN
-    )
-    from .private_profiles import BrowserProfileStore
-    from .pinned_public_preview import PinnedOriginProxy
-    from playwright.async_api import async_playwright
-    from .engine import allowed_origins
-
     require_enabled()
-    if site not in allowed_origins():
-        raise PermissionError("Owner signed-in site has not been authorized")
-    target = _approved_read_target(site, path)
-    store = BrowserProfileStore.from_environment()
-    state, _generation = store.load_for_trusted_worker(owner=owner, origin=site)
-    async with PinnedOriginProxy(site) as broker:
-        async with async_playwright() as pw:
-            browser = await pw.chromium.launch(
-                headless=True,
-                args=["--disable-background-networking", "--disable-quic",
-                      "--force-webrtc-ip-handling-policy=disable_non_proxied_udp"],
-                proxy={"server": f"http://127.0.0.1:{broker.port}"}
-            )
-            try:
-                context = await browser.new_context(
-                    storage_state=state, accept_downloads=False,
-                    java_script_enabled=False, service_workers="block",
-                    ignore_https_errors=False, permissions=[],
-                )
-                try:
-                    async def restrict(route):
-                        req = route.request
-                        if (req.method == "GET"
-                                and req.resource_type == "document"
-                                and req.url == target):
-                            await route.continue_()
-                        else:
-                            await route.abort()
-                    await context.route("**/*", restrict)
-                    page = await context.new_page()
-                    response = await page.goto(
-                        target, wait_until="domcontentloaded", timeout=22000
-                    )
-                    if (response is None or response.status != 200
-                            or page.url != target or broker.accepted < 1):
-                        raise PermissionError("Private pinned read left approved page")
-                    title = " ".join((await page.title()).split())[:160]
-                    body = " ".join((await page.locator("body").inner_text(
-                        timeout=7000)).split())[:1200]
-                    links = []
-                    anchors = page.locator("a[href]")
-                    for i in range(min(await anchors.count(), 18)):
-                        link = anchors.nth(i)
-                        try:
-                            if not await link.is_visible():
-                                continue
-                            href = await link.get_attribute("href", timeout=500)
-                            label = await link.inner_text(timeout=500)
-                        except Exception:
-                            continue
-                        links.append((label, href))
-                    return {
-                        "site": site,
-                        "final_url": page.url,
-                        "http_status": response.status,
-                        "title": title,
-                        "body": body,
-                        "links_untrusted": _validated_read_links(
-                            site, target, links
-                        ),
-                        "demo_authenticated_restored": (
-                            site == PUBLIC_DEMO_ORIGIN
-                            and urlsplit(page.url).path == "/secure"
-                            and "Logged in as" in body
-                            and "Secure Area" in body
-                        ),
-                    }
-                finally:
-                    await context.close()
-            finally:
-                await browser.close()
+    from .sealed_chat_read import APPROVAL_BLOB, _store
+    from .owner_chat_pairing import _owner
+    if owner is not None:
+        _owner(owner)
+    revoked = False
+
+    # The signed founder may revoke before the FIRST GitHub issue starts.
+    pending = _store().bucket.blob(APPROVAL_BLOB)
+    if pending.exists():
+        pending.reload()
+        generation = int(pending.generation)
+        record = json.loads(_cipher().decrypt(
+            pending.download_as_bytes(if_generation_match=generation), ttl=TTL
+        ))
+        if record.get("schema") == "plenum-sealed-owner-adaptive-consent-v1":
+            if owner is not None and record.get("owner") != owner:
+                raise PermissionError("Pending adaptive consent is not this owner")
+            pending.delete(if_generation_match=generation)
+            revoked = True
+
+    # The same founder may revoke after the initial page or during a follow.
+    active = _cursor_blob()
+    if active.exists():
+        active.reload()
+        generation = int(active.generation)
+        record = json.loads(_cipher().decrypt(
+            active.download_as_bytes(if_generation_match=generation), ttl=TTL
+        ))
+        if owner is not None and record.get("owner") != owner:
+            raise PermissionError("Adaptive session is not this owner")
+        active.delete(if_generation_match=generation)
+        revoked = True
+    return revoked
