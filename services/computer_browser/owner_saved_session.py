@@ -240,12 +240,17 @@ async def read_saved_site(*, site, owner, path=None):
                 # no form input is inspected, and no site write is enabled.
                 anchor_nodes = page.locator("a[href]")
                 candidates = []
-                for index in range(min(await anchor_nodes.count(), 48)):
+                for index in range(min(await anchor_nodes.count(), 18)):
                     anchor = anchor_nodes.nth(index)
-                    if not await anchor.is_visible():
+                    try:
+                        if not await anchor.is_visible():
+                            continue
+                        href = await anchor.get_attribute("href", timeout=500)
+                        label = await anchor.inner_text(timeout=500)
+                    except Exception:
+                        # Optional navigation hints may never block the
+                        # approved private-page read if a DOM node disappears.
                         continue
-                    href = await anchor.get_attribute("href")
-                    label = await anchor.inner_text(timeout=1500)
                     candidates.append((label, href))
                 links = _validated_read_links(site, page.url, candidates)
                 # An ordinary HTTP 200 login page is not an authenticated
