@@ -29,7 +29,7 @@ from .owner_adaptive_session import (
     FLAG as ADAPTIVE_FLAG, MAX_FOLLOWS,
     require_enabled as require_adaptive, _safe_links,
     read_hardened_saved_site, begin_session, consume_follow, save_follow,
-    revoke_session,
+    revoke_session, require_pending,
 )
 
 _HEADERS = {"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"}
@@ -243,6 +243,8 @@ def mount_owner_sealed_relay(app):
                                 detail="Owner consent absent or expired") from exc
         try:
             if consent.get("schema") == "plenum-sealed-owner-adaptive-consent-v1":
+                # Revocation must block the first read, not only follow-ups.
+                await asyncio.to_thread(require_pending, consent)
                 result = await asyncio.wait_for(read_hardened_saved_site(
                     site=consent["site"], owner=consent["owner"],
                     path=consent["path"],
