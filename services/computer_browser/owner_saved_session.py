@@ -12,7 +12,7 @@ import re
 import secrets
 import time
 from html import escape
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urljoin
 
 from fastapi import Depends, HTTPException, Request, Form
 from fastapi.responses import HTMLResponse
@@ -161,6 +161,48 @@ def _approved_read_target(site, path):
     return target
 
 
+def _validated_read_links(site, current_url, candidates):
+    """Bounded read-only navigation hints from a saved page.
+
+    Never execute the discovered link. Strip query/fragment, omit sensitive
+    or action-like routes and reject off-origin targets. The founder must
+    approve each selected exact path separately before any future read.
+    """
+    if not safe_url(current_url, origins={site}):
+        raise PermissionError("Link discovery outside approved saved origin")
+    entries = []
+    seen = set()
+    for label, href in candidates[:48]:
+        if not isinstance(label, str) or not isinstance(href, str):
+            continue
+        label = " ".join(label.split())[:75]
+        if not label or len(href) > 800:
+            continue
+        target = urljoin(current_url, href)
+        if not safe_url(target, origins={site}):
+            continue
+        parts = urlsplit(target)
+        if parts.query or parts.fragment:
+            continue
+        path = parts.path or "/"
+        if not 1 <= len(path) <= 220:
+            continue
+        if re.search(r"(?i)(?:^|[/_-])(logout|signout|delete|remove|purchase|pay|cancel|revoke|disable|unsubscribe)(?:[/_.-]|$)", path):
+            continue
+        try:
+            if _approved_read_target(site, path) != target:
+                continue
+        except PermissionError:
+            continue
+        if path in seen:
+            continue
+        entries.append({"label_untrusted": label, "path": path})
+        seen.add(path)
+        if len(entries) == 6:
+            break
+    return entries
+
+
 async def read_saved_site(*, site, owner, path=None):
     """Decrypt only inside the trusted server and restore only one owner/site."""
     store = BrowserProfileStore.from_environment()
@@ -194,6 +236,18 @@ async def read_saved_site(*, site, owner, path=None):
                 title = " ".join((await page.title()).split())[:160]
                 body = " ".join((await page.locator("body").inner_text(
                     timeout=7000)).split())[:1200]
+                # Collect only visible same-origin links. No link is opened,
+                # no form input is inspected, and no site write is enabled.
+                anchor_nodes = page.locator("a[href]")
+                candidates = []
+                for index in range(min(await anchor_nodes.count(), 48)):
+                    anchor = anchor_nodes.nth(index)
+                    if not await anchor.is_visible():
+                        continue
+                    href = await anchor.get_attribute("href")
+                    label = await anchor.inner_text(timeout=1500)
+                    candidates.append((label, href))
+                links = _validated_read_links(site, page.url, candidates)
                 # An ordinary HTTP 200 login page is not an authenticated
                 # restore proof. Only the specific public demo fixture has
                 # a trustworthy narrow success check.
@@ -203,6 +257,7 @@ async def read_saved_site(*, site, owner, path=None):
                     and "Secure Area" in body)
                 return {"title":title,"body":body,
                         "site":site,"final_url":page.url,"http_status":resp.status,
+                        "links_untrusted": links,
                         "demo_authenticated_restored":demo_restored}
             finally:
                 await context.close()
