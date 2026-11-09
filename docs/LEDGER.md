@@ -691,3 +691,8 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [x] Connected GitHub verified immutable founder actor ID `251133044` and repo ID `1447724141`; public identification data, not credentials.
 - [ ] [Issue #250](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/250): create one-time authenticated owner consent/pairing, encrypted GCS grant with TTL/revocation, durable JWT jti replay and rate controls, exact demo read-only Cloud Run endpoint and founder-issue workflow. A real chat-invoked signed-in demo read remains the live acceptance gate. No TinyFish, new engine, unrestricted auth access or additional cloud deployment this turn.
 
+## 2026-11-08 ~20:45 ET: stricter signed workflow identity in PR #251
+- [x] Merged previous source-only signed workflow relay policy [PR #249](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/249). No live private ChatGPT access yet.
+- [ ] [PR #251](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/251) pins 2026 immutable OIDC subject and actual authenticated GitHub numeric IDs (owner `251133044`, repo `1447724141`); requires issuer, audience, founder actor, workflow, runner and scope from signed JWT. CI and merge still required. No new browser engine, IAM grant or deployment.
+- [ ] Private relay requires owner pairing, durable replay protection, fixed read-only demo endpoint and authenticated real chat tool acceptance.
+
