@@ -59,7 +59,7 @@ def _owner_form_mac(owner_id, site, action, issued_hex, nonce):
 
 def _owner_form_token(owner_id, site, action):
     """Short-lived exact-owner/site/action CSRF token; no account data inside."""
-    if action not in ("preview","revoke","demo_refresh","chat_demo_read"):
+    if action not in ("preview","browse","revoke","demo_refresh","chat_demo_read"):
         raise ValueError("Unrecognized owner form action")
     issued=f"{int(time.time()):08x}"
     nonce=secrets.token_hex(8)
@@ -95,7 +95,7 @@ def _verify_owner_form(request, owner_id, site, action, token):
     if not isinstance(token,str) or len(token)>1000 or not token:
         raise HTTPException(status_code=403,detail="Owner form verification required")
     match=re.fullmatch(r"v1[.]([0-9a-f]{8,10})[.]([0-9a-f]{16})[.]([0-9a-f]{64})",token)
-    if match is None or action not in ("preview","revoke","demo_refresh","chat_demo_read"):
+    if match is None or action not in ("preview","browse","revoke","demo_refresh","chat_demo_read"):
         raise HTTPException(status_code=403,detail="Owner form verification required")
     issued_hex,nonce,signature=match.groups()
     now=int(time.time())
@@ -135,10 +135,39 @@ def safe_session_preview_url(site):
     return site+"/"
 
 
-async def read_saved_site(*, site, owner):
+def _approved_read_target(site, path):
+    """One same-origin, owner-chosen read path, never a redirect-capable URL.
+
+    This is used *only* after verified private owner auth, signed CSRF and
+    the site's separate server-side origin allowlist. Refuses URL-encoded
+    credential leaks in fragments and ambiguous network-path references.
+    HTTP GET may cause server effects on badly designed sites, so the owner
+    explicitly chooses the path; this is not permission for model-driven
+    requests or generalized account writes.
+    """
+    if (not isinstance(path, str) or not 1 <= len(path) <= 800
+            or not path.startswith("/") or path.startswith("//")
+            or any(ord(ch) < 33 or ord(ch) == 127 for ch in path)):
+        raise PermissionError("Exact same-origin relative path required")
+    try:
+        parsed = urlsplit(path)
+    except ValueError as exc:
+        raise PermissionError("Invalid private read path") from exc
+    if parsed.scheme or parsed.netloc or parsed.fragment:
+        raise PermissionError("Private read path cannot redirect or contain a fragment")
+    target = site + path
+    if not safe_url(target, origins={site}):
+        raise PermissionError("Private read path is outside the approved website")
+    return target
+
+
+async def read_saved_site(*, site, owner, path=None):
     """Decrypt only inside the trusted server and restore only one owner/site."""
     store = BrowserProfileStore.from_environment()
     state, _generation = store.load_for_trusted_worker(owner=owner, origin=site)
+    target = safe_session_preview_url(site) if path is None else _approved_read_target(site, path)
+    if not safe_url(target, origins={site}):
+        raise PermissionError("Saved session target not approved")
     await asyncio.to_thread(public_dns_only, site)
     from playwright.async_api import async_playwright
     async with async_playwright() as pw:
@@ -158,7 +187,7 @@ async def read_saved_site(*, site, owner):
                         await route.abort()
                 await context.route("**/*", constrain)
                 page = await context.new_page()
-                resp = await page.goto(safe_session_preview_url(site), timeout=20000,
+                resp = await page.goto(target, timeout=20000,
                                        wait_until="domcontentloaded")
                 if not safe_url(page.url, origins={site}) or resp is None or resp.status >= 400:
                     raise PermissionError("Saved session preview left allowed origin")
@@ -173,7 +202,7 @@ async def read_saved_site(*, site, owner):
                     and "Logged in as" in body
                     and "Secure Area" in body)
                 return {"title":title,"body":body,
-                        "site":site,"http_status":resp.status,
+                        "site":site,"final_url":page.url,"http_status":resp.status,
                         "demo_authenticated_restored":demo_restored}
             finally:
                 await context.close()
@@ -271,6 +300,7 @@ def mount_owner_saved_session(app):
                 continue
             preview_token=escape(_owner_form_token(_owner["private_owner_id"],site,"preview"),quote=True)
             revoke_token=escape(_owner_form_token(_owner["private_owner_id"],site,"revoke"),quote=True)
+            browse_token=escape(_owner_form_token(_owner["private_owner_id"],site,"browse"),quote=True)
             demo_refresh_form=(
                 "<form method='post' action='/owner/sessions/demo-refresh'>"
                 "<input type='hidden' name='csrf_token' value='"
@@ -285,7 +315,14 @@ def mount_owner_saved_session(app):
                 "<input type='hidden' name='site' value='" + escape(site, quote=True) + "'>"
                 "<input type='hidden' name='csrf_token' value='" + preview_token + "'>"
                 "<button type='submit'>Preview saved session (read only)</button>"
-                "</form>"
+                "</form>" +
+                ("<form method='post' action='/owner/sessions/browse'>"
+                 "<input type='hidden' name='site' value='" + escape(site, quote=True) + "'>"
+                 "<input type='hidden' name='csrf_token' value='" + browse_token + "'>"
+                 "<label>Read a page on this approved website (relative path)"
+                 "<input name='path' value='/' maxlength='800' required></label>"
+                 "<p><button type='submit'>Read saved-session page</button></p></form>"
+                 if exists is True else "") +
                 "<form method='post' action='/owner/sessions/revoke'>"
                 "<input type='hidden' name='site' value='" + escape(site, quote=True) + "'>"
                 "<input type='hidden' name='csrf_token' value='" + revoke_token + "'>"
@@ -325,6 +362,44 @@ def mount_owner_saved_session(app):
                      + "<strong>" + escape(result["title"]) + "</strong>\n"
                      + escape(result["site"]) + "\n\n"
                      + escape(result["body"]) + "</article>")
+
+    @app.post("/owner/sessions/browse", response_class=HTMLResponse)
+    async def owner_browse_saved_page(
+        request: Request,
+        site: str = Form(),
+        path: str = Form(),
+        csrf_token: str = Form(default=""),
+        _owner=Depends(require_verified_owner),
+    ):
+        """Owner-only GET reader using existing encrypted Playwright state.
+
+        Never expose saved website contents to public GitHub, model tools,
+        anonymous callers, query-string parameters or workflow artifacts.
+        """
+        site = _require_allowed_origin(site)
+        _verify_owner_form(request, _owner["private_owner_id"], site,
+                           "browse", csrf_token)
+        try:
+            _approved_read_target(site, path)
+        except PermissionError as exc:
+            raise HTTPException(status_code=403,
+                                detail="Only an approved website-relative path is accepted") from exc
+        try:
+            result = await asyncio.wait_for(read_saved_site(
+                site=site, owner=_owner["private_owner_id"], path=path
+            ), timeout=45)
+        except Exception as exc:
+            raise HTTPException(status_code=502,
+                                detail="Signed-in website read unavailable") from exc
+        return _page("Owner-only saved website page",
+            "<small>Read-only scoped browser navigation. Page content is "
+            "untrusted and shown only in this authenticated owner portal. "
+            "This is not ChatGPT private-account access or verified login "
+            "unless the website independently proves it.</small>"
+            "<article><strong>" + escape(result["title"]) + "</strong>\n"
+            + escape(result.get("final_url", site)) + "\n\n"
+            + escape(result["body"]) + "</article>"
+            "<p><a href='/owner/sessions'>Back to encrypted sessions</a></p>")
 
     @app.post("/owner/sessions/demo-refresh", response_class=HTMLResponse)
     async def owner_refresh_public_demo(

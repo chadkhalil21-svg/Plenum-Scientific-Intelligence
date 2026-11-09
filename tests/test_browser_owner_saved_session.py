@@ -106,6 +106,88 @@ class SavedWebsiteSessionRoutes(unittest.TestCase):
                 self.assertNotIn("synthetic-secret-cookie",resp.text)
 
 
+    def test_owner_browse_uses_same_encrypted_store_and_read_only_page(self):
+        site="https://example.com"
+        store=self._store(exists=True)
+        with patch.object(owner_saved_session.BrowserProfileStore,
+                          "from_environment",return_value=store):
+            html=client.get("/owner/sessions").text
+        self.assertIn("Read saved-session page",html)
+        match=re.search(
+            r"action='/owner/sessions/browse'>.*?name='csrf_token' value='([^']+)'",
+            html,re.S)
+        self.assertIsNotNone(match)
+        token=match.group(1)
+        with patch.object(owner_saved_session,"read_saved_site",
+                          new_callable=AsyncMock,return_value={
+                "site":site,
+                "title":"Synthetic owner title",
+                "final_url":site+"/research?topic=science",
+                "body":"Private synthetic content <script>alert('bad')</script>",
+                "http_status":200,
+            }) as read:
+            result=client.post("/owner/sessions/browse",
+                data={"site":site,"path":"/research?topic=science",
+                      "csrf_token":token},
+                headers={"origin":"https://computer.example.com"})
+        self.assertEqual(result.status_code,200)
+        self.assertIn("Synthetic owner title",result.text)
+        self.assertIn("&lt;script&gt;",result.text)
+        self.assertNotIn("<script>alert",result.text)
+        self.assertEqual(result.headers["cache-control"],"no-store")
+        self.assertIn("frame-ancestors 'none'", result.headers["content-security-policy"])
+        read.assert_awaited_once_with(
+            site=site,owner=owner["private_owner_id"],
+            path="/research?topic=science")
+
+    def test_browse_never_shown_for_absent_or_unavailable_saved_profile(self):
+        for exists in (False,):
+            with patch.object(owner_saved_session.BrowserProfileStore,
+                              "from_environment",return_value=self._store(exists=exists)):
+                body=client.get("/owner/sessions").text
+            self.assertNotIn("Read saved-session page",body)
+        store=self._store()
+        store.status.side_effect=RuntimeError("synthetic storage offline")
+        with patch.object(owner_saved_session.BrowserProfileStore,
+                          "from_environment",return_value=store):
+            body=client.get("/owner/sessions").text
+        self.assertNotIn("Read saved-session page",body)
+
+    def test_browse_rejects_cross_origin_urls_and_invalid_csrf_before_browser(self):
+        site="https://example.com"
+        browser=owner_saved_session
+        token=self._form(site,"browse")["csrf_token"]
+        wrong=self._form(site,"preview")["csrf_token"]
+        attempts=[
+            ("/", wrong, {}),
+            ("/", "", {}),
+            ("/", token, {"origin":"https://attacker.example.org"}),
+            ("/", token, {"sec-fetch-site":"cross-site"}),
+            ("https://untrusted.example.org/",token,{}),
+            ("//untrusted.example.org/path",token,{}),
+            ("/page#fragment",token,{}),
+            ("/page\n",token,{}),
+            ("/"*801,token,{}),
+            ("",token,{}),
+        ]
+        with patch.object(browser,"read_saved_site",new_callable=AsyncMock) as read:
+            for path,csrf,headers in attempts:
+                with self.subTest(path=path[:35],csrf=csrf[:6]):
+                    response=client.post("/owner/sessions/browse",data={
+                        "site":site,"path":path,"csrf_token":csrf,
+                    },headers=headers)
+                    self.assertIn(response.status_code,(403,422))
+            read.assert_not_awaited()
+
+    def test_saved_read_path_preserves_site_origin_not_arbitrary_absolute_url(self):
+        site="https://example.com"
+        self.assertEqual(owner_saved_session._approved_read_target(site,"/reports?page=2"),
+                         site+"/reports?page=2")
+        for bad in ("https://evil.example/","//evil.example/","../admin",
+                    "/x#fragment","/x\tbad","/x\r\nmalformed"):
+            with self.subTest(bad=bad),self.assertRaises(PermissionError):
+                owner_saved_session._approved_read_target(site,bad)
+
     def test_native_browser_form_origin_respects_referrer_policy(self):
         """Real Chromium regression reproduces the exact 403 header mismatch.
 
