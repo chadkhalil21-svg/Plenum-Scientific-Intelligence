@@ -14,11 +14,23 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 import numpy as np
-from .noaa_empirical import API, STATIONS, MAX_DOWNLOAD, parse_observations
+from .noaa_empirical import API, STATIONS, parse_observations
 from .autonomous_hypothesis import _matrix
 from .noaa_revision_agent import parse_candidate
 from .model_challenge import CpuCandidate
 from .independent_noaa_critic import SmolLM2Critic
+
+# Pre-issuance source clarification, 2026-11-09: NOAA verified hourly_height
+# is published after monthly review, not reliably available for November 2026
+# target days at the precommitted November 16 audit. Reuse NOAA's ORIGINAL
+# water_level observation product at six-minute intervals, selecting ONLY
+# the recorded top-of-hour UTC measurements. No interpolation, synthetic
+# observations, NOAA tide predictions, post-hoc forecast-model changes, or
+# fallback between two measurement products. Preliminary source may be revised.
+NOAA_SOURCE_PRODUCT = "water_level"
+NOAA_SOURCE_SAMPLING = "exact top-of-hour UTC (minute=00) from observed six-minute product"
+NOAA_SOURCE_AMENDMENT = "noaa-prospective-2026-11-source-clarification-2026-11-09"
+NOAA_MAX_SOURCE_BYTES = 1_200_000  # 21 days of real 6-minute observations; finite limit.
 
 PROTOCOL_ID = "plenum-prospective-noaa-2026-11-v1"
 PROTOCOL_COMMIT = "45ac814869b9e47450c00ec55e83b29f02d3ca71"
@@ -76,23 +88,54 @@ def protocol():
     return p
 
 
+def usable_six_minute_observation(row):
+    """Apply NOAA's original p/v quality flags before exact-hour sampling.
+
+    NOAA water_level f fields are O,F,R,L for preliminary and I,F,R,T for
+    verified readings. Reject flagged flat/rate/limit anomalies in either
+    category and inferred verified heights; preliminary O is a sample count,
+    not itself an invalid observation. Unparseable flags are NOT assumed good.
+    """
+    if not isinstance(row,dict) or row.get("q") not in ("p","v"):
+        return False
+    flags=row.get("f")
+    if not isinstance(flags,str):
+        return False
+    fields=flags.split(",")
+    if len(fields)!=4 or not all(x.isdigit() for x in fields):
+        return False
+    if any(x!="0" for x in fields[1:]):
+        return False
+    return row["q"]!="v" or fields[0]=="0"
+
+
 def fetch_public(station, reveal=False, opener=urlopen):
     if station not in STATION_IDS or station not in STATIONS:
         raise ValueError("Unapproved station")
     end="20261113" if reveal else "20261108"
     query=urlencode({"begin_date":"20261024","end_date":end,"station":station,
-        "product":"hourly_height","datum":"MLLW","time_zone":"gmt",
+        "product":NOAA_SOURCE_PRODUCT,"datum":"MLLW","time_zone":"gmt",
         "units":"metric","format":"json",
         "application":"plenum_prospective_scientific_study"})
     request=Request(API+"?"+query,headers={"User-Agent":"PlenumScientificIntelligence/1.0"})
     with opener(request,timeout=25) as response:
-        raw=response.read(MAX_DOWNLOAD+1)
-    if len(raw)>MAX_DOWNLOAD:
-        raise ValueError("NOAA source exceeded the fixed download limit")
+        raw=response.read(NOAA_MAX_SOURCE_BYTES+1)
+    if len(raw)>NOAA_MAX_SOURCE_BYTES:
+        raise ValueError("NOAA six-minute source exceeded fixed 21-day download limit")
     data=json.loads(raw)
     if not isinstance(data,dict) or data.get("error") or not isinstance(data.get("data"),list):
-        raise ValueError("Real observed NOAA hourly series not available")
-    return parse_observations(data["data"]),sha256(raw).hexdigest()
+        raise ValueError("Observed NOAA six-minute water levels unavailable; no forecasts fabricated")
+    # NOAA water_level is measured, not the tide-prediction product. Its q flag
+    # identifies preliminary/verified observation status. Accept only p/v;
+    # parse_observations takes exact hh:00 UTC readings and rejects duplicates.
+    # This samples observed top-of-hour heights, NOT the verified hourly_height
+    # averaged product. Both frozen development and later targets use this
+    # single predeclared extraction and the original observed-data units.
+    accepted=[row for row in data["data"] if usable_six_minute_observation(row)]
+    hourly=parse_observations(accepted)
+    if not hourly:
+        raise ValueError("No flagged real NOAA top-of-hour observations in six-minute source")
+    return hourly,sha256(raw).hexdigest()
 
 
 def dev_series(obs):
@@ -200,7 +243,10 @@ def verify_original(report):
             or report.get("protocol_commit")!=PROTOCOL_COMMIT
             or report.get("protocol_sha256")!=digest(protocol())
             or report.get("future_observations_seen") is not False
-            or report.get("target_days")!=list(TEST_DAYS)):
+            or report.get("target_days")!=list(TEST_DAYS)
+            or report.get("observation_source_product")!=NOAA_SOURCE_PRODUCT
+            or report.get("observation_source_sampling")!=NOAA_SOURCE_SAMPLING
+            or report.get("source_amendment")!=NOAA_SOURCE_AMENDMENT):
         raise ValueError("Invalid sealed original research")
     rows=report.get("stations")
     if not isinstance(rows,list) or [r.get("station") for r in rows]!=list(STATION_IDS):
@@ -249,6 +295,9 @@ def propose(generate,fetcher=fetch_public,now=None,model=QWEN,revision=QWEN_SHA)
     return {"schema":"plenum-future-noaa-qwen-v1","model":model,
             "model_revision":revision,"protocol_commit":PROTOCOL_COMMIT,
             "protocol_sha256":digest(p),"target_days":list(TEST_DAYS),
+            "observation_source_product":NOAA_SOURCE_PRODUCT,
+            "observation_source_sampling":NOAA_SOURCE_SAMPLING,
+            "source_amendment":NOAA_SOURCE_AMENDMENT,
             "stations":rows,"model_calls":len(rows),
             "future_observations_seen":False,"auto_model_promotion":False}
 
@@ -278,6 +327,9 @@ def critique(report,generate,fetcher=fetch_public,now=None,
     return {"schema":"plenum-future-noaa-critic-v1",
             "original_sha256":digest(report),"critic_model":model,
             "critic_revision":revision,"stations":entries,
+            "observation_source_product":NOAA_SOURCE_PRODUCT,
+            "observation_source_sampling":NOAA_SOURCE_SAMPLING,
+            "source_amendment":NOAA_SOURCE_AMENDMENT,
             "model_calls":len(entries),"future_observations_seen":False,
             "auto_model_promotion":False}
 
@@ -290,7 +342,10 @@ def verify_critic(report,criticism,fetcher):
             or criticism.get("critic_revision")!=CRITIC_SHA
             or criticism.get("original_sha256")!=digest(report)
             or criticism.get("model_calls")!=len(STATION_IDS)
-            or criticism.get("future_observations_seen") is not False):
+            or criticism.get("future_observations_seen") is not False
+            or criticism.get("observation_source_product")!=NOAA_SOURCE_PRODUCT
+            or criticism.get("observation_source_sampling")!=NOAA_SOURCE_SAMPLING
+            or criticism.get("source_amendment")!=NOAA_SOURCE_AMENDMENT):
         raise ValueError("Unverified independent model criticism")
     critics=criticism.get("stations")
     if not isinstance(critics,list) or [r.get("station") for r in critics]!=list(STATION_IDS):
