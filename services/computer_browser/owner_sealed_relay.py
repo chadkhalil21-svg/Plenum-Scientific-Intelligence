@@ -7,6 +7,7 @@ This is NOT a generic account-automation or unrestricted MCP endpoint.
 """
 import asyncio
 import os
+import re
 from html import escape
 
 from fastapi import Depends, Form, Header, HTTPException, Request
@@ -22,6 +23,13 @@ from .owner_saved_session import (
 from .private_profiles import BrowserProfileStore
 from .sealed_chat_read import (
     FLAG, require_enabled, approve_read, consume_read, seal_result,
+)
+
+from .owner_adaptive_session import (
+    FLAG as ADAPTIVE_FLAG, MAX_FOLLOWS,
+    require_enabled as require_adaptive, _safe_links,
+    read_hardened_saved_site, begin_session, consume_follow, save_follow,
+    revoke_session,
 )
 
 _HEADERS = {"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"}
@@ -51,6 +59,15 @@ def mount_owner_sealed_relay(app):
                 continue
             token = escape(_owner_form_token(_owner["private_owner_id"],
                                              site, "sealed_read"), quote=True)
+            adaptive_option = (
+                "<p><label><input type='checkbox' name='adaptive' value='read_only'>"
+                "Allow up to THREE adaptive read-only same-site link follows "
+                "within TEN minutes (no script execution, forms, submissions, "
+                "downloads, account writes or arbitrary URLs). Every follow-up "
+                "is still limited to a link on the previous approved page. "
+                "</label></p>"
+                if os.environ.get(ADAPTIVE_FLAG) == "true" else ""
+            )
             forms.append(
                 "<article><strong>Site: " + escape(site) + "</strong>"
                 "<p>Only you can authorize a one-time read of a page on this "
@@ -66,7 +83,7 @@ def mount_owner_sealed_relay(app):
                 "<p><label>Optional additional read-only paths (up to two, one "
                 "per line; same website, no form submission) "
                 "<textarea name='additional_paths' maxlength='480' rows='3'></textarea>"
-                "</label></p>"
+                "</label></p>" + adaptive_option +
                 "<p><label>Recipient ephemeral public key "
                 "<input name='recipient_public_key' maxlength='43' "
                 "autocomplete='off' required></label></p>"
@@ -76,18 +93,30 @@ def mount_owner_sealed_relay(app):
                 "<button type='submit'>Approve one encrypted page read</button>"
                 "</form></article>"
             )
+        token_revoke = escape(_owner_form_token(
+            _owner["private_owner_id"], "https://example.com", "adaptive_revoke"
+        ), quote=True)
+        revoke_form = (
+            "<article><strong>End any active adaptive browsing session</strong>"
+            "<form method='post' action='/owner/chat-adaptive-revoke'>"
+            "<input type='hidden' name='csrf_token' value='" + token_revoke + "'>"
+            "<label>Type REVOKE <input name='confirmation' maxlength='6' "
+            "autocomplete='off' required></label>"
+            "<button type='submit'>Revoke adaptive browser session</button>"
+            "</form></article>"
+        )
         if not forms:
-            return _page("No eligible encrypted sessions",
-                "<article>No approved saved website session is currently "
-                "available for this owner. Do not send passwords or cookies "
-                "to ChatGPT or GitHub.</article>")
-        return _page("Approve one sealed Computer page read", "".join(forms))
+            forms.append("<article>No approved saved website session is currently "
+                         "available for this owner. Do not share credentials.</article>")
+        return _page("Approve sealed Computer page reads",
+                     "".join(forms) + revoke_form)
 
     @app.post("/owner/chat-sealed-approval", response_class=HTMLResponse)
     async def approve_page_post(
         request: Request, site: str = Form(), path: str = Form(),
         recipient_public_key: str = Form(),
         additional_paths: str = Form(default=""),
+        adaptive: str = Form(default=""),
         csrf_token: str = Form(default=""),
         confirmation: str = Form(default=""),
         _owner=Depends(require_verified_owner),
@@ -100,10 +129,19 @@ def mount_owner_sealed_relay(app):
             if confirmation != "APPROVE":
                 raise HTTPException(status_code=403,
                                     detail="Explicit owner approval required")
+            if adaptive not in ("", "read_only"):
+                raise HTTPException(status_code=403,
+                                    detail="Unrecognized adaptive approval")
+            if adaptive == "read_only" and additional_paths.strip():
+                raise HTTPException(status_code=403,
+                                    detail="Select either a fixed batch or adaptive read")
             params = {"site": site, "path": path,
                       "recipient_public_key": recipient_public_key}
             if additional_paths.strip():
                 params["additional_paths"] = additional_paths
+            if adaptive == "read_only":
+                require_adaptive()
+                params["adaptive"] = True
             result = await asyncio.to_thread(
                 approve_read, _owner["private_owner_id"], **params
             )
@@ -115,17 +153,43 @@ def mount_owner_sealed_relay(app):
         except Exception as exc:
             raise HTTPException(status_code=503,
                                 detail="Private owner consent unavailable") from exc
+        description = (
+            "One signed founder GitHub workflow may start the read-only site "
+            "navigation session. The first and up to THREE later safe same-site "
+            "links are bounded by ten minutes and encrypted to the same key. "
+            if adaptive == "read_only" else
+            "One signed founder workflow may read only the exact approved "
+            "page(s) within ten minutes. "
+        )
         return _page("One sealed private page read authorized",
-            "<article>The exact approved site, path and recipient public key "
-            "are sealed in the owner's existing private encrypted vault. "
-            "One signed founder GitHub workflow may read only that page "
-            "within " + str(result["expires_in_seconds"]) + " seconds. "
-            "Only encrypted text may reach GitHub. No website changes, "
-            "cookies, passwords, or private keys are shared.</article>")
+            "<article>Owner-approved scope encrypted in existing private vault. "
+            + description +
+            "No website changes, credentials, cookies, or private keys "
+            "are ever delivered to GitHub.</article>")
+
+    @app.post("/owner/chat-adaptive-revoke", response_class=HTMLResponse)
+    async def owner_revoke_adaptive(
+        request: Request, csrf_token: str = Form(default=""),
+        confirmation: str = Form(default=""),
+        _owner=Depends(require_verified_owner),
+    ):
+        _verify_owner_form(request, _owner["private_owner_id"],
+                           "https://example.com", "adaptive_revoke", csrf_token)
+        if confirmation != "REVOKE":
+            raise HTTPException(status_code=403, detail="Revocation must be explicit")
+        try:
+            was_active = await asyncio.to_thread(revoke_session)
+        except Exception as exc:
+            raise HTTPException(status_code=503,
+                                detail="Unable to verify private session revocation") from exc
+        return _page("Adaptive browser session ended",
+                     "<article>Any active adaptive follow-up session has been "
+                     "revoked; no saved login credentials were deleted.</article>")
 
     @app.post("/internal/chat-sealed-read")
     async def signed_sealed_page_read(
         authorization: str | None = Header(default=None),
+        navigation: str | None = Header(default=None, alias="X-Plenum-Navigation"),
     ):
         try:
             require_enabled()
@@ -137,25 +201,69 @@ def mount_owner_sealed_relay(app):
         except Exception as exc:
             raise HTTPException(status_code=401,
                                 detail="Signed founder workflow required") from exc
+        if navigation is not None:
+            # Only a signed founder workflow may follow an opaque link ID.
+            # The public issue carries no account URL, path or private text.
+            match = re.fullmatch(r"([0-9a-f]{32}):([1-6])", navigation)
+            if match is None:
+                raise HTTPException(status_code=403,
+                                    detail="Invalid private navigation request")
+            try:
+                cursor = await asyncio.to_thread(
+                    consume_follow, match.group(1), int(match.group(2))
+                )
+            except Exception as exc:
+                raise HTTPException(status_code=403,
+                                    detail="No matching owner-approved link") from exc
+            try:
+                result = await asyncio.wait_for(read_hardened_saved_site(
+                    site=cursor["site"], owner=cursor["owner"],
+                    path=cursor["path"],
+                ), timeout=45)
+                links = _safe_links(cursor["site"], cursor["path"], result)
+                result = {**result, "links_untrusted": links}
+                response_record = {
+                    "site": cursor["site"], "path": cursor["path"],
+                    "recipient_public_key": cursor["recipient_public_key"],
+                    "adaptive_session_id": cursor["session_id"],
+                    "adaptive_remaining": cursor["remaining"],
+                }
+                encrypted = seal_result(response_record, result)
+                await asyncio.to_thread(save_follow, cursor, result)
+                return JSONResponse(encrypted, headers=_HEADERS)
+            except Exception as exc:
+                raise HTTPException(status_code=503,
+                                    detail="Encrypted adaptive navigation failed") from exc
+
         try:
-            # Existing GCS atomic compare-and-delete is a mandatory first step.
+            # The original GCS atomic compare-and-delete is mandatory.
             consent = await asyncio.to_thread(consume_read)
         except Exception as exc:
             raise HTTPException(status_code=403,
                                 detail="Owner consent absent or expired") from exc
         try:
-            if consent.get("additional_paths"):
+            if consent.get("schema") == "plenum-sealed-owner-adaptive-consent-v1":
+                result = await asyncio.wait_for(read_hardened_saved_site(
+                    site=consent["site"], owner=consent["owner"],
+                    path=consent["path"],
+                ), timeout=45)
+                links = _safe_links(consent["site"], consent["path"], result)
+                result = {**result, "links_untrusted": links}
+                encrypted = seal_result(consent, result)
+                await asyncio.to_thread(begin_session, consent, result)
+            elif consent.get("additional_paths"):
                 result = await asyncio.wait_for(read_saved_batch(
                     site=consent["site"], owner=consent["owner"],
                     path=consent["path"],
                     additional_paths=consent["additional_paths"],
                 ), timeout=105)
+                encrypted = seal_result(consent, result)
             else:
                 result = await asyncio.wait_for(read_saved_site(
                     site=consent["site"], owner=consent["owner"],
                     path=consent["path"],
                 ), timeout=43)
-            encrypted = seal_result(consent, result)
+                encrypted = seal_result(consent, result)
         except Exception as exc:
             raise HTTPException(status_code=503,
                                 detail="Owner-approved private read failed") from exc

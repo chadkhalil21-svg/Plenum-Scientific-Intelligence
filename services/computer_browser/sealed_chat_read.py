@@ -67,14 +67,23 @@ def _validate_intent(*, site, path, recipient_public_key):
 
 def approve_read(owner_id: str, *, site: str, path: str,
                  recipient_public_key: str, now: int | None = None,
-                 additional_paths: str = ""):
+                 additional_paths: str = "", adaptive: bool = False):
     """Trusted owner UI only, after signed CSRF and exact confirmation."""
     require_enabled()
     owner = _owner(owner_id)
     _validate_intent(site=site, path=path,
                      recipient_public_key=recipient_public_key)
+    if type(adaptive) is not bool:
+        raise PermissionError("Invalid owner adaptive approval")
     from .owner_saved_session import _approved_batch_paths
     extras = _approved_batch_paths(site, path, additional_paths)
+    if adaptive:
+        if extras:
+            raise PermissionError("Adaptive read and explicit batch are exclusive")
+        from .owner_adaptive_session import require_enabled as require_adaptive
+        require_adaptive()
+        # A signed-in adaptive reader may only follow safe exact GET paths.
+        _approved_batch_paths(site, "/__plenum_adaptive_start__", [path])
     store = BrowserProfileStore.from_environment()
     if store.status(owner=owner, origin=site).get("profile_exists") is not True:
         raise PermissionError("No saved owner session for approved website")
@@ -94,6 +103,9 @@ def approve_read(owner_id: str, *, site: str, path: str,
     if extras:
         record["schema"] = "plenum-sealed-owner-batch-consent-v1"
         record["additional_paths"] = list(extras)
+    if adaptive:
+        record["schema"] = "plenum-sealed-owner-adaptive-consent-v1"
+        record["adaptive_session_id"] = secrets.token_hex(16)
     blob.upload_from_string(
         _cipher().encrypt(json.dumps(record, separators=(",", ":")).encode()),
         content_type="application/octet-stream",
@@ -122,9 +134,15 @@ def consume_read(*, now: int | None = None):
                      and set(record) != {"schema", "owner", "site", "path",
                                          "recipient_public_key", "issued", "expires", "nonce",
                                          "additional_paths"})
+                    or
+                    (record.get("schema") == "plenum-sealed-owner-adaptive-consent-v1"
+                     and set(record) != {"schema", "owner", "site", "path",
+                                         "recipient_public_key", "issued", "expires", "nonce",
+                                         "adaptive_session_id"})
                     or record.get("schema") not in {
                         "plenum-sealed-owner-consent-v1",
-                        "plenum-sealed-owner-batch-consent-v1"
+                        "plenum-sealed-owner-batch-consent-v1",
+                        "plenum-sealed-owner-adaptive-consent-v1"
                     })
                 or not isinstance(record["issued"], int)
                 or isinstance(record["issued"], bool)
@@ -143,6 +161,12 @@ def consume_read(*, now: int | None = None):
         if record.get("additional_paths") is not None:
             _approved_batch_paths(record["site"], record["path"],
                                   record["additional_paths"])
+        if record.get("schema") == "plenum-sealed-owner-adaptive-consent-v1":
+            from .owner_adaptive_session import _validate_id, require_enabled as require_adaptive
+            require_adaptive()
+            _validate_id(record.get("adaptive_session_id"))
+            _approved_batch_paths(record["site"], "/__plenum_adaptive_start__",
+                                  [record["path"]])
         # CAS deletion must succeed before any private website session is read.
         blob.delete(if_generation_match=generation)
         return record
@@ -226,14 +250,28 @@ def seal_result(record: dict, result: dict):
                 or len(item["body"]) > 300):
             raise PermissionError("Unapproved or malformed private batch page")
         safe_pages.append(item)
-    plaintext = json.dumps({
+    document = {
         "schema": "plenum-private-page-read-v1",
         "site": record["site"], "path": record["path"],
         "http_status": result["http_status"], "title": title, "body": body,
         "links_untrusted": clean_links,
         "additional_pages_untrusted": safe_pages,
         "model_did_not_execute_website_actions": True,
-    }, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    }
+    if record.get("adaptive_session_id") is not None:
+        from .owner_adaptive_session import _validate_id, MAX_FOLLOWS
+        _validate_id(record["adaptive_session_id"])
+        left = record.get("adaptive_remaining", MAX_FOLLOWS)
+        if type(left) is not int or not 0 <= left <= MAX_FOLLOWS:
+            raise PermissionError("Invalid adaptive navigation budget")
+        document["adaptive_navigation"] = {
+            "session_id": record["adaptive_session_id"],
+            "remaining_followups": left,
+            "read_only": True,
+            "requires_new_owner_approval_per_page": False,
+        }
+    plaintext = json.dumps(document, separators=(",", ":"),
+                           ensure_ascii=True).encode("utf-8")
     if len(plaintext) > 4800:
         raise PermissionError("Private result payload exceeds limit")
     eph = X25519PrivateKey.generate()
