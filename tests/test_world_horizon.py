@@ -76,7 +76,7 @@ class WorldHorizonTests(unittest.TestCase):
         self.assertTrue(report["credential_or_permission_gated"])
         self.assertIn("defense_internal_systems",REVIEW_GATED)
 
-    def test_sciencedaily_is_a_secondary_all-fields_headline_feed(self):
+    def test_sciencedaily_is_a_secondary_all_fields_headline_feed(self):
         source=SOURCES["sciencedaily_latest"]
         self.assertEqual(source["url"],"https://www.sciencedaily.com/rss/all.xml")
         self.assertEqual(source["category"],"discoveries")
