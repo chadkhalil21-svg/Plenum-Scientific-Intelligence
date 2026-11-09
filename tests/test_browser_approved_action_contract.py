@@ -60,9 +60,7 @@ class ExactOwnerActionTests(unittest.TestCase):
         self.assertEqual(result.steps[-1].file_id, "approved.txt")
 
     def test_exact_original_grant_is_single_use(self):
-        token = self._grant()
-        # Test time is fixed to prevent expiry in this historical synthetic unit.
-        # Authorizing uses current time, so issue a current-time grant for this test.
+        # Use current time so expiry is tested by the original owner gate.
         token = self.gate.issue(verified_owner_id=self.OWNER, plan=self.plan)
         result = self._authorize(self.plan, token)
         self.assertEqual(len(result.steps), 4)
