@@ -63,7 +63,8 @@ def _approved_upload(root, file_id):
 
 
 async def execute_steps_on_page(page, steps, *, upload_root=None,
-                                authorized_origins=None, local_fixture=False):
+                                authorized_origins=None, local_fixture=False,
+                                locator_scope=None):
     """Run fixed locator APIs, never JavaScript evaluation or arbitrary shell."""
     validate_steps(steps)
     if not local_fixture:
@@ -74,7 +75,7 @@ async def execute_steps_on_page(page, steps, *, upload_root=None,
         if not local_fixture and not safe_url(page.url,origins=authorized_origins):
             raise PermissionError("Browser navigated outside owner-approved site")
         op=step.operation
-        locator=page.locator(step.selector) if op!="snapshot" else None
+        locator=(locator_scope or page).locator(step.selector) if op!="snapshot" else None
         if op=="fill":
             await locator.fill(step.value,timeout=8000)
         elif op=="click":
