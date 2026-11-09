@@ -164,7 +164,7 @@ def login_html(nonce):
           updateTypingEnabled();
           status.textContent=m.message||"Private session save did not complete.";
           fieldStatus.textContent=m.ok===true
-            ?"Encrypted website session saved. Open Saved Website Sessions to verify restoration."
+            ?"Website state stored encrypted. Login restoration is NOT yet verified; use Saved Website Sessions."
             :"Browser remains open. Saving was not confirmed; do not assume this login is stored.";
         }
         if(m.type==="ack"&&m.action==="click"){
@@ -381,7 +381,7 @@ def mount_private_login(app):
                                 "message":"Encrypted session storage unavailable. Browser remains open; saving was not confirmed."})
                             continue
                         await ws.send_json({"type":"save_result","ok":True,
-                            "message":"Website login saved privately in encrypted storage"})
+                            "message":"Website state stored encrypted; website login restoration not yet verified"})
                         continue
                     elif kind=="close":
                         break
