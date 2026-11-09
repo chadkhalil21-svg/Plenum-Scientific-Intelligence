@@ -246,7 +246,7 @@ def verify_original(report):
             or report.get("target_days")!=list(TEST_DAYS)
             or report.get("observation_source_product")!=NOAA_SOURCE_PRODUCT
             or report.get("observation_source_sampling")!=NOAA_SOURCE_SAMPLING
-            or report.get("source_amendment")!=NOAA_SOURCE_AMENDMENT)::
+            or report.get("source_amendment")!=NOAA_SOURCE_AMENDMENT):
         raise ValueError("Invalid sealed original research")
     rows=report.get("stations")
     if not isinstance(rows,list) or [r.get("station") for r in rows]!=list(STATION_IDS):
