@@ -11,7 +11,7 @@ from inspect_ai.agent import react
 from inspect_ai.tool import python
 from inspect_evals.humaneval.humaneval import humaneval
 
-from .inspect_react_coding import MAX_MESSAGES, MAX_TOOL_SECONDS
+from plenum_ai.inspect_react_coding import MAX_MESSAGES, MAX_TOOL_SECONDS
 
 SAMPLE_ID="HumanEval/3"
 PROMPT=(
