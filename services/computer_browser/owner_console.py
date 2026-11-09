@@ -84,6 +84,13 @@ value="https://example.com/" maxlength="1200">
 <p><a href="/owner/chat-sealed-approval">Approve an encrypted one-page Computer read</a></p>"""
                 if (os.environ.get("K_SERVICE")=="plenum-browser-owner-auth0"
                     and os.environ.get("PLENUM_SEALED_CHAT_READ_ENABLED")=="true")
+                else "") + (
+                """<h2>Authorize a new website</h2>
+<p><a href="/owner/sites">Manage registered websites</a></p>
+<small>New registration does not authorize navigation until the separately
+verified network execution gate is enabled.</small>"""
+                if (os.environ.get("K_SERVICE")=="plenum-browser-owner-auth0"
+                    and os.environ.get("PLENUM_RUNTIME_SITE_GRANTS_ENABLED")=="true")
                 else ""))
 
     @app.get("/owner/public-preview",response_class=HTMLResponse)
