@@ -7,9 +7,10 @@ from unittest.mock import patch
 
 from services.computer_browser.github_oidc_read_policy import (
     AUDIENCE, ENVIRONMENT, GitHubRelayIdentity, GitHubOIDCTokenVerifier,
-    ISSUER, JWKS, REPOSITORY, WORKFLOW_REF, enforce_relay_claims,
+    ISSUER, JWKS, REPOSITORY, REPOSITORY_ID, ACTOR_ID, OWNER_SUBJECT,
+    WORKFLOW_REF, enforce_relay_claims,
 )
-ID=GitHubRelayIdentity(repository_id="98614162",actor_id="32165498")
+ID=GitHubRelayIdentity(repository_id=REPOSITORY_ID,actor_id=ACTOR_ID)
 
 
 class GitHubWorkflowPolicyTests(unittest.TestCase):
@@ -17,9 +18,11 @@ class GitHubWorkflowPolicyTests(unittest.TestCase):
         now=int(time.time())
         return {
             "iss":ISSUER,"aud":AUDIENCE,
-            "sub":"repo:chadkhalil21-svg@1/Plenum-Scientific-Intelligence@98614162:environment:computer-browser-production",
+            "sub":OWNER_SUBJECT,
             "repository":REPOSITORY,"repository_owner":"chadkhalil21-svg",
             "repository_id":ID.repository_id,
+            "repository_owner_id":ID.actor_id,
+            "runner_environment":"github-hosted",
             "actor":"chadkhalil21-svg","actor_id":ID.actor_id,
             "workflow_ref":WORKFLOW_REF,
             "event_name":"issues","ref":"refs/heads/main",
@@ -32,7 +35,8 @@ class GitHubWorkflowPolicyTests(unittest.TestCase):
     def test_requires_protected_immutable_repo_and_actor_ids(self):
         with patch.dict(os.environ,{},clear=True),self.assertRaises(ValueError):
             GitHubRelayIdentity.from_environment()
-        for a,b in [("","3"),("0","3"),("123",""),("test","3"),("123","x")]:
+        for a,b in [("","3"),("0","3"),("123",""),("test","3"),("123","x"),
+                    ("9999",ACTOR_ID),(REPOSITORY_ID,"9999")]:
             with self.subTest(ids=(a,b)),self.assertRaises(ValueError):
                 GitHubRelayIdentity(repository_id=a,actor_id=b).validate()
 
@@ -51,10 +55,12 @@ class GitHubWorkflowPolicyTests(unittest.TestCase):
         variants={
             "iss":"https://attacker.example","aud":"https://other.example",
             "repository":"attacker/fork","repository_id":"99999",
-            "repository_owner":"attacker","actor":"attacker","actor_id":"888",
+            "repository_owner":"attacker","repository_owner_id":"888",
+            "actor":"attacker","actor_id":"888",
             "workflow_ref":"chadkhalil21-svg/Plenum-Scientific-Intelligence/.github/workflows/evil.yml@refs/heads/main",
             "event_name":"pull_request","ref":"refs/heads/feature",
             "ref_type":"tag","environment":"dev","repository_visibility":"private",
+            "runner_environment":"self-hosted",
             "sub":"attacker","iat":int(time.time())+1200,
             "nbf":int(time.time())+1200,"exp":int(time.time())+1200,
             "jti":"x","run_id":"1; rm -rf /",
