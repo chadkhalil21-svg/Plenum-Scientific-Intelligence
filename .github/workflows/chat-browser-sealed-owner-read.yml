@@ -1,0 +1,106 @@
+name: One Owner-Approved Encrypted Browser Page Read
+on:
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+  id-token: write
+  issues: write
+jobs:
+  sealed-private-owner-read:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.user.id == 251133044 &&
+      github.event.issue.title == 'Computer Browser: one encrypted approved page read' &&
+      github.event.issue.body == 'READ_ONE_OWNER_APPROVED_ENCRYPTED_PAGE:2026-11-09'
+    environment: computer-browser-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: plenum-owner-sealed-chat-read
+      cancel-in-progress: false
+    steps:
+      - name: Verify signed founder-only request without site details
+        env:
+          REPO: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          test "$REPO" = 'chadkhalil21-svg/Plenum-Scientific-Intelligence'
+          test "$ACTOR" = 'chadkhalil21-svg'
+      - name: Request one end-to-end encrypted page through signed OIDC
+        id: sealed
+        env:
+          AUDIENCE: https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app/internal/chat-sealed-read
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, re, urllib.request, urllib.parse
+          from pathlib import Path
+          target=os.environ['AUDIENCE']
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self,*args,**kwargs):return None
+          opener=urllib.request.build_opener(NoRedirect(),urllib.request.ProxyHandler({}))
+          try:
+              req=urllib.request.Request(
+                  os.environ['ACTIONS_ID_TOKEN_REQUEST_URL']+'&audience='+
+                  urllib.parse.quote(target,safe=''),
+                  headers={'Authorization':'Bearer '+os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']})
+              with opener.open(req,timeout=12) as reply:
+                  signed=json.loads(reply.read(15000)).get('value','')
+              if not isinstance(signed,str) or not 80<=len(signed)<=12000:
+                  raise ValueError('Unverified signed identity')
+              req=urllib.request.Request(target,data=b'',method='POST',
+                  headers={'Authorization':'Bearer '+signed,'Content-Type':'application/octet-stream'})
+              with opener.open(req,timeout=75) as reply:
+                  if reply.status!=200:raise ValueError('No approved read')
+                  envelope=json.loads(reply.read(8100))
+              expected={'schema','encoding','ephemeral_public_key','salt','nonce','ciphertext','plaintext_in_github'}
+              if (not isinstance(envelope,dict) or set(envelope)!=expected
+                  or envelope['schema']!='plenum-sealed-browser-result-v1'
+                  or envelope['encoding']!='x25519-hkdf-sha256-aes256gcm'
+                  or envelope['plaintext_in_github'] is not False):
+                  raise ValueError('Invalid encrypted envelope')
+              for field,low,high in [('ephemeral_public_key',43,43),('salt',22,22),
+                                     ('nonce',16,16),('ciphertext',32,7900)]:
+                  value=envelope[field]
+                  if not isinstance(value,str) or not low<=len(value)<=high or not re.fullmatch(r'[A-Za-z0-9_-]+',value):
+                      raise ValueError('Invalid sealed field')
+              (Path(os.environ['RUNNER_TEMP'])/'sealed-browser.json').write_text(
+                  json.dumps(envelope,separators=(',',':')),encoding='utf-8')
+              print('PASS: Received only owner-approved ciphertext.')
+          except Exception:
+              print('BLOCKED: Owner approval, signed transport or encrypted result unavailable.')
+              raise SystemExit(1)
+          PY
+      - name: Deliver ciphertext only to original founder issue
+        if: steps.sealed.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json,os,pathlib,urllib.request
+          artifact=pathlib.Path(os.environ['RUNNER_TEMP'])/'sealed-browser.json'
+          envelope=json.loads(artifact.read_text())
+          assert envelope['plaintext_in_github'] is False
+          note='SEALED RESULT: The exact owner-approved page is encrypted to a recipient-held X25519 key. No plaintext or website credentials are stored here.\n'+json.dumps(envelope,separators=(',',':'))
+          endpoint='https://api.github.com/repos/'+os.environ['GH_REPO']+'/issues/'+str(int(os.environ['ISSUE']))+'/comments'
+          req=urllib.request.Request(endpoint,data=json.dumps({'body':note}).encode(),method='POST',
+              headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],
+                       'Accept':'application/vnd.github+json','Content-Type':'application/json'})
+          with urllib.request.urlopen(req,timeout=20) as reply:
+              assert reply.status==201
+          artifact.unlink()
+          print('Ciphertext delivered without leaking private page text or key.')
+          PY
+      - name: Report denial without private content
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$ISSUE" --repo "$GH_REPO" --body 'BLOCKED: A signed one-time owner-approved encrypted page read was not available. No private page text or account credentials returned.'

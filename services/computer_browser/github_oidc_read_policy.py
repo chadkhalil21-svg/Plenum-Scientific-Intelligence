@@ -22,6 +22,8 @@ OWNER_SUBJECT=("repo:chadkhalil21-svg@"+ACTOR_ID+
                ":environment:computer-browser-production")
 WORKFLOW_REF=REPOSITORY+"/.github/workflows/chat-browser-owner-read.yml@refs/heads/main"
 AUDIENCE="https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app/internal/chat-demo-read"
+SEALED_AUDIENCE="https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app/internal/chat-sealed-read"
+SEALED_WORKFLOW_REF=REPOSITORY+"/.github/workflows/chat-browser-sealed-owner-read.yml@refs/heads/main"
 ENVIRONMENT="computer-browser-production"
 MAX_LIFETIME=600
 
@@ -44,7 +46,8 @@ class GitHubRelayIdentity:
         return self
 
 
-def enforce_relay_claims(claims, identity, *, now=None):
+def enforce_relay_claims(claims, identity, *, now=None, expected_audience=AUDIENCE,
+                         expected_workflow_ref=WORKFLOW_REF):
     """Accept only already-signature-verified, short-lived issue workflow JWT."""
     identity.validate()
     t=int(time.time() if now is None else now)
@@ -56,7 +59,7 @@ def enforce_relay_claims(claims, identity, *, now=None):
             or not 0<exp-iat<=MAX_LIFETIME
             or nbf>iat+10
             or claims.get("iss")!=ISSUER
-            or claims.get("aud")!=AUDIENCE
+            or claims.get("aud")!=expected_audience
             or claims.get("repository")!=REPOSITORY
             or str(claims.get("repository_id"))!=identity.repository_id
             or claims.get("repository_owner")!="chadkhalil21-svg"
@@ -65,7 +68,7 @@ def enforce_relay_claims(claims, identity, *, now=None):
             or claims.get("event_name")!="issues"
             or claims.get("ref")!="refs/heads/main"
             or claims.get("ref_type")!="branch"
-            or claims.get("workflow_ref")!=WORKFLOW_REF
+            or claims.get("workflow_ref")!=expected_workflow_ref
             or claims.get("environment")!=ENVIRONMENT
             or claims.get("repository_visibility")!="public"
             or claims.get("sub")!=OWNER_SUBJECT
@@ -85,9 +88,11 @@ def enforce_relay_claims(claims, identity, *, now=None):
 class GitHubOIDCTokenVerifier:
     """Pinned GitHub issuer/JWKS and RS256 only. Never trust token-provided key URIs."""
 
-    def __init__(self, identity):
+    def __init__(self, identity, *, sealed=False):
         self.identity=identity.validate()
         self._jwks=None
+        self._expected_audience=SEALED_AUDIENCE if sealed else AUDIENCE
+        self._expected_workflow_ref=SEALED_WORKFLOW_REF if sealed else WORKFLOW_REF
 
     def verify(self, token):
         import jwt
@@ -101,8 +106,10 @@ class GitHubOIDCTokenVerifier:
                 self._jwks=jwt.PyJWKClient(JWKS,cache_jwk_set=True,lifespan=300,timeout=5)
             key=self._jwks.get_signing_key_from_jwt(token).key
             claims=jwt.decode(token,key,algorithms=["RS256"],issuer=ISSUER,
-                audience=AUDIENCE,leeway=10,
+                audience=self._expected_audience,leeway=10,
                 options={"require":["iss","aud","sub","iat","exp","nbf","jti"]})
-            return enforce_relay_claims(claims,self.identity)
+            return enforce_relay_claims(claims,self.identity,
+                expected_audience=self._expected_audience,
+                expected_workflow_ref=self._expected_workflow_ref)
         except (jwt.PyJWTError,ValueError,TypeError,OSError) as exc:
             raise PermissionError("Invalid GitHub OIDC workflow token") from exc

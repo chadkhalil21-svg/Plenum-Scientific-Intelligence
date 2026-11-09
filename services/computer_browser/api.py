@@ -115,3 +115,7 @@ mount_auth0_owner(app)
 # Not mounted until enabled explicitly in the isolated owner Auth0 service.
 from .owner_chat_relay import mount_owner_chat_relay
 mount_owner_chat_relay(app)
+
+# Optional owner-only, signed one-shot X25519 encrypted chat read.
+from .owner_sealed_relay import mount_owner_sealed_relay
+mount_owner_sealed_relay(app)
