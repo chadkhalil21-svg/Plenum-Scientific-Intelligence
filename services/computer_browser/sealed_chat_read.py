@@ -106,11 +106,19 @@ def approve_read(owner_id: str, *, site: str, path: str,
     if adaptive:
         record["schema"] = "plenum-sealed-owner-adaptive-consent-v1"
         record["adaptive_session_id"] = secrets.token_hex(16)
-    blob.upload_from_string(
-        _cipher().encrypt(json.dumps(record, separators=(",", ":")).encode()),
-        content_type="application/octet-stream",
-        if_generation_match=generation,
-    )
+        from .owner_adaptive_session import prepare_pending
+        prepare_pending(record, now=t)
+    try:
+        blob.upload_from_string(
+            _cipher().encrypt(json.dumps(record, separators=(",", ":")).encode()),
+            content_type="application/octet-stream",
+            if_generation_match=generation,
+        )
+    except Exception:
+        if adaptive:
+            from .owner_adaptive_session import revoke_session
+            revoke_session()
+        raise
     return {"approved_once": True, "expires_in_seconds": TTL}
 
 
