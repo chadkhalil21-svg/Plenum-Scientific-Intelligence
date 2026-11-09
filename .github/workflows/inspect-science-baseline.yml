@@ -154,3 +154,123 @@ jobs:
           git -C ledger commit -m 'Archive independently scored Inspect science baseline'
           git -C ledger pull --rebase origin research-memory
           git -C ledger push origin HEAD:research-memory
+
+  original-scicode-one-case:
+    if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release original SciCode one-case')
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    permissions:
+      contents: read
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+      HF_TOKEN: ''
+      OPENAI_API_KEY: ''
+      ANTHROPIC_API_KEY: ''
+      GOOGLE_API_KEY: ''
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Use existing pinned Inspect and ORIGINAL SciCode scorer, no new framework
+        run: |
+          docker info >/dev/null
+          docker compose version
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[inspection]'
+          python -m pip install 'inspect-evals[scicode]==0.27.0' 'transformers==5.22.1' 'accelerate>=1.1,<2' 'huggingface_hub>=1.2,<2' safetensors
+          python -m pip check
+          python - <<'PY'
+          from importlib import metadata
+          import acp.helpers
+          assert metadata.version('inspect-ai') == '0.3.287'
+          assert metadata.version('inspect-evals') == '0.27.0'
+          assert metadata.version('agent-client-protocol') == '0.12.1'
+          from inspect_evals.scicode.scicode import scicode
+          assert callable(scicode)
+          print('Pinned original Inspect/SciCode interfaces available; no benchmark rewrite.')
+          PY
+      - name: Fetch only the already approved Qwen3-0.6B revision
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from huggingface_hub import HfApi,snapshot_download
+          from plenum_ai.hf_model import APPROVED_MODEL, APPROVED_REVISION
+          assert APPROVED_MODEL == 'Qwen/Qwen3-0.6B'
+          assert HfApi().model_info(APPROVED_MODEL,revision=APPROVED_REVISION).sha == APPROVED_REVISION
+          Path('reports').mkdir(exist_ok=True)
+          Path('reports/original-scicode-model-path.txt').write_text(
+              snapshot_download(repo_id=APPROVED_MODEL, revision=APPROVED_REVISION),
+              encoding='utf-8')
+          print('Official checkpoint revision verified; no paid model provider.')
+          PY
+      - name: Run ONE original external scientific coding case with Inspect Docker scorer
+        run: |
+          MODEL_PATH="$(cat reports/original-scicode-model-path.txt)"
+          inspect eval inspect_evals/scicode --model hf/local \
+            -M "model_path=$MODEL_PATH" -M device=cpu -M do_sample=false -M enable_thinking=false \
+            --limit 1 --epochs 1 --max-samples 1 --max-sandboxes 1 \
+            --max-connections 1 --max-tokens 256 --temperature 0 \
+            --max-retries 0 --time-limit 620 -T timeout=90 \
+            --log-dir reports/inspect-original-scicode-logs --display none
+      - name: Archive exact original task score, including legitimate failures
+        run: |
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          from inspect_ai.log import list_eval_logs, read_eval_log
+          from plenum_ai.hf_model import APPROVED_REVISION
+          folder=Path('reports/inspect-original-scicode-logs')
+          logs=list_eval_logs(log_dir=str(folder))
+          assert len(logs)==1, 'Exactly one original SciCode task log required'
+          record=read_eval_log(logs[0].name)
+          assert record.status=='success' and not record.error, 'Original scorer did not complete'
+          assert record.eval.task in ('scicode','inspect_evals/scicode')
+          assert record.eval.model=='hf/local'
+          assert str(record.eval.model_args.get('model_path','')).endswith(APPROVED_REVISION)
+          assert len(record.samples or [])==1
+          sample=record.samples[0]
+          scores=list((sample.scores or {}).values())
+          assert len(scores)==1 and isinstance(scores[0].value,dict), 'Original SciCode scorer missing'
+          items=scores[0].value
+          assert len(items)>=1
+          assert all(float(v) in (0.0,1.0) for v in items.values())
+          passed=sum(float(v)==1.0 for v in items.values())
+          native=Path(logs[0].name)
+          result={
+            'schema':'plenum-original-scicode-one-task-v1',
+            'original_evaluator':'inspect_evals/scicode 0.27.0; unchanged original Docker scorer',
+            'original_task_version':getattr(record.eval,'task_version',None),
+            'model':'Qwen/Qwen3-0.6B',
+            'revision':APPROVED_REVISION,
+            'model_execution':'real frozen CPU local inference',
+            'original_task_id':str(sample.id),
+            'one_original_main_task_attempted':1,
+            'original_subproblems_attempted':len(items),
+            'original_subproblems_correct':passed,
+            'original_main_task_solved':passed==len(items),
+            'original_log_sha256':hashlib.sha256(native.read_bytes()).hexdigest(),
+            'paid_api_calls':0,
+            'tool_using_agent_tested':False,
+            'new_scientific_discovery':False,
+            'AGI_demonstrated':False,
+            'limitations':['Single public benchmark case, possibly in pretraining',
+              'Original code is scored in Inspect default no-network Docker sandbox',
+              'This is no-tool scientific coding, NOT autonomous research or self-improvement'],
+          }
+          Path('reports/original-scicode-one.json').write_text(json.dumps(result,indent=2)+'\n')
+          print('Original SciCode:',passed,'/',len(items),'subproblems correct;',
+                'main problem solved?',result['original_main_task_solved'])
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: original-scicode-one-case-independent-scores
+          path: |
+            reports/original-scicode-one.json
+            reports/inspect-original-scicode-logs/
+          retention-days: 90
