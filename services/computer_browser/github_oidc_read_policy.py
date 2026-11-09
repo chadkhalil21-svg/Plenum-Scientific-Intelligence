@@ -14,6 +14,12 @@ import time
 ISSUER="https://token.actions.githubusercontent.com"
 JWKS=ISSUER+"/.well-known/jwks"
 REPOSITORY="chadkhalil21-svg/Plenum-Scientific-Intelligence"
+# Public immutable GitHub IDs read from authenticated repository metadata.
+REPOSITORY_ID="1447724141"
+ACTOR_ID="251133044"
+OWNER_SUBJECT=("repo:chadkhalil21-svg@"+ACTOR_ID+
+               "/Plenum-Scientific-Intelligence@"+REPOSITORY_ID+
+               ":environment:computer-browser-production")
 WORKFLOW_REF=REPOSITORY+"/.github/workflows/chat-browser-owner-read.yml@refs/heads/main"
 AUDIENCE="https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app/internal/chat-read-v1"
 ENVIRONMENT="computer-browser-production"
@@ -33,9 +39,8 @@ class GitHubRelayIdentity:
         ).validate()
 
     def validate(self):
-        for x in (self.repository_id,self.actor_id):
-            if not isinstance(x,str) or not re.fullmatch(r"[1-9][0-9]{0,19}",x):
-                raise ValueError("Trusted immutable GitHub actor/repository IDs must be pinned")
+        if self.repository_id!=REPOSITORY_ID or self.actor_id!=ACTOR_ID:
+            raise ValueError("Unrecognized immutable GitHub repository or owner identity")
         return self
 
 
@@ -63,8 +68,9 @@ def enforce_relay_claims(claims, identity, *, now=None):
             or claims.get("workflow_ref")!=WORKFLOW_REF
             or claims.get("environment")!=ENVIRONMENT
             or claims.get("repository_visibility")!="public"
-            or not isinstance(claims.get("sub"),str)
-            or not claims["sub"].startswith("repo:")
+            or claims.get("sub")!=OWNER_SUBJECT
+            or str(claims.get("repository_owner_id"))!=ACTOR_ID
+            or claims.get("runner_environment")!="github-hosted"
             or not isinstance(claims.get("jti"),str)
             or not 16<=len(claims["jti"])<=200
             or not isinstance(claims.get("run_id"),str)
