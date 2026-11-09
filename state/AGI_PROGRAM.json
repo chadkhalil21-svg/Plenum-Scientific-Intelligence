@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-07T22:45:06.697Z",
+  "last_reviewed_utc": "2026-11-09T02:38:15.390Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -581,12 +581,28 @@
       "url": "https://cloud.google.com/run/pricing",
       "AGI_demonstrated": false,
       "notes": "Google official current Cloud Run REQUEST-based monthly free tier: 180,000 vCPU-seconds, 360,000 GiB-seconds, 2 million requests, based on us-central1 Tier 1 pricing and aggregated across projects by linked BILLING ACCOUNT. Existing planned Cloud Run browser worker has 2 vCPU, 2GiB RAM, min instances 0. Ignoring startup, egress, build, secret storage and other usage, free CPU allowance corresponds to ~90,000 billable active seconds = 25 active browser hours/month or ~1,500 60-second tasks. Cloud Run requires project linked to active billing even for free-tier use. Budget alerts do NOT automatically cap charges. Long-lived browser WebSocket can remain billable while open. These are rough planning upper bounds, not guaranteed no-cost usage. Browser operations do not demonstrate AGI or provide free LLM/GPU training."
+    },
+    {
+      "id": "world-model-action-conditioned-synthetic-20261108",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42551545363",
+      "result": {
+        "heldout_horizon8_action_conditioned_rmse": 0.0263881,
+        "heldout_horizon8_action_blind_rmse": 0.2398873,
+        "heldout_horizon8_persistence_rmse": 0.8799355,
+        "shifted_physics_horizon8_action_conditioned_rmse": 0.0591322,
+        "train_transitions": 448,
+        "holdout_transitions": 192
+      },
+      "metric": "Synthetic nonlinear ODE action-conditioned frozen dynamics prediction vs nonaction baselines under heldout actions; shifted physics tests transfer error",
+      "AGI_demonstrated": false,
+      "notes": "Reuses SciPy solve_ivp, NumPy and scikit-learn Ridge; original Verified Scientific Simulation Lab job ran from PR branch at #42551545363 and passed actual offline probe and independent workflow assertions. This is NOT JEPA latent video training, real-world calibrated digital twin, new physics, causal understanding, or AGI/ASI."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Avoid asking founder to copy notebook code. Verified official Kaggle API auth and private draft upload already completed (#42408852329, #42413145594). Available GitHub connector currently lacks workflow_dispatch and this ChatGPT session cannot access GitHub environment secret; TinyFish supports browser actions in chat but its default profile has no saved Kaggle/GitHub login. Next, with founder's consent, initialize a secure TinyFish website-login profile and directly inspect/control Kaggle UI; alternatively add an explicitly owner-approved GitHub Actions trigger path. Inference remains NOT executed; preserve scarce free GPU quota."
+      "action": "AGI research priority: apply the documented reuse-first JEPA/world-model program, not another browser stack. The first SciPy/sklearn action-conditioned synthetic probe independently ran on the official scientific workflow (run 42551545363): horizon-8 RMSE 0.0263881 vs action-blind 0.2398873, but shifted physics worsened to 0.0591322. Next, evaluate one frozen licensed official V-JEPA 2.1 checkpoint on a tiny rights-cleared video/action corpus with explicit GPU budget and independent action, occlusion, long-horizon and OOD baselines. No V-JEPA inference/training or genuine digital twin has run yet."
     },
     {
       "priority": 2,
@@ -598,7 +614,7 @@
     },
     {
       "priority": 4,
-      "action": "Founder created Google project plenum-computer-browser; billing linkage unverified. Browser source/CI and owner IAP private read-only page built but no cloud deployment, real account login or ChatGPT private-browser tool yet. Nominal 2vCPU/2GiB free capacity ~25 active browser hours/month, shared per billing account and not guaranteed; Cloud billing account must be linked. Next: verify project billing and cost guardrails, owner-authorize GCP IAM/WIF/private GCS/Secret Manager, deploy private Cloud Run, independently verify logged-in user/browser approvals and ChatGPT connector. Existing GitHub free public bridge and optional metered TinyFish remain separate."
+      "action": "Supporting browser status, not AGI core: official Playwright MCP public browser and ordinary ChatGPT to GitHub public navigation have worked; owner-operated encrypted public demo login restoration verified live at 8:09 PM ET November 8. Private ChatGPT authenticated browsing remains unverified. OAuth MCP and signed GitHub relay have source/CI changes (#248/#249/#252/#253) but the private relay feature is off by default and production/identity replay evidence requires fresh checking. No additional parallel browser framework or unapproved privilege expansion. Resume only for a concrete scientific research use case."
     },
     {
       "priority": 5,
@@ -957,6 +973,14 @@
     {
       "decision": "Treat Cloud Run's nominal 25 hours/month of free 2-vCPU browser compute as an estimate, not a zero-cost guarantee or AGI compute allocation.",
       "reason": "Official pricing: request-based allowance 180k vCPU-seconds, 360k GiB-seconds, 2M requests monthly shared across projects on same billing account. 2 vCPU 2GiB browser is CPU-limited to ~25 hours only if no other use. Cloud billing must be linked even within free tier; side services, egress and idle open browser sessions can incur charges."
+    },
+    {
+      "decision": "AGI/ASI FIRST: reuse proven upstream tools, independently verify capability gains, and stop duplicated infrastructure work",
+      "reason": "Founder reaffirmed on 2026-11-08 that repeated browser infrastructure and stale ledger statuses squander research progress. Main AGENTS.md, docs/LEDGER.md, docs/CONTINUITY_AND_REUSE.md now require inspecting actual verified source, choosing a single reused tool, measuring a heldout falsifier, labeling statuses, and keeping AGI/ASI goals primary. Browser work is only a supporting capability."
+    },
+    {
+      "decision": "World models and physical simulations: learn from Yann LeCun JEPA, reuse V-JEPA 2.1 and validated scientific simulators; never confuse synthetic fixtures with a real-world digital twin",
+      "reason": "Founder reviewed Yann LeCun JEPA/world-model educational images on 2026-11-08. Meta FAIR V-JEPA 2.1 official source and checkpoints, Google MuJoCo, NVIDIA Isaac Lab are candidate external libraries, NOT installed or independently evaluated at Plenum. Existing SciPy/OpenMM/PyBaMM/OpenMDAO solvers provide bounded scientific computation. New tiny supervised action-conditioned synthetic prediction baseline passed CI but is not JEPA or AGI. See docs/JEPA_WORLD_MODELS_AND_SIMULATION.md and main PR #257."
     }
   ],
   "operating_rules": [
@@ -964,6 +988,8 @@
     "Label scheduled, implemented, experimentally confirmed, and failed work distinctly.",
     "Never infer scientific novelty or general intelligence from generated language or green CI.",
     "Do not auto-publish private content or authorize spending, model promotion, external communication, or unrestricted code execution.",
-    "Update this public-safe status after important verified experiments and decisions, preserving previous evidence URLs."
+    "Update this public-safe status after important verified experiments and decisions, preserving previous evidence URLs.",
+    "Before building any new infrastructure, audit current repo/evidence/ledger and upstream tools, reuse exactly one suitable implementation per role, define one heldout/falsifiable capability test and cost limit, measure actual improvement, report negative results, and update canonical research-memory state promptly. AGI and eventual ASI research outrank browser and UI polish.",
+    "Distinguish physical-law simulator, data-calibrated digital twin, action-conditioned dynamics model, latent JEPA representation, causal intervention evidence and AGI. Never mark a trained/verified world model or AGI/ASI from a fixture, license review, CI import, or model checkpoint alone."
   ]
 }
