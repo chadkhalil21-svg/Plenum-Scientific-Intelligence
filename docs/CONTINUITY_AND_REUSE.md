@@ -1,5 +1,12 @@
 # Reuse-first development and program continuity
 
+## Current all-disciplines AGI/ASI reuse decision (2026-11-08)
+
+The comprehensive [AGI/ASI capability atlas](AGI_ASI_CAPABILITY_ATLAS.md) is the one reviewed cross-disciplinary index for what is actually verified vs merely optional vs upstream candidate across physics, engineering, plant biology, tissue/cells, molecular science, synthetic simulation, causal inference, experimental design, quantum, learning, testing and digital twins. It complements rather than replaces the historical detailed ledger and science-specific docs. Reuse official upstream results **without rerunning their science validation**; only test Plenum's new interoperation or genuinely new biological/physical claim. No blanket import or mass package pinning.
+
+**2026-11-08 audit optimization:** 103 GitHub Actions workflow files, 89 Python Plenum modules, 71 docs and 33 service files. Stop breadth-driven code/infrastructure work, keep verified Qwen/Inspect/LangGraph/Playwright/specialist solvers, and prioritize one scored unfamiliar real scientific problem, one genuinely prospective physical prediction, and then a rights-cleared realistic action/video transfer task. Full AGI and ASI remain absent; no defensible percentage. Supporting packages are selected only when they demonstrably unblock these tasks. Source links, package registrations, imports and green test fixtures are not independent intelligence or original discovery.
+
+
 ## 2026-11-08 current optimization reconciliation (read before older snapshots)
 
 This is a *current decision*, not a new framework implementation. Use one existing role-based stack: Qwen frozen baseline; LangGraph for orchestration/memory; Inspect for independently scored models/agents; scoped OpenHands for coding; official Playwright/Playwright MCP with existing authenticated owner portal for browser; tested specialist numerical engines; V-JEPA 2.1 only as a properly budgeted frozen *visual representation* trial, not as a proven action-conditioned model. Compare alternatives on heldout actual outcome, reliability, total cost and compute; if no gain, do not add them. BrowserGym/AgentLab are optional **evaluation** fixtures, not new production browser stacks. Choose **adopt > adapt > build**, but require licensing/weight terms, security, provenance, maintenance and test evidence before imports. Latest upstream rationale and exact stop/go/finish-line are documented at the top of [LEDGER.md](LEDGER.md).
