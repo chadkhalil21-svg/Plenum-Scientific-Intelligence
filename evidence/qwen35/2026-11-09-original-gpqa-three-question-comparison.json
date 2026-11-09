@@ -1,0 +1,81 @@
+{
+  "schema": "plenum-qwen35-4b-original-gpqa-three-question-v1",
+  "evidence_class": "new_model_real_cpu_inference_original_upstream_scorer",
+  "source": {
+    "workflow_url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42565079525",
+    "run_id": 42565079525,
+    "job_id": 128989735017,
+    "status": "success",
+    "source_sha": "14ecf61521408889a5cf2e726b6d760fe55810fa",
+    "artifact_id": 13651326628,
+    "artifact_url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42565079525/artifacts/13651326628",
+    "artifact_zip_sha256": "a3abff5ec135759c8ac0fb1e4f05d0a623bc37bade9649737da6ebbe8fa9668b"
+  },
+  "candidate": {
+    "name": "Qwen/Qwen3.5-4B",
+    "quantized_gguf": "unsloth/Qwen3.5-4B-GGUF/Qwen3.5-4B-Q4_K_M.gguf",
+    "quantization": "Q4_K_M",
+    "weights_revision": "e87f176479d0855a907a41277aca2f8ee7a09523",
+    "weights_sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+    "runtime": "original ggml-org/llama.cpp b11146 Ubuntu x64 CPU",
+    "runtime_binary_sha256": "c150306eb16b5ab696f76a8bdf810c35fd98a24e82158742e6fa28f420ff8410",
+    "local_only_127_0_0_1": true,
+    "paid_model_api_calls": 0
+  },
+  "evaluation": {
+    "original_upstream": "inspect_evals/gpqa_diamond 0.27.0",
+    "questions_same_as_previous_frozen_model": true,
+    "question_count": 3,
+    "old_model_rerun": false,
+    "scorer_reimplemented": false,
+    "domain_results": [
+      {
+        "domain": "Biology",
+        "original_id": "rec2ZTsqazBZ3LTWZ",
+        "previous_qwen3_06b_correct": false,
+        "candidate_qwen35_4b_correct": false,
+        "log_sha256": "bc4cc985baede651ec87f2bec4c419b01a40caf69e975b98e83d1dbfb87ca5b9"
+      },
+      {
+        "domain": "Chemistry",
+        "original_id": "rec0Arme2jcXQZnAW",
+        "previous_qwen3_06b_correct": true,
+        "candidate_qwen35_4b_correct": false,
+        "log_sha256": "f45ebb51e878d8b7ff3987c7fb3698851eda728a20517efae0ccaf180c587c07"
+      },
+      {
+        "domain": "Physics",
+        "original_id": "rec06pnAkLOr2t2mp",
+        "previous_qwen3_06b_correct": false,
+        "candidate_qwen35_4b_correct": false,
+        "log_sha256": "87fd7222cecd4790e983c7072113a20a40fe9ffd3f9390867f82a2407f0dc7f6"
+      }
+    ],
+    "previous_qwen3_06b_correct": 1,
+    "candidate_qwen35_4b_correct": 0,
+    "paired_delta_correct": -1
+  },
+  "promotion": {
+    "automatic": false,
+    "proposed": false,
+    "reason": "No benefit on the 3 paired original expert-science items; low statistical precision"
+  },
+  "failures_and_corrections": [
+    {
+      "run_id": 42564670475,
+      "status": "integration_failure_not_model_grade",
+      "diagnosis": "llama.cpp model loaded, but Inspect original OpenAI compatible provider used old OpenAI SDK 2.x, whereas Inspect 0.3.287 requires openai>=3.4 with httpx2"
+    },
+    {
+      "pr": 269,
+      "result": "Pin original openai==3.4.0; preflight original provider before model download; actual resulting main run #42565079525 successful"
+    }
+  ],
+  "limitations": [
+    "Three historical publicly available benchmark questions are insufficient to rank either model reliably.",
+    "Quantized Qwen3.5-4B vs unquantized Qwen3-0.6B is not controlled for architecture, tokenization, numerical precision, training data or compute.",
+    "Answer parsing, tool use and multistep reasoning generalization have not been isolated by this comparison.",
+    "Does not establish scientific discoveries, operational digital twins, continual learning, AGI or ASI.",
+    "No new broad model promotion or paid expenditure is justified by the observed result."
+  ]
+}
