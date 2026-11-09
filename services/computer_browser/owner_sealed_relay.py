@@ -32,6 +32,12 @@ from .owner_adaptive_session import (
     revoke_session,
 )
 
+from .owner_exact_form import (
+    FLAG as FORM_POST_FLAG, require_enabled as require_form_post,
+    approve_form, consume_form, submit_native_post, seal_form_receipt,
+    revoke_form,
+)
+
 _HEADERS = {"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"}
 
 
@@ -186,10 +192,136 @@ def mount_owner_sealed_relay(app):
                      "<article>Any active adaptive follow-up session has been "
                      "revoked; no saved login credentials were deleted.</article>")
 
+    @app.get("/owner/chat-exact-form", response_class=HTMLResponse)
+    async def exact_form_approval(_owner=Depends(require_verified_owner)):
+        try:
+            require_form_post()
+            store = BrowserProfileStore.from_environment()
+        except Exception as exc:
+            raise HTTPException(status_code=503,
+                                detail="Owner-reviewed form actions unavailable") from exc
+        forms = []
+        for site in sorted(allowed_origins()):
+            try:
+                if store.status(owner=_owner["private_owner_id"],
+                                origin=site).get("profile_exists") is not True:
+                    continue
+            except Exception:
+                continue
+            token = escape(_owner_form_token(
+                _owner["private_owner_id"], site, "exact_form_post"
+            ), quote=True)
+            forms.append(
+                "<article><h3>One reviewed POST: " + escape(site) + "</h3>"
+                "<p>ADVANCED: no scripts, payments, email, deletion, account "
+                "permissions, password changes or uploads. You must examine "
+                "the EXACT page, target, fields and resulting website action. "
+                "This is NOT an unlimited account-write authorization.</p>"
+                "<form method='post' action='/owner/chat-exact-form'>"
+                "<input type='hidden' name='site' value='" + escape(site,quote=True) + "'>"
+                "<input type='hidden' name='csrf_token' value='" + token + "'>"
+                "<p><label>Existing private form page path "
+                "<input name='page_path' value='/profile/edit' maxlength='220' "
+                "autocomplete='off' required></label></p>"
+                "<p><label>Exact approved native form POST path "
+                "<input name='post_path' value='/profile/save' maxlength='220' "
+                "autocomplete='off' required></label></p>"
+                "<p><label>Exact form selector "
+                "<input name='form_selector' value='form' maxlength='120' "
+                "autocomplete='off' required></label></p>"
+                "<p><label>Complete reviewed JSON steps (fill/select within "
+                "form then one submit-button click): "
+                "<textarea name='operations' maxlength='4000' rows='8' "
+                "required>[{&quot;op&quot;:&quot;fill&quot;,&quot;selector&quot;:"
+                "&quot;input[name=note]&quot;,&quot;value&quot;:&quot;Reviewed note&quot;},"
+                "{&quot;op&quot;:&quot;click&quot;,&quot;selector&quot;:"
+                "&quot;button[type=submit]&quot;}]</textarea></label></p>"
+                "<p><label>Recipient's ephemeral X25519 PUBLIC key "
+                "<input name='recipient_public_key' maxlength='43' "
+                "autocomplete='off' required></label></p>"
+                "<p><label>Type APPROVE FORM POST after reviewing exact action "
+                "<input name='confirmation' maxlength='17' "
+                "autocomplete='off' required></label></p>"
+                "<button type='submit'>Approve this exact one-time form POST</button>"
+                "</form></article>"
+            )
+        revoke_token = escape(_owner_form_token(
+            _owner["private_owner_id"], "https://example.com", "exact_form_revoke"
+        ), quote=True)
+        forms.append(
+            "<article><form action='/owner/chat-exact-form-revoke' method='post'>"
+            "<input type='hidden' name='csrf_token' value='" + revoke_token + "'>"
+            "<label>Type REVOKE FORM to cancel any pending exact form POST "
+            "<input name='confirmation' maxlength='11' required></label>"
+            "<button type='submit'>Revoke pending one-time form POST</button>"
+            "</form></article>"
+        )
+        return _page("Owner-reviewed website form actions", "".join(forms))
+
+    @app.post("/owner/chat-exact-form", response_class=HTMLResponse)
+    async def exact_form_approval_post(
+        request: Request, site: str = Form(), page_path: str = Form(),
+        post_path: str = Form(), form_selector: str = Form(),
+        operations: str = Form(), recipient_public_key: str = Form(),
+        csrf_token: str = Form(default=""),
+        confirmation: str = Form(default=""),
+        _owner=Depends(require_verified_owner),
+    ):
+        try:
+            require_form_post()
+            site = _require_allowed_origin(site)
+            _verify_owner_form(request, _owner["private_owner_id"],
+                               site, "exact_form_post", csrf_token)
+            if confirmation != "APPROVE FORM POST":
+                raise HTTPException(status_code=403,
+                                    detail="Exact owner action review required")
+            await asyncio.to_thread(
+                approve_form, _owner["private_owner_id"], site=site,
+                page_path=page_path, post_path=post_path,
+                form_selector=form_selector, operations=operations,
+                recipient_public_key=recipient_public_key,
+            )
+        except HTTPException:
+            raise
+        except (ValueError, PermissionError) as exc:
+            raise HTTPException(status_code=403,
+                                detail="Form action not within approved owner scope") from exc
+        except Exception as exc:
+            raise HTTPException(status_code=503,
+                                detail="One-time form approval unavailable") from exc
+        return _page("One exact native form POST authorized",
+                     "<article>The reviewed form path, values and target "
+                     "are encrypted in the existing private owner vault for "
+                     "TEN minutes. The original signed founder GitHub action "
+                     "may consume this approval ONCE. Do NOT automatically "
+                     "retry if the website response is ambiguous. No passwords "
+                     "or private page contents have entered GitHub.</article>")
+
+    @app.post("/owner/chat-exact-form-revoke", response_class=HTMLResponse)
+    async def exact_form_cancel(
+        request: Request, csrf_token: str = Form(default=""),
+        confirmation: str = Form(default=""),
+        _owner=Depends(require_verified_owner),
+    ):
+        _verify_owner_form(request, _owner["private_owner_id"],
+                           "https://example.com", "exact_form_revoke", csrf_token)
+        if confirmation != "REVOKE FORM":
+            raise HTTPException(status_code=403,
+                                detail="Exact form revocation requires confirmation")
+        try:
+            await asyncio.to_thread(revoke_form)
+        except Exception as exc:
+            raise HTTPException(status_code=503,
+                                detail="Could not verify pending form cancellation") from exc
+        return _page("Pending form POST canceled",
+                     "<article>Any unconsumed form action approval has been "
+                     "canceled. Existing signed-in profile unchanged.</article>")
+
     @app.post("/internal/chat-sealed-read")
     async def signed_sealed_page_read(
         authorization: str | None = Header(default=None),
         navigation: str | None = Header(default=None, alias="X-Plenum-Navigation"),
+        action: str | None = Header(default=None, alias="X-Plenum-Action"),
     ):
         try:
             require_enabled()
@@ -201,6 +333,29 @@ def mount_owner_sealed_relay(app):
         except Exception as exc:
             raise HTTPException(status_code=401,
                                 detail="Signed founder workflow required") from exc
+        if action is not None:
+            # Original signed GitHub OIDC, separate exact owner-reviewed plan.
+            if navigation is not None or action != "exact-form-post-v1":
+                raise HTTPException(status_code=403,
+                                    detail="Unsupported private browser action")
+            try:
+                plan = await asyncio.to_thread(consume_form)
+            except Exception as exc:
+                raise HTTPException(status_code=403,
+                                    detail="Owner-reviewed exact form approval absent") from exc
+            try:
+                outcome = await asyncio.wait_for(
+                    submit_native_post(record=plan), timeout=65
+                )
+                return JSONResponse(
+                    seal_form_receipt(plan, outcome), headers=_HEADERS
+                )
+            except Exception as exc:
+                # Consent was already consumed. Remote action status can be
+                # ambiguous: caller MUST NOT automatically retry the POST.
+                raise HTTPException(status_code=503,
+                                    detail="One-time form result uncertain; check website manually") from exc
+
         if navigation is not None:
             # Only a signed founder workflow may follow an opaque link ID.
             # The public issue carries no account URL, path or private text.
