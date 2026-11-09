@@ -171,6 +171,36 @@ class AdaptiveOwnerContract(unittest.TestCase):
         with self.assertRaises(PermissionError):
             adaptive.consume_follow(sid, 1)
 
+    def test_owner_revoke_cancels_pending_consent_before_first_page_read(self):
+        _, public = new_keys()
+        sealed.approve_read(OWNER, site=SITE, path="/secure",
+                            recipient_public_key=public, adaptive=True)
+        self.assertTrue(self.store.blob(sealed.APPROVAL_BLOB).exists())
+        self.assertTrue(self.store.blob(adaptive.CURSOR_BLOB).exists())
+        self.assertTrue(adaptive.revoke_session())
+        self.assertFalse(self.store.blob(sealed.APPROVAL_BLOB).exists())
+        self.assertFalse(self.store.blob(adaptive.CURSOR_BLOB).exists())
+        with self.assertRaises(PermissionError):
+            sealed.consume_read()
+        self.assertFalse(adaptive.revoke_session())
+
+    def test_revoke_blocks_initial_read_and_cas_resurrection_after_consumption(self):
+        consent = self.approve()
+        adaptive.require_pending(consent)
+        self.assertTrue(adaptive.revoke_session())
+        with self.assertRaises(PermissionError):
+            adaptive.require_pending(consent)
+        with self.assertRaises(PermissionError):
+            adaptive.begin_session(consent, self.page())
+
+    def test_revoke_preserves_unrelated_fixed_private_page_consent(self):
+        _, public = new_keys()
+        sealed.approve_read(OWNER, site=SITE, path="/secure",
+                            recipient_public_key=public)
+        self.assertFalse(adaptive.revoke_session())
+        record = sealed.consume_read()
+        self.assertEqual(record["schema"], "plenum-sealed-owner-consent-v1")
+
     def test_follow_replay_expiry_and_path_scope_rejected(self):
         t = int(time.time())
         consent = self.approve(now=t)
