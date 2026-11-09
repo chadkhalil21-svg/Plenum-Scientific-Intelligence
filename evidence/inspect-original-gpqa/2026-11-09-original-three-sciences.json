@@ -1,0 +1,55 @@
+{
+  "schema": "plenum-original-gpqa-three-science-external-score-summary-v1",
+  "evidence_grade": "original_external_scorer_on_actual_frozen_model_outputs",
+  "source_model_execution": {
+    "run_id": 42563122617,
+    "run_url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42563122617",
+    "source_job_id": 128983686608,
+    "source_artifact_id": 13650326627,
+    "source_artifact_sha256": "7b3d176eff78f98229dd22c6eac82cd23a0c4a51897b8a02dae1ca61405dc3c9",
+    "log_artifact_url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42563122617/artifacts/13650326627",
+    "result": "All three original GPQA tasks executed; original grader logs completed. Downstream report exited nonzero due bare Path(file: URI), not model failure."
+  },
+  "archival_recovery": {
+    "run_id": 42563663980,
+    "job_id": 128985355632,
+    "status": "success",
+    "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42563663980",
+    "artifact_id": 13650700719,
+    "artifact_sha256": "926da29c1c4dac6c91a528c65861432868ea1e195462afb971686023d898a7a1",
+    "artifact_url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42563663980/artifacts/13650700719",
+    "reran_model_inference": false,
+    "dataset_repeated": false,
+    "original_scorer_replaced": false
+  },
+  "model": "Qwen/Qwen3-0.6B",
+  "frozen_model_commit": "c1899de289a04d12100db370d81485cdf75e47ca",
+  "evaluation": "original inspect_evals/gpqa_diamond==0.27.0",
+  "evaluation_conditions": "One originally scored public benchmark question per domain, original answer-choice grader, CPU inference, no paid API, no tool-using agent and no automatic retries.",
+  "attempted": 3,
+  "correct": 1,
+  "by_domain": {
+    "Biology": {
+      "attempted": 1,
+      "correct": 0
+    },
+    "Chemistry": {
+      "attempted": 1,
+      "correct": 1
+    },
+    "Physics": {
+      "attempted": 1,
+      "correct": 0
+    }
+  },
+  "paid_model_api_calls": 0,
+  "original_scientific_discovery_demonstrated": false,
+  "general_intelligence_demonstrated": false,
+  "limitations": [
+    "Three public historical questions are not statistically sufficient to rank models.",
+    "Training-data contamination cannot be excluded.",
+    "Only short-form expert questions tested. No autonomous research, scientific coding, physical discovery or self-improvement established.",
+    "Source job concluded failure after original grades due audit log URI formatting; exact unchanged `.eval` scorer files preserved and independently read by a second no-inference job.",
+    "The full sample IDs and log SHA256 values are in the original recovery artifact; this permanent summary avoids inventing values not visible in the public job logs."
+  ]
+}
