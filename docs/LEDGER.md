@@ -1,4 +1,11 @@
 # Engineering and Scientific Ledger
+
+## Current decision and verified browser status (2026-11-08 evening)
+
+**Mission:** Plenum Prometheus pursues AGI and ultimately ASI; a browser is only an enabling tool. Do not confuse browser engineering, CI success, or imported agent frameworks with general intelligence. The canonical public AGI state is [research-memory/state/AGI_PROGRAM.json](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/research-memory/state/AGI_PROGRAM.json). The live verified integration and duplicate-work audit is at [CONTINUITY_AND_REUSE.md](CONTINUITY_AND_REUSE.md), and the historical browser acceptance trail at [COMPUTER_BROWSER_PROGRESS.md](COMPUTER_BROWSER_PROGRESS.md).
+
+**Verified:** Official Playwright MCP public mode [#213](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/213), ChatGPT-issued public Playwright navigation [#254](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/254), encrypted owner-demo saved login restoration (8:09 PM founder evidence), optional Browser Use public integration with unconfigured inference key [#214](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/214). **Not yet complete:** ChatGPT-controlled authenticated private browser actions or Work/TinyFish parity. Source-only alternatives #248 and #249/#252 must not be mistaken for live connections; further PR #253 is paused in DRAFT after cross-module OIDC mismatch was detected. **Engineering direction:** no more parallel browser stacks; reuse working technology; move AGI research forward through independent evaluation and actual observed capability gains.
+
 Established: 2026-11-05
 
 | ID | Work | Status |
