@@ -83,41 +83,6 @@ def react_original_humaneval():
     )
 
 
-
-# New original problem HumanEval/3 was NOT part of the previously scored
-# 0,1,2 trio. Preserve the old task and its unchanged independent evidence.
-# Inspect's *upstream* react(submit=False) terminates on a normal assistant
-# final message instead of demanding a separately formatted submit() tool.
-# This isolates a genuine previously observed final-submission failure mode.
-NO_SUBMIT_PROMPT=(
-    "Implement the single public Python function specification. "
-    "Use the provided Python tool only if it helps you test or debug. "
-    "After you are finished, respond with ONLY the complete Python source "
-    "implementation with required imports, no Markdown, XML, JSON or "
-    "literal tool-call markers. Do not ask for more tasks. "
-    "Use no network or private files."
-)
-
-
-@task
-def react_no_submit_new_humaneval3():
-    original=humaneval()
-    selected=[s for s in original.dataset if str(s.id)=="HumanEval/3"]
-    if len(selected)!=1:
-        raise ValueError("Exactly one previously unattempted HumanEval/3 case required")
-    return Task(
-        dataset=selected,
-        solver=react(
-            prompt=NO_SUBMIT_PROMPT,
-            tools=[python(timeout=MAX_TOOL_SECONDS)],
-            submit=False,  # ORIGINAL Inspect option, not a homemade finalizer.
-        ),
-        scorer=original.scorer,  # ORIGINAL functional test, unchanged.
-        sandbox="docker",
-        message_limit=MAX_MESSAGES,
-    )
-
-
 def count_actual_tools(messages):
     """Count tool CALLS separately from observed tool RESULTS."""
     calls=0
