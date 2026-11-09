@@ -161,7 +161,7 @@ def mount_owner_sealed_relay(app):
             "One signed founder workflow may read only the exact approved "
             "page(s) within ten minutes. "
         )
-        return _page("Private Computer browser consent granted",
+        return _page("One sealed private page read authorized",
             "<article>Owner-approved scope encrypted in existing private vault. "
             + description +
             "No website changes, credentials, cookies, or private keys "
