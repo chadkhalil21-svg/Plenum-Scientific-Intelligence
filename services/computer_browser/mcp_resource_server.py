@@ -78,6 +78,20 @@ def create_private_browser_mcp():
         require_owner()
         return await read_fixed_public_fixture(config)
 
+    # This tool is intentionally absent from the deployed public fixture
+    # facade. A separate approved Auth0 owner-bound MCP deployment must opt in
+    # explicitly after correct OAuth, pinned subject, and sandbox tests.
+    import os
+    if (os.environ.get("K_SERVICE")=="plenum-browser-owner-auth0"
+            and os.environ.get("PLENUM_MCP_PRIVATE_DEMO_READ_ENABLED")=="true"):
+        from .owner_mcp_demo_bridge import verified_saved_demo_status
+
+        @server.tool(meta={"securitySchemes": [{"type": "oauth2", "scopes": [READ_SCOPE]}]})
+        async def browser_verify_saved_public_demo() -> dict:
+            """Verify only the owner-scoped saved public demo login, no page data."""
+            require_owner()
+            return await verified_saved_demo_status(config)
+
     return server
 
 
