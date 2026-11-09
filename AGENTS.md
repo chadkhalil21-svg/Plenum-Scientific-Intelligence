@@ -1,5 +1,12 @@
 # Project working instructions
 
+## Don't repeat frozen synthetic model experiments every month (2026-11-09)
+
+**Founder optimality/efficiency rule, executed:** The originally scheduled first-of-month `model-challenge.yml` and 15th-of-month `iterative-hypotheses.yml` kept rerunning *frozen* Qwen checkpoints against *fixed/synthetic* benchmarks. They have no actual new outcomes merely because a month elapsed. Remove their monthly `schedule`, **preserve on-demand workflow dispatch and meaningful source-change triggers on main**, archive all prior actual results, and do not create new AGI or scientific discovery claims. Distinguish this from **daily research RADAR** (new external literature/data) and **one-time prospectively frozen NOAA/USGS** (new future actual measurements), both of which must remain protected.
+
+**Do not recommend dead free provider:** GitHub Models inference API retired on 2026-07-30. Do not resurrect its legacy token integration to obtain supposedly free stronger reasoning models. Original OpenAI Codex / GitHub Copilot ecosystems may offer controlled agent tools but are NOT Plenum-installed models, cannot be assumed free for unrestricted use, and require applicable account/permission/budget validation before action.
+
+
 ## Protect upcoming actual real-world prospective science (Nov 10–18, 2026)
 
 **The top near-term intelligence evidence is real-world science, not another agent wrapper.** Locked NOAA predictions issue **Nov 10** and USGS predictions **Nov 11** for **Nov 12–13** future heldout physical observations; main original audit schedules remain NOAA **Nov 16**, USGS **Nov 18**. Do not rewrite either protocol, select models after outcomes, access embargoed future observations early, run models merely to revalidate proven upstream packages, or count synthetic data as independent measurement.
