@@ -41,7 +41,8 @@ class FakeHttp:
 def fake_opener(request,timeout=None):
     query=parse_qs(urlsplit(request.full_url).query)
     site=query["monitoring_location_id"][0][5:]
-    reveal=query["time"][0].endswith(h.HOLDOUT_LAST.isoformat())
+    assert "time" not in query, "USGS OGC time property is not the datetime range filter"
+    reveal=query["datetime"][0].endswith(h.HOLDOUT_LAST.isoformat())
     return FakeHttp(payload(site,reveal))
 
 
@@ -50,7 +51,8 @@ class USGSDomainTests(unittest.TestCase):
         for site in h.SITES:
             url=h.query_url(site,False)
             self.assertIn("/ogcapi/v1/collections/daily/items?",url)
-            self.assertIn("time=2026-10-01%2F2026-11-04",url)
+            self.assertIn("datetime=2026-10-01%2F2026-11-04",url)
+            self.assertNotIn("&time=",url)
             self.assertNotIn("2026-11-13",url)
             self.assertIn("statistic_id=00003",url)
             self.assertIn("parameter_code=00060",url)

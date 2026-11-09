@@ -41,7 +41,9 @@ def query_url(site, include_holdout=False):
     params = {
         "f":"json", "monitoring_location_id":"USGS-"+site,
         "parameter_code":PARAMETER, "statistic_id":STATISTIC,
-        "time":FIRST.isoformat()+"/"+last.isoformat(),
+        # OGC API interval filter is datetime; returned observation property
+        # is named time. A literal time='start/end' is NOT an interval query.
+        "datetime":FIRST.isoformat()+"/"+last.isoformat(),
         "limit":500, "skipGeometry":"true",
     }
     return API+"?"+urlencode(params)
