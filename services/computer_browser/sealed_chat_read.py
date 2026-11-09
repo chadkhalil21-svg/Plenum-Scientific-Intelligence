@@ -126,7 +126,6 @@ def consume_read(*, now: int | None = None):
                         "plenum-sealed-owner-consent-v1",
                         "plenum-sealed-owner-batch-consent-v1"
                     })
-                )
                 or not isinstance(record["issued"], int)
                 or isinstance(record["issued"], bool)
                 or not isinstance(record["expires"], int)
