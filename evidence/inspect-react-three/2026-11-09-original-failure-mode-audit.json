@@ -1,0 +1,56 @@
+{
+  "schema": "plenum-archived-inspect-react-three-failure-mode-audit-v1",
+  "data_class": "posthoc_analysis_original_independent_unchanged_logs",
+  "archived_original_run": {
+    "id": 42350599820,
+    "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42350599820",
+    "artifact_id": 13565593023,
+    "artifact_sha256": "bdde0854219e970a5dda63fd3dcba03101d66078b686cd58e11665c237724c3a",
+    "original_native_eval_filename": "2026-11-07T07-18-52-00-00_react-original-humaneval_TnowXb6FP4DVUkToHPbqVx.eval",
+    "original_native_eval_sha256": "da6958c02a046aeb2ed5f4d8f913b2f42d56404db16befb3782bebb2aef9c1b"
+  },
+  "model": {
+    "name": "Qwen/Qwen3-1.7B",
+    "frozen_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+    "agent": "unchanged upstream Inspect AI react()",
+    "scorer": "unchanged inspect_evals/humaneval verify()",
+    "network": "default disabled Docker",
+    "original_react_result": 1,
+    "original_direct_result": 2,
+    "tasks": 3,
+    "original_tool_calls": 11,
+    "original_tool_responses": 11
+  },
+  "observed_trace_facts": [
+    {
+      "sample": "HumanEval/0",
+      "original_react_score": "correct",
+      "model_used_structured_tools": true,
+      "trace_note": "The agent hit an initial Python NameError because a type alias was missing, then invoked another Python tool call with the import and eventually supplied complete final code. Four actual tool calls recorded."
+    },
+    {
+      "sample": "HumanEval/1",
+      "original_react_score": "incorrect",
+      "model_used_structured_tools": true,
+      "trace_note": "The final model answer contained a literal textual `<tool_call>` marker and JSON code rather than the required source implementation or a properly dispatched final submit(). Repeated user nudges did not get a valid submission before limit. Its candidate algorithm also used a next-closing-parenthesis scan that would not correctly preserve nested balanced groups. One actual tool call was reported."
+    },
+    {
+      "sample": "HumanEval/2",
+      "original_react_score": "incorrect",
+      "model_used_structured_tools": true,
+      "trace_note": "The model called the Python tool multiple times with a plausible `truncate_number(number): return number-int(number)` function, but the final model output was blank and had no final submit() answer; the original unchanged functional scorer therefore had an empty candidate. Six actual tool calls were reported. Whether the unsubmitted code would have passed was not independently graded in this experiment and must not be counted as success."
+    }
+  ],
+  "engineering_inference": {
+    "confidence": "moderate_on_protocol_symptoms_low_on_generalization",
+    "measured_limitation": "Final-answer/structured-tool-call protocol and tool-result-to-submission workflow fail on at least two historical original coding tasks. Model mathematical/programming errors also remain possible; no singular cause of general model weakness established.",
+    "avoid": "Do not conflate tool-use regression entirely with parameter count or test-framework quality. Do not call unsubmitted code correct or modify original benchmark grading to hide unfinished tasks.",
+    "minimal_upstream_first_solution": "Before selecting a new model, configure existing Inspect supported native structured tool calls and explicit submit action with schema and appropriate prompt/turn allowance. Prefer an already pretrained tool-calling-capable checkpoint and existing OpenHands SDK when needed. Check a genuinely new independently scored task and explicit successful terminal submission; no replacement agent framework or handmade scorer.",
+    "repeat_original_tests": false,
+    "new_inference_performed": false,
+    "new_test_run_performed": false,
+    "sensitive_data_exposed": false,
+    "automatic_model_promotion": false,
+    "AGI_demonstrated": false
+  }
+}
