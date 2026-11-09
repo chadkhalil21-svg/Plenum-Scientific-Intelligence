@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-09T05:22:23.124Z",
+  "last_reviewed_utc": "2026-11-09T05:35:35.551Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -848,7 +848,7 @@
   "next_actions": [
     {
       "priority": 1,
-      "action": "Verified 2026-11-09 one NEW original coding problem via existing official Inspect react(submit=False), original HumanEval/3 scored 1/1 with real Qwen3-1.7B model, five Python tool calls and five responses and nonblank final source, run #42566367059. Exact original eval hash + artifact linked in main evidence/inspect-react-no-submit/2026-11-09-humaneval3-original-grade.json. Prior ReAct submit() test on /0-/2 was 1/3 with submission failures; NO paired baseline on /3, so not robust advantage. Do NOT rerun published old tasks, build a new agent framework, add a scorer or promote a model. NEXT DISTINCT capability: use already integrated original Inspect react(no-submit)/OpenHands and frozen checkpoint to complete one truly unfamiliar, multi-step real source-repair/science task with external independently verifiable outcome, documented resource budget, no private IP/production writes; preserve failure if any. Keep prospective NOAA/USGS separate and untouched."
+      "action": "New real repository-repair challenge already launched on main: GitHub Actions #42568013296 from merged PR #272, original pinned Inspect Evals 0.27.0 SWE-bench Verified Mini first predetermined actual GitHub issue, official Docker image, original author tests and original repo-editing agent, existing frozen Qwen3-1.7B, no paid API, no private/production writes. Previous original HumanEval/3 no-submit remains verified 1/1 with five tool calls, and older HumanEval/0-2 1/3. In this NEW case, first confirm original dataset/image/disk preflight, then inspect native original scorer grade (1.0 resolved vs 0.0 unresolved), real model tool calls, patch SHA and source issue ID. If preflight fails before model/scoring, record INFRA BLOCKER not intelligence result; no unapproved retries. Preserve result in main evidence and ledger, avoid rebuilding anything or re-running upstream numerical validation. Next evaluate distinct unfamiliar tool use and prospective measured science only after evidence."
     },
     {
       "priority": 2,
@@ -1287,6 +1287,10 @@
     {
       "decision": "2026-11-09 reuse original Inspect react(submit=False) to solve new HumanEval/3 with five actual sandbox tool calls and correct final source",
       "reason": "Reviewed source Inspect AI 0.3.287 has built-in react_no_submit, which ends on plain final message instead of requiring structured submit() (the archived ReAct trace showed missing final submissions for /1 and /2). Merged main PR #271 with small isolated single-task adapter, preserving all old code/evidence and using existing Inspect, Python tool, original HumanEval scorer, network-disabled Docker, and frozen Qwen3-1.7B. Main Actions #42566367059 scored NEW Plenum HumanEval/3 1/1, 5 actual tool calls and 5 responses, nonempty final answer, no literal tool marker. Original native artifact #13651149697 and permanent evidence. No paid APIs or repeated old tests. This establishes one specific terminal-submission success, not general reliable autonomy, AGI, ASI or statistically verified superiority. Next: unfamiliar multi-step real coding/science task with independent outcome and preserved logs using this existing agent option, not adding frameworks or repeating HumanEval."
+    },
+    {
+      "decision": "2026-11-09 direct new multistep repo repair with original SWE-bench Verified Mini scorer, no new agent platform",
+      "reason": "Founder directive: move from HumanEval/3 1/1 no-submit to a genuinely different multi-step repository repair and independent issue tests, not repeated upstream science or more infrastructure. PR #272 merged one opt-in job to EXISTING Inspect ReAct workflow. Original pinned Inspect Evals 0.27.0 swe_bench_verified_mini supplies the first original public verified GitHub issue, author regression tests, disposable Docker image, model-native repo-editing tools and scorer. Job #42568013296 started with pinned existing Qwen3-1.7B, max 10 turns/45min, no paid API or production/private writes; preflight original metadata, upstream image, disk checks BEFORE downloading existing model. Status as of this record: official image check ongoing, no actual model score validated yet. Any scorer 0/1 and infrastructure failures must remain distinct. Do not automatically rerun, build another framework or claim AGI."
     }
   ],
   "operating_rules": [
