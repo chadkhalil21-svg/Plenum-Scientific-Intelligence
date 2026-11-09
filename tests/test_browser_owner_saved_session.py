@@ -1,4 +1,5 @@
 """IAP-only session restore UI tests. No real account, Cloud Run or GCS."""
+import asyncio
 import importlib.util
 import os
 import re
@@ -248,6 +249,123 @@ class SavedWebsiteSessionRoutes(unittest.TestCase):
         self.assertEqual(cross.status_code,403)
         self.assertEqual(missing.status_code,403)
         store.revoke.assert_not_called()
+
+    def test_owner_signed_demo_refresh_is_fixed_origin_and_action_scoped(self):
+        demo="https://the-internet.herokuapp.com"
+        with patch.dict(os.environ,{"BROWSER_ALLOWED_ORIGINS":demo}):
+            store=self._store()
+            with patch.object(owner_saved_session.BrowserProfileStore,
+                              "from_environment",return_value=store):
+                html=client.get("/owner/sessions").text
+            self.assertIn("Refresh and verify public demo login",html)
+            match=re.search(
+                r"action='/owner/sessions/demo-refresh'>.*?name='csrf_token' value='([^']+)'",
+                html,re.S)
+            self.assertIsNotNone(match)
+            refresh_token=match.group(1)
+            preview_token=self._form(demo,"preview")["csrf_token"]
+            with patch.object(owner_saved_session,
+                              "_refresh_and_verify_public_demo",
+                              new_callable=AsyncMock,return_value="verified") as refresh:
+                good=client.post("/owner/sessions/demo-refresh",
+                    data={"csrf_token":refresh_token})
+                self.assertEqual(good.status_code,200)
+                self.assertIn("Demo login restoration verified",good.text)
+                refresh.assert_awaited_once_with(owner["private_owner_id"])
+                for bad_data,bad_headers in [
+                    ({},{}),
+                    ({"csrf_token":preview_token},{}),
+                    ({"csrf_token":refresh_token},{"origin":"https://attacker.example.com"}),
+                    ({"csrf_token":refresh_token},{"sec-fetch-site":"cross-site"}),
+                ]:
+                    result=client.post("/owner/sessions/demo-refresh",
+                                       data=bad_data,headers=bad_headers)
+                    self.assertEqual(result.status_code,403)
+                self.assertEqual(refresh.await_count,1)
+
+    def test_non_demo_allowlist_never_offers_or_runs_public_demo_refresh(self):
+        store=self._store()
+        with patch.object(owner_saved_session.BrowserProfileStore,
+                          "from_environment",return_value=store):
+            html=client.get("/owner/sessions").text
+        self.assertNotIn("Refresh and verify public demo login",html)
+        with patch.object(owner_saved_session,"_refresh_and_verify_public_demo",
+                          new_callable=AsyncMock) as run:
+            response=client.post("/owner/sessions/demo-refresh",
+                data={"csrf_token":self._form(
+                    "https://the-internet.herokuapp.com","demo_refresh")["csrf_token"]})
+            self.assertEqual(response.status_code,403)
+            run.assert_not_awaited()
+
+    def test_failed_public_demo_refresh_does_not_claim_login_restoration(self):
+        demo="https://the-internet.herokuapp.com"
+        token=self._form(demo,"demo_refresh")["csrf_token"]
+        with patch.dict(os.environ,{"BROWSER_ALLOWED_ORIGINS":demo}):
+            with patch.object(owner_saved_session,
+                              "_refresh_and_verify_public_demo",
+                              new_callable=AsyncMock,return_value="demo_login_not_verified"):
+                response=client.post("/owner/sessions/demo-refresh",
+                                     data={"csrf_token":token})
+            self.assertEqual(response.status_code,200)
+            self.assertIn("existing saved profile was not changed",response.text)
+            self.assertNotIn("Demo login restoration verified",response.text)
+            with patch.object(owner_saved_session,
+                              "_refresh_and_verify_public_demo",
+                              new_callable=AsyncMock,return_value="saved_but_not_restored"):
+                failed=client.post("/owner/sessions/demo-refresh",
+                                   data={"csrf_token":token})
+            self.assertEqual(failed.status_code,200)
+            self.assertIn("saved but not restored",failed.text.lower())
+            self.assertNotIn("Demo login restoration verified",failed.text)
+
+    def test_synthetic_public_demo_login_cookie_captured_in_actual_chromium(self):
+        """No external website, site account, storage or owner data used."""
+        if importlib.util.find_spec("playwright") is None:
+            self.skipTest("Playwright is unavailable")
+        from playwright.async_api import async_playwright
+        demo=owner_saved_session.PUBLIC_DEMO_ORIGIN
+        async def exercise():
+            async def fixture(route):
+                req=route.request
+                path=req.url[len(demo):]
+                if req.method=="GET" and path=="/login":
+                    await route.fulfill(status=200,content_type="text/html",
+                        body="<form action='/authenticate' method='POST'>"
+                             "<input id='username' name='username'>"
+                             "<input id='password' name='password' type='password'>"
+                             "<button type='submit'>Login</button></form>")
+                elif req.method=="POST" and path=="/authenticate":
+                    if ("username=tomsmith" not in (req.post_data or "")
+                            or "password=SuperSecretPassword" not in (req.post_data or "")):
+                        await route.fulfill(status=403,body="Invalid synthetic request")
+                    else:
+                        await route.fulfill(status=302,headers={
+                            "location":"/secure",
+                            "set-cookie":"rack.session=CI_FAKE_COOKIE;"
+                                " Path=/; Secure; HttpOnly; SameSite=Lax"
+                        },body="")
+                elif req.method=="GET" and path=="/secure":
+                    if "rack.session=CI_FAKE_COOKIE" not in req.headers.get("cookie",""):
+                        await route.fulfill(status=302,headers={"location":"/login"},body="")
+                    else:
+                        await route.fulfill(status=200,content_type="text/html",
+                            body="<h3>Secure Area</h3><p>Logged in as tomsmith</p>")
+                else:
+                    await route.abort()
+            async with async_playwright() as pw:
+                browser=await pw.chromium.launch(headless=True)
+                try:
+                    state=await owner_saved_session._public_demo_login_snapshot(
+                        browser,fixture_route=fixture)
+                finally:
+                    await browser.close()
+            self.assertIsNotNone(state)
+            self.assertEqual([c["name"] for c in state["cookies"]],
+                             ["rack.session"])
+            self.assertEqual(state["cookies"][0]["domain"],
+                             "the-internet.herokuapp.com")
+            self.assertEqual(state["origins"],[])
+        asyncio.run(exercise())
 
     def test_missing_vault_config_fails_closed(self):
         with patch.dict(os.environ, {"BROWSER_PROFILE_BUCKET": "",
