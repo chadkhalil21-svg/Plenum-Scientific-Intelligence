@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-09T02:38:15.390Z",
+  "last_reviewed_utc": "2026-11-09T02:47:10Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -597,6 +597,42 @@
       "metric": "Synthetic nonlinear ODE action-conditioned frozen dynamics prediction vs nonaction baselines under heldout actions; shifted physics tests transfer error",
       "AGI_demonstrated": false,
       "notes": "Reuses SciPy solve_ivp, NumPy and scikit-learn Ridge; original Verified Scientific Simulation Lab job ran from PR branch at #42551545363 and passed actual offline probe and independent workflow assertions. This is NOT JEPA latent video training, real-world calibrated digital twin, new physics, causal understanding, or AGI/ASI."
+    },
+    {
+      "id": "world-model-paired-intervention-synthetic-20261108",
+      "status": "verified_foundation",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42552640155",
+      "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/258",
+      "result": {
+        "paired_episodes": 6,
+        "action_intervention": "same simulator initial condition; opposite action forces",
+        "horizons_steps": [
+          1,
+          8,
+          32
+        ],
+        "nominal_action_aware_effect_rmse": [
+          0.0016384,
+          0.031683,
+          0.1200611
+        ],
+        "nominal_action_blind_effect_rmse": [
+          0.2499226,
+          0.2937382,
+          0.6383155
+        ],
+        "changed_physics_action_aware_effect_rmse": [
+          0.0410067,
+          0.1464238,
+          0.2702026
+        ],
+        "JEPA_trained": false,
+        "real_world_causality_verified": false,
+        "real_digital_twin_verified": false
+      },
+      "metric": "Heldout within-simulator paired controlled action reversal: predicted differences in later state against fixed action-free comparator and altered-physics OOD generalization",
+      "AGI_demonstrated": false,
+      "notes": "Reused original SciPy DOP853 nonlinear oscillator and scikit-learn Ridge with frozen weights. Six matched starting states, reversed force sequences and independent trial seeds. Actual CI #42552640155 passed and logged all horizon errors; shifted physics increased error. Synthetic causal intervention in a declared ODE is not independent empirical causality, video latent JEPA, AGI or ASI. No GPU/model download."
     }
   ],
   "next_actions": [
