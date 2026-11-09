@@ -394,7 +394,7 @@ jobs:
       - name: Reuse existing original Inspect science grader, not another evaluator
         run: |
           python -m pip install -e '.[inspection]'
-          python -m pip install 'inspect-evals==0.27.0' 'huggingface_hub>=1.2,<2' 'openai>=2,<3'
+          python -m pip install 'inspect-evals==0.27.0' 'huggingface_hub>=1.2,<2' 'openai==3.4.0'
           python -m pip check
           python - <<'PY'
           from importlib.metadata import version
@@ -402,6 +402,13 @@ jobs:
           import acp.helpers
           assert version('inspect-ai')=='0.3.287' and version('inspect-evals')=='0.27.0'
           assert callable(gpqa_diamond)
+          from importlib.metadata import version as installed
+          import httpx2
+          assert installed('openai')=='3.4.0'
+          from inspect_ai.model import get_model
+          m=get_model('openai-api/local/qwen35-4b')
+          assert m is not None
+          print('Original Inspect OpenAI-compatible local provider instantiated BEFORE weights download')
           PY
       - name: Download SHA256 pinned official llama.cpp CPU binary and existing published quantization
         run: |
@@ -446,7 +453,7 @@ jobs:
       - name: Score EXACT same original biology chemistry physics questions, only NEW model
         run: |
           for DOMAIN in Biology Chemistry Physics; do
-            inspect eval inspect_evals/gpqa_diamond --model openai-api/local/qwen35-4b -T high_level_domain="$DOMAIN" -T cot=false --limit 1 --epochs 1 --max-samples 1 --max-connections 1 --max-tokens 256 --max-retries 0 --temperature 0 --time-limit 390 --log-dir "reports/qwen35-original-gpqa/$DOMAIN" --display none
+            inspect eval inspect_evals/gpqa_diamond --model openai-api/local/qwen35-4b -T high_level_domain="$DOMAIN" -T cot=false --limit 1 --epochs 1 --max-samples 1 --max-connections 1 --max-tokens 256 --max-retries 0 --temperature 0 --time-limit 390 --log-dir "reports/qwen35-original-gpqa/$DOMAIN" --display plain
           done
       - name: Preserve original independent grades and difference from PREEXISTING Qwen0.6 evidence
         run: |
