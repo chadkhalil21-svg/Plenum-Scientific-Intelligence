@@ -8,6 +8,8 @@ At the beginning of **every Plenum Prometheus / Scientific Intelligence / Comput
 
 **Model roles are not interchangeable:** Qwen (Alibaba) is Plenum's presently tested language-model baseline; Llama (Meta) is an alternate language model to evaluate on identical blinded tasks; V-JEPA 2.1 (Meta) is a proposed video/latent world-model research candidate, not a Llama/chat model. No automatic weight replacement or assumption that any choice is globally optimal. Keep separate measured evidence for each.
 
+**Status precedence:** Later GitHub release evidence [issue #256](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/256) reports enabled owner-paired demo relay. It supersedes older unactivated-source assumptions but does not verify a real signed-in chat browser task. Check actual owner approval and a sanitized end-to-end result before claiming private capability.
+
 **Browser finish line:** Official Playwright/Playwright MCP, public chat->GitHub browsing, owner portal and encrypted demo session restore already exist. Checked-in GitHub OIDC workflow and verifier audiences currently match on `/internal/chat-demo-read`; old mismatch notes are outdated. What remains unproven is a **live single-use chat-initiated owner-authorized protected demo read**, secure private message transport and then permitted real-site read/write/files, not another browser implementation. Compare deployed revision, owner pairing, runtime feature flag, signature/claims/replay, private output handling and end-to-end proof before doing any additional integration. Owner authorization and least-privilege safety gates must remain enforced.
 
 
