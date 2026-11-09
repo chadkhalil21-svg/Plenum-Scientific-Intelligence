@@ -6,6 +6,9 @@ import copy
 import json
 import math
 import unittest
+from hashlib import sha256
+from io import BytesIO
+from urllib.parse import parse_qs, urlsplit
 from datetime import datetime, timedelta, timezone
 from plenum_ai import prospective_noaa as p
 
@@ -66,6 +69,64 @@ def frozen():
 
 
 class ProspectiveNOAATests(unittest.TestCase):
+    def test_real_noaa_observation_adapter_uses_single_preliminary_source(self):
+        # Contract test of Plenum's OWN source adapter using inert NOAA-shaped
+        # examples only. Never fetch Nov 12-13 actual target observations.
+        rows=[
+            {"t":"2026-10-24 00:00","v":"1.200","q":"p"},
+            {"t":"2026-10-24 00:06","v":"1.800","q":"p"},
+            {"t":"2026-10-24 01:00","v":"1.300","q":"v"},
+            {"t":"2026-10-24 02:00","v":"999","q":"p"},
+            {"t":"2026-10-24 03:00","v":"1.500","q":"s"},
+        ]
+        raw=json.dumps({"data":rows}).encode()
+        requested=[]
+        def observed_only(request,timeout):
+            self.assertEqual(timeout,25)
+            self.assertEqual(urlsplit(request.full_url).netloc,
+                             "api.tidesandcurrents.noaa.gov")
+            args=parse_qs(urlsplit(request.full_url).query)
+            requested.append(args)
+            self.assertEqual(args["product"],["water_level"])
+            self.assertEqual(args["datum"],["MLLW"])
+            self.assertEqual(args["time_zone"],["gmt"])
+            self.assertEqual(args["units"],["metric"])
+            self.assertEqual(args["begin_date"],["20261024"])
+            return BytesIO(raw)
+        observed,digest=p.fetch_public(p.STATION_IDS[0],False,opener=observed_only)
+        self.assertEqual(requested[0]["end_date"],["20261108"])
+        self.assertEqual(observed,{
+            datetime(2026,10,24,0,tzinfo=timezone.utc):1.2,
+            datetime(2026,10,24,1,tzinfo=timezone.utc):1.3,
+        })
+        self.assertEqual(digest,sha256(raw).hexdigest())
+        self.assertEqual(p.NOAA_SOURCE_PRODUCT,"water_level")
+        self.assertIn("2026-11-09",p.NOAA_SOURCE_AMENDMENT)
+        # This second call uses ONLY synthetic source payload. Production
+        # reveal=True occurs inside an independently gated future auditor.
+        p.fetch_public(p.STATION_IDS[0],True,opener=observed_only)
+        self.assertEqual(requested[1]["end_date"],["20261113"])
+
+    def test_real_noaa_adapter_rejects_invalid_flags_duplicates_and_oversize(self):
+        def fake(rows):
+            return lambda request,timeout: BytesIO(json.dumps({"data":rows}).encode())
+        with self.assertRaisesRegex(ValueError,"No flagged real NOAA"):
+            p.fetch_public(p.STATION_IDS[0],False,opener=fake([
+                {"t":"2026-10-24 00:00","v":"0.8","q":"unknown"}]))
+        with self.assertRaisesRegex(ValueError,"Duplicate NOAA hourly timestamp"):
+            p.fetch_public(p.STATION_IDS[0],False,opener=fake([
+                {"t":"2026-10-24 00:00","v":"0.8","q":"p"},
+                {"t":"2026-10-24 00:00","v":"0.9","q":"v"}]))
+        with self.assertRaisesRegex(ValueError,"fixed 21-day download limit"):
+            p.fetch_public(p.STATION_IDS[0],False,
+                opener=lambda request,timeout: BytesIO(
+                    b"x"*(p.NOAA_MAX_SOURCE_BYTES+1)))
+        with self.assertRaisesRegex(ValueError,"unavailable"):
+            p.fetch_public(p.STATION_IDS[0],False,
+                opener=lambda request,timeout: BytesIO(
+                    b'{"error":{"message":"not available"}}'))
+
+
     def test_precommitted_protocol_dates_and_models(self):
         data=p.protocol()
         self.assertEqual(data["protocol_id"],p.PROTOCOL_ID)
