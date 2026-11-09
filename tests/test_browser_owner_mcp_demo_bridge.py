@@ -50,6 +50,12 @@ class OwnerMCPDemoBridgeTests(unittest.TestCase):
 
     @unittest.skipUnless(importlib.util.find_spec("fastapi") is not None,
                          "Browser integration requires optional FastAPI")
+    def test_bridge_issuer_matches_actual_owner_portal(self):
+        from services.computer_browser.owner_auth0 import ISSUER as portal_issuer
+        self.assertEqual(EXPECTED_OWNER_ISSUER,portal_issuer)
+
+    @unittest.skipUnless(importlib.util.find_spec("fastapi") is not None,
+                         "Browser integration requires optional FastAPI")
     def test_feature_disabled_or_wrong_service_never_reaches_profile(self):
         from services.computer_browser import owner_saved_session
         scenarios=[
