@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-09T17:39:49.059Z",
+  "last_reviewed_utc": "2026-11-09T17:51:37.468Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -1470,6 +1470,10 @@
     {
       "decision": "2026-11-09 first encrypted owner-approved saved-browser page independently decrypted in ChatGPT",
       "reason": "LIVE founder-approved narrow browser acceptance PASS: new one-time sealed owner consent screenshot 12:36 ET; issue #286 issued 17:37:12 UTC, signed OIDC GitHub Actions run #42666405649 SUCCESS, owner-only saved public-demo /secure fetched via original Playwright, X25519+HKDF+AES-GCM encrypted result in public GitHub ciphertext-only issue comment, original private key retained locally; independently authenticated decrypted page in requesting conversation (site=https://the-internet.herokuapp.com, path=/secure, status 200, Secure Area and Logged in as). No passwords, private key, raw page content or cookies placed in GitHub. This is a genuinely new one-page owner-approved authenticated chat result, unlike original Boolean-only authentication proof #259. Main docs/COMPUTER_BROWSER_PROGRESS.md and docs/AGI_ASI_CAPABILITY_ATLAS.md updated. No AGI, Work/TinyFish parity, arbitrary third-party private site, agent planning, files or approved write proven. NEVER rerun same demo or build replacement Playwright/OAuth/agent stack for this. Browser milestone complete; focus prospective NOAA Nov10 and USGS Nov11 and genuine generalization evidence."
+    },
+    {
+      "decision": "2026-11-09 new ChatGPT-in-loop public research browsing across two actual GitHub browser tasks",
+      "reason": "Founder issued Go after the first encrypted saved-page success. Reused existing private Sovereign-Gateway runner (no new browser engine, MCP, OAuth, paid agent or CI repeat) for an original new public AGI world-model literature task. Private GitHub issues #21 (actual arXiv GET search + read+inspect+extract, run #42668069774 successful) and #22 (follow actual observed link arXiv:2611.09145 + read+inspect+extract, run #42668274371 successful), 8 real Playwright steps over two independent browser jobs. Source paper Augmentron Nov6 2026 relates to robot augmentation, not proven action-conditioned world model, licensed source not inspected or imported. Precise evidence: ChatGPT used live tool output to select next browser action; NOT autonomous model self-directed multi-step deployment, error recovery, independent unseen benchmark score, or general authenticated Work/TinyFish parity. Main browser ledger and AGI atlas updated; do not rerun. Existing NOAA Nov10 and USGS Nov11 frozen issuance jobs remain high priority, both forecast files appropriately not yet present on Nov9. Preserve future holdouts; no extra infra."
     }
   ],
   "operating_rules": [
