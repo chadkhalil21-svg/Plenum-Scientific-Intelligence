@@ -218,6 +218,42 @@ class EncryptedReadTests(unittest.TestCase):
             with self.assertRaises(PermissionError):
                 sealed.seal_result(record,bad)
 
+    def test_signed_in_link_discovery_filters_site_and_action_paths(self):
+        from services.computer_browser.owner_saved_session import _validated_read_links
+        candidate = [
+            ("Research", "/research"),
+            ("Research duplicate", "https://the-internet.herokuapp.com/research"),
+            ("Dashboard", "/dashboard"),
+            ("Pay now", "/pay"),
+            ("Log out", "/logout"),
+            ("Cross origin", "https://evil.example/private"),
+            ("Token in URL", "/private?token=abc"),
+            ("An internal anchor", "#section"),
+        ]
+        links = _validated_read_links(SITE, SITE + "/secure", candidate)
+        self.assertEqual(links, [
+            {"label_untrusted": "Research", "path": "/research"},
+            {"label_untrusted": "Dashboard", "path": "/dashboard"},
+        ])
+        _, pub = new_keypair()
+        record = {"site": SITE, "path": "/secure", "recipient_public_key": pub}
+        base = {"site": SITE, "http_status": 200,
+                "final_url": SITE + "/secure", "demo_authenticated_restored": True,
+                "title": "Private", "body": "Owner-approved body"}
+        env = sealed.seal_result(record, {**base, "links_untrusted": links})
+        self.assertNotIn("/research", json.dumps(env))
+        self.assertNotIn("Owner-approved body", json.dumps(env))
+        for bad in [
+            [{"label_untrusted": "X", "path": "//outside.example/private"}],
+            [{"label_untrusted": "X", "path": "/private?token=x"}],
+            [{"label_untrusted": "X", "path": "https://evil.example"}],
+            [{"label_untrusted": "X", "path": "/a", "cookie": "x"}],
+            [42],
+            [{"label_untrusted": "X", "path": "/a"}] * 7,
+        ]:
+            with self.subTest(bad=str(bad)[:90]), self.assertRaises(PermissionError):
+                sealed.seal_result(record, {**base, "links_untrusted": bad})
+
     def test_disabled_service_is_denied_without_vault_access(self):
         for change in [{sealed.FLAG:"false"},
                        {"K_SERVICE":"plenum-computer-browser"},
