@@ -5,7 +5,7 @@
 ## Credibility levels (do not blur)
 
 - **Reference model**: validated numerical execution against an equation or fixed synthetic fixture. Already established for several Plenum solvers.
-- **Observation-linked model / shadow**: measured data ingested and compared with or sequentially assimilated into a defined virtual state. The June 2025 NOAA retrospective pilot is this *historical replay level only*.
+- **Observation-linked model / shadow**: measured data ingested and compared with or sequentially assimilated into a defined virtual state. The June 2025 NOAA retrospective pilot **ran against actual NOAA data** ([run #42557644772](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42557644772)) at this *historical replay level only*.
 - **Research digital twin**: real counterpart, repeatable verified data synchronization at a stated cadence, quality flags, uncertainty estimates, recalibration process and independently demonstrated prospective predictive value against strong competing forecasts. **Not yet achieved**.
 - **Operational digital twin**: deployed measurement and prediction pipeline with monitoring, realistic interventions, validated limits, access controls, incident response and ongoing validation for its actual use. **Not achieved**.
 - **Action-conditioned causal world model / AGI**: an additional independent research question. A frozen simulator, twin, or pretrained JEPA representation alone does not establish causal comprehension, AGI or ASI.
