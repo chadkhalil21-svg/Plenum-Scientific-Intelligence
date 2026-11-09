@@ -165,12 +165,31 @@ def seal_result(record: dict, result: dict):
     body = result.get("body")
     if not isinstance(title, str) or len(title) > 160 or not isinstance(body, str) or len(body) > 1200:
         raise PermissionError("Private page exceeds bounded read result")
+    # Only validated navigation hints can enter the encrypted payload.
+    # This is link discovery, never permission to follow links without a
+    # fresh owner-approved exact path in a new one-shot consent.
+    links = result.get("links_untrusted", [])
+    if not isinstance(links, list) or len(links) > 6:
+        raise PermissionError("Invalid private page link count")
+    clean_links = []
+    for link in links:
+        if not isinstance(link, dict) or set(link) != {"label_untrusted", "path"}:
+            raise PermissionError("Malformed private link")
+        label, link_path = link["label_untrusted"], link["path"]
+        if (not isinstance(label, str) or not 1 <= len(label) <= 75
+                or any(ord(ch) < 32 for ch in label)
+                or not isinstance(link_path, str) or len(link_path) > 220
+                or "?" in link_path or "#" in link_path):
+            raise PermissionError("Private link data rejected")
+        _approved_read_target(record["site"], link_path)
+        clean_links.append({"label_untrusted": label, "path": link_path})
     _validate_intent(site=record.get("site"), path=record.get("path"),
                      recipient_public_key=record.get("recipient_public_key"))
     plaintext = json.dumps({
         "schema": "plenum-private-page-read-v1",
         "site": record["site"], "path": record["path"],
         "http_status": result["http_status"], "title": title, "body": body,
+        "links_untrusted": clean_links,
         "model_did_not_execute_website_actions": True,
     }, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
     if len(plaintext) > 3600:
