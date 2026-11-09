@@ -108,7 +108,6 @@ class SignedGitHubTokenTests(unittest.TestCase):
             ):
                 with self.subTest(mutate=mutate),self.assertRaises(PermissionError):
                     verifier.verify(self.make(**mutate))
-            evil_key=type(self).key.__class__
             from cryptography.hazmat.primitives.asymmetric import rsa
             wrong=rsa.generate_private_key(public_exponent=65537,key_size=2048)
             token=self.jwt.encode(GitHubWorkflowPolicyTests().valid(),wrong,
