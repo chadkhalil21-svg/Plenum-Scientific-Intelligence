@@ -146,8 +146,21 @@ def seal_result(record: dict, result: dict):
     if (not isinstance(record, dict) or not isinstance(result, dict)
             or result.get("site") != record.get("site")
             or type(result.get("http_status")) is not int
-            or not 200 <= result["http_status"] < 400):
+            or not 200 <= result["http_status"] < 300):
         raise PermissionError("Owner private page read was not verified")
+    # An HTTP 200 login page at the *same* origin is not the owner's
+    # authorized destination. Fail closed for redirects to /login, /home,
+    # different query strings, or any route not explicitly owner-approved.
+    from .owner_saved_session import _approved_read_target, PUBLIC_DEMO_ORIGIN
+    expected_url = _approved_read_target(record.get("site"), record.get("path"))
+    if result.get("final_url") != expected_url:
+        raise PermissionError("The browser did not read the exact approved page")
+    # This published demo has an independent authenticated-login proof.
+    # Other approved sites have no universal proof; do not infer one from 200.
+    if (record.get("site") == PUBLIC_DEMO_ORIGIN
+            and record.get("path") == "/secure"
+            and result.get("demo_authenticated_restored") is not True):
+        raise PermissionError("Published demo saved login was not restored")
     title = result.get("title")
     body = result.get("body")
     if not isinstance(title, str) or len(title) > 160 or not isinstance(body, str) or len(body) > 1200:
