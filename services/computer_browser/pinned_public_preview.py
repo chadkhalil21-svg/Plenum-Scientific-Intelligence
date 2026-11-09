@@ -102,8 +102,7 @@ class PinnedOriginProxy:
             # literals, CONNECT credentials, proxy auth, and proxy introspection.
             if (first not in (f"CONNECT {self.host}:443 HTTP/1.1",
                               f"CONNECT {self.host}:443 HTTP/1.0")
-                    or b"\r\nProxy-Authorization:" in header
-                    or b"\r\nproxy-authorization:" in header):
+                    or b"\r\nproxy-authorization:" in header.lower()):
                 writer.write(b"HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n")
                 await writer.drain()
                 return
