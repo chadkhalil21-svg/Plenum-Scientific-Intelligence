@@ -1,0 +1,112 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "42713770685",
+  "source_revision": "2be387ad98fb4303e367738aaebd14c6fcbbd409",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-09T22:39:40.462427+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 28,
+    "sources_returning_records": 27,
+    "source_outages": [
+      "gdelt_headlines"
+    ],
+    "new_public_links_before_limit": 13,
+    "signals": [
+      {
+        "category": "universities",
+        "publisher": "Harvard Gazette",
+        "source": "harvard_research",
+        "url": "https://news.harvard.edu/gazette/story/2026/11/hello-how-the-telephone-transformed-human-connection-gleick-book/",
+        "title_untrusted": "Hello? How the telephone transformed human connection",
+        "claimed_publication_date": "Mon, 09 Nov 2026 19:45:09 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "NASA",
+        "source": "nasa_research",
+        "url": "https://www.nasa.gov/news-release/la-nasa-busca-a-la-proxima-generacion-de-astronautas/",
+        "title_untrusted": "La NASA busca a la próxima generación de astronautas",
+        "claimed_publication_date": "Mon, 09 Nov 2026 19:27:20 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03654-3",
+        "title_untrusted": "How to make failure your friend and teacher in science",
+        "claimed_publication_date": "2026-11-09",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "United Nations Climate News",
+        "source": "un_climate_environment",
+        "url": "https://news.un.org/feed/view/en/story/2026/11/1168768",
+        "title_untrusted": "World News in Brief: El Niño’s $11 trillion price tag, Mozambique and Yemen updates",
+        "claimed_publication_date": "Mon, 09 Nov 2026 12:00:00 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "NASA",
+        "source": "nasa_research",
+        "url": "https://science.nasa.gov/missions/chandra/nasas-chandra-finds-source-of-stars-mysterious-outbursts/",
+        "title_untrusted": "NASA’s Chandra Finds Source of Star’s Mysterious Outbursts",
+        "claimed_publication_date": "Mon, 09 Nov 2026 18:55:50 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "United Nations Climate News",
+        "source": "un_climate_environment",
+        "url": "https://news.un.org/feed/view/en/story/2026/11/1168766",
+        "title_untrusted": "Children among the dead as heavy rains flood tents and shelters in Gaza",
+        "claimed_publication_date": "Mon, 09 Nov 2026 12:00:00 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "United Nations Climate News",
+        "source": "un_climate_environment",
+        "url": "https://news.un.org/feed/view/en/story/2026/11/1168763",
+        "title_untrusted": "COP31 opens in Antalya: Can climate promises finally deliver results?",
+        "claimed_publication_date": "Mon, 09 Nov 2026 12:00:00 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "United Nations Climate News",
+        "source": "un_climate_environment",
+        "url": "https://news.un.org/feed/view/en/story/2026/11/1168760",
+        "title_untrusted": "‘Exceptional’ extreme temperatures to continue into next year, UN reports",
+        "claimed_publication_date": "Mon, 09 Nov 2026 12:00:00 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
