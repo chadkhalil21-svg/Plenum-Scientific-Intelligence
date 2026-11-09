@@ -1,5 +1,12 @@
 # Reuse-first development and program continuity
 
+## 2026-11-08 current optimization reconciliation (read before older snapshots)
+
+This is a *current decision*, not a new framework implementation. Use one existing role-based stack: Qwen frozen baseline; LangGraph for orchestration/memory; Inspect for independently scored models/agents; scoped OpenHands for coding; official Playwright/Playwright MCP with existing authenticated owner portal for browser; tested specialist numerical engines; V-JEPA 2.1 only as a properly budgeted frozen *visual representation* trial, not as a proven action-conditioned model. Compare alternatives on heldout actual outcome, reliability, total cost and compute; if no gain, do not add them. BrowserGym/AgentLab are optional **evaluation** fixtures, not new production browser stacks. Choose **adopt > adapt > build**, but require licensing/weight terms, security, provenance, maintenance and test evidence before imports. Latest upstream rationale and exact stop/go/finish-line are documented at the top of [LEDGER.md](LEDGER.md).
+
+**Browser evidence precedence:** older paragraph(s) below claiming workflow OIDC audience `/internal/chat-demo-read` versus verifier `/internal/chat-read-v1` are obsolete. Current reviewed source matches `/internal/chat-demo-read`; [issue #256](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/256) also reports restricted relay activation. **Still unverified:** one owner-approved signed ChatGPT-to-saved-demo login read. Do not rebuild the browser or infer general authenticated Work/TinyFish parity from issue #256. Verify the existing one-time owner consent + GitHub workflow path once; then return to independent AGI research. No private cookies or accounts in public GitHub.
+
+
 ## 2026-11-08 founder correction: AGI/ASI knowledge and world modeling before auxiliary infrastructure
 
 The founder has explicitly identified repeated infrastructure reimplementation and stale ledgers as unacceptable lost effort. Treat **reuse-first, simplify, independent evidence and current ledger reconciliation as mandatory operating constraints** for the *entire* project, not just Computer Browser. `AGENTS.md` now carries this doctrine. Maintain one canonical evidence record and an intelligible current-status header, not a sprawl of "pending" claims.
