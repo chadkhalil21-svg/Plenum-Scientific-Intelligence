@@ -245,6 +245,19 @@ def mount_owner_sealed_relay(app):
                 "<button type='submit'>Approve this exact one-time form POST</button>"
                 "</form></article>"
             )
+        if not forms:
+            forms.append(
+                "<article><strong>No saved authenticated website session is "
+                "ready for a write action.</strong><p>Use the same browser "
+                "where you signed into this owner portal. First authorize "
+                "the website origin if necessary, then open its secure "
+                "website sign-in and save the session. Registration alone "
+                "does not grant account access.</p>"
+                "<p><a href='/owner/sign-in'>Open secure website sign-in</a></p>"
+                "<p><a href='/owner/sessions'>View saved website sessions</a></p>"
+                "<p><a href='/owner'>Return to Computer Browser</a></p>"
+                "</article>"
+            )
         revoke_token = escape(_owner_form_token(
             _owner["private_owner_id"], "https://example.com", "exact_form_revoke"
         ), quote=True)

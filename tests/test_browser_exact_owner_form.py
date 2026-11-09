@@ -247,6 +247,18 @@ class ExactFormHttpTests(unittest.TestCase):
         self.client=TestClient(app)
         self.relay=relay
 
+    def test_no_saved_website_shows_clear_sign_in_guidance(self):
+        profile=MagicMock()
+        profile.status.return_value={"profile_exists":False}
+        with patch.object(self.relay.BrowserProfileStore,"from_environment",
+                          return_value=profile):
+            page=self.client.get("/owner/chat-exact-form")
+        self.assertEqual(page.status_code,200)
+        self.assertIn("No saved authenticated website session",page.text)
+        self.assertIn("/owner/sign-in",page.text)
+        self.assertIn("/owner/sessions",page.text)
+        self.assertNotIn("name='recipient_public_key'",page.text)
+
     def test_owner_review_requires_authenticated_identity_csrf_and_exact_phrase(self):
         from services.computer_browser.owner_saved_session import _owner_form_token
         profile=MagicMock()
