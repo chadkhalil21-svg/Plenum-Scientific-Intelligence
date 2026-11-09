@@ -315,7 +315,7 @@ def mount_owner_saved_session(app):
                 "<input type='hidden' name='site' value='" + escape(site, quote=True) + "'>"
                 "<input type='hidden' name='csrf_token' value='" + preview_token + "'>"
                 "<button type='submit'>Preview saved session (read only)</button>"
-                "</form>"
+                "</form>" +
                 ("<form method='post' action='/owner/sessions/browse'>"
                  "<input type='hidden' name='site' value='" + escape(site, quote=True) + "'>"
                  "<input type='hidden' name='csrf_token' value='" + browse_token + "'>"
