@@ -9,6 +9,11 @@ on:
       - 'tests/test_private_browser_profiles.py'
       - 'tests/test_browser_private_login.py'
       - 'tests/test_browser_owner_saved_session.py'
+      - 'tests/test_browser_chat_pairing.py'
+      - 'tests/test_browser_chat_relay.py'
+      - 'tests/test_browser_chat_workflow_static.py'
+      - '.github/workflows/chat-browser-owner-read.yml'
+      - '.github/workflows/chat-browser-owner-read-activate.yml'
       - 'tests/test_browser_owner_mcp_demo_bridge.py'
       - 'tests/test_computer_browser_gateway.py'
       - 'tests/test_computer_browser_deploy.py'
@@ -115,6 +120,12 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_browser_owner_saved_session.py' -v
       - name: Prove future owner-bound MCP saved demo read is disabled unless pinned and redacted
         run: python -m unittest discover -s tests -p 'test_browser_owner_mcp_demo_bridge.py' -v
+      - name: Verify one-time encrypted owner ChatGPT demo approval CAS and expiry
+        run: python -m unittest discover -s tests -p 'test_browser_chat_pairing.py' -v
+      - name: Verify signed owner form, GitHub OIDC route and secret-free demo read
+        run: python -m unittest discover -s tests -p 'test_browser_chat_relay.py' -v
+      - name: Verify issue-bound OIDC workflow, owner activation and rollback contracts
+        run: python -m unittest discover -s tests -p 'test_browser_chat_workflow_static.py' -v
       - name: Verify real on-demand public navigation with actual Chromium
         run: |
           python - <<'PY'

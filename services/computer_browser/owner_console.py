@@ -6,6 +6,7 @@ Human-operated website sign-in uses a separate protected browser page.
 This is not ChatGPT model-controlled website login.
 """
 from html import escape
+import os
 from fastapi import Depends, Header, HTTPException, Query, Request
 from .owner_auth0 import active as auth0_active, verified_session as auth0_verified_session
 from fastapi.responses import HTMLResponse
@@ -73,7 +74,12 @@ ChatGPT direct website interaction: not yet connected.</article>
 <label for="url">Website address</label>
 <input type="url" id="url" name="url" required
 value="https://example.com/" maxlength="1200">
-<p><button type="submit">Open public page</button></p></form>""")
+<p><button type="submit">Open public page</button></p></form>""" + (
+                """<h2>One-time ChatGPT public-demo verification</h2>
+<p><a href="/owner/chat-demo-approval">Approve one signed, read-only demo browser check</a></p>"""
+                if (os.environ.get("K_SERVICE")=="plenum-browser-owner-auth0"
+                    and os.environ.get("PLENUM_CHAT_RELAY_ENABLED")=="true")
+                else ""))
 
     @app.get("/owner/public-preview",response_class=HTMLResponse)
     async def owner_preview(url: str=Query(min_length=9,max_length=1200),

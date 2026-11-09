@@ -696,3 +696,8 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [ ] [PR #251](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/251) pins 2026 immutable OIDC subject and actual authenticated GitHub numeric IDs (owner `251133044`, repo `1447724141`); requires issuer, audience, founder actor, workflow, runner and scope from signed JWT. CI and merge still required. No new browser engine, IAM grant or deployment.
 - [ ] Private relay requires owner pairing, durable replay protection, fixed read-only demo endpoint and authenticated real chat tool acceptance.
 
+## 2026-11-08 ~20:55 ET: bounded owner-paired GitHub OIDC demo browser relay staged
+- [ ] Branch `feat/one-click-owner-paired-signed-github-demo-read`: exact founder-issued GitHub issue triggers signed 10-min OIDC workflow, one-time owner Auth0 CSRF approval stored Fernet-encrypted in private GCS and atomically consumed before fresh Chromium checks **only** the public Sauce Labs demonstration site. Output limited to boolean `verified/not_verified` and fixed safe metadata. No cookies, private page content or arbitrary website actions reach GitHub.
+- [ ] CI, merge, protected release, explicit safe environment activation and founder one-click pairing still required. Default flag OFF and no live route introduced. No TinyFish costs or duplicate browser engine.
+- [ ] One actual ChatGPT invocation resulting in authenticated public-demo proof remains the final acceptance gate. Other private website actions and Work-like parity are not claimed.
+
