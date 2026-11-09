@@ -115,7 +115,7 @@ class PrivateLoginTests(unittest.TestCase):
         from urllib.parse import quote
         fixture=private_login.login_html("test-nonce")
         self.assertIn("Continue with Google",fixture)
-        self.assertIn("private live",fixture.lower())
+        self.assertIn("LIVE browser picture",fixture)
         self.assertIn('id="url" type="url" placeholder=',fixture)
         self.assertNotIn('value="https://the-internet.herokuapp.com/login"',fixture)
         self.assertIn("Save this website login",fixture)
