@@ -21,7 +21,7 @@ OWNER_SUBJECT=("repo:chadkhalil21-svg@"+ACTOR_ID+
                "/Plenum-Scientific-Intelligence@"+REPOSITORY_ID+
                ":environment:computer-browser-production")
 WORKFLOW_REF=REPOSITORY+"/.github/workflows/chat-browser-owner-read.yml@refs/heads/main"
-AUDIENCE="https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app/internal/chat-read-v1"
+AUDIENCE="https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app/internal/chat-demo-read"
 ENVIRONMENT="computer-browser-production"
 MAX_LIFETIME=600
 
