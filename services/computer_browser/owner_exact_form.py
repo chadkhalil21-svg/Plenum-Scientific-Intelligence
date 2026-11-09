@@ -100,6 +100,11 @@ def validate_plan(*, site, page_path, post_path, form_selector,
                 or _SENSITIVE.search(selector)):
             raise PermissionError("Unsafe or non-CSS form field selector")
         if idx < len(operations) - 1:
+            if selector.startswith("#"):
+                raise PermissionError("Form fields must identify their input tag")
+            if (op == "fill" and not selector.startswith(("input[", "textarea["))
+                    or op == "select" and not selector.startswith("select[")):
+                raise PermissionError("Field selector does not match operation")
             if (op not in {"fill", "select"}
                     or set(step) != {"op", "selector", "value"}
                     or not isinstance(step["value"], str)
@@ -274,6 +279,17 @@ async def submit_native_post(*, record):
                                 "application/x-www-form-urlencoded").lower()
                     if encoding != "application/x-www-form-urlencoded":
                         raise PermissionError("Only ordinary URL-encoded forms")
+                    # Reject password/hidden/file/action controls even if
+                    # they appear under a harmless CSS name.
+                    for step in compiled.steps[:-1]:
+                        field = form.locator(step.selector)
+                        if await field.count() != 1 or not await field.is_visible():
+                            raise PermissionError("Private form field is not unique and visible")
+                        if step.selector.startswith("input["):
+                            field_type = (await field.get_attribute("type") or "text").lower()
+                            if field_type not in {"text", "search", "email",
+                                                  "tel", "url", "number"}:
+                                raise PermissionError("Protected or non-text field")
                     # Original step executor: a scoped form locator prevents
                     # escaping to account-level controls outside this form.
                     await execute_steps_on_page(
