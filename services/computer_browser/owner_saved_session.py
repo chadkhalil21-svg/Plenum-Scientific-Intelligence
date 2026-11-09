@@ -299,7 +299,7 @@ def _approved_batch_paths(site, first_path, additional_paths):
     )
     for path in paths:
         if (not isinstance(path, str) or not 1 <= len(path) <= 220
-                or not re.fullmatch(r"/[A-Za-z0-9/_\\.-]*", path)
+                or not re.fullmatch(r"/[A-Za-z0-9/_.-]*", path)
                 or "//" in path or "%" in path or "?" in path or "#" in path
                 or any(part in (".", "..") for part in path.split("/"))
                 or blocked.search(path) or path in seen):
