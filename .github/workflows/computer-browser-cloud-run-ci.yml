@@ -118,6 +118,10 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_computer_browser_iap.py' -v
       - name: Verify IAP owner interactive Chromium and site-scoped cookie privacy
         run: python -m unittest discover -s tests -p 'test_browser_private_login.py' -v
+      - name: Verify original owner registered-site pinned HTTPS proxy and action refusal
+        env:
+          PLENUM_BROWSER_NEW_PROXY_LIVE_CI: 'true'
+        run: python -m unittest discover -s tests -p 'test_browser_pinned_public_preview.py' -v
       - name: Verify new owner-only encrypted runtime website registry and revocation
         run: python -m unittest discover -s tests -p 'test_browser_runtime_site_grants.py' -v
       - name: Verify signed-owner saved-session preview and revocation endpoints
