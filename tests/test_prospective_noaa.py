@@ -73,11 +73,11 @@ class ProspectiveNOAATests(unittest.TestCase):
         # Contract test of Plenum's OWN source adapter using inert NOAA-shaped
         # examples only. Never fetch Nov 12-13 actual target observations.
         rows=[
-            {"t":"2026-10-24 00:00","v":"1.200","q":"p"},
-            {"t":"2026-10-24 00:06","v":"1.800","q":"p"},
-            {"t":"2026-10-24 01:00","v":"1.300","q":"v"},
-            {"t":"2026-10-24 02:00","v":"999","q":"p"},
-            {"t":"2026-10-24 03:00","v":"1.500","q":"s"},
+            {"t":"2026-10-24 00:00","v":"1.200","q":"p","f":"0,0,0,0"},
+            {"t":"2026-10-24 00:06","v":"1.800","q":"p","f":"0,0,0,0"},
+            {"t":"2026-10-24 01:00","v":"1.300","q":"v","f":"0,0,0,0"},
+            {"t":"2026-10-24 02:00","v":"999","q":"p","f":"0,0,0,0"},
+            {"t":"2026-10-24 03:00","v":"1.500","q":"s","f":"0,0,0,0"},
         ]
         raw=json.dumps({"data":rows}).encode()
         requested=[]
@@ -107,16 +107,30 @@ class ProspectiveNOAATests(unittest.TestCase):
         p.fetch_public(p.STATION_IDS[0],True,opener=observed_only)
         self.assertEqual(requested[1]["end_date"],["20261113"])
 
+    def test_noaa_six_minute_quality_flags_prevent_false_observations(self):
+        ok=lambda q,f:{"t":"2026-10-24 00:00","v":"1.05","q":q,"f":f}
+        self.assertTrue(p.usable_six_minute_observation(ok("p","0,0,0,0")))
+        # Preliminary O counts 1-second outliers; it does not by itself make
+        # the six-minute height inferred. F/R/L hard warning flags do.
+        self.assertTrue(p.usable_six_minute_observation(ok("p","3,0,0,0")))
+        self.assertTrue(p.usable_six_minute_observation(ok("v","0,0,0,0")))
+        for q,f in [("p","0,1,0,0"),("p","0,0,1,0"),
+                    ("p","0,0,0,1"),("v","1,0,0,0"),
+                    ("p","0,0,0"),("v","bad"),("v",None)]:
+            self.assertFalse(p.usable_six_minute_observation(ok(q,f)))
+        self.assertFalse(p.usable_six_minute_observation(None))
+        self.assertFalse(p.usable_six_minute_observation(ok("unknown","0,0,0,0")))
+
     def test_real_noaa_adapter_rejects_invalid_flags_duplicates_and_oversize(self):
         def fake(rows):
             return lambda request,timeout: BytesIO(json.dumps({"data":rows}).encode())
         with self.assertRaisesRegex(ValueError,"No flagged real NOAA"):
             p.fetch_public(p.STATION_IDS[0],False,opener=fake([
-                {"t":"2026-10-24 00:00","v":"0.8","q":"unknown"}]))
+                {"t":"2026-10-24 00:00","v":"0.8","q":"unknown","f":"0,0,0,0"}]))
         with self.assertRaisesRegex(ValueError,"Duplicate NOAA hourly timestamp"):
             p.fetch_public(p.STATION_IDS[0],False,opener=fake([
-                {"t":"2026-10-24 00:00","v":"0.8","q":"p"},
-                {"t":"2026-10-24 00:00","v":"0.9","q":"v"}]))
+                {"t":"2026-10-24 00:00","v":"0.8","q":"p","f":"0,0,0,0"},
+                {"t":"2026-10-24 00:00","v":"0.9","q":"v","f":"0,0,0,0"}]))
         with self.assertRaisesRegex(ValueError,"fixed 21-day download limit"):
             p.fetch_public(p.STATION_IDS[0],False,
                 opener=lambda request,timeout: BytesIO(
