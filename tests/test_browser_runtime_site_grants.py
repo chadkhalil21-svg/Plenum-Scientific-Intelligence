@@ -7,10 +7,14 @@ import os
 import unittest
 from unittest.mock import patch, MagicMock
 
-from services.computer_browser import runtime_site_grants as grants
-
 FASTAPI = importlib.util.find_spec("fastapi") is not None
 CRYPTO = importlib.util.find_spec("cryptography") is not None
+# The scientific foundation intentionally installs neither HTTP gateway
+# nor browser crypto extras; keep the optional Plenum browser tests skipped.
+if FASTAPI and CRYPTO:
+    from services.computer_browser import runtime_site_grants as grants
+else:
+    grants = None
 
 if CRYPTO:
     from cryptography.fernet import Fernet
