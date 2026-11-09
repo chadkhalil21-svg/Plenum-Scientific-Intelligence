@@ -114,6 +114,11 @@ class PrivateLoginTests(unittest.TestCase):
         from playwright.sync_api import sync_playwright
         from urllib.parse import quote
         fixture=private_login.login_html("test-nonce")
+        self.assertIn("Continue with Google",fixture)
+        self.assertIn("private live",fixture.lower())
+        self.assertIn('id="url" type="url" placeholder=',fixture)
+        self.assertNotIn('value="https://the-internet.herokuapp.com/login"',fixture)
+        self.assertIn("Save this website login",fixture)
         injected="""(() => {
           class TestWebSocket {
             static OPEN=1;
