@@ -58,6 +58,21 @@ Each entry below is a **choice for a specific future problem**, NOT an instructi
 
 **Source review:** authoritative upstream links above. A mature solver's original validation is inherited **only within its published domain and conditions**. Codes and the checkpoints or datasets they consume may have distinct usage/redistribution terms.
 
+### Additional broad-domain tools that should **not** be overlooked
+
+| Additional role | Original established software | When it actually warrants adoption |
+|---|---|---|
+| Industrial planning, scheduling and combinatorial optimization | [Google OR-Tools](https://developers.google.com/optimization) (routing, CP-SAT, mathematical optimization) | A genuinely difficult routing, scheduling, factory or resource allocation problem; no new Plenum optimizer |
+| Parametric product and building design | [FreeCAD](https://github.com/FreeCAD/FreeCAD) (parametric CAD), OpenCASCADE | A concrete engineering design, fabrication or measured geometry task; imported CAD model is not proof of structural safety |
+| Photonic integrated circuit / chip layout | [gdsfactory](https://github.com/gdsfactory/gdsfactory) original open-source design/verification stack | Actual AION photonic chip design/PDK question; carefully separate open PDKs from NDA/paid foundry data |
+| Electronics and circuit simulation | [ngspice](https://ngspice.sourceforge.io/) for analog/semiconductor circuits | A stated circuit/component and measured parameters; no need when SciPy circuit fixture suffices |
+| Robot communication/control and deployment | [ROS 2](https://github.com/ros2/ros2) | Only once a bounded physical robot or reliable ROS-compatible sensor/actuator integration is needed, not a second agent brain |
+| Reinforcement-learning algorithms | [Stable-Baselines3](https://github.com/DLR-RM/stable-baselines3) with Gymnasium/MuJoCo | A measurable learning-from-action task requiring PPO/SAC/etc. Do not build another RL algorithm framework |
+| Social science, economics, supply chains | Existing SciPy/OpenMDAO plus [Mesa](https://github.com/mesa/mesa), SimPy, Google OR-Tools | Only for stated economic/agent-based or discrete-event objective, calibrated on relevant observations |
+| Art, music, creativity and interactive design | Already Plenum creative/music modules, original music21, upstream CAD/design/rendering tools | Use existing programs on explicit creative task. Artistic output alone is not evidence of general intelligence |
+
+**Autonomous science systems already reviewed in earlier Plenum inventories** include [Sakana AI Scientist v2](https://github.com/SakanaAI/AI-Scientist-v2), [Biomni](https://github.com/snap-stanford/Biomni), [ToolUniverse](https://github.com/mims-harvard/ToolUniverse), and [K-Dense Scientific Agent Skills](https://github.com/K-Dense-AI/scientific-agent-skills). They are not operating Plenum research agents; some have model/data license, security, generated-code and large compute requirements. **Reference their existing tools and task implementations individually**, instead of grafting entire agent infrastructures onto our working LangGraph/Inspect stack. Do not treat publisher agent-generated manuscripts as independently established discoveries.
+
 ## C. Other critical engines: testing, synthetic experiments and scientific reasoning
 
 These matter as much as the simulations. **Synthetic data are not new ground truth.** Separate upstream reliability from verification of *Plenum's new capability*.
