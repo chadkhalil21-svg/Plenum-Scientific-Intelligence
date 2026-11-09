@@ -113,8 +113,10 @@ def _page(title, body):
         "<meta name='viewport' content='width=device-width,initial-scale=1'>"
         "<title>Computer · Private Website Sessions</title>"
         "<style>body{font:16px system-ui;max-width:720px;margin:32px auto;"
-        "padding:0 18px;line-height:1.6}input,button{font:inherit;padding:9px}"
-        "input{min-width:60%}article{border:1px solid #8888;padding:16px;"
+        "padding:0 18px;line-height:1.6}input,button,textarea{font:inherit;padding:9px}"
+        "input{min-width:60%}textarea{box-sizing:border-box;width:100%;"
+        "min-height:165px;font:14px ui-monospace,monospace}"
+        "article{border:1px solid #8888;padding:16px;"
         "border-radius:10px;white-space:pre-wrap;overflow-wrap:anywhere}"
         "button{cursor:pointer}small{opacity:.75}</style></head>"
         "<body><h1>" + escape(title) + "</h1>" + body

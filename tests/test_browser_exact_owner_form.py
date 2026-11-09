@@ -269,6 +269,12 @@ class ExactFormHttpTests(unittest.TestCase):
         self.assertEqual(page.status_code,200)
         self.assertIn("APPROVE FORM POST",page.text)
         self.assertIn("Revoke pending",page.text)
+        self.assertIn("Do not approve a sample or guessed operation",page.text)
+        self.assertIn("open the private live Chromium",page.text)
+        self.assertNotIn("value='/profile/edit'",page.text)
+        self.assertNotIn("value='/profile/save'",page.text)
+        self.assertNotIn("Reviewed note",page.text)
+        self.assertIn("Paste the reviewed, exact JSON action plan only",page.text)
         _,public=keys()
         payload={"site":SITE,"page_path":"/profile/edit",
                  "post_path":"/profile/save","form_selector":"form",
