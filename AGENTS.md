@@ -1,5 +1,12 @@
 # Project working instructions
 
+## Protect upcoming actual real-world prospective science (Nov 10–18, 2026)
+
+**The top near-term intelligence evidence is real-world science, not another agent wrapper.** Locked NOAA predictions issue **Nov 10** and USGS predictions **Nov 11** for **Nov 12–13** future heldout physical observations; main original audit schedules remain NOAA **Nov 16**, USGS **Nov 18**. Do not rewrite either protocol, select models after outcomes, access embargoed future observations early, run models merely to revalidate proven upstream packages, or count synthetic data as independent measurement.
+
+[PR #274](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/274) adds ONE backup scheduled occurrence per existing workflow at Nov 10 20:17 UTC (NOAA) / Nov 11 18:17 UTC (USGS), with canonical research-memory **frozen file presence check** blocking duplicate issuance. Original proposals are scheduled Nov 10 11:17 UTC (NOAA), Nov 11 09:20 UTC (USGS), and all original scientific code stays unchanged. This is a scheduling safeguard, **not** a tested science outcome or AGI. In future chats, prioritize verifying original archived freeze time on research-memory; if missing after issuance deadline, label the study invalid rather than issuing post-hoc forecasts. Later score only with original separate auditor. No new paid service, solver, model, framework or extra background monitoring.
+
+
 ## Real first SWE-bench case completed: preserve behavior evidence, no rerun (2026-11-09)
 
 Prior 'SWE-bench running' ledger/status is now stale. [Original one-case workflow #42568013296](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42568013296) **FINISHED**; original SWE-bench scorer errored because **swebench==5.0.2** removed original `MAP_REPO_VERSION_TO_SPECS` expected by pinned Inspect Evals 0.27.0. There is **NO official score**; never report 0/1 or 1/1. We retrieved the immutable original ZIP and inspected the nested actual Inspect sample. Qwen3-1.7B performed **10 model tool calls**: two duplicate Python failures and eight identical failed-to-help `export DJANGO_SETTINGS_MODULE=myproject.settings` calls, with NO repository edits/patch. The model exhibited a **real repeated-tool strategy failure** and hit the turn limit, distinct from the scorer crash. Full exact hashes and original issue ID in [permanent evidence](evidence/inspect-swebench/2026-11-09-django-11790-original-ungraded-attempt.json) and [main ledger](docs/LEDGER.md).
