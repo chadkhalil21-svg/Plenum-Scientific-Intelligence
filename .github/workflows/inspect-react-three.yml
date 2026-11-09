@@ -340,3 +340,182 @@ jobs:
             reports/no-submit-new-humaneval3.json
             reports/inspect-original-no-submit-logs/
           retention-days: 90
+
+  one-original-swebench-repair:
+    if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release one original SWE-bench repository repair')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+      OPENAI_API_KEY: ''
+      ANTHROPIC_API_KEY: ''
+      GOOGLE_API_KEY: ''
+      HF_TOKEN: ''
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Preflight ONLY original Inspect SWE-bench Verified Mini data and official patch grader, no LLM
+        run: |
+          python -m pip install -e '.[inspection]'
+          python -m pip install 'inspect-evals[swe_bench]==0.27.0'
+          python -m pip check
+          python - <<'PY'
+          import json
+          from importlib.metadata import version
+          from pathlib import Path
+          from inspect_evals.swe_bench.swe_bench import (
+              swe_bench_verified_mini, SWE_BENCH_VERIFIED_MINI_REVISION,
+          )
+          from inspect_evals.swe_bench.scorers import swe_bench_scorer
+          import acp.helpers
+          assert version('inspect-ai')=='0.3.287'
+          assert version('inspect-evals')=='0.27.0'
+          assert version('agent-client-protocol')=='0.12.1'
+          task=swe_bench_verified_mini(allow_internet=False)
+          assert len(task.dataset)>=1
+          first=task.dataset[0]
+          assert first.id and first.metadata is not None
+          assert first.metadata['allow_internet'] is False
+          assert first.metadata['image_name'].startswith('swebench/sweb.eval.x86_64.')
+          assert first.metadata['FAIL_TO_PASS'] and first.metadata['base_commit']
+          assert task.scorer is not None and callable(swe_bench_scorer)
+          Path('reports').mkdir(exist_ok=True)
+          Path('reports/original-swebench-instance.json').write_text(json.dumps({
+            'dataset':'MariusHobbhahn/swe-bench-verified-mini',
+            'dataset_revision':SWE_BENCH_VERIFIED_MINI_REVISION,
+            'sample_selection':'first in original upstream dataset, no cherry-picking',
+            'id':str(first.id),
+            'repo':first.metadata['repo'],
+            'base_commit':first.metadata['base_commit'],
+            'original_image':first.metadata['image_name'],
+            'network_in_sandbox':False,
+            'original_fail_to_pass_count':len(first.metadata['FAIL_TO_PASS']),
+            'original_pass_to_pass_count':len(first.metadata['PASS_TO_PASS']),
+          },indent=2)+'\n')
+          print('Original SWE-bench pinned first instance:',first.id,
+                'test cases:',len(first.metadata['FAIL_TO_PASS']),
+                'Docker image:',first.metadata['image_name'])
+          PY
+      - name: Check original official prebuilt SWE-bench Docker issue environment BEFORE any model download
+        run: |
+          docker info >/dev/null
+          docker compose version
+          IMAGE="$(python -c "import json; print(json.load(open('reports/original-swebench-instance.json'))['original_image'])")"
+          docker pull --quiet "$IMAGE"
+          docker image inspect "$IMAGE" >/dev/null
+          df -h .
+          python - <<'PY'
+          import shutil
+          gb=shutil.disk_usage('.').free/1024**3
+          print('Remaining runner free storage after original benchmark image: %.2f GiB'%gb)
+          if gb<5:
+              raise SystemExit('Not enough room for frozen existing model; original Docker image too heavy for this runner')
+          PY
+      - name: Install same frozen original Qwen3-1.7B CPU inference; no second agent framework
+        run: |
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install 'transformers==5.22.1' 'accelerate>=1.1,<2' 'huggingface_hub>=1.2,<2' safetensors
+          python -m pip check
+          python - <<'PY'
+          from pathlib import Path
+          from huggingface_hub import HfApi,snapshot_download
+          from plenum_ai.qwen3_chat_template import MODEL,REVISION
+          assert MODEL=='Qwen/Qwen3-1.7B'
+          assert HfApi().model_info(MODEL,revision=REVISION).sha==REVISION
+          Path('reports/model-path.txt').write_text(snapshot_download(repo_id=MODEL,revision=REVISION))
+          print('Existing pinned Qwen3-1.7B verified. No paid model API.')
+          PY
+          MODEL_PATH="$(cat reports/model-path.txt)"
+          python -m plenum_ai.qwen3_chat_template --model-path "$MODEL_PATH" \
+            --template-out reports/qwen3-react-template.jinja \
+            --out reports/qwen3-react-template-check.json
+          python -m plenum_ai.react_json_model_config --model-path "$MODEL_PATH" \
+            --original-template native --template reports/qwen3-react-template.jinja \
+            --out reports/qwen3-react-model-config.json
+      - name: Attempt exactly ONE real upstream GitHub software issue with original repo-editing agent and grader
+        run: |
+          inspect eval inspect_evals/swe_bench_verified_mini --model hf/local \
+            --model-config reports/qwen3-react-model-config.json \
+            --limit 1 --epochs 1 --max-samples 1 --max-sandboxes 1 \
+            --max-connections 1 --max-tokens 384 --temperature 0 \
+            --turn-limit 10 --message-limit 24 --time-limit 930 --max-retries 0 \
+            --log-dir reports/inspect-swebench-original-logs --display plain
+      - name: Preserve original SWE-bench failure or success without re-running evaluator
+        if: success()
+        run: |
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          from urllib.parse import urlsplit,unquote
+          from inspect_ai.log import list_eval_logs,read_eval_log
+          from plenum_ai.qwen3_chat_template import REVISION
+          from plenum_ai.inspect_react_coding import count_actual_tools
+          chosen=json.loads(Path('reports/original-swebench-instance.json').read_text())
+          logs=list_eval_logs(log_dir='reports/inspect-swebench-original-logs')
+          assert len(logs)==1
+          log=read_eval_log(logs[0].name)
+          assert log.status=='success' and not log.error, 'No completed original grading: do not fabricate 0 score'
+          assert log.eval.model=='hf/local'
+          assert str(log.eval.model_args.get('model_path','')).endswith(REVISION)
+          assert len(log.samples or [])==1
+          sample=log.samples[0]
+          assert str(sample.id)==chosen['id']
+          scores=list((sample.scores or {}).values())
+          assert len(scores)==1, 'Original SWE-bench scorer unavailable'
+          scored=scores[0]
+          assert float(scored.value) in (0.0,1.0)
+          calls,responses=count_actual_tools(sample.messages or [])
+          patch=str((scored.metadata or {}).get('model_patch',''))
+          uri=logs[0].name
+          disk=Path(unquote(urlsplit(uri).path)) if uri.startswith('file:') else Path(uri)
+          assert disk.is_file()
+          result={
+            'schema':'plenum-original-swebench-repository-repair-one-v1',
+            'original_dataset':chosen['dataset'],
+            'original_dataset_revision':chosen['dataset_revision'],
+            'original_source_id':chosen['id'],
+            'original_repo':chosen['repo'],
+            'original_base_commit':chosen['base_commit'],
+            'original_prebuilt_image':chosen['original_image'],
+            'original_scorer':'inspect_evals/swe_bench 0.27.0 original SWE-bench Docker pass/fail suite',
+            'actual_repo_issue_resolved':float(scored.value)==1.0,
+            'original_score':float(scored.value),
+            'agent':'original Inspect Evals SWE-bench native repo-editing agent',
+            'model':'Qwen/Qwen3-1.7B',
+            'model_revision':REVISION,
+            'real_model_tool_calls':calls,
+            'real_tool_responses':responses,
+            'repo_patch_bytes':len(patch.encode()),
+            'repo_patch_sha256':hashlib.sha256(patch.encode()).hexdigest(),
+            'original_native_eval_sha256':hashlib.sha256(disk.read_bytes()).hexdigest(),
+            'old_HumanEval_cases_rerun':False,
+            'paid_model_api_calls':0,
+            'single_original_github_issue_attempt':True,
+            'private_production_writes':False,
+            'automatic_model_promotion':False,
+            'AGI_demonstrated':False,
+            'limitations':['Exactly one existing public benchmark issue, possibly seen in training',
+              'Original code under test is sandboxed with network disabled',
+              'One repository fix is not general competence, long-horizon research or AGI']
+          }
+          Path('reports/original-swebench-one.json').write_text(json.dumps(result,indent=2)+'\n')
+          print('ORIGINAL SWE-BENCH SCORE:',result['original_score'],
+                '; edits:',result['repo_patch_bytes'],'bytes; model tool calls',calls)
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: original-swebench-one-real-repository-task-evidence
+          path: |
+            reports/original-swebench-instance.json
+            reports/original-swebench-one.json
+            reports/inspect-swebench-original-logs/
+          retention-days: 90
