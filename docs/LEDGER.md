@@ -1,5 +1,14 @@
 # Engineering and Scientific Ledger
 
+## QWEN3.5-4B PROVIDER REPAIR | 2026-11-09: original model loaded; score still pending
+
+**Actual candidate result is not yet graded.** [Original model trial #42564670475](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42564670475) verified official Unsloth Qwen3.5-4B Q4_K_M model SHA256, the pinned official llama.cpp binary, and a functioning loopback-only `llama-server`. Inspect's original GPQA invocation failed at the provider call before any trustworthy score: the opt-in job mistakenly installed `openai>=2,<3` while our pinned `inspect-ai==0.3.287` OpenAI-compatible provider uses `httpx2` and requires OpenAI SDK >=3.4.0. Do **not** classify this as a model error or change the old Qwen3-0.6B **1/3** result.
+
+**Small upstream fix, no new infrastructure:** [PR #270](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/270) merged, updating only the experimental job to `openai==3.4.0` and asserting `httpx2` and successful `get_model('openai-api/local/qwen35-4b')` **before downloading model weights**; diagnostics display is enabled. The existing original Inspect CPU benchmark preflight passed. A previously launched main run [#42565079525](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42565079525) advanced to original three-question GPQA scoring. No accurate new-model grade may be claimed until the original native logs and unchanged historical IDs are independently validated and archived.
+
+**Global founder efficiency constraint:** Existing upstream runtime + existing grader + frozen old evidence; if compatibility breaks, fix only that integration. Do not rebuild the engine, rerun existing model baseline, invoke GPU/cloud spend, duplicate tests or conflate PR approval and scoring. The existing external score (ReAct Qwen3-1.7B **1/3 vs 2/3** one-shot on original HumanEval) remains evidence that model/tool-using reliability, not agent quantity, is the research bottleneck.
+
+
 ## MODEL-QUALITY-FIRST PROGRESS | 2026-11-08: new Qwen3.5-4B candidate, no repeated prior baseline
 
 **Decision from measured prior work:** Qwen3-1.7B **regressed** in exact previously held original HumanEval task comparison: ReAct tool-using agent **1/3**, one-shot **2/3**, despite **11 real tool calls and 11 real tool responses** ([original run #42350599820](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42350599820)). The bottleneck is reliable underlying reasoning and using tool feedback correctly, not another graph/planner framework. Do not create 10,000 agents or rerun existing upstream software tests to obscure this negative evidence. Earlier Qwen3-0.6B original three-domain GPQA results **1/3** are fixed and already archived.
