@@ -646,3 +646,8 @@ Across four known-equation fixtures, DOP853 required 1,256 solver function evalu
 - [x] Founder screenshot shows live authenticated demo Secure Area rendered at 7:12 p.m. through the owner-operated private Chromium stream.
 - [x] Source audit proves owner sign-in streaming launches a fresh Chromium context **without loading encrypted profile state**; screenshot is therefore not the `/owner/sessions/preview` restoration check.
 - [ ] Use saved-session read-only preview under the owner portal to verify independent decrypt/cookie restore on the public demonstration site's protected `/secure` route. Do not imply Work/TinyFish parity until ordinary ChatGPT-controlled actions are actually enabled and tested.
+
+## 2026-11-08 ~19:15 ET: root cause of recurring owner preview 403 identified
+- [x] Founder correctly selected encrypted demo-profile Preview, but Edge still got `Same-origin owner action required`. Prior form-signing fix did not address HTTP `Origin:null`.
+- [x] Fetch standard confirms **`Referrer-Policy:no-referrer` on a native form POST generates `Origin:null`**, while existing exact-origin guard rejects it. Narrow code change stages **`Referrer-Policy:same-origin`** for saved-session pages, retaining all signed-CSRF and owner identity protections; no IAM, credentials, ciphertext or cross-site request scope changes.
+- [ ] Run actual Chromium synthetic POST header regression for old/current policy, full CI/merge/protected Auth0 deploy. Then owner rechecks saved public-demo login restoration through read-only preview, without repeating website credentials.

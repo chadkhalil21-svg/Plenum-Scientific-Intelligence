@@ -105,6 +105,73 @@ class SavedWebsiteSessionRoutes(unittest.TestCase):
                 self.assertNotIn("synthetic-secret-cookie",resp.text)
 
 
+    def test_native_browser_form_origin_respects_referrer_policy(self):
+        """Real Chromium regression reproduces the exact 403 header mismatch.
+
+        Fetch standard: ordinary HTML form POST with no-referrer sends
+        Origin:null, whereas same-origin sends the valid owner page origin.
+        Everything here is intercepted locally, no real website or identity.
+        """
+        self.assertEqual(owner_saved_session._HEADERS["Referrer-Policy"],
+                         "same-origin")
+        if importlib.util.find_spec("playwright") is None:
+            self.skipTest("Playwright is not installed in this test environment")
+        from playwright.sync_api import sync_playwright, Error as PlaywrightError
+        origin="https://computer.example.com"
+        listing=origin+"/owner/sessions"
+        endpoint=origin+"/owner/sessions/preview"
+        doc=("<!doctype html><html><body>"
+             "<form method='post' action='/owner/sessions/preview'>"
+             "<input type='hidden' name='site' value='https://example.com'>"
+             "<input type='hidden' name='csrf_token' value='synthetic-ci-only'>"
+             "<button type='submit'>Preview saved session (read only)</button>"
+             "</form></body></html>")
+        with sync_playwright() as p:
+            try:
+                browser=p.chromium.launch(headless=True)
+            except PlaywrightError as exc:
+                if "Executable doesn't exist" in str(exc):
+                    self.skipTest("Chromium executable not installed in this environment")
+                raise
+            try:
+                def submit_with_policy(policy):
+                    context=browser.new_context()
+                    try:
+                        page=context.new_page()
+                        captured=[]
+                        def route_handler(route):
+                            req=route.request
+                            if req.url==listing and req.method=="GET":
+                                route.fulfill(status=200,
+                                    headers={"content-type":"text/html; charset=utf-8",
+                                             "referrer-policy":policy},
+                                    body=doc)
+                            elif req.url==endpoint and req.method=="POST":
+                                captured.append({
+                                    "origin":req.headers.get("origin"),
+                                    "method":req.method,
+                                    "post":req.post_data,
+                                })
+                                route.fulfill(status=200,content_type="text/plain",
+                                              body="Synthetic preview accepted")
+                            else:
+                                route.abort()
+                        page.route("**/*",route_handler)
+                        page.goto(listing)
+                        page.get_by_role("button",name="Preview saved session (read only)").click()
+                        page.wait_for_url(endpoint)
+                        self.assertEqual(len(captured),1)
+                        self.assertIn("csrf_token=synthetic-ci-only",captured[0]["post"])
+                        self.assertEqual(captured[0]["method"],"POST")
+                        return captured[0]["origin"]
+                    finally:
+                        context.close()
+                self.assertEqual(submit_with_policy("no-referrer"),"null")
+                self.assertEqual(submit_with_policy(
+                    owner_saved_session._HEADERS["Referrer-Policy"]),origin)
+            finally:
+                browser.close()
+
     def test_mobile_form_without_origin_header_has_signed_csrf(self):
         """Native HTML form in iPad Edge may omit Origin and no-referrer hides Referer."""
         site="https://example.com"
