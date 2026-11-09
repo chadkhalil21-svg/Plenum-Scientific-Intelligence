@@ -164,6 +164,7 @@ class EncryptedReadTests(unittest.TestCase):
         other, _ = new_keypair()
         record = {"site": SITE, "path": "/secure", "recipient_public_key": pub}
         result = {"site":SITE, "http_status":200,
+                  "final_url":SITE+"/secure", "demo_authenticated_restored":True,
                   "title":"Private synthetic title",
                   "body":"PRIVATE PAGE TEXT: confidential test result"}
         encrypted = sealed.seal_result(record, result)
@@ -196,6 +197,7 @@ class EncryptedReadTests(unittest.TestCase):
         _, pub = new_keypair()
         record = {"site": SITE, "path": "/secure", "recipient_public_key": pub}
         data = {"site": SITE, "http_status":200,
+                "final_url":SITE+"/secure", "demo_authenticated_restored":True,
                 "title":"Private", "body":"Authorized page",
                 "cookie":"NEVER-ECHO", "session_state":{"password":"secret"}}
         result=sealed.seal_result(record, data)
@@ -203,7 +205,14 @@ class EncryptedReadTests(unittest.TestCase):
         self.assertNotIn("password",json.dumps(result))
         for bad in [
             {**data,"http_status":401},
+            {**data,"http_status":302},
             {**data,"site":"https://evil.example.org"},
+            {**data,"final_url":SITE+"/login"},
+            {**data,"final_url":SITE+"/secure?different=1"},
+            {**data,"final_url":"https://evil.example.org/secure"},
+            {**data,"final_url":None},
+            {**data,"demo_authenticated_restored":False},
+            {**data,"demo_authenticated_restored":None},
             {**data,"body":"X"*1201},
         ]:
             with self.assertRaises(PermissionError):
@@ -268,6 +277,7 @@ class AuthenticatedOwnerHttpTests(unittest.TestCase):
         from services.computer_browser import owner_sealed_relay
         from services.computer_browser.github_oidc_read_policy import GitHubOIDCTokenVerifier
         result={"site":SITE,"http_status":200,"title":"Private Title",
+                "final_url":SITE+"/secure","demo_authenticated_restored":True,
                 "body":"SENSITIVE CONTENT MUST BE SEALED"}
         priv,pub=new_keypair()
         record={"site":SITE,"path":"/secure","owner":OWNER,
