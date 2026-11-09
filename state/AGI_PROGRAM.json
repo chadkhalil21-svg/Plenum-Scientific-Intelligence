@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-09T03:15:42.799Z",
+  "last_reviewed_utc": "2026-11-09T03:49:04.665Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -633,12 +633,49 @@
       "metric": "Heldout within-simulator paired controlled action reversal: predicted differences in later state against fixed action-free comparator and altered-physics OOD generalization",
       "AGI_demonstrated": false,
       "notes": "Reused original SciPy DOP853 nonlinear oscillator and scikit-learn Ridge with frozen weights. Six matched starting states, reversed force sequences and independent trial seeds. Actual CI #42552640155 passed and logged all horizon errors; shifted physics increased error. Synthetic causal intervention in a declared ODE is not independent empirical causality, video latent JEPA, AGI or ASI. No GPU/model download."
+    },
+    {
+      "id": "owner-approved-chat-github-playwright-demo-read-20261108",
+      "status": "verified_narrow_authenticated_public_demo",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/259",
+      "verified_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42557249024",
+      "AGI_demonstrated": false,
+      "notes": "Founder separately approved one read-only public-demo session in authenticated Auth0 portal (10-minute/one-use). ChatGPT-created exactly pinned issue #259 triggered existing GitHub OIDC workflow; GitHub bot reported VERIFIED independently restored the previously saved demo login, no page contents/credentials disclosed, approval consumed. Source/user approval alone were not treated as proof; this is a real narrowly signed end-to-end chat-to-protected demo verification. No general private-site authorization, site writes, uploads, unrestricted Work/TinyFish parity or general AGI."
+    },
+    {
+      "id": "noaa-observation-shadow-twin-historical-replay-20261108",
+      "status": "verified_observational_historical_replay_not_operational_twin",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42557644772",
+      "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/260",
+      "permanent_evidence": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/evidence/noaa/2025-06-17-shadow-twin-replay.json",
+      "result": {
+        "noaa_stations": [
+          "8443970",
+          "8723214"
+        ],
+        "reference_study_day": "2025-06-17",
+        "training_samples_each": 384,
+        "next_hour_evaluations_each": 23,
+        "residual_update_gain": 0.25,
+        "boston_shadow_mae_m": 0.3198791277908438,
+        "boston_frozen_harmonic_mae_m": 0.3204207634726116,
+        "boston_one_hour_persistence_mae_m": 0.4161739130434783,
+        "virginia_key_shadow_mae_m": 0.06256253225827904,
+        "virginia_key_frozen_harmonic_mae_m": 0.06575036305284719,
+        "virginia_key_one_hour_persistence_mae_m": 0.09613043478260869,
+        "real_NOAA_measurements_retrieved": true,
+        "historical_replay_not_live_synchronization": true,
+        "operational_digital_twin_verified": false
+      },
+      "metric": "Observation-updated next-hour historic NOAA sensor replay vs unmodified harmonic and 1h persistence; original NOAA API source digests and full sample forecasts archived.",
+      "AGI_demonstrated": false,
+      "notes": "Reuses existing noaa_empirical hourly_height retrieval, fixed June 1-16, 2025 four-harmonic fit, and existing workflow (no new solver, paid API, model training or GPU). Frozen gain 0.25 sensor-residual update, 5 new synthetic no-leakage/failure tests and real measured-data evaluation all passed in Actions run #42557644772. Small Boston improvement just ~0.54 mm MAE; new update is an exploratory retrospective variant on already examined June 2025 holdout, NOT prospective blind novel discovery, continuous sensor sync, uncertainty-quantified validated digital twin or AGI."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "AGI research priority: preserve the independently scored synthetic SciPy/sklearn action/counterfactual experiment (runs #42551923254/#42552640155) as a *synthetic* baseline. Prioritize already scheduled real NOAA/USGS outcome audits and one predeclared cross-environment test with heldout measured data and strongest conventional baseline. Separately evaluate ONE frozen licensed official Meta V-JEPA 2.1 ViT-B (80M) visual representation checkpoint only when a rights-cleared action/video dataset, SHA, predeclared OOD/occlusion/ablation test and compute budget are approved. V-JEPA 2.1 small is not the giant V-JEPA 2-AC robot predictor; do not train/download more merely to add architecture."
+      "action": "AGI/ASI and grounded world-model research: a low-cost observation-updated NOAA shadow experiment was actually verified on historical June 2025 real NOAA observations at two stations (23 sequential next-hour predictions each, run #42557644772, merged PR #260). This is retrospective shadow-state assimilation, NOT a continuously synchronized or calibrated digital twin. Do NOT contaminate already precommitted future NOAA/USGS Nov12-13 outcomes. Next distinct physical-world gate: after a new forecast issuance with frozen methods/strong NOAA predictions comparator, score truly unseen prospective observations, sensor quality, uncertainty and independently measured transfer. Meta V-JEPA 2.1 remains a separate uninstalled visual feature-learning candidate subject to licensed data/hardware budget and cheap baseline."
     },
     {
       "priority": 2,
@@ -650,7 +687,7 @@
     },
     {
       "priority": 4,
-      "action": "Supporting browser finish line (not AGI): official Playwright MCP public navigation via ChatGPT->GitHub and separate encrypted public-demo owner login restoration are already verified. Issue #256 has a GitHub Actions bot PASS that the narrowly scoped demo relay was enabled with anonymous/unsigned negative checks, and checked-in OIDC verifier + workflow audiences now match. NO actual founder-approved, ChatGPT-initiated signed private demo read has yet been proven. Next single gate: owner explicitly approves one 10-minute demo read in existing Auth0 portal, then use existing exact GitHub workflow with signed issuer/audience and sanitized result; check live deployment, revocation/replay and output privacy. Do not add another browser/MCP/identity path or claim Work/TinyFish parity. No credentials in public issue."
+      "action": "Browser enabling tool status: Verified narrow single-use authenticated public-demo read from an ordinary ChatGPT request via GitHub-signed workflow and saved Playwright profile, issue #259 (GitHub run #42557249024); explicit founder Auth0 consent consumed, no private data exposed. Do NOT redo Playwright/Playwright MCP/Auth0/issue transport or request another demo approval. General real private-site login/approved writes/uploads remain NOT VERIFIED and require an independent authorized research use case, security tests and private outputs. Browser engineering must not crowd out AGI experiments."
     },
     {
       "priority": 5,
@@ -675,6 +712,10 @@
     {
       "priority": 10,
       "action": "Continue mathematical competency evaluations using real Lean 4 kernel verification of proposed proofs on unfamiliar third-party statements, with explicit false-proof controls and no sorry/axiom escape. Separately obtain a reliable transcript of the user's original video narration before quoting it; media must not enter public GitHub."
+    },
+    {
+      "priority": 11,
+      "action": "Next biological world-model candidate: run ONE reviewed PCSE LINGRA grassland simulation against the upstream published observational grassland dataset (or another properly licensed independent grassland dataset), with temporal holdout, biomass/LAI/soil moisture validation, uncertainty, baseline, and exact EUPL-1.2/license/data review; compare BioCro only if defined physiology task requires it. Do not assume results transfer to any other species or plant biotechnology without independent field/lab measurements."
     }
   ],
   "decisions": [
@@ -1021,6 +1062,14 @@
     {
       "decision": "2026-11-08 externally reviewed optimality gate: adopt proven upstream per role, do not duplicate stacks or equate import with intelligence",
       "reason": "Founder requires AGI/ASI capability gains per development hour, real cost and complexity. Verified main source and upstream official Playwright MCP, Browser Use, BrowserGym, Inspect AI, Qwen3 and Meta V-JEPA2/2.1. Keep incumbent tested Qwen baseline, LangGraph, Inspect, scoped OpenHands, official Playwright/Playwright MCP, scientific numerical solvers; evaluate optional upstream packages only against an independently scored gap. BrowserGym is benchmark scaffolding, not browser/auth replacement. Meta 80M V-JEPA 2.1 is primarily frozen visual representations, while V-JEPA 2-AC is a separate heavier action-conditioned model. No new paid model, code import, GPU or private browser operation was performed. See docs/LEDGER.md operating decision."
+    },
+    {
+      "decision": "Extend measurement-linked digital-twin research to biological, plant, agricultural and other sciences through reviewed existing upstream models",
+      "reason": "Founder directed broad cross-domain reality-grounded science. Actual NOAA observation-updated replay merged #260 with passed real measurements; living systems need domain-specific models, real biological measurements, calibration and rigorous independent outcomes. Prioritize PCSE LINGRA (EUPL-1.2; grassland observation datasets) for one next plant-field pilot only after verified license/data suitability, with BioCro, OpenAlea, APSIM, COBRApy, COPASI/Tellurium, PhysiCell and existing OpenMM as reviewed alternatives for different biological scales. For engineering reuse EnergyPlus, Meep, Aviary/OpenMDAO, PyBaMM, etc only for matched experiments. New candidates are documented in docs/SCIENTIFIC_DIGITAL_TWINS.md but NOT installed by this decision. Avoid one giant universal simulator and private-source exposure."
+    },
+    {
+      "decision": "Record owner-approved ChatGPT to signed authenticated demonstration browser read as verified narrowly, not general private browsing",
+      "reason": "Live GitHub signed workflow response issue #259 confirmed restored encrypted public-demo session after one-time founder Auth0 approval, without disclosing page data or cookie. This closes earlier 'chat private demo unverified' status but does not prove arbitrary authenticated accounts or Work/TinyFish parity. Stop repeating same setup; only expand when a concrete authorized task and acceptance test justify permissions."
     }
   ],
   "operating_rules": [
@@ -1031,6 +1080,7 @@
     "Update this public-safe status after important verified experiments and decisions, preserving previous evidence URLs.",
     "Before building any new infrastructure, audit current repo/evidence/ledger and upstream tools, reuse exactly one suitable implementation per role, define one heldout/falsifiable capability test and cost limit, measure actual improvement, report negative results, and update canonical research-memory state promptly. AGI and eventual ASI research outrank browser and UI polish.",
     "Distinguish physical-law simulator, data-calibrated digital twin, action-conditioned dynamics model, latent JEPA representation, causal intervention evidence and AGI. Never mark a trained/verified world model or AGI/ASI from a fixture, license review, CI import, or model checkpoint alone.",
-    "Before accepting new agents, solvers, models or browsers, calculate measured capability gain per dollar/hour and operational complexity against existing verified incumbents. Adopt > adapt > build; use official supported licenses/packages/checkpoints, preserve source and weight provenance, avoid duplicate workflows and new models without blinded acceptance tests and a real task. Retrieval of docs/LEDGER.md and this canonical state is necessary at each new Plenum session; it is not automatically synchronized model memory."
+    "Before accepting new agents, solvers, models or browsers, calculate measured capability gain per dollar/hour and operational complexity against existing verified incumbents. Adopt > adapt > build; use official supported licenses/packages/checkpoints, preserve source and weight provenance, avoid duplicate workflows and new models without blinded acceptance tests and a real task. Retrieval of docs/LEDGER.md and this canonical state is necessary at each new Plenum session; it is not automatically synchronized model memory.",
+    "Scientific digital twins include plants, biology, cells, ecosystems, organisms, chemistry, engineering and planetary systems. Prefer reviewed upstream per-domain simulators and real observations; distinguish retrospective shadow-state updates from synchronized uncertainty-quantified twins, from action-conditioned physics and from general intelligence. Require prospective blind observations and meaningful strong baselines before upgrading status."
   ]
 }
