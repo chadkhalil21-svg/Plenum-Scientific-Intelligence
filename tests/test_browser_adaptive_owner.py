@@ -144,7 +144,10 @@ class AdaptiveOwnerContract(unittest.TestCase):
 
     def test_read_only_adaptation_with_one_approval_and_owner_revocation(self):
         consent = self.approve()
-        encrypted = sealed.seal_result(consent, self.page())
+        raw = self.page()
+        screened = {**raw, "links_untrusted": adaptive._safe_links(
+            SITE, "/secure", raw)}
+        encrypted = sealed.seal_result(consent, screened)
         self.assertNotIn("NO PRIVATE DATA IN GITHUB", json.dumps(encrypted))
         info = adaptive.begin_session(consent, self.page())
         sid = info["session_id"]
