@@ -1,6 +1,6 @@
 # NOAA observational shadow-twin pilot: sensor updating without another simulator
 
-**Status:** experimental historical replay; changes submitted for review, **not yet an operational digital twin**. This reuses the validated Plenum NOAA harmonic forecast code, observations and independent scoring, without adding another simulator, agent framework or paid service.
+**Status:** experimental historical replay **actually executed and passed** on real NOAA observations in GitHub Actions [run #42557644772](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42557644772). It is **not yet a live or operational digital twin**. This reuses the validated Plenum NOAA harmonic forecast code, observations and independent scoring, without adding another simulator, agent framework or paid service.
 
 ## Design and provenance
 
@@ -13,6 +13,17 @@ The narrow prototype is a **two-station coastal water-level observational shadow
 The gain 0.25 is fixed and exploratory, **not calibrated** to this data. The prediction at hour `t+1` is `harmonic(t+1) + state_after_observing(t)` and must be recorded before reading the `t+1` target. The independent comparison uses the **same** target hours for (a) observationally updated shadow model, (b) original frozen harmonic model, (c) strong one-hour water-level persistence `observed(t)`. No success is forced; if the update loses, retain the loss.
 
 The fixed June 2025 holdout has already been inspected in earlier Plenum science runs. Therefore the new online-bias variant is an **exploratory historical replay**, not a freshly preregistered prospective study. Synthetic fixtures validate chronology, missing data refusal, duplicate time refusal, no future-observation leakage and baseline-loss honesty; a separate live GitHub run should fetch actual NOAA observations and archive its results. Existing `noaa-empirical.yml` is extended, not replaced, to run the replay.
+
+## Verified observed-data run (not a prospective discovery)
+
+GitHub Actions [run #42557644772](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42557644772) **PASSED**: original frozen-model tests, five new no-leakage/failure/source-contract tests, fresh actual NOAA hourly-height API calls and both-station historical sensor replay. 384 training observations and 23 next-hour comparisons per station; raw source SHA-256 recorded in [permanent evidence](../evidence/noaa/2025-06-17-shadow-twin-replay.json).
+
+| Gauge | Assimilated shadow MAE (m) | Frozen harmonic MAE (m) | One-hour persistence MAE (m) |
+|---|---:|---:|---:|
+| Boston | 0.3198791 | 0.3204208 | 0.4161739 |
+| Virginia Key | 0.0625625 | 0.0657504 | 0.0961304 |
+
+The bias update marginally improved the original harmonic baseline for both historical series, but Boston's advantage (about **0.54 mm MAE**) is negligible without uncertainty intervals or independent prospectively unseen datasets. Neither this small improvement nor the original fixed June 2025 result proves a continuously synchronized, calibrated digital twin. Full source-linked artifact is saved at [GitHub run #42557644772, artifact #13648390728](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42557644772/artifacts/13648390728).
 
 ## Acceptance and red lines
 
