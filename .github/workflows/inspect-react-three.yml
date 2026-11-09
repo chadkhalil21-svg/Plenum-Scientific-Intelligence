@@ -207,3 +207,136 @@ jobs:
           git -C ledger commit -m 'Archive original three-case ReAct versus one-shot independent scoring evidence'
           git -C ledger pull --rebase origin research-memory
           git -C ledger push origin HEAD:research-memory
+
+  new-human-eval-no-submit:
+    if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release upstream no-submit HumanEval3')
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+      OPENAI_API_KEY: ''
+      ANTHROPIC_API_KEY: ''
+      GOOGLE_API_KEY: ''
+      HF_TOKEN: ''
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Check original Inspect no-submit option and new HumanEval/3 sample BEFORE model download
+        run: |
+          python -m pip install -e '.[inspection]'
+          python -m pip install 'inspect-evals==0.27.0'
+          python -m pip check
+          python - <<'PY'
+          import inspect
+          from inspect_ai.agent import react
+          from plenum_ai.inspect_react_no_submit import original_new_case_no_submit,SAMPLE_ID
+          import inspect_ai, inspect_evals
+          assert "submit" in inspect.signature(react).parameters
+          task=original_new_case_no_submit()
+          assert SAMPLE_ID=='HumanEval/3'
+          assert len(task.dataset)==1 and str(task.dataset[0].id)==SAMPLE_ID
+          assert task.scorer is not None and task.sandbox is not None
+          print('Official Inspect react(submit=False) and one new original task available; no model called.')
+          PY
+          docker info >/dev/null
+          docker compose version
+      - name: Install exact frozen CPU Qwen and already reviewed tokenizer
+        run: |
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install "transformers==5.22.1" "accelerate>=1.1,<2" "huggingface_hub>=1.2,<2" safetensors
+          python -m pip check
+      - name: Reuse one previously verified Qwen3-1.7B checkpoint and original tokenizer
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from huggingface_hub import HfApi,snapshot_download
+          from plenum_ai.qwen3_chat_template import MODEL,REVISION
+          assert HfApi().model_info(MODEL,revision=REVISION).sha==REVISION
+          Path('reports').mkdir(exist_ok=True)
+          Path('reports/model-path.txt').write_text(snapshot_download(repo_id=MODEL,revision=REVISION))
+          print('Frozen existing 1.7B model; no paid model API or new weights')
+          PY
+          MODEL_PATH="$(cat reports/model-path.txt)"
+          python -m plenum_ai.qwen3_chat_template --model-path "$MODEL_PATH" --template-out reports/qwen3-react-template.jinja --out reports/qwen3-react-template-check.json
+          python -m plenum_ai.react_json_model_config --model-path "$MODEL_PATH" --original-template native --template reports/qwen3-react-template.jinja --out reports/qwen3-react-model-config.json
+      - name: Original Inspect ReAct without submit tool on one NEW official HumanEval function
+        run: |
+          inspect eval src/plenum_ai/inspect_react_no_submit.py --model hf/local \
+            --model-config reports/qwen3-react-model-config.json \
+            --limit 1 --epochs 1 --max-samples 1 --max-sandboxes 1 \
+            --max-connections 1 --max-tokens 256 --temperature 0 \
+            --turn-limit 6 --message-limit 14 --time-limit 900 --max-retries 0 \
+            --log-dir reports/inspect-original-no-submit-logs --display plain
+      - name: Record original functional grade and whether final answer was actually delivered
+        run: |
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          from urllib.parse import urlsplit,unquote
+          from inspect_ai.log import list_eval_logs,read_eval_log
+          from inspect_ai.scorer import CORRECT,INCORRECT
+          from plenum_ai.inspect_react_coding import count_actual_tools
+          from plenum_ai.qwen3_chat_template import REVISION
+          folder='reports/inspect-original-no-submit-logs'
+          logs=list_eval_logs(log_dir=folder)
+          assert len(logs)==1
+          record=read_eval_log(logs[0].name)
+          assert record.status=='success' and not record.error
+          assert str(record.eval.task).endswith('original_new_case_no_submit')
+          assert record.eval.model=='hf/local'
+          assert str(record.eval.model_args.get('model_path','')).endswith(REVISION)
+          assert len(record.samples or [])==1
+          sample=record.samples[0]
+          assert str(sample.id)=='HumanEval/3' and (sample.metadata or {}).get('test')
+          scores=list((sample.scores or {}).values())
+          assert len(scores)==1 and scores[0].value in (CORRECT,INCORRECT)
+          calls,results=count_actual_tools(sample.messages or [])
+          final=str(getattr(sample.output,'completion','') or '')
+          uri=logs[0].name
+          disk=Path(unquote(urlsplit(uri).path)) if uri.startswith('file:') else Path(uri)
+          assert disk.is_file()
+          data={
+            'schema':'plenum-inspect-original-no-submit-new-task-v1',
+            'model':'Qwen/Qwen3-1.7B',
+            'model_revision':REVISION,
+            'original_agent':'inspect_ai.agent.react(submit=False)',
+            'original_grader':'inspect_evals.humaneval original verify() functional scorer',
+            'original_problem':'HumanEval/3',
+            'previous_original_0_to_2_not_rerun':True,
+            'original_grade_correct':scores[0].value==CORRECT,
+            'final_answer_nonempty':bool(final.strip()),
+            'final_answer_includes_literal_tool_marker':'<tool_call>' in final,
+            'observed_tool_calls':calls,
+            'observed_tool_responses':results,
+            'native_original_eval_sha256':hashlib.sha256(disk.read_bytes()).hexdigest(),
+            'original_new_problem_attempts':1,
+            'old_model_accuracy_comparison_claimed':False,
+            'new_model_trained':False,
+            'paid_api_calls':0,
+            'auto_model_promotion':False,
+            'AGI_demonstrated':False,
+            'limitations':['Single previously unattempted-by-Plenum public original benchmark task',
+              'No statistical ranking, published problem possibly in pretraining',
+              'A successful code task does not demonstrate research autonomy or AGI']
+          }
+          Path('reports/no-submit-new-humaneval3.json').write_text(json.dumps(data,indent=2)+'\n')
+          print('Original new HumanEval/3:',int(data['original_grade_correct']),
+                '/1; final answer present',data['final_answer_nonempty'],
+                '; tool calls',calls,'tool responses',results)
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: original-inspect-no-submit-humaneval3-evidence
+          path: |
+            reports/no-submit-new-humaneval3.json
+            reports/inspect-original-no-submit-logs/
+          retention-days: 90
