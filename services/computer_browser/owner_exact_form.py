@@ -21,7 +21,6 @@ from urllib.parse import urljoin
 
 from .engine import allowed_origins
 from .owner_chat_pairing import _owner, _store, _cipher
-from .owner_saved_session import _approved_read_target
 from .private_profiles import BrowserProfileStore
 from .sealed_chat_read import parse_recipient, _b64, require_enabled as require_sealed
 
@@ -57,6 +56,8 @@ def require_enabled():
 
 
 def _path(site: str, path: str) -> str:
+    # Keep scientific/core imports free of optional FastAPI/browser packages.
+    from .owner_saved_session import _approved_read_target
     if (not isinstance(path, str) or _PATH.fullmatch(path) is None
             or "//" in path or any(piece in (".", "..") for piece in path.split("/"))
             or _BLOCKED.search(path)):
