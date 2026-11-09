@@ -1,5 +1,87 @@
 # Plenum Prometheus | AGI / ASI Capability Atlas and Reuse-First Execution Decision
 
+## Founder execution map and verifiable checklist | 2026-11-09
+
+**Scope:** A durable founder-facing execution order for already implemented, partial and unproven capabilities. **Status is evidence-based, not a completion percentage.** This is a map of necessary/recommended research gates, NOT a known recipe for AGI or ASI. The detailed upstream ecosystem remains in subsequent sections; no new dependency, workflow, agent, model, paid API or benchmark was installed by adding this map. Original verified successes and negatives remain in `research-memory/state/AGI_PROGRAM.json` and `docs/LEDGER.md`. **Do not duplicate prior experiments**; score only a new unanswered ability.
+
+### Dependency map
+
+```text
+ESTABLISHED FOUNDATION
+  open-source models + OpenHands/Inspect + LangGraph/memory + scientific engines
+  real research APIs + restricted ChatGPT→Playwright bridge + original evaluators
+                   |
+                   v
+NEXT EVIDENCE GATES (parallel with strict separation of future holdouts)
+  A. Prospective NOAA Nov10 / USGS Nov11 freeze, audit later unchanged
+  B. New unfamiliar multi-step coding/science challenge: tool-error recovery + final graded outcome
+                   |
+                   v
+RESEARCH GATES
+  C. Stronger verified general reasoning and cross-domain transfer
+  D. Multi-modal perception/action-conditioned world models + grounded causal reasoning
+  E. Durable long-horizon memory/planning and continual learning
+  F. Open-ended science discovery with independent real experiments
+  G. Bounded reversible self-improvement with independent unseen evaluation
+                   |
+                   v
+AGI EVIDENCE THRESHOLD (not met)
+  consistent broad human-comparable skill acquisition, robust unseen transfer,
+  real-world competence, reliability, security and independent reproduction
+                   |
+                   v
+ASI RESEARCH FRONTIER (no established roadmap guaranteeing success)
+  sustained broadly superhuman verified abilities + scientific acceleration
+  + secure controllability/oversight + robust independent validation
+```
+
+### Scientific intelligence checklist
+
+Use `[x]` only for the *specific observed evidence described*, never as implied mastery. `[~]` means partial / ongoing and `[ ]` means not demonstrated. For executable checklists use ordinary `[ ]` and contextual annotations; no fake progress percentages.
+
+- [x] **Foundation and provenance:** real pinned open-weight Qwen models; existing model inference; reusable SciPy/RDKit/OpenMM/PyBaMM/Astropy/OpenMDAO/NASA Aviary/Lean 4 where actually tested; original LangGraph/Inspect/OpenHands software; literature metadata retrieval and public research memory. Evidence scope is narrow integration/execution only.
+- [x] **Independent narrow model outcomes:** historical HumanEval/3 native Inspect `react(submit=False)` passed 1/1 on a new function with five tool calls. Original other tool-using HumanEval 1/3 versus one-shot 2/3; original GPQA Qwen3.5-4B 0/3 vs previously frozen Qwen3-0.6B 1/3. No strong general performance established.
+- [x] **Browser minimum:** original public ChatGPT→GitHub→Playwright arXiv navigation issue #254, and one owner-consented signed encrypted public-demo saved-login read issue #259. Private broad account writes and Work/TinyFish parity are NOT established. Independent personal ChatGPT plugin v0.4.12 exists; do not reimplement.
+- [x] **One-time real source adapter checks:** real pre-holdout NOAA both stations and USGS two gauges returned historical data in the required shapes. This confirms source compatibility only, not future science.
+- [ ] **P0 NOV 10–11: Original prospective forecast freeze.** Verify actual Qwen and SmolLM2 proposal files, exact source/digest and **Git commit before Nov12 00:00 UTC**. NOAA Nov10, USGS Nov11; preserve original Nov12–13 holdouts, original Nov16/18 independent audits and failures. NO post-hoc change.
+- [ ] **P0/P1 New practical intelligence capability:** On an unfamiliar third-party public repository issue or original scientific engineering task, freeze task/test provenance, restrict tools to disposable environment, use existing original Inspect/OpenHands, and measure source inspection, recovery from failed tools, meaningful edits, finished artifact, independent author-grade outcome, wall time and compute budget. Do not rerun archived Django issue `django__django-11790` (original scorer crashed and model repeated eight commands without patch); first preflight original existing grader version, then spend any capped model inference. Preserve non-success.
+- [ ] **P1 Stronger cross-domain reasoner:** Choose a suitable *licensed, already available* pretrained model/checkpoint only when a new unfamiliar task requires it; record model weight/engine provenance, realistic device/memory fit, quality, latency, cost; compare to frozen incumbent without rerunning old baseline. Avoid claiming 4B superiority from size or three-item public quizzes.
+- [ ] **P1 Long-horizon reliable agency:** Demonstrate a complete unseen multistep task including error recognition, replanning, tool output use, final deliverable and rollback, across distinct domains. Score original external success, autonomy duration, human interventions and error rate; agents count is irrelevant.
+- [ ] **P1 Grounded multimodal world understanding:** Rights-cleared video/action data, a pretrained compatible visual representation (V-JEPA 2.1 only if fit) or original action-conditioned model (V-JEPA 2-AC if appropriate), predict unseen outcomes under interventions/occlusions and changed environments versus strong cheap baselines; existing synthetic SciPy/scikit-learn action model is NOT a real world model.
+- [ ] **P1 Knowledge/memory transfer:** Months-spanning task continuity with provenance and retrieval, uncertainty awareness, correction of obsolete beliefs and reuse on genuinely new cases. Original SQLite checkpoints and public Git memory prove storage, not reliable continual learning.
+- [ ] **P1 Causal/scientific experimentation:** Predefine hypotheses, interventions, falsifiers and uncertainty; use original validated scientific engines as *tools*, and measure Plenum's **novel physical/biological prediction** with genuinely withheld field/lab/source data and independent baseline. LINGRA published ryegrass validity is inherited; Terra bahiagrass/Florida/genotype mechanisms must be separately evidenced.
+- [ ] **P1 Broad skill-acquisition evaluation:** Original upstream Inspect/ARC-AGI-3/METR-style long horizon, science/engineering/math/visual/agentic representative tasks, clean unseen cases and human/expert baselines with reliability and resource reporting. Prefer one relevant new benchmark *task family*, not installing or rerunning every benchmark. No single benchmark defines AGI.
+- [ ] **P2 Robust continual learning:** Transfer skill across unseen tasks over time without catastrophic forgetting, self-confirming hallucination or evaluation leakage; evaluate newly dated sources independently.
+- [ ] **P2 Secure autonomous tool use and self-modification:** Scope least-privilege tools, sandbox, owner confirmation for consequential acts, model/version freeze, native independent tests, rollback and permission-controlled candidate promotion. No autonomous risky deployment or infinite training loop.
+- [ ] **P2 Integrated generality:** Independently reproduce sustained human-comparable ability to acquire and apply new skills across STEM, language, tools, design and practical environments, with strong calibration, resilience to shift, long-horizon autonomy and transparent failures. This AGI-level acceptance is *not demonstrated*.
+- [ ] **ASI frontier:** No agreed recipe or verified ASI test. Research sustained broadly superhuman scientific/technical skill acquisition, genuinely accelerated discoveries validated outside the model, resource/compute scaling, interpretability, controllability, alignment, oversight, independent replication and governance. Do NOT presume that adding GPUs/agents/models, self-improvement or consciousness yields ASI.
+- [ ] **Consciousness / emotion (separate optional research):** No verified method for confirming subjective AI experience; not a prerequisite under ordinary functional definitions of AGI/ASI.
+
+### Plenum Computer Browser vs existing Work / TinyFish capabilities
+
+Read as **observed Plenum status** versus **vendor-supported product capability**, not identical measured side-by-side performance.
+
+| Ability | Plenum Computer Browser | ChatGPT Work cloud browser | TinyFish Web Agent / Browser |
+|---|---|---|---|
+| Public read/navigation | **Verified** ChatGPT→GitHub→Playwright | Supported | Supported |
+| Programmatic Playwright control | Existing Plenum-owned Playwright; official MCP public tests verified | Hosted GUI/browser orchestration, not a user-owned Playwright endpoint | Managed CDP/Playwright browser is offered |
+| Existing saved login | **One owner-approved fixed public-demo session restored** | Separate cloud browser sessions can persist; supported site sign-in where available | Saved Browser Context Profiles and Vault-supported sign-in |
+| Arbitrary authorized private-site workflow | **Not demonstrated** | Supported on some sites/plans, with sign-in and approvals | Official agent supports authenticated multistep goals |
+| Agent-guided adaptive multi-page planning | Public scripted bounded examples, not general verified autonomy | Supported on eligible sites/tasks | Primary Web Agent functionality |
+| Private page content returned confidentially | Not demonstrated through the existing GitHub public-result path | Managed through Work session/app environment | Structured outputs from authorized runs |
+| Forms, approvals, website changes | Safe public fixed demonstrations; private writes not verified | Supported with confirmation for consequential actions | Agent can interact and submit within approved scope |
+| Arbitrary private file transfer | Not demonstrated | Depends on supported browser task/tool/website | Requires testing actual agent/task/profile behavior |
+| Multi-hour hands-off task | Scheduled GitHub workflows exist; general browser handoff unverified | Work task can continue when user leaves; may pause for approval | Async agent runs; long-task reliability must be checked |
+| Human takeover | Founder-controlled owner portal exists; chat-side takeover unverified | Supported hosted browser takeover | Live view/logging supported; interactive takeover not asserted |
+| Cost/ownership | Owner-managed GitHub/Cloud Run/model expenses and security work | Product-plan/usage entitlement; Work-managed cloud | Vendor consumption model, advertised $0.016 per agent step or $0.002 per managed browser minute |
+| Current direct tool here | Personal `plenum-computer-browser` plugin exists (v0.4.12), but not exposed as a callable tool in this chat | Available when user starts supported Work task, not ordinary response tool here | TinyFish connected plugin actions available |
+
+**Browser finish-line, only if a real research task depends on it:** Reuse the existing auth/Playwright bridge, select *one* authorized staging site beyond fixed demo, show browser agent safely handles login, confidential page read, multi-step click/type, file handling and an explicitly approved write, protected by owner scope, network restrictions, expiry/revocation and private output transport. Preserve the original scenario evidence and cost. Do not re-prove #254/#259 or build another browser/transport stack. This capability is useful but **NOT AGI**.
+
+**Research priority today:** Do not touch prospective hidden future observations. Protect original Nov10/11 freezes first; then fix *new-task reasoning* in existing Inspect/OpenHands and independently evaluate action-conditioned world-model transfer. Avoid indiscriminate frameworks, huge agent swarms and claims of full AGI or ASI.
+
+**Public sources consulted November 9:** https://help.openai.com/en/articles/20001280-using-cloud-browser-in-chatgpt ; https://www.tinyfish.chat/agent ; https://www.tinyfish.ai/browser ; https://inspect.aisi.org.uk/ ; https://arcprize.org/arc-agi/3 ; https://metr.org/time-horizons/ . Vendor pages describe capabilities but do not independently prove equal performance for the same private website.
+
 **Recorded:** 2026-11-08 ET. **Evidence source:** inspected live `main` repository and canonical `research-memory/state/AGI_PROGRAM.json`, compared with maintained, original upstream repositories / documentation as listed below. **Scope:** all disciplines, physical simulations and digital twins, synthetic worlds, experimentation engines, scientific knowledge, engineering agents, model inference/training, evaluation, causal models, measurements, governance and AGI/ASI progress. This atlas supersedes indiscriminate lists of "install everything." Actual package versions, licenses, API terms and hardware must be checked when first selected; external links do not establish Plenum installation or scientific capability.
 
 ## Executive decision
