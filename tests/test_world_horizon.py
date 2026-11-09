@@ -76,6 +76,24 @@ class WorldHorizonTests(unittest.TestCase):
         self.assertTrue(report["credential_or_permission_gated"])
         self.assertIn("defense_internal_systems",REVIEW_GATED)
 
+    def test_sciencedaily_is_a_secondary_all-fields_headline_feed(self):
+        source=SOURCES["sciencedaily_latest"]
+        self.assertEqual(source["url"],"https://www.sciencedaily.com/rss/all.xml")
+        self.assertEqual(source["category"],"discoveries")
+        rss=(b'<?xml version="1.0"?><rss version="2.0"><channel>'
+             b'<item><title>A quantum breakthrough makes light behave like both a solid and a liquid</title>'
+             b'<link>https://www.sciencedaily.com/releases/2026/11/261105224536.htm</link>'
+             b'<pubDate>Mon, 09 Nov 2026 06:19:39 EST</pubDate></item>'
+             b'</channel></rss>')
+        rows=parse_public("sciencedaily_latest",rss)
+        self.assertEqual(len(rows),1)
+        self.assertEqual(rows[0]["publisher"],"ScienceDaily science news (secondary reporting)")
+        self.assertEqual(rows[0]["url"],"https://www.sciencedaily.com/releases/2026/11/261105224536.htm")
+        self.assertFalse(rows[0]["primary_source_verified"])
+        self.assertFalse(rows[0]["independent_fact_check_complete"])
+        with self.assertRaises(ValueError):
+            parse_public("sciencedaily_latest",b'<!DOCTYPE fake><rss/>')
+
     def test_nature_rdf_rss_namespaced_item(self):
         records=parse_public("nature_journal_news",RDF_RSS)
         self.assertEqual(len(records),1)
