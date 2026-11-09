@@ -110,3 +110,8 @@ mount_owner_saved_session(app)
 # Separate OAuth PKCE owner portal, activated ONLY on its dedicated Cloud Run service.
 from .owner_auth0 import mount_auth0_owner
 mount_auth0_owner(app)
+
+# Optional, one-time consent and signed GitHub OIDC public demo read only.
+# Not mounted until enabled explicitly in the isolated owner Auth0 service.
+from .owner_chat_relay import mount_owner_chat_relay
+mount_owner_chat_relay(app)
