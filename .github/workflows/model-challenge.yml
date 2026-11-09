@@ -1,11 +1,9 @@
 name: Compare Reasoning Models and Draft Falsifiable Hypotheses
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: '47 10 1 * *'
+  workflow_dispatch: # Run only when a genuinely NEW model capability question warrants the cost.
   push:
+    branches: [main]
     paths:
-      - '.github/workflows/model-challenge.yml'
       - 'src/plenum_ai/model_challenge.py'
       - 'tests/test_model_challenge.py'
       - 'src/plenum_ai/research_pilot.py'

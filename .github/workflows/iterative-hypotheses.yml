@@ -1,11 +1,9 @@
 name: Iterative Cross-Discipline Scientific Hypothesis Laboratory
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: '23 11 15 * *'
+  workflow_dispatch: # Keep exploratory synthetic pilot manually available; no recurring fixed replays.
   push:
+    branches: [main]
     paths:
-      - '.github/workflows/iterative-hypotheses.yml'
       - 'src/plenum_ai/hypothesis_cycle.py'
       - 'tests/test_hypothesis_cycle.py'
 permissions:
