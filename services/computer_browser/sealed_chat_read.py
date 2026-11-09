@@ -66,12 +66,15 @@ def _validate_intent(*, site, path, recipient_public_key):
 
 
 def approve_read(owner_id: str, *, site: str, path: str,
-                 recipient_public_key: str, now: int | None = None):
+                 recipient_public_key: str, now: int | None = None,
+                 additional_paths: str = ""):
     """Trusted owner UI only, after signed CSRF and exact confirmation."""
     require_enabled()
     owner = _owner(owner_id)
     _validate_intent(site=site, path=path,
                      recipient_public_key=recipient_public_key)
+    from .owner_saved_session import _approved_batch_paths
+    extras = _approved_batch_paths(site, path, additional_paths)
     store = BrowserProfileStore.from_environment()
     if store.status(owner=owner, origin=site).get("profile_exists") is not True:
         raise PermissionError("No saved owner session for approved website")
@@ -88,6 +91,9 @@ def approve_read(owner_id: str, *, site: str, path: str,
         "issued": t, "expires": t + TTL,
         "nonce": secrets.token_hex(16),
     }
+    if extras:
+        record["schema"] = "plenum-sealed-owner-batch-consent-v1"
+        record["additional_paths"] = list(extras)
     blob.upload_from_string(
         _cipher().encrypt(json.dumps(record, separators=(",", ":")).encode()),
         content_type="application/octet-stream",
@@ -107,9 +113,20 @@ def consume_read(*, now: int | None = None):
         sealed = blob.download_as_bytes(if_generation_match=generation)
         record = json.loads(_cipher().decrypt(sealed, ttl=TTL))
         if (not isinstance(record, dict)
-                or set(record) != {"schema", "owner", "site", "path",
-                                   "recipient_public_key", "issued", "expires", "nonce"}
-                or record["schema"] != "plenum-sealed-owner-consent-v1"
+                or (
+                    (record.get("schema") == "plenum-sealed-owner-consent-v1"
+                     and set(record) != {"schema", "owner", "site", "path",
+                                         "recipient_public_key", "issued", "expires", "nonce"})
+                    or
+                    (record.get("schema") == "plenum-sealed-owner-batch-consent-v1"
+                     and set(record) != {"schema", "owner", "site", "path",
+                                         "recipient_public_key", "issued", "expires", "nonce",
+                                         "additional_paths"})
+                    or record.get("schema") not in {
+                        "plenum-sealed-owner-consent-v1",
+                        "plenum-sealed-owner-batch-consent-v1"
+                    })
+                )
                 or not isinstance(record["issued"], int)
                 or isinstance(record["issued"], bool)
                 or not isinstance(record["expires"], int)
@@ -123,6 +140,10 @@ def consume_read(*, now: int | None = None):
         _owner(record["owner"])
         _validate_intent(site=record["site"], path=record["path"],
                          recipient_public_key=record["recipient_public_key"])
+        from .owner_saved_session import _approved_batch_paths
+        if record.get("additional_paths") is not None:
+            _approved_batch_paths(record["site"], record["path"],
+                                  record["additional_paths"])
         # CAS deletion must succeed before any private website session is read.
         blob.delete(if_generation_match=generation)
         return record
@@ -185,14 +206,36 @@ def seal_result(record: dict, result: dict):
         clean_links.append({"label_untrusted": label, "path": link_path})
     _validate_intent(site=record.get("site"), path=record.get("path"),
                      recipient_public_key=record.get("recipient_public_key"))
+    # Allow multiple owner-specified read-only pages in a single consent,
+    # but forbid an executor from adding even one unapproved page.
+    from .owner_saved_session import _approved_batch_paths
+    extras = _approved_batch_paths(record["site"], record["path"],
+                                    record.get("additional_paths", []))
+    raw_pages = result.get("additional_pages_untrusted", [])
+    if (not isinstance(raw_pages, list) or len(raw_pages) != len(extras)):
+        raise PermissionError("Unexpected private batch page count")
+    safe_pages = []
+    for expected, item in zip(extras, raw_pages):
+        if (not isinstance(item, dict)
+                or set(item) != {"path", "http_status", "title", "body"}
+                or item.get("path") != expected
+                or type(item.get("http_status")) is not int
+                or not 200 <= item["http_status"] < 300
+                or not isinstance(item.get("title"), str)
+                or len(item["title"]) > 150
+                or not isinstance(item.get("body"), str)
+                or len(item["body"]) > 300):
+            raise PermissionError("Unapproved or malformed private batch page")
+        safe_pages.append(item)
     plaintext = json.dumps({
         "schema": "plenum-private-page-read-v1",
         "site": record["site"], "path": record["path"],
         "http_status": result["http_status"], "title": title, "body": body,
         "links_untrusted": clean_links,
+        "additional_pages_untrusted": safe_pages,
         "model_did_not_execute_website_actions": True,
     }, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
-    if len(plaintext) > 3600:
+    if len(plaintext) > 4800:
         raise PermissionError("Private result payload exceeds limit")
     eph = X25519PrivateKey.generate()
     shared = eph.exchange(parse_recipient(record["recipient_public_key"]))
