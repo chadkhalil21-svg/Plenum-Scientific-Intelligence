@@ -5,7 +5,9 @@ on:
     paths:
       - '.github/workflows/noaa-empirical.yml'
       - 'src/plenum_ai/noaa_empirical.py'
+      - 'src/plenum_ai/noaa_shadow_twin.py'
       - 'tests/test_noaa_empirical.py'
+      - 'tests/test_noaa_shadow_twin.py'
 permissions:
   contents: read
 concurrency:
@@ -24,8 +26,34 @@ jobs:
         run: python -m pip install -e ".[empirical]"
       - name: Test model coefficients, chronology and data integrity offline
         run: python -m unittest discover -s tests -p 'test_noaa_empirical.py' -v
+      - name: Test sensor-update chronology and refusal gates offline
+        run: python -m unittest discover -s tests -p 'test_noaa_shadow_twin.py' -v
       - name: Retrieve real measured NOAA water levels and test a fixed hypothesis
         run: python -m plenum_ai.cli empirical-tides --out reports/noaa_measured_tides.json
+      - name: Replay fixed hourly state updates using real observed NOAA measurements
+        run: python -m plenum_ai.noaa_shadow_twin --out reports/noaa_shadow_twin.json
+      - name: Verify honest shadow-twin evidence and prequential comparison
+        run: |
+          python - <<'PY'
+          import json,math
+          from pathlib import Path
+          r=json.loads(Path('reports/noaa_shadow_twin.json').read_text())
+          assert r['historical_replay_not_live_sensor_sync'] is True
+          assert r['physically_calibrated_operational_digital_twin'] is False
+          assert r['prequential_forecasts_not_future_data_fit'] is True
+          assert len(r['stations']) == 2
+          for s in r['stations']:
+              assert s['train_observations'] >= 280
+              assert s['evaluation_pairs'] >= 18
+              assert len(s['raw_payload_sha256']) == 64
+              assert all(v['issued_at_utc'] < v['target_at_utc'] for v in s['sample_prequential_forecasts'])
+              for name in ('shadow_mae_m','frozen_harmonic_mae_m','one_hour_persistence_mae_m'):
+                  assert math.isfinite(s[name])
+              print('Observed station',s['station_name'], 'assimilated MAE',s['shadow_mae_m'],
+                    'unadjusted harmonic',s['frozen_harmonic_mae_m'],
+                    '1h persistence',s['one_hour_persistence_mae_m'])
+          print('This is a historical sensor replay; no operational digital twin is certified.')
+          PY
       - name: Preserve independent test results regardless of hypothesis outcome
         run: |
           python - <<'PY'
@@ -53,6 +81,8 @@ jobs:
         if: always()
         with:
           name: noaa-heldout-observation-evidence
-          path: reports/noaa_measured_tides.json
+          path: |
+            reports/noaa_measured_tides.json
+            reports/noaa_shadow_twin.json
           if-no-files-found: warn
           retention-days: 14

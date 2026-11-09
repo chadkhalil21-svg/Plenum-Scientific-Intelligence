@@ -1,5 +1,14 @@
 # Plenum Prometheus: JEPA World Models, Simulators and Digital Twins
 
+## Biological, plant and environmental twins (2026-11-08 extension)
+
+The project scope now expressly includes **plant biology, crop/forage growth, soil and root systems, cellular/metabolic/microbial processes, ecosystems and biomedical simulations** alongside aerospace, energy, robotics, infrastructure and buildings. This is a modeling inventory and measurement-first research mandate, not a claim that one general twin or unified biological world model has been built. A living system has different measurement cadence and causal interventions at gene, cell, plant, field and ecosystem scales. Never treat a solver output as a measured trait or experimentally established biochemical response.
+
+Reuse established scientific engines, choosing one per question: **PCSE LINGRA** for grassland/forage as first candidate (upstream EUPL-1.2), WOFOST for general crops, BioCro for plant ecophysiology/biomass (license varies by component), OpenAlea for structural plant architecture, COBRApy for metabolic flux, COPASI/Tellurium for SBML reaction networks, and existing OpenMM/other specific tools for molecular research. Consult [SCIENTIFIC_DIGITAL_TWINS.md](SCIENTIFIC_DIGITAL_TWINS.md), licenses, and actual plant/soil/weather or biological observational datasets before installing or integrating anything.
+
+A **new observed-data sensor-assimilation pilot** for NOAA is specified in [NOAA_SHADOW_TWIN.md](NOAA_SHADOW_TWIN.md), reusing our existing real hourly gauge data and harmonic model. Historical observation replay with sequential bias updates is not live synchronization, operational flood prediction or an independently validated digital twin. Require real future withheld measurements, strong official comparators, quantified uncertainty and provenance before promoting the claim. Do not alter the already-frozen forthcoming NOAA/USGS prospective test protocols.
+
+
 **Decision: November 8, 2026 (ET). Status: research architecture and first synthetic prediction probe; NOT a trained JEPA system, operational digital twin, AGI or ASI.**
 
 ## Founder's persistent engineering principle
