@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-09T02:47:10Z",
+  "last_reviewed_utc": "2026-11-09T03:15:42.799Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -638,7 +638,7 @@
   "next_actions": [
     {
       "priority": 1,
-      "action": "AGI research priority: apply the documented reuse-first JEPA/world-model program, not another browser stack. The first SciPy/sklearn action-conditioned synthetic probe independently ran on the official scientific workflow (run 42551545363): horizon-8 RMSE 0.0263881 vs action-blind 0.2398873, but shifted physics worsened to 0.0591322. Next, evaluate one frozen licensed official V-JEPA 2.1 checkpoint on a tiny rights-cleared video/action corpus with explicit GPU budget and independent action, occlusion, long-horizon and OOD baselines. No V-JEPA inference/training or genuine digital twin has run yet."
+      "action": "AGI research priority: preserve the independently scored synthetic SciPy/sklearn action/counterfactual experiment (runs #42551923254/#42552640155) as a *synthetic* baseline. Prioritize already scheduled real NOAA/USGS outcome audits and one predeclared cross-environment test with heldout measured data and strongest conventional baseline. Separately evaluate ONE frozen licensed official Meta V-JEPA 2.1 ViT-B (80M) visual representation checkpoint only when a rights-cleared action/video dataset, SHA, predeclared OOD/occlusion/ablation test and compute budget are approved. V-JEPA 2.1 small is not the giant V-JEPA 2-AC robot predictor; do not train/download more merely to add architecture."
     },
     {
       "priority": 2,
@@ -650,7 +650,7 @@
     },
     {
       "priority": 4,
-      "action": "Supporting browser status, not AGI core: official Playwright MCP public browser and ordinary ChatGPT to GitHub public navigation have worked; owner-operated encrypted public demo login restoration verified live at 8:09 PM ET November 8. Private ChatGPT authenticated browsing remains unverified. OAuth MCP and signed GitHub relay have source/CI changes (#248/#249/#252/#253) but the private relay feature is off by default and production/identity replay evidence requires fresh checking. No additional parallel browser framework or unapproved privilege expansion. Resume only for a concrete scientific research use case."
+      "action": "Supporting browser finish line (not AGI): official Playwright MCP public navigation via ChatGPT->GitHub and separate encrypted public-demo owner login restoration are already verified. Issue #256 has a GitHub Actions bot PASS that the narrowly scoped demo relay was enabled with anonymous/unsigned negative checks, and checked-in OIDC verifier + workflow audiences now match. NO actual founder-approved, ChatGPT-initiated signed private demo read has yet been proven. Next single gate: owner explicitly approves one 10-minute demo read in existing Auth0 portal, then use existing exact GitHub workflow with signed issuer/audience and sanitized result; check live deployment, revocation/replay and output privacy. Do not add another browser/MCP/identity path or claim Work/TinyFish parity. No credentials in public issue."
     },
     {
       "priority": 5,
@@ -1017,6 +1017,10 @@
     {
       "decision": "World models and physical simulations: learn from Yann LeCun JEPA, reuse V-JEPA 2.1 and validated scientific simulators; never confuse synthetic fixtures with a real-world digital twin",
       "reason": "Founder reviewed Yann LeCun JEPA/world-model educational images on 2026-11-08. Meta FAIR V-JEPA 2.1 official source and checkpoints, Google MuJoCo, NVIDIA Isaac Lab are candidate external libraries, NOT installed or independently evaluated at Plenum. Existing SciPy/OpenMM/PyBaMM/OpenMDAO solvers provide bounded scientific computation. New tiny supervised action-conditioned synthetic prediction baseline passed CI but is not JEPA or AGI. See docs/JEPA_WORLD_MODELS_AND_SIMULATION.md and main PR #257."
+    },
+    {
+      "decision": "2026-11-08 externally reviewed optimality gate: adopt proven upstream per role, do not duplicate stacks or equate import with intelligence",
+      "reason": "Founder requires AGI/ASI capability gains per development hour, real cost and complexity. Verified main source and upstream official Playwright MCP, Browser Use, BrowserGym, Inspect AI, Qwen3 and Meta V-JEPA2/2.1. Keep incumbent tested Qwen baseline, LangGraph, Inspect, scoped OpenHands, official Playwright/Playwright MCP, scientific numerical solvers; evaluate optional upstream packages only against an independently scored gap. BrowserGym is benchmark scaffolding, not browser/auth replacement. Meta 80M V-JEPA 2.1 is primarily frozen visual representations, while V-JEPA 2-AC is a separate heavier action-conditioned model. No new paid model, code import, GPU or private browser operation was performed. See docs/LEDGER.md operating decision."
     }
   ],
   "operating_rules": [
@@ -1026,6 +1030,7 @@
     "Do not auto-publish private content or authorize spending, model promotion, external communication, or unrestricted code execution.",
     "Update this public-safe status after important verified experiments and decisions, preserving previous evidence URLs.",
     "Before building any new infrastructure, audit current repo/evidence/ledger and upstream tools, reuse exactly one suitable implementation per role, define one heldout/falsifiable capability test and cost limit, measure actual improvement, report negative results, and update canonical research-memory state promptly. AGI and eventual ASI research outrank browser and UI polish.",
-    "Distinguish physical-law simulator, data-calibrated digital twin, action-conditioned dynamics model, latent JEPA representation, causal intervention evidence and AGI. Never mark a trained/verified world model or AGI/ASI from a fixture, license review, CI import, or model checkpoint alone."
+    "Distinguish physical-law simulator, data-calibrated digital twin, action-conditioned dynamics model, latent JEPA representation, causal intervention evidence and AGI. Never mark a trained/verified world model or AGI/ASI from a fixture, license review, CI import, or model checkpoint alone.",
+    "Before accepting new agents, solvers, models or browsers, calculate measured capability gain per dollar/hour and operational complexity against existing verified incumbents. Adopt > adapt > build; use official supported licenses/packages/checkpoints, preserve source and weight provenance, avoid duplicate workflows and new models without blinded acceptance tests and a real task. Retrieval of docs/LEDGER.md and this canonical state is necessary at each new Plenum session; it is not automatically synchronized model memory."
   ]
 }
