@@ -38,6 +38,11 @@ SOURCES = {
         "url":"https://www.nsf.gov/rss/rss_www_funding_pgm_annc_inf.xml", "publisher":"U.S. National Science Foundation Funding"},
     "nature_journal_news": {"category":"journals", "type":"feed",
         "url":"https://www.nature.com/nature.rss", "publisher":"Nature Portfolio"},
+    # ScienceDaily is a SECONDARY news alert, never proof of the underlying experiment.
+    # Follow each headline to original lab announcements, papers and methods.
+    "sciencedaily_latest": {"category":"discoveries", "type":"feed",
+        "url":"https://www.sciencedaily.com/rss/all.xml",
+        "publisher":"ScienceDaily science news (secondary reporting)"},
     "mit_technology_review": {"category":"news", "type":"feed",
         "url":"https://www.technologyreview.com/stories.rss", "publisher":"MIT Technology Review"},
     "un_climate_environment": {"category":"environment", "type":"feed",

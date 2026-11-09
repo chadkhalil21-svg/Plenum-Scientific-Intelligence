@@ -49,6 +49,7 @@ LAB_FEEDS = {
     "Stanford News": "https://news.stanford.edu/rss/index.xml",
     "NIH News": "https://www.nih.gov/news-releases/feed.xml",
     "Nature Journal": "https://www.nature.com/nature.rss",
+    "ScienceDaily Research": "https://www.sciencedaily.com/rss/all.xml",
 }
 ALL_PROVIDER_NAMES = ("crossref", "biorxiv", "medrxiv", "mit_news",
                       "nasa_news", "nasa_youtube")
@@ -188,39 +189,45 @@ def parse_newsfeed(raw, provider):
         raise ValueError("Feed not allowlisted")
     root=_xml(raw)
     result=[]
+    # All-fields daily news needs a broader window than one university feed.
+    feed_limit = 30 if provider == "ScienceDaily Research" else 5
+    official_host = urlsplit(LAB_FEEDS[provider]).hostname
+    allowed_hosts = {official_host}
+    if official_host in ("www.nasa.gov", "www.nih.gov"):
+        allowed_hosts.add(official_host.removeprefix("www."))
+    tier = ("secondary_science_news_not_primary_research" if provider == "ScienceDaily Research"
+            else "publisher_updates_metadata" if provider == "Nature Journal"
+            else "institutional_news_not_independent_verification")
     if root.tag=="rss":
         items=root.findall(".//channel/item")
-        for item in items[:5]:
-            link=_safe_source_link(item.findtext("link"), {"news.mit.edu","www.nasa.gov","nasa.gov","news.stanford.edu","www.nih.gov","nih.gov","www.nature.com"})
+        for item in items[:feed_limit]:
+            link=_safe_source_link(item.findtext("link"), allowed_hosts)
             title=" ".join((item.findtext("title") or "").split())
             if link and title:
-                result.append({"source":provider,"tier":("publisher_updates_metadata" if provider=="Nature Journal"
-                                       else "institutional_news_not_independent_verification"),
+                result.append({"source":provider,"tier":tier,
                                "title":title[:300], "url":link,
                                "published":(item.findtext("pubDate") or "")[:90],
                                "original_research_peer_review_confirmed":False})
     elif root.tag=="{http://www.w3.org/1999/02/22-rdf-syntax-ns#}RDF":
-        for item in root.findall("{http://purl.org/rss/1.0/}item")[:5]:
+        for item in root.findall("{http://purl.org/rss/1.0/}item")[:feed_limit]:
             namespace="{http://purl.org/rss/1.0/}"
-            link=_safe_source_link(item.findtext(namespace+"link"),{"news.mit.edu","www.nasa.gov","nasa.gov","news.stanford.edu","www.nih.gov","nih.gov","www.nature.com"})
+            link=_safe_source_link(item.findtext(namespace+"link"),allowed_hosts)
             title=" ".join((item.findtext(namespace+"title") or "").split())
             if link and title:
                 result.append({
                     "source":provider,
-                    "tier":("publisher_updates_metadata" if provider=="Nature Journal"
-                                       else "institutional_news_not_independent_verification"),
+                    "tier":tier,
                     "title":title[:300],"url":link,
                     "published":str(item.findtext("{http://purl.org/dc/elements/1.1/}date") or "")[:40],
                     "original_research_peer_review_confirmed":False})
     elif root.tag==YT_ATOM+"feed":
-        for item in root.findall(YT_ATOM+"entry")[:5]:
+        for item in root.findall(YT_ATOM+"entry")[:feed_limit]:
             l=item.find(YT_ATOM+"link")
             link=_safe_source_link(l.get("href") if l is not None else None,
-                                   {"news.mit.edu","www.nasa.gov","nasa.gov","news.stanford.edu","www.nih.gov","nih.gov","www.nature.com"})
+                                   allowed_hosts)
             title=" ".join((item.findtext(YT_ATOM+"title") or "").split())
             if link and title:
-                result.append({"source":provider,"tier":("publisher_updates_metadata" if provider=="Nature Journal"
-                                       else "institutional_news_not_independent_verification"),
+                result.append({"source":provider,"tier":tier,
                                "title":title[:300],"url":link,
                                "published":(item.findtext(YT_ATOM+"published") or "")[:40],
                                "original_research_peer_review_confirmed":False})

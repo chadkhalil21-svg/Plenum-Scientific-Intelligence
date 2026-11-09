@@ -114,7 +114,8 @@ jobs:
               assert item['tier'] in (
                   'journal_publication_metadata','preprint_not_peer_reviewed',
                   'institutional_news_not_independent_verification',
-                  'publisher_updates_metadata','public_video_metadata')
+                  'publisher_updates_metadata','public_video_metadata',
+                  'secondary_science_news_not_primary_research')
           name=r['observed_at_utc'][:10]+'-run-'+os.environ['RUN_ID']+'.json'
           path=Path('memory/evidence/discovery')/name
           path.parent.mkdir(parents=True,exist_ok=True)

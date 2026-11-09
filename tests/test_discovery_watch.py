@@ -27,6 +27,12 @@ MIT=b"""<?xml version="1.0"?><rss version="2.0"><channel>
 NASA=b"""<?xml version="1.0"?><rss version="2.0"><channel>
 <item><title>NASA research update</title><link>https://www.nasa.gov/news-release/test/</link></item>
 </channel></rss>"""
+SCIENCEDAILY=b"""<?xml version="1.0"?><rss version="2.0"><channel>
+<item><title>A quantum breakthrough makes light behave like both a solid and a liquid</title>
+<link>https://www.sciencedaily.com/releases/2026/11/261105224536.htm</link>
+<pubDate>Mon, 09 Nov 2026 06:19:39 EST</pubDate></item>
+</channel></rss>"""
+
 YOUTUBE=b"""<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"
 xmlns:yt="http://www.youtube.com/xml/schemas/2015">
 <entry><yt:videoId>AbCdEf12345</yt:videoId>
@@ -63,6 +69,15 @@ class ResearchPulseTests(unittest.TestCase):
     def test_institutional_feeds_and_youtube_only_metadata(self):
         self.assertEqual(len(parse_newsfeed(MIT,"MIT News")),1)
         self.assertEqual(len(parse_newsfeed(NASA,"NASA Updates")),1)
+        radar=parse_newsfeed(SCIENCEDAILY,"ScienceDaily Research")
+        self.assertEqual(len(radar),1)
+        self.assertEqual(radar[0]["tier"],"secondary_science_news_not_primary_research")
+        self.assertEqual(radar[0]["published"],"Mon, 09 Nov 2026 06:19:39 EST")
+        self.assertFalse(radar[0]["original_research_peer_review_confirmed"])
+        untrusted=SCIENCEDAILY.replace(b"www.sciencedaily.com/releases",b"malicious.example.org/releases")
+        self.assertEqual(parse_newsfeed(untrusted,"ScienceDaily Research"),[])
+        with self.assertRaises(ValueError):
+            parse_newsfeed(SCIENCEDAILY,"Unregistered Lab News")
         self.assertIn("channel_id=UCLA_DiR1FfKNvjuUpBHmylQ",youtube_url())
         with self.assertRaises(ValueError):
             youtube_url("unreviewed-person")
@@ -85,13 +100,14 @@ class ResearchPulseTests(unittest.TestCase):
             if host=="news.stanford.edu": return Response(MIT.replace(b"news.mit.edu",b"news.stanford.edu"))
             if host=="www.nih.gov": return Response(NASA.replace(b"www.nasa.gov",b"www.nih.gov"))
             if host=="www.nature.com": return Response(NASA.replace(b"www.nasa.gov",b"www.nature.com"))
+            if host=="www.sciencedaily.com": return Response(SCIENCEDAILY)
             if host=="www.nasa.gov": return Response(NASA)
             if host=="www.youtube.com": return Response(YOUTUBE)
             raise AssertionError("Unexpected network host")
         report=research_pulse("photonic batteries",cutoff=WHEN,opener=opener,
                               selected_journals=["Nature"])
-        self.assertEqual(len(report["providers"]),10)
-        self.assertEqual(report["distinct_records"],8)
+        self.assertEqual(len(report["providers"]),11)
+        self.assertEqual(report["distinct_records"],9)
         self.assertTrue(all(x["status"]=="retrieved_metadata" for x in report["providers"]))
         self.assertFalse(report["breakthroughs_independently_confirmed"])
         self.assertFalse(report["all_science_journals_covered"])
@@ -107,6 +123,7 @@ class ResearchPulseTests(unittest.TestCase):
             if host=="news.stanford.edu": return Response(MIT.replace(b"news.mit.edu",b"news.stanford.edu"))
             if host=="www.nih.gov": return Response(NASA.replace(b"www.nasa.gov",b"www.nih.gov"))
             if host=="www.nature.com": return Response(NASA.replace(b"www.nasa.gov",b"www.nature.com"))
+            if host=="www.sciencedaily.com": return Response(SCIENCEDAILY)
             return Response(NASA)
         report=research_pulse("astronomy",cutoff=WHEN,opener=opener,
                               selected_journals=["Nature"])
