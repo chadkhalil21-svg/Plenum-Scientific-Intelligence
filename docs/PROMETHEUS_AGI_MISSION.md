@@ -60,3 +60,10 @@ It selects **one orchestration framework** (LangGraph), one primary voice layer
 and approved, pinned specialist tools instead of cloning them. Import-only,
 CI-verified, actual model-inference, and deployed operational services are
 different statuses. The public GitHub repo is not a private AI memory server.
+
+## Founder world-model / digital-twin directive (November 8, 2026)
+
+Grounded world understanding is now an explicit AGI research workstream, alongside language reasoning, scientific tools, planning, memory, and independent evaluation. Review [JEPA world models and simulation decision](JEPA_WORLD_MODELS_AND_SIMULATION.md). LeCun's JEPA methods predict withheld or future abstract embeddings, not pixels; action-conditioned models and physical interventions are separate required research gates. Reuse Meta's official V-JEPA 2.1 weights/code and established physics engines where a measured task warrants them. Test controlled physics, counterfactual actions, long-horizon drift, shifted environments, calibration and prospective observations before calling a program a real digital twin. Existing Python SciPy/OpenMM/PyBaMM/OpenMDAO are partial solver capabilities; **no Plenum AGI, ASI, trained JEPA or validated world simulator exists today**.
+
+Permanent first-principles operating rule: measure independently verified, useful, transferable intelligence per compute dollar and development hour. Read the ledger/repo, reuse and pin what works, improve the smallest missing part, test against a held-out comparator, report failures and update state, then stop building infrastructure unless the next scientific experiment requires it.
+
