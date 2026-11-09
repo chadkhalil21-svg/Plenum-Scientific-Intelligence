@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-09T03:49:04.665Z",
+  "last_reviewed_utc": "2026-11-09T03:56:52.507Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -715,7 +715,7 @@
     },
     {
       "priority": 11,
-      "action": "Next biological world-model candidate: run ONE reviewed PCSE LINGRA grassland simulation against the upstream published observational grassland dataset (or another properly licensed independent grassland dataset), with temporal holdout, biomass/LAI/soil moisture validation, uncertainty, baseline, and exact EUPL-1.2/license/data review; compare BioCro only if defined physiology task requires it. Do not assume results transfer to any other species or plant biotechnology without independent field/lab measurements."
+      "action": "Plant/forage capabilities: official PCSE 6.0.13 optional `plant` extra added to main in merged PR #261. Reuse original LINGRA grassland code, existing Belgian/Dutch 1986 regression scenarios and irrigated/rainfed ryegrass observed experiments. Do not rerun those published science cases. On first actual plant task, simply install dependency in the chosen runtime and check native model import once; run new field/biological measurements only for a genuinely new Plenum crop/region/genotype/digital-twin claim. PCSE is declared but not preinstalled; no plant simulation has yet executed in Plenum."
     }
   ],
   "decisions": [
@@ -1070,6 +1070,10 @@
     {
       "decision": "Record owner-approved ChatGPT to signed authenticated demonstration browser read as verified narrowly, not general private browsing",
       "reason": "Live GitHub signed workflow response issue #259 confirmed restored encrypted public-demo session after one-time founder Auth0 approval, without disclosing page data or cookie. This closes earlier 'chat private demo unverified' status but does not prove arbitrary authenticated accounts or Work/TinyFish parity. Stop repeating same setup; only expand when a concrete authorized task and acceptance test justify permissions."
+    },
+    {
+      "decision": "Inherit PCSE LINGRA existing upstream model validation; add official install-on-demand package rather than repeat its published tests",
+      "reason": "Founder challenged repeated upstream revalidation. Repo audit proved PCSE LINGRA absent from pyproject/main code despite being referenced in docs. Upstream PCSE 6.0.13 (EUPL-1.2) provides LINGRA regression cases (Michamps/Zegveld, 1986) and ryegrass irrigated/rainfed measured experiments; verified official sources. PR #261 merged as `plant = [\"pcse==6.0.13\"]` optional dependency plus native class references, without copying algorithms or rerunning grassland scientific tests. Status: declared for on-demand pip installation, NOT yet installed, run or newly validated at Plenum. Run only minimal target-environment import check when first used; test custom adapters or new claims/new species, not published ryegrass science. CI global pyproject trigger caused unrelated Inspect failure (`ModuleNotFoundError: acp.helpers`); mark separately, not as PCSE outcome. See docs/LEDGER.md and docs/SCIENTIFIC_DIGITAL_TWINS.md."
     }
   ],
   "operating_rules": [
@@ -1081,6 +1085,7 @@
     "Before building any new infrastructure, audit current repo/evidence/ledger and upstream tools, reuse exactly one suitable implementation per role, define one heldout/falsifiable capability test and cost limit, measure actual improvement, report negative results, and update canonical research-memory state promptly. AGI and eventual ASI research outrank browser and UI polish.",
     "Distinguish physical-law simulator, data-calibrated digital twin, action-conditioned dynamics model, latent JEPA representation, causal intervention evidence and AGI. Never mark a trained/verified world model or AGI/ASI from a fixture, license review, CI import, or model checkpoint alone.",
     "Before accepting new agents, solvers, models or browsers, calculate measured capability gain per dollar/hour and operational complexity against existing verified incumbents. Adopt > adapt > build; use official supported licenses/packages/checkpoints, preserve source and weight provenance, avoid duplicate workflows and new models without blinded acceptance tests and a real task. Retrieval of docs/LEDGER.md and this canonical state is necessary at each new Plenum session; it is not automatically synchronized model memory.",
-    "Scientific digital twins include plants, biology, cells, ecosystems, organisms, chemistry, engineering and planetary systems. Prefer reviewed upstream per-domain simulators and real observations; distinguish retrospective shadow-state updates from synchronized uncertainty-quantified twins, from action-conditioned physics and from general intelligence. Require prospective blind observations and meaningful strong baselines before upgrading status."
+    "Scientific digital twins include plants, biology, cells, ecosystems, organisms, chemistry, engineering and planetary systems. Prefer reviewed upstream per-domain simulators and real observations; distinguish retrospective shadow-state updates from synchronized uncertainty-quantified twins, from action-conditioned physics and from general intelligence. Require prospective blind observations and meaningful strong baselines before upgrading status.",
+    "Inherit the scientific/regression evidence of maintained peer-reviewed/upstream engines; never rerun their full original numerical validation without a concrete software-change/integration hazard. Use official pinned package on demand and cite original experiments. A new species/region, calibration, custom adapter, digital twin or novel biological claim deserves its own specifically scoped empirical check. Declared package is not equal to installed or scientifically verified."
   ]
 }
