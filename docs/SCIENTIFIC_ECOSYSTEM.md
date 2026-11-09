@@ -1,6 +1,13 @@
 # Scientific Ecosystem: Screenshot Inventory and Integration Plan
 
-Updated 2026-11-06. This document incorporates the scientific engines, knowledge sources, agent frameworks and learning systems in the founder's screenshots. A repository or web link is **not** an installed, validated or authorized execution capability.
+## Current adoption judgment (November 8, 2026)
+
+This is an inventory of distinct execution states, **not a shopping list**. Keep the working stack: Qwen benchmark baselines; LangGraph checkpoints; official Playwright/Playwright MCP public browse route; independently tested Inspect AI; optional bounded OpenHands SDK; verified numerical solvers and public scholarly sources. Browser Use remains optional for LLM-guided public tasks; no configured provider key or general authenticated agent parity. BrowserGym/AgentLab are external benchmark candidates, not browser execution/authorization replacements. Meta V-JEPA 2.1 ViT-B (~80M) is an upstream frozen *visual representation* research option; V-JEPA 2-AC is a **separate larger action-conditioned robot system**. Neither has been inferred by Plenum. Evaluate one model and benchmark only after rights, baseline, hardware/budget and independent holdout have been established.
+
+The current [engineering ledger](LEDGER.md) and [research-memory canonical state](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/research-memory/state/AGI_PROGRAM.json) supersede earlier rows or narrative when new tests prove a more advanced *but limited* capability. Actual source and run evidence take precedence over historical screenshots. Do not install or fork an entire science-agent index when a narrow maintained upstream package solves the named task. No software installation or model change was made by this reconciliation.
+
+
+Updated 2026-11-08 (current-status reconciliation; original inventory established November 6). This document incorporates the scientific engines, knowledge sources, agent frameworks and learning systems in the founder's screenshots. A repository or web link is **not** an installed, validated or authorized execution capability.
 
 ## Engineering principle
 
@@ -22,7 +29,7 @@ self-improvement remain unestablished.
 | Mathematics | [Lean 4](https://github.com/leanprover/lean4) | **Verified isolated real Lean 4 CI** | Three predefined general proofs compiled; deliberate false proof rejected in run 42402969343; no autonomous theorem discovery |
 | Drug discovery | [DiffDock](https://github.com/gcorso/DiffDock) | Registry: planned, license/weights review | No drug binding or efficacy claims |
 | Molecular dynamics | [OpenMM 8.6.1](https://github.com/openmm/openmm) | **Verified isolated CPU engine** | Two-particle harmonic reference, not protein folding |
-| Chemistry | [PySCF](https://github.com/pyscf/pyscf) | Registry: planned | Electronic structure models must be validated |
+| Chemistry | [PySCF 2.15.0](https://github.com/pyscf/pyscf) | **Verified isolated real CPU H2 Hartree-Fock reference workflow** | One conventional known reference and stretched-bond control, not chemistry discovery; see [PySCF evidence](PYSCF_QUANTUM_CHEMISTRY.md) |
 | Materials science | [pymatgen](https://github.com/materialsproject/pymatgen) | Registry: planned | Distinct from Materials Project data API |
 | Aerodynamics | [SU2](https://github.com/su2code/SU2) | Registry: planned | Turbulence/mesh/geometry validation not done |
 | Batteries | [PyBaMM 26.10.1.1](https://github.com/pybamm-team/PyBaMM) | **Verified isolated workflow** | Default lithium-ion SPM/SPMe, no experimental validation of Plenum technology |
@@ -80,9 +87,9 @@ index and can reload verified older public research memory entries.
 | [K-Dense Scientific Skills](https://github.com/K-Dense-AI/scientific-agent-skills) | Large specialized skills catalog | Pinned and curated **read-only** |
 | [Stanford Biomni](https://github.com/snap-stanford/Biomni) | Biomedical research AI | Architecture candidate, not installed |
 | [Sakana AI Scientist v2](https://github.com/SakanaAI/AI-Scientist-v2) | Hypothesis/search/experiment research architecture | License-reviewed **reference only**, not arbitrary-code executor |
-| [Karpathy AutoResearch](https://github.com/karpathy/autoresearch) | Iterative automated ML training experiments | Reference for training benchmarks, needs suitable compute and controls |
-| [PaperQA2](https://github.com/Future-House/paper-qa) | Full-paper reading, attribution and evidence synthesis | Candidate requiring explicitly configured LLM and reviewed data |
-| [Inspect AI](https://github.com/UKGovernmentBEIS/inspect_ai) | Independent AI agent audits | Planned; current unit tests are not a full research-agent evaluation |
+| [Karpathy AutoResearch](https://github.com/karpathy/autoresearch) | Iterative automated ML training experiments | **Reference only**; no general model self-improvement loop; existing bounded experiments with negative tests should be reused before adoption |
+| [PaperQA2](https://github.com/Future-House/paper-qa) | Scientific document retrieval and eventual grounded QA | **Upstream SDK and actual offline retrieval verified but insufficient** (1/2 initial top-1 public examples; exploratory 5/8 and 6/8 settings), no reliable model-generated citation reasoning yet |
+| [Inspect AI](https://github.com/UKGovernmentBEIS/inspect_ai) | Independent model and agent audits | **Real framework and Qwen model scoring verified**, including 17/24 bounded original ARC non-thinking evaluation (run [42340974100](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42340974100)); no broad AGI validity |
 | [EleutherAI LM Evaluation Harness](https://github.com/EleutherAI/lm-evaluation-harness) | Official external model benchmark | **Verified** on Qwen3 0.6B and 1.7B; eight cases per task |
 | [Hugging Face TRL](https://github.com/huggingface/trl) | Candidate model training and preference methods | Later, after larger blind benchmarks and resource budget |
 | [vLLM](https://github.com/vllm-project/vllm) | Efficient high-throughput model serving | Later; requires suitable inference hardware |
