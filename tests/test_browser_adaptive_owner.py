@@ -190,6 +190,19 @@ class AdaptiveOwnerContract(unittest.TestCase):
             with self.assertRaises(PermissionError):
                 adaptive.consume_follow(sid, 1, now=t)
 
+    def test_revocation_also_cancels_pending_owner_approval_before_first_read(self):
+        _, public = new_keys()
+        sealed.approve_read(OWNER, site=SITE, path="/secure",
+                            recipient_public_key=public, adaptive=True)
+        self.assertNotIn(SITE.encode(), self.store.blob(
+            sealed.APPROVAL_BLOB).data)
+        with self.assertRaises(PermissionError):
+            adaptive.revoke_session(owner="c" * 64)
+        self.assertTrue(adaptive.revoke_session(owner=OWNER))
+        with self.assertRaises(PermissionError):
+            sealed.consume_read()
+        self.assertFalse(adaptive.revoke_session(owner=OWNER))
+
     def test_sealed_result_metadata_stays_recipient_only(self):
         consent = self.approve()
         result = self.page()
@@ -277,7 +290,7 @@ class AdaptiveOwnerHttpContract(unittest.TestCase):
             self.assertFalse(revoked.called)
             okay = self.client.post("/owner/chat-adaptive-revoke",data=revoke)
         self.assertEqual(okay.status_code, 200)
-        revoked.assert_called_once()
+        revoked.assert_called_once_with(owner=OWNER)
 
     def test_signed_follow_only_and_no_generic_private_write(self):
         from services.computer_browser.github_oidc_read_policy import GitHubOIDCTokenVerifier

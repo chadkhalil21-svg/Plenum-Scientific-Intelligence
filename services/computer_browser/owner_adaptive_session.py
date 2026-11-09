@@ -244,17 +244,46 @@ def save_follow(cursor, result, *, now=None):
     return {"remaining": state["remaining"], "links_untrusted": links}
 
 
-def revoke_session(*, now=None):
-    """Trusted owner-authenticated portal ONLY, never a GitHub issue command."""
-    require_enabled()
-    blob = _cursor_blob()
-    if not blob.exists():
-        return False
-    blob.reload()
-    gen = int(blob.generation)
-    blob.delete(if_generation_match=gen)
-    return True
+def revoke_session(*, owner=None):
+    """Owner-only cancellation of BOTH pending and active adaptive consent.
 
+    This also rejects a stale in-flight worker's attempt to republish a
+    deleted CAS lease. A pending fixed-batch read is deliberately unaffected.
+    """
+    require_enabled()
+    from .sealed_chat_read import APPROVAL_BLOB, _store
+    from .owner_chat_pairing import _owner
+    if owner is not None:
+        _owner(owner)
+    revoked = False
+
+    # The signed founder may revoke before the FIRST GitHub issue starts.
+    pending = _store().bucket.blob(APPROVAL_BLOB)
+    if pending.exists():
+        pending.reload()
+        generation = int(pending.generation)
+        record = json.loads(_cipher().decrypt(
+            pending.download_as_bytes(if_generation_match=generation), ttl=TTL
+        ))
+        if record.get("schema") == "plenum-sealed-owner-adaptive-consent-v1":
+            if owner is not None and record.get("owner") != owner:
+                raise PermissionError("Pending adaptive consent is not this owner")
+            pending.delete(if_generation_match=generation)
+            revoked = True
+
+    # The same founder may revoke after the initial page or during a follow.
+    active = _cursor_blob()
+    if active.exists():
+        active.reload()
+        generation = int(active.generation)
+        record = json.loads(_cipher().decrypt(
+            active.download_as_bytes(if_generation_match=generation), ttl=TTL
+        ))
+        if owner is not None and record.get("owner") != owner:
+            raise PermissionError("Adaptive session is not this owner")
+        active.delete(if_generation_match=generation)
+        revoked = True
+    return revoked
 
 async def read_hardened_saved_site(*, site, owner, path):
     """Restore original encrypted profile in Chromium with ONE pinned HTTPS egress.
