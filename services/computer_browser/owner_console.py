@@ -79,6 +79,11 @@ value="https://example.com/" maxlength="1200">
 <p><a href="/owner/chat-demo-approval">Approve one signed, read-only demo browser check</a></p>"""
                 if (os.environ.get("K_SERVICE")=="plenum-browser-owner-auth0"
                     and os.environ.get("PLENUM_CHAT_RELAY_ENABLED")=="true")
+                else "") + (
+                """<h2>One-time encrypted chat read of approved saved website</h2>
+<p><a href="/owner/chat-sealed-approval">Approve an encrypted one-page Computer read</a></p>"""
+                if (os.environ.get("K_SERVICE")=="plenum-browser-owner-auth0"
+                    and os.environ.get("PLENUM_SEALED_CHAT_READ_ENABLED")=="true")
                 else ""))
 
     @app.get("/owner/public-preview",response_class=HTMLResponse)
