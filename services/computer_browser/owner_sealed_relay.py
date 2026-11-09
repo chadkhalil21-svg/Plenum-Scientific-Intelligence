@@ -17,7 +17,7 @@ from .github_oidc_read_policy import GitHubOIDCTokenVerifier, GitHubRelayIdentit
 from .owner_console import require_verified_owner
 from .owner_saved_session import (
     _owner_form_token, _verify_owner_form, _require_allowed_origin,
-    _page, read_saved_site,
+    _page, read_saved_site, read_saved_batch,
 )
 from .private_profiles import BrowserProfileStore
 from .sealed_chat_read import (
@@ -63,6 +63,10 @@ def mount_owner_sealed_relay(app):
                 "<input type='hidden' name='csrf_token' value='" + token + "'>"
                 "<label>Relative page path <input name='path' value='/' "
                 "maxlength='800' autocomplete='off' required></label>"
+                "<p><label>Optional additional read-only paths (up to two, one "
+                "per line; same website, no form submission) "
+                "<textarea name='additional_paths' maxlength='480' rows='3'></textarea>"
+                "</label></p>"
                 "<p><label>Recipient ephemeral public key "
                 "<input name='recipient_public_key' maxlength='43' "
                 "autocomplete='off' required></label></p>"
@@ -83,6 +87,7 @@ def mount_owner_sealed_relay(app):
     async def approve_page_post(
         request: Request, site: str = Form(), path: str = Form(),
         recipient_public_key: str = Form(),
+        additional_paths: str = Form(default=""),
         csrf_token: str = Form(default=""),
         confirmation: str = Form(default=""),
         _owner=Depends(require_verified_owner),
@@ -95,10 +100,12 @@ def mount_owner_sealed_relay(app):
             if confirmation != "APPROVE":
                 raise HTTPException(status_code=403,
                                     detail="Explicit owner approval required")
+            params = {"site": site, "path": path,
+                      "recipient_public_key": recipient_public_key}
+            if additional_paths.strip():
+                params["additional_paths"] = additional_paths
             result = await asyncio.to_thread(
-                approve_read, _owner["private_owner_id"],
-                site=site, path=path,
-                recipient_public_key=recipient_public_key,
+                approve_read, _owner["private_owner_id"], **params
             )
         except HTTPException:
             raise
@@ -137,10 +144,17 @@ def mount_owner_sealed_relay(app):
             raise HTTPException(status_code=403,
                                 detail="Owner consent absent or expired") from exc
         try:
-            result = await asyncio.wait_for(read_saved_site(
-                site=consent["site"], owner=consent["owner"],
-                path=consent["path"],
-            ), timeout=43)
+            if consent.get("additional_paths"):
+                result = await asyncio.wait_for(read_saved_batch(
+                    site=consent["site"], owner=consent["owner"],
+                    path=consent["path"],
+                    additional_paths=consent["additional_paths"],
+                ), timeout=105)
+            else:
+                result = await asyncio.wait_for(read_saved_site(
+                    site=consent["site"], owner=consent["owner"],
+                    path=consent["path"],
+                ), timeout=43)
             encrypted = seal_result(consent, result)
         except Exception as exc:
             raise HTTPException(status_code=503,

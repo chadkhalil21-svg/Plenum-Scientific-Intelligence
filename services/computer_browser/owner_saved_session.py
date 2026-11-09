@@ -270,6 +270,77 @@ async def read_saved_site(*, site, owner, path=None):
             await browser.close()
 
 
+# Optional multiple read-only pages per ONE exact owner approval. This is
+# intentionally not an adaptive or writable account agent. All destinations
+# are owner-selected before the session starts; browser only GETs each path.
+BATCH_MAX_EXTRA = 2
+
+
+def _approved_batch_paths(site, first_path, additional_paths):
+    """Validate 0-2 short, explicit safe same-host GET paths from owner form."""
+    _approved_read_target(site, first_path)
+    if isinstance(additional_paths, str):
+        if len(additional_paths) > 480:
+            raise PermissionError("Additional private paths too long")
+        paths = [line.strip() for line in additional_paths.splitlines() if line.strip()]
+    elif isinstance(additional_paths, (list, tuple)):
+        paths = list(additional_paths)
+    else:
+        raise PermissionError("Invalid batch read paths")
+    if len(paths) > BATCH_MAX_EXTRA:
+        raise PermissionError("At most two additional private pages permitted")
+    seen = {first_path}
+    verified = []
+    blocked = re.compile(
+        r"(?:^|[/_.-])(?:api|graphql|login|logout|signout|delete|remove|"
+        r"pay|purchase|checkout|cancel|revoke|disable|unsubscribe|"
+        r"submit|save|update|reset|change|invite|authorize)(?:[/_.-]|$)",
+        re.IGNORECASE
+    )
+    for path in paths:
+        if (not isinstance(path, str) or not 1 <= len(path) <= 220
+                or not re.fullmatch(r"/[A-Za-z0-9/_.-]*", path)
+                or "//" in path or "%" in path or "?" in path or "#" in path
+                or any(part in (".", "..") for part in path.split("/"))
+                or blocked.search(path) or path in seen):
+            raise PermissionError("Unsafe or duplicate private batch path")
+        if _approved_read_target(site, path) != site + path:
+            raise PermissionError("Batch path not on approved owner website")
+        verified.append(path)
+        seen.add(path)
+    return tuple(verified)
+
+
+async def read_saved_batch(*, site, owner, path, additional_paths):
+    """Read only the preapproved paths using the EXISTING session reader.
+
+    Each read uses the same saved encrypted owner profile; browser storage
+    state is not serialized or returned. Fail the entire batch if ANY page
+    differs from the exact approved URL. A preapproval is not permission to
+    adaptively follow unreviewed links, submit forms or mutate the account.
+    """
+    extras = _approved_batch_paths(site, path, additional_paths)
+    if not extras:
+        return await read_saved_site(site=site, owner=owner, path=path)
+    result = await read_saved_site(site=site, owner=owner, path=path)
+    out = []
+    for extra in extras:
+        one = await read_saved_site(site=site, owner=owner, path=extra)
+        if (one.get("site") != site or one.get("final_url") != site + extra
+                or type(one.get("http_status")) is not int
+                or not 200 <= one["http_status"] < 300
+                or not isinstance(one.get("title"), str)
+                or not isinstance(one.get("body"), str)):
+            raise PermissionError("Approved private batch page could not be verified")
+        out.append({
+            "path": extra,
+            "http_status": one["http_status"],
+            "title": one["title"][:150],
+            "body": one["body"][:300],
+        })
+    return {**result, "additional_pages_untrusted": out}
+
+
 async def _public_demo_login_snapshot(browser, *, fixture_route=None):
     """Get session state for ONLY the public Sauce Labs test account.
 

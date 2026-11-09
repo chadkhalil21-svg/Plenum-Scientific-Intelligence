@@ -1,3 +1,4 @@
+import asyncio
 """Tests of Plenum's OWN confidential ChatGPT browser boundary, no live accounts."""
 import base64
 import importlib.util
@@ -253,6 +254,73 @@ class EncryptedReadTests(unittest.TestCase):
         ]:
             with self.subTest(bad=str(bad)[:90]), self.assertRaises(PermissionError):
                 sealed.seal_result(record, {**base, "links_untrusted": bad})
+
+    def test_one_owner_approval_can_cover_two_additional_exact_safe_pages(self):
+        from services.computer_browser.owner_saved_session import _approved_batch_paths
+        self.assertEqual(
+            _approved_batch_paths(SITE, "/secure", "/research\n/reports"),
+            ("/research", "/reports"),
+        )
+        for bad in ("/secure", "//external.example", "/delete/all",
+                    "/settings?token=abc", "/%2e%2e/admin",
+                    "/research\n/reports\n/third", "/foo/../pay"):
+            with self.subTest(bad=bad), self.assertRaises(PermissionError):
+                _approved_batch_paths(SITE, "/secure", bad)
+        _, public = new_keypair()
+        with patch.object(sealed, "_store", return_value=self.owner_store), \
+             patch.object(sealed.BrowserProfileStore, "from_environment",
+                          return_value=self.private_profiles):
+            approved = sealed.approve_read(
+                OWNER, site=SITE, path="/secure",
+                recipient_public_key=public, additional_paths="/research\n/reports")
+            self.assertTrue(approved["approved_once"])
+            encrypted_record = self.owner_store.blob_instance.data
+            self.assertNotIn(b"/research", encrypted_record)
+            record = sealed.consume_read()
+            self.assertEqual(record["additional_paths"], ["/research", "/reports"])
+            with self.assertRaises(PermissionError):
+                sealed.consume_read()
+            result = {
+                "site": SITE, "final_url": SITE + "/secure", "http_status": 200,
+                "demo_authenticated_restored": True, "title": "Secure Area",
+                "body": "PRIVATE INITIAL CONTENT",
+                "additional_pages_untrusted": [
+                    {"path": "/research", "http_status": 200,
+                     "title": "Research", "body": "SECRET RESEARCH"},
+                    {"path": "/reports", "http_status": 200,
+                     "title": "Reports", "body": "SECRET REPORT"},
+                ],
+            }
+            envelope = sealed.seal_result(record, result)
+            self.assertNotIn("SECRET RESEARCH", json.dumps(envelope))
+            self.assertNotIn("/reports", json.dumps(envelope))
+            with self.assertRaises(PermissionError):
+                sealed.seal_result(record, {
+                    **result, "additional_pages_untrusted": [
+                        {**result["additional_pages_untrusted"][0], "path": "/delete/all"},
+                        result["additional_pages_untrusted"][1],
+                    ]
+                })
+
+    def test_batch_worker_uses_original_saved_browser_only(self):
+        from services.computer_browser.owner_saved_session import read_saved_batch
+        from unittest.mock import AsyncMock
+        from services.computer_browser import owner_saved_session as saved
+        async def fake_read(*, site, owner, path):
+            return {"site": site, "final_url": site+path, "http_status": 200,
+                    "title": "Authorized", "body": "Sensitive page",
+                    "demo_authenticated_restored": path == "/secure"}
+        with patch.object(saved, "read_saved_site", new=AsyncMock(side_effect=fake_read)) as read:
+            result = asyncio.run(read_saved_batch(
+                site=SITE, owner=OWNER, path="/secure",
+                additional_paths=["/research", "/reports"]))
+            self.assertEqual(read.await_count, 3)
+            self.assertEqual([x["path"] for x in result["additional_pages_untrusted"]],
+                             ["/research", "/reports"])
+        with patch.object(saved, "read_saved_site", new=AsyncMock(side_effect=fake_read)):
+            with self.assertRaises(PermissionError):
+                asyncio.run(read_saved_batch(site=SITE, owner=OWNER,
+                    path="/secure", additional_paths=["/logout"]))
 
     def test_disabled_service_is_denied_without_vault_access(self):
         for change in [{sealed.FLAG:"false"},
