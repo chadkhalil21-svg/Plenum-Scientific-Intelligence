@@ -52,7 +52,7 @@ jobs:
                   raise ValueError('Unverified signed identity')
               req=urllib.request.Request(target,data=b'',method='POST',
                   headers={'Authorization':'Bearer '+signed,'Content-Type':'application/octet-stream'})
-              with opener.open(req,timeout=75) as reply:
+              with opener.open(req,timeout=145) as reply:
                   if reply.status!=200:raise ValueError('No approved read')
                   envelope=json.loads(reply.read(8100))
               expected={'schema','encoding','ephemeral_public_key','salt','nonce','ciphertext','plaintext_in_github'}
