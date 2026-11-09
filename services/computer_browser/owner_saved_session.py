@@ -24,7 +24,11 @@ from .private_profiles import BrowserProfileStore
 _HEADERS = {
     "Cache-Control": "no-store",
     "X-Content-Type-Options": "nosniff",
-    "Referrer-Policy": "no-referrer",
+    # HTML form POST with Referrer-Policy:no-referrer serializes Origin:null
+    # under the Fetch standard. That conflicts with our same-origin CSRF guard.
+    # "same-origin" sends Referer only internally and never to external sites;
+    # no cookies, bearer values or CSRF tokens are present in this page URL.
+    "Referrer-Policy": "same-origin",
     "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; "
                                "form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
 }
