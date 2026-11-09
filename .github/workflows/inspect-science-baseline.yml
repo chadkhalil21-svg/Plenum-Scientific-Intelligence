@@ -277,3 +277,96 @@ jobs:
             reports/original-gpqa-three-sciences.json
             reports/inspect-original-gpqa-logs/
           retention-days: 90
+
+  original-gpqa-archived-score-recovery:
+    if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'Release GPQA archive-only scorer recovery')
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Recover original already scored GPQA logs from prior immutable Actions run
+        uses: actions/download-artifact@v7
+        with:
+          name: original-gpqa-three-domain-independent-grades
+          run-id: 42563122617
+          repository: chadkhalil21-svg/Plenum-Scientific-Intelligence
+          github-token: ${{ github.token }}
+          path: reports/
+      - name: Install ONLY the established original Inspect log reader; no model or eval execution
+        run: python -m pip install -e '.[inspection]'
+      - name: Audit existing original science scores, without any model inference
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from urllib.parse import urlsplit, unquote
+          from hashlib import sha256
+          import json
+          from inspect_ai.log import list_eval_logs, read_eval_log
+          from inspect_ai.scorer import CORRECT, INCORRECT
+          from plenum_ai.hf_model import APPROVED_REVISION
+          results={}
+          root=Path("reports/inspect-original-gpqa-logs").resolve()
+          assert root.is_dir(), "Archived original run logs missing"
+          for domain in ("Biology","Chemistry","Physics"):
+              folder=root/domain
+              logs=list_eval_logs(log_dir=str(folder))
+              assert len(logs)==1, "Original logs must contain exactly one case per domain"
+              log=read_eval_log(logs[0].name)
+              assert log.status=="success" and not log.error
+              assert log.eval.task in ("gpqa_diamond","inspect_evals/gpqa_diamond")
+              assert log.eval.model=="hf/local"
+              assert str(log.eval.model_args.get("model_path","")).endswith(APPROVED_REVISION)
+              assert len(log.samples or [])==1
+              sample=log.samples[0]
+              assert sample.metadata["high_level_domain"]==domain
+              scores=list((sample.scores or {}).values())
+              assert len(scores)==1 and scores[0].value in (CORRECT, INCORRECT)
+              uri=logs[0].name
+              disk=Path(unquote(urlsplit(uri).path)) if uri.startswith("file:") else Path(uri)
+              assert disk.is_file() and disk.resolve().is_relative_to(root), "Archived original log path invalid"
+              results[domain]={
+                  "sample_id":str(sample.id),
+                  "original_scorer_correct":scores[0].value==CORRECT,
+                  "eval_sha256":sha256(disk.read_bytes()).hexdigest(),
+              }
+          assert len({v["sample_id"] for v in results.values()})==3
+          report={
+              "schema":"plenum-gpqa-original-three-sciences-archived-scores-v1",
+              "upstream":"Original Inspect Evals GPQA Diamond task and scorer 0.27.0",
+              "source_scored_run_id":42563122617,
+              "source_artifact_id":13650326627,
+              "model":"Qwen/Qwen3-0.6B",
+              "frozen_revision":APPROVED_REVISION,
+              "no_new_model_inference":True,
+              "model_attempts_in_source_run":3,
+              "original_cases_attempted":3,
+              "original_cases_correct":sum(int(v["original_scorer_correct"]) for v in results.values()),
+              "by_domain":results,
+              "paid_model_api_calls":0,
+              "original_scientific_discovery":False,
+              "general_intelligence_demonstrated":False,
+              "limitations":[
+                  "Three public historically available questions, one per domain",
+                  "May overlap published pretraining data",
+                  "Not statistically adequate for model rankings",
+                  "Does not demonstrate autonomous science or reliable tool use"
+              ]
+          }
+          Path("reports/original-gpqa-three-sciences.json").write_text(json.dumps(report,indent=2)+"\n")
+          print("RECOVERED ORIGINAL GPQA:",report["original_cases_correct"],"/3",
+                {k:v["original_scorer_correct"] for k,v in results.items()})
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: recovered-original-gpqa-three-science-scores-no-inference
+          path: reports/original-gpqa-three-sciences.json
+          retention-days: 90
