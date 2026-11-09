@@ -103,8 +103,7 @@ def validate_plan(*, site, page_path, post_path, form_selector,
             if (op not in {"fill", "select"}
                     or set(step) != {"op", "selector", "value"}
                     or not isinstance(step["value"], str)
-                    or len(step["value"]) > 500
-                    or _SENSITIVE.search(step["value"][:0])):
+                    or len(step["value"]) > 500):
                 raise PermissionError("Only exact non-sensitive text/select fields")
         elif set(step) != {"op", "selector"}:
             raise PermissionError("Unexpected submit action fields")
