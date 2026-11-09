@@ -118,6 +118,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_computer_browser_iap.py' -v
       - name: Verify IAP owner interactive Chromium and site-scoped cookie privacy
         run: python -m unittest discover -s tests -p 'test_browser_private_login.py' -v
+      - name: Verify new owner-only encrypted runtime website registry and revocation
+        run: python -m unittest discover -s tests -p 'test_browser_runtime_site_grants.py' -v
       - name: Verify signed-owner saved-session preview and revocation endpoints
         run: python -m unittest discover -s tests -p 'test_browser_owner_saved_session.py' -v
       - name: Prove future owner-bound MCP saved demo read is disabled unless pinned and redacted
