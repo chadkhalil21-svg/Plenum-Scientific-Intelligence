@@ -39,11 +39,12 @@ _SELECTOR = re.compile(
 )
 _FORM = re.compile(r"""form(?:\#[A-Za-z][A-Za-z0-9_-]{0,80}|\[name=['"]?[A-Za-z][A-Za-z0-9_-]{0,79}['"]?\])?""")
 _BLOCKED = re.compile(
-    r"(?i)(?:^|[/_.-])(?:billing|payment|checkout|purchase|pay|order|"
-    r"bank|transfer|withdraw|payout|refund|subscription|credit|tax|"
-    r"delete|remove|cancel|revoke|disable|role|permission|access|"
-    r"security|password|mfa|2fa|otp|secret|token|api|webhook|"
-    r"authorize|auth|login|logout|publish|invite|send|email)(?:[/_.-]|$)"
+    r"(?i)(?:^|[/_.-])(?:billing|payments?|checkouts?|purchases?|pay|orders?|"
+    r"banks?|banking|transfers?|withdraw(?:als?)?|payouts?|refunds?|"
+    r"subscriptions?|credits?|tax(?:es)?|delete|remove|cancel|revoke|"
+    r"disable|roles?|permissions?|access|admin|security|passwords?|"
+    r"mfa|2fa|otp|secret|tokens?|api|webhook|authorize|auth|login|"
+    r"logout|publish|invite|send|email)(?:[/_.-]|$)"
 )
 _SENSITIVE = re.compile(r"(?i)(?:password|passwd|mfa|2fa|otp|secret|token|"
                         r"key|card|cvv|ssn|pin|bank|payment|transfer|role|permission)")
