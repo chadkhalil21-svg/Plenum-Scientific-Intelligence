@@ -61,6 +61,7 @@ jobs:
           set -euo pipefail
           gcloud run services update plenum-browser-owner-auth0             --project="$PROJECT" --region=us-east1             --update-env-vars='PLENUM_CHAT_RELAY_ENABLED=true,PLENUM_CHAT_RELAY_REPO_ID=1447724141,PLENUM_CHAT_RELAY_ACTOR_ID=251133044'             --quiet > /dev/null
       - name: Verify signed-only endpoint and original owner authentication still closed
+        id: verify
         env:
           PROJECT: ${{ vars.GCP_PROJECT_ID }}
         run: |
@@ -94,6 +95,15 @@ jobs:
           test "$approval" = '401'
           test "$signed" = '401'
           echo 'PASS: Owner login, anonymous denial and signed-only relay verified.'
+      - name: Fail closed if any protected activation or readback check fails
+        if: failure()
+        env:
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          test "$PROJECT" = 'plenum-computer-browser'
+          gcloud run services update plenum-browser-owner-auth0             --project="$PROJECT" --region=us-east1             --update-env-vars='PLENUM_CHAT_RELAY_ENABLED=false'             --quiet > /dev/null
+          echo 'Protected demo relay disabled following failed activation check.'
       - name: Post public nonsecret release result
         if: always()
         env:
