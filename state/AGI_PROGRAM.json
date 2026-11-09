@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-09T06:11:56.121Z",
+  "last_reviewed_utc": "2026-11-09T06:25:42.635Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -912,6 +912,44 @@
       },
       "AGI_demonstrated": false,
       "notes": "Retire frozen baseline model/synthetic replays, not fresh independent research, original source code, historical result artifacts or future explicit task evaluation."
+    },
+    {
+      "id": "noaa-nov2026-preissuance-observation-source-clarification-20261109",
+      "status": "original_NOAA_documented_source_and_mock_adapter_tests_verified_no_real_data_or_forecast_yet",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/276",
+      "commit": "69bffbbd64ea19a2291c013ebba1dc5ed00a5832",
+      "original_original_protocol_commit": "45ac814869b9e47450c00ec55e83b29f02d3ca71",
+      "source_documents": [
+        "https://api.tidesandcurrents.noaa.gov/api/prod/",
+        "https://api.tidesandcurrents.noaa.gov/api/prod/responseHelp.html"
+      ],
+      "source_amendment": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/docs/NOAA_2026_PROSPECTIVE_SOURCE_CLARIFICATION.md",
+      "original_verification_ci": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42572751612",
+      "result": {
+        "reason": "Original historical NOAA hourly_height is monthly-verified; not guaranteed for Nov12-13 outcomes by Nov16 audit",
+        "actual_original_product": "water_level",
+        "six_minute_original_NOAA_observed_values": true,
+        "UTC_hourly_sample": "exact hh:00 only",
+        "quality": "q=p/v and original NOAA f flags exclude inferred/flat/rate/limit anomalies",
+        "response_max_bytes": 1200000,
+        "frozen_source_metadata": "Original Qwen and SmolLM2 JSON seal product, sampling and versioned pre-issue amendment",
+        "original_test_days": [
+          "2026-11-12",
+          "2026-11-13"
+        ],
+        "protocol_and_frozen_forecast_method_unchanged": true,
+        "original_live_NOAA_API_development_data_verification": false,
+        "future_measurements_accessed": false,
+        "new_scientific_forecast_issued": false,
+        "independent_scientific_result": false,
+        "CI_total_unit_tests": 633,
+        "CI_result": "success",
+        "model_weights_modified": false,
+        "paid_API_spending": 0,
+        "AGI_demonstrated": false
+      },
+      "AGI_demonstrated": false,
+      "notes": "A pre-issuance source correction, openly documented before Nov10; official NOAA source says product=hourly_height monthly verified, while water_level is preliminary/verified six-minute observations. Original model uses only actual UTC hourly sample points, no predictions or interpolation, and preserves no-future-data gates. The two source products are NOT numerically identical; older 2025 verified hourly experiments cannot be equated. Actual live endpoint response/availability must still be verified by scheduled Nov10 model issuance; mock tests only check our adapter contract. The original independent audit may fail if provisional data revise after freeze; do not silently refit. No upstream software revalidation."
     }
   ],
   "next_actions": [
@@ -921,7 +959,7 @@
     },
     {
       "priority": 2,
-      "action": "IMMEDIATE IRREVERSIBLE SCIENCE DEADLINE: verify canonical research-memory original sealed NOAA forecast after scheduled proposal 2026-11-10 11:17 UTC (one backup 20:17 UTC only if archive missing); verify sealed USGS forecast after 2026-11-11 09:20 UTC (one backup 18:17 UTC only if archive missing). Merged PR #274 ensures existing eligibility gates read-only check original frozen file; protocol methods, Qwen/SmolLM2 choices, original Nov 12–13 withheld observation timestamps and independent audit unchanged. Forecasts must be committed BEFORE Nov 12 00:00 UTC or admit no valid prospective claim. Audit NOAA no sooner than Nov 15, scheduled Nov 16 11:33 UTC, and USGS no sooner than Nov 17, scheduled Nov 18 11:40 UTC. Do not peek at future data, refit after outcomes, create a new framework, or count source configuration as scientific result. Original SWE-bench repeated tool-loop failure remains priority after this time-critical evidence. Main PR #275 removed calendar-only fixed small-model/synthetic repeats while preserving actual research and manual evaluation."
+      "action": "TIME CRITICAL real scientific evidence: NOAA official Data API documentation says verified hourly_height may not be published at Nov16 audit. Main merged PR #276 (commit 69bffbbd64ea19a2291c013ebba1dc5ed00a5832) uses observed six-minute water_level values sampled at exact UTC hh:00 with q=p/v and valid f QC; the pre-issuance amendment in docs/NOAA_2026_PROSPECTIVE_SOURCE_CLARIFICATION.md is committed and sealed in both frozen Qwen/SmolLM2 proposal JSON. Main source adapter tested on mocked NOAA JSON, CI #42572751612 green 633 tests, but NO live NOAA source data have been checked yet. Original Nov7 forecast protocol/score rules/model revisions unchanged. Verify ACTUAL original NOAA research-memory frozen-2026-11.json after Nov10 11:17 UTC issue/20:17 fallback and BEFORE Nov12 UTC (must include amendment ID/product and real observed development digests), separately USGS after Nov11 issuance. Do not fetch future Nov12-13 target measurements before original independent audits Nov16 NOAA/Nov18 USGS, no post-hoc source/model alterations or fictional outcomes. If NOAA preliminary development data are revised after freeze, preserve source-hash integrity failure, don't silently refit. Next real AGI milestone remains unfamiliar real multi-step tool reasoning, not further integration work."
     },
     {
       "priority": 3,
@@ -1372,6 +1410,10 @@
     {
       "decision": "Stop calendar repetition of unchanged Qwen/synthetic model fixtures; preserve only on-demand and meaningful new-source tests",
       "reason": "Merged main PR #275 (9e44f2e47ab55f644886ad845211fcc282f9114d) removed monthly cron from .github/workflows/model-challenge.yml (first day fixed 0.6B/1.7B Qwen pair / same two synthetic holdout cases) and .github/workflows/iterative-hypotheses.yml (15th day fixed six Qwen calls / same three synthetic tasks). Both monthly replays produce no new external observations, are not upstream solver validation needed each month, and waste download/CPU without independent AGI progress. Kept original model/scientific code and immutable result artifacts, workflow_dispatch, main-only push on meaningful source/test changes; removed editing workflow YAML self-push and redundant monthly triggers. Daily public research/discovery radar, actual novel observations, and both original prospective NOAA/USGS schedules untouched. Savings not measured as dollar amount; no changes to weights, cloud compute, model evaluations performed by PR itself. Retired GitHub Models free inference API July 30 2026, do not invest in dead API."
+    },
+    {
+      "decision": "Prioritize upcoming authentic prospective science: prevent Nov16 NOAA verified-hourly source unavailability with publicly preregistered observed 6-minute source amendment",
+      "reason": "Live repo review before Nov10 forecast found real NOAA source error: originally the prospective adapter used product=hourly_height, but NOAA official Data API says this is verified only monthly and therefore Nov12-13 heights may be unavailable by fixed Nov16 independent audit. Merged PR #276 changes ONLY public-source adapter to product=water_level six-minute observed with q and f QA, exact UTC minute 00 sampling, fixed datum/stations/date windows, 1.2MB bound, and immutable amendment source ID in original Qwen/SmolLM2 proposal manifests. Original precommitted Nov7 protocol untouched, no target data retrieved or method/model/baseline re-selection. Existing CI run #42572751612 passed 633 tests including new mocked adapter and source sealing; source availability on live scheduled Nov10 remains unverified. This is a real-science integrity correction, not new model intelligence. Do not rerun established upstream NOAA library verification."
     }
   ],
   "operating_rules": [
