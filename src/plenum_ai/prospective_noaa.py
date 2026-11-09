@@ -28,6 +28,7 @@ from .independent_noaa_critic import SmolLM2Critic
 # observations, NOAA tide predictions, post-hoc forecast-model changes, or
 # fallback between two measurement products. Preliminary source may be revised.
 NOAA_SOURCE_PRODUCT = "water_level"
+NOAA_SOURCE_SAMPLING = "exact top-of-hour UTC (minute=00) from observed six-minute product"
 NOAA_SOURCE_AMENDMENT = "noaa-prospective-2026-11-source-clarification-2026-11-09"
 NOAA_MAX_SOURCE_BYTES = 1_200_000  # 21 days of real 6-minute observations; finite limit.
 
@@ -242,7 +243,10 @@ def verify_original(report):
             or report.get("protocol_commit")!=PROTOCOL_COMMIT
             or report.get("protocol_sha256")!=digest(protocol())
             or report.get("future_observations_seen") is not False
-            or report.get("target_days")!=list(TEST_DAYS)):
+            or report.get("target_days")!=list(TEST_DAYS)
+            or report.get("observation_source_product")!=NOAA_SOURCE_PRODUCT
+            or report.get("observation_source_sampling")!=NOAA_SOURCE_SAMPLING
+            or report.get("source_amendment")!=NOAA_SOURCE_AMENDMENT)::
         raise ValueError("Invalid sealed original research")
     rows=report.get("stations")
     if not isinstance(rows,list) or [r.get("station") for r in rows]!=list(STATION_IDS):
@@ -291,6 +295,9 @@ def propose(generate,fetcher=fetch_public,now=None,model=QWEN,revision=QWEN_SHA)
     return {"schema":"plenum-future-noaa-qwen-v1","model":model,
             "model_revision":revision,"protocol_commit":PROTOCOL_COMMIT,
             "protocol_sha256":digest(p),"target_days":list(TEST_DAYS),
+            "observation_source_product":NOAA_SOURCE_PRODUCT,
+            "observation_source_sampling":NOAA_SOURCE_SAMPLING,
+            "source_amendment":NOAA_SOURCE_AMENDMENT,
             "stations":rows,"model_calls":len(rows),
             "future_observations_seen":False,"auto_model_promotion":False}
 
@@ -320,6 +327,9 @@ def critique(report,generate,fetcher=fetch_public,now=None,
     return {"schema":"plenum-future-noaa-critic-v1",
             "original_sha256":digest(report),"critic_model":model,
             "critic_revision":revision,"stations":entries,
+            "observation_source_product":NOAA_SOURCE_PRODUCT,
+            "observation_source_sampling":NOAA_SOURCE_SAMPLING,
+            "source_amendment":NOAA_SOURCE_AMENDMENT,
             "model_calls":len(entries),"future_observations_seen":False,
             "auto_model_promotion":False}
 
@@ -332,7 +342,10 @@ def verify_critic(report,criticism,fetcher):
             or criticism.get("critic_revision")!=CRITIC_SHA
             or criticism.get("original_sha256")!=digest(report)
             or criticism.get("model_calls")!=len(STATION_IDS)
-            or criticism.get("future_observations_seen") is not False):
+            or criticism.get("future_observations_seen") is not False
+            or criticism.get("observation_source_product")!=NOAA_SOURCE_PRODUCT
+            or criticism.get("observation_source_sampling")!=NOAA_SOURCE_SAMPLING
+            or criticism.get("source_amendment")!=NOAA_SOURCE_AMENDMENT):
         raise ValueError("Unverified independent model criticism")
     critics=criticism.get("stations")
     if not isinstance(critics,list) or [r.get("station") for r in critics]!=list(STATION_IDS):
