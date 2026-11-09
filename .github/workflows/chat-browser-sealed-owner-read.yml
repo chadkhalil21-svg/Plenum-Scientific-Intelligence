@@ -15,6 +15,7 @@ jobs:
       github.event.issue.title == 'Computer Browser: one encrypted approved page read' &&
       (
         github.event.issue.body == 'READ_ONE_OWNER_APPROVED_ENCRYPTED_PAGE:2026-11-09' ||
+        github.event.issue.body == 'POST_ONE_OWNER_APPROVED_FORM:2026-11-09' ||
         startsWith(github.event.issue.body, 'FOLLOW_SEALED_LINK:')
       )
     environment: computer-browser-production
@@ -44,10 +45,13 @@ jobs:
           target=os.environ['AUDIENCE']
           command=os.environ.get('STEP_ACTION','')
           navigation=None
-          if command!='READ_ONE_OWNER_APPROVED_ENCRYPTED_PAGE:2026-11-09':
+          exact_form_post=False
+          if command=='POST_ONE_OWNER_APPROVED_FORM:2026-11-09':
+              exact_form_post=True
+          elif command!='READ_ONE_OWNER_APPROVED_ENCRYPTED_PAGE:2026-11-09':
               match=re.fullmatch(r'FOLLOW_SEALED_LINK:([0-9a-f]{32}):([1-6])',command)
               if match is None:
-                  print('BLOCKED: Invalid owner-private navigation command.')
+                  print('BLOCKED: Invalid exact owner-private command.')
                   raise SystemExit(1)
               navigation=match.group(1)+':'+match.group(2)
           class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -66,6 +70,8 @@ jobs:
                        'Content-Type':'application/octet-stream'}
               if navigation is not None:
                   headers['X-Plenum-Navigation']=navigation
+              if exact_form_post:
+                  headers['X-Plenum-Action']='exact-form-post-v1'
               req=urllib.request.Request(target,data=b'',method='POST',
                   headers=headers)
               with opener.open(req,timeout=145) as reply:
