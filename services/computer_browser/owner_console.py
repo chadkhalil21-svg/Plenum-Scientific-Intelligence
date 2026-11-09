@@ -97,7 +97,7 @@ verified network execution gate is enabled.</small>"""
                 else "") + (
                 """<h2>Authenticated website actions · Write Approval</h2>
 <p><a href="/owner/chat-exact-form">Review and approve one signed-in form submission</a></p>
-<p><a href="/owner/chat-exact-form-revoke">Cancel an unused approved form action</a></p>
+<p><small>The Write Approval page includes a control to cancel a pending form approval.</small></p>
 <small>A website must have an existing authorized saved login. Review the
 exact form before approval. One native HTML form submission is supported;
 payments, deletions, permission changes and unrestricted writes are not.</small>"""
