@@ -1,5 +1,12 @@
 # Project working instructions
 
+## Founder efficiency correction: inherit upstream scientific validation, avoid redundant tests (November 8, 2026)
+
+When a mature scientific engine has already been published, peer-reviewed, implemented and tested by its maintainers, **adopt its tested algorithms and their original published/archived results as the default evidence**. Do not routinely reproduce upstream scientific validation or rerun the upstream numerical test suite simply because Plenum adds a dependency. Reuse an official supported release, pin the dependency, cite the origin/license and original validated conditions and data. Perform at most the smallest *target-environment installation/import/interface check when first needed*; use existing CI checks rather than creating repeated scientific regression workflows.
+
+New domain validation is appropriate **only for a specific new claim or actual risk**: changed upstream implementation, custom adapter/input conversion, new physical counterpart, new species/conditions, model calibration, novel biology, uncertainty-sensitive decisions or asserted predictive transfer. Choose an exact purpose and least expensive necessary evidence. Existing LINGRA ryegrass tests are evidence for those historical ryegrass scenarios, not automatic validation for Florida bahiagrass or Plenum Terra. Do not label "optional dependency declared" as "package installed", "working simulation", or "validated biological digital twin". This policy supersedes any earlier checklist demanding Plenum rerun upstream models without a demonstrated integration or research need.
+
+
 ## Mandatory cross-conversation optimum-reuse checkpoint (2026-11-08)
 
 At the beginning of **every Plenum Prometheus / Scientific Intelligence / Computer Browser development conversation or resumed task**, consult the *live* `docs/LEDGER.md` top directive, `docs/CONTINUITY_AND_REUSE.md`, the relevant domain ledger, `research-memory/state/AGI_PROGRAM.json` on `research-memory`, and existing code/PRs/runs **before** advising or engineering. Do not restart completed setup or confuse historical entries with current code. This is a required retrieval habit, not a claim of automatic ChatGPT memory synchronization.
