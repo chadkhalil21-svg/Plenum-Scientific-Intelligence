@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-09T04:12:55.683Z",
+  "last_reviewed_utc": "2026-11-09T04:37:50.374Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -675,7 +675,7 @@
   "next_actions": [
     {
       "priority": 1,
-      "action": "First real AGI capability gap: use existing Inspect AI and Qwen baseline on ONE unfamiliar, independently scored original SCIENCE or engineering agent task from original SciCode / FutureHouse Aviary / Inspect CORE-Bench, rather than building new evaluator or generic agent infrastructure. Compare full tool-using solution to locked no-tool baseline under explicit cost/output limits and archive original hidden/outcome failures. Confirm current Inspect runner dependency integrity (historical `acp.helpers` isolated job failure is not a PCSE failure) before any model inference; only then compare a better already published checkpoint if available under a capped budget. One original task does not establish AGI; increase breadth after a real successful gate."
+      "action": "Original SciCode competence gate already released in existing Inspect science workflow, main run #42562773900, one external science-coding task with original scorer, pinned Qwen3-0.6B CPU model and no paid API. Inspect/ACP incompatibility has been FIXED and real original Inspect framework smoke passed in #42562360943/#42562452996. Check exact workflow job / scorer / native log and archive its result or actual blocker. Do not reimplement SciCode, do not run its upstream validation tests, do not rerun original to cherry-pick outcomes; compare future tool-using agent performance only after evidence and within budget."
     },
     {
       "priority": 2,
@@ -1078,6 +1078,10 @@
     {
       "decision": "2026-11-08 full-spectrum AGI/ASI audit: capability-first original upstream software, use published validation, stop breadth-driven infrastructure",
       "reason": "Founder required exhaustive cross-discipline examination beyond digital twins and simulations, including science tests, synthetic environments, agent evaluations, control, causal inference, experimental design, CAD, quantum and biological/plant science, plus a realistic AGI/ASI roadmap. Main PR #262 merged a source-linked 29k-character docs/AGI_ASI_CAPABILITY_ATLAS.md and expanded the existing protocols/reuse_first_registry.json to 61 entries; additions are reference candidates only, not installed or run. Audit observed 103 GitHub Actions workflows, 89 src/plenum_ai Python modules, 71 docs and 33 service files: broad infrastructure, not AGI. Continue reusing Qwen, LangGraph, Inspect, Playwright MCP, verified scientific solvers and NOAA historical shadow; PCSE is optional declared, not installed; Meta V-JEPA 2.1 and V-JEPA 2-AC are upstream pretrained reference candidates, neither evaluated at Plenum. Inherit upstream published scientific validation; perform one cheap compatibility check at first need; independent new tests are for NEW original scientific claims or changed integration. Prioritize one real unfamiliar externally scored agent task, strong baseline and real costs, followed by prospective physical-science observation and action/video grounded transfer where rights/compute allow. No new runtime model/package, GPU, deployment, owner permissions or spending. Avoid AGI progress percentages."
+    },
+    {
+      "decision": "Recover existing Inspect runner compatibility with upstream ACP 0.12.1; reuse original Inspect Evals SciCode scorer for one real Qwen research-coding attempt",
+      "reason": "Main PR #263 merged only the compatible agent-client-protocol==0.12.1 into existing inspect-ai 0.3.287 optional dependency. Root cause real failed Inspect smoke at #42558959687 installed incompatible ACP 1.0.0 whose `acp.helpers` was absent. Original smoke #42562360943 and main #42562452996 passed after pin. Existing inspect-evals==0.27.0 already has unmodified official SciCode scientific coding scorer/Docker sandbox, so main PR #264 added ONE opt-in job to existing workflow, not a custom evaluator, with immutable Qwen3-0.6B, exactly one original problem, original independent grader, no paid model APIs, 24min resource cap. Main run #42562773900 started; at this checkpoint no original scored outcome was verified. Preserve errors/failures rather than invent scores or re-run upstream tests. See docs/LEDGER.md front page."
     }
   ],
   "operating_rules": [
