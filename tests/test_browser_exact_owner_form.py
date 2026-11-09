@@ -146,6 +146,33 @@ class ExactFormApprovalTests(unittest.TestCase):
         with patch.dict(os.environ,{forms.FLAG:"false"}), self.assertRaises(PermissionError):
             forms.require_enabled()
 
+
+    def test_broader_checkbox_and_multi_control_plan_has_strict_refusals(self):
+        steps = [
+            {"op":"fill","selector":"textarea[name=message]","value":"Reviewed text"},
+            {"op":"select","selector":"select[name=category]","value":"general"},
+            {"op":"check","selector":"input[name=contact_ok]"},
+            {"op":"uncheck","selector":"input[name=notify]"},
+            OPS[-1],
+        ]
+        accepted = forms.validate_plan(**self.plan(operations=steps))
+        self.assertEqual([x.operation for x in accepted.steps],
+                         ["fill", "select", "check", "uncheck", "click"])
+        invalid = [
+            [{"op":"check","selector":"input[name=password]"}, OPS[-1]],
+            [{"op":"check","selector":"button[type=submit]"}, OPS[-1]],
+            [{"op":"check","selector":"input[name=contact_ok]","value":"yes"}, OPS[-1]],
+            [{"op":"uncheck","selector":"select[name=category]"}, OPS[-1]],
+            [{"op":"press","selector":"input[name=note]","value":"Enter"}, OPS[-1]],
+            [steps[0],steps[0],OPS[-1]],
+            [*steps[:4],*steps[:4],*steps[:4],OPS[-1]],
+        ]
+        for case in invalid:
+            with self.subTest(case=str(case)[:90]), self.assertRaises(
+                (PermissionError,ValueError)
+            ):
+                forms.validate_plan(**self.plan(operations=case))
+
     def test_owner_form_grant_is_encrypted_one_time_and_can_be_revoked(self):
         _, pub = keys()
         args=self.plan(recipient_public_key=pub)
@@ -303,6 +330,9 @@ class OfflineFormExecutorTest(unittest.TestCase):
             site="https://example.com"
             _, pub=keys()
             ops=[{"op":"fill","selector":"input[name=note]","value":"reviewed offline"},
+                 {"op":"select","selector":"select[name=category]","value":"general"},
+                 {"op":"check","selector":"input[name=contact_ok]"},
+                 {"op":"uncheck","selector":"input[name=notifications]"},
                  {"op":"click","selector":"button[type=submit]"}]
             with patch.dict(os.environ, {"BROWSER_ALLOWED_ORIGINS":site}):
                 compiled=forms.validate_plan(
@@ -318,9 +348,17 @@ class OfflineFormExecutorTest(unittest.TestCase):
                         if req.url==site+"/profile/edit":
                             await route.fulfill(status=200,content_type="text/html",
                                 body="<form method='post' action='/profile/save'>"
-                                     "<input name='note'><button type='submit'>Save</button></form>")
+                                     "<input name='note'>"
+                                     "<select name='category'><option value='general'>General</option>"
+                                     "<option value='other'>Other</option></select>"
+                                     "<input type='checkbox' name='contact_ok'>"
+                                     "<input type='checkbox' name='notifications' checked>"
+                                     "<button type='submit'>Save</button></form>")
                         elif req.url==site+"/profile/save" and req.method=="POST":
                             self.assertIn("note=reviewed",req.post_data)
+                            self.assertIn("category=general",req.post_data)
+                            self.assertIn("contact_ok=on",req.post_data)
+                            self.assertNotIn("notifications=on",req.post_data)
                             await route.fulfill(status=200,content_type="text/html",
                                                body="<h1>Saved synthetic data</h1>")
                         else:
@@ -336,6 +374,8 @@ class OfflineFormExecutorTest(unittest.TestCase):
                     self.assertEqual(
                         await form.locator("input[name=note]").input_value(),
                         "reviewed offline")
+                    self.assertTrue(await form.locator("input[name=contact_ok]").is_checked())
+                    self.assertFalse(await form.locator("input[name=notifications]").is_checked())
                     async with page.expect_response(
                         lambda rsp:rsp.url==site+"/profile/save" and
                         rsp.request.method=="POST") as pending:

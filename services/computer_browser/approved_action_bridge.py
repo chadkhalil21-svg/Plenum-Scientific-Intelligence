@@ -29,6 +29,8 @@ class ApprovedBrowserActionPlan:
 _STEP_FIELDS = {
     "fill": frozenset({"op", "selector", "value"}),
     "select": frozenset({"op", "selector", "value"}),
+    "check": frozenset({"op", "selector"}),
+    "uncheck": frozenset({"op", "selector"}),
     "click": frozenset({"op", "selector"}),
     "upload": frozenset({"op", "selector", "file_id"}),
 }

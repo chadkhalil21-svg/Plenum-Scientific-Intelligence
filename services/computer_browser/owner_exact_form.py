@@ -29,7 +29,7 @@ APPROVAL_BLOB = "browser-chat-read/v4/exact-owner-form-post-once.sealed"
 SCHEMA = "plenum-exact-owner-form-post-v1"
 AAD = b"plenum-exact-owner-native-form-post-v1"
 TTL = 600
-MAX_OPERATIONS = 5
+MAX_OPERATIONS = 12
 _PATH = re.compile(r"/[A-Za-z0-9/_.-]{0,219}")
 _SELECTOR = re.compile(
     r"""(?:\#[A-Za-z][A-Za-z0-9_-]{0,80}|"""
@@ -89,10 +89,11 @@ def validate_plan(*, site, page_path, post_path, form_selector,
             raise PermissionError("Invalid private form plan JSON") from exc
     if (not isinstance(operations, list)
             or not 2 <= len(operations) <= MAX_OPERATIONS):
-        raise PermissionError("Only 1-4 form fields plus one submit allowed")
+        raise PermissionError("Only 1-11 reviewed fields plus one submit allowed")
     if (not isinstance(operations[-1], dict)
             or operations[-1].get("op") != "click"):
         raise PermissionError("One exact final submit click is required")
+    seen_fields = set()
     for idx, step in enumerate(operations):
         if not isinstance(step, dict):
             raise PermissionError("Invalid form step")
@@ -102,16 +103,27 @@ def validate_plan(*, site, page_path, post_path, form_selector,
                 or _SENSITIVE.search(selector)):
             raise PermissionError("Unsafe or non-CSS form field selector")
         if idx < len(operations) - 1:
-            if selector.startswith("#"):
-                raise PermissionError("Form fields must identify their input tag")
-            if (op == "fill" and not selector.startswith(("input[", "textarea["))
-                    or op == "select" and not selector.startswith("select[")):
-                raise PermissionError("Field selector does not match operation")
-            if (op not in {"fill", "select"}
-                    or set(step) != {"op", "selector", "value"}
-                    or not isinstance(step["value"], str)
-                    or len(step["value"]) > 500):
-                raise PermissionError("Only exact non-sensitive text/select fields")
+            if selector.startswith("#") or selector in seen_fields:
+                raise PermissionError("Form fields must have unique, typed selectors")
+            seen_fields.add(selector)
+            if op == "fill":
+                if (not selector.startswith(("input[", "textarea["))
+                        or set(step) != {"op", "selector", "value"}
+                        or not isinstance(step["value"], str)
+                        or len(step["value"]) > 500):
+                    raise PermissionError("Only reviewed text input fields")
+            elif op == "select":
+                if (not selector.startswith("select[")
+                        or set(step) != {"op", "selector", "value"}
+                        or not isinstance(step["value"], str)
+                        or len(step["value"]) > 500):
+                    raise PermissionError("Only reviewed select controls")
+            elif op in {"check", "uncheck"}:
+                if (not selector.startswith("input[")
+                        or set(step) != {"op", "selector"}):
+                    raise PermissionError("Only reviewed checkbox controls")
+            else:
+                raise PermissionError("Unsupported native form field operation")
         elif set(step) != {"op", "selector"}:
             raise PermissionError("Unexpected submit action fields")
     compiled = compile_exact_steps(
@@ -289,9 +301,15 @@ async def submit_native_post(*, record):
                             raise PermissionError("Private form field is not unique and visible")
                         if step.selector.startswith("input["):
                             field_type = (await field.get_attribute("type") or "text").lower()
-                            if field_type not in {"text", "search", "email",
-                                                  "tel", "url", "number"}:
-                                raise PermissionError("Protected or non-text field")
+                            if step.operation == "fill":
+                                if field_type not in {"text", "search", "email",
+                                                      "tel", "url", "number"}:
+                                    raise PermissionError("Protected or non-text field")
+                            elif step.operation in {"check", "uncheck"}:
+                                if field_type != "checkbox":
+                                    raise PermissionError("Only visible checkboxes allowed")
+                            else:
+                                raise PermissionError("Incompatible input operation")
                     # Original step executor: a scoped form locator prevents
                     # escaping to account-level controls outside this form.
                     await execute_steps_on_page(

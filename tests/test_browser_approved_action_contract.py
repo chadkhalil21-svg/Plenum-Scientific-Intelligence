@@ -81,10 +81,16 @@ class ExactOwnerActionTests(unittest.TestCase):
         self.assertEqual(len(self.store.used), 0)
         self.assertEqual(len(self._authorize(self.plan, token).steps), 4)
 
-    def test_existing_scorer_allows_future_ops_but_adapter_refuses(self):
+    def test_bounded_checkbox_steps_compile_but_future_unsafe_ops_are_refused(self):
+        for op in ("check", "uncheck"):
+            with self.subTest(approved=op):
+                plan = {"origin": self.SITE,
+                        "operations": [{"op": op, "selector": "input[name=consent]"}]}
+                compiled = compile_exact_steps(plan, allowed_origins={self.SITE})
+                self.assertEqual(compiled.steps[0].operation, op)
         for op in ("navigate", "download", "delete", "submit",
-                   "check", "uncheck", "press", "snapshot", "javascript"):
-            with self.subTest(op=op):
+                   "press", "snapshot", "javascript"):
+            with self.subTest(refused=op):
                 plan = {"origin": self.SITE,
                         "operations": [{"op": op, "selector": "#button"}]}
                 with self.assertRaises(UnsupportedOwnerAction):
