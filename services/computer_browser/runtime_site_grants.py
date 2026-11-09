@@ -189,9 +189,20 @@ def mount_runtime_site_grants(app):
         for row in rows:
             origin = row["origin"]
             revoke = escape(_owner_form_token(owner_id, origin, "site_revoke"), quote=True)
+            preview_token = escape(_owner_form_token(owner_id, origin, "site_preview"), quote=True)
+            preview_enabled = os.environ.get("PLENUM_PINNED_PUBLIC_PREVIEW_ENABLED") == "true"
+            preview_form = (
+                "<form method='post' action='/owner/sites/preview'>"
+                "<input type='hidden' name='site' value='" + escape(origin, quote=True) + "'>"
+                "<input type='hidden' name='csrf_token' value='" + preview_token + "'>"
+                "<label>Relative page to inspect (public HTML only)"
+                "<input name='path' maxlength='800' value='/' required></label>"
+                "<button type='submit'>Read public page securely</button></form>"
+                if preview_enabled else "")
             parts.append(
                 "<article><strong>" + escape(origin) + "</strong>"
-                "<p>Registration active. Browser execution remains separately gated.</p>"
+                "<p>Registration active. Signed-in browsing and website changes "
+                "remain separately gated.</p>" + preview_form +
                 "<form method='post' action='/owner/sites/revoke'>"
                 "<input type='hidden' name='site' value='" + escape(origin, quote=True) + "'>"
                 "<input type='hidden' name='csrf_token' value='" + revoke + "'>"
@@ -199,6 +210,42 @@ def mount_runtime_site_grants(app):
                 "<button type='submit'>Revoke registration</button></form></article>"
             )
         return _page("Owner-authorized website registry", "".join(parts))
+
+    @app.post("/owner/sites/preview", response_class=HTMLResponse)
+    async def preview_registered_site(
+        request: Request, site: str = Form(), path: str = Form(),
+        csrf_token: str = Form(default=""),
+        _owner=Depends(require_verified_owner),
+    ):
+        """Only owner-approved, read-only public HTML, never site credentials."""
+        if os.environ.get("PLENUM_PINNED_PUBLIC_PREVIEW_ENABLED") != "true":
+            raise HTTPException(status_code=404, detail="Public website preview unavailable")
+        owner_id = _owner["private_owner_id"]
+        site = normalize_origin(site)
+        _verify_owner_form(request, owner_id, site, "site_preview", csrf_token)
+        try:
+            from .owner_saved_session import _approved_read_target
+            _approved_read_target(site, path)
+            from .pinned_public_preview import read_registered_public
+            import asyncio
+            result = await asyncio.wait_for(
+                read_registered_public(owner=owner_id, site=site, path=path),
+                timeout=52)
+        except PermissionError as exc:
+            raise HTTPException(status_code=403,
+                                detail="Website read not owner-approved") from exc
+        except Exception as exc:
+            raise HTTPException(status_code=502,
+                                detail="Approved public page read failed") from exc
+        return _page(
+            "Public registered website preview",
+            "<article><strong>" + escape(result["title"]) + "</strong>\\n"
+            + escape(result["final_url"]) + "\\n\\n"
+            + escape(result["body"]) + "</article>"
+            "<small>Fresh Chromium, no saved credentials, scripts, files or "
+            "website changes. An actual signed-in website session and interactive "
+            "task actions require separate owner approval and execution gates.</small>"
+            "<p><a href='/owner/sites'>Manage registered websites</a></p>")
 
     @app.post("/owner/sites/authorize", response_class=HTMLResponse)
     async def authorize_site(request: Request, site: str = Form(),
