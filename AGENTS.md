@@ -1,5 +1,16 @@
 # Project working instructions
 
+## Mandatory cross-conversation optimum-reuse checkpoint (2026-11-08)
+
+At the beginning of **every Plenum Prometheus / Scientific Intelligence / Computer Browser development conversation or resumed task**, consult the *live* `docs/LEDGER.md` top directive, `docs/CONTINUITY_AND_REUSE.md`, the relevant domain ledger, `research-memory/state/AGI_PROGRAM.json` on `research-memory`, and existing code/PRs/runs **before** advising or engineering. Do not restart completed setup or confuse historical entries with current code. This is a required retrieval habit, not a claim of automatic ChatGPT memory synchronization.
+
+**Optimization order:** (1) reuse verified present Plenum component, (2) adopt an official open-source upstream/released pretrained checkpoint or licensed API, (3) write the smallest safe adapter, (4) build genuinely absent capabilities only after an independently measured necessity. Compare quality, reliability, licensing, security, compute, monetary cost, maintenance and time-to-capability; use one established implementation per role and reject duplicative tools. Every next step must specify an existing baseline, one test and a falsifiable success metric. Preserve AGI/ASI research time.
+
+**Model roles are not interchangeable:** Qwen (Alibaba) is Plenum's presently tested language-model baseline; Llama (Meta) is an alternate language model to evaluate on identical blinded tasks; V-JEPA 2.1 (Meta) is a proposed video/latent world-model research candidate, not a Llama/chat model. No automatic weight replacement or assumption that any choice is globally optimal. Keep separate measured evidence for each.
+
+**Browser finish line:** Official Playwright/Playwright MCP, public chat->GitHub browsing, owner portal and encrypted demo session restore already exist. Checked-in GitHub OIDC workflow and verifier audiences currently match on `/internal/chat-demo-read`; old mismatch notes are outdated. What remains unproven is a **live single-use chat-initiated owner-authorized protected demo read**, secure private message transport and then permitted real-site read/write/files, not another browser implementation. Compare deployed revision, owner pairing, runtime feature flag, signature/claims/replay, private output handling and end-to-end proof before doing any additional integration. Owner authorization and least-privilege safety gates must remain enforced.
+
+
 ## Permanent founder operating doctrine: AGI/ASI capability first (2026-11-08)
 
 **This applies across the entire project, not only to browser development.**
