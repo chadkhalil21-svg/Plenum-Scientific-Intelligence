@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-09T06:25:42.635Z",
+  "last_reviewed_utc": "2026-11-09T06:31:04.982Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -950,6 +950,34 @@
       },
       "AGI_demonstrated": false,
       "notes": "A pre-issuance source correction, openly documented before Nov10; official NOAA source says product=hourly_height monthly verified, while water_level is preliminary/verified six-minute observations. Original model uses only actual UTC hourly sample points, no predictions or interpolation, and preserves no-future-data gates. The two source products are NOT numerically identical; older 2025 verified hourly experiments cannot be equated. Actual live endpoint response/availability must still be verified by scheduled Nov10 model issuance; mock tests only check our adapter contract. The original independent audit may fail if provisional data revise after freeze; do not silently refit. No upstream software revalidation."
+    },
+    {
+      "id": "usgs-nov2026-preissuance-datetime-interval-source-correction-20261109",
+      "status": "source_documented_and_adapter_contract_tests_verified_not_real_source_or_science_yet",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/277",
+      "commit": "92bb8402539334522a5b010bf3c80e3c701219e0",
+      "original_unchanged_protocol_commit": "5599f4b8037e6d2a0dca78d0e3a03a034eb37c44",
+      "primary_source": "https://api.waterdata.usgs.gov/docs/ogcapi/",
+      "original_upstream_migration": "https://api.waterdata.usgs.gov/docs/ogcapi/migration/",
+      "documentation": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/docs/USGS_2026_PROSPECTIVE_SOURCE_CLARIFICATION.md",
+      "ci": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42573332837",
+      "result": {
+        "original_bug": "Incorrect OGC date-range query key time=start/end, while USGS specifies datetime=start/end; time is returned observation property.",
+        "corrected_query_key": "datetime",
+        "returned_observation_property_unchanged": "time",
+        "original_source_and_sites_unchanged": true,
+        "original_precommitted_models_and_forecast_method_unchanged": true,
+        "protocol_json_byte_identical": true,
+        "future_observations_accessed": false,
+        "live_USGS_source_verified": false,
+        "scientific_forecasts_issued": false,
+        "CI_unit_tests": 633,
+        "CI_status": "success",
+        "paid_API_spending": 0,
+        "AGI_demonstrated": false
+      },
+      "AGI_demonstrated": false,
+      "notes": "Targeted source-contract error discovered before Nov11 first/backup USGS issuance; existing mocked test formerly asserted wrong query and was corrected, not an upstream software validation. Real source response and model inference remain unverified until future issuance. Preserve immutable original Oct1-Nov4 development and Nov12-13 future target gates, Nov18 later auditor."
     }
   ],
   "next_actions": [
@@ -959,7 +987,7 @@
     },
     {
       "priority": 2,
-      "action": "TIME CRITICAL real scientific evidence: NOAA official Data API documentation says verified hourly_height may not be published at Nov16 audit. Main merged PR #276 (commit 69bffbbd64ea19a2291c013ebba1dc5ed00a5832) uses observed six-minute water_level values sampled at exact UTC hh:00 with q=p/v and valid f QC; the pre-issuance amendment in docs/NOAA_2026_PROSPECTIVE_SOURCE_CLARIFICATION.md is committed and sealed in both frozen Qwen/SmolLM2 proposal JSON. Main source adapter tested on mocked NOAA JSON, CI #42572751612 green 633 tests, but NO live NOAA source data have been checked yet. Original Nov7 forecast protocol/score rules/model revisions unchanged. Verify ACTUAL original NOAA research-memory frozen-2026-11.json after Nov10 11:17 UTC issue/20:17 fallback and BEFORE Nov12 UTC (must include amendment ID/product and real observed development digests), separately USGS after Nov11 issuance. Do not fetch future Nov12-13 target measurements before original independent audits Nov16 NOAA/Nov18 USGS, no post-hoc source/model alterations or fictional outcomes. If NOAA preliminary development data are revised after freeze, preserve source-hash integrity failure, don't silently refit. Next real AGI milestone remains unfamiliar real multi-step tool reasoning, not further integration work."
+      "action": "NEXT IRREVERSIBLE ORIGINAL SCIENCE EVIDENCE: Two source-backed pre-issuance corrections are merged, no forecast issued yet: NOAA PR #276 now original NOAA water_level six-minute measurements sampled at exact UTC top-of-hour with q/f QA and publicly dated source clarification, USGS PR #277 now official OGC datetime=START/END query instead of erroneous time=START/END (returned observation property remains time). Both passed 633 existing CI tests on mocked contracts, but actual LIVE NOAA/USGS responses remain UNVERIFIED. Check NOAA source and research-memory/evidence/prospective-noaa/frozen-2026-11.json after original Nov10 11:17 UTC issue (backup 20:17 UTC) and USGS research-memory/evidence/prospective-usgs-hydrology/frozen-2026-11.json after Nov11 09:20 UTC (backup 18:17 UTC), both must be COMMITTED before Nov12 00:00 UTC. Original source/model/critic forecast methods, stations, dates, selection rules and model revisions unchanged; before-target amendments recorded in docs/NOAA_2026_PROSPECTIVE_SOURCE_CLARIFICATION.md and docs/USGS_2026_PROSPECTIVE_SOURCE_CLARIFICATION.md. Never query test dates before original independent audits Nov16 NOAA and Nov18 USGS; preserve failures, no post-hoc source/model fitting. No AGI claim from adapter CI."
     },
     {
       "priority": 3,
@@ -1414,6 +1442,10 @@
     {
       "decision": "Prioritize upcoming authentic prospective science: prevent Nov16 NOAA verified-hourly source unavailability with publicly preregistered observed 6-minute source amendment",
       "reason": "Live repo review before Nov10 forecast found real NOAA source error: originally the prospective adapter used product=hourly_height, but NOAA official Data API says this is verified only monthly and therefore Nov12-13 heights may be unavailable by fixed Nov16 independent audit. Merged PR #276 changes ONLY public-source adapter to product=water_level six-minute observed with q and f QA, exact UTC minute 00 sampling, fixed datum/stations/date windows, 1.2MB bound, and immutable amendment source ID in original Qwen/SmolLM2 proposal manifests. Original precommitted Nov7 protocol untouched, no target data retrieved or method/model/baseline re-selection. Existing CI run #42572751612 passed 633 tests including new mocked adapter and source sealing; source availability on live scheduled Nov10 remains unverified. This is a real-science integrity correction, not new model intelligence. Do not rerun established upstream NOAA library verification."
+    },
+    {
+      "decision": "Preserve authentic Nov 11 USGS prospective science by adopting official OGC datetime interval filter, not observation time key",
+      "reason": "Official USGS OGC daily docs specify URL datetime=START/END for time intervals but actual returned FeatureCollection property is named time. Original Plenum source used time=START/END, which can produce incomplete/no real development data; mocked tests repeated error. Main PR #277 merged simple request-key change to datetime, preserved parsing returned .time, all original source sites, fixed protocol, target dates, models and independent scoring. CI #42573332837 passed 633 tests. Public pre-issuance source clarification saved in docs/USGS_2026_PROSPECTIVE_SOURCE_CLARIFICATION.md. No live river data accessed or outcome known, no new software duplicated. Complementary source correction NOAA main PR #276 pre-issue preliminary water_level product remains recorded."
     }
   ],
   "operating_rules": [
