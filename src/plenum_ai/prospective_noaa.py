@@ -87,6 +87,27 @@ def protocol():
     return p
 
 
+def usable_six_minute_observation(row):
+    """Apply NOAA's original p/v quality flags before exact-hour sampling.
+
+    NOAA water_level f fields are O,F,R,L for preliminary and I,F,R,T for
+    verified readings. Reject flagged flat/rate/limit anomalies in either
+    category and inferred verified heights; preliminary O is a sample count,
+    not itself an invalid observation. Unparseable flags are NOT assumed good.
+    """
+    if not isinstance(row,dict) or row.get("q") not in ("p","v"):
+        return False
+    flags=row.get("f")
+    if not isinstance(flags,str):
+        return False
+    fields=flags.split(",")
+    if len(fields)!=4 or not all(x.isdigit() for x in fields):
+        return False
+    if any(x!="0" for x in fields[1:]):
+        return False
+    return row["q"]!="v" or fields[0]=="0"
+
+
 def fetch_public(station, reveal=False, opener=urlopen):
     if station not in STATION_IDS or station not in STATIONS:
         raise ValueError("Unapproved station")
@@ -109,8 +130,7 @@ def fetch_public(station, reveal=False, opener=urlopen):
     # This samples observed top-of-hour heights, NOT the verified hourly_height
     # averaged product. Both frozen development and later targets use this
     # single predeclared extraction and the original observed-data units.
-    accepted=[row for row in data["data"] if isinstance(row,dict) and
-              row.get("q") in ("p","v")]
+    accepted=[row for row in data["data"] if usable_six_minute_observation(row)]
     hourly=parse_observations(accepted)
     if not hourly:
         raise ValueError("No flagged real NOAA top-of-hour observations in six-minute source")
