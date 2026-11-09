@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-09T05:07:00Z",
+  "last_reviewed_utc": "2026-11-09T05:08:12.404Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -764,12 +764,41 @@
       },
       "AGI_demonstrated": false,
       "notes": "Original public GPQA questions, too few for statistical model ranking; differing quantization/model family and prompts confound. First Qwen3.5 trial #42564670475 had upstream SDK mismatch at Inspect provider after model load, fixed by merged PR #270 (OpenAI SDK 3.4 and httpx2 pre-download check). Later main #42565079525 completed real original independent scores, exactly same source question IDs and original .eval SHA256 archived. The candidate failed all 3, so no upgrade justified. Upstream validated model itself is not being revalidated; this is Plenum's NEW inference/task-value comparison."
+    },
+    {
+      "id": "qwen35-4b-original-gpqa-three-negative-20261108",
+      "status": "verified_independent_new_candidate_negative",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42565079525",
+      "source_commit": "14ecf61521408889a5cf2e726b6d760fe55810fa",
+      "artifact_id": 13651326628,
+      "artifact_digest_sha256": "a3abff5ec135759c8ac0fb1e4f05d0a623bc37bade9649737da6ebbe8fa9668b",
+      "permanent_evidence": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/evidence/qwen35/2026-11-09-original-gpqa-three-question-comparison.json",
+      "result": {
+        "candidate": "Qwen3.5-4B Q4_K_M Unsloth GGUF",
+        "quant_sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+        "quant_revision": "e87f176479d0855a907a41277aca2f8ee7a09523",
+        "original_llama_cpp_release": "b11146",
+        "original_inspect_eval": "inspect_evals/gpqa_diamond==0.27.0",
+        "same_question_ids_as_frozen_qwen3_06b": true,
+        "candidate_correct": 0,
+        "candidate_attempted": 3,
+        "original_previous_qwen3_06b_correct": 1,
+        "original_previous_qwen3_06b_attempted": 3,
+        "biology_correct": false,
+        "chemistry_correct": false,
+        "physics_correct": false,
+        "prior_baseline_reexecuted": false,
+        "paid_model_api_calls": 0,
+        "automatic_promotion": false
+      },
+      "AGI_demonstrated": false,
+      "notes": "GitHub action #42565079525 successfully ran original upstream scorer on exact three prior GPQA items for new official quantized 4B candidate. All three candidate wrong; previously fixed 0.6B had 1/3, no rerun of 0.6B. 4B source checksum, original llama.cpp b11146 CPU, local-only model serving verified. Initial run #42564670475 model download/server succeeded but was ungraded because Inspect 0.3.287 requires openai>=3.4 HTTPX2; PR #269 pinned OpenAI3.4 and preflighted provider before download. Tiny 3-public-question sample, quantization and training/architecture differences preclude general superiority inference. Candidate NOT promoted. Store native source artifact. Genuine multi-step tool use under stronger baseline remains unresolved."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Completed new candidate external scorer gate: Qwen3.5-4B Q4_K_M official llama.cpp and original Inspect GPQA on same three already frozen prior 0.6B IDs succeeded on main #42565079525. Measured 4B **0/3** versus prior frozen 0.6B **1/3**, chemistry regressed. Exact public original score+hashes in main evidence/inspect-gpqa/2026-11-09-qwen35-4b-paired-original-three-sciences.json. **NO promotion**. Do not repeat these three examples, increase agent quantity, or modify grader. Three historical questions are insufficient for ranking. Choose next DIFFERENT unfamiliar original externally graded multistep code/science problem suited to budget, compare higher-quality model and verified tool-use versus reliable baseline, or await precommitted real-world NOAA observations. Only actual new task success advances AGI evidence."
+      "action": "Model-strength experiment COMPLETED: original Qwen3.5-4B Q4_K_M source at e87f176479d0855a907a41277aca2f8ee7a09523 scored 0/3 on exact original GPQA biology, chemistry, physics held public questions using original Inspect independent scorer in main run #42565079525, no baseline rerun. Existing original Qwen3-0.6B 1/3. Live original logs SHA256 and permanent evidence in main evidence/qwen35/2026-11-09-original-gpqa-three-question-comparison.json. NO promotion or general ranking warranted by three examples. The initial source provider problem is fixed via PR #269, Inspect OpenAI SDK v3.4.0 httpx2 and preflight before weight download. Existing original Qwen3-1.7B tool-using ReAct coding regressed 1/3 vs one-shot 2/3 (run #42350599820). Next highest leverage: analyze preserved HumanEval/2 agent regression and HumanEval/1 failure WITHOUT rerunning upstream science or model, then select a robust pretrained reasoning model or more economical API only for a genuinely new bounded real scientific/engineering task with independent grader; compare reliability/cost, not just parameter size."
     },
     {
       "priority": 2,
@@ -1196,6 +1225,10 @@
     {
       "decision": "Decline Qwen3.5-4B promotion based on real original GPQA 0/3 vs Qwen3-0.6B existing 1/3; favor new tool-using tasks over arbitrary model scale",
       "reason": "Real main original Inspect GPQA run #42565079525 succeeded after upstream OpenAI SDK 3.4 provider integration fix. New official llama.cpp-served Qwen3.5-4B Q4_K_M, exact model SHA and three original historical GPQA IDs, scored biology 0/1 chemistry 0/1 physics 0/1; prior frozen Qwen3-0.6B scored 0/1,1/1,0/1 (no old-model rerun). Native logs and original artifact #13651326628 sha256 archived, permanent main evidence/inspect-gpqa/2026-11-09-qwen35-4b-paired-original-three-sciences.json. This negative result rejects *promotion on current evidence*, not proves 4B inherently inferior. Next research needs stronger suited pretrained inference on different original unfamiliar tasks and real tool-use improvement, not new agents/evaluators or repeated same three cases."
+    },
+    {
+      "decision": "Treat Qwen3.5-4B original 0/3 GPQA as negative promotion evidence, not assume model size predicts intelligence",
+      "reason": "Official original Inspect Evals GPQA Diamond model trial #42565079525 PASSED software execution, after previous provider integration corrected with PR #269. Official llama.cpp b11146 CPU and Unsloth Qwen3.5-4B Q4_K_M SHA256 verified. Same three original expert domain cases, real candidate 0/3 (B/C/P all wrong), older Qwen3-0.6B frozen score 1/3 (Chemistry right). Store original full logs, hashes, and summary in main/evidence/qwen35/2026-11-09-original-gpqa-three-question-comparison.json. Do not upgrade or spend more simply for 4B model. 3 historical public questions are tiny and can be contaminated, and quantization/compute differ; no general model ranking. Existing ReAct tool 1/3 vs direct 2/3 indicates weak tool-feedback interpretation. Next meaningful path is retrospective analysis of ReAct mistakes from already preserved traces, and later one new independently scored task using genuinely stronger already-existing suitable model only if available cost/rights justify, not another agent framework."
     }
   ],
   "operating_rules": [
