@@ -164,11 +164,13 @@
       "role": "low_cost_synthetic_dynamics_holdout_baseline",
       "origin": "local:src/plenum_ai/world_model_probe.py",
       "dependencies": "existing optional science/ML extras: SciPy solve_ivp, NumPy, scikit-learn Ridge",
-      "adoption": "source_only_proposed_in_this_PR",
-      "status": "local_offline_evaluation_done_CI_and_merge_pending",
+      "adoption": "already_integrated_into_existing_scientific_lab",
+      "status": "actual_synthetic_heldout_probe_verified_in_GitHub_Actions_42551923254",
       "next_gate": "existing scientific-lab workflow independently checks action conditioning, holdout action sequences, shifted physics and negative claims",
       "default_execution": false,
-      "notes": "Not JEPA, not empirical validation, not a verified real-world digital twin."
+      "notes": "Actual SciPy/sklearn synthetic mass-spring action-conditioned holdout benchmark and altered-physics error check passed existing scientific CI. No V-JEPA, real calibrated twin, independent empirical physics or AGI.",
+      "verified_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42551923254",
+      "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/257"
     }
   ],
   "rules": {
