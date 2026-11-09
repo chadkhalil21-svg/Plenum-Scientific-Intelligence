@@ -178,7 +178,7 @@ def mount_owner_sealed_relay(app):
         if confirmation != "REVOKE":
             raise HTTPException(status_code=403, detail="Revocation must be explicit")
         try:
-            was_active = await asyncio.to_thread(revoke_session)
+            was_active = await asyncio.to_thread(revoke_session, owner=_owner["private_owner_id"])
         except Exception as exc:
             raise HTTPException(status_code=503,
                                 detail="Unable to verify private session revocation") from exc
