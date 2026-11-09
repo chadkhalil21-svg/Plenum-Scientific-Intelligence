@@ -1,5 +1,12 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## Latest verified browser state, 2026-11-08 evening
+
+**Read this before the historical chronological entries below.** The earlier `Updated:` line is a historical snapshot, not the current release status. Current verified components: ordinary chat -> GitHub -> restricted public Playwright navigation, including [arXiv Astrophysics #254](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/254); official [Playwright MCP public integration #213](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/213); encrypted owner login independent restore on the public demo (founder 8:09 PM live screenshot); optional Browser Use agent integrated but **model key not configured** [#214](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/214). **Not verified:** chat-initiated private-account browser actions, general Work/TinyFish parity, unattended multi-step private interactions.
+
+**Stop-work rule:** Do not duplicate Playwright, Playwright MCP, Browser Use, LangGraph or existing GitHub issue gateway. OAuth MCP [#248](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/248) and GitHub OIDC [#249](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/249)/[#252](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/252) are source-only, not private chat connections. Further [#253](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/253) was put in DRAFT for the founder's efficiency review after detecting mismatched OIDC audience paths, despite CI success. Do not activate or deploy it. The browser is a supporting Plenum tool; prioritize AGI/ASI capability, persistent project continuity and independent evaluations. Authoritative reuse policy: [CONTINUITY_AND_REUSE.md](CONTINUITY_AND_REUSE.md).
+
+
 Updated: 2026-11-08 (live public form proof and owner-login release pending)
 Owner: Founder, Plenum Industries
 Status: **PARTIAL / NOT WORK-OR-TINYFISH-EQUIVALENT**
