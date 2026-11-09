@@ -45,6 +45,13 @@ jobs:
           from pathlib import Path
           target=os.environ['AUDIENCE']
           outcome='blocked'
+          # Never forward a signed GitHub JWT through redirects or runner
+          # proxy environment, even if the fixed service is misconfigured.
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self,*args,**kwargs):
+                  return None
+          opener=urllib.request.build_opener(
+              NoRedirect(),urllib.request.ProxyHandler({}))
           try:
               id_url=os.environ['ACTIONS_ID_TOKEN_REQUEST_URL']
               auth=os.environ['ACTIONS_ID_TOKEN_REQUEST_TOKEN']
@@ -52,7 +59,7 @@ jobs:
                   id_url+'&audience='+urllib.parse.quote(target,safe=''),
                   headers={'Authorization':'Bearer '+auth},
                   method='GET')
-              with urllib.request.urlopen(req,timeout=10) as response:
+              with opener.open(req,timeout=10) as response:
                   identity=json.loads(response.read(15000))
               signed=identity.get('value','')
               if not isinstance(signed,str) or len(signed)<80:
@@ -61,7 +68,7 @@ jobs:
                   target,method='POST',data=b'',
                   headers={'Authorization':'Bearer '+signed,
                            'Content-Type':'application/octet-stream'})
-              with urllib.request.urlopen(request,timeout=65) as response:
+              with opener.open(request,timeout=65) as response:
                   if response.status!=200:
                       raise ValueError('Read-only browser unavailable')
                   body=json.loads(response.read(2200))
