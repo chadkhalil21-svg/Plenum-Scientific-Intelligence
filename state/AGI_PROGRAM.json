@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-09T04:37:50.374Z",
+  "last_reviewed_utc": "2026-11-09T04:42:04.505Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -675,7 +675,7 @@
   "next_actions": [
     {
       "priority": 1,
-      "action": "Original SciCode competence gate already released in existing Inspect science workflow, main run #42562773900, one external science-coding task with original scorer, pinned Qwen3-0.6B CPU model and no paid API. Inspect/ACP incompatibility has been FIXED and real original Inspect framework smoke passed in #42562360943/#42562452996. Check exact workflow job / scorer / native log and archive its result or actual blocker. Do not reimplement SciCode, do not run its upstream validation tests, do not rerun original to cherry-pick outcomes; compare future tool-using agent performance only after evidence and within budget."
+      "action": "Currently active model competence gate: original SciCode #42562773900 is BLOCKED by original Google Drive numerical test-data quota before any inference or scoring; no model score and do not rerun automatically. Instead original GPQA Diamond in existing Inspect Evals uses a different original source with checksum-verified public data, and single main #42563122617 is running for one Biology, one Chemistry, one Physics question using pinned Qwen3-0.6B on CPU. Inspect ACP incompatibility was fixed in #263. Review the native original scoring logs if present and archive exact results/failure; do not claim AGI from 3 public examples. If GPQA also encounters external blocker, stop duplicate tool work and return to existing verified scientific tasks."
     },
     {
       "priority": 2,
@@ -1082,6 +1082,10 @@
     {
       "decision": "Recover existing Inspect runner compatibility with upstream ACP 0.12.1; reuse original Inspect Evals SciCode scorer for one real Qwen research-coding attempt",
       "reason": "Main PR #263 merged only the compatible agent-client-protocol==0.12.1 into existing inspect-ai 0.3.287 optional dependency. Root cause real failed Inspect smoke at #42558959687 installed incompatible ACP 1.0.0 whose `acp.helpers` was absent. Original smoke #42562360943 and main #42562452996 passed after pin. Existing inspect-evals==0.27.0 already has unmodified official SciCode scientific coding scorer/Docker sandbox, so main PR #264 added ONE opt-in job to existing workflow, not a custom evaluator, with immutable Qwen3-0.6B, exactly one original problem, original independent grader, no paid model APIs, 24min resource cap. Main run #42562773900 started; at this checkpoint no original scored outcome was verified. Preserve errors/failures rather than invent scores or re-run upstream tests. See docs/LEDGER.md front page."
+    },
+    {
+      "decision": "Report original SciCode test-data quota failure as no score; activate existing Inspect GPQA three-science fallback without new benchmark implementation",
+      "reason": "Original external SciCode source required numeric test_data.h5 from Google Drive and the actual main run #42562773900 failed before any model inference or grading when Google returned 'Too many users have viewed or downloaded this file recently'. This is an upstream external data quota block, neither Qwen failure nor success, no synthetic replacement or repeated retries. Existing inspect-evals==0.27.0 also ships GPQA Diamond original independent scorer and sha256-verified public dataset; main PR #265 replaced the same one opt-in job in the existing Inspect science workflow with three original expert questions (Biology/Chemistry/Physics), fixed already approved Qwen3-0.6B CPU model, no paid API. Released in main run #42563122617; still pending original scored log when this decision was added. See main docs/LEDGER.md front record."
     }
   ],
   "operating_rules": [
