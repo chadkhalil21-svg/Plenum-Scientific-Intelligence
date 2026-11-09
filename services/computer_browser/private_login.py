@@ -69,10 +69,21 @@ def login_html(nonce):
     touch-action:manipulation;cursor:crosshair}
     #status,#field-status{white-space:pre-wrap}h1{font-size:23px}</style></head><body>
     <h1>Computer · Private Website Sign-in</h1>
-    <p>Open an approved website. Sign in here rather than sharing passwords
-    in ChatGPT. This browser runs only while the private session is connected.</p>
-    <label>Website <input id="url" value="https://the-internet.herokuapp.com/login"
-    maxlength="1200" autocomplete="off"></label>
+    <p>Open the actual website thou ownest or art authorized to use.
+    This owner-only Chromium canvas is the LIVE browser picture; it cannot
+    presently stream directly into an ordinary ChatGPT chat.</p>
+    <p>Sign in or create a website account personally, and use its own
+    <strong>Continue with Google</strong> button only when offered. Google may
+    block automatic or embedded sign-ins, so a supported external browser
+    or site-specific connection may be necessary. Use a password manager
+    to generate a distinct password for websites without Google sign-in.
+    Never share credentials or recovery codes in ChatGPT or GitHub.</p>
+    <p>After a successful website sign-in, choose
+    <strong>Save this website login</strong> to encrypt its site-specific
+    session for later approved Plenum tasks. Saved state can expire and
+    doth not bypass future MFA. A saved session is not an account password.</p>
+    <label>Website <input id="url" type="url" placeholder="https://website.example/login"
+    required maxlength="1200" autocomplete="off"></label>
     <button id="open">Open secure browser</button>
     <p id="status" role="status">Not connected</p>
     <canvas width="1024" height="720" id="display" tabindex="0" aria-label="Remote Chromium view: tap or click a field to select it"></canvas>
