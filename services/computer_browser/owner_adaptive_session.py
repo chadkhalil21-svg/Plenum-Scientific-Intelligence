@@ -18,6 +18,7 @@ import secrets
 import time
 
 CURSOR_BLOB = "browser-chat-read/v3/owner-adaptive-cursor.sealed"
+PENDING_SCHEMA = "plenum-adaptive-read-pending-v1"
 FLAG = "PLENUM_ADAPTIVE_OWNER_READ_ENABLED"
 MAX_FOLLOWS = 3
 TTL = 600
@@ -119,6 +120,83 @@ def _check_scope(record, now):
     return record
 
 
+
+def prepare_pending(consent, *, now=None):
+    """Create the revocable pending grant BEFORE its OIDC trigger is usable.
+
+    Both pending and active states inhabit the SAME private GCS object. The
+    owner revoke action deletes this object, and a later first page cannot
+    recreate it without matching the original compare-and-swap generation.
+    """
+    require_enabled()
+    from .sealed_chat_read import _validate_intent
+    from .owner_chat_pairing import _owner
+    t = int(time.time() if now is None else now)
+    if (not isinstance(consent, dict)
+            or consent.get("schema") != "plenum-sealed-owner-adaptive-consent-v1"
+            or type(consent.get("issued")) is not int
+            or type(consent.get("expires")) is not int
+            or not 0 < consent["expires"] - consent["issued"] <= TTL
+            or consent["expires"] <= t or consent["issued"] > t + 10):
+        raise PermissionError("Missing exact owner adaptive grant")
+    _validate_id(consent.get("adaptive_session_id"))
+    _owner(consent.get("owner"))
+    _validate_intent(site=consent.get("site"), path=consent.get("path"),
+                     recipient_public_key=consent.get("recipient_public_key"))
+    pending = {key: consent[key] for key in (
+        "owner", "site", "path", "recipient_public_key", "issued", "expires"
+    )}
+    pending["schema"] = PENDING_SCHEMA
+    pending["session_id"] = consent["adaptive_session_id"]
+    blob = _cursor_blob()
+    generation = 0
+    if blob.exists():
+        blob.reload()
+        generation = int(blob.generation)
+    blob.upload_from_string(
+        _cipher().encrypt(json.dumps(pending, separators=(",", ":")).encode()),
+        content_type="application/octet-stream",
+        if_generation_match=generation,
+    )
+    return True
+
+
+def require_pending(consent, *, now=None):
+    """Prove revocation has not invalidated even the INITIAL saved-page read.
+
+    This check is executed immediately after signed OIDC + atomic consent
+    consumption and BEFORE loading the owner's saved website profile.
+    """
+    require_enabled()
+    t = int(time.time() if now is None else now)
+    try:
+        blob = _cursor_blob()
+        blob.reload()
+        generation = int(blob.generation)
+        pending = json.loads(_cipher().decrypt(
+            blob.download_as_bytes(if_generation_match=generation), ttl=TTL
+        ))
+        keys = {"schema", "owner", "site", "path", "recipient_public_key",
+                "issued", "expires", "session_id"}
+        if (not isinstance(consent, dict) or not isinstance(pending, dict)
+                or set(pending) != keys
+                or pending["schema"] != PENDING_SCHEMA
+                or type(pending["issued"]) is not int
+                or type(pending["expires"]) is not int
+                or pending["expires"] <= t
+                or not 0 < pending["expires"] - pending["issued"] <= TTL
+                or pending["issued"] > t + 10
+                or pending["session_id"] != consent.get("adaptive_session_id")
+                or any(pending[key] != consent.get(key) for key in (
+                    "owner", "site", "path", "recipient_public_key",
+                    "issued", "expires"
+                ))):
+            raise PermissionError("Pending consent does not match owner")
+        return generation
+    except Exception as exc:
+        raise PermissionError("Owner revoked or expired pending browser session") from exc
+
+
 def begin_session(consent, result, *, now=None):
     """After first exact owner-approved read, create a bounded cursor.
 
@@ -139,6 +217,9 @@ def begin_session(consent, result, *, now=None):
     session_id = _validate_id(consent.get("adaptive_session_id"))
     _validate_intent(site=consent.get("site"), path=consent.get("path"),
                      recipient_public_key=consent.get("recipient_public_key"))
+    # A revoked pending grant cannot be resurrected by an in-flight
+    # first-page read. The final write uses this exact GCS generation.
+    generation = require_pending(consent, now=t)
     links = _safe_links(consent["site"], consent["path"], result)
     record = {
         "schema": "plenum-adaptive-read-cursor-v1",
@@ -154,10 +235,6 @@ def begin_session(consent, result, *, now=None):
     }
     _check_scope(record, t)
     blob = _cursor_blob()
-    generation = 0
-    if blob.exists():
-        blob.reload()
-        generation = int(blob.generation)
     blob.upload_from_string(
         _cipher().encrypt(json.dumps(record, separators=(",", ":")).encode()),
         content_type="application/octet-stream",
@@ -245,15 +322,38 @@ def save_follow(cursor, result, *, now=None):
 
 
 def revoke_session(*, now=None):
-    """Trusted owner-authenticated portal ONLY, never a GitHub issue command."""
+    """Revoke PENDING consent and active cursor via existing private CAS.
+
+    The initial signed request may already have consumed the owner consent;
+    deleting the shared pending/active cursor ensures the in-flight read
+    cannot start (or re-create the cursor) after revocation.
+    """
     require_enabled()
+    from .sealed_chat_read import APPROVAL_BLOB, _store
+    store = _store()
+    revoked = False
+    approval = store.bucket.blob(APPROVAL_BLOB)
+    if approval.exists():
+        approval.reload()
+        generation = int(approval.generation)
+        # Only discard pending ADAPTIVE grants; unrelated fixed page/batch
+        # approvals are NOT touched by an adaptive-session revoke.
+        try:
+            record = json.loads(_cipher().decrypt(
+                approval.download_as_bytes(if_generation_match=generation), ttl=TTL
+            ))
+        except Exception as exc:
+            raise PermissionError("Could not verify pending owner consent") from exc
+        if record.get("schema") == "plenum-sealed-owner-adaptive-consent-v1":
+            approval.delete(if_generation_match=generation)
+            revoked = True
     blob = _cursor_blob()
-    if not blob.exists():
-        return False
-    blob.reload()
-    gen = int(blob.generation)
-    blob.delete(if_generation_match=gen)
-    return True
+    if blob.exists():
+        blob.reload()
+        generation = int(blob.generation)
+        blob.delete(if_generation_match=generation)
+        revoked = True
+    return revoked
 
 
 async def read_hardened_saved_site(*, site, owner, path):
