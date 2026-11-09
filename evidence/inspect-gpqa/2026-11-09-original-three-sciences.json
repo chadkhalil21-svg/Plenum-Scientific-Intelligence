@@ -1,0 +1,64 @@
+{
+  "schema": "plenum-gpqa-original-science-scores-v1",
+  "observed_date_utc": "2026-11-09",
+  "source_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42563122617",
+  "original_logs_artifact": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42563122617/artifacts/13650326627",
+  "model": "Qwen/Qwen3-0.6B",
+  "model_revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+  "evaluator": "Original UK AISI Inspect Evals 0.27.0 GPQA Diamond task and choice scorer, version 3",
+  "attempted": 3,
+  "correct": 1,
+  "by_domain": {
+    "biology": {
+      "original_id": "rec2ZTsqazBZ3LTWZ",
+      "subdomain": "Genetics",
+      "native_correct": false,
+      "original_grade": "I",
+      "model_answer": "B",
+      "target": "C",
+      "original_eval_sha256": "794e1b6730960d2984168f6532a0499a709a6712f0e6a9776b91ffd0d6818966",
+      "input_tokens": 476,
+      "output_tokens": 5
+    },
+    "chemistry": {
+      "original_id": "rec0Arme2jcXQZnAW",
+      "subdomain": "Organic Chemistry",
+      "native_correct": true,
+      "original_grade": "C",
+      "model_answer": "C",
+      "target": "C",
+      "original_eval_sha256": "372af2a1cb86270e686de3a3b06f6dda15f2d8d06974d1e888370c48b6863e5f",
+      "input_tokens": 160,
+      "output_tokens": 9
+    },
+    "physics": {
+      "original_id": "rec06pnAkLOr2t2mp",
+      "subdomain": "Physics (general)",
+      "native_correct": false,
+      "original_grade": "I",
+      "model_answer": "B",
+      "target": "D",
+      "original_eval_sha256": "a8e8f72401aaa7df79a83c154467427aa90fe92286b3c9ab91864939fdd2aa16",
+      "input_tokens": 153,
+      "output_tokens": 5
+    }
+  },
+  "tokens": {
+    "input": 789,
+    "output": 19,
+    "total": 808
+  },
+  "paid_model_api_calls": 0,
+  "environment": "original held-out public questions, no tool use, CPU local model, enable_thinking=false",
+  "independent_score_recovery": "Downloaded original GitHub Actions artifact 13650326627. Read the three original Inspect .eval ZIPs with Zstandard decompression; native header.status=success and sample.scores.choice.value were checked, no re-inference/re-scoring.",
+  "archival_integrity_issue": "Following successful original tasks, Plenum's summary script tried pathlib.Path on a file: URI for native log. It failed with FileNotFoundError, so workflow is red although the 3 original grades are intact. Do not equate a CI failure with an incorrect model answer.",
+  "scicode_earlier_blocker": "Original SciCode run 42562773900 was blocked before any model inference by quota-limited public Google Drive numerical data, so no SciCode score exists.",
+  "scientific_discovery": false,
+  "AGI_demonstrated": false,
+  "ASI_demonstrated": false,
+  "limitations": [
+    "Only 3 public expert-level science questions, possible training contamination, no statistical capability estimate",
+    "No model-to-model comparative experiment, no tool-using general agent, and no original science discovery",
+    "No new model weights trained or promoted"
+  ]
+}
