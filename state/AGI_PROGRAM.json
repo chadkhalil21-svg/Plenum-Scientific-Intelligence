@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-09T05:56:24.908Z",
+  "last_reviewed_utc": "2026-11-09T06:11:56.121Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -874,6 +874,44 @@
       },
       "AGI_demonstrated": false,
       "notes": "Original model attempted a previously untested repo issue but failed to change approach, looping eight times on same setting export; no patch. Separately, original scorer crashed on missing MAP_REPO_VERSION_TO_SPECS because SWE-bench 5 removed legacy harness API and Inspect Evals 0.27 expected 4.x. Official score is NULL, NOT 0. Full unmodified source .eval artifact recovered and parsed; model wasn't rerun. Merged PR #273 pins SWE-bench 4.1.0 for future and checks original scorer API before model download, without rerunning same benchmark. Do not conflate compatibility with capability."
+    },
+    {
+      "id": "one-time-nov-2026-prospective-archive-backup-main-configuration",
+      "status": "scheduling_safeguard_merged_and_source_verified_not_prospective_science_result",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/274",
+      "commit": "502ffec8b7ec4a4700cc066581a92b3a98607d3a",
+      "result": {
+        "NOAA_original_utc": "2026-11-10T11:17:00Z",
+        "NOAA_backup_utc": "2026-11-10T20:17:00Z",
+        "USGS_original_utc": "2026-11-11T09:20:00Z",
+        "USGS_backup_utc": "2026-11-11T18:17:00Z",
+        "frozen_before_utc": "2026-11-12T00:00:00Z",
+        "audit_dates_unchanged": true,
+        "duplicate_proposal_guard": "research-memory original frozen file must NOT exist",
+        "research_memory_precommitted_files_exist_yet": false,
+        "original_heldout_observations_viewed": false,
+        "scientific_results_verified": false,
+        "model_inference_executed_by_this_change": false
+      },
+      "AGI_demonstrated": false,
+      "notes": "Source-verified on main. External GitHub scheduler is not guaranteed; a second scheduled attempt may also be delayed/dropped. Only future original pre-holdout Git commit and independent later audit can establish a legitimate prospective test."
+    },
+    {
+      "id": "frozen-monthly-synthetic-model-job-retirement-main-20261109",
+      "status": "configuration_merged_no_new_model_inference",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/275",
+      "commit": "9e44f2e47ab55f644886ad845211fcc282f9114d",
+      "result": {
+        "model_challenge_monthly_cron_removed": true,
+        "iterative_hypotheses_monthly_cron_removed": true,
+        "manual_dispatch_preserved": true,
+        "main_branch_source_change_trigger_preserved": true,
+        "daily_public_source_radar_unchanged": true,
+        "prospective_NOAA_USGS_unchanged": true,
+        "dollar_savings_measured": false
+      },
+      "AGI_demonstrated": false,
+      "notes": "Retire frozen baseline model/synthetic replays, not fresh independent research, original source code, historical result artifacts or future explicit task evaluation."
     }
   ],
   "next_actions": [
@@ -883,7 +921,7 @@
     },
     {
       "priority": 2,
-      "action": "Next physical-world science gap: preserve precommitted NOAA/USGS November 12–13 future observation protocols and independently audit once the observations exist; do not access or tune against them early. Reuse existing NOAA historical observation shadow and physical simulators. A research digital twin requires future issued predictions, real sensor quality, uncertainty, stronger official provider baseline and transfer to unseen sites; an observed historical replay is not a synchronized digital twin. Broader biology/forage PCSE 6.0.13 is only declared on-demand, retain published upstream tests, not reinstall/validate unnecessarily."
+      "action": "IMMEDIATE IRREVERSIBLE SCIENCE DEADLINE: verify canonical research-memory original sealed NOAA forecast after scheduled proposal 2026-11-10 11:17 UTC (one backup 20:17 UTC only if archive missing); verify sealed USGS forecast after 2026-11-11 09:20 UTC (one backup 18:17 UTC only if archive missing). Merged PR #274 ensures existing eligibility gates read-only check original frozen file; protocol methods, Qwen/SmolLM2 choices, original Nov 12–13 withheld observation timestamps and independent audit unchanged. Forecasts must be committed BEFORE Nov 12 00:00 UTC or admit no valid prospective claim. Audit NOAA no sooner than Nov 15, scheduled Nov 16 11:33 UTC, and USGS no sooner than Nov 17, scheduled Nov 18 11:40 UTC. Do not peek at future data, refit after outcomes, create a new framework, or count source configuration as scientific result. Original SWE-bench repeated tool-loop failure remains priority after this time-critical evidence. Main PR #275 removed calendar-only fixed small-model/synthetic repeats while preserving actual research and manual evaluation."
     },
     {
       "priority": 3,
@@ -1326,6 +1364,14 @@
     {
       "decision": "Original real SWE-bench failure disambiguated: incompatible upstream grader plus model repeated eight nonproductive tool commands; retain original and stop re-testing",
       "reason": "Original live SWE-bench Verified Mini issue django__django-11790 (run 42568013296) completed with original scorer exception: Inspect Evals 0.27.0 imports MAP_REPO_VERSION_TO_SPECS, absent in SWE-bench 5.0.2 breaking version. The source ZIP #13652876207 contains errored 22-message Inspect sample: 10 tool calls/responses (2 repeated Python imports and 8 identical `export DJANGO_SETTINGS_MODULE=myproject.settings` commands), no changed files, no patch; 11 turns hit 10-turn limit. This is evidence of stuck replanning as well as incompatibility but **no numeric official SWE-bench grade**. Merged PR #273 stores exact artifact and sample SHA records, future-only SWE-bench 4.1.0 pin and original scorer get_eval_script compatibility check before model download; no rerun. Next priority improve error-driven planning and substantive repo edits in a different task with stronger original pretrained model only when compute budget justified. Avoid new framework and repeated upstream validation."
+    },
+    {
+      "decision": "Protect irreversible prospective NOAA and USGS November 2026 predictions using existing archive-aware backup schedules, no re-fitting",
+      "reason": "Merged main PR #274 (502ffec8b7ec4a4700cc066581a92b3a98607d3a) adds one same-day backup for two already precommitted prospective science experiments, after official GitHub docs warned scheduled Actions events can be delayed/dropped. NOAA forecast original Nov 10 11:17 UTC; backup Nov 10 20:17 UTC. USGS original Nov 11 09:20 UTC; backup Nov 11 18:17 UTC. Both preserve the ORIGINAL pre-Nov-12 freeze deadline; keep original audit dates Nov 16 NOAA and Nov 18 USGS. First job reads canonical research-memory (read-only) and aborts any proposed new model inference once a frozen forecast file already exists; original archival FileExistsError and workflow-wide concurrency remain. No change to numerical physics, model candidates, existing critic, selection, validation, precommitted protocol, or future observation access. At this check original frozen files are NOT YET present because proposal windows have not opened; schedules configured only, not science proof. Audit MUST confirm original Git commit timestamp before heldout observations. No paid API or new scientific framework."
+    },
+    {
+      "decision": "Stop calendar repetition of unchanged Qwen/synthetic model fixtures; preserve only on-demand and meaningful new-source tests",
+      "reason": "Merged main PR #275 (9e44f2e47ab55f644886ad845211fcc282f9114d) removed monthly cron from .github/workflows/model-challenge.yml (first day fixed 0.6B/1.7B Qwen pair / same two synthetic holdout cases) and .github/workflows/iterative-hypotheses.yml (15th day fixed six Qwen calls / same three synthetic tasks). Both monthly replays produce no new external observations, are not upstream solver validation needed each month, and waste download/CPU without independent AGI progress. Kept original model/scientific code and immutable result artifacts, workflow_dispatch, main-only push on meaningful source/test changes; removed editing workflow YAML self-push and redundant monthly triggers. Daily public research/discovery radar, actual novel observations, and both original prospective NOAA/USGS schedules untouched. Savings not measured as dollar amount; no changes to weights, cloud compute, model evaluations performed by PR itself. Retired GitHub Models free inference API July 30 2026, do not invest in dead API."
     }
   ],
   "operating_rules": [
@@ -1342,6 +1388,7 @@
     "At every Plenum session read live docs/AGI_ASI_CAPABILITY_ATLAS.md in addition to AGENTS.md, docs/LEDGER.md, docs/CONTINUITY_AND_REUSE.md and canonical program state. The source-reviewed candidate registry (61 software entries as of 2026-11-08) is NOT installed software. Do not install everything, rerun upstream validation, add a second simulator/browse/agent/evaluator stack or spin up hundreds of agents to claim progress. Select ONE source-licensed upstream component for a named missing task, use original benchmark scoring, real measured outcome and reported cost; consider hardware/data/security/permissions constraints.",
     "Treat archived valid original scorer logs as evidence even when a downstream report exporter fails. Correct the smallest reporting-layer defect or recover the original immutable artifact; never rerun model inference or published upstream scientific tests solely to repair a file URI/format issue.",
     "Before increasing agents or frameworks, audit whether stronger original pretrained model reasoning can solve the task; actual Qwen3-1.7B ReAct three-case regression (1/3 tool vs 2/3 direct) makes reasoning the near-term bottleneck. Use official original release, verify weight and engine SHA, reuse existing Inspect grader and exact archived baseline without rereading/modeling it, check provider compatibility before large downloads, and do not automatically promote any candidate on three public questions.",
-    "When an existing pretrained tool-using model produces valid intermediate Python calls but fails to call terminal submit(), prefer the official Inspect react(submit=False) no-submit behavior over writing a new parser/finalizer or adding agents. Preserve original task and scorer; record actual final-answer presence and tool-call/result counts separately from independent correctness. One successful original public function does not prove broad agent capability, and a different problem is not a matched-mode comparison."
+    "When an existing pretrained tool-using model produces valid intermediate Python calls but fails to call terminal submit(), prefer the official Inspect react(submit=False) no-submit behavior over writing a new parser/finalizer or adding agents. Preserve original task and scorer; record actual final-answer presence and tool-call/result counts separately from independent correctness. One successful original public function does not prove broad agent capability, and a different problem is not a matched-mode comparison.",
+    "Time-critical valid prospective evidence outranks re-running unchanged public benchmark or adding more agent infrastructure. Keep NOAA/USGS original November 2026 precommit protocols immutable. Validate original research-memory forecast record exists and its original Git commit predates heldout observations; audit independent real measurements only at authorized later date. A green workflow PR/schedule is NOT scientific success. Never rerun unchanged frozen toy benchmarks on a monthly timer: model-challenge and iterative-hypotheses remain manual or main source-change-only. GitHub Models inference API retired 2026-07-30; do not waste time integrating it. Build only missing capability; maintain exact evidence grade."
   ]
 }
