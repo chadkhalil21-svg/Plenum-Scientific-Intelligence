@@ -330,6 +330,9 @@ class OfflineFormExecutorTest(unittest.TestCase):
             site="https://example.com"
             _, pub=keys()
             ops=[{"op":"fill","selector":"input[name=note]","value":"reviewed offline"},
+                 {"op":"select","selector":"select[name=category]","value":"general"},
+                 {"op":"check","selector":"input[name=contact_ok]"},
+                 {"op":"uncheck","selector":"input[name=notifications]"},
                  {"op":"click","selector":"button[type=submit]"}]
             with patch.dict(os.environ, {"BROWSER_ALLOWED_ORIGINS":site}):
                 compiled=forms.validate_plan(
@@ -345,9 +348,17 @@ class OfflineFormExecutorTest(unittest.TestCase):
                         if req.url==site+"/profile/edit":
                             await route.fulfill(status=200,content_type="text/html",
                                 body="<form method='post' action='/profile/save'>"
-                                     "<input name='note'><button type='submit'>Save</button></form>")
+                                     "<input name='note'>"
+                                     "<select name='category'><option value='general'>General</option>"
+                                     "<option value='other'>Other</option></select>"
+                                     "<input type='checkbox' name='contact_ok'>"
+                                     "<input type='checkbox' name='notifications' checked>"
+                                     "<button type='submit'>Save</button></form>")
                         elif req.url==site+"/profile/save" and req.method=="POST":
                             self.assertIn("note=reviewed",req.post_data)
+                            self.assertIn("category=general",req.post_data)
+                            self.assertIn("contact_ok=on",req.post_data)
+                            self.assertNotIn("notifications=on",req.post_data)
                             await route.fulfill(status=200,content_type="text/html",
                                                body="<h1>Saved synthetic data</h1>")
                         else:
@@ -363,6 +374,8 @@ class OfflineFormExecutorTest(unittest.TestCase):
                     self.assertEqual(
                         await form.locator("input[name=note]").input_value(),
                         "reviewed offline")
+                    self.assertTrue(await form.locator("input[name=contact_ok]").is_checked())
+                    self.assertFalse(await form.locator("input[name=notifications]").is_checked())
                     async with page.expect_response(
                         lambda rsp:rsp.url==site+"/profile/save" and
                         rsp.request.method=="POST") as pending:
