@@ -96,7 +96,8 @@ jobs:
           set -euo pipefail
           test -n "$IMAGE"
           gcloud run services update plenum-browser-owner-auth0 \
-            --project="$PROJECT" --region=us-east1 --image="$IMAGE"             --timeout=900s --quiet >/dev/null
+            --project="$PROJECT" --region=us-east1 --image="$IMAGE" --timeout=900s \
+            --update-env-vars "PLENUM_SEALED_CHAT_READ_ENABLED=true" --quiet >/dev/null
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
       - name: Read back identity and verify anonymous denied with unchanged OAuth login
         id: verify
@@ -125,6 +126,8 @@ jobs:
           assert env["BROWSER_PROFILE_BUCKET"].get("value")
           assert "BROWSER_SESSION_KEY" in env
           assert "COMPUTER_BROWSER_TOKEN" in env
+          assert env.get("PLENUM_SEALED_CHAT_READ_ENABLED",{}).get("value")=="true"
+          assert env.get("PLENUM_CHAT_RELAY_ENABLED",{}).get("value")=="true"
           (Path(os.environ["RUNNER_TEMP"])/"owner-after.json").unlink()
           print("PASS: Existing Auth0 owner portal image replaced, identity/config and encrypted session vault preserved.")
           PY
@@ -137,6 +140,10 @@ jobs:
           test "$LOGIN" = '302'
           test "$OWNER" = '401'
           test "$SIGNIN" = '401'
+          SEALED_OWNER="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 "$URL/owner/chat-sealed-approval")"
+          SEALED_INTERNAL="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 -X POST "$URL/internal/chat-sealed-read")"
+          test "$SEALED_OWNER" = '401'
+          test "$SEALED_INTERNAL" = '401'
           echo 'PASS: Auth0 login redirect still 302; anonymous browser endpoints still 401.'
       - name: Report safe outcome to exact founder issue
         if: always()
