@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-09T05:08:12.404Z",
+  "last_reviewed_utc": "2026-11-09T05:11:31.973Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -793,12 +793,35 @@
       },
       "AGI_demonstrated": false,
       "notes": "GitHub action #42565079525 successfully ran original upstream scorer on exact three prior GPQA items for new official quantized 4B candidate. All three candidate wrong; previously fixed 0.6B had 1/3, no rerun of 0.6B. 4B source checksum, original llama.cpp b11146 CPU, local-only model serving verified. Initial run #42564670475 model download/server succeeded but was ungraded because Inspect 0.3.287 requires openai>=3.4 HTTPX2; PR #269 pinned OpenAI3.4 and preflighted provider before download. Tiny 3-public-question sample, quantization and training/architecture differences preclude general superiority inference. Candidate NOT promoted. Store native source artifact. Genuine multi-step tool use under stronger baseline remains unresolved."
+    },
+    {
+      "id": "original-react-three-native-failure-mode-review-20261108",
+      "status": "verified_original_archived_trace_diagnostic_no_new_model_inference",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42350599820",
+      "original_artifact_id": 13565593023,
+      "original_artifact_sha256": "bdde0854219e970a5dda63fd3dcba03101d66078b686cd58e11665c237724c3a",
+      "permanent_evidence": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/evidence/inspect-react-three/2026-11-09-original-failure-mode-audit.json",
+      "result": {
+        "original_model": "Qwen3-1.7B",
+        "original_direct_correct": 2,
+        "original_react_correct": 1,
+        "original_attempted": 3,
+        "native_tool_calls": 11,
+        "native_tool_responses": 11,
+        "HumanEval_0": "Correct after recovery from initial Python NameError and final submission",
+        "HumanEval_1": "Incorrect, repeated literal <tool_call> markup in assistant response, final source submission invalid, algorithm concern",
+        "HumanEval_2": "Incorrect, candidate function sent to Python tool repeatedly but no final submitted code; original scorer saw empty answer",
+        "new_model_calls": 0,
+        "new_scoring_runs": 0
+      },
+      "AGI_demonstrated": false,
+      "notes": "Exact posthoc read of original native Inspect .eval archived in GitHub Actions artifact, no repeat benchmark or model inference. Revises earlier oversimplification that model size alone was bottleneck. Both native tool-call schema/finalization protocol and reasoning matter. Candidate code not submitted cannot be retroactively counted correct. When selecting new original task, prefer existing upstream structured tool APIs and explicit submit action, not ad-hoc graders/frameworks."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Model-strength experiment COMPLETED: original Qwen3.5-4B Q4_K_M source at e87f176479d0855a907a41277aca2f8ee7a09523 scored 0/3 on exact original GPQA biology, chemistry, physics held public questions using original Inspect independent scorer in main run #42565079525, no baseline rerun. Existing original Qwen3-0.6B 1/3. Live original logs SHA256 and permanent evidence in main evidence/qwen35/2026-11-09-original-gpqa-three-question-comparison.json. NO promotion or general ranking warranted by three examples. The initial source provider problem is fixed via PR #269, Inspect OpenAI SDK v3.4.0 httpx2 and preflight before weight download. Existing original Qwen3-1.7B tool-using ReAct coding regressed 1/3 vs one-shot 2/3 (run #42350599820). Next highest leverage: analyze preserved HumanEval/2 agent regression and HumanEval/1 failure WITHOUT rerunning upstream science or model, then select a robust pretrained reasoning model or more economical API only for a genuinely new bounded real scientific/engineering task with independent grader; compare reliability/cost, not just parameter size."
+      "action": "NO additional benchmark replay on existing models or original questions. Completed direct frozen Qwen3-0.6B original GPQA 1/3, Qwen3.5-4B Q4_K_M same IDs 0/3 (source run 42565079525, SHA-verified, no promotion) and Qwen3-1.7B original HumanEval tool agent 1/3 vs direct 2/3. Exact original ReAct native trace review now shows HumanEval/1 repeated literal tool-call markup and HumanEval/2 six Python tool calls but NO final submitted candidate, while HumanEval/0 recovered from Python NameError and submitted correctly. See main evidence/inspect-react-three/2026-11-09-original-failure-mode-audit.json. Highest leverage next: use existing Inspect native tool-call protocol/final submit with appropriate supported pretrained model, on a NEW original independently scored multi-step public coding/science task, measuring actual completed submissions and tool-feedback handling; cap resources, don't invent graders, don't make source/weights count into AGI, don't waste CPU/GPU if capability not demonstrated. Continue separate prospective physical science at its precommitted dates."
     },
     {
       "priority": 2,
@@ -1229,6 +1252,10 @@
     {
       "decision": "Treat Qwen3.5-4B original 0/3 GPQA as negative promotion evidence, not assume model size predicts intelligence",
       "reason": "Official original Inspect Evals GPQA Diamond model trial #42565079525 PASSED software execution, after previous provider integration corrected with PR #269. Official llama.cpp b11146 CPU and Unsloth Qwen3.5-4B Q4_K_M SHA256 verified. Same three original expert domain cases, real candidate 0/3 (B/C/P all wrong), older Qwen3-0.6B frozen score 1/3 (Chemistry right). Store original full logs, hashes, and summary in main/evidence/qwen35/2026-11-09-original-gpqa-three-question-comparison.json. Do not upgrade or spend more simply for 4B model. 3 historical public questions are tiny and can be contaminated, and quantization/compute differ; no general model ranking. Existing ReAct tool 1/3 vs direct 2/3 indicates weak tool-feedback interpretation. Next meaningful path is retrospective analysis of ReAct mistakes from already preserved traces, and later one new independently scored task using genuinely stronger already-existing suitable model only if available cost/rights justify, not another agent framework."
+    },
+    {
+      "decision": "Repair native tool-call protocol and terminal submission before multiplying agents or assuming bigger pretrained model solves regression",
+      "reason": "Re-analysis of immutable original Inspect ReAct #42350599820 native sample logs, archived provenance in main/evidence/inspect-react-three/2026-11-09-original-failure-mode-audit.json, shows HumanEval/1 repeated textual <tool_call> instead of valid final code (and flawed nesting approach); HumanEval/2 made six Python tool calls with plausible code but final answer empty, never submitted; HumanEval/0 succeeded after a NameError recovery. Thus earlier claim 'model size only' was too simple. Need first repair finalization/tool-response alignment with existing Inspect native APIs and proper structured model output, retain unchanged original tests for new independently scored task only. Do not force-submit candidate code or upgrade historical grader failures. New Qwen3.5-4B actual original GPQA 0/3 versus frozen Qwen3-0.6B 1/3 also argues against blind model scaling."
     }
   ],
   "operating_rules": [
