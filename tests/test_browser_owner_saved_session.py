@@ -136,36 +136,36 @@ class SavedWebsiteSessionRoutes(unittest.TestCase):
             try:
                 def submit_with_policy(policy):
                     context=browser.new_context()
-                    page=context.new_page()
-                    captured=[]
-                    def route_handler(route):
-                        req=route.request
-                        if req.url==listing and req.method=="GET":
-                            route.fulfill(status=200,
-                                headers={"content-type":"text/html; charset=utf-8",
-                                         "referrer-policy":policy},
-                                body=doc)
-                        elif req.url==endpoint and req.method=="POST":
-                            captured.append({
-                                "origin":req.headers.get("origin"),
-                                "method":req.method,
-                                "post":req.post_data,
-                            })
-                            route.fulfill(status=200,content_type="text/plain",
-                                          body="Synthetic preview accepted")
-                        else:
-                            route.abort()
-                    page.route("**/*",route_handler)
-                    page.goto(listing)
-                    page.get_by_role("button",name="Preview saved session (read only)").click()
-                    page.wait_for_url(endpoint)
-                    self.assertEqual(len(captured),1)
-                    self.assertIn("csrf_token=synthetic-ci-only",captured[0]["post"])
-                    self.assertEqual(captured[0]["method"],"POST")
-                    return captured[0]["origin"]
-                    # The simulated browser has no external network requests.
-                finally:
-                    context.close()
+                    try:
+                        page=context.new_page()
+                        captured=[]
+                        def route_handler(route):
+                            req=route.request
+                            if req.url==listing and req.method=="GET":
+                                route.fulfill(status=200,
+                                    headers={"content-type":"text/html; charset=utf-8",
+                                             "referrer-policy":policy},
+                                    body=doc)
+                            elif req.url==endpoint and req.method=="POST":
+                                captured.append({
+                                    "origin":req.headers.get("origin"),
+                                    "method":req.method,
+                                    "post":req.post_data,
+                                })
+                                route.fulfill(status=200,content_type="text/plain",
+                                              body="Synthetic preview accepted")
+                            else:
+                                route.abort()
+                        page.route("**/*",route_handler)
+                        page.goto(listing)
+                        page.get_by_role("button",name="Preview saved session (read only)").click()
+                        page.wait_for_url(endpoint)
+                        self.assertEqual(len(captured),1)
+                        self.assertIn("csrf_token=synthetic-ci-only",captured[0]["post"])
+                        self.assertEqual(captured[0]["method"],"POST")
+                        return captured[0]["origin"]
+                    finally:
+                        context.close()
                 self.assertEqual(submit_with_policy("no-referrer"),"null")
                 self.assertEqual(submit_with_policy(
                     owner_saved_session._HEADERS["Referrer-Policy"]),origin)
