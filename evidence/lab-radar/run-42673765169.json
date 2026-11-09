@@ -1,0 +1,278 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "42673765169",
+  "source_revision": "c1baa1cce7e9acd4abc6ba50712877ff85856c2a",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-09T18:25:31.600184+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 28,
+    "sources_returning_records": 26,
+    "source_outages": [
+      "un_climate_environment",
+      "gdelt_headlines"
+    ],
+    "new_public_links_before_limit": 33,
+    "signals": [
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261108233057.htm",
+        "title_untrusted": "Common supplement could help fight psoriasis, scientists discover",
+        "claimed_publication_date": "Mon, 09 Nov 2026 06:44:20 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03588-w",
+        "title_untrusted": "He spent a year on ‘Mars’: NASA science officer emerges from mock mission",
+        "claimed_publication_date": "2026-11-09",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.08572",
+        "title_untrusted": "Enhancing Academic Advisement with Case-Based Reasoning",
+        "claimed_publication_date": "Mon, 09 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.08520",
+        "title_untrusted": "Rotating Black Holes in Perfect Fluid Dark Matter: Horizons, Photon Orbits, and Shadows",
+        "claimed_publication_date": "Mon, 09 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "software",
+        "publisher": "GitHub public repository index",
+        "source": "github_public_code",
+        "url": "https://github.com/huzaifa-ai-ml/.github",
+        "title_untrusted": "huzaifa-ai-ml/.github",
+        "claimed_publication_date": "2026-11-09T13:00:01Z",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75464482",
+        "title_untrusted": "M 1.1 - 6 km NW of The Geysers, CA",
+        "claimed_publication_date": "1794248462870",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "design",
+        "publisher": "MIT Architecture",
+        "source": "mit_architecture",
+        "url": "https://news.mit.edu/2026/powering-up-for-pivotal-moment-1102",
+        "title_untrusted": "Powering up for a pivotal moment",
+        "claimed_publication_date": "Mon, 02 Nov 2026 14:55:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261108233054.htm",
+        "title_untrusted": "NASA reveals bold new plan to return astronauts to the Moon in 2028",
+        "claimed_publication_date": "Mon, 09 Nov 2026 04:13:28 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03628-5",
+        "title_untrusted": "The super El Niño is more than a climate shock – it’s a health one, too",
+        "claimed_publication_date": "2026-11-09",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.08613",
+        "title_untrusted": "NormGym: Evaluating Normative Competence through Social Interaction",
+        "claimed_publication_date": "Mon, 09 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.08521",
+        "title_untrusted": "How balloons lose their charge by collecting ions from the air",
+        "claimed_publication_date": "Mon, 09 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "software",
+        "publisher": "GitHub public repository index",
+        "source": "github_public_code",
+        "url": "https://github.com/DataScorpion/DataScorpion.github.io",
+        "title_untrusted": "DataScorpion/DataScorpion.github.io",
+        "claimed_publication_date": "2026-11-09T01:24:15Z",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41360295",
+        "title_untrusted": "M 0.7 - 4 km WSW of Anza, CA",
+        "claimed_publication_date": "1794247890330",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261108233043.htm",
+        "title_untrusted": "Caltech robot makes history by building a structure in space",
+        "claimed_publication_date": "Mon, 09 Nov 2026 05:01:13 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03626-7",
+        "title_untrusted": "Carlo Rovelli says fundamental physics is overrated",
+        "claimed_publication_date": "2026-11-09",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.08626",
+        "title_untrusted": "LLM-Based Feature Extraction for Multi-Criteria Inventory Classification",
+        "claimed_publication_date": "Mon, 09 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.08530",
+        "title_untrusted": "$\\cal{PT}$-Symmetric GUP-Modified Single- and Double-Well Quartic Oscillators",
+        "claimed_publication_date": "Mon, 09 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41360287",
+        "title_untrusted": "M 1.0 - 4 km SW of Anza, CA",
+        "claimed_publication_date": "1794247623920",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261108233037.htm",
+        "title_untrusted": "Common osteoporosis drugs linked to 24% lower dementia risk in major study",
+        "claimed_publication_date": "Mon, 09 Nov 2026 02:36:14 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03631-w",
+        "title_untrusted": "COP31 kicks off as planet faces imminent overshoot of 1.5 °C climate target",
+        "claimed_publication_date": "2026-11-09",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.08640",
+        "title_untrusted": "Aspect-wise Pairwise Tournaments for Test-Time Selection",
+        "claimed_publication_date": "Mon, 09 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.08539",
+        "title_untrusted": "Predicting next-week VIIRS fire detections in Bolivia: a reproducible benchmark with temporal and geographic evaluation",
+        "claimed_publication_date": "Mon, 09 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026wfqnyl",
+        "title_untrusted": "M 3.4 - 15 km SSE of Larsen Bay, Alaska",
+        "claimed_publication_date": "1794246655148",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
