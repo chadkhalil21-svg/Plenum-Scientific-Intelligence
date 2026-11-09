@@ -104,6 +104,30 @@ class Auth0OwnerTests(unittest.TestCase):
                 "x-goog-authenticated-user-email": "founder@example.org",
             }).status_code, 401)
 
+    def test_owner_home_exposes_real_write_portal_without_new_auth_or_fake_global_switch(self):
+        from services.computer_browser.owner_console import require_verified_owner
+        env={**SYNTHETIC_ENV, "PLENUM_EXACT_OWNER_FORM_POST_ENABLED":"true",
+             "PLENUM_SEALED_CHAT_READ_ENABLED":"true"}
+        with patch.dict(os.environ,env,clear=False):
+            app=FastAPI()
+            mount_owner_console(app)
+            app.dependency_overrides[require_verified_owner]=lambda: {
+                "private_owner_id":"a"*64}
+            client=TestClient(app)
+            response=client.get("/owner")
+            self.assertEqual(response.status_code,200)
+            self.assertIn("Authenticated website actions",response.text)
+            self.assertIn('href="/owner/chat-exact-form"',response.text)
+            self.assertIn("ChatGPT's",response.text)
+            self.assertNotIn('href="/owner/chat-exact-form-revoke"',response.text)
+            self.assertNotIn("ChatGPT direct website interaction: not yet connected",
+                             response.text)
+        with patch.dict(os.environ, {
+            **env,"PLENUM_EXACT_OWNER_FORM_POST_ENABLED":"false"},clear=False):
+            hidden=client.get("/owner")
+            self.assertEqual(hidden.status_code,200)
+            self.assertNotIn('href="/owner/chat-exact-form"',hidden.text)
+
     def test_expired_owner_html_navigation_redirects_only_with_signed_auth_required(self):
         """A human in Edge gets sign-in rather than downloadable JSON; APIs stay 401."""
         with patch.dict(os.environ,SYNTHETIC_ENV,clear=False):
