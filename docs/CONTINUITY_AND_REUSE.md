@@ -1,5 +1,12 @@
 # Reuse-first development and program continuity
 
+## 2026-11-08 founder correction: AGI/ASI knowledge and world modeling before auxiliary infrastructure
+
+The founder has explicitly identified repeated infrastructure reimplementation and stale ledgers as unacceptable lost effort. Treat **reuse-first, simplify, independent evidence and current ledger reconciliation as mandatory operating constraints** for the *entire* project, not just Computer Browser. `AGENTS.md` now carries this doctrine. Maintain one canonical evidence record and an intelligible current-status header, not a sprawl of "pending" claims.
+
+**New scientific priority:** LeCun-style JEPA/world models, physical simulation and eventually reality-calibrated digital twins. Review `docs/JEPA_WORLD_MODELS_AND_SIMULATION.md` before building any new simulation system. Existing SciPy/heat equation and domain solvers stay in place; pretrained Meta V-JEPA 2/2.1 and reviewed external MuJoCo/Isaac Lab are **reusable upstream candidates**, not installed proof. First benchmark uses existing SciPy/scikit-learn, frozen holdout scores and action ablations. A video-derived latent JEPA and calibrated physical digital twin remain absent. Do not conflate a video world-model research result with genuine causality or an AGI milestone.
+
+**Strategic constraint:** one task, one upstream component per role, one measurable acceptance test, explicit spending limits, transparent measured failures, and public/private data separation. Advance model and planning capabilities before returning to browser integration. Do not run an unbounded simulator or train very large models without a justified measured gap.
 ## Current program decision: AGI and ASI first (founder audit, 2026-11-08)
 
 **Plenum Prometheus's mission is general intelligence research, advancing toward AGI and ultimately ASI. The computer browser is a supporting tool, not the current research objective.** The public program's canonical research state remains `research-memory/state/AGI_PROGRAM.json`, with results scored by independent evaluators and held-out evidence. Do not convert integration tests or installed packages into AGI capability claims.
