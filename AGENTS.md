@@ -1,5 +1,12 @@
 # Project working instructions
 
+## Global capability-first atlas retrieval (2026-11-08)
+
+**One authoritative map, not another stack:** On *any* Plenum Prometheus/Scientific Intelligence task, first read the current [docs/AGI_ASI_CAPABILITY_ATLAS.md](docs/AGI_ASI_CAPABILITY_ATLAS.md) **alongside** the live canonical ledger, existing AGENTS instructions, existing relevant source, and research-memory AGI state. The atlas is a **selection and evidence map**, not a list of libraries to install. Candidate registry entries are **research-only** until chosen for an actual job; do not misstate optional `pcse` as installed, a NOAA historical shadow as a live twin, or model capability as AGI. Prefer executing a difficult *unfamiliar* existing original external task rather than adding tools because they are available. AGI/ASI progress must be an independently scored new competence, not a software count.
+
+**Scientific efficiency:** Inherit upstream published tests/experiments and maintained implementations as evidence under their reported conditions. No repeated upstream science regression, synthetic-only 'AGI' proof or new benchmark framework. On first use check interface once; new measurements are for **new claims only**. When existing original Inspect and its evaluator suffice, use it; avoid running 103 repository CI workflows for every dependency edit unless changes actually require them. Identify new release risks separately instead of conflating unrelated CI failures with candidate software quality.
+
+
 ## Founder efficiency correction: inherit upstream scientific validation, avoid redundant tests (November 8, 2026)
 
 When a mature scientific engine has already been published, peer-reviewed, implemented and tested by its maintainers, **adopt its tested algorithms and their original published/archived results as the default evidence**. Do not routinely reproduce upstream scientific validation or rerun the upstream numerical test suite simply because Plenum adds a dependency. Reuse an official supported release, pin the dependency, cite the origin/license and original validated conditions and data. Perform at most the smallest *target-environment installation/import/interface check when first needed*; use existing CI checks rather than creating repeated scientific regression workflows.
