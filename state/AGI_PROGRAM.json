@@ -1,6 +1,6 @@
 {
   "schema": "plenum-agi-program-continuity-v1",
-  "last_reviewed_utc": "2026-11-09T04:42:04.505Z",
+  "last_reviewed_utc": "2026-11-09T04:49:13.790Z",
   "mission": "Develop full, independently evaluated Artificial General Intelligence with broad scientific reasoning, responsible autonomous action, durable learning, discovery, creative invention and open-ended improvement. Investigate whether genuinely subjective machine consciousness and emotion are possible, without claiming they already exist.",
   "program_status": "research_platform_with_limited_and_unsuccessful_model_generalization_evidence",
   "AGI_achieved": false,
@@ -670,12 +670,35 @@
       "metric": "Observation-updated next-hour historic NOAA sensor replay vs unmodified harmonic and 1h persistence; original NOAA API source digests and full sample forecasts archived.",
       "AGI_demonstrated": false,
       "notes": "Reuses existing noaa_empirical hourly_height retrieval, fixed June 1-16, 2025 four-harmonic fit, and existing workflow (no new solver, paid API, model training or GPU). Frozen gain 0.25 sensor-residual update, 5 new synthetic no-leakage/failure tests and real measured-data evaluation all passed in Actions run #42557644772. Small Boston improvement just ~0.54 mm MAE; new update is an exploratory retrospective variant on already examined June 2025 holdout, NOT prospective blind novel discovery, continuous sensor sync, uncertainty-quantified validated digital twin or AGI."
+    },
+    {
+      "id": "gpqa-original-science-qwen06b-one-of-three-20261108",
+      "status": "verified_original_public_science_scoring_1_of_3",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42563122617",
+      "recovery_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42563663980",
+      "evidence_url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/evidence/inspect-gpqa/2026-11-09-original-three-sciences.json",
+      "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/267",
+      "model": "Qwen/Qwen3-0.6B",
+      "revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+      "result": {
+        "attempted": 3,
+        "correct": 1,
+        "biology_correct": false,
+        "chemistry_correct": true,
+        "physics_correct": false,
+        "total_input_tokens": 789,
+        "total_output_tokens": 19,
+        "total_tokens": 808,
+        "paid_model_api_calls": 0
+      },
+      "AGI_demonstrated": false,
+      "notes": "All three actual original Inspect Evals GPQA Diamond 0.27.0 tasks completed and original native grader scores were valid. Plenum's report-export step failed because an Inspect file: URI was parsed as local Path, resulting in red workflow #42563122617 despite valid original scores. Original native .eval logs and SHA256 were recovered without reinference; separate already existing archive-only recovery run #42563663980 passed. Original experiment 1/3 is only three historical public questions (potential pretraining contamination), no general model ranking, autonomous science, AGI or ASI. Prior original SciCode was independently blocked before any inference by upstream Google Drive data quota. No new model or framework added."
     }
   ],
   "next_actions": [
     {
       "priority": 1,
-      "action": "Currently active model competence gate: original SciCode #42562773900 is BLOCKED by original Google Drive numerical test-data quota before any inference or scoring; no model score and do not rerun automatically. Instead original GPQA Diamond in existing Inspect Evals uses a different original source with checksum-verified public data, and single main #42563122617 is running for one Biology, one Chemistry, one Physics question using pinned Qwen3-0.6B on CPU. Inspect ACP incompatibility was fixed in #263. Review the native original scoring logs if present and archive exact results/failure; do not claim AGI from 3 public examples. If GPQA also encounters external blocker, stop duplicate tool work and return to existing verified scientific tasks."
+      "action": "Verified original limited expert scientific baseline Qwen3-0.6B using original Inspect GPQA Diamond 0.27.0 scorer: 1/3 correct (Biology 0/1, Chemistry 1/1, Physics 0/1) from main run #42563122617; 808 total model tokens. Original native logs recovered without rerunning; archive-only run #42563663980 PASS; evidence permanent in main via PR #267. Do not count GPQA's report-export file: URI bug as a model failure and do not rerun these public questions. Original SciCode failed from upstream Google Drive numerical data quota before any inference; choose future new independent task only if justified by new model/agent competence. Next high information gap: tool-use and multistep cross-domain generalization compared against SAME-cost direct Qwen baseline, in isolated original evaluation; no new benchmark or simulator framework needed."
     },
     {
       "priority": 2,
@@ -1099,6 +1122,7 @@
     "Before accepting new agents, solvers, models or browsers, calculate measured capability gain per dollar/hour and operational complexity against existing verified incumbents. Adopt > adapt > build; use official supported licenses/packages/checkpoints, preserve source and weight provenance, avoid duplicate workflows and new models without blinded acceptance tests and a real task. Retrieval of docs/LEDGER.md and this canonical state is necessary at each new Plenum session; it is not automatically synchronized model memory.",
     "Scientific digital twins include plants, biology, cells, ecosystems, organisms, chemistry, engineering and planetary systems. Prefer reviewed upstream per-domain simulators and real observations; distinguish retrospective shadow-state updates from synchronized uncertainty-quantified twins, from action-conditioned physics and from general intelligence. Require prospective blind observations and meaningful strong baselines before upgrading status.",
     "Inherit the scientific/regression evidence of maintained peer-reviewed/upstream engines; never rerun their full original numerical validation without a concrete software-change/integration hazard. Use official pinned package on demand and cite original experiments. A new species/region, calibration, custom adapter, digital twin or novel biological claim deserves its own specifically scoped empirical check. Declared package is not equal to installed or scientifically verified.",
-    "At every Plenum session read live docs/AGI_ASI_CAPABILITY_ATLAS.md in addition to AGENTS.md, docs/LEDGER.md, docs/CONTINUITY_AND_REUSE.md and canonical program state. The source-reviewed candidate registry (61 software entries as of 2026-11-08) is NOT installed software. Do not install everything, rerun upstream validation, add a second simulator/browse/agent/evaluator stack or spin up hundreds of agents to claim progress. Select ONE source-licensed upstream component for a named missing task, use original benchmark scoring, real measured outcome and reported cost; consider hardware/data/security/permissions constraints."
+    "At every Plenum session read live docs/AGI_ASI_CAPABILITY_ATLAS.md in addition to AGENTS.md, docs/LEDGER.md, docs/CONTINUITY_AND_REUSE.md and canonical program state. The source-reviewed candidate registry (61 software entries as of 2026-11-08) is NOT installed software. Do not install everything, rerun upstream validation, add a second simulator/browse/agent/evaluator stack or spin up hundreds of agents to claim progress. Select ONE source-licensed upstream component for a named missing task, use original benchmark scoring, real measured outcome and reported cost; consider hardware/data/security/permissions constraints.",
+    "Treat archived valid original scorer logs as evidence even when a downstream report exporter fails. Correct the smallest reporting-layer defect or recover the original immutable artifact; never rerun model inference or published upstream scientific tests solely to repair a file URI/format issue."
   ]
 }
