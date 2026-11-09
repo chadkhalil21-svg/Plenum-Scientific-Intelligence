@@ -13,16 +13,19 @@ ESTABLISHED FOUNDATION
                    |
                    v
 NEXT EVIDENCE GATES (parallel with strict separation of future holdouts)
-  A. Prospective NOAA Nov10 / USGS Nov11 freeze, audit later unchanged
-  B. New unfamiliar multi-step coding/science challenge: tool-error recovery + final graded outcome
+  A. Preserve the original NOAA Nov10 / USGS Nov11 precommitted forecast evidence (TWO studies only)
+  B. BROAD CROSS-DOMAIN INVENTION: continually screen worldwide labs and journals,
+     corroborate original papers, identify physical bottlenecks, propose and falsify
+     genuinely new designs with independent measurements
+  C. New unfamiliar multi-step coding/science challenge: tool-error recovery + final graded outcome
                    |
                    v
 RESEARCH GATES
-  C. Stronger verified general reasoning and cross-domain transfer
-  D. Multi-modal perception/action-conditioned world models + grounded causal reasoning
-  E. Durable long-horizon memory/planning and continual learning
-  F. Open-ended science discovery with independent real experiments
-  G. Bounded reversible self-improvement with independent unseen evaluation
+  D. Stronger verified general reasoning and cross-domain transfer
+  E. Multi-modal perception/action-conditioned world models + grounded causal reasoning
+  F. Durable long-horizon memory/planning and continual learning
+  G. Open-ended invention and scientific discovery with independent real experiments
+  H. Bounded reversible self-improvement with independent unseen evaluation
                    |
                    v
 AGI EVIDENCE THRESHOLD (not met)
@@ -35,6 +38,8 @@ ASI RESEARCH FRONTIER (no established roadmap guaranteeing success)
   + secure controllability/oversight + robust independent validation
 ```
 
+**Founder priority clarification (2026-11-09):** Open-ended invention across ALL disciplines, world laboratories and journals is Plenum's central scientific aspiration. NOAA/USGS are deliberately narrow *evaluation* cases, never the research agenda. Original `discovery_watch`, `world_horizon`, `lab_radar` and `universal_brief` already exist; extend their source coverage only where proven missing (ScienceDaily's official All Research RSS added Nov9), then demand an ORIGINAL falsifiable invention concept with clear mechanism, negative controls and independent outcome. Existing headline-cross-pair templates are research questions, not autonomous invention. See `docs/UNIVERSAL_DISCOVERY_AND_CREATIVITY.md`. Do not claim all journals monitored, patent novelty, physical engineering readiness or AGI.
+ 
 ### Scientific intelligence checklist
 
 Use `[x]` only for the *specific observed evidence described*, never as implied mastery. `[~]` means partial / ongoing and `[ ]` means not demonstrated. For executable checklists use ordinary `[ ]` and contextual annotations; no fake progress percentages.
