@@ -1,5 +1,14 @@
 # Engineering and Scientific Ledger
 
+## 2026-11-10 UTC | First real Chief mission with source-aware free upstream selection VERIFIED
+
+[PR #386](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/386) merged: existing Chief preflight uses the prior reviewed 27-source catalogue's `suggest_sources()` to attach **bounded read-only source references** to an actual founder-authorized public mission. It does **not** download, install, enable accounts, or execute a suggested external project. Model-driven single-worker Chief and independently validated original four public tool workers are unchanged. Targeted source-aware task test passed with zero network/model calls; other PR source/ledger guards passed.
+
+**Independent first actual acceptance:** new [mission #387](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/387), [Actions run #42801934283](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42801934283) **SUCCESS**: an original public battery-source+code objective dispatched **two separate existing tool specialists**, Research and Coding, each independently verified in its established narrow scope, with actual public artifact `chief-founder-public-387`. Original durable comment confirms `VERIFIED_BOUNDED_TEAM`, `executed=2`, `independently_verified=True`, and **`upstream_references_not_installed=pybamm`**. The PyBaMM entry is a **contextually relevant free-source *reference***, not a running battery model, tested solver for this objective, or inferred scientific outcome. No Qwen or additional paid inference was required to select the worker or source.
+
+**Remaining material gap:** real on-demand provisioning/execution of new third-party engineering tools on actual unfamiliar independent problems, model-backed adaptive error recovery, approved private enterprise accounts, and secure persistent free compute. Next selection must have a concrete technical task, source/rights review and a new independently judged result; do not repeatedly benchmark known demo prompts or inflate the active worker count.
+
+
 
 ## 2026-11-10 UTC | Founder requests unlimited free inference, all source imports, no wasted reimplementation
 
