@@ -2,7 +2,7 @@
 import hashlib
 from unittest import TestCase
 
-from plenum_ai.agent_library import load_index, fetch_role, PREFIX
+from plenum_ai.agent_library import load_index, fetch_role, PREFIX, load_sources, suggest_sources
 
 
 class AgentCatalogContract(TestCase):
@@ -25,6 +25,64 @@ class AgentCatalogContract(TestCase):
         self.assertEqual(index["source"]["license"],"AGPL-3.0")
         self.assertEqual(len(index["source"]["commit"]),40)
         self.assertTrue(all(x["status"]=="catalogued_uninstalled" for x in index["files"]))
+
+
+    def test_full_free_upstream_catalogue_is_indexed_not_installed(self):
+        entries=load_sources()["entries"]
+        self.assertGreaterEqual(len(entries),27)
+        self.assertEqual(len({e["repository"] for e in entries}),len(entries))
+        ids={e["id"] for e in entries}
+        for expected in (
+            "agency-agents","agency-agents-app","browser-use","openmontage",
+            "agentmemory","graft","elephant-goldfish-model","qwen-agentworld",
+            "kilocode","openhands-sdk","langgraph","ollama","llama-cpp",
+            "freecad","su2","openmdao","openmm","pybamm","rdkit","kicad",
+            "monai","blender","ffmpeg"
+        ):
+            self.assertIn(expected,ids)
+        self.assertTrue(all(e["default_execution"]=="never_install_automatically"
+                            for e in entries))
+
+    def test_deterministic_read_only_domain_selection(self):
+        for query,expected in (
+            ("aerodynamics cfd","su2"),
+            ("battery electrochemistry","pybamm"),
+            ("medical imaging","monai"),
+            ("mechanical cad","freecad"),
+            ("memory retrieval","agentmemory"),
+        ):
+            with self.subTest(query=query):
+                selections=suggest_sources(query,limit=10)
+                self.assertIn(expected,[x["id"] for x in selections])
+                self.assertTrue(all(x["model_calls"]==0 and
+                                    x["activation"]=="SOURCE_REFERENCE_ONLY_NOT_INSTALLED" and
+                                    not x["additional_paid_services_enabled"]
+                                    for x in selections))
+        self.assertEqual(suggest_sources("unmatched gibberish kangaroo"),[])
+        with self.assertRaises(ValueError):
+            suggest_sources("x"*181)
+        with self.assertRaises(ValueError):
+            suggest_sources("bounded public task",limit=500)
+
+    def test_untrusted_source_and_auto_execution_are_rejected(self):
+        import copy
+        import json
+        from pathlib import Path
+        import tempfile
+        original=load_sources()
+        for changed in (
+            {"repository":"../../arbitrary/path"},
+            {"default_execution":"auto_install_and_execute"},
+            {"license":123},
+            {"tags":["wrong//path"]},
+        ):
+            d=copy.deepcopy(original)
+            d["entries"][0].update(changed)
+            with tempfile.TemporaryDirectory() as folder:
+                p=Path(folder)/"sources.json"
+                p.write_text(json.dumps(d))
+                with self.assertRaises(PermissionError):
+                    load_sources(p)
 
     def test_blob_verified_before_any_persona_used(self):
         idx=load_index()
