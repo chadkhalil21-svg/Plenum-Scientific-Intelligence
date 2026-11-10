@@ -21,10 +21,10 @@
     },
     {
       "id": "openmontage",
-      "repository": "calesthio/OpenMontage",
+      "repository": "OpenMontageInc/OpenMontage",
       "kind": "production_skills",
       "license": "AGPL-3.0",
-      "source_status": "700_plus_skill_and_knowledge_files_advertised_not_imported",
+      "source_status": "1106_markdown_skill_and_production_docs_indexed_agpl_uninstalled",
       "activation": "license_review_required"
     },
     {
