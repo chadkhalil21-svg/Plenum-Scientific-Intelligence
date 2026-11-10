@@ -111,13 +111,16 @@
   ],
   "free_first_capability_registry": {
     "relative_path": "../agent-catalog/upstream-sources.json",
-    "registered_reusable_sources": 27,
+    "registered_reusable_sources": 33,
     "selection_command": "python -m plenum_ai.agent_library --suggest-source 'aerodynamics cfd'",
     "selection_inference_calls": 0,
     "source_lookup_only": true,
     "automatic_install_or_execution": false,
     "infer_with_owned_local_model_when_needed": true,
     "free_cloud_hosted_inference": "optional_rate_limited_owner_authorized_not_connected",
-    "no_silent_paid_api_or_model_provisioning": true
+    "no_silent_paid_api_or_model_provisioning": true,
+    "browser_tooling_note": "Existing Plenum Playwright and browser-use adapter FIRST when capable; four additional original free source refs are NOT installed, signed in, or directly ChatGPT-connected. Separate human approval and host required for real portal account changes.",
+    "writing_quality_note": "Humanizer MIT skill reference and NVIDIA SkillSpector Apache security scanner are reviewed source candidates; founder private Plenum Editorial Council skill plugin saved separately, no account data or model fees.",
+    "new_source_refs_executable": false
   }
 }

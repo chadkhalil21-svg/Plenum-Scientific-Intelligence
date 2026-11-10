@@ -1,7 +1,7 @@
 {
   "schema": "plenum-upstream-tool-sources-v1",
   "reviewed_on": "2026-11-10",
-  "comment": "Source references are NOT installed tool executors or active AI agents. GitHub Actions public runners may only be used for eligible repository software development/testing under GitHub terms, not as an unrestricted commercial inference service. Cloud free tiers have quotas. Deterministic on-demand source lookup is read-only. AGPL/GPL/LGPL/fair-code obligations require review.",
+  "comment": "Source references are NOT installed tool executors or active AI agents. GitHub Actions public runners may only be used for eligible repository software development/testing under GitHub terms, not as an unrestricted commercial inference service. Cloud free tiers have quotas. Deterministic on-demand source lookup is read-only. AGPL/GPL/LGPL/fair-code obligations require review. Browser alternatives and humanizer are SOURCE REFERENCES only: none are a free authenticated hosted browser or an installed Plenum worker; private editorial ChatGPT plugin is separately saved in founder account.",
   "entries": [
     {
       "id": "agency-agents",
@@ -473,6 +473,112 @@
         "transcoding"
       ],
       "free_cost_class": "free_software_build_license_review",
+      "plenum_reuse_state": "candidate",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "playwright-mcp",
+      "repository": "microsoft/playwright-mcp",
+      "kind": "browser_agent_mcp",
+      "license": "Apache-2.0",
+      "source_status": "verified_upstream_option_existing_playwright_engine_preferred",
+      "activation": "only_if_specific_verified_existing_Plenum_browser_gap_and_authorized_host",
+      "tags": [
+        "browser",
+        "mcp",
+        "playwright",
+        "automation",
+        "forms"
+      ],
+      "free_cost_class": "free_source_requires_owned_host_browser_and_runtime",
+      "plenum_reuse_state": "candidate",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "agent-browser",
+      "repository": "vercel-labs/agent-browser",
+      "kind": "browser_agent_cli",
+      "license": "Apache-2.0",
+      "source_status": "verified_upstream_optional_local_shell_browser",
+      "activation": "only_for_concrete_local_host_task_if_existing_engine_cannot_do_it",
+      "tags": [
+        "browser",
+        "cli",
+        "automation",
+        "local"
+      ],
+      "free_cost_class": "free_source_requires_local_host_and_chromium",
+      "plenum_reuse_state": "candidate",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "browser-mcp",
+      "repository": "BrowserMCP/mcp",
+      "kind": "signed_in_local_browser_mcp",
+      "license": "Apache-2.0",
+      "source_status": "verified_upstream_requires_owner_browser_extension_and_local_mcp",
+      "activation": "only_on_owner_authorized_compatible_desktop_and_existing_user_session",
+      "tags": [
+        "browser",
+        "mcp",
+        "chrome",
+        "edge",
+        "session"
+      ],
+      "free_cost_class": "free_source_requires_local_desktop_and_extension",
+      "plenum_reuse_state": "candidate",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "chrome-devtools-mcp",
+      "repository": "ChromeDevTools/chrome-devtools-mcp",
+      "kind": "browser_diagnostics_mcp",
+      "license": "Apache-2.0",
+      "source_status": "verified_upstream_for_real_cross_origin_browser_debugging",
+      "activation": "when_a_real_site_rendering_or_debugging_problem_is_evidenced",
+      "tags": [
+        "browser",
+        "diagnostics",
+        "mcp",
+        "chrome"
+      ],
+      "free_cost_class": "free_source_requires_local_host_browser",
+      "plenum_reuse_state": "candidate",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "humanizer",
+      "repository": "blader/humanizer",
+      "kind": "nonexecutable_writing_skill",
+      "license": "MIT",
+      "source_status": "verified_original_markdown_writing_skill_voice_preserving",
+      "activation": "review_technical_and_sponsor_prose_only_after_sources_and_criteria_are_checked",
+      "tags": [
+        "writing",
+        "editorial",
+        "humanizer",
+        "grant",
+        "research"
+      ],
+      "free_cost_class": "free_markdown_skill_uses_existing_model",
+      "plenum_reuse_state": "method_reused",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "skillspector",
+      "repository": "NVIDIA/skillspector",
+      "kind": "agent_skill_supply_chain_scanner",
+      "license": "Apache-2.0",
+      "source_status": "verified_original_open_source_static_skill_scanner",
+      "activation": "optional_before_installing_new_untrusted_skill_static_no_llm_first",
+      "tags": [
+        "security",
+        "skills",
+        "agents",
+        "supply-chain",
+        "verification"
+      ],
+      "free_cost_class": "free_source_local_scan_optional_llm_api_extra_cost",
       "plenum_reuse_state": "candidate",
       "default_execution": "never_install_automatically"
     }

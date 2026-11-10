@@ -1,5 +1,14 @@
 # Engineering and Scientific Ledger
 
+## 2026-11-10 | Free browser + editorial source decisions — no new runtime claimed
+
+**Verified original sources and rights:** microsoft/playwright-mcp, vercel-labs/agent-browser, BrowserMCP/mcp, ChromeDevTools/chrome-devtools-mcp (Apache-2.0); blader/humanizer (MIT); NVIDIA/skillspector (Apache-2.0). Original manifest now lists **33** reviewed source references, up from 27, with existing Browser Use still indexed rather than installed anew. Original Plenum Playwright and its GitHub routes remain unchanged. [Decision and application workflow](FREE_BROWSER_AND_SUBMISSION_WORKFLOW.md) defines cost-first selection, founder sign-in/approval, and factual/prose audit.
+
+**Actually saved separately:** private ChatGPT `Plenum Editorial Council` 1.0.0 plugin with three instruction skills (document standard, Humanizer style, browser chooser); creator record confirmed six package files. No hosted browser, new resident agent, automatic Chief dispatch, local source installation, or unlimited free inference was created by this reference update. Use skills only where the user/app product invokes them; check live deployment separately.
+
+**Immediate external-account blocker:** 2027 Wilkes application has public preview questions and draft responses prepared; no user-approved signed-in application session or submission receipt verified. Avoid metered repeat previews. Next success requires review of actual form answers, formal patent/FTE counts and terms, then owner-authorized saved/submitted portal record.
+
+
 
 ## 2026-11-10 UTC | Original SU2 Simulation draft failed upstream-link provenance despite successful native model + durable issue receipt
 

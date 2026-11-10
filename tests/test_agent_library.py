@@ -37,7 +37,9 @@ class AgentCatalogContract(TestCase):
             "agentmemory","graft","elephant-goldfish-model","qwen-agentworld",
             "kilocode","openhands-sdk","langgraph","ollama","llama-cpp",
             "freecad","su2","openmdao","openmm","pybamm","rdkit","kicad",
-            "monai","blender","ffmpeg"
+            "monai","blender","ffmpeg",
+            "playwright-mcp","agent-browser","browser-mcp","chrome-devtools-mcp",
+            "humanizer","skillspector"
         ):
             self.assertIn(expected,ids)
         self.assertTrue(all(e["default_execution"]=="never_install_automatically"

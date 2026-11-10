@@ -1,5 +1,12 @@
 # Project working instructions
 
+## 2026-11-10 | Free-first browser and source-preserving proposal review
+
+Before external browser automation or importing editorial/agent skills, read [docs/FREE_BROWSER_AND_SUBMISSION_WORKFLOW.md](docs/FREE_BROWSER_AND_SUBMISSION_WORKFLOW.md) and the original computer browser progress ledger. The new six reviewed source entries are NOT installed/connected browser services, and do not demonstrate signed-in application control. Prefer direct authenticated connectors, existing Plenum-supported actions, owner-approved no-new-fee local options, then carefully scoped metered services only for a real blocker. Never use confidential project patents or personal portal credentials in public repo issues or issue artifacts.
+
+For any grant/proposal, follow recipient-specific form and founder's private Document Production Standards Ledger when accessible. Use source-preserving Humanizer-style editing after the scientific review; do not alter figures, patents, legal status, authorizations, regulatory claims or uncertainty to sound more confident. The private Plenum Editorial Council skill plugin is a saved instruction package, not a running n8n/Chief worker. Obtain founder review before correspondence or final form submission.
+
+
 
 ## 2026-11-10 | Generic no-cost source sanity checks required for untrusted AI agents
 
