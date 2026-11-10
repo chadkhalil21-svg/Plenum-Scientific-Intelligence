@@ -20,6 +20,8 @@ from fastapi.responses import HTMLResponse
 from .engine import _origin_syntax, allowed_origins, safe_url, public_dns_only
 from .owner_console import require_verified_owner
 from .private_profiles import BrowserProfileStore
+from .owner_live_access import owner_live_origin
+from .runtime_site_grants import enabled as site_grants_enabled, OwnerSiteGrantStore
 
 PUBLIC_DEMO_ORIGIN = "https://the-internet.herokuapp.com"
 
@@ -42,6 +44,19 @@ def _require_allowed_origin(site):
             or urlsplit(site).path not in ("", "/")):
         raise HTTPException(status_code=403, detail="Website origin not approved")
     return site
+
+
+def _require_owner_session_origin(site, owner_id):
+    if site in allowed_origins():
+        return _require_allowed_origin(site)
+    try:
+        origin, pinned = owner_live_origin(owner_id=owner_id, site=site)
+        if not pinned or origin != site:
+            raise PermissionError("Exact registered site required")
+        return origin
+    except PermissionError as exc:
+        raise HTTPException(status_code=403,
+                            detail="Website session is not owner-authorized") from exc
 
 
 def _owner_form_secret(owner_id):
@@ -207,6 +222,9 @@ def _validated_read_links(site, current_url, candidates):
 
 async def read_saved_site(*, site, owner, path=None):
     """Decrypt only inside the trusted server and restore only one owner/site."""
+    actual_origin, pinned = owner_live_origin(owner_id=owner,site=site)
+    if actual_origin != site:
+        raise PermissionError("Session must be bound to exact website origin")
     store = BrowserProfileStore.from_environment()
     state, _generation = store.load_for_trusted_worker(owner=owner, origin=site)
     target = safe_session_preview_url(site) if path is None else _approved_read_target(site, path)
@@ -215,8 +233,20 @@ async def read_saved_site(*, site, owner, path=None):
     await asyncio.to_thread(public_dns_only, site)
     from playwright.async_api import async_playwright
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=True)
+        browser = None
+        broker = None
         try:
+            launch = {"headless":True}
+            if pinned:
+                from .pinned_public_preview import PinnedOriginProxy
+                broker = PinnedOriginProxy(site)
+                await broker.__aenter__()
+                launch.update({
+                    "proxy":{"server":f"http://127.0.0.1:{broker.port}"},
+                    "args":["--disable-background-networking","--disable-quic",
+                            "--force-webrtc-ip-handling-policy=disable_non_proxied_udp"],
+                })
+            browser = await pw.chromium.launch(**launch)
             context = await browser.new_context(
                 storage_state=state, accept_downloads=False,
                 ignore_https_errors=False, service_workers="block",
@@ -230,6 +260,9 @@ async def read_saved_site(*, site, owner, path=None):
                     else:
                         await route.abort()
                 await context.route("**/*", constrain)
+                if pinned:
+                    await context.route_web_socket(
+                        "**/*",lambda route:route.close())
                 page = await context.new_page()
                 resp = await page.goto(target, timeout=20000,
                                        wait_until="domcontentloaded")
@@ -269,7 +302,10 @@ async def read_saved_site(*, site, owner, path=None):
             finally:
                 await context.close()
         finally:
-            await browser.close()
+            if browser is not None:
+                await browser.close()
+            if broker is not None:
+                await broker.__aexit__(None,None,None)
 
 
 # Optional multiple read-only pages per ONE exact owner approval. This is
@@ -410,7 +446,16 @@ async def _refresh_and_verify_public_demo(owner):
 def mount_owner_saved_session(app):
     @app.get("/owner/sessions", response_class=HTMLResponse)
     async def owner_sessions(_owner=Depends(require_verified_owner)):
-        origins = sorted(allowed_origins())
+        origins = set(allowed_origins())
+        if site_grants_enabled():
+            try:
+                registered = OwnerSiteGrantStore.from_environment().list_active(
+                    owner=_owner["private_owner_id"])
+                origins.update(row["origin"] for row in registered)
+            except Exception as exc:
+                raise HTTPException(status_code=503,
+                                    detail="Owner site registry unavailable") from exc
+        origins = sorted(origins)
         if (not os.environ.get("BROWSER_PROFILE_BUCKET")
                 or not os.environ.get("BROWSER_SESSION_KEY")):
             return _page("Session vault not yet provisioned",
@@ -473,7 +518,7 @@ def mount_owner_saved_session(app):
         csrf_token: str = Form(default=""),
         _owner=Depends(require_verified_owner),
     ):
-        site = _require_allowed_origin(site)
+        site = _require_owner_session_origin(site,_owner["private_owner_id"])
         _verify_owner_form(request,_owner["private_owner_id"],site,"preview",csrf_token)
         try:
             result = await asyncio.wait_for(read_saved_site(
@@ -509,7 +554,7 @@ def mount_owner_saved_session(app):
         Never expose saved website contents to public GitHub, model tools,
         anonymous callers, query-string parameters or workflow artifacts.
         """
-        site = _require_allowed_origin(site)
+        site = _require_owner_session_origin(site,_owner["private_owner_id"])
         _verify_owner_form(request, _owner["private_owner_id"], site,
                            "browse", csrf_token)
         try:
@@ -579,7 +624,7 @@ def mount_owner_saved_session(app):
         csrf_token: str = Form(default=""),
         _owner=Depends(require_verified_owner),
     ):
-        site = _require_allowed_origin(site)
+        site = _require_owner_session_origin(site,_owner["private_owner_id"])
         _verify_owner_form(request,_owner["private_owner_id"],site,"revoke",csrf_token)
         if confirmation != "REVOKE":
             raise HTTPException(status_code=403, detail="Explicit revoke confirmation required")
