@@ -372,6 +372,17 @@ class PrivateLoginTests(unittest.TestCase):
 
 @unittest.skipUnless(HAS_TEST,"Browser owner diagnostic needs async gateway deps")
 class OwnerBlankPageDiagnostics(unittest.IsolatedAsyncioTestCase):
+    def test_owner_stream_repaints_after_delayed_javascript_first_paint(self):
+        import inspect
+        code=inspect.getsource(private_login.mount_private_login)
+        self.assertIn("refresh_task=asyncio.create_task(refresh_picture())",code)
+        self.assertIn("await asyncio.sleep(3)",code)
+        self.assertIn("for tick in range(200):",code)
+        self.assertIn("frame_lock=asyncio.Lock()",code)
+        self.assertIn("await show_picture()",code)
+        self.assertIn("refresh_task.cancel()",code)
+        self.assertIn("owner_live_origin,",code)
+
     async def test_health_has_only_aggregates_without_page_content_or_urls(self):
         page=unittest.mock.Mock()
         page.evaluate=AsyncMock(return_value=False)
