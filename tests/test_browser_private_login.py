@@ -536,7 +536,9 @@ class AppleAuthenticationOptInPolicy(unittest.TestCase):
         code = __import__("inspect").getsource(private_login.mount_private_login)
         self.assertIn("approved_origins=_approved_live_origins(", code)
         self.assertIn("additional_origins=approved_origins-{origin}", code)
-        self.assertIn("safe_url(req.url,origins=approved_origins)", code)
+        self.assertIn("_allow_live_request(", code)
+        self.assertIn('allow_apple_auth=apple_auth=="1"', code)
+        self.assertIn("primary=origin,approved=approved_origins", code)
         self.assertIn("safe_url(page.url,origins={origin})", code)
 
 
