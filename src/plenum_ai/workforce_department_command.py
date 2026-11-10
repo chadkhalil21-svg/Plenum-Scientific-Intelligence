@@ -116,7 +116,7 @@ def audit_public_draft_repositories(draft: str, *, catalogue=None) -> dict:
     index = load_sources() if catalogue is None else catalogue
     known_repos = {x["repository"].casefold() for x in index["entries"]}
     approved, unreviewed, malformed = set(), set(), 0
-    for matched in re.finditer(r"https?://[^\\s\\[\\]<>\\(\\)\\{\\}]+", draft, re.I):
+    for matched in re.finditer(r"https?://[^\s<>()\[\]{}]+", draft, re.I):
         raw = matched.group(0).rstrip(".,;:!?")
         url = urlsplit(raw)
         if (url.hostname or "").casefold() not in ("github.com", "www.github.com"):
