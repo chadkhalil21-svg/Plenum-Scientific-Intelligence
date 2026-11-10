@@ -491,7 +491,7 @@
         "forms"
       ],
       "free_cost_class": "free_source_requires_owned_host_browser_and_runtime",
-      "plenum_reuse_state": "candidate_upstream_no_new_install",
+      "plenum_reuse_state": "candidate",
       "default_execution": "never_install_automatically"
     },
     {
@@ -508,7 +508,7 @@
         "local"
       ],
       "free_cost_class": "free_source_requires_local_host_and_chromium",
-      "plenum_reuse_state": "candidate_not_runtime_connected",
+      "plenum_reuse_state": "candidate",
       "default_execution": "never_install_automatically"
     },
     {
@@ -526,7 +526,7 @@
         "session"
       ],
       "free_cost_class": "free_source_requires_local_desktop_and_extension",
-      "plenum_reuse_state": "candidate_not_connected_in_chat",
+      "plenum_reuse_state": "candidate",
       "default_execution": "never_install_automatically"
     },
     {
@@ -543,7 +543,7 @@
         "chrome"
       ],
       "free_cost_class": "free_source_requires_local_host_browser",
-      "plenum_reuse_state": "candidate_not_runtime_connected",
+      "plenum_reuse_state": "candidate",
       "default_execution": "never_install_automatically"
     },
     {
@@ -561,8 +561,8 @@
         "research"
       ],
       "free_cost_class": "free_markdown_skill_uses_existing_model",
-      "plenum_reuse_state": "portable_skill_reviewed_reuse_as_instruction_not_executed",
-      "default_execution": "no_external_api_or_auto_install"
+      "plenum_reuse_state": "method_reused",
+      "default_execution": "never_install_automatically"
     },
     {
       "id": "skillspector",
@@ -579,7 +579,7 @@
         "verification"
       ],
       "free_cost_class": "free_source_local_scan_optional_llm_api_extra_cost",
-      "plenum_reuse_state": "candidate_security_gate_not_installed",
+      "plenum_reuse_state": "candidate",
       "default_execution": "never_install_automatically"
     }
   ]
