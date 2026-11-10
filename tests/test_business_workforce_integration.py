@@ -47,11 +47,15 @@ class BusinessWorkforceContractTest(unittest.TestCase):
         assignments = next(n for n in flow["nodes"] if n["name"] == "Assign Nine Roles")
         script = assignments["parameters"]["jsCode"]
         self.assertEqual(script.count('["'), 9)
+        self.assertIn("rubric:rubrics[role]", script)
+        self.assertIn("NEEDS_VERIFICATION", script)
+        self.assertIn("Do not claim", next(n for n in flow["nodes"] if n["name"] == "Plenum Specialist Agent")["parameters"]["options"]["systemMessage"])
         for role in ("research", "engineering", "browser", "creative", "marketing",
                      "operations", "simulation", "support", "verification"):
             self.assertIn('["' + role + '"', script)
         review = next(n for n in flow["nodes"] if n["name"] == "Founder Review Queue")
         self.assertIn("DRAFT_AWAITING_FOUNDER_REVIEW", review["parameters"]["jsCode"])
+        self.assertIn("quality_rubric", review["parameters"]["jsCode"])
         self.assertIn("external_actions_executed: false", review["parameters"]["jsCode"])
         self.assertEqual(len(flow["connections"]), 5)
 

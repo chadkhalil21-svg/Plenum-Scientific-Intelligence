@@ -3,6 +3,13 @@ on:
   push:
     branches: [feat/live-business-workforce-20261110]
     paths: ['.github/workflows/business-workforce-n8n-agent-trial.yml']
+  pull_request:
+    paths:
+      - '.github/workflows/business-workforce-n8n-agent-trial.yml'
+      - 'integrations/n8n/plenum-business-workforce.json'
+      - 'src/plenum_ai/business_public_watch.py'
+  schedule:
+    - cron: '49 11 * * 3'
   workflow_dispatch:
 permissions:
   contents: read
@@ -17,6 +24,15 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - name: Collect true public operational facts for the agent mission
+        run: |
+          mkdir -p reports
+          set +e
+          PYTHONPATH=src python -m plenum_ai.business_public_watch --out reports/public-business-readback.json
+          status=$?
+          set -e
+          test -s reports/public-business-readback.json
+          echo "PUBLIC_READBACK_EXIT=$status; agent receives pass/unverified statuses, never business credentials."
       - name: Start ephemeral private network and free Ollama
         run: |
           docker network create plenum-trial-network
@@ -43,6 +59,22 @@ jobs:
           }]
           workflow=json.loads(Path('integrations/n8n/plenum-business-workforce.json').read_text())
           assert workflow['active'] is False and len(workflow['nodes'])==6
+          # The nine specialists see ONLY evidence-graded, public status labels.
+          evidence=json.loads(Path('reports/public-business-readback.json').read_text())
+          assert evidence['schema']=='plenum-public-business-readback-v1'
+          assert len(evidence['reports'])==3
+          allowed={'corporate','platform','public_server'}
+          assert set(x['service'] for x in evidence['reports'])==allowed
+          assert all(x['status'] in {'PUBLIC_HTTP_VERIFIED','UNVERIFIED'} for x in evidence['reports'])
+          summary='; '.join(x['service']+'='+x['status'] for x in evidence['reports'])
+          mission=('Review independently reread PUBLIC business web availability: '+summary+
+              '. Give bounded, testable next steps for your specialist role. Do not invent customer transactions, send messages, or claim accounts were accessed.')
+          node=next(n for n in workflow['nodes'] if n['name']=='Assign Nine Roles')
+          original='const mission = "Prepare an evidence-based, non-confidential operating plan for a one-person technology company.";'
+          assert original in node['parameters']['jsCode']
+          node['parameters']['jsCode']=node['parameters']['jsCode'].replace(
+              original,'const mission = '+json.dumps(mission)+';')
+
           model=next(n for n in workflow['nodes'] if n['name']=='Local Ollama (Configure Credential)')
           model['parameters']['model']='qwen3:0.6b'
           model['credentials']={'ollamaApi':{'id':cred_id,'name':'Plenum Ephemeral Ollama'}}
@@ -92,7 +124,12 @@ jobs:
           from pathlib import Path
           text=Path('runtime-trial/run.log').read_text(errors='replace')
           assert 'Error executing workflow' not in text
-          print('n8n process reported success. This does not validate individual draft quality.')
+          assert text.count('DRAFT_AWAITING_FOUNDER_REVIEW')>=9, 'Expected nine founder-review entries'
+          for role in ('research','engineering','browser','creative','marketing',
+                       'operations','simulation','support','verification'):
+              assert '"role": "'+role+'"' in text, 'Missing role '+role
+          print('PASS: Nine actual model-produced drafts with role-labeled founder review; factual accuracy remains unverified.')
+
           PY
       - name: Delete temporary credentials, n8n database and model
         if: always()
