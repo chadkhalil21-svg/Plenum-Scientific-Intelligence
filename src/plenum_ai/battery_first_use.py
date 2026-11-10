@@ -51,7 +51,7 @@ def run_spm_first_use() -> dict:
             raise RuntimeError("Nonmonotone solver timeline")
         # Independent analytic constant-current integral from the ACTUAL output
         # samples, instead of trusting the model's discharge-capacity variable.
-        amp_hours_from_current = float(np.trapezoid(amps, t_s) / 3600.0)
+        amp_hours_from_current = float(np.sum((amps[:-1] + amps[1:]) * np.diff(t_s) / 2.0) / 3600.0)
         model_discharge_Ah = float(discharged_Ah[-1] - discharged_Ah[0])
         reference_Ah = float(applied_A * (t_s[-1] - t_s[0]) / 3600.0)
         current_error = float(np.max(np.abs(amps - applied_A)))
