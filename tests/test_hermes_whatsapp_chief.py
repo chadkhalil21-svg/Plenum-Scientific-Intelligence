@@ -23,7 +23,7 @@ class WhatsAppChiefRoutingContract(unittest.TestCase):
         self.assertIn("backend: profile_routes", yaml)
         self.assertIn("max_concurrent_children: 2", yaml)
         self.assertIn("max_spawn_depth: 1", yaml)
-        self.assertIn("subagent_auto_approve: false", yaml)
+        self.assertIn("orchestrator_enabled: false", yaml)
         self.assertEqual(yaml.count("- name: "), 9)
         self.assertNotIn("- name: chief", yaml)
         for role in mod.EXPECTED - {"chief"}:
