@@ -1,0 +1,117 @@
+name: Browser Engineering | Founder OpenHands Source Proposal
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    paths:
+      - 'src/plenum_ai/browser_issue_coder.py'
+      - 'tests/test_browser_issue_coder.py'
+      - '.github/workflows/browser-issue-code-agent.yml'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-browser-coder-${{ github.event.issue.number || github.ref }}
+  cancel-in-progress: false
+jobs:
+  contract:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - run: python -m unittest discover -s tests -p 'test_browser_issue_coder.py' -v
+  actual-founder-code-agent:
+    if: >-
+      github.event_name == 'issues' &&
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == '[Plenum Browser Coder] public proposal'
+    runs-on: ubuntu-latest
+    timeout-minutes: 32
+    permissions:
+      contents: read
+      issues: write
+    env:
+      PLENUM_EPHEMERAL_RUNNER: confirmed
+      PLENUM_OPENHANDS_MODEL: ollama/qwen3:1.7b
+      PLENUM_OPENHANDS_BASE_URL: http://127.0.0.1:11434
+      PLENUM_OPENHANDS_API_KEY: ''
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      ANONYMIZED_TELEMETRY: 'false'
+      LANGSMITH_TRACING: 'false'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Founder-only PUBLIC scope before any model install
+        run: |
+          python -m pip install -e .
+          python -m plenum_ai.browser_issue_coder --event "$GITHUB_EVENT_PATH"
+      - name: Start existing disposable zero-provider-fee local Qwen
+        run: |
+          docker pull ollama/ollama:latest
+          docker run -d --rm --name plenum-browser-code-qwen --memory=5g --cpus=3 \
+            -e OLLAMA_CONTEXT_LENGTH=22000 -e OLLAMA_NUM_PARALLEL=1 \
+            -p 127.0.0.1:11434:11434 ollama/ollama:latest
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:11434/api/tags > /dev/null; then break; fi
+            sleep 2
+          done
+          docker exec plenum-browser-code-qwen ollama pull qwen3:1.7b
+      - name: Use existing reviewed OpenHands SDK and file editor only
+        run: |
+          python -m pip install -e '.[openhands_tools]'
+          python -m pip check
+      - name: Agent reads original browser and writes one isolated review candidate
+        timeout-minutes: 13
+        run: |
+          timeout 700 python -m plenum_ai.browser_issue_coder \
+            --event "$GITHUB_EVENT_PATH" --execute
+      - name: Independent syntax and provenance receipt
+        env:
+          GH_ISSUE: ${{ github.event.issue.number }}
+        run: |
+          python - <<'PY'
+          import ast,hashlib,json,os,pathlib
+          base=pathlib.Path('reports/browser-agent/issue-'+os.environ['GH_ISSUE'])
+          report=json.loads((base/'result.json').read_text())
+          candidate=(base/'proposal.py').read_bytes()
+          ast.parse(candidate.decode('utf-8'))
+          assert report['status']=='SOURCE_PROPOSAL_AWAITING_REVIEW'
+          assert report['candidate_sha256']==hashlib.sha256(candidate).hexdigest()
+          assert report['model_executed'] and report['source_candidate_syntax_verified']
+          assert not report['production_written'] and not report['external_account_actions']
+          assert not report['independent_behavior_verified']
+          print('Actual local OpenHands candidate: syntax verified, behavior NOT verified')
+          PY
+      - name: Preserve review-only evidence with no private browser content
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-agent-public-source-${{ github.event.issue.number }}
+          path: reports/browser-agent/issue-${{ github.event.issue.number }}/
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Report bounded execution status on original founder issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          if test -s "reports/browser-agent/issue-$ISSUE/proposal.py"; then
+            gh issue comment "$ISSUE" --body "OpenHands SOURCE_PROPOSAL_AWAITING_REVIEW: model wrote an isolated syntax-checked candidate. See the seven-day Actions artifact. NOT reviewed, merged, deployed, authenticated, or evidence of TinyFish parity. Run: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          else
+            gh issue comment "$ISSUE" --body "OpenHands BLOCKED: no independently syntax-checked browser source candidate. No production code, accounts or credentials touched. Run: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          fi
+      - name: Destroy temporary inference server
+        if: always()
+        run: docker rm -f plenum-browser-code-qwen 2>/dev/null || true
