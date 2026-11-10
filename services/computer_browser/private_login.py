@@ -20,6 +20,29 @@ from .private_profiles import BrowserProfileStore
 from .owner_live_access import owner_live_origin
 
 
+# Apple documents these exact HTTPS hosts as Apple Account sign-in dependencies.
+# An owner must opt in for EACH private App Store Connect session. The existing
+# public-IP pinned proxy still rejects every unlisted destination, and other
+# registered websites retain their original exact single-origin policy.
+_APP_STORE_ORIGIN = "https://appstoreconnect.apple.com"
+_APPLE_LOGIN_ORIGINS = frozenset({
+    "https://idmsa.apple.com",
+    "https://appleid.cdn-apple.com",
+    "https://account.apple.com",
+    "https://gsa.apple.com",
+})
+
+
+def _approved_live_origins(origin, *, dynamic, apple_auth):
+    if apple_auth not in ("0", "1"):
+        raise PermissionError("Invalid Apple authentication permission")
+    if apple_auth == "0":
+        return frozenset({origin})
+    if origin != _APP_STORE_ORIGIN or not dynamic:
+        raise PermissionError("Apple sign-in scope requires registered private site")
+    return frozenset({origin}) | _APPLE_LOGIN_ORIGINS
+
+
 def filter_site_storage(state,site_origin):
     """Keep only the selected HTTPS site's encrypted cookies/localStorage/IndexedDB.
 
@@ -100,6 +123,10 @@ def login_html(nonce):
     is not an account password.</p>
     <label>Website <input id="url" type="url" placeholder="https://website.example/login"
     required maxlength="1200" autocomplete="off"></label>
+    <label><input id="apple-auth" type="checkbox">
+    For App Store Connect only: permit Apple's four documented sign-in hosts
+    during this private browser session. All other websites remain blocked.
+    Sign-in and MFA remain thine own actions.</label>
     <button id="open">Open secure browser</button>
     <p id="status" role="status">Not connected</p>
     <canvas width="1024" height="720" id="display" tabindex="0" aria-label="Remote Chromium view: tap or click a field to select it"></canvas>
@@ -145,10 +172,12 @@ def login_html(nonce):
       ws=null;ready=false;pageBlank=true;selected="none";pendingText=null;saveInFlight=false;
       updateTypingEnabled();clearStalePreview();
       const target=document.getElementById("url").value.trim();
+      const appleAuth=document.getElementById("apple-auth").checked?"1":"0";
       status.textContent="Checking owner-approved website access...";
       let access;
       try{
-        access=await fetch("/owner/live-access?site="+encodeURIComponent(target),{
+        access=await fetch("/owner/live-access?site="+encodeURIComponent(target)+
+            "&apple_auth="+appleAuth,{
           credentials:"same-origin",cache:"no-store",headers:{"Accept":"application/json"}
         });
       }catch(_){
@@ -166,6 +195,7 @@ def login_html(nonce):
       const u=new URL("/owner/live",location.origin);
       u.protocol=location.protocol==="https:"?"wss:":"ws:";
       u.searchParams.set("site",target);
+      u.searchParams.set("apple_auth",appleAuth);
       const connection=new WebSocket(u);
       ws=connection;ready=false;pageBlank=true;selected="none";pendingText=null;saveInFlight=false;
       updateTypingEnabled();
@@ -352,15 +382,19 @@ async def _page_render_health(ws, page, blocked):
 def mount_private_login(app):
     @app.get("/owner/live-access")
     async def live_access(site: str=Query(min_length=9,max_length=1200),
+                          apple_auth: str="0",
                           _owner=Depends(require_verified_owner)):
         """Same-origin, verified-owner HTTP preflight; no browser or secrets."""
         try:
             origin, pinned=owner_live_origin(
                 owner_id=_owner["private_owner_id"],site=site)
+            approved_origins=_approved_live_origins(
+                origin,dynamic=pinned,apple_auth=apple_auth)
         except PermissionError as exc:
             raise HTTPException(status_code=403,
                                 detail="Website not approved for private sign-in") from exc
-        return {"approved":True,"pinned_single_origin":pinned,
+        return {"approved":True,"pinned_single_origin":pinned and apple_auth=="0",
+                "pinned_exact_origins":len(approved_origins) if pinned else 0,
                 "site_specific_owner_consent":True,
                 "login_restoration_verified":False}
 
@@ -380,7 +414,7 @@ def mount_private_login(app):
             })
 
     @app.websocket("/owner/live")
-    async def live(ws:WebSocket,site:str,demo:str="0"):
+    async def live(ws:WebSocket,site:str,demo:str="0",apple_auth:str="0"):
         # IAP's unsigned email headers can be forged; accept only its signed JWT.
         try:
             # Auth0 portal accepts only Authlib-verified and signed owner
@@ -395,7 +429,9 @@ def mount_private_login(app):
                 raise PermissionError("Origin not owner authorized")
             origin, dynamic=owner_live_origin(
                 owner_id=owner["private_owner_id"],site=site)
-            if demo=="1" and not ci:
+            approved_origins=_approved_live_origins(
+                origin,dynamic=dynamic,apple_auth=apple_auth)
+            if demo=="1" and (not ci or apple_auth=="1"):
                 raise PermissionError("Offline demonstration is not enabled")
             if demo not in ("0","1"):
                 raise PermissionError("Unknown execution mode")
@@ -418,7 +454,8 @@ def mount_private_login(app):
                 # Reuse exact public-IP-pinned CONNECT proxy already audited
                 # for registered website previews. No direct cross-site egress.
                 broker=PinnedOriginProxy(
-                    origin,max_tunnels=16,
+                    origin,additional_origins=approved_origins-{origin},
+                    max_tunnels=16,
                     max_tunnel_bytes=30_000_000,max_lifetime=600)
                 await broker.__aenter__()
             phase="chromium_start"
@@ -441,10 +478,10 @@ def mount_private_login(app):
                     async def limited_origin(route):
                         req=route.request
                         if (req.method in {"GET","HEAD","POST","OPTIONS"} and
-                                safe_url(req.url,origins={origin})):
+                                safe_url(req.url,origins=approved_origins)):
                             await route.continue_()
                         else:
-                            if not safe_url(req.url,origins={origin}):
+                            if not safe_url(req.url,origins=approved_origins):
                                 blocked["cross_origin"]+=1
                             await route.abort()
                     await context.route("**/*",limited_origin)
@@ -547,6 +584,10 @@ def mount_private_login(app):
                             await ws.send_json({"type":"save_result","ok":False,
                                 "message":"Offline test does not save login state"})
                             continue
+                        if not safe_url(page.url,origins={origin}):
+                            await ws.send_json({"type":"save_result","ok":False,
+                                "message":"Return to the original website before saving its session."})
+                            continue
                         try:
                             origin="https://"+urlsplit(site).hostname
                             # Official Playwright supports IndexedDB auth state
@@ -578,7 +619,7 @@ def mount_private_login(app):
                         break
                     else:
                         raise PermissionError("Unknown browser operation")
-                    if demo=="0" and not safe_url(page.url,origins={origin}):
+                    if demo=="0" and not safe_url(page.url,origins=approved_origins):
                         raise PermissionError("Website redirected off authorized origins")
                     await show_picture()
                 else:

@@ -154,6 +154,77 @@ class PinnedProxyOriginalSocketTests(unittest.IsolatedAsyncioTestCase):
             await echo.wait_closed()
 
 
+    async def test_additional_exact_host_pins_separately_and_blocks_unknown_connect(self):
+        primary="https://example.org"
+        extra="https://login.example.net"
+        ips={primary:"93.184.215.14", extra:"93.184.215.15"}
+        resolutions=[]
+        def public_pin(origin):
+            resolutions.append(origin)
+            return ips[origin]
+        async def local_echo(reader,writer):
+            writer.write(b"proof")
+            await writer.drain()
+            writer.close()
+            await writer.wait_closed()
+        echo=await asyncio.start_server(local_echo,"127.0.0.1",0)
+        original_connect=asyncio.open_connection
+        remote=[]
+        async def guarded_connect(host,port,*args,**kwargs):
+            if host=="93.184.215.15" and port==443:
+                remote.append((host,port))
+                return await original_connect("127.0.0.1",
+                    echo.sockets[0].getsockname()[1])
+            raise AssertionError("Unsafe or unexpected remote connection")
+        try:
+            with patch.object(preview,"resolve_public_ip",side_effect=public_pin):
+                async with preview.PinnedOriginProxy(
+                        primary,additional_origins=(extra,)) as proxy:
+                    self.assertEqual(resolutions,[primary,extra])
+                    with patch.object(preview.asyncio,"open_connection",
+                                      side_effect=guarded_connect):
+                        for host in ("169.254.169.254","bad.example.net",
+                                     "login.example.net:8080"):
+                            reader,writer=await original_connect("127.0.0.1",proxy.port)
+                            target=host if ":" in host else host+":443"
+                            writer.write(("CONNECT "+target+" HTTP/1.1\r\n\r\n").encode())
+                            await writer.drain()
+                            self.assertIn(b"403 Forbidden",await reader.read(150))
+                            writer.close()
+                            await writer.wait_closed()
+                        reader,writer=await original_connect("127.0.0.1",proxy.port)
+                        writer.write(b"CONNECT login.example.net:443 HTTP/1.1\r\n\r\n")
+                        await writer.drain()
+                        self.assertIn(b"200 Connection Established",
+                                      await reader.readuntil(b"\r\n\r\n"))
+                        self.assertEqual(await reader.read(5),b"proof")
+                        writer.close()
+                        await writer.wait_closed()
+                    self.assertEqual(remote,[("93.184.215.15",443)])
+        finally:
+            echo.close()
+            await echo.wait_closed()
+
+    async def test_additional_origin_is_exact_bounded_and_public_ip_only(self):
+        with self.assertRaises(ValueError):
+            preview.PinnedOriginProxy(SITE, additional_origins=(
+                "https://a.example.org","https://b.example.org","https://c.example.org",
+                "https://d.example.org","https://e.example.org","https://f.example.org"))
+        for bad in ("https://127.0.0.1","http://account.example.org",
+                    "https://idmsa.apple.com/extra"):
+            with self.subTest(bad=bad),self.assertRaises(PermissionError):
+                preview.PinnedOriginProxy(SITE,additional_origins=(bad,))
+        def resolver(url):
+            if url=="https://example.org":return "93.184.215.14"
+            raise PermissionError("No public IP for extra")
+        with patch.object(preview,"resolve_public_ip",side_effect=resolver):
+            with self.assertRaises(PermissionError):
+                async with preview.PinnedOriginProxy(
+                        SITE,additional_origins=("https://login.example.net",)):
+                    pass
+
+
+
 @unittest.skipUnless(FASTAPI and CRYPTO, "Optional browser gateway packages absent")
 class OwnerOnlyRegisteredPreviewTests(unittest.TestCase):
     def setUp(self):

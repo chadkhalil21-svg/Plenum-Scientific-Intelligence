@@ -64,7 +64,14 @@ class PinnedOriginProxy:
     """Single-origin loopback CONNECT broker, using *only* pinned public IP."""
 
     def __init__(self, origin: str, *, max_tunnels=MAX_TUNNELS,
-                 max_tunnel_bytes=MAX_TUNNEL_BYTES, max_lifetime=MAX_LIFETIME):
+                 max_tunnel_bytes=MAX_TUNNEL_BYTES, max_lifetime=MAX_LIFETIME,
+                 additional_origins=()):
+        """Additional exact HTTPS origins must come from a trusted owner policy.
+
+        No suffix wildcard, browser-discovered host, URL parameter or page
+        content may expand this set. Every hostname is resolved and pinned
+        independently before opening Chromium.
+        """
         # Defaults preserve the original public-preview security envelope.
         # Larger bounded values may be supplied only by a trusted owner worker.
         if (not all(type(v) is int for v in
@@ -77,7 +84,16 @@ class PinnedOriginProxy:
         self.max_tunnel_bytes = max_tunnel_bytes
         self.max_lifetime = max_lifetime
         self.origin = normalize_origin(origin)
-        self.host = urlsplit(origin).hostname
+        self.host = urlsplit(self.origin).hostname
+        if not isinstance(additional_origins, (tuple, list, frozenset, set)):
+            raise ValueError("Expected explicit additional origins")
+        if len(additional_origins) > 5:
+            raise ValueError("Too many approved proxy origins")
+        extras = frozenset(normalize_origin(item) for item in additional_origins)
+        if self.origin in extras:
+            raise ValueError("Duplicate primary proxy origin")
+        self.additional_origins = extras
+        self.host_ips = {}
         self.ip = None
         self.port = None
         self.server = None
@@ -86,6 +102,14 @@ class PinnedOriginProxy:
 
     async def __aenter__(self):
         self.ip = await asyncio.to_thread(resolve_public_ip, self.origin)
+        hosts = {self.host: self.ip}
+        for extra in sorted(self.additional_origins):
+            host = urlsplit(extra).hostname
+            if host in hosts:
+                raise ValueError("Duplicate approved proxy hostname")
+            hosts[host] = await asyncio.to_thread(resolve_public_ip, extra)
+        # Atomic publication: a failed resolution permits no tunnel.
+        self.host_ips = hosts
         self.server = await asyncio.start_server(self._handle, "127.0.0.1", 0,
                                                  limit=16_384)
         self.port = self.server.sockets[0].getsockname()[1]
@@ -112,15 +136,18 @@ class PinnedOriginProxy:
                 return
             # Disallow absolute-form proxy GET, alternative ports, IPv6
             # literals, CONNECT credentials, proxy auth, and proxy introspection.
-            if (first not in (f"CONNECT {self.host}:443 HTTP/1.1",
-                              f"CONNECT {self.host}:443 HTTP/1.0")
-                    or b"\r\nproxy-authorization:" in header.lower()):
+            target_ip = next((
+                ip for host, ip in self.host_ips.items()
+                if first in (f"CONNECT {host}:443 HTTP/1.1",
+                             f"CONNECT {host}:443 HTTP/1.0")
+            ), None)
+            if target_ip is None or b"\r\nproxy-authorization:" in header.lower():
                 writer.write(b"HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n")
                 await writer.drain()
                 return
             try:
                 rr, rw = await asyncio.wait_for(
-                    asyncio.open_connection(self.ip, 443), timeout=8)
+                    asyncio.open_connection(target_ip, 443), timeout=8)
                 remote = rw
             except (OSError, asyncio.TimeoutError):
                 writer.write(b"HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n")

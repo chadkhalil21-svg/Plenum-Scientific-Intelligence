@@ -421,5 +421,47 @@ class OwnerBlankPageDiagnostics(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("secret",str(ws.send_json.await_args.args[0]))
 
 
+
+@unittest.skipUnless(HAS_TEST, "Owner-only Apple scope needs original gateway")
+class AppleAuthenticationOptInPolicy(unittest.TestCase):
+    def test_apple_dependencies_require_exact_site_private_owner_and_opt_in(self):
+        primary = "https://appstoreconnect.apple.com"
+        base = private_login._approved_live_origins(
+            primary, dynamic=True, apple_auth="0")
+        self.assertEqual(base, frozenset({primary}))
+        approved = private_login._approved_live_origins(
+            primary, dynamic=True, apple_auth="1")
+        self.assertEqual(len(approved), 5)
+        self.assertIn("https://idmsa.apple.com", approved)
+        self.assertIn("https://appleid.cdn-apple.com", approved)
+        self.assertIn("https://account.apple.com", approved)
+        self.assertIn("https://gsa.apple.com", approved)
+        for site, dynamic, flag in (
+            ("https://unrelated.example", True, "1"),
+            (primary, False, "1"),
+            (primary, True, "true"),
+            (primary, True, "2"),
+        ):
+            with self.subTest(site=site, dynamic=dynamic, flag=flag):
+                with self.assertRaises(PermissionError):
+                    private_login._approved_live_origins(
+                        site, dynamic=dynamic, apple_auth=flag)
+        self.assertEqual(private_login._approved_live_origins(
+            "https://unrelated.example", dynamic=True, apple_auth="0"),
+            frozenset({"https://unrelated.example"}))
+
+    def test_owner_canvas_requires_explicit_session_only_checkbox(self):
+        page = private_login.login_html("synthetic-nonce")
+        self.assertIn('id="apple-auth" type="checkbox"', page)
+        self.assertNotIn('id="apple-auth" type="checkbox" checked', page)
+        self.assertIn('"&apple_auth="+appleAuth', page)
+        self.assertIn('u.searchParams.set("apple_auth",appleAuth)', page)
+        code = __import__("inspect").getsource(private_login.mount_private_login)
+        self.assertIn("approved_origins=_approved_live_origins(", code)
+        self.assertIn("additional_origins=approved_origins-{origin}", code)
+        self.assertIn("safe_url(req.url,origins=approved_origins)", code)
+        self.assertIn("safe_url(page.url,origins={origin})", code)
+
+
 if __name__=="__main__":
     unittest.main()
