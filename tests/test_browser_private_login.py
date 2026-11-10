@@ -213,6 +213,9 @@ class PrivateLoginTests(unittest.TestCase):
             send(raw){this.commands.push(JSON.parse(raw));}
             close(){this.readyState=3;}
           }
+          // Owner permission preflight is an existing authenticated HTTP
+          // gate; the synthetic UI test injects its successful response.
+          window.fetch=async()=>({ok:true,status:200});
           window.WebSocket=TestWebSocket;
         })();"""
         with sync_playwright() as p:
