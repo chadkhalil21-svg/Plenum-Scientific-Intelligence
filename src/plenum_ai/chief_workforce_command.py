@@ -114,6 +114,19 @@ def preflight(event: dict) -> dict:
     }
 
 
+
+def independently_accept_delegation(expected: str, routed_roles: list,
+                                    observations: list, total_calls: int) -> bool:
+    """Real worker count must equal one. Redundant *same-role* requests are inert."""
+    return (
+        expected in KIND_TO_AGENT
+        and total_calls >= 1
+        and len(routed_roles) == total_calls
+        and len(observations) == 1
+        and all(role == KIND_TO_AGENT[expected] for role in routed_roles)
+        and observations[0]["kind"] == expected
+    )
+
 def execute(event: dict, *, output_dir: Path) -> dict:
     report = preflight(event)
     if (
@@ -214,11 +227,8 @@ def execute(event: dict, *, output_dir: Path) -> dict:
     # Local Qwen can redundantly call Deep Agents' task router several times.
     # A repeated *request* is not a second external execution: the tool enforces
     # one real specialist invocation. Reject even one wrong-role delegation.
-    correct = (
-        len(calls) >= 1 and len(observations) == 1
-        and len(routed_roles) == len(calls)
-        and all(role == KIND_TO_AGENT[expected] for role in routed_roles)
-        and observations[0]["kind"] == expected
+    correct = independently_accept_delegation(
+        expected, routed_roles, observations, len(calls)
     )
     verified = correct and outcome.get("status") == "DRAFT_READY_FOR_FOUNDER"
     report.update({
