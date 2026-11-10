@@ -1,5 +1,23 @@
 # Plenum Workforce | One Free Assignment Inbox
 
+## Founder multi-specialist missions — 2026-11-10
+
+The existing **Deep Agents + LangGraph Chief** is now wired for a PUBLIC, nonsensitive mission that can request **two or three distinct, original Plenum worker capabilities** rather than one. No second orchestration framework or model is introduced. The work is event-driven on a disposable GitHub Actions runner, not an always-on private company. Real execution and outcomes require an actual founder-created issue and independent workflow evidence.
+
+Create an original founder GitHub issue with exact title `[Plenum Chief] public mission` and an exact two-line body:
+
+```
+PLENUM_CHIEF_PUBLIC_MISSION_V1
+objective: Create a public data validator program and an original SVG illustration
+```
+
+The requested objective must contain two or three independently recognized capabilities (public sources/research; code/program/validator; numerical/thermal; original SVG/music/art), be 20–120 characters, and pass the **existing original Chief's founder/sensitivity checks before any model starts**. The Chief receives four original tool-specialist choices and must use the built-in real `task` delegation mechanism; every actual worker is checked independently. A deterministic permission gate blocks a model from executing additional scopes beyond those independently recognized from the founder's original text. Duplicate model delegation requests are inert. Each worker receives a distinct artifact directory to prevent overwrites. A verified result requires *all* distinct requested workers to execute, return their separately checked known capabilities, and have correct model `task` routing. One failed or missing worker blocks the team's success status; no fictional completion.
+
+The original four capabilities are **public-source research leads**, **review-only code starter with AST and checksum**, **existing known-model numerical study with SQLite checkpoint**, and **original SVG/MusicXML sketches with XML parsing**. Reports and bounded public artifacts remain attached to the originating issue through a seven-day GitHub Actions artifact. Do not call model-generated text independently verified research, novel scientific discoveries, production code, externally sent messages or actual private business operations. The nine n8n role-based drafting workers remain separately callable as before; the 283 catalogued personas remain idle, selectable metadata, not newly running models.
+
+Next acceptance is **one actual multi-specialist issue** with at least two distinct original tool-executed results, independent verification, GitHub Actions receipt, and recoverable artifacts. The ultimate goal is more general tasks and durable tool-error recovery; repeated unchanged demos are not progress.
+
+
 **Scope:** Public, nonsensitive tasks only. This is an ACTUAL input path to one approved existing research worker, not a universal autonomous company.
 
 ## 2026-11-10: Four existing specialist teams through one founder inbox
