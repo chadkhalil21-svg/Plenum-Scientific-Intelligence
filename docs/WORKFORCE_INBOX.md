@@ -2,23 +2,20 @@
 
 ## Founder multi-specialist missions — 2026-11-10
 
-The existing **Deep Agents + LangGraph Chief** is now wired for a PUBLIC, nonsensitive mission that can request **two or three distinct, original Plenum worker capabilities** rather than one. No second orchestration framework or model is introduced. The work is event-driven on a disposable GitHub Actions runner, not an always-on private company. Real execution and outcomes require an actual founder-created issue and independent workflow evidence.
+**Correction after independent actual execution:** Original [two-specialist run #42796438425](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42796438425) **FAILED**: local Qwen repeatedly deliberated until LangGraph's 38-step GraphRecursionError, although its preflight/CI passed. The first run's generic `SOURCE_READY_NOT_EXECUTED` receipt is a crash-report artifact, not proof zero subtools ran; a few bounded artifact files were uploaded but the multi-worker result was not independently finalized. **Never mark that model-driven run as verified.** Raising the recursion limit or adding a second supervisor would increase waste.
 
-Create an original founder GitHub issue with exact title `[Plenum Chief] public mission` and an exact two-line body:
+**Founder-approved correction:** Use our **existing deterministic Chief task dispatcher** for clearly separated PUBLIC missions and call the **original working Plenum worker tools**, once each, without running an LLM. The original single-worker **model-driven** Deep Agents Chief remains available on its own existing issue title. For the multi-worker route, `chief_model_delegated=false` and `model_called=false` by design; the actual specialist tools produce verifiable artifacts. This is real automated orchestration, **not independent model reasoning or 283 active AI employees**.
+
+Exact owner-created public issue title: `[Plenum Chief] public mission`. Exact body:
 
 ```
 PLENUM_CHIEF_PUBLIC_MISSION_V1
 objective: Create a public data validator program and an original SVG illustration
 ```
 
-The requested objective must contain two or three independently recognized capabilities (public sources/research; code/program/validator; numerical/thermal; original SVG/music/art), be 20–120 characters, and pass the **existing original Chief's founder/sensitivity checks before any model starts**. The Chief receives four original tool-specialist choices and must use the built-in real `task` delegation mechanism; every actual worker is checked independently. A deterministic permission gate blocks a model from executing additional scopes beyond those independently recognized from the founder's original text. Duplicate model delegation requests are inert. Each worker receives a distinct artifact directory to prevent overwrites. A verified result requires *all* distinct requested workers to execute, return their separately checked known capabilities, and have correct model `task` routing. One failed or missing worker blocks the team's success status; no fictional completion.
+The unchanged original founder identity/public-scope validator must pass **before any specialist tool starts**. Two or three independently recognized capabilities are allowed: public research/source retrieval, review-only Python starter, known numerical science with checkpoint readback, or original SVG/MusicXML assets. Unknown/ambiguous requests and sensitive content are denied. The original four existing workers run in separate artifact folders, and all must individually pass their existing verification. If one fails, the mission remains BLOCKED and successful siblings are preserved for honest founder review; no retry spiral, fabricated evidence, private-account access or paid inference. For public numerical tasks, reuse pinned original scientific extras; otherwise skip costly installation/model downloads. The original nine n8n **draft-only** roles remain separately callable, and 283 SHA-indexed personas remain idle until independently justified.
 
-The original four capabilities are **public-source research leads**, **review-only code starter with AST and checksum**, **existing known-model numerical study with SQLite checkpoint**, and **original SVG/MusicXML sketches with XML parsing**. Reports and bounded public artifacts remain attached to the originating issue through a seven-day GitHub Actions artifact. Do not call model-generated text independently verified research, novel scientific discoveries, production code, externally sent messages or actual private business operations. The nine n8n role-based drafting workers remain separately callable as before; the 283 catalogued personas remain idle, selectable metadata, not newly running models.
-
-Next acceptance is **one actual multi-specialist issue** with at least two distinct original tool-executed results, independent verification, GitHub Actions receipt, and recoverable artifacts. The ultimate goal is more general tasks and durable tool-error recovery; repeated unchanged demos are not progress.
-
-
-**Scope:** Public, nonsensitive tasks only. This is an ACTUAL input path to one approved existing research worker, not a universal autonomous company.
+**New acceptance:** a **new** real founder issue after the correction must show two distinct original specialist outputs in one run, a single durable outcome comment, independently checked per-worker artifacts, and no Qwen model runtime. A passing no-model unit test proves only our adapter code. The status is not upgraded to verified until the live run succeeds.
 
 ## 2026-11-10: Four existing specialist teams through one founder inbox
 

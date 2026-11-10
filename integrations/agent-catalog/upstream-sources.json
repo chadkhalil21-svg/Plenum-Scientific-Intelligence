@@ -1,7 +1,7 @@
 {
   "schema": "plenum-upstream-tool-sources-v1",
   "reviewed_on": "2026-11-10",
-  "comment": "Static catalogue references are not executable processes, credentials, or claims of independent agent competence.",
+  "comment": "Source references and pinned personas are not running agents. Prefer existing working Plenum tools; free code may require separately paid hosting/inference; preserve GPL/AGPL duties.",
   "entries": [
     {
       "id": "agency-agents",
@@ -10,6 +10,14 @@
       "license": "MIT",
       "source_status": "283_profile_metadata_indexed_at_immutable_commit",
       "activation": "idle_by_default"
+    },
+    {
+      "id": "agency-agents-app",
+      "repository": "msitarzewski/agency-agents-app",
+      "kind": "local_native_persona_installer_not_runtime",
+      "license": "MIT",
+      "source_status": "official_native_installer_verified_free_source_no_plenum_install",
+      "activation": "optional_only_on_supported_owner_computer_not_iphone_runtime"
     },
     {
       "id": "browser-use",
