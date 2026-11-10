@@ -10,6 +10,9 @@ on:
       - 'tests/test_workforce_team_dispatch.py'
       - 'src/plenum_ai/telegram_workforce_status.py'
       - 'tests/test_telegram_workforce_status.py'
+      - 'src/plenum_ai/hermes_issue_bridge.py'
+      - 'tests/test_hermes_issue_bridge.py'
+      - 'integrations/hermes/plugins/plenum-public-workforce/**'
       - '.github/workflows/workforce-public-inbox.yml'
 permissions:
   contents: read
@@ -32,6 +35,7 @@ jobs:
       - run: python -m unittest discover -s tests -p 'test_workforce_public_inbox.py' -v
       - run: python -m unittest discover -s tests -p 'test_workforce_team_dispatch.py' -v
       - run: python -m unittest discover -s tests -p 'test_telegram_workforce_status.py' -v
+      - run: python -m unittest discover -s tests -p 'test_hermes_issue_bridge.py' -v
   public-task:
     if: >-
       github.event_name == 'issues' &&
