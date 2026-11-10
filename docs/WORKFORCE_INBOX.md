@@ -61,3 +61,16 @@ For any future genuine private app task: authenticate the specific provider from
 - [Freebuff](https://github.com/CodebuffAI/freebuff) — possible ad-supported auxiliary coding; free allowance and data handling must be reviewed before confidential source access.
 
 **Success criterion for this exact bridge:** One founder-owned PUBLIC GitHub Issue starts an existing research worker without human website clicks, produces an actual source-linked result, and independently records a truthful completion or failure. This does not establish full workforce command, accurate source claims, autonomous account operations, 24/7 private hosting, or AGI.
+
+## New: actual model-driven Chief commands from ordinary chats (bounded public missions)
+
+**Founder objective:** direct the real Chief rather than a static role selector. The new `src/plenum_ai/chief_workforce_command.py` and `.github/workflows/founder-chief-workforce-command.yml` accept an exact founder-created GitHub Issue **title** `[Plenum Chief] public assignment` with body:
+
+```
+PLENUM_CHIEF_PUBLIC_V1
+objective: Create a public data validator for scientific observations
+```
+
+The issue is **PUBLIC**; do not enter confidential or patent-sensitive data, passwords, customer records, phone numbers or private app operations. The preflight checks the original GitHub author and semantic task boundaries **before** starting any model. The disposable Qwen3:1.7b + original Deep Agents Chief must invoke its actual `task` delegation tool, select one of the **existing** World Horizon, Program Foundry, durable known-model science, or Creative Studio workers, and have that worker call its existing verified tool. Independently check which domain was relevant to the founder's task, whether exactly one specialist acted, and the actual tool's verification status. If selection is wrong or no tool truly executes, report **BLOCKED**, not a fake success. The GitHub Issue retains a bounded status and link to the run; the actual Qwen instance is destroyed after the task. This is not a new always-on agent, new hosting provider or private credential bridge.
+
+**Real-world maturity gate:** no claim of successful live model delegation on this newly joined command path until an owner-issued live Issue and its GitHub Actions result are independently checked. Source and unit tests alone do not establish this. The prior real Chief Crossref and SciPy delegations, prior nine n8n role drafts, and existing original worker routes are already proven **separately**; do not rerun unchanged tests merely to boast agent count. Completing a public task does not authorize account email, customer messaging, deployments or financial actions.
