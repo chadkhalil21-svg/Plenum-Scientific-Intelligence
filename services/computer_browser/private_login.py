@@ -233,8 +233,11 @@ def login_html(nonce):
           pendingText=null;updateTypingEnabled();
         }
         if(m.type==="page_health"){
-          pageBlank=m.blank===true;
-          if(pageBlank&&m.blocked_cross_origin>0){
+          pageBlank=m.blank===true||m.render_unverified===true;
+          if(m.render_unverified===true){
+            status.textContent="Browser connected, but website rendering could not be verified. "+
+              "Login is not confirmed; do not save this session.";
+          }else if(pageBlank&&m.blocked_cross_origin>0){
             status.textContent="Browser connected, but website appears blank. "+
               "Some cross-origin resources were blocked by Plenum's current single-site "+
               "security policy. No login is confirmed; do not save this session.";
