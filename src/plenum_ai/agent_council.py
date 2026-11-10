@@ -21,6 +21,22 @@ BANNED = (
     "customer", "patient", "patent", "bank", "account", "production",
     "send email", "payment", "delete", "deploy", "authorization",
 )
+VERIFIED_CONTEXT = (
+    "Evidence from Plenum's 2026-11-10 public repository: "
+    "the existing Plenum Chief and nine n8n specialist departments already exist; "
+    "the current new catalog contains 283 MIT-licensed *dormant persona definitions*, "
+    "not 283 autonomous employees; the media index has 1106 AGPL-3.0 "
+    "Markdown skills/reference files, not 1106 running AI agents; "
+    "GitHub Actions supports bounded public tasks, and the existing dashboard "
+    "is a static source-backed UI, not a verified always-on private agent host. "
+    "No verified Plenum blockchain, decentralized consensus backend, "
+    "external customer-base size, production agent account integrations, or "
+    "unlimited free model inference are evidenced. "
+    "Do not recommend inventing a blockchain, new hosting framework or "
+    "duplicate master agent without a concrete measured need. "
+    "Prefer reusing these established components and small reversible tests. "
+    "Any claim outside these recorded facts must be marked UNVERIFIED."
+)
 SEATS = (
     ("chief", "Clarify the founder's objective, two alternative approaches, and acceptance criteria. Do not claim that tools were used."),
     ("engineer", "Independently critique technical feasibility, reuse of existing Plenum components, measurable tests, and failure modes. Ford standardization and MIT engineering rigor are decision lenses, not actual participants."),
@@ -91,7 +107,8 @@ def deliberate(event):
     for name, remit in SEATS:
         # Distinct fresh model contexts, not synthetic labels on one response.
         draft = _ask_local(
-            "You are a separate Plenum AI council reviewer. " + remit +
+            "You are a separate Plenum AI council reviewer. " + VERIFIED_CONTEXT +
+            " " + remit +
             " Return: proposal, strongest objection, suggested small first test. "
             "Do not access tools, accounts or invent citations. You are an AI "
             "using an intellectual lens, NOT the historical person or institution.",
@@ -105,8 +122,8 @@ def deliberate(event):
     )
     # Reviewer sees the decision artifacts, but none of the earlier seat prompts.
     fresh = _ask_local(
-        "You are a fresh-context Plenum Goldfish Reviewer. Critique the "
-        "following four independent AI proposals without any prior chat context. "
+        "You are a fresh-context Plenum Goldfish Reviewer. " + VERIFIED_CONTEXT +
+        " Critique the following four independent AI proposals without any prior chat context. "
         "Identify conflicts, missing empirical evidence, hidden costs, "
         "privacy risks, and one inexpensive reversible experiment. "
         "Clearly mark unverified claims. Do not decide for the founder.",
