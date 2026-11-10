@@ -235,6 +235,12 @@ class PrivateLoginTests(unittest.TestCase):
                     if route.request.url=="https://owner.test/owner/sign-in"
                     else route.abort()))
                 page.goto("https://owner.test/owner/sign-in")
+                # Empty target must not create a misleading preflight failure.
+                page.locator("#open").click()
+                self.assertIn("Enter the website HTTPS address",
+                              page.locator("#status").inner_text())
+                self.assertFalse(page.evaluate("Boolean(window.__owner_ws)"))
+                page.locator("#url").fill("https://example.com/")
                 page.locator("#open").click()
                 page.wait_for_function("Boolean(window.__owner_ws && window.__owner_ws.onmessage)")
                 page.evaluate("""() => window.__owner_ws.onmessage({
@@ -422,45 +428,67 @@ class OwnerBlankPageDiagnostics(unittest.IsolatedAsyncioTestCase):
 
 
 
-@unittest.skipUnless(HAS_TEST, "Owner-only Apple scope needs original gateway")
-class AppleAuthenticationOptInPolicy(unittest.TestCase):
-    def test_apple_dependencies_require_exact_site_private_owner_and_opt_in(self):
-        primary = "https://appstoreconnect.apple.com"
-        base = private_login._approved_live_origins(
-            primary, dynamic=True, apple_auth="0")
-        self.assertEqual(base, frozenset({primary}))
-        approved = private_login._approved_live_origins(
-            primary, dynamic=True, apple_auth="1")
-        self.assertEqual(len(approved), 5)
-        self.assertIn("https://idmsa.apple.com", approved)
-        self.assertIn("https://appleid.cdn-apple.com", approved)
-        self.assertIn("https://account.apple.com", approved)
-        self.assertIn("https://gsa.apple.com", approved)
-        for site, dynamic, flag in (
-            ("https://unrelated.example", True, "1"),
-            (primary, False, "1"),
-            (primary, True, "true"),
-            (primary, True, "2"),
+@unittest.skipUnless(HAS_TEST, "Provider-neutral owner scope needs original gateway")
+class UniversalOwnerAuthenticationScope(unittest.TestCase):
+    def test_bounded_public_https_resources_for_any_owner_registered_site(self):
+        for primary, extras in (
+            ("https://appstoreconnect.apple.com",
+             "https://idmsa.apple.com, https://appleid.cdn-apple.com"),
+            ("https://example.org",
+             "https://login.example.net https://static.example.edu"),
+            ("https://service.example",
+             "https://accounts.google.com,https://cdn.example.com"),
         ):
-            with self.subTest(site=site, dynamic=dynamic, flag=flag):
-                with self.assertRaises(PermissionError):
-                    private_login._approved_live_origins(
-                        site, dynamic=dynamic, apple_auth=flag)
-        self.assertEqual(private_login._approved_live_origins(
-            "https://unrelated.example", dynamic=True, apple_auth="0"),
-            frozenset({"https://unrelated.example"}))
+            with self.subTest(primary=primary):
+                self.assertEqual(private_login._approved_live_origins(
+                    primary, dynamic=True, support_sites=""),
+                    frozenset({primary}))
+                approved=private_login._approved_live_origins(
+                    primary,dynamic=True,support_sites=extras)
+                self.assertEqual(len(approved),3)
+                self.assertIn(primary,approved)
 
-    def test_owner_canvas_requires_explicit_session_only_checkbox(self):
+    def test_reject_bad_hosts_duplicate_origins_and_unapproved_private_site(self):
+        base="https://appstoreconnect.apple.com"
+        bad=(
+            "https://localhost",
+            "http://login.example.net",
+            "https://login.example.net/path",
+            "https://user:pass@login.example.net",
+            "https://169.254.169.254",
+            "https://a.example,https://a.example",
+            base,
+            "https://a.example,https://b.example,https://c.example,"
+            "https://d.example,https://e.example,https://f.example",
+            "https://a.example?secret=x",
+        )
+        for data in bad:
+            with self.subTest(data=data),self.assertRaises(PermissionError):
+                private_login._approved_live_origins(
+                    base,dynamic=True,support_sites=data)
+        with self.assertRaises(PermissionError):
+            private_login._approved_live_origins(
+                base,dynamic=False,support_sites="https://idmsa.apple.com")
+        with self.assertRaises(PermissionError):
+            private_login._approved_live_origins(
+                base,dynamic=True,support_sites="x"*1201)
+        with self.assertRaises(PermissionError):
+            private_login._approved_live_origins(
+                base,dynamic=True,support_sites=["https://idmsa.apple.com"])
+
+    def test_owner_canvas_is_generic_and_validates_empty_url(self):
         page = private_login.login_html("synthetic-nonce")
-        self.assertIn('id="apple-auth" type="checkbox"', page)
-        self.assertNotIn('id="apple-auth" type="checkbox" checked', page)
-        self.assertIn('"&apple_auth="+appleAuth', page)
-        self.assertIn('u.searchParams.set("apple_auth",appleAuth)', page)
-        code = __import__("inspect").getsource(private_login.mount_private_login)
-        self.assertIn("approved_origins=_approved_live_origins(", code)
-        self.assertIn("additional_origins=approved_origins-{origin}", code)
-        self.assertIn("safe_url(req.url,origins=approved_origins)", code)
-        self.assertIn("safe_url(page.url,origins={origin})", code)
+        self.assertIn('id="support-sites" type="text"', page)
+        self.assertNotIn('id="apple-auth"', page)
+        self.assertNotIn('App Store Connect only', page)
+        self.assertIn('"&support_sites="+encodeURIComponent(supportSites)', page)
+        self.assertIn('u.searchParams.set("support_sites",supportSites)',page)
+        self.assertIn("Enter the website HTTPS address",page)
+        code=__import__("inspect").getsource(private_login.mount_private_login)
+        self.assertIn("approved_origins=_approved_live_origins(",code)
+        self.assertIn("additional_origins=approved_origins-{origin}",code)
+        self.assertIn("safe_url(req.url,origins=approved_origins)",code)
+        self.assertIn("safe_url(page.url,origins={origin})",code)
 
 
 if __name__=="__main__":
