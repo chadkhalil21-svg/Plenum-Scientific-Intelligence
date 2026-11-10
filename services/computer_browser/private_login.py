@@ -114,6 +114,7 @@ def login_html(nonce):
     <button id="close">Close</button></p>
     <script nonce="__NONCE__">
     let ws=null,ready=false,selected="none",pendingText=null,frameNumber=0;
+    let pageBlank=true;
     let lastTouchAt=0,saveInFlight=false;
     const canvas=document.getElementById("display"),
       ctx=canvas.getContext("2d"),
@@ -126,7 +127,7 @@ def login_html(nonce):
       for(const id of ["enter","tab","reload"]){
         document.getElementById(id).disabled=!ready;
       }
-      document.getElementById("save").disabled=!ready||saveInFlight;
+      document.getElementById("save").disabled=!ready||saveInFlight||pageBlank;
     }
     function clearStalePreview(){
       ++frameNumber;
@@ -141,7 +142,7 @@ def login_html(nonce):
     }
     document.getElementById("open").onclick=async()=>{
       if(ws)ws.close();
-      ws=null;ready=false;selected="none";pendingText=null;saveInFlight=false;
+      ws=null;ready=false;pageBlank=true;selected="none";pendingText=null;saveInFlight=false;
       updateTypingEnabled();clearStalePreview();
       const target=document.getElementById("url").value.trim();
       status.textContent="Checking owner-approved website access...";
@@ -166,7 +167,7 @@ def login_html(nonce):
       u.protocol=location.protocol==="https:"?"wss:":"ws:";
       u.searchParams.set("site",target);
       const connection=new WebSocket(u);
-      ws=connection;ready=false;selected="none";pendingText=null;saveInFlight=false;
+      ws=connection;ready=false;pageBlank=true;selected="none";pendingText=null;saveInFlight=false;
       updateTypingEnabled();
       fieldStatus.textContent="Waiting for live browser picture.";
       let connected=false,serverStopped=false,openedAt=null;
@@ -182,7 +183,7 @@ def login_html(nonce):
       };
       connection.onclose=e=>{
         if(ws!==connection)return;
-        ready=false;selected="none";pendingText=null;saveInFlight=false;updateTypingEnabled();
+        ready=false;pageBlank=true;selected="none";pendingText=null;saveInFlight=false;updateTypingEnabled();
         clearStalePreview();
         const elapsed=openedAt===null?"":", after "+Math.round((Date.now()-openedAt)/1000)+" seconds";
         if(!serverStopped){
@@ -201,7 +202,7 @@ def login_html(nonce):
         if(m.type==="status"){
           status.textContent=m.message;
           if(m.failure===true){
-            serverStopped=true;ready=false;selected="none";saveInFlight=false;updateTypingEnabled();
+            serverStopped=true;ready=false;pageBlank=true;selected="none";saveInFlight=false;updateTypingEnabled();
             clearStalePreview();
             fieldStatus.textContent="Browser operation ended; previous image cleared. Reopen secure browser.";
           }
@@ -231,10 +232,27 @@ def login_html(nonce):
           }
           pendingText=null;updateTypingEnabled();
         }
+        if(m.type==="page_health"){
+          pageBlank=m.blank===true;
+          if(pageBlank&&m.blocked_cross_origin>0){
+            status.textContent="Browser connected, but website appears blank. "+
+              "Some cross-origin resources were blocked by Plenum's current single-site "+
+              "security policy. No login is confirmed; do not save this session.";
+          }else if(pageBlank){
+            status.textContent="Browser connected, but the website appears blank. "+
+              "The cause is not established; no login is confirmed.";
+          }else{
+            status.textContent=m.blocked_cross_origin>0
+              ?"Website picture loaded, but some cross-origin resources were blocked. "+
+               "Login functionality may be incomplete."
+              :"Website picture loaded. Browser connection working; login is not yet verified.";
+          }
+          updateTypingEnabled();
+        }
         if(m.type==="frame"){
           if(!ready){
             ready=true;
-            status.textContent="Browser ready. Tap a website input inside the picture.";
+            status.textContent="Browser stream connected; checking website rendering...";
             updateTypingEnabled();
           }
           const seq=++frameNumber,img=new Image();
@@ -295,6 +313,31 @@ def login_html(nonce):
 async def _frame(ws,page):
     jpeg=await page.screenshot(type="jpeg",quality=55,timeout=12000)
     await ws.send_json({"type":"frame","image":base64.b64encode(jpeg).decode("ascii")})
+
+
+async def _page_render_health(ws, page, blocked):
+    """Redacted diagnostic, not evidence of account authentication.
+
+    No URLs, HTML, text, login values, headers, cookies, JS stacktraces or
+    selectors leave the owner-only Chromium process.
+    """
+    try:
+        visible = await page.evaluate("""() => {
+          const b=document.body;
+          if (!b) return false;
+          const t=(b.innerText||"").trim();
+          const controls=b.querySelector("input,button,textarea,select,a,[role=button]");
+          return t.length > 0 || Boolean(controls);
+        }""")
+        blank = not bool(visible)
+    except Exception:
+        # Evaluation errors must not be misrepresented as a blank page.
+        await ws.send_json({"type":"page_health","blank":False,
+                            "render_unverified":True,
+                            "blocked_cross_origin":min(99,blocked["cross_origin"])})
+        return
+    await ws.send_json({"type":"page_health","blank":blank,
+                        "blocked_cross_origin":min(99,blocked["cross_origin"])})
 
 
 def mount_private_login(app):
@@ -383,6 +426,7 @@ def mount_private_login(app):
                     viewport={"width":1024,"height":720},accept_downloads=False,
                     service_workers="block",ignore_https_errors=False,
                     permissions=[])
+                blocked={"cross_origin":0}
                 if demo=="0":
                     async def limited_origin(route):
                         req=route.request
@@ -390,6 +434,8 @@ def mount_private_login(app):
                                 safe_url(req.url,origins={origin})):
                             await route.continue_()
                         else:
+                            if not safe_url(req.url,origins={origin}):
+                                blocked["cross_origin"]+=1
                             await route.abort()
                     await context.route("**/*",limited_origin)
                     if dynamic:
@@ -412,6 +458,7 @@ def mount_private_login(app):
                     await page.goto(site,wait_until="domcontentloaded",timeout=25000)
                 phase="live_interaction"
                 await _frame(ws,page)
+                await _page_render_health(ws,page,blocked)
                 for number in range(160):
                     command=await ws.receive_json()
                     if dynamic:
@@ -488,6 +535,7 @@ def mount_private_login(app):
                     if demo=="0" and not safe_url(page.url,origins={origin}):
                         raise PermissionError("Website redirected off authorized origins")
                     await _frame(ws,page)
+                    await _page_render_health(ws,page,blocked)
                 else:
                     await ws.send_json({"type":"status","failure":True,
                                         "message":"Browser action limit reached; reopen a fresh browser."})
