@@ -144,6 +144,15 @@ def run(event: dict, *, execute: bool = False) -> dict:
             llm=LLM(
                 model="ollama/qwen2.5-coder:7b", api_key="local-no-secret",
                 base_url="http://127.0.0.1:11434",
+                # Official pinned OpenHands SDK 1.60.1 defaults to
+                # reasoning_effort='high' and maps this to an Ollama think
+                # request. Qwen2.5-Coder 7B is NON-thinking. Disable this
+                # capability before the very first model tool call.
+                reasoning_effort=None,
+                capability_overrides={
+                    "supports_reasoning_effort": False,
+                    "thinking_mode": "none",
+                },
             ),
             tools=[Tool(name=FileEditorTool.name)],
         )
