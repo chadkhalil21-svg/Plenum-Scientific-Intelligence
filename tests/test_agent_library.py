@@ -14,6 +14,18 @@ class AgentCatalogContract(TestCase):
         self.assertEqual(idx["source"]["license"],"MIT")
         self.assertEqual(idx["run_state"],"none_installed_or_running_by_this_index")
 
+    def test_openmontage_skills_are_separate_from_agent_roles(self):
+        from pathlib import Path
+        import json
+        repo=Path(__file__).resolve().parents[1]
+        index=json.loads((repo/"integrations/agent-catalog/openmontage.index.json").read_text())
+        self.assertEqual(index["count"],1106)
+        self.assertEqual(len(index["files"]),1106)
+        self.assertEqual(index["skill_entrypoints"],141)
+        self.assertEqual(index["source"]["license"],"AGPL-3.0")
+        self.assertEqual(len(index["source"]["commit"]),40)
+        self.assertTrue(all(x["status"]=="catalogued_uninstalled" for x in index["files"]))
+
     def test_blob_verified_before_any_persona_used(self):
         idx=load_index()
         path=idx["profiles"][0]["path"]
