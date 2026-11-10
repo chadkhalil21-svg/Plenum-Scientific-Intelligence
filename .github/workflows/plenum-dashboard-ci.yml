@@ -32,15 +32,16 @@ jobs:
                     'id="agentGrid"','id="scheduleGrid"','id="objective"',
                     'id="prepare"','id="mic"','id="speak"')
           assert all(x in page for x in required)
-          assert 'https://api.github.com/repos/chadkhalil21-svg/Plenum-Scientific-Intelligence' not in page or True
+          assert "api.github.com/repos/" in page
           assert 'window.open(url' in page, 'Founder review required, not direct autonomous issue post'
           assert 'github.com/'+ 'chadkhalil21-svg/Plenum-Scientific-Intelligence' in page
           assert 'SpeechRecognition' in page and 'SpeechSynthesisUtterance' in page
-          assert 'plenum-chief' not in page.lower() or True
+          assert 'PLENUM_CHIEF_PUBLIC_V1' in page
+          assert 'PLENUM_DEPARTMENT_PUBLIC_V1' in page
           assert 'ELEVENLABS_API_KEY' not in page
           assert 'xi-api-key' not in page
           assert 'ghp_' not in page and 'github_pat_' not in page
-          assert 'private GitHub' not in page
+          assert 'customer account' in page.lower() or 'customer data' in page.lower()
           assert re.search(r'const repo=',page)
           scripts=re.findall(r'<script>(.*?)</script>',page,flags=re.S)
           assert len(scripts)==1
