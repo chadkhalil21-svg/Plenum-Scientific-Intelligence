@@ -1,0 +1,41 @@
+# Plenum Prometheus | Free-Only Chief of Staff and Workforce Decision
+**Decision:** 2026-11-10 UTC. **Evidence level:** Reviewed upstream sources + existing Plenum implementation; no new model runtime or authenticated app connection launched by this document.
+
+## Founder requirement
+Build one company-wide AI workforce, not an American Rider-specific bot or a collection of nine static prompts. Reuse present Plenum control center, research-memory and LangGraph; operate within $0 software/inference/hosting spend until the founder approves otherwise. A free license does **not** imply free permanent compute, privacy, API requests, electricity or unlimited throughput.
+
+## Recommended one-command architecture
+Founder instruction → Chief of Staff → LangGraph persistent execution/approval policy → specialised teams with scoped tools → independent reviewer and external readback → founder summary.
+
+The Chief of Staff is an **operational role**: it receives a company-wide objective, checks the latest ledger, assigns project ownership, decomposes work, selects a worker and verifier, handles blocked states and requests action-specific approval only when required. It is not a self-governing founder and may not spend or make consequential account changes alone.
+
+**Primary optional adoption: [Deep Agents](https://github.com/langchain-ai/deepagents)** (MIT, built directly upon already-pinned LangGraph). It provides a bundled planning, subagent, skills, memory and human-interrupt harness. Start with **one** owner-controlled Chief of Staff and test its delegated task against a standalone nonsecret fixture before pinning it. **Not installed or live yet.** Use local Ollama-compatible tool-calling models first; Qwen3:0.6b has not demonstrated trustworthy general autonomy. The source-repo `skills/plenum-chief-of-staff/SKILL.md` is a portable [Agent Skills](https://agentskills.io/specification) instruction file, ready for an eligible runtime to load; creating this file does not activate an agent.
+
+**Keep already adopted:** LangGraph (coordination/checkpointing), n8n Community (approved business event workflows), OpenHands (isolated coding), original Plenum Playwright (browser when actually connected), existing scientific tools and source databases, existing free public GitHub Actions scheduling.
+
+**Optional secondary interface:** [Hermes Agent](https://github.com/NousResearch/hermes-agent) (MIT), if a direct chat/Telegram/desktop roster with independent per-profile memories and scheduled conversations materially improves the founder experience. Do not appoint Hermes and Deep Agents as competing master orchestrators or assume Hermes bot credentials transfer automatically. Deployment and model compute still required.
+
+**Reusable instruction tooling:** Write native `SKILL.md` files per audited workflow. Third-party [Ordain](https://www.ordain.host/) is optional for drafting, **not** a necessary dependency or a way to grant permissions. [Agency Agents](https://github.com/msitarzewski/agency-agents) supplies MIT persona descriptions; Plenum has already selectively adapted their process rubrics. Installing hundreds of personas does not create running workers.
+
+**Additional coding capacity:** [Freebuff](https://github.com/CodebuffAI/freebuff) has free, ad-supported usage that is subject to daily/model-specific rate limits. Test on a public sandbox only after confirming provider data handling and terms; do not put sensitive Plenum science or customer source there.
+
+**Exclude from the strict $0 core:** Grok Bot marketplace access is tied to paid plans per [xAI pricing](https://x.ai/pricing); [Base44](https://base44.com/pricing) has a free prototype tier but only 25 message and 100 integration credits monthly. Neither is a reliable unlimited no-cost operating backbone. Likewise do not add CrewAI, AutoGen, OpenClaw or another orchestration engine merely for agent-count marketing when LangGraph already exists.
+
+## Team structure, not 280 running models
+**1 Chief of Staff** coordinates a small number of concurrently active tasks. **6–9 function leads** selected by outcome: scientific discovery, engineering, operations, growth/sales, finance, knowledge/creative, customer support, legal/risk and independent verification. **20–40 or more optional specialist skill profiles** are *loaded on demand*, not paid idle background model processes. Personal assistance (inbox, people, travel, family) must be private and separate from corporate customer/finance scopes. Finance and healthcare agents may prepare drafts but require authoritative human review for decisions.
+
+## Free infrastructure economics
+- **Already working free scheduled compute:** standard [public GitHub-hosted Actions](https://docs.github.com/en/actions/concepts/billing-and-usage) with public-only inputs. Not appropriate for private customer records or long-lived identity, and not a 24/7 server.
+- **Already available on-demand local setup:** the existing private Codespaces n8n/Ollama demo with owner-controlled free quota limits; may terminate when idle and may charge if limits are exceeded.
+- **Candidate owner private 24/7 coordinator:** [Oracle Always Free](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier.htm), **only after actual account availability, identity, quotas, billing protection, encrypted disk, backups and security review**; always-free accounts have capacity/idle-reclaim caveats. Free-tier registration can require a payment card and is not guaranteed. A larger tool-calling model may not run well on a tiny CPU VM.
+- No honest guarantee exists that a secure always-on, capable multimodal "AI army" consumes **zero** infrastructure, model, or provider resources.
+
+## Implementation order and exit gates
+1. **Already delivered now:** original shared ledger plus portable Chief of Staff skill, no new running supervisor yet.
+2. **First real delegated run:** reuse Plenum's LangGraph; pilot one Deep Agents Chief of Staff with a free approved local model in ephemeral isolated compute. Outcome includes meaningful task plan + one specialist output + independent readback. No production credentials.
+3. **State and permission gates:** add a private durable queue (task ID, owner, scope, status, attempt budget, approval event, readback and failure), encrypted checkpoint store and strict tool allowlists. Let n8n handle authorised triggers; one supervisor directs it, rather than two masters.
+4. **Read-only real app:** access one user-authorized connected business resource through a supported native provider, cross-verify its actual state. Only later consider draft email or queued action requiring owner consent. Do not share ChatGPT plugin tokens to n8n or public GitHub.
+5. **Scale by proved benefit:** two workers, then three, then dynamically selected skills; expand to dozens of roles only after held-out success, failure recovery, cost/throughput, rollback and real outcomes have improved.
+6. **24/7 is last:** move from successful on-demand runs to actual persistent private host only after cost, data protection and uptime testing. Stop at the free-tier boundary.
+
+**Nonclaims:** Neither a Chief of Staff skill nor a role roster equals operational 24/7 autonomy. There is no verified unlimited-free 280-agent workforce, no new private email/Stripe automation, and no AGI demonstrated by these components.
