@@ -2,7 +2,7 @@
 import importlib.util
 import os
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 
 HAS_TEST=all(importlib.util.find_spec(x) is not None
              for x in ("playwright","fastapi","httpx","jwt","cryptography"))
@@ -234,7 +234,12 @@ class PrivateLoginTests(unittest.TestCase):
                 page.evaluate("""() => window.__owner_ws.onmessage({
                   data: JSON.stringify({type:"frame",image:""})
                 })""")
-                page.wait_for_function("document.getElementById('status').textContent.includes('Browser ready')")
+                page.wait_for_function("document.getElementById('status').textContent.includes('Browser stream connected')")
+                page.evaluate("""() => window.__owner_ws.onmessage({
+                  data: JSON.stringify({type:"page_health",blank:false,
+                                        blocked_cross_origin:0})
+                })""")
+                self.assertIn("login is not yet verified",page.locator("#status").inner_text())
                 box=page.locator("#display").bounding_box()
                 self.assertIsNotNone(box)
                 page.dispatch_event("#display","pointerup",{
@@ -271,7 +276,21 @@ class PrivateLoginTests(unittest.TestCase):
                 self.assertEqual(page.locator("#text").input_value(),
                                  "must-preserve-on-failure")
                 self.assertIn("NOT entered",page.locator("#field-status").inner_text())
-                # Save controls remain usable on the live connection while
+                # Redacted rendering diagnostics must not leak a website URL,
+                # cross-origin hostname or account secret. Blank is NOT ready.
+                page.evaluate("""() => window.__owner_ws.onmessage({
+                  data: JSON.stringify({type:"page_health",blank:true,
+                                        blocked_cross_origin:3})
+                })""")
+                self.assertIn("appears blank",page.locator("#status").inner_text())
+                self.assertIn("cross-origin resources",page.locator("#status").inner_text())
+                self.assertTrue(page.locator("#save").is_disabled())
+                page.evaluate("""() => window.__owner_ws.onmessage({
+                  data: JSON.stringify({type:"page_health",blank:false,
+                                        blocked_cross_origin:0})
+                })""")
+                self.assertFalse(page.locator("#save").is_disabled())
+                # Save controls remain usable once the page is not blank;
                 # no secret is persisted by this synthetic browser.
                 page.locator("#save").click()
                 self.assertIn("Saving encrypted website session",
@@ -350,6 +369,40 @@ class PrivateLoginTests(unittest.TestCase):
                         "/owner/live?site=https%3A%2F%2Fexample.com%2F&demo=1",
                         headers={"origin":"https://example.com"}):
                         pass
+
+@unittest.skipUnless(HAS_TEST,"Browser owner diagnostic needs async gateway deps")
+class OwnerBlankPageDiagnostics(unittest.IsolatedAsyncioTestCase):
+    async def test_health_has_only_aggregates_without_page_content_or_urls(self):
+        page=unittest.mock.Mock()
+        page.evaluate=AsyncMock(return_value=False)
+        ws=unittest.mock.Mock()
+        ws.send_json=AsyncMock()
+        await private_login._page_render_health(ws,page,{"cross_origin":6})
+        report=ws.send_json.await_args.args[0]
+        self.assertEqual(report,{"type":"page_health",
+                                 "blank":True,"blocked_cross_origin":6})
+        self.assertNotIn("https",str(report))
+        self.assertNotIn("cookie",str(report))
+        self.assertNotIn("account",str(report))
+
+        page.evaluate=AsyncMock(return_value=True)
+        await private_login._page_render_health(ws,page,{"cross_origin":200})
+        self.assertEqual(ws.send_json.await_args.args[0],
+                         {"type":"page_health",
+                          "blank":False,"blocked_cross_origin":99})
+
+    async def test_unavailable_js_does_not_claim_blank(self):
+        page=unittest.mock.Mock()
+        page.evaluate=AsyncMock(side_effect=RuntimeError("secret example HTML"))
+        ws=unittest.mock.Mock()
+        ws.send_json=AsyncMock()
+        await private_login._page_render_health(ws,page,{"cross_origin":0})
+        self.assertEqual(ws.send_json.await_args.args[0],
+                         {"type":"page_health","blank":False,
+                          "render_unverified":True,
+                          "blocked_cross_origin":0})
+        self.assertNotIn("secret",str(ws.send_json.await_args.args[0]))
+
 
 if __name__=="__main__":
     unittest.main()
