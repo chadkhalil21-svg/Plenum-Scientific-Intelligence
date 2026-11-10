@@ -96,7 +96,7 @@ jobs:
           docker exec plenum-temporary-ollama ollama list
       - name: Install exact previously reviewed OpenHands SDK
         run: |
-          python -m pip install -e ".[openhands_sdk]"
+          python -m pip install -e ".[openhands_tools]"
           python -m pip check
       - name: Run actual model-driven OpenHands file creation (bounded, no secret inputs)
         run: |
