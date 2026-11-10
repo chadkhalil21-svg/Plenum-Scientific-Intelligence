@@ -21,7 +21,6 @@ from .engine import _origin_syntax, allowed_origins, safe_url, public_dns_only
 from .owner_console import require_verified_owner
 from .private_profiles import BrowserProfileStore
 from .owner_live_access import owner_live_origin
-from .runtime_site_grants import enabled as site_grants_enabled, OwnerSiteGrantStore
 
 PUBLIC_DEMO_ORIGIN = "https://the-internet.herokuapp.com"
 
@@ -446,6 +445,7 @@ async def _refresh_and_verify_public_demo(owner):
 def mount_owner_saved_session(app):
     @app.get("/owner/sessions", response_class=HTMLResponse)
     async def owner_sessions(_owner=Depends(require_verified_owner)):
+        from .runtime_site_grants import enabled as site_grants_enabled, OwnerSiteGrantStore
         origins = set(allowed_origins())
         if site_grants_enabled():
             try:
