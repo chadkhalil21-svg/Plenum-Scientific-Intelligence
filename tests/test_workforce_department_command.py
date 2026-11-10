@@ -37,6 +37,30 @@ class DirectNineDepartmentTests(TestCase):
                 self.assertIn(json.dumps(task["objective"]),change["parameters"]["jsCode"])
                 self.assertEqual(compiled["active"],False)
 
+    def test_department_gets_only_reviewed_free_sources_not_installed_tools(self):
+        task=parse_founder_department(event(
+            role="engineering",
+            objective="Design a public PyBaMM battery benchmark with an independent physical baseline",
+        ))
+        compiled=tailor_original_n8n_workflow(SOURCE,task)
+        script=next(x for x in compiled["nodes"] if x["name"]=="Assign Nine Roles")["parameters"]["jsCode"]
+        self.assertIn("pybamm [pybamm-team/PyBaMM]",script)
+        self.assertIn("not installed",script)
+        self.assertIn("never claim code or a solver ran",script)
+        self.assertEqual(len(compiled["nodes"]),6)
+        self.assertEqual(compiled["active"],False)
+        self.assertEqual(len([x for x in compiled["nodes"] if "credentials" in x]),0)
+
+    def test_no_source_match_keeps_only_founder_objective(self):
+        task=parse_founder_department(event(
+            role="support",
+            objective="Draft an internal FAQ about unfamiliar workflow terminology",
+        ))
+        compiled=tailor_original_n8n_workflow(SOURCE,task)
+        script=next(x for x in compiled["nodes"] if x["name"]=="Assign Nine Roles")["parameters"]["jsCode"]
+        self.assertIn(json.dumps(task["objective"]),script)
+        self.assertNotIn("FREE-source references",script)
+
     def test_wrong_author_private_data_or_role_denied(self):
         for e in [
             event(actor="someone-else"),
