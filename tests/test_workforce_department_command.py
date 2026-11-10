@@ -62,6 +62,23 @@ class DirectNineDepartmentTests(TestCase):
         self.assertEqual(SOURCE["active"],False)
         self.assertEqual(len(SOURCE["nodes"]),6)
 
+    def test_extract_actual_untrusted_model_text_not_n8n_plans(self):
+        from plenum_ai.workforce_department_command import extract_untrusted_public_department_reply
+        text='Execution successful: {"role": "operations", "draft_untrusted": "Review weekly actions\\nSchedule checks", "status": "DRAFT_AWAITING_FOUNDER_REVIEW"}'
+        self.assertEqual(
+            extract_untrusted_public_department_reply(text),
+            "Review weekly actions\nSchedule checks",
+        )
+        for bad in [
+            "No real agent output",
+            '{"draft_untrusted": ""}',
+            '{"draft_untrusted": "one", "draft_untrusted": "two"}',
+            '{"draft_untrusted": 42}',
+            1,
+        ]:
+            with self.assertRaises((ValueError,TypeError)):
+                extract_untrusted_public_department_reply(bad)
+
     def test_no_model_network_write_or_private_credentials_in_parser(self):
         src=(ROOT/"src/plenum_ai/workforce_department_command.py").read_text()
         for forbidden in ("subprocess.run(", "requests.post(", "gcloud run deploy",

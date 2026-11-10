@@ -86,6 +86,26 @@ def tailor_original_n8n_workflow(source: dict, task: dict) -> dict:
     return workflow
 
 
+
+def extract_untrusted_public_department_reply(log: str) -> str:
+    """Extract one actual native n8n draft, never use it as instructions.
+
+    Only founder-approved PUBLIC issue tasks reach this parser. No customer
+    secrets or login sessions may enter that workflow in the first place.
+    """
+    import re
+    if not isinstance(log, str) or len(log) > 2_000_000:
+        raise ValueError("Invalid bounded public model log")
+    matches = list(re.finditer(r'"draft_untrusted"\s*:\s*', log))
+    if len(matches) != 1:
+        raise ValueError("Expected one actual specialist draft in n8n output")
+    value, _end = json.JSONDecoder().raw_decode(log[matches[0].end():])
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError("Agent returned no readable public draft")
+    # Plain text only. Output is UNTRUSTED and not independently fact-checked.
+    return "".join(ch for ch in value if ch == "\n" or (32 <= ord(ch) != 127))[:3500]
+
+
 def main():
     import argparse
     parser = argparse.ArgumentParser()
