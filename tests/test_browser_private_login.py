@@ -16,6 +16,83 @@ if HAS_TEST:
 
 @unittest.skipUnless(HAS_TEST,"Dedicated browser CI installs optional Playwright and IAP SDK")
 class PrivateLoginTests(unittest.TestCase):
+    def test_registered_site_may_approve_exact_static_resource_origins(self):
+        main="https://github.com"
+        resource="https://github.githubassets.com"
+        avatar="https://avatars.githubusercontent.com"
+        denied=private_login._approved_live_origins(
+            main,dynamic=True,apple_auth="0")
+        self.assertEqual(denied,frozenset({main}))
+        allowed=private_login._approved_live_origins(
+            main,dynamic=True,apple_auth="0",
+            resource_origins=resource+","+avatar,
+            approve_resources="1")
+        self.assertEqual(allowed,frozenset({main,resource,avatar}))
+        allow=private_login._allow_live_request
+        self.assertTrue(allow(
+            url=main+"/login",method="POST",resource_type="document",
+            primary=main,approved=allowed))
+        self.assertTrue(allow(
+            url=resource+"/assets/app.js",method="GET",resource_type="script",
+            primary=main,approved=allowed))
+        self.assertTrue(allow(
+            url=resource+"/assets/style.css",method="GET",
+            resource_type="stylesheet",primary=main,approved=allowed))
+        self.assertTrue(allow(
+            url=avatar+"/u/1",method="GET",resource_type="image",
+            primary=main,approved=allowed))
+        for url,method,kind in (
+            (resource+"/login","GET","document"),
+            (resource+"/submit","POST","script"),
+            (resource+"/f","GET","fetch"),
+            ("https://other.example.org/a.js","GET","script"),
+            ("http://github.githubassets.com/a.js","GET","script"),
+            ("https://localhost/a.js","GET","script"),
+        ):
+            with self.subTest(url=url,method=method,kind=kind):
+                self.assertFalse(allow(
+                    url=url,method=method,resource_type=kind,
+                    primary=main,approved=allowed))
+        self.assertTrue(allow(
+            url="https://idmsa.apple.com/auth",
+            method="POST",resource_type="document",
+            primary="https://appstoreconnect.apple.com",
+            approved=frozenset({
+                "https://appstoreconnect.apple.com","https://idmsa.apple.com"}),
+            allow_apple_auth=True))
+
+    def test_unapproved_extra_resources_rejected_before_connect(self):
+        site="https://github.com"
+        extra="https://github.githubassets.com"
+        for resource,approved,dynamic in (
+            (extra,"0",True), (extra,"1",False),
+            (extra+"/assets","1",True),
+            ("http://github.githubassets.com","1",True),
+            ("https://127.0.0.1","1",True),
+            (extra+","+extra,"1",True),
+            (site,"1",True),
+            ("https://a.example,https://b.example,https://c.example,"
+             "https://d.example,https://e.example,https://f.example","1",True),
+        ):
+            with self.subTest(resource=resource),self.assertRaises(PermissionError):
+                private_login._approved_live_origins(
+                    site,dynamic=dynamic,apple_auth="0",
+                    resource_origins=resource,approve_resources=approved)
+        for apple in ("0","1"):
+            with self.subTest(apple=apple), self.assertRaises(PermissionError):
+                private_login._approved_live_origins(
+                    "https://appstoreconnect.apple.com",dynamic=True,
+                    apple_auth=apple,resource_origins=extra,
+                    approve_resources="0" if apple=="0" else "1")
+        with self.assertRaises(PermissionError):
+            private_login._approved_live_origins(
+                site,dynamic=True,apple_auth="0",
+                resource_origins="",approve_resources="1")
+        self.assertIn('id="resource-origins"',private_login.login_html("safe-nonce"))
+        self.assertIn('id="approve-resources"',private_login.login_html("safe-nonce"))
+        self.assertIn('u.searchParams.set("resource_origins",resources)',
+                      private_login.login_html("safe-nonce"))
+
     def test_separate_website_cookie_isolation(self):
         state={"cookies":[
             {"domain":".kaggle.com","name":"site","value":"synthetic"},
