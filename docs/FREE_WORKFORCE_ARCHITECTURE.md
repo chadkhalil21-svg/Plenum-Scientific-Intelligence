@@ -1,4 +1,13 @@
 # Plenum Prometheus | Free-Only Chief of Staff and Workforce Decision
+
+## Verified new capability — 2026-11-10
+
+**The first real Chief of Staff delegation has PASSED.** [GitHub Actions run #42764463537](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42764463537) used the pinned **Deep Agents 0.7.35** harness with existing **LangGraph 1.2.20**, a local **Qwen3:1.7b** model from Ollama and a named `upstream-auditor` specialist. The model actually invoked the Deep Agents `task` delegation tool; its specialist invoked a strictly read-only, allowlisted public GitHub API tool for `langchain-ai/deepagents`. Separate Python verification outside the model fetched the repository metadata a **second time** and confirmed the exact repository identity and **MIT** SPDX license. The genuine action and independent verification steps **passed**, as did the no-model isolation/allowlist/approval tests. The [run artifact](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42764463537) contains only a bounded public status report. No paid API, production service, proprietary data, personal account, message send or outbound business mutation was involved.
+
+This is **one correctly delegated, externally checked source task**, not a broadly competent autonomous Chief of Staff, not three unfamiliar tasks, not private memory, and not 24/7 hosting. Existing chief skill is read and fed as a bounded instruction excerpt to the model. The executable entrypoint is `python -m plenum_ai.chief_of_staff_pilot --execute` in a separately isolated runner with an already available owner-controlled Ollama model. The current acceptance supports **only an exact allowlist of three public GitHub repositories**; arbitrary objectives are not authorized by this first trial.
+
+**Now prioritize one different, independently graded task** (e.g. licensed research or verified code repair) over repeating the same upstream license check. Then establish secure private state and founder-task dispatch; scale specialists only after demonstrating reliable recovery. **No permanent always-on worker is deployed.**
+
 **Decision:** 2026-11-10 UTC. **Evidence level:** Reviewed upstream sources + existing Plenum implementation; no new model runtime or authenticated app connection launched by this document.
 
 ## Founder requirement
