@@ -10,6 +10,8 @@ from services.computer_browser.browser_actions import (
     BrowserStep, validate_steps, _approved_upload, execute_steps_on_page,
 )
 
+from services.computer_browser.owner_task_loop import execute_owner_adaptive_loop
+
 HAS_BROWSER=importlib.util.find_spec("playwright") is not None
 
 
@@ -55,6 +57,106 @@ class BrowserActionContractTests(unittest.TestCase):
         self.assertTrue(result["real_chromium_form_fill_click_select_check_upload"])
         self.assertFalse(result["real_website_modified"])
         self.assertFalse(result["AGI_demonstrated"])
+
+
+
+class AdaptiveOwnerLoopContractTests(unittest.TestCase):
+    """Only new adapter behavior; no repeated external login or demo tests."""
+
+    class FakeLocator:
+        def __init__(self, page, selector):
+            self.page, self.selector = page, selector
+
+        async def count(self):
+            return self.page.matches.get(self.selector, 0)
+
+        async def click(self, **kwargs):
+            self.page.clicks.append(self.selector)
+            if self.page.fail_after_click:
+                raise TimeoutError("DO NOT PRINT PRIVATE DOM")
+
+    class FakePage:
+        url = "https://example.com/owner"
+        def __init__(self, matches=None, fail_after_click=False):
+            self.matches = matches or {"#ready": 1}
+            self.clicks = []
+            self.fail_after_click = fail_after_click
+
+        def locator(self, selector):
+            return AdaptiveOwnerLoopContractTests.FakeLocator(self, selector)
+
+    def test_missing_selector_replans_without_executing(self):
+        async def run():
+            page = self.FakePage()
+            candidates = iter([BrowserStep("click", "#missing"),
+                               BrowserStep("click", "#ready")])
+            events = []
+            async def observe(p):
+                return {"ready": True}
+            async def decide(obs, feedback):
+                if len(events) > 0:
+                    self.assertEqual(feedback, "locator_missing")
+                return next(candidates)
+            async def consent(step):
+                self.assertEqual(step.selector, "#ready")
+                return True
+            async def verify(p):
+                return p.clicks == ["#ready"]
+            async def progress(event):
+                events.append(event)
+            result = await execute_owner_adaptive_loop(
+                page, authorized_origins={"https://example.com"},
+                observe=observe, decide=decide, consent=consent,
+                verify=verify, progress=progress)
+            self.assertEqual(result["status"], "CALLER_VERIFIED")
+            self.assertEqual(result["executed_steps"], 1)
+            self.assertEqual(result["safe_locator_replans"], 1)
+            self.assertFalse(result["private_page_text_or_credentials_returned"])
+            self.assertTrue(all(set(e) == {"state", "step"} for e in events))
+        asyncio.run(run())
+
+    def test_missing_consent_never_clicks(self):
+        async def run():
+            page = self.FakePage()
+            with self.assertRaises(PermissionError):
+                await execute_owner_adaptive_loop(
+                    page, authorized_origins={"https://example.com"},
+                    observe=lambda p: {},
+                    decide=lambda o, feedback: BrowserStep("click", "#ready"),
+                    consent=lambda step: False,
+                    verify=lambda p: True)
+            self.assertEqual(page.clicks, [])
+        asyncio.run(run())
+
+    def test_uncertain_click_is_not_retried(self):
+        async def run():
+            page = self.FakePage(fail_after_click=True)
+            result = await execute_owner_adaptive_loop(
+                page, authorized_origins={"https://example.com"},
+                observe=lambda p: {},
+                decide=lambda o, feedback: BrowserStep("click", "#ready"),
+                consent=lambda step: True,
+                verify=lambda p: False)
+            self.assertEqual(result["status"], "BLOCKED_UNCERTAIN_ACTION_NO_RETRY")
+            self.assertEqual(page.clicks, ["#ready"])
+            self.assertEqual(result["executed_steps"], 0)
+        asyncio.run(run())
+
+    def test_ambiguous_target_and_bad_origin_block(self):
+        async def run():
+            page = self.FakePage(matches={"#ready": 2})
+            result = await execute_owner_adaptive_loop(
+                page, authorized_origins={"https://example.com"},
+                observe=lambda p: {}, decide=lambda o, f: BrowserStep("click", "#ready"),
+                consent=lambda step: True, verify=lambda p: False)
+            self.assertEqual(result["status"], "BLOCKED_AMBIGUOUS_OR_MISSING_LOCATOR")
+            self.assertEqual(page.clicks, [])
+            with self.assertRaises(PermissionError):
+                await execute_owner_adaptive_loop(
+                    page, authorized_origins={"https://other.example.org"},
+                    observe=lambda p: {}, decide=lambda o, f: None,
+                    consent=lambda step: True, verify=lambda p: False)
+        asyncio.run(run())
 
 if __name__=="__main__":
     unittest.main()
