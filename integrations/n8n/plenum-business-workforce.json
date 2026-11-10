@@ -79,7 +79,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "// Model-generated work is UNVERIFIED until its sources and assertions are checked.\n// This workflow has no webhooks, credentials, or write-capable business connectors.\nreturn $input.all().map((item, index) => ({\n  json: {\n    item_index: index,\n    status: \"DRAFT_AWAITING_FOUNDER_REVIEW\",\n    draft_untrusted: String(item.json.output || \"\").slice(0,12000),\n    independent_verification_performed: false,\n    external_actions_executed: false,\n    owner_approval_required: true\n  }\n}));"
+        "jsCode": "// All nine drafts are untrusted; preserve the matching role for human review.\n// This isolated prototype has no external write tools, account credentials or triggers.\nconst original = $('Assign Nine Roles').all();\nreturn $input.all().map((item, index) => ({\n  json: {\n    item_index: index,\n    role: String(original[index]?.json?.role || \"unknown\"),\n    mission: String(original[index]?.json?.mission || \"\"),\n    assigned_task: String(original[index]?.json?.instruction || \"\"),\n    status: \"DRAFT_AWAITING_FOUNDER_REVIEW\",\n    draft_untrusted: String(item.json.output || \"\").slice(0,12000),\n    independent_verification_performed: false,\n    external_actions_executed: false,\n    owner_approval_required: true\n  }\n}));"
       }
     }
   ],
