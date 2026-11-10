@@ -37,6 +37,30 @@ class DirectNineDepartmentTests(TestCase):
                 self.assertIn(json.dumps(task["objective"]),change["parameters"]["jsCode"])
                 self.assertEqual(compiled["active"],False)
 
+    def test_department_gets_only_reviewed_free_sources_not_installed_tools(self):
+        task=parse_founder_department(event(
+            role="engineering",
+            objective="Design a public PyBaMM battery benchmark with an independent physical baseline",
+        ))
+        compiled=tailor_original_n8n_workflow(SOURCE,task)
+        script=next(x for x in compiled["nodes"] if x["name"]=="Assign Nine Roles")["parameters"]["jsCode"]
+        self.assertIn("pybamm [pybamm-team/PyBaMM]",script)
+        self.assertIn("not installed",script)
+        self.assertIn("never claim code or a solver ran",script)
+        self.assertEqual(len(compiled["nodes"]),6)
+        self.assertEqual(compiled["active"],False)
+        self.assertEqual(len([x for x in compiled["nodes"] if "credentials" in x]),0)
+
+    def test_no_source_match_keeps_only_founder_objective(self):
+        task=parse_founder_department(event(
+            role="support",
+            objective="Draft an internal FAQ about unfamiliar etiquette wording",
+        ))
+        compiled=tailor_original_n8n_workflow(SOURCE,task)
+        script=next(x for x in compiled["nodes"] if x["name"]=="Assign Nine Roles")["parameters"]["jsCode"]
+        self.assertIn(json.dumps(task["objective"]),script)
+        self.assertNotIn("FREE-source references",script)
+
     def test_wrong_author_private_data_or_role_denied(self):
         for e in [
             event(actor="someone-else"),
@@ -78,6 +102,30 @@ class DirectNineDepartmentTests(TestCase):
         ]:
             with self.assertRaises((ValueError,TypeError)):
                 extract_untrusted_public_department_reply(bad)
+
+    def test_nine_agent_inference_only_from_founder_issue_or_explicit_founder_manual(self):
+        workflow=(ROOT/".github/workflows/business-workforce-n8n-agent-trial.yml").read_text()
+        triggers=workflow.split("permissions:",1)[0]
+        self.assertIn("workflow_dispatch:",triggers)
+        self.assertIn("issues:",triggers)
+        self.assertNotIn("schedule:",triggers)
+        self.assertNotIn("pull_request:",triggers)
+        self.assertNotIn("  push:",triggers)
+        self.assertIn("github.actor == 'chadkhalil21-svg'",workflow)
+        self.assertIn("github.event.issue.user.login == 'chadkhalil21-svg'",workflow)
+        self.assertIn("[Plenum Department] public assignment",workflow)
+
+    def test_durable_issue_receipt_does_not_publish_untrusted_agent_content(self):
+        text=(ROOT/".github/workflows/business-workforce-n8n-agent-trial.yml").read_text()
+        self.assertIn("issues: write",text)
+        self.assertIn("plenum-department-public:",text)
+        self.assertIn("independent_fact_verification",text)
+        receipt=text.split("- name: Publish bounded public department status",1)[1]
+        receipt=receipt.split("- name: Delete temporary credentials",1)[0]
+        for forbidden in ("draft_untrusted","run.log","credentials.json",
+                          "public-department-reply.json"):
+            self.assertNotIn(forbidden,receipt)
+        self.assertIn("Founder-visible department status published",receipt)
 
     def test_no_model_network_write_or_private_credentials_in_parser(self):
         src=(ROOT/"src/plenum_ai/workforce_department_command.py").read_text()

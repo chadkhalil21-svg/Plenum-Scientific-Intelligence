@@ -1,6 +1,14 @@
 # Project working instructions
 
 
+## Founder agent-workforce evidence and no wasteful trials (2026-11-10 UTC)
+
+**Caution from actual native n8n model execution:** [Engineering issue #388](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/388) succeeded at invoking its real local Qwen3:0.6b role, but its produced PyBaMM benchmark **fabricated technical relevance for IEEE 802.1X** (which IEEE explicitly identifies as network access control). Independent evidence on the issue documents the error. **Nine role profiles are nine draft-only model instructions, not nine verified scientific/engineering specialists.** Distinguish model execution, source references, independently scored original outputs and full autonomy. Do not promote unsupported model-source citations, made-up thresholds or claimed simulations.
+
+**Efficiency action:** [PR #389](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/389) attaches the existing read-only 27-source registry to one-of-nine department *planning prompts* and preserves `NOT INSTALLED` text; no model inference for lookup. It removes automatically rerun generic nine-model trials on every PR and old weekly generic schedule; actual inference is only founder-authorized public issue/explicit founder manual dispatch. Original department results must leave an **evidence-only** issue status and a separately retained untrusted draft; no private credentials/model text in public comments. For independently meaningful engineering/science results use established original solver, source observations and independent author-grade tests, not yet another orchestration engine.
+
+
+
 ## FOUNDER FREE-FIRST INFERENCE AND UNIVERSAL UPSTREAM REUSE (2026-11-10)
 
 **Explicit owner directive:** Incorporate all useful original video agent repositories AND free engineering/science upstream libraries by **reusing the existing Plenum source registry and original execution engines**. Never build another framework or blindly install a repo. The [original source catalogue](integrations/agent-catalog/upstream-sources.json) now registers **27** agent/software/engineering upstream references, and [existing five-workforce manifest](integrations/workforces/five-workforces.json) points to that catalogue. Use `python -m plenum_ai.agent_library --sources` or `--suggest-source "aerodynamics cfd"` for deterministic zero-inference discovery. These are **source references**, not installed tools; 283 pinned MIT persona profiles and 1,106 AGPL production documents stay separate and dormant.

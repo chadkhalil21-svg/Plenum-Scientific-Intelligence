@@ -2,18 +2,6 @@ name: Business Workforce | Real n8n Nine-Agent Local-Qwen Trial
 on:
   issues:
     types: [opened]
-  push:
-    branches: [feat/live-business-workforce-20261110]
-    paths: ['.github/workflows/business-workforce-n8n-agent-trial.yml']
-  pull_request:
-    paths:
-      - '.github/workflows/business-workforce-n8n-agent-trial.yml'
-      - 'integrations/n8n/plenum-business-workforce.json'
-      - 'src/plenum_ai/business_public_watch.py'
-      - 'src/plenum_ai/workforce_department_command.py'
-      - 'tests/test_workforce_department_command.py'
-  schedule:
-    - cron: '49 11 * * 3'
   workflow_dispatch:
 permissions:
   contents: read
@@ -22,9 +10,14 @@ concurrency:
   cancel-in-progress: false
 jobs:
   run-nine-public-agents:
+    permissions:
+      contents: read
+      issues: write
     if: >-
-      github.event_name != 'issues' ||
-      (github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      (github.event_name == 'workflow_dispatch' &&
+       github.actor == 'chadkhalil21-svg') ||
+      (github.event_name == 'issues' &&
+       github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
        github.event.issue.user.login == 'chadkhalil21-svg' &&
        github.event.issue.title == '[Plenum Department] public assignment')
     runs-on: ubuntu-latest
@@ -195,6 +188,61 @@ jobs:
           path: runtime-trial/verified-department.json
           if-no-files-found: ignore
           retention-days: 7
+      - name: Publish bounded public department status to original founder issue
+        if: always() && github.event_name == 'issues'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          GH_ISSUE: ${{ github.event.issue.number }}
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          from urllib.request import Request,urlopen
+          report=Path('runtime-trial/verified-department.json')
+          meta=Path('runtime-trial/department-metadata.json')
+          if not meta.is_file():
+              print('No verified founder preflight metadata; no report to publish')
+              raise SystemExit(0)
+          task=json.loads(meta.read_text())
+          if int(task['issue_number']) != int(os.environ['GH_ISSUE']):
+              raise PermissionError('Founder issue number mismatch')
+          if task.get('approval')!='public-draft-only':
+              raise PermissionError('Cannot publish private or privileged department')
+          state={'status':'BLOCKED_NO_VERIFIED_AGENT_DRAFT',
+                 'model_executed':False,
+                 'independent_fact_verification':False,
+                 'external_account_actions':False}
+          if report.is_file():
+              data=json.loads(report.read_text())
+              if data.get('role')!=task['role']:
+                  raise PermissionError('Role mismatch')
+              state.update({k:data.get(k) for k in state if k in data})
+          run=os.environ['GITHUB_RUN_ID']
+          marker='<!-- plenum-department-public:'+run+' -->'
+          body=(marker+'\n**Plenum department: '+task['role']+'**\n'
+                '**Status: '+str(state['status'])+'**\n'
+                'Model executed: '+str(state['model_executed'])+
+                '; independently fact-verified: '+str(state['independent_fact_verification'])+
+                '; external account actions: '+str(state['external_account_actions'])+
+                '. Public draft is a seven-day Actions artifact, **NOT verified engineering**.\n'
+                'Run: https://github.com/'+os.environ['GH_REPO']+'/actions/runs/'+run)
+          root='https://api.github.com/repos/'+os.environ['GH_REPO']+'/issues/'+os.environ['GH_ISSUE']+'/comments'
+          headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],
+                   'Accept':'application/vnd.github+json',
+                   'User-Agent':'PlenumOriginalNineDepartment/1'}
+          with urlopen(Request(root+'?per_page=100',headers=headers),timeout=15) as response:
+              prior=json.loads(response.read(200001))
+          if not any(marker in (c.get('body') or '') for c in prior if isinstance(c,dict)):
+              payload=json.dumps({'body':body}).encode()
+              with urlopen(Request(root,data=payload,headers={
+                  **headers,'Content-Type':'application/json'
+              },method='POST'),timeout=15) as response:
+                  assert response.status==201
+              print('Founder-visible department status published; no model text or credentials')
+          else:
+              print('Department run receipt already exists')
+          PY
       - name: Delete temporary credentials, n8n database and model
         if: always()
         run: |
