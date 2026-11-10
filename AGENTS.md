@@ -1,6 +1,14 @@
 # Project working instructions
 
 
+## 2026-11-10 | Generic no-cost source sanity checks required for untrusted AI agents
+
+**Actual failed model citations:** n8n [Engineering #388](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/388) mistakenly treated IEEE 802.1X as a battery standard; native [Simulation #390](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/390) produced a wrong GitHub link `su2/su2` instead of official `su2code/SU2`. Both **executed real local Qwen model tasks**, yet remained scientifically unverified drafts. These are **negative outcome evidence** against claiming nine mature AI scientists. Sources were checked separately against primary IEEE/IEC and SU2 origin. Do not discard failed drafts or mistake process success for technical correctness.
+
+**PR #391** now checks arbitrary model-supplied GitHub repositories against the original vetted free-source index, offline and without inference; unregistered/malformed references mark the draft for source review, with only a count in the durable status receipt. A known repo alone does **not** prove a scientific claim; all unsupported outside-source assertions remain unverified. Do not build custom one-off keyword blacklist patches for each hallucination. Improve real model reasoning, trusted tool retrieval and separately graded actual effects instead.
+
+
+
 ## Founder agent-workforce evidence and no wasteful trials (2026-11-10 UTC)
 
 **Caution from actual native n8n model execution:** [Engineering issue #388](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/388) succeeded at invoking its real local Qwen3:0.6b role, but its produced PyBaMM benchmark **fabricated technical relevance for IEEE 802.1X** (which IEEE explicitly identifies as network access control). Independent evidence on the issue documents the error. **Nine role profiles are nine draft-only model instructions, not nine verified scientific/engineering specialists.** Distinguish model execution, source references, independently scored original outputs and full autonomy. Do not promote unsupported model-source citations, made-up thresholds or claimed simulations.
