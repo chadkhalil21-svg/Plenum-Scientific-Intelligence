@@ -1,0 +1,105 @@
+name: Plenum Chief of Staff | Real Free Model Delegation
+on:
+  pull_request:
+    paths:
+      - 'src/plenum_ai/chief_of_staff_pilot.py'
+      - 'tests/test_chief_of_staff_pilot.py'
+      - 'skills/plenum-chief-of-staff/SKILL.md'
+      - 'pyproject.toml'
+      - '.github/workflows/chief-of-staff-delegation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: plenum-chief-public-pilot-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  no-model-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - name: Test exact public GitHub allowlist, independent source ID, $0 gates
+        run: python -m unittest discover -s tests -p test_chief_of_staff_pilot.py -v
+      - name: Demonstrate preflight never calls a model
+        run: |
+          python -m plenum_ai.chief_of_staff_pilot --out reports/chief-of-staff-delegation.json
+          python - <<'PY'
+          import json
+          r=json.load(open('reports/chief-of-staff-delegation.json'))
+          assert r['mode']=='SOURCE_READY_NOT_EXECUTED'
+          assert not r['model_called'] and not r['paid_api_used']
+          assert not r['business_account_action_executed']
+          print('PASS: no-model free-first preflight; no external action')
+          PY
+  actual-model-delegation:
+    needs: no-model-security
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    env:
+      PLENUM_EPHEMERAL_RUNNER: confirmed
+      PLENUM_CHIEF_MODEL_URL: http://127.0.0.1:11434
+      LANGSMITH_TRACING: 'false'
+      LANGCHAIN_TRACING_V2: 'false'
+      HF_HUB_DISABLE_TELEMETRY: '1'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Start free local CPU-only model (no paid API or credentials)
+        run: |
+          docker pull ollama/ollama:latest
+          docker run -d --rm --name plenum-chief-local-ollama \
+            --memory=5g --cpus=3 -p 127.0.0.1:11434:11434 \
+            -e OLLAMA_CONTEXT_LENGTH=8192 \
+            -e OLLAMA_NUM_PARALLEL=1 \
+            ollama/ollama:latest
+          for i in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
+            sleep 2
+          done
+          docker exec plenum-chief-local-ollama ollama pull qwen3:1.7b
+          docker exec plenum-chief-local-ollama ollama list
+      - name: Install pinned upstream Deep Agents and local Ollama SDK
+        run: |
+          python -m pip install -e '.[chief_of_staff]'
+          python -m pip check
+      - name: Chief delegates actual public supplier-license check to specialist
+        run: |
+          timeout 900 python -m plenum_ai.chief_of_staff_pilot \
+            --execute --repo langchain-ai/deepagents \
+            --out reports/chief-of-staff-delegation.json
+      - name: Independently verify model delegation plus external provider readback
+        run: |
+          python - <<'PY'
+          import json
+          r=json.load(open('reports/chief-of-staff-delegation.json'))
+          assert r['mode']=='VERIFIED_NARROW_DELEGATION'
+          assert r['model_called'] and r['subagent_delegation_verified']
+          assert r['worker_read_only_tool_called']
+          assert r['independent_external_readback']
+          assert r['upstream_metadata_agrees']
+          assert r['source_license_spdx']=='MIT'
+          assert not r['paid_api_used'] and not r['business_account_action_executed']
+          print('PASS: actual local-model Chief → Deep Agents task → public specialist tool → independent second upstream read.')
+          PY
+      - name: Preserve only public evidence; no tokens, credentials or private tasks
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: chief-of-staff-public-delegation
+          path: reports/chief-of-staff-delegation.json
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Destroy isolated model container and do not leave always-on worker
+        if: always()
+        run: docker rm -f plenum-chief-local-ollama 2>/dev/null || true
