@@ -90,8 +90,13 @@ def run_issue(event: dict, *, output_dir: Path, runner=subprocess.run) -> dict:
     safe_env = {k: v for k, v in os.environ.items()
                 if k not in ("GH_TOKEN", "GITHUB_TOKEN") and
                 not k.endswith(("_TOKEN", "_SECRET", "_API_KEY"))}
-    result = runner(command, timeout=360, cwd=str(Path(__file__).resolve().parents[2]),
-                    env=safe_env, capture_output=True, text=True, check=False)
+    try:
+        result = runner(command, timeout=360, cwd=str(Path(__file__).resolve().parents[2]),
+                        env=safe_env, capture_output=True, text=True, check=False)
+    except (subprocess.TimeoutExpired, OSError):
+        return {**task, "status": "BLOCKED_WORKER_UNAVAILABLE", "verified": False,
+                "reason": "Existing worker did not finish within bounded runtime",
+                "output_artifact": None}
     if result.returncode != 0:
         return {**task, "status": "BLOCKED_WORKER_FAILED", "verified": False,
                 "reason": "Original public research worker failed",
@@ -102,6 +107,9 @@ def run_issue(event: dict, *, output_dir: Path, runner=subprocess.run) -> dict:
         return {**task, "status": "BLOCKED_VERIFICATION", "verified": False,
                 "reason": "Original report failed independent schema check",
                 "output_artifact": None}
+    if checked["source_linked_records"] == 0:
+        return {**task, **checked, "status": "BLOCKED_NO_SOURCE_EVIDENCE",
+                "verified": False, "output_artifact": output.name}
     return {
         **task, **checked, "status": "DRAFT_READY_FOR_FOUNDER",
         "verified": True, "output_artifact": output.name,
