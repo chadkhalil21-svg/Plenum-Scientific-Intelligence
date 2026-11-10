@@ -581,6 +581,40 @@
       "free_cost_class": "free_source_local_scan_optional_llm_api_extra_cost",
       "plenum_reuse_state": "candidate",
       "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "paperclip",
+      "repository": "paperclipai/paperclip",
+      "kind": "multi_agent_workforce_control_plane",
+      "license": "MIT",
+      "source_status": "official_source_and_native_hermes_gateway_adapter_reviewed_2026_11_10",
+      "plenum_reuse_state": "candidate_existing_management_gap_only_not_installed",
+      "activation": "defer_until_owner_scoped_host_and_independent_acceptance",
+      "free_cost_class": "free_mit_source_requires_execution_compute",
+      "default_execution": "never_install_automatically",
+      "tags": [
+        "agent",
+        "workforce",
+        "orchestration",
+        "governance"
+      ]
+    },
+    {
+      "id": "openclaw",
+      "repository": "openclaw/openclaw",
+      "kind": "self_hosted_agent_gateway_alternative",
+      "license": "MIT",
+      "source_status": "official_source_reviewed_2026_11_10",
+      "plenum_reuse_state": "alternative_to_existing_hermes_not_additional_chief",
+      "activation": "defer_until_owner_scoped_host_and_independent_acceptance",
+      "free_cost_class": "free_mit_source_requires_execution_compute",
+      "default_execution": "never_install_automatically",
+      "tags": [
+        "agent",
+        "messaging",
+        "browser",
+        "gateway"
+      ]
     }
   ]
 }
