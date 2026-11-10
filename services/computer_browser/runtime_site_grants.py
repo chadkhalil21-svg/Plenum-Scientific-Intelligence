@@ -55,6 +55,18 @@ def normalize_origin(origin: str) -> str:
     return origin
 
 
+def normalize_owner_entry(origin: str) -> str:
+    """Accept an optional root slash from normal URL copy/paste.
+
+    Persistent grants and security checks still receive the EXACT canonical
+    HTTPS origin. No paths, query strings, credentials or other relaxations.
+    """
+    if not isinstance(origin, str):
+        raise PermissionError("Invalid website origin")
+    candidate = origin[:-1] if origin.endswith("/") else origin
+    return normalize_origin(candidate)
+
+
 class OwnerSiteGrantStore:
     """One encrypted owner-specific GCS index with CAS updates and 7-day expiry."""
 
@@ -176,7 +188,9 @@ def mount_runtime_site_grants(app):
             "and expires automatically after seven days. "
             "<strong>Registration enables only owner-operated private sign-in</strong> "
             "through an IP-pinned single-origin browser. ChatGPT account "
-            "actions and cross-site sign-in remain separately gated.</small>",
+            "actions and cross-site sign-in remain separately gated. "
+            "Enter a website such as https://appstoreconnect.apple.com "
+            "(an optional final / is accepted), without a page path.</small>",
             "<form method='post' action='/owner/sites/authorize'>"
             "<label>Website HTTPS origin (for example https://example.org)"
             "<input name='site' type='url' maxlength='240' autocomplete='off' required>"
@@ -256,15 +270,42 @@ def mount_runtime_site_grants(app):
         _verify_owner_form(request, owner_id, REGISTRY_SCOPE, "site_register", csrf_token)
         if confirmation != "AUTHORIZE":
             raise HTTPException(status_code=403, detail="Explicit owner confirmation required")
+        # A browser commonly supplies a harmless trailing '/' on HTTPS URLs.
+        # Still store only exact canonical origins; never loosen host/SSRF guards.
         try:
-            site = normalize_origin(site)
-            # Pre-registration DNS validation is defense in depth, NOT proof
-            # of rebinding-safe browser egress. Hence navigation stays disabled.
+            site = normalize_owner_entry(site)
+        except PermissionError:
+            return HTMLResponse(_page(
+                "Website address not accepted",
+                "<article>Enter a public HTTPS website origin only, for example "
+                "<code>https://appstoreconnect.apple.com</code>. A final slash "
+                "is allowed; paths, ports, credentials and query strings are not."
+                "</article><p><a href='/owner/sites'>Return to registry</a></p>"),
+                status_code=400)
+        # Existing pre-registration DNS checks remain mandatory. A transient
+        # resolver failure is NOT evidence that the owner entered a bad URL.
+        try:
             public_dns_only(site)
+        except PermissionError as exc:
+            detail = str(exc)
+            if detail in {"Cannot verify destination DNS", "Unresolved destination"}:
+                return HTMLResponse(_page(
+                    "Website DNS unavailable",
+                    "<article>The website address passed validation, but the "
+                    "Plenum server could not resolve its public DNS records. "
+                    "No registration was saved. This is not an Apple login "
+                    "refusal.</article><p><a href='/owner/sites'>Return to registry</a></p>"),
+                    status_code=503)
+            return HTMLResponse(_page(
+                "Website destination denied",
+                "<article>Plenum could not verify exclusively public IP "
+                "addresses for this HTTPS website. Registration was blocked "
+                "to protect internal networks.</article>"
+                "<p><a href='/owner/sites'>Return to registry</a></p>"),
+                status_code=403)
+        try:
             result = OwnerSiteGrantStore.from_environment().register(
                 owner=owner_id, origin=site)
-        except PermissionError as exc:
-            raise HTTPException(status_code=403, detail="Invalid or unsafe HTTPS origin") from exc
         except Exception as exc:
             raise HTTPException(status_code=503,
                                 detail="Website registration unavailable") from exc
