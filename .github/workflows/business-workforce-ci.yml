@@ -7,6 +7,8 @@ on:
       - 'integrations/n8n/plenum-business-workforce.json'
       - 'docs/BUSINESS_WORKFORCE.md'
       - '.github/workflows/business-workforce-ci.yml'
+      - 'integrations/n8n/docker-compose.codespace.yml'
+      - 'integrations/n8n/start-codespace-workforce.sh'
   push:
     branches: [main]
     paths:
@@ -35,6 +37,12 @@ jobs:
         run: python -m pip install -e .
       - name: Test n8n import schema and owner guardrails
         run: python -m unittest discover -s tests -p 'test_business_workforce_integration.py' -v
+      - name: Validate Codespaces startup syntax and private Docker Compose
+        env:
+          N8N_ENCRYPTION_KEY: disposable-test-placeholder-not-a-production-secret
+        run: |
+          bash -n integrations/n8n/start-codespace-workforce.sh
+          docker compose -f integrations/n8n/docker-compose.codespace.yml config --quiet
       - name: Produce no-cost OpenHands configuration report
         run: python -m plenum_ai.openhands_coding_agent --out reports/openhands-agent-review.json
       - name: Verify no agent or side effects were falsely claimed
