@@ -33,14 +33,56 @@ _APPLE_LOGIN_ORIGINS = frozenset({
 })
 
 
-def _approved_live_origins(origin, *, dynamic, apple_auth):
-    if apple_auth not in ("0", "1"):
-        raise PermissionError("Invalid Apple authentication permission")
-    if apple_auth == "0":
+def _approved_live_origins(origin, *, dynamic, apple_auth,
+                           resource_origins="", approve_resources="0"):
+    """Trusted owner-session exact origins, never page-supplied redirects.
+
+    Extra resources exist only for an active owner-registered HTTPS website
+    behind the original public-IP-pinned CONNECT broker. Approval is strictly
+    one browser session; cookie/session storage remains bound to the primary.
+    """
+    if apple_auth not in ("0", "1") or approve_resources not in ("0", "1"):
+        raise PermissionError("Invalid owner cross-origin permission")
+    if not isinstance(resource_origins, str) or len(resource_origins) > 650:
+        raise PermissionError("Oversized resource origin request")
+    if apple_auth == "1":
+        if resource_origins or approve_resources != "0":
+            raise PermissionError("Distinct authentication and resource scopes cannot mix")
+        if origin != _APP_STORE_ORIGIN or not dynamic:
+            raise PermissionError("Apple sign-in scope requires registered private site")
+        return frozenset({origin}) | _APPLE_LOGIN_ORIGINS
+    if not resource_origins:
+        if approve_resources != "0":
+            raise PermissionError("Resource approval requires explicit origins")
         return frozenset({origin})
-    if origin != _APP_STORE_ORIGIN or not dynamic:
-        raise PermissionError("Apple sign-in scope requires registered private site")
-    return frozenset({origin}) | _APPLE_LOGIN_ORIGINS
+    if not dynamic or approve_resources != "1":
+        raise PermissionError("Owner registration and resource confirmation required")
+    from .runtime_site_grants import normalize_origin
+    values = [part.strip() for part in resource_origins.split(",")]
+    if not 1 <= len(values) <= 5 or any(not value for value in values):
+        raise PermissionError("At most five exact HTTPS resource origins")
+    extras = tuple(normalize_origin(value) for value in values)
+    if origin in extras or len(set(extras)) != len(extras):
+        raise PermissionError("Resource origins must be distinct from approved site")
+    return frozenset({origin, *extras})
+
+
+def _allow_live_request(*, url, method, resource_type, primary, approved,
+                        allow_apple_auth=False):
+    """No secondary-origin navigation or credential-bearing form writes.
+
+    Static script permission implies the source may execute in the website
+    context: the verified owner explicitly approves each exact resource host.
+    All traffic still passes pinned public-IP CONNECT proxy and HTTPS TLS.
+    """
+    if safe_url(url, origins={primary}):
+        return method in {"GET", "HEAD", "POST", "OPTIONS"}
+    if not safe_url(url, origins=approved - {primary}):
+        return False
+    if allow_apple_auth:
+        return method in {"GET", "HEAD", "POST", "OPTIONS"}
+    return (method in {"GET", "HEAD"} and resource_type in
+            {"script", "stylesheet", "image", "font"})
 
 
 def filter_site_storage(state,site_origin):
@@ -127,6 +169,16 @@ def login_html(nonce):
     For App Store Connect only: permit Apple's four documented sign-in hosts
     during this private browser session. All other websites remain blocked.
     Sign-in and MFA remain thine own actions.</label>
+    <p><label>Optional extra website resource origins (comma-separated HTTPS origins;
+    no paths or wildcards; up to five)
+    <input id="resource-origins" maxlength="650" autocomplete="off"
+      placeholder="https://github.githubassets.com,https://avatars.githubusercontent.com"></label></p>
+    <label><input id="approve-resources" type="checkbox">
+    I approve these exact resource hosts for this browser session only.
+    They may supply scripts, styles, images and fonts; their scripts run on
+    the opened website. No extra page navigation, form submission or
+    storage of their login data is authorized. Never copy website-requested
+    hosts without independently checking whom they belong to.</label>
     <button id="open">Open secure browser</button>
     <p id="status" role="status">Not connected</p>
     <canvas width="1024" height="720" id="display" tabindex="0" aria-label="Remote Chromium view: tap or click a field to select it"></canvas>
@@ -173,11 +225,21 @@ def login_html(nonce):
       updateTypingEnabled();clearStalePreview();
       const target=document.getElementById("url").value.trim();
       const appleAuth=document.getElementById("apple-auth").checked?"1":"0";
+      const resources=document.getElementById("resource-origins").value.trim();
+      const resourceConsent=document.getElementById("approve-resources").checked?"1":"0";
+      if((resources && resourceConsent!=="1") ||
+         (!resources && resourceConsent==="1") ||
+         (resources && appleAuth==="1")){
+        status.textContent="Review and approve exact resource hosts; do not mix Apple sign-in and resource permissions.";
+        return;
+      }
       status.textContent="Checking owner-approved website access...";
       let access;
       try{
         access=await fetch("/owner/live-access?site="+encodeURIComponent(target)+
-            "&apple_auth="+appleAuth,{
+            "&apple_auth="+appleAuth+
+            "&resource_origins="+encodeURIComponent(resources)+
+            "&approve_resources="+resourceConsent,{
           credentials:"same-origin",cache:"no-store",headers:{"Accept":"application/json"}
         });
       }catch(_){
@@ -196,6 +258,8 @@ def login_html(nonce):
       u.protocol=location.protocol==="https:"?"wss:":"ws:";
       u.searchParams.set("site",target);
       u.searchParams.set("apple_auth",appleAuth);
+      u.searchParams.set("resource_origins",resources);
+      u.searchParams.set("approve_resources",resourceConsent);
       const connection=new WebSocket(u);
       ws=connection;ready=false;pageBlank=true;selected="none";pendingText=null;saveInFlight=false;
       updateTypingEnabled();
@@ -383,13 +447,17 @@ def mount_private_login(app):
     @app.get("/owner/live-access")
     async def live_access(site: str=Query(min_length=9,max_length=1200),
                           apple_auth: str="0",
+                          resource_origins: str=Query(default="", max_length=650),
+                          approve_resources: str="0",
                           _owner=Depends(require_verified_owner)):
         """Same-origin, verified-owner HTTP preflight; no browser or secrets."""
         try:
             origin, pinned=owner_live_origin(
                 owner_id=_owner["private_owner_id"],site=site)
             approved_origins=_approved_live_origins(
-                origin,dynamic=pinned,apple_auth=apple_auth)
+                origin,dynamic=pinned,apple_auth=apple_auth,
+                resource_origins=resource_origins,
+                approve_resources=approve_resources)
         except PermissionError as exc:
             raise HTTPException(status_code=403,
                                 detail="Website not approved for private sign-in") from exc
@@ -414,7 +482,8 @@ def mount_private_login(app):
             })
 
     @app.websocket("/owner/live")
-    async def live(ws:WebSocket,site:str,demo:str="0",apple_auth:str="0"):
+    async def live(ws:WebSocket,site:str,demo:str="0",apple_auth:str="0",
+                   resource_origins:str="",approve_resources:str="0"):
         # IAP's unsigned email headers can be forged; accept only its signed JWT.
         try:
             # Auth0 portal accepts only Authlib-verified and signed owner
@@ -430,7 +499,9 @@ def mount_private_login(app):
             origin, dynamic=owner_live_origin(
                 owner_id=owner["private_owner_id"],site=site)
             approved_origins=_approved_live_origins(
-                origin,dynamic=dynamic,apple_auth=apple_auth)
+                origin,dynamic=dynamic,apple_auth=apple_auth,
+                resource_origins=resource_origins,
+                approve_resources=approve_resources)
             if demo=="1" and (not ci or apple_auth=="1"):
                 raise PermissionError("Offline demonstration is not enabled")
             if demo not in ("0","1"):
@@ -477,11 +548,14 @@ def mount_private_login(app):
                 if demo=="0":
                     async def limited_origin(route):
                         req=route.request
-                        if (req.method in {"GET","HEAD","POST","OPTIONS"} and
-                                safe_url(req.url,origins=approved_origins)):
+                        if _allow_live_request(
+                                url=req.url,method=req.method,
+                                resource_type=req.resource_type,
+                                primary=origin,approved=approved_origins,
+                                allow_apple_auth=apple_auth=="1"):
                             await route.continue_()
                         else:
-                            if not safe_url(req.url,origins=approved_origins):
+                            if not safe_url(req.url,origins={origin}):
                                 blocked["cross_origin"]+=1
                             await route.abort()
                     await context.route("**/*",limited_origin)
