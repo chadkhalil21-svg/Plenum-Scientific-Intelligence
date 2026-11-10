@@ -103,6 +103,18 @@ class DirectNineDepartmentTests(TestCase):
             with self.assertRaises((ValueError,TypeError)):
                 extract_untrusted_public_department_reply(bad)
 
+    def test_nine_agent_inference_only_from_founder_issue_or_explicit_founder_manual(self):
+        workflow=(ROOT/".github/workflows/business-workforce-n8n-agent-trial.yml").read_text()
+        triggers=workflow.split("permissions:",1)[0]
+        self.assertIn("workflow_dispatch:",triggers)
+        self.assertIn("issues:",triggers)
+        self.assertNotIn("schedule:",triggers)
+        self.assertNotIn("pull_request:",triggers)
+        self.assertNotIn("  push:",triggers)
+        self.assertIn("github.actor == 'chadkhalil21-svg'",workflow)
+        self.assertIn("github.event.issue.user.login == 'chadkhalil21-svg'",workflow)
+        self.assertIn("[Plenum Department] public assignment",workflow)
+
     def test_no_model_network_write_or_private_credentials_in_parser(self):
         src=(ROOT/"src/plenum_ai/workforce_department_command.py").read_text()
         for forbidden in ("subprocess.run(", "requests.post(", "gcloud run deploy",
