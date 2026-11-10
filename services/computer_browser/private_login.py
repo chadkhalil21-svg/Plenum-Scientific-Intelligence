@@ -132,6 +132,26 @@ def _persist_encrypted_site_profile(*, owner_id, origin, state):
                                  expected_generation=generation,ttl_seconds=86400)
 
 
+def _load_existing_owner_state(*, owner_id: str, origin: str):
+    """Reuse only an existing, encrypted, owner-scoped same-site profile.
+
+    The trusted server gets the state, NEVER ChatGPT, GitHub, or client JS.
+    No cookie or saved login from any second site is admitted to Chromium.
+    Existence alone does NOT verify a website's authentication status.
+    """
+    vault = BrowserProfileStore.from_environment()
+    if vault.status(owner=owner_id, origin=origin).get("profile_exists") is not True:
+        return None
+    state, _generation = vault.load_for_trusted_worker(
+        owner=owner_id, origin=origin)
+    if not isinstance(state, dict):
+        raise PermissionError("Saved owner state is invalid")
+    scoped = filter_site_storage(state, origin)
+    if not scoped["cookies"] and not scoped["origins"]:
+        raise PermissionError("Saved owner state contains no site data")
+    return scoped
+
+
 def login_html(nonce):
     return """<!doctype html><html lang="en"><head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -177,12 +197,20 @@ def login_html(nonce):
       placeholder="Example only: https://github.githubassets.com,https://avatars.githubusercontent.com"></textarea>
     <small>The grey example is not entered automatically. Paste full addresses,
     with no slash at the end, then tick the separate permission checkbox.</small></p>
+    <p><button id="github-quick-open" type="button">Approve and open GitHub with its two verified resource hosts</button>
+    <small>This one-click choice is ONLY for https://github.com and approves
+    https://github.githubassets.com and https://avatars.githubusercontent.com
+    for this private browser session. Other sites keep their own approvals.</small></p>
     <label><input id="approve-resources" type="checkbox">
     I approve these exact resource hosts for this browser session only.
     They may supply scripts, styles, images and fonts; their scripts run on
     the opened website. No extra page navigation, form submission or
     storage of their login data is authorized. Never copy website-requested
     hosts without independently checking whom they belong to.</label>
+    <p><label><input id="resume-saved" type="checkbox" checked>
+    Reuse my existing encrypted login for this exact website, if one exists.
+    Untick to start a fresh website sign-in. This does not bypass expired
+    sessions or multifactor authentication.</label></p>
     <button id="open">Open secure browser</button>
     <p id="status" role="status">Not connected</p>
     <canvas width="1024" height="720" id="display" tabindex="0" aria-label="Remote Chromium view: tap or click a field to select it"></canvas>
@@ -223,6 +251,23 @@ def login_html(nonce):
       fieldStatus.textContent="No live browser connection. Reopen secure browser to resume; previously typed website fields cannot be assumed saved.";
       return false;
     }
+    document.getElementById("github-quick-open").onclick=()=>{
+      let site;
+      try{site=new URL(document.getElementById("url").value.trim());}
+      catch(_){status.textContent="Enter the exact https://github.com website first.";return;}
+      if(site.origin!=="https://github.com" || site.username || site.password){
+        status.textContent="This predefined resource approval works for GitHub only.";
+        return;
+      }
+      if(document.getElementById("apple-auth").checked){
+        status.textContent="Uncheck the Apple-only authentication option for GitHub.";
+        return;
+      }
+      document.getElementById("resource-origins").value=
+        "https://github.githubassets.com,https://avatars.githubusercontent.com";
+      document.getElementById("approve-resources").checked=true;
+      document.getElementById("open").click();
+    };
     document.getElementById("open").onclick=async()=>{
       if(ws)ws.close();
       ws=null;ready=false;pageBlank=true;selected="none";pendingText=null;saveInFlight=false;
@@ -231,6 +276,7 @@ def login_html(nonce):
       const appleAuth=document.getElementById("apple-auth").checked?"1":"0";
       const resources=document.getElementById("resource-origins").value.trim();
       const resourceConsent=document.getElementById("approve-resources").checked?"1":"0";
+      const resumeSaved=document.getElementById("resume-saved").checked?"1":"0";
       if((resources && resourceConsent!=="1") ||
          (!resources && resourceConsent==="1") ||
          (resources && appleAuth==="1")){
@@ -270,6 +316,7 @@ def login_html(nonce):
       u.searchParams.set("apple_auth",appleAuth);
       u.searchParams.set("resource_origins",resources);
       u.searchParams.set("approve_resources",resourceConsent);
+      u.searchParams.set("resume_saved",resumeSaved);
       const connection=new WebSocket(u);
       ws=connection;ready=false;pageBlank=true;selected="none";pendingText=null;saveInFlight=false;
       updateTypingEnabled();
@@ -497,7 +544,8 @@ def mount_private_login(app):
 
     @app.websocket("/owner/live")
     async def live(ws:WebSocket,site:str,demo:str="0",apple_auth:str="0",
-                   resource_origins:str="",approve_resources:str="0"):
+                   resource_origins:str="",approve_resources:str="0",
+                   resume_saved:str="1"):
         # IAP's unsigned email headers can be forged; accept only its signed JWT.
         try:
             # Auth0 portal accepts only Authlib-verified and signed owner
@@ -516,6 +564,8 @@ def mount_private_login(app):
                 origin,dynamic=dynamic,apple_auth=apple_auth,
                 resource_origins=resource_origins,
                 approve_resources=approve_resources)
+            if resume_saved not in ("0", "1"):
+                raise PermissionError("Unknown saved session preference")
             if demo=="1" and (not ci or apple_auth=="1"):
                 raise PermissionError("Offline demonstration is not enabled")
             if demo not in ("0","1"):
@@ -554,10 +604,21 @@ def mount_private_login(app):
                                 "--force-webrtc-ip-handling-policy=disable_non_proxied_udp"],
                     })
                 browser=await playwright.chromium.launch(**launch)
+                saved_state = None
+                if demo=="0" and resume_saved=="1":
+                    saved_state = await asyncio.to_thread(
+                        _load_existing_owner_state,
+                        owner_id=owner["private_owner_id"], origin=origin)
                 context=await browser.new_context(
                     viewport={"width":1024,"height":720},accept_downloads=False,
                     service_workers="block",ignore_https_errors=False,
-                    permissions=[])
+                    permissions=[],
+                    **({"storage_state": saved_state} if saved_state is not None else {}))
+                if saved_state is not None:
+                    await ws.send_json({
+                        "type":"status",
+                        "message":"Existing encrypted site state restored privately. "
+                                  "Website login validity is not yet verified."})
                 blocked={"cross_origin":0}
                 if demo=="0":
                     async def limited_origin(route):
