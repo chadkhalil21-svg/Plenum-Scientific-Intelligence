@@ -1,5 +1,13 @@
 # Plenum Business Workforce | First Adopted Integrations
 
+## November 10, 2026 | Free recurring real-data workforce — independently verified
+
+[PR #338](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/338) merged five green original PR suites. New free GitHub Actions standard public-repository runners are scheduled to:
+- **Every six hours:** GET and independently reread three exact public Render American Rider endpoints with 1–3 retries and separate verification pass; [actual run #42759233829](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42759233829) returned 3/3 VERIFIED, twice each. No accounts/credentials, public status only.
+- **Weekly:** Reuse exact n8n + Ollama/Qwen nine specialist agents, passing the *fresh verified/unverified public-business web status summary* into each role with an explicit separate Agency Agents-inspired evidence rubric; [actual run #42759233622](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42759233622) returned all nine founder-review drafts. No external action tools, private app data or real customer contact.
+
+These are **scheduled ephemeral jobs, not a live persistent n8n instance**, and AI draft facts/quality remain unverified. Existing native connected GitHub and Render independently matched American Rider corporate/platform live deployment SHA to release/current. Native Resend read confirmed two verified sending domains, but **no n8n provider OAuth connection** or outbound message occurred. Dedicated Render Free n8n is not being deployed: free instances sleep and lose filesystem state. See [Operational Gates](BUSINESS_WORKFORCE_OPERATIONAL_GATES.md) for exact costs, protected account-connection requirements, Obscura decision and MIT Agency Agents source attribution.
+
 **Status:** Nine native n8n model-backed specialist drafts and one OpenHands/Qwen3:1.7B syntax-valid coding proposal have been verified on disposable public GitHub runners. No persistent or trustworthy production business-account workforce is deployed.
 **Purpose:** Reuse the existing LangGraph orchestrator, official OpenHands SDK,
 and n8n's free self-hosted Community edition, without reimplementing their engines.
