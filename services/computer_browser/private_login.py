@@ -400,6 +400,7 @@ def mount_private_login(app):
 
         browser=None
         broker=None
+        refresh_task=None
         phase="destination_check"
         from playwright.async_api import async_playwright
         try:
@@ -460,8 +461,42 @@ def mount_private_login(app):
                 else:
                     await page.goto(site,wait_until="domcontentloaded",timeout=25000)
                 phase="live_interaction"
-                await _frame(ws,page)
-                await _page_render_health(ws,page,blocked)
+                # The first screenshot can precede JavaScript's first paint.
+                # Repaint the SAME owner-only Chromium without needing a click.
+                # Cap the stream, and serialize it with action screenshots.
+                frame_lock=asyncio.Lock()
+                async def show_picture():
+                    async with frame_lock:
+                        await _frame(ws,page)
+                        await _page_render_health(ws,page,blocked)
+
+                await show_picture()
+
+                if demo=="0":
+                    async def refresh_picture():
+                        for tick in range(200):
+                            await asyncio.sleep(3)
+                            if dynamic and tick % 10 == 9:
+                                # Recheck revoked grants without placing the
+                                # synchronous GCS request on the event loop.
+                                try:
+                                    owner_origin, pinned=await asyncio.to_thread(
+                                        owner_live_origin,
+                                        owner_id=owner["private_owner_id"],site=site)
+                                    if owner_origin!=origin or not pinned:
+                                        raise PermissionError("Owner grant revoked")
+                                except PermissionError:
+                                    await ws.close(code=4403)
+                                    return
+                            try:
+                                await show_picture()
+                            except asyncio.CancelledError:
+                                raise
+                            except Exception:
+                                return  # A failed repaint does not imply login.
+
+                    refresh_task=asyncio.create_task(refresh_picture())
+
                 for number in range(160):
                     command=await ws.receive_json()
                     if dynamic:
@@ -537,8 +572,7 @@ def mount_private_login(app):
                         raise PermissionError("Unknown browser operation")
                     if demo=="0" and not safe_url(page.url,origins={origin}):
                         raise PermissionError("Website redirected off authorized origins")
-                    await _frame(ws,page)
-                    await _page_render_health(ws,page,blocked)
+                    await show_picture()
                 else:
                     await ws.send_json({"type":"status","failure":True,
                                         "message":"Browser action limit reached; reopen a fresh browser."})
@@ -559,6 +593,12 @@ def mount_private_login(app):
             except Exception:
                 pass
         finally:
+            if refresh_task is not None:
+                refresh_task.cancel()
+                try:
+                    await refresh_task
+                except asyncio.CancelledError:
+                    pass
             if browser is not None:
                 await browser.close()
             if broker is not None:
