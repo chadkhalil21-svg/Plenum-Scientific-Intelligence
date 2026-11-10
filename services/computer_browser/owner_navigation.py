@@ -184,7 +184,12 @@ async def read_owner_link_sequence(*, owner: str, site: str,
                         return BrowserStep("click", picked["selector"])
 
                     async def consent(step):
+                        # Owner revocation applies between steps, not just at start.
+                        current_origin, _ = owner_live_origin(
+                            owner_id=owner, site=site
+                        )
                         return bool(
+                            current_origin == site and
                             prepared is not None and
                             step.operation == "click" and
                             step.selector == prepared["selector"] and
