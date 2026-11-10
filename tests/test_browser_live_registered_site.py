@@ -14,6 +14,7 @@ HAS_HTTP = all(importlib.util.find_spec(x) is not None for x in
 if HAS_HTTP:
     from fastapi.testclient import TestClient
     from services.computer_browser import owner_live_access as live
+    from services.computer_browser.runtime_site_grants import OwnerSiteGrantStore
     from services.computer_browser import private_login
     from services.computer_browser.owner_console import require_verified_owner
     from services.computer_browser.api import app
@@ -32,7 +33,7 @@ ENV = {
 class RegisteredOwnerLiveTests(unittest.TestCase):
     def test_existing_static_allowlist_retains_original_behavior(self):
         with patch.dict(os.environ, ENV):
-            with patch.object(live.OwnerSiteGrantStore, "from_environment",
+            with patch.object(OwnerSiteGrantStore, "from_environment",
                               side_effect=AssertionError("Not needed for static")):
                 self.assertEqual(live.owner_live_origin(
                     owner_id=OWNER, site="https://example.com/path"),
@@ -43,7 +44,7 @@ class RegisteredOwnerLiveTests(unittest.TestCase):
         store.authorized.side_effect = lambda *, owner, origin: (
             owner == OWNER and origin == SITE)
         with patch.dict(os.environ, ENV):
-            with patch.object(live.OwnerSiteGrantStore, "from_environment",
+            with patch.object(OwnerSiteGrantStore, "from_environment",
                               return_value=store):
                 self.assertEqual(live.owner_live_origin(
                     owner_id=OWNER, site=SITE + "/signin"),
@@ -59,7 +60,7 @@ class RegisteredOwnerLiveTests(unittest.TestCase):
         store = MagicMock()
         store.authorized.return_value = False
         with patch.dict(os.environ, ENV):
-            with patch.object(live.OwnerSiteGrantStore, "from_environment",
+            with patch.object(OwnerSiteGrantStore, "from_environment",
                               return_value=store):
                 with self.assertRaises(PermissionError):
                     live.owner_live_origin(owner_id=OWNER, site=SITE)
@@ -81,7 +82,7 @@ class RegisteredOwnerLiveTests(unittest.TestCase):
         )
         store = MagicMock()
         with patch.dict(os.environ, ENV), patch.object(
-                live.OwnerSiteGrantStore, "from_environment",
+                OwnerSiteGrantStore, "from_environment",
                 return_value=store):
             for url in invalid:
                 with self.subTest(url=url), self.assertRaises(PermissionError):
@@ -95,7 +96,7 @@ class RegisteredOwnerLiveTests(unittest.TestCase):
             self.addCleanup(app.dependency_overrides.pop,
                             require_verified_owner, None)
             client = TestClient(app)
-            with patch.object(live.OwnerSiteGrantStore,
+            with patch.object(OwnerSiteGrantStore,
                               "from_environment") as store:
                 store.return_value.authorized.return_value = False
                 denied = client.get("/owner/live-access",
