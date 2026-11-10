@@ -2,18 +2,6 @@ name: Business Workforce | Real n8n Nine-Agent Local-Qwen Trial
 on:
   issues:
     types: [opened]
-  push:
-    branches: [feat/live-business-workforce-20261110]
-    paths: ['.github/workflows/business-workforce-n8n-agent-trial.yml']
-  pull_request:
-    paths:
-      - '.github/workflows/business-workforce-n8n-agent-trial.yml'
-      - 'integrations/n8n/plenum-business-workforce.json'
-      - 'src/plenum_ai/business_public_watch.py'
-      - 'src/plenum_ai/workforce_department_command.py'
-      - 'tests/test_workforce_department_command.py'
-  schedule:
-    - cron: '49 11 * * 3'
   workflow_dispatch:
 permissions:
   contents: read
@@ -23,8 +11,10 @@ concurrency:
 jobs:
   run-nine-public-agents:
     if: >-
-      github.event_name != 'issues' ||
-      (github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      (github.event_name == 'workflow_dispatch' &&
+       github.actor == 'chadkhalil21-svg') ||
+      (github.event_name == 'issues' &&
+       github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
        github.event.issue.user.login == 'chadkhalil21-svg' &&
        github.event.issue.title == '[Plenum Department] public assignment')
     runs-on: ubuntu-latest
