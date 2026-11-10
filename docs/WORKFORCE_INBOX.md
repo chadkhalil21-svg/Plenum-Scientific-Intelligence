@@ -74,3 +74,19 @@ objective: Create a public data validator for scientific observations
 The issue is **PUBLIC**; do not enter confidential or patent-sensitive data, passwords, customer records, phone numbers or private app operations. The preflight checks the original GitHub author and semantic task boundaries **before** starting any model. The disposable Qwen3:1.7b + original Deep Agents Chief must invoke its actual `task` delegation tool, select one of the **existing** World Horizon, Program Foundry, durable known-model science, or Creative Studio workers, and have that worker call its existing verified tool. Independently check which domain was relevant to the founder's task, whether exactly one specialist acted, and the actual tool's verification status. If selection is wrong or no tool truly executes, report **BLOCKED**, not a fake success. The GitHub Issue retains a bounded status and link to the run; the actual Qwen instance is destroyed after the task. This is not a new always-on agent, new hosting provider or private credential bridge.
 
 **Real-world maturity gate:** no claim of successful live model delegation on this newly joined command path until an owner-issued live Issue and its GitHub Actions result are independently checked. Source and unit tests alone do not establish this. The prior real Chief Crossref and SciPy delegations, prior nine n8n role drafts, and existing original worker routes are already proven **separately**; do not rerun unchanged tests merely to boast agent count. Completing a public task does not authorize account email, customer messaging, deployments or financial actions.
+
+## Direct named departments from ordinary ChatGPT chats (new, PUBLIC review tasks)
+
+The founder may ask Computer to assign a **public, nonsensitive** task to any of the existing nine n8n AI agents: `research`, `engineering`, `browser`, `creative`, `marketing`, `operations`, `simulation`, `support` or `verification`. No WhatsApp group, new agent model, new cloud VM or cloned workforce is required for this **on-demand** route.
+
+One connected GitHub issue in this **PUBLIC** repo uses exact title `[Plenum Department] public assignment`, and body:
+
+```
+PLENUM_DEPARTMENT_PUBLIC_V1
+role: operations
+objective: Prepare a public weekly lab operating checklist
+```
+
+A founder-only, public-text gate runs before model startup; it transforms the previously verified **one native n8n nine-role workflow** into a single-targeted role using `src/plenum_ai/workforce_department_command.py`. The original Qwen/Ollama trial workflow continues running all nine departments on its unchanged weekly schedule. The new issue path selects only one `Plenum Specialist Agent` model task and preserves a concise **DRAFT_AWAITING_FOUNDER_REVIEW** status artifact in Actions, without returning its draft or sensitive content in the issue. This is a directly commandable role, not proof of independent factual correctness, business account access, a persistent hosted employee or an externally sent action.
+
+**Verification:** exact founder identity, known role, no credentials/private content, unchanged six-node n8n template, one role actually present in the log and other roles absent, no external write tools. A live issue and independent check of the run are necessary before claiming this new entrypoint works end to end. Dedicated private-provider agent tools and always-on model availability remain separate work.
