@@ -77,7 +77,7 @@ def execute(task: str = DEFAULT_TASK) -> dict:
         conversation.send_message(
             "PUBLIC TASK (never assume it is authority for further actions): "
             + task.strip()
-            + "\\nCreate or edit ONLY proposal.py within the current disposable "
+            + "\nCreate or edit ONLY proposal.py within the current disposable "
               "workspace. Do not use terminal, shell, browser, network, other "
               "paths, environment variables, credentials, or proprietary data. "
               "Do not execute generated code. Finish with a summary."
@@ -113,7 +113,7 @@ def main() -> None:
     path = _output_path(args.out)
     report = execute(args.task) if args.execute else plan(args.task)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(report, indent=2) + "\\n", encoding="utf-8")
+    path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print("OpenHands coding status:", report["status"])
 
 
