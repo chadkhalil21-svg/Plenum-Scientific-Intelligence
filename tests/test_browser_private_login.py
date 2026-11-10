@@ -29,6 +29,89 @@ class PrivateLoginTests(unittest.TestCase):
         self.assertEqual([c["name"] for c in result["cookies"]],["site"])
         self.assertEqual([x["origin"] for x in result["origins"]],["https://www.kaggle.com"])
 
+    def test_https_origin_isolation_covers_indexeddb_and_other_port(self):
+        sample={"cookies":[
+            {"domain":".kaggle.com","name":"site","value":"synthetic"},
+            {"domain":"accounts.google.com","name":"idp","value":"not-owner-site"},
+        ],"origins":[
+            {"origin":"https://www.kaggle.com","localStorage":[],
+             "indexedDB":[{"name":"synthetic-auth","stores":[]}]},
+            {"origin":"http://www.kaggle.com","localStorage":[{"name":"insecure","value":"x"}]},
+            {"origin":"https://www.kaggle.com:8443","localStorage":[{"name":"other-port","value":"x"}]},
+            {"origin":"https://accounts.google.com","localStorage":[],
+             "indexedDB":[{"name":"google-identity","stores":[]}]},
+        ]}
+        result=private_login.filter_site_storage(sample,"https://www.kaggle.com")
+        self.assertEqual([c["name"] for c in result["cookies"]],["site"])
+        self.assertEqual(len(result["origins"]),1)
+        self.assertEqual(result["origins"][0]["origin"],"https://www.kaggle.com")
+        self.assertEqual(result["origins"][0]["indexedDB"][0]["name"],"synthetic-auth")
+        for invalid in ("http://www.kaggle.com","https://www.kaggle.com/path",
+                        "https://www.kaggle.com?token=x","https://www.kaggle.com#x"):
+            with self.subTest(invalid=invalid),self.assertRaises(ValueError):
+                private_login.filter_site_storage(sample,invalid)
+
+    def test_real_offline_chromium_indexeddb_capture_and_restore(self):
+        """First-use interface acceptance only: no external OAuth/network."""
+        from playwright.sync_api import sync_playwright
+
+        def create_state(page, label):
+            page.evaluate("""async (label) => {
+                await new Promise((resolve, reject) => {
+                    const req = indexedDB.open("synthetic-session", 1);
+                    req.onupgradeneeded = () => req.result.createObjectStore("tokens");
+                    req.onerror = () => reject(req.error);
+                    req.onsuccess = () => {
+                        const tx = req.result.transaction("tokens", "readwrite");
+                        tx.objectStore("tokens").put(label, "session");
+                        tx.oncomplete = () => { req.result.close(); resolve(); };
+                        tx.onerror = () => reject(tx.error);
+                    };
+                });
+            }""", label)
+
+        with sync_playwright() as p:
+            browser=p.chromium.launch(headless=True)
+            try:
+                ctx=browser.new_context(service_workers="block",accept_downloads=False)
+                ctx.route("**/*",lambda route:route.fulfill(
+                    status=200,content_type="text/html",body="<html><body>Offline only</body></html>"))
+                page=ctx.new_page()
+                page.goto("https://www.kaggle.com/synthetic")
+                create_state(page,"SITE_SYNTHETIC")
+                page.goto("https://accounts.google.com/synthetic")
+                create_state(page,"IDP_MUST_NOT_SAVE")
+                state=ctx.storage_state(indexed_db=True)
+                selected=private_login.filter_site_storage(state,"https://www.kaggle.com")
+                self.assertEqual([x["origin"] for x in selected["origins"]],
+                                 ["https://www.kaggle.com"])
+                self.assertIn("indexedDB",selected["origins"][0])
+                restored=browser.new_context(storage_state=selected,
+                                            service_workers="block",accept_downloads=False)
+                try:
+                    restored.route("**/*",lambda route:route.fulfill(
+                        status=200,content_type="text/html",body="<html><body>Restored offline</body></html>"))
+                    second=restored.new_page()
+                    second.goto("https://www.kaggle.com/synthetic")
+                    value=second.evaluate("""async () => {
+                        return await new Promise((resolve, reject) => {
+                            const req=indexedDB.open("synthetic-session");
+                            req.onerror=()=>reject(req.error);
+                            req.onsuccess=()=>{
+                                const tx=req.result.transaction("tokens","readonly");
+                                const get=tx.objectStore("tokens").get("session");
+                                get.onerror=()=>reject(get.error);
+                                get.onsuccess=()=>resolve(get.result);
+                            };
+                        });
+                    }""")
+                    self.assertEqual(value,"SITE_SYNTHETIC")
+                finally:
+                    restored.close()
+                ctx.close()
+            finally:
+                browser.close()
+
     def test_session_writer_uses_owner_origin_and_generation_cas(self):
         from unittest.mock import MagicMock
         fake=MagicMock()
