@@ -100,3 +100,46 @@ Official sources:
 - OpenHands docs: https://docs.openhands.dev/sdk
 - n8n self hosting: https://docs.n8n.io/hosting/
 - n8n security: https://docs.n8n.io/hosting/securing/
+
+## On-demand free-tier browser deployment from an iPad (added 2026-11-09 ET)
+
+**Not always-on, not suitable for customer accounts or production.** Personal GitHub
+Codespaces includes a monthly compute/storage allowance; the GitHub Free
+personal plan publicly documents **120 core-hours and 15 GB-month**, or
+approximately 60 hours of 2-core use if no other compute is used. Exceeding
+the allowance can incur charges if billing permits them. Check your own
+account budget and set a zero-dollar spending limit before launching.
+
+1. On a *personal* GitHub repository Codespaces page, create a **2-core**
+   Codespace for this repository; browser-based Codespaces works on an iPad.
+2. In its terminal run exactly:
+
+   ```sh
+   bash integrations/n8n/start-codespace-workforce.sh
+   ```
+
+   This intentionally owner-triggered script creates an untracked random n8n
+   encryption key, starts n8n and Ollama on a private Docker network, and
+   downloads small `qwen3:0.6b` weights; neither an n8n editor nor Ollama
+   API is publicly exposed by its Docker Compose configuration.
+3. In Codespaces **Ports**, keep port **5678 Private**, open its HTTPS forwarded
+   URL, complete n8n admin registration and import
+   `integrations/n8n/plenum-business-workforce.json` from the repository.
+4. Create n8n **Ollama** credential with `http://ollama:11434` as Base URL,
+   no API key, and select `qwen3:0.6b` in the imported Chat Ollama node.
+   Run the workflow manually and inspect all role-labelled drafts in the
+   founder review node. Public/general text only: never paste passwords,
+   private customer records or patent-sensitive information into this demo.
+5. Stop the Codespace after reviewing results. Ports stay private by default;
+   never switch to Public. Codespaces stop when idle; there is no guarantee
+   of continuous 24/7 execution and no claim of business-employee competence.
+
+No new paid Render service was started. The actual always-on version requires
+owner-authorized secure hosting, a sufficient model, scoped business-app
+credentials, auditing and an independent end-to-end business outcome. For
+instant on-demand personal trial, the Codespaces approach avoids the cost and
+risks of provisioning permanent infrastructure before acceptance.
+
+Official references: [GitHub Codespaces billing](https://docs.github.com/en/billing/concepts/product-billing/github-codespaces),
+[Codespaces private ports](https://docs.github.com/en/codespaces/reference/security-in-github-codespaces),
+[n8n Community hosting](https://docs.n8n.io/hosting/).
