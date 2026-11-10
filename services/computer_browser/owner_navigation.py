@@ -197,20 +197,55 @@ async def read_owner_link_sequence(*, owner: str, site: str,
                             prepared["target"] not in visited
                         )
 
-                    async def verify(current):
+                    async def recover_observation(current, feedback):
+                        # Passive DOM recovery only: no reload, click, form write
+                        # or new browser tab. Existing private page remains scoped.
+                        if not safe_url(current.url, origins={site}):
+                            return False
+                        await current.wait_for_timeout(180)
+                        return True
+
+                    async def confirm_step(current, step):
                         nonlocal index
-                        if last_target and current.url == last_target:
-                            if not await current.locator("body").is_visible():
+                        if (prepared is None or
+                                step.selector != prepared["selector"] or
+                                not safe_url(last_target, origins={site})):
+                            return False
+                        try:
+                            # Wait for a delayed single approved GET navigation.
+                            # If the already-clicked site action remains
+                            # uncertain, STOP: never click it a second time.
+                            await current.wait_for_url(
+                                last_target, wait_until="domcontentloaded",
+                                timeout=2200,
+                            )
+                            if (current.url != last_target or
+                                    not await current.locator("body").is_visible()):
                                 return False
-                            visited.add(last_target)
-                            index += 1
-                            return index == len(terms)
-                        return False
+                            current_origin, _ = owner_live_origin(
+                                owner_id=owner, site=site
+                            )
+                            if current_origin != site:
+                                return False
+                        except Exception:
+                            return False
+                        visited.add(last_target)
+                        index += 1
+                        return True
+
+                    async def verify(current):
+                        return bool(
+                            index == len(terms) and
+                            current.url == last_target and
+                            await current.locator("body").is_visible()
+                        )
 
                     result = await execute_owner_adaptive_loop(
                         page, authorized_origins={site},
                         observe=observe, decide=decide, consent=consent,
                         verify=verify, max_actions=len(terms),
+                        confirm_step=confirm_step,
+                        recover_observation=recover_observation,
                     )
                     success = result["status"] == "CALLER_VERIFIED"
                     # The private owner ONLY may see this result, never public CI.
@@ -221,6 +256,7 @@ async def read_owner_link_sequence(*, owner: str, site: str,
                         "schema": "plenum-owner-private-navigation-v1",
                         "success": success,
                         "step_count": result["executed_steps"],
+                        "passive_reobservations": result["safe_locator_replans"],
                         "status": result["status"],
                         "final_url": page.url if success else "",
                         "title_untrusted": title,
@@ -270,6 +306,7 @@ def mount_owner_navigation(app) -> None:
             "Navigation is NOT proof that website login remained valid.\n\n"
             "Status: " + escape(result["status"]) +
             "\nLinks completed: " + str(result["step_count"]) +
+            "\nPassive recovery checks: " + str(result.get("passive_reobservations",0)) +
             "\nFinal page: " + escape(result["final_url"]) +
             "\nTitle: " + escape(result["title_untrusted"]) +
             "\nExcerpt: " + escape(result["excerpt_untrusted"]) +
