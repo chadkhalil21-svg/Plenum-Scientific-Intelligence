@@ -1,0 +1,51 @@
+name: Business Workforce | OpenHands and n8n Offline Contracts
+on:
+  pull_request:
+    paths:
+      - 'src/plenum_ai/openhands_coding_agent.py'
+      - 'tests/test_business_workforce_integration.py'
+      - 'integrations/n8n/plenum-business-workforce.json'
+      - 'docs/BUSINESS_WORKFORCE.md'
+      - '.github/workflows/business-workforce-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/plenum_ai/openhands_coding_agent.py'
+      - 'tests/test_business_workforce_integration.py'
+      - 'integrations/n8n/plenum-business-workforce.json'
+      - '.github/workflows/business-workforce-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      PLENUM_EPHEMERAL_RUNNER: ''
+      PLENUM_OPENHANDS_API_KEY: ''
+      PLENUM_OPENHANDS_MODEL: ''
+      PLENUM_OPENHANDS_BASE_URL: ''
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install Plenum only (no model, no n8n server, no SDK)
+        run: python -m pip install -e .
+      - name: Test n8n import schema and owner guardrails
+        run: python -m unittest discover -s tests -p 'test_business_workforce_integration.py' -v
+      - name: Produce no-cost OpenHands configuration report
+        run: python -m plenum_ai.openhands_coding_agent --out reports/openhands-agent-review.json
+      - name: Verify no agent or side effects were falsely claimed
+        run: |
+          python - <<'PY'
+          import json
+          data=json.load(open('reports/openhands-agent-review.json'))
+          assert data['status']=='CONFIGURATION_ONLY'
+          assert data['human_review_required'] is True
+          assert not data['model_run_completed']
+          assert not data['production_written']
+          assert not data['external_accounts_changed']
+          print('PASS: n8n import contract + OpenHands opt-in preflight, no LLM/paid provider.')
+          PY
