@@ -69,6 +69,26 @@ def _require_implemented_candidate(raw: bytes) -> None:
 
 
 
+def local_coder_llm_options() -> dict:
+    """Pinned official SDK model config for non-thinking Ollama coder weights.
+
+    SDK 1.60.1 defaults reasoning_effort='high', which LiteLLM translated
+    into Ollama's unsupported think=true on qwen2.5-coder:7b. Use the SDK's
+    existing documented capability overrides, not a proxy rewrite.
+    """
+    return {
+        "model": "ollama/qwen2.5-coder:7b",
+        "api_key": "local-no-secret",
+        "base_url": "http://127.0.0.1:11434",
+        "reasoning_effort": None,
+        "capability_overrides": {
+            "supports_reasoning_effort": False,
+            "thinking_mode": "none",
+        },
+        "enable_encrypted_reasoning": False,
+    }
+
+
 def parse_issue(event: dict) -> dict:
     issue = event.get("issue") or {}
     if (
@@ -141,10 +161,7 @@ def run(event: dict, *, execute: bool = False) -> dict:
             dest.write_bytes(original)
             trusted[dest.name] = hashlib.sha256(original).hexdigest()
         agent = Agent(
-            llm=LLM(
-                model="ollama/qwen2.5-coder:7b", api_key="local-no-secret",
-                base_url="http://127.0.0.1:11434",
-            ),
+            llm=LLM(**local_coder_llm_options()),
             tools=[Tool(name=FileEditorTool.name)],
         )
         conversation = Conversation(
