@@ -33,6 +33,18 @@ class WhatsAppChiefRoutingContract(unittest.TestCase):
         self.assertNotIn("group_policy: open", yaml)
         self.assertNotIn("auto_start_gateway: true", yaml)
 
+    def test_official_whatsapp_agent_beta_is_not_a_group_or_e2ee_claim(self):
+        defaults = json.loads(mod.ROSTER.read_text())["defaults"]
+        self.assertEqual(defaults["whatsapp_first_mode"],
+                         "official_agent_platform_beta_else_business_dm")
+        self.assertFalse(defaults["whatsapp_agent_platform_beta_confirmed"])
+        self.assertFalse(defaults["whatsapp_agent_platform_credential_connected"])
+        self.assertFalse(defaults["whatsapp_agent_platform_group_supported"])
+        self.assertFalse(defaults["whatsapp_agent_platform_e2ee"])
+        self.assertFalse(defaults["live_whatsapp_connected"])
+        self.assertTrue(defaults["baileys_group_opt_in_required"])
+        self.assertFalse(defaults["personal_whatsapp_pairing_allowed"])
+
     def test_roster_drift_refused_instead_of_adding_agents(self):
         roles = mod.read_roles()
         roles.pop("support")
