@@ -1,0 +1,105 @@
+name: Plenum Chief | Cross-Domain Generalization Held-Out Pilot
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/chief-domain-transfer.yml'
+      - 'src/plenum_ai/chief_domain_transfer.py'
+      - 'tests/test_chief_domain_transfer.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: chief-domain-transfer-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  no-model-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Use already pinned numerical integration, not a new simulator
+        run: python -m pip install -e '.[numerical]'
+      - name: Verify two tasks, allowed sources, source identity and recovery
+        run: python -m unittest discover -s tests -p 'test_chief_domain_transfer.py' -v
+      - name: Verify neither source-only plan calls a paid model
+        run: |
+          python -m plenum_ai.chief_domain_transfer --case scholarly --out reports/scholarly.json
+          python -m plenum_ai.chief_domain_transfer --case thermal --out reports/thermal.json
+          python - <<'PY'
+          import json
+          for name in ('scholarly','thermal'):
+              x=json.load(open('reports/'+name+'.json'))
+              assert x['status']=='SOURCE_READY_NOT_EXECUTED'
+              assert not x['model_called'] and not x['paid_api_used'] and not x['business_account_write']
+          print('PASS: two source-only safe preflights')
+          PY
+  actual-domain-transfer:
+    needs: no-model-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    env:
+      PLENUM_EPHEMERAL_RUNNER: confirmed
+      PLENUM_CHIEF_MODEL_URL: http://127.0.0.1:11434
+      LANGSMITH_TRACING: 'false'
+      LANGCHAIN_TRACING_V2: 'false'
+      HF_HUB_DISABLE_TELEMETRY: '1'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Start local Qwen only on loopback with bounded CPU and RAM
+        run: |
+          docker pull ollama/ollama:latest
+          docker run -d --rm --name plenum-chief-domain-qwen \
+            -p 127.0.0.1:11434:11434 \
+            -e OLLAMA_CONTEXT_LENGTH=8192 -e OLLAMA_NUM_PARALLEL=1 \
+            --memory=5g --cpus=3 ollama/ollama:latest
+          for i in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
+            sleep 2
+          done
+          docker exec plenum-chief-domain-qwen ollama pull qwen3:1.7b
+      - name: Install exact reviewed Deep Agents and reused science engine
+        run: |
+          python -m pip install -e '.[chief_of_staff,numerical]'
+          python -m pip check
+      - name: Held-out scholarly publisher metadata delegation plus fresh provider readback
+        run: |
+          timeout 420 python -m plenum_ai.chief_domain_transfer --case scholarly \
+            --execute --out reports/chief-scholarly.json
+      - name: Held-out physics numerical specialist delegation plus independent calculation
+        run: |
+          timeout 420 python -m plenum_ai.chief_domain_transfer --case thermal \
+            --execute --out reports/chief-thermal.json
+      - name: Grade both genuine outcomes and forbid account writes
+        run: |
+          python - <<'PY'
+          import json
+          for case in ('scholarly','thermal'):
+              x=json.load(open('reports/chief-'+case+'.json'))
+              assert x['status']=='VERIFIED_CROSS_DOMAIN'
+              assert x['model_called'] and x['chief_delegated']
+              assert x['correct_worker_selected'] and x['worker_tool_called']
+              assert x['independent_verified'] and not x['paid_api_used']
+              assert not x['business_account_write'] and not x['private_data_used']
+              print('PASS: Chief selected, delegated and independently verified', case)
+          PY
+      - name: Preserve public-only evidence of success or failure
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: chief-two-domain-public-evidence
+          path: reports/chief-*.json
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Destroy transient model after one test
+        if: always()
+        run: docker rm -f plenum-chief-domain-qwen 2>/dev/null || true
