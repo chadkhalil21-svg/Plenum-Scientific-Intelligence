@@ -115,6 +115,83 @@ class AdaptiveOwnerLoopContractTests(unittest.TestCase):
             self.assertTrue(all(set(e) == {"state", "step"} for e in events))
         asyncio.run(run())
 
+    def test_delayed_link_observation_recovers_without_click_retry(self):
+        async def run():
+            page = self.FakePage()
+            polls = []
+            async def observe(current):
+                polls.append(len(current.clicks))
+                return {"ready": len(polls) >= 2}
+            def decide(view, feedback):
+                return (BrowserStep("click", "#ready")
+                        if view["ready"] else None)
+            recovered = []
+            async def passive(current, feedback):
+                recovered.append(feedback)
+                return True  # Only a new observation, not a page action.
+            result = await execute_owner_adaptive_loop(
+                page, authorized_origins={"https://example.com"},
+                observe=observe, decide=decide,
+                consent=lambda step: step.selector == "#ready",
+                confirm_step=lambda p, step: p.clicks == ["#ready"],
+                verify=lambda p: p.clicks == ["#ready"],
+                recover_observation=passive,
+            )
+            self.assertEqual(result["status"], "CALLER_VERIFIED")
+            self.assertEqual(result["executed_steps"], 1)
+            self.assertEqual(result["safe_locator_replans"], 1)
+            self.assertEqual(page.clicks, ["#ready"])
+            self.assertEqual(len(recovered), 1)
+        asyncio.run(run())
+
+    def test_unverified_postclick_blocks_before_second_action(self):
+        async def run():
+            page = self.FakePage()
+            checked = []
+            result = await execute_owner_adaptive_loop(
+                page, authorized_origins={"https://example.com"},
+                observe=lambda p: {"ready": True},
+                decide=lambda obs, feedback: BrowserStep("click", "#ready"),
+                consent=lambda step: True,
+                confirm_step=lambda p, step: False,
+                verify=lambda p: checked.append(1) or False,
+            )
+            self.assertEqual(result["status"],
+                             "BLOCKED_POST_ACTION_UNVERIFIED_NO_RETRY")
+            self.assertEqual(result["executed_steps"], 1)
+            self.assertEqual(page.clicks, ["#ready"])
+            self.assertEqual(checked, [])
+            self.assertFalse(result["automatic_write_retries"])
+        asyncio.run(run())
+
+    def test_no_candidate_recovery_is_strictly_bounded(self):
+        async def run():
+            page = self.FakePage()
+            rechecked = []
+            result = await execute_owner_adaptive_loop(
+                page, authorized_origins={"https://example.com"},
+                observe=lambda p: [],
+                decide=lambda obs, feedback: None,
+                consent=lambda step: True,
+                verify=lambda p: False,
+                recover_observation=lambda p, feedback:
+                    rechecked.append(feedback) or True,
+            )
+            self.assertEqual(result["status"], "BLOCKED_NO_NEXT_STEP")
+            self.assertEqual(result["safe_locator_replans"], 2)
+            self.assertEqual(len(rechecked), 2)
+            self.assertEqual(page.clicks, [])
+            with self.assertRaises(PermissionError):
+                await execute_owner_adaptive_loop(
+                    page, authorized_origins={"https://example.com"},
+                    observe=lambda p: [],
+                    decide=lambda o, f: None,
+                    consent=lambda step: True,
+                    verify=lambda p: False,
+                    recover_observation=lambda p, f: "yes",
+                )
+        asyncio.run(run())
+
     def test_missing_consent_never_clicks(self):
         async def run():
             page = self.FakePage()
