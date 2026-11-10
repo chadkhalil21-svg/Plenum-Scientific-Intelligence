@@ -329,8 +329,14 @@ async def _page_render_health(ws, page, blocked):
           const b=document.body;
           if (!b) return false;
           const t=(b.innerText||"").trim();
-          const controls=b.querySelector("input,button,textarea,select,a,[role=button]");
-          return t.length > 0 || Boolean(controls);
+          const controls=[...b.querySelectorAll("input,button,textarea,select,a,[role=button]")]
+            .some(el => {
+              const r=el.getBoundingClientRect();
+              const s=getComputedStyle(el);
+              return r.width>0 && r.height>0 && s.display!=="none" &&
+                     s.visibility!=="hidden";
+            });
+          return t.length > 0 || controls;
         }""")
         blank = not bool(visible)
     except Exception:
@@ -485,7 +491,9 @@ def mount_private_login(app):
                                         owner_id=owner["private_owner_id"],site=site)
                                     if owner_origin!=origin or not pinned:
                                         raise PermissionError("Owner grant revoked")
-                                except PermissionError:
+                                except Exception:
+                                    # An unavailable/revoked registration cannot
+                                    # keep an owner stream alive indefinitely.
                                     await ws.close(code=4403)
                                     return
                             try:
