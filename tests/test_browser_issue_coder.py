@@ -4,7 +4,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from plenum_ai.browser_issue_coder import parse_issue, run, TITLE, MAGIC, REPO, OWNER
+from plenum_ai.browser_issue_coder import (
+    parse_issue, run, review_candidate_structure, TITLE, MAGIC, REPO, OWNER,
+)
 
 
 def fixture(objective="Create a safe selector helper for the existing browser navigation engine"):
@@ -47,6 +49,48 @@ class FounderPublicCoderContract(unittest.TestCase):
             with self.subTest(event=event["issue"]["body"][:50]):
                 with self.assertRaises((PermissionError, ValueError)):
                     parse_issue(event)
+
+    def test_real_first_agent_stub_rejected_without_running_model(self):
+        # Exact actual failure mode from founder #399, not an artificial demo.
+        candidate = (
+            "from typing import List, Tuple\n\n"
+            "def get_approved_elements() -> List[Tuple[str, str]]:\n"
+            "    # Logic to retrieve owner-approved elements\n"
+            "    pass\n\n"
+            "def rank_elements(elements: List[Tuple[str, str]]) "
+            "-> List[Tuple[str, str]]:\n"
+            "    # Logic to rank elements based on owner-approved actions\n"
+            "    pass\n\n"
+            "if __name__ == '__main__':\n"
+            "    approved_elements = get_approved_elements()\n"
+            "    ranked_elements = rank_elements(approved_elements)\n"
+            "    print(ranked_elements)\n"
+        ).encode()
+        self.assertEqual(len(candidate), 448)
+        with self.assertRaisesRegex(ValueError, "no computed function result"):
+            review_candidate_structure(candidate)
+
+    def test_generic_ast_structural_gate_is_independent_of_model(self):
+        valid = (
+            "def rank_elements(elements):\n"
+            "    \"\"\"Sort public link records without website side effects.\"\"\"\n"
+            "    return sorted(elements, key=lambda element: element[0])\n"
+        ).encode()
+        self.assertIsNone(review_candidate_structure(valid))
+        for candidate in (
+            "def rank_elements(elements):\n    pass\n" + "# padding\n" * 12,
+            "def rank_elements(elements):\n    ...\n" + "# padding\n" * 12,
+            "def rank_elements(elements):\n    raise NotImplementedError()\n"
+            + "# padding\n" * 12,
+            "def rank_elements(elements):\n    return elements\n    pass\n"
+            + "# padding\n" * 12,
+            "x = 1\n" + "# padding\n" * 20,
+            "def rank_elements(elements):\n    return (\n"
+            + "# padding\n" * 12,
+        ):
+            with self.subTest(candidate=candidate[:45]):
+                with self.assertRaises(ValueError):
+                    review_candidate_structure(candidate.encode())
 
     def test_preflight_has_no_model_or_external_access(self):
         with tempfile.TemporaryDirectory() as root:
