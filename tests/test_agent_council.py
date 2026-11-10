@@ -62,6 +62,9 @@ class CouncilContract(TestCase):
         self.assertIn("fresh-context",calls[4][0])
         self.assertEqual(calls[0][1],calls[3][1])
         self.assertGreater(len(calls[4][1]),len(calls[0][1]))
+        self.assertTrue(all("283 MIT-licensed" in system for system,_ in calls))
+        self.assertTrue(all("No verified Plenum blockchain" in system for system,_ in calls))
+        self.assertTrue(all("UNVERIFIED" in system for system,_ in calls))
 
     def test_ollama_api_disables_expensive_reasoning_by_default(self):
         from unittest.mock import patch
