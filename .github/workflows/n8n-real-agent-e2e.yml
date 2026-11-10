@@ -1,0 +1,98 @@
+name: Business Workforce | Native n8n AI-Agent Live E2E
+on:
+  push:
+    branches: [feat/live-business-workforce-20261110]
+    paths:
+      - '.github/workflows/n8n-real-agent-e2e.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-native-agent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      N8N_IMAGE: n8nio/n8n@sha256:e97b4f576cd21de5c7676858f7006126581faeca8046d9d23fda0e06468008d4
+      OLLAMA_IMAGE: ollama/ollama@sha256:910d0d8107b538fb0894e63163eb195de0cc7aefcbc666dc62d3b18f71124592
+      N8N_DIAGNOSTICS_ENABLED: 'false'
+      N8N_PERSONALIZATION_ENABLED: 'false'
+      N8N_ENCRYPTION_KEY: temporary-public-dummy-key-used-only-in-disposable-workflow
+      N8N_RUNNERS_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Build disposable ONE-ROLE real-model test from actual nine-agent workflow
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path('integrations/n8n/plenum-business-workforce.json').read_text())
+          assert data['active'] is False
+          data['id']='plenum-e2e-agent'
+          data['nodes'].append({'id':'1061f9c5-bfc5-4ab9-a246-10b4dbb77a99',
+            'name':'CLI Execution Entry','type':'n8n-nodes-base.executeWorkflowTrigger',
+            'typeVersion':1,'position':[220,120],'parameters':{}})
+          data['connections']['CLI Execution Entry']={
+            'main':[[{'node':'Assign Nine Roles','type':'main','index':0}]]}
+          for node in data['nodes']:
+            if node['name']=='Local Ollama (Configure Credential)':
+              node['parameters']['model']='qwen3:0.6b'
+              node['credentials']={'ollamaApi':{'id':'plenum-ephemeral-ollama',
+                                              'name':'Ephemeral Ollama'}}
+            if node['name']=='Assign Nine Roles':
+              node['parameters']['jsCode']=(
+                'return [{json:{role:"operations",mission:"A public toy company",'
+                'instruction:"Write a two-sentence weekly quality checklist without citations",'
+                'run_scope:"draft_only",authorization:"none",owner_review_required:true}}];'
+              )
+          Path('plenum-e2e.json').write_text(json.dumps(data),encoding='utf-8')
+          credential=[{'id':'plenum-ephemeral-ollama','name':'Ephemeral Ollama',
+                        'type':'ollamaApi','data':{'baseUrl':'http://ollama:11434'}}]
+          Path('plenum-temporary-local-credential.json').write_text(
+            json.dumps(credential),encoding='utf-8')
+          print('Test uses no real account, no private content, one role, no side effects.')
+          PY
+      - name: Start isolated CPU Ollama and n8n only in temporary private Docker network
+        run: |
+          docker network create plenum-e2e
+          docker pull "$OLLAMA_IMAGE"
+          docker pull "$N8N_IMAGE"
+          docker volume create plenum-e2e-n8n
+          docker run -d --name ollama --network plenum-e2e --memory=5g --cpus=3 \
+            -e OLLAMA_CONTEXT_LENGTH=8192 "$OLLAMA_IMAGE"
+          docker exec ollama ollama pull qwen3:0.6b
+      - name: Import a throwaway credential into local n8n only
+        run: |
+          docker run --rm --name plenum-n8n-import --network plenum-e2e \
+            --memory=3g --cpus=2 \
+            -v plenum-e2e-n8n:/home/node/.n8n \
+            -v "$PWD/plenum-temporary-local-credential.json:/test/credentials.json:ro" \
+            -e N8N_DIAGNOSTICS_ENABLED -e N8N_PERSONALIZATION_ENABLED \
+            -e N8N_ENCRYPTION_KEY -e N8N_RUNNERS_ENABLED \
+            "$N8N_IMAGE" import:credentials --input=/test/credentials.json
+      - name: Import original agent workflow into local n8n with single task and test trigger
+        run: |
+          docker run --rm --network plenum-e2e --memory=3g --cpus=2 \
+            -v plenum-e2e-n8n:/home/node/.n8n \
+            -v "$PWD/plenum-e2e.json:/test/workflow.json:ro" \
+            -e N8N_DIAGNOSTICS_ENABLED -e N8N_PERSONALIZATION_ENABLED \
+            -e N8N_ENCRYPTION_KEY -e N8N_RUNNERS_ENABLED \
+            "$N8N_IMAGE" import:workflow --input=/test/workflow.json
+      - name: Execute REAL native AI Agent + Ollama model and check founder-review result
+        run: |
+          timeout 500 docker run --rm --network plenum-e2e --memory=4g --cpus=3 \
+            -v plenum-e2e-n8n:/home/node/.n8n \
+            -e N8N_DIAGNOSTICS_ENABLED -e N8N_PERSONALIZATION_ENABLED \
+            -e N8N_ENCRYPTION_KEY -e N8N_RUNNERS_ENABLED \
+            "$N8N_IMAGE" execute --id plenum-e2e-agent | tee n8n-e2e-console.log
+          grep -q 'DRAFT_AWAITING_FOUNDER_REVIEW' n8n-e2e-console.log
+          grep -q 'external_actions_executed' n8n-e2e-console.log
+          echo 'LIVE n8n AI Agent produced review-only output; no account writes.'
+      - name: Destroy all temporary credentials, models and services
+        if: always()
+        run: |
+          docker rm -f ollama 2>/dev/null || true
+          docker volume rm -f plenum-e2e-n8n 2>/dev/null || true
+          docker network rm plenum-e2e 2>/dev/null || true
+          rm -f plenum-temporary-local-credential.json plenum-e2e.json n8n-e2e-console.log
