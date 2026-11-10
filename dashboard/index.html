@@ -26,6 +26,7 @@
   <div class="entry"><div>⑤ Fresh reviewer · challenges conclusions<small>Elephant-Goldfish method; independent context</small></div></div></div>
   <p class="hint">These are AI role prompts, not real people, university endorsements or a substitute for independently sourced evidence.</p></section>
 </div>
+<section class="panel" aria-labelledby="councilActivityHeading" style="margin-top:15px"><div class="overline">SOURCE-LINKED EXECUTION EVIDENCE</div><h2 id="councilActivityHeading">Recent council meetings</h2><p class="muted">Read actual founder agendas and GitHub Actions bot status. An opened agenda is not a completed deliberation; proposals are advisory only.</p><div class="feed" id="councilRuns" role="status" aria-live="polite"><div class="empty">Checking public council evidence…</div></div><p class="hint" id="councilChecked">Public GitHub status checked periodically; no private business access.</p></section>
 <div class="section"><div class="overline">PINNED OPEN-SOURCE LIBRARY</div><h2>Specialists available on demand <span class="muted" id="catalogCount">Loading…</span></h2>
 <p class="muted">Indexed profiles remain idle. No model, service or account access is created by cataloguing them.</p><p class="muted" id="mediaCatalogCount">Checking indexed media production resources…</p>
 <input class="catalog-search" id="catalogSearch" type="search" aria-label="Filter indexed specialists" placeholder="Search by division or specialist name" maxlength="70"/>
@@ -39,7 +40,7 @@
 const repo='chadkhalil21-svg/Plenum-Scientific-Intelligence', api='https://api.github.com/repos/'+repo, raw='https://raw.githubusercontent.com/'+repo+'/main';
 const defaults=[['chief','Chief of Staff'],['research','Research Director'],['coding','Engineering Director'],['browser','Browser Operator'],['creative','Creative Director'],['marketing','Growth Director'],['operations','Operations Director'],['simulation','Simulation Director'],['support','Support Drafting Lead'],['verification','Verification Officer']];
 const schedules=[['Business health','.github/workflows/business-public-readback.yml'],['Nine n8n specialists','.github/workflows/business-workforce-n8n-agent-trial.yml'],['Workforce runtime','.github/workflows/business-workforce-runtime.yml'],['Research frontiers','.github/workflows/research-frontiers.yml']];
-const $=id=>document.getElementById(id);let runs=[],issues=[],roles=defaults,loaded=false,externalProfiles=[],externalSnapshot='';
+const $=id=>document.getElementById(id);let runs=[],issues=[],roles=defaults,loaded=false,externalProfiles=[],externalSnapshot='',councilEvidence=[],councilEvidenceChecked=0;
 function node(tag,cls,t){let e=document.createElement(tag);if(cls)e.className=cls;if(t!==undefined)e.textContent=String(t);return e}
 function show(tab){for(const t of ['overview','agents','council','tasks','schedules','command'])$(t).classList.toggle('hidden',t!==tab);document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x.dataset.tab===tab));location.hash=tab}
 function state(r){return r.status!=='completed'?'pending':r.conclusion==='success'?'success':r.conclusion==='failure'?'failure':'other'}
@@ -85,6 +86,37 @@ async function loadCouncilCatalog(){
  }catch(e){externalProfiles=[];externalSnapshot=''}
  renderCouncilCatalog();
 }
+function renderCouncilEvidence(){
+ const host=$('councilRuns');host.replaceChildren();
+ if(!councilEvidence.length){host.append(node('div','empty','No recent public council agendas found or issue feed unavailable.'));return}
+ for(const e of councilEvidence){
+   const label='Council #'+e.number+' · '+e.status.replaceAll('_',' ').toLowerCase();
+   const stage=e.status.includes('ADVISORY')?'success':e.status.includes('BLOCKED')?'failure':'pending';
+   item(host,label,e.issueUrl,'Model perspectives: '+e.seats+' · open issue for verified run link',e.status,stage);
+ }
+}
+async function refreshCouncilEvidence(){
+ const now=Date.now();
+ if(councilEvidenceChecked&&now-councilEvidenceChecked<20*60*1000){renderCouncilEvidence();return}
+ const recent=issues.filter(i=>!i.pull_request&&i.title==='[Plenum Council] public agenda'&&Number.isSafeInteger(i.number)).slice(0,3);
+ if(!recent.length){councilEvidence=[];renderCouncilEvidence();$('councilChecked').textContent='No council issues in the recent public feed.';return}
+ councilEvidenceChecked=now;
+ // Three bounded anonymous requests at most every 20 minutes; respect the public API rate limit.
+ const results=await Promise.allSettled(recent.map(i=>request(api+'/issues/'+i.number+'/comments?per_page=20')));
+ councilEvidence=recent.map((i,j)=>{
+   let e={number:i.number,issueUrl:i.html_url,status:'AWAITING_VERIFIED_RESULT',seats:'—'};
+   if(results[j].status!=='fulfilled'||!Array.isArray(results[j].value)){e.status='EVIDENCE_UNAVAILABLE';return e}
+   const comment=results[j].value.filter(c=>typeof c.body==='string'&&c.body.includes('Plenum council status:')).at(-1);
+   if(!comment)return e;
+   const match=comment.body.match(/Plenum council status: ([A-Z_]+)/);
+   const seats=comment.body.match(/Independent model perspectives completed: ([0-9]+[/]4)/);
+   e.status=match?match[1]:'UNVERIFIED_STATUS';
+   e.seats=seats?seats[1]:'—';
+   return e
+ });
+ renderCouncilEvidence();
+ $('councilChecked').textContent='Last GitHub council readback: '+new Date().toLocaleTimeString()+' · advisory only';
+}
 function prepareCouncil(){
  const objective=$('councilAgenda').value.trim(),message=$('councilMessage');
  if(objective.length<20||objective.length>120||!(/^[\p{L}\p{N}_\s,.\-()/+?]+$/u.test(objective))||/[\r\n]/.test(objective)||forbidden(objective)){
@@ -101,7 +133,7 @@ const results=await Promise.allSettled([request(api+'/actions/runs?per_page=50')
 let errs=0;if(results[0].status==='fulfilled')runs=results[0].value.workflow_runs||[];else errs++;
 if(results[1].status==='fulfilled')issues=results[1].value||[];else errs++;
 if(results[2].status==='fulfilled')roles=results[2].value.roles.map(x=>[x.name,x.title,x.scope]);else errs++;
-loaded=true;render();
+loaded=true;render();if(results[1].status==='fulfilled')void refreshCouncilEvidence();
 $('sync').textContent=errs?'Partial telemetry':'Public telemetry updated';
 $('stamp').textContent='Checked '+new Date().toLocaleTimeString()+' · GitHub public API';
 }
@@ -120,14 +152,14 @@ let title=role==='chief'?'[Plenum Chief] public assignment':'[Plenum Department]
 const url='https://github.com/'+repo+'/issues/new?title='+encodeURIComponent(title)+'&body='+encodeURIComponent(body);
 m.textContent='Opening GitHub for review. Nothing is submitted without thy confirmation.';m.classList.add('success');window.open(url,'_blank','noopener,noreferrer')
 }
-function summary(){const active=runs.filter(r=>r.status!=='completed').length,pass=runs.filter(r=>r.conclusion==='success').length;return 'Plenum Prometheus. '+roles.length+' configured workforce roles. '+active+' queued or executing GitHub workflows, and '+pass+' successful runs in the recent public feed. These are not ten continuously running AI models.'}
+function summary(){const active=runs.filter(r=>r.status!=='completed').length,pass=runs.filter(r=>r.conclusion==='success').length;const c=councilEvidence[0];return 'Plenum Prometheus. '+roles.length+' configured workforce roles. '+active+' queued or executing GitHub workflows, and '+pass+' successful runs in the recent public feed. '+(c?'Latest council '+c.number+', '+c.status.replaceAll('_',' ').toLowerCase()+', '+c.seats+' model perspectives. ':'')+'These are not ten continuously running AI models.'}
 function speak(){if(!('speechSynthesis'in window)){alert('Speech playback unavailable');return}speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(summary());u.lang='en-US';u.rate=.95;speechSynthesis.speak(u)}
 function listen(){const Engine=window.SpeechRecognition||window.webkitSpeechRecognition;if(!Engine){show('command');$('message').textContent='Use keyboard microphone dictation; speech recognition unavailable in this browser.';return}let rec=new Engine();rec.lang='en-US';rec.interimResults=false;rec.continuous=false;rec.onresult=e=>{const v=e.results[0][0].transcript;show('command');$('objective').value=v.slice(0,120);$('message').textContent='Dictated. Review before preparing a task.'};rec.onerror=()=>{$('message').textContent='Mic unavailable. Try keyboard dictation.'};rec.start()}
 for(const b of document.querySelectorAll('[data-tab]'))b.addEventListener('click',()=>show(b.dataset.tab));
 $('catalogSearch').addEventListener('input',renderCouncilCatalog);$('councilPrepare').addEventListener('click',prepareCouncil);
-$('refresh').addEventListener('click',refresh);$('prepare').addEventListener('click',prepare);$('mic').addEventListener('click',listen);$('hear').addEventListener('click',listen);$('speak').addEventListener('click',speak);
+$('refresh').addEventListener('click',()=>{councilEvidenceChecked=0;refresh()});$('prepare').addEventListener('click',prepare);$('mic').addEventListener('click',listen);$('hear').addEventListener('click',listen);$('speak').addEventListener('click',speak);
 for(const [id,name]of defaults){if(id==='chief')continue;const option=node('option','',name);option.value=id==='coding'?'engineering':id;$('role').append(option)}
-show(['overview','agents','tasks','schedules','command'].includes(location.hash.slice(1))?location.hash.slice(1):'overview');
+show(['overview','agents','council','tasks','schedules','command'].includes(location.hash.slice(1))?location.hash.slice(1):'overview');
 async function loadMediaResources(){
  try{
    const data=await request(raw+'/integrations/agent-catalog/openmontage.index.json');
