@@ -183,10 +183,12 @@ def login_html(nonce, register_token=""):
     <p>Open the actual website thou ownest or art authorized to use.
     This owner-only Chromium canvas is the LIVE browser picture; it cannot
     presently stream directly into an ordinary ChatGPT chat.</p>
-    <p>For a new website, first register its exact HTTPS origin through
-    <a href="/owner/sites">Manage registered websites</a>. Only the verified
-    owner may activate its private sign-in; traffic is limited to that site.
-    Cross-site Google/Apple identity redirects can still be blocked.</p>
+    <p>Choose any public HTTPS website and tap <strong>Open secure browser</strong>.
+    If it is new, the verified owner click registers that exact website securely,
+    without a second page or confirmation word. Existing registrations are reused.
+    Private/internal addresses remain blocked. Cross-site Google/Apple sign-in
+    may still require separate permission or owner verification.
+    <a href="/owner/sites">Review or revoke registered websites</a>.</p>
     <p>Sign in or create a website account personally, and use its own
     <strong>Continue with Google</strong> button only when offered. Google may
     block automatic or embedded sign-ins, so a supported external browser
@@ -602,8 +604,8 @@ def mount_private_login(app):
                                 detail="Unsafe website origin") from exc
         try:
             await asyncio.to_thread(
-                OwnerSiteGrantStore.from_environment().register,
-                owner=owner_id,origin=origin)
+                lambda: OwnerSiteGrantStore.from_environment().register(
+                    owner=owner_id,origin=origin))
         except Exception as exc:
             raise HTTPException(status_code=503,
                                 detail="Owner site registration unavailable") from exc
