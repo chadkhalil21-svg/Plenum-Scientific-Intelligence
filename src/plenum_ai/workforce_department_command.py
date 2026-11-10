@@ -84,7 +84,7 @@ def tailor_original_n8n_workflow(source: dict, task: dict) -> dict:
     mission = task["objective"]
     if hints:
         mission += (
-            "\\nReviewed FREE-source references to CONSIDER, not installed: "
+            "\nReviewed FREE-source references to CONSIDER, not installed: "
             + hints
             + ". These are candidates only; never claim code or a solver ran."
         )
