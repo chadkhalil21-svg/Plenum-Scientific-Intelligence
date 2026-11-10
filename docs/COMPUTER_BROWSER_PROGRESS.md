@@ -1,5 +1,14 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-09 ET / 2026-11-10 UTC | Owner-registered private sign-in gate PR #315 — UNDER REVIEW, NOT DEPLOYED
+
+**Actual new founder evidence:** Edge owner was Auth0-verified, existing saved-demo profile showed active, but opening `https://appstoreconnect.apple.com/` at `/owner/sign-in` ended before any picture with WebSocket code 1006. Code 1006 alone cannot establish Apple blocking, expired Auth0, WebSocket transport or static origin rejection. **Canonical known obstacle:** `private_login.py` still accepted only `BROWSER_ALLOWED_ORIGINS`; encrypted runtime registration at `/owner/sites` was not wired to signed-in Chromium. Do NOT request another blind Apple login or old public demonstration.
+
+**Minimal original-engine upgrade under PR #315:** owner-only `/owner/live-access` HTTP preflight before opening WebSocket; exact owner-ID/HTTPS-origin active GCS grant admission; existing Playwright login using the already-established pinned public IP single-origin CONNECT proxy for newly registered sites; bounded session transport, browser request URL checks, website-created WebSockets blocked, runtime grant recheck before owner interaction, unchanged per-origin IndexedDB encrypted storage. Existing owner sessions listing/reader now proposes recognizing registered sites using pinned origin-restricted read-only Chromium, with no general model-facing tool. Original static owner allowlist remains supported. Existing proxy remains the sole proxy; no new browser, service, paid framework, Google credentials or automatic account mutation. New mock integration tests added.
+
+**Evidence level:** SOURCE/OPEN PR ONLY. CI detected initial owner module circular-import and ledger update omissions; fixes are being submitted. Require full browser+Auth0+ledger+scientific CI success, authorized review and protected Cloud Run original service deployment before asserting this new capability live. Cross-origin Google/Apple sign-in may still fail; redirect/identity handoff across hosts is intentionally blocked until separately approved and isolated. **General authenticated observe→decide→act→verify and interactive in-chat MCP Apps screen remain unimplemented**. First true new non-demo owner-approved website outcome still open under [#310](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/310).
+
+
 ## 2026-11-09 | IndexedDB-backed authenticated sessions MERGED AND DEPLOYED; broader autonomy still unproven
 
 **Founder scope:** One reusable original Playwright/Cloud Run/ChatGPT-GitHub browser for arbitrary *owner-authorized* real websites, with per-website approved login, long-horizon observe→act→verify and recovery, secure third-party credential handling and optional interactive in-chat viewing. **Do not build a second browser** or rerun proven arXiv/demo authentication.
