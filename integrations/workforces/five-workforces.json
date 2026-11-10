@@ -1,0 +1,109 @@
+{
+  "schema": "plenum-five-workforce-registry-v1",
+  "updated_utc": "2026-11-10",
+  "authority": "founder_approves_consequential_actions",
+  "control_plane": "existing Plenum Chief, GitHub founder issue queue, n8n nine departments, council",
+  "hosting_candidate": "Oracle Always Free Ampere A1; not yet provisioned",
+  "default_cost_ceiling_usd": 0,
+  "rules": {
+    "public_github_only": "Never include private patents, credentials, customer records, or paid actions",
+    "deployment": "No OCI provisioning or billable action without verified owner tenancy and Always Free quota",
+    "model": "One existing shared inference model on demand, not one model per role",
+    "verification": "No status VERIFIED without actual original worker evidence and separate readback",
+    "promotion": "Import third-party persona prompt only by pinned immutable SHA, review source and rights, tool scope first"
+  },
+  "workforces": [
+    {
+      "id": "scientific_research",
+      "name": "Scientific Research",
+      "lead": "research",
+      "roles": [
+        "research",
+        "simulation"
+      ],
+      "public_kinds": [
+        "public_research",
+        "public_science"
+      ],
+      "original_capability": "existing World Horizon + known SciPy model checks",
+      "runtime": "GitHub Actions ephemeral",
+      "state": "limited_public_tools_verified",
+      "private_integrations": "blocked_pending_owner_scope"
+    },
+    {
+      "id": "engineering_manufacturing",
+      "name": "Engineering & Manufacturing",
+      "lead": "engineering",
+      "roles": [
+        "engineering",
+        "creative"
+      ],
+      "public_kinds": [
+        "public_program",
+        "public_creative"
+      ],
+      "original_capability": "Program Foundry review-only code + Creative Studio structural checks",
+      "runtime": "GitHub Actions ephemeral",
+      "state": "two_worker_mission_verified_2026_11_10_issue_381",
+      "private_integrations": "blocked_pending_owner_scope"
+    },
+    {
+      "id": "commercial_operations",
+      "name": "Commercial Operations",
+      "lead": "operations",
+      "roles": [
+        "operations",
+        "marketing",
+        "support"
+      ],
+      "public_kinds": [],
+      "original_capability": "nine n8n drafts, public American Rider health audits",
+      "runtime": "scheduled GitHub Actions ephemeral",
+      "state": "model_drafts_only_private_writes_blocked",
+      "private_integrations": "blocked_pending_owner_scope"
+    },
+    {
+      "id": "global_intelligence",
+      "name": "Global Intelligence",
+      "lead": "research",
+      "roles": [
+        "research",
+        "browser"
+      ],
+      "public_kinds": [
+        "public_research"
+      ],
+      "original_capability": "public World Horizon metadata scouting, global radar",
+      "runtime": "scheduled GitHub Actions ephemeral",
+      "state": "public_research_only",
+      "private_integrations": "blocked_pending_owner_scope"
+    },
+    {
+      "id": "verification_council",
+      "name": "Verification & Advisory Council",
+      "lead": "verification",
+      "roles": [
+        "verification"
+      ],
+      "public_kinds": [],
+      "original_capability": "on-demand Qwen five-perspective council + checked public artifacts",
+      "runtime": "GitHub Actions ephemeral",
+      "state": "advisory_only",
+      "private_integrations": "blocked_pending_owner_scope"
+    }
+  ],
+  "catalogues": [
+    {
+      "source": "msitarzewski/agency-agents",
+      "items": 283,
+      "status": "indexed_idle",
+      "license": "MIT"
+    },
+    {
+      "source": "OpenMontageInc/OpenMontage",
+      "items": 1106,
+      "status": "metadata_only",
+      "license": "AGPL-3.0"
+    }
+  ]
+}

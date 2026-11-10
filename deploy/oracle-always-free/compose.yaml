@@ -1,0 +1,45 @@
+# Prepared for an OWNER-CONFIGURED Oracle Ampere A1 Always Free ARM64 VM.
+# Does not create a tenancy, cloud instance, credentials or internet-facing UI.
+# Before production, replace image tags with reviewed immutable image digests.
+services:
+  n8n:
+    image: ${N8N_IMAGE:?Set a reviewed, ARM64-compatible n8n image}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      N8N_ENCRYPTION_KEY: "${N8N_ENCRYPTION_KEY:?Generate a private encryption key}"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "true"
+      N8N_RUNNERS_ENABLED: "true"
+      N8N_PROTOCOL: "http"
+      N8N_SECURE_COOKIE: "false" # ONLY for SSH-tunnel loopback; enable for HTTPS
+      GENERIC_TIMEZONE: "Etc/UTC"
+    volumes:
+      - n8n_owner_data:/home/node/.n8n
+    networks:
+      - private_workforce
+    depends_on:
+      - ollama
+    mem_limit: "3g"
+  ollama:
+    image: ${OLLAMA_IMAGE:?Set a reviewed, ARM64-compatible Ollama image}
+    restart: unless-stopped
+    environment:
+      OLLAMA_NUM_PARALLEL: "1"
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_CONTEXT_LENGTH: "4096"
+    volumes:
+      - ollama_models:/root/.ollama
+    networks:
+      - private_workforce
+    mem_limit: "7g"
+    # NO published 11434 port; accessible to n8n only on Docker network.
+networks:
+  private_workforce:
+    driver: bridge
+volumes:
+  n8n_owner_data:
+  ollama_models:
