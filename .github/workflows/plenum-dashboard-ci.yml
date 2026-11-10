@@ -32,6 +32,13 @@ jobs:
                     'id="agentGrid"','id="scheduleGrid"','id="objective"',
                     'id="prepare"','id="mic"','id="speak"')
           assert all(x in page for x in required)
+          council=('data-tab="council"','id="council"','id="catalogSearch"',
+                   'id="catalogGrid"','id="councilAgenda"','id="councilPrepare"')
+          assert all(x in page for x in council)
+          assert "agency-agents.index.json" in page
+          assert "PLENUM_COUNCIL_PUBLIC_V1" in page
+          assert "public agenda" in page
+
           assert "api.github.com/repos/" in page
           assert 'window.open(url' in page, 'Founder review required, not direct autonomous issue post'
           assert 'github.com/'+ 'chadkhalil21-svg/Plenum-Scientific-Intelligence' in page
