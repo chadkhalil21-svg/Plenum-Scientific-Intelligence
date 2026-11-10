@@ -54,7 +54,7 @@ class DirectNineDepartmentTests(TestCase):
     def test_no_source_match_keeps_only_founder_objective(self):
         task=parse_founder_department(event(
             role="support",
-            objective="Draft an internal FAQ about unfamiliar workflow terminology",
+            objective="Draft an internal FAQ about unfamiliar etiquette wording",
         ))
         compiled=tailor_original_n8n_workflow(SOURCE,task)
         script=next(x for x in compiled["nodes"] if x["name"]=="Assign Nine Roles")["parameters"]["jsCode"]
