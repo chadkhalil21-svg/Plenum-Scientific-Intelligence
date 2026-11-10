@@ -193,6 +193,52 @@ class OwnerSiteRegistrationHttpTests(unittest.TestCase):
         self.assertNotIn("browser_navigation_enabled", result.text)
         self.assertIn(SITE, self.client.get("/owner/sites").text)
 
+    def test_root_slash_registration_and_actionable_dns_failures(self):
+        target = "https://appstoreconnect.apple.com"
+        self.assertEqual(grants.normalize_owner_entry(target + "/"), target)
+        self.assertEqual(grants.normalize_owner_entry(target), target)
+        with patch.object(grants, "public_dns_only", return_value=None) as dns:
+            good = self.client.post("/owner/sites/authorize", data={
+                "site": target + "/", "confirmation": "AUTHORIZE",
+                "csrf_token": self._approval()})
+        self.assertEqual(good.status_code, 200)
+        dns.assert_called_once_with(target)
+        self.assertTrue(self.store.authorized(owner=OWNER, origin=target))
+        self.assertNotIn(target + "/", [x["origin"] for x in
+                        self.store.list_active(owner=OWNER)])
+        for bad in (
+            target + "//", target + "/login", target + "/?token=secret",
+            "https://username:secret@appstoreconnect.apple.com",
+            "http://appstoreconnect.apple.com", "https://127.0.0.1",
+        ):
+            with self.subTest(bad=bad), patch.object(
+                    grants, "public_dns_only",
+                    side_effect=AssertionError("unsafe target reached DNS")):
+                rejected = self.client.post("/owner/sites/authorize", data={
+                    "site": bad, "confirmation": "AUTHORIZE",
+                    "csrf_token": self._approval()})
+                self.assertEqual(rejected.status_code, 400)
+                self.assertIn("Website address not accepted", rejected.text)
+                self.assertNotIn("secret", rejected.text)
+
+        for status, exception, expected in (
+            (503, PermissionError("Cannot verify destination DNS"), "Website DNS unavailable"),
+            (503, PermissionError("Unresolved destination"), "Website DNS unavailable"),
+            (403, PermissionError("Browser destination resolves to a nonpublic address"),
+             "Website destination denied"),
+        ):
+            with self.subTest(status=status, exception=str(exception)):
+                with patch.object(grants, "public_dns_only", side_effect=exception):
+                    refused = self.client.post("/owner/sites/authorize", data={
+                        "site": "https://different.example.org",
+                        "confirmation": "AUTHORIZE",
+                        "csrf_token": self._approval()})
+                self.assertEqual(refused.status_code, status)
+                self.assertIn(expected, refused.text)
+                self.assertNotIn("Traceback", refused.text)
+                self.assertFalse(self.store.authorized(
+                    owner=OWNER, origin="https://different.example.org"))
+
     def test_external_origin_wrong_action_bad_confirmation_denied_no_mutation(self):
         good = {"site": SITE, "confirmation": "AUTHORIZE",
                 "csrf_token": self._approval()}
@@ -209,7 +255,9 @@ class OwnerSiteRegistrationHttpTests(unittest.TestCase):
                 with self.subTest(data=data, headers=headers):
                     denied = self.client.post("/owner/sites/authorize",
                                               data=data, headers=headers)
-                    self.assertEqual(denied.status_code, 403)
+                    self.assertEqual(
+                        denied.status_code,
+                        400 if data.get("site") == "http://example.org" else 403)
             dns.assert_not_called()
         self.assertEqual(self.store.list_active(owner=OWNER), [])
 
