@@ -139,14 +139,15 @@ jobs:
             }
           echo 'Native n8n AI-agent execution exited successfully.'
           grep -Ei 'execute|success|completed' runtime-trial/run.log | tail -12 || true
-      - name: Verify output count and review status without publishing draft content
+      - name: Verify actual native n8n agent and bound one PUBLIC founder reply
         run: |
-          python - <<'PY'
+          PYTHONPATH=src python - <<'PY'
           import os, json
           from pathlib import Path
           text=Path('runtime-trial/run.log').read_text(errors='replace')
           assert 'Error executing workflow' not in text
           if os.environ.get('GITHUB_EVENT_NAME') == 'issues':
+              from plenum_ai.workforce_department_command import extract_untrusted_public_department_reply
               meta=json.loads(Path('runtime-trial/department-metadata.json').read_text())
               role=meta['role']
               assert text.count('DRAFT_AWAITING_FOUNDER_REVIEW')>=1
@@ -155,6 +156,15 @@ jobs:
                             'operations','simulation','support','verification'):
                   if other != role:
                       assert '"role": "'+other+'"' not in text, 'Unapproved role executed'
+              draft=extract_untrusted_public_department_reply(text)
+              Path('runtime-trial/public-department-reply.json').write_text(json.dumps({
+                  'schema':'plenum-one-public-department-response-v1',
+                  'role':role,
+                  'draft_untrusted':draft,
+                  'independent_fact_verification':False,
+                  'owner_review_required':True,
+                  'external_actions_executed':False,
+              },indent=2)+'\n')
               Path('runtime-trial/verified-department.json').write_text(json.dumps({
                   'role':role,'status':'DRAFT_AWAITING_FOUNDER_REVIEW',
                   'model_executed':True,'independent_fact_verification':False,
@@ -169,6 +179,14 @@ jobs:
               print('PASS: Nine native model drafts; factual quality not independently verified.')
 
           PY
+      - name: Preserve one actual PUBLIC department reply for founder reading
+        if: github.event_name == 'issues'
+        uses: actions/upload-artifact@v4
+        with:
+          name: plenum-department-public-reply-${{ github.event.issue.number }}
+          path: runtime-trial/public-department-reply.json
+          if-no-files-found: error
+          retention-days: 7
       - name: Preserve public-only single-department outcome, not chat contents
         if: always() && github.event_name == 'issues'
         uses: actions/upload-artifact@v4
