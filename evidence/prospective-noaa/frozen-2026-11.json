@@ -1,0 +1,156 @@
+{
+  "schema": "plenum-future-noaa-frozen-v1",
+  "protocol_commit": "45ac814869b9e47450c00ec55e83b29f02d3ca71",
+  "source_commit": "5bf9fb2d2fbd4e744ae3f5d33f5b120bc9e6bcad",
+  "originating_run_id": "42877863002",
+  "frozen_at_utc": "2026-11-10T18:47:03.167072+00:00",
+  "original": {
+    "schema": "plenum-future-noaa-qwen-v1",
+    "model": "Qwen/Qwen3-1.7B",
+    "model_revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+    "protocol_commit": "45ac814869b9e47450c00ec55e83b29f02d3ca71",
+    "protocol_sha256": "dd6c13e7cbd1610e371dbfef9a89ee2690134a8c44a0e8b4b4d72ee680099be5",
+    "target_days": [
+      "2026-11-12",
+      "2026-11-13"
+    ],
+    "observation_source_product": "water_level",
+    "observation_source_sampling": "exact top-of-hour UTC (minute=00) from observed six-minute product",
+    "source_amendment": "noaa-prospective-2026-11-source-clarification-2026-11-09",
+    "stations": [
+      {
+        "station": "8443970",
+        "development_sha256": "dc8e0d4f7ca2c1f085658fae6d5c5b3af5fe69f57737694a95c8e0dafc57d6df",
+        "source_sha256": "25489ad791470491507d83aba3ec58cae770fe9e699904c976f2bc0e542f0eb4",
+        "baseline_fold_mae_m": {
+          "phase_repeat_of_last_training_UTC_day": [
+            0.70541667,
+            0.74301389
+          ],
+          "m2_s2_harmonics": [
+            0.30019964,
+            0.33827958
+          ],
+          "four_constituent_harmonics": [
+            0.29366503,
+            0.33579345
+          ]
+        },
+        "qwen_candidate": {
+          "alpha": 0.6,
+          "gain": 1.2,
+          "hypothesis": "The model will produce forecasts with increasing accuracy and reliability, as indicated by the rising MAE values and the gain range.",
+          "falsifier": "The model's performance will be validated against independent measurements, and if the MAE remains within the expected range, the hypothesis will be supported."
+        },
+        "qwen_status": "valid",
+        "qwen_fold_mae_m": [
+          0.45558257,
+          0.47956042
+        ],
+        "model_output_sha256": "e9aac4e0e8171632f8e671211f7dfbf2446ba9cd5b63ab52bcd20569fd37c8a4",
+        "future_observations_seen": false,
+        "seal_sha256": "7c05010cf635bb1d0968e5bcb65e0d96855568b08d4715b570b5974e3d305a05"
+      },
+      {
+        "station": "8723214",
+        "development_sha256": "893d13aeb9d2e50e4f8b1f07f9e243fac7146d0be2a16272557c4b6310a97787",
+        "source_sha256": "291fe6a5f6641bbadf818a25493c0959b3ebb967fa6d56ff6d041922840e6a9b",
+        "baseline_fold_mae_m": {
+          "phase_repeat_of_last_training_UTC_day": [
+            0.1495,
+            0.17870833
+          ],
+          "m2_s2_harmonics": [
+            0.14478062,
+            0.17454609
+          ],
+          "four_constituent_harmonics": [
+            0.1484533,
+            0.17768169
+          ]
+        },
+        "qwen_candidate": {
+          "alpha": 0.5,
+          "gain": 1.2,
+          "hypothesis": "The model will produce forecasts with a mean absolute error (MAE) that is between 0.1448 and 0.1745 meters, consistent with the training data.",
+          "falsifier": "If the MAE exceeds 0.1777 meters in any validation period, the hypothesis is falsified."
+        },
+        "qwen_status": "valid",
+        "qwen_fold_mae_m": [
+          0.12433662,
+          0.13821185
+        ],
+        "model_output_sha256": "c2df157b7732da39ff85ec8455b291db2ea1235653597a0a988f572d6376b79a",
+        "future_observations_seen": false,
+        "seal_sha256": "c26a7b4449e174c8312733aa8f76a3e7ee634d78dc5aeff1fa968679be8720c9"
+      }
+    ],
+    "model_calls": 2,
+    "future_observations_seen": false,
+    "auto_model_promotion": false
+  },
+  "critic": {
+    "schema": "plenum-future-noaa-critic-v1",
+    "original_sha256": "3737af68b153a4065553a3cdc85b6d46161ede1406e809c1f4db5b7cd461e4b4",
+    "critic_model": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+    "critic_revision": "31b70e2e869a7173562077fd711b654946d38674",
+    "stations": [
+      {
+        "station": "8443970",
+        "critic_candidate": {
+          "alpha": 0.6,
+          "gain": 1.2,
+          "hypothesis": "The model will produce forecasts with increasing accuracy and reliability, as indicated by the rising MAE values and the gain range.",
+          "falsifier": "The model's performance will be validated against independent measurements, and if the MAE remains within the expected range, the hypothesis will be supported."
+        },
+        "critic_status": "valid",
+        "critic_fold_mae_m": [
+          0.45558257,
+          0.47956042
+        ],
+        "selected": {
+          "type": "baseline",
+          "candidate": "four_constituent_harmonics"
+        },
+        "response_sha256": "e9aac4e0e8171632f8e671211f7dfbf2446ba9cd5b63ab52bcd20569fd37c8a4",
+        "future_observations_seen": false,
+        "seal_sha256": "34910967fd756174ab60878eea1f167f2ecac661d50c33d0306e49cad685cff4"
+      },
+      {
+        "station": "8723214",
+        "critic_candidate": {
+          "alpha": 0.6,
+          "gain": 1.4,
+          "hypothesis": "The model will produce forecasts with a mean absolute error (MAE) that is between 0.1448 and 0.1745 meters, consistent with the training data.",
+          "falsifier": "If the MAE exceeds 0.1777 meters in any validation period, the hypothesis is falsified."
+        },
+        "critic_status": "valid",
+        "critic_fold_mae_m": [
+          0.13191182,
+          0.15025274
+        ],
+        "selected": {
+          "type": "qwen",
+          "candidate": {
+            "alpha": 0.5,
+            "gain": 1.2,
+            "hypothesis": "The model will produce forecasts with a mean absolute error (MAE) that is between 0.1448 and 0.1745 meters, consistent with the training data.",
+            "falsifier": "If the MAE exceeds 0.1777 meters in any validation period, the hypothesis is falsified."
+          }
+        },
+        "response_sha256": "6f8f0e12b4fc4d5c9d879bf2f2cc650125d4e56f91142203fbdca490dab104e3",
+        "future_observations_seen": false,
+        "seal_sha256": "9e95cc2562e75b48aa9a42d2a2546393f2c8d0841c08dd18cdbc2a68997ac10f"
+      }
+    ],
+    "observation_source_product": "water_level",
+    "observation_source_sampling": "exact top-of-hour UTC (minute=00) from observed six-minute product",
+    "source_amendment": "noaa-prospective-2026-11-source-clarification-2026-11-09",
+    "model_calls": 2,
+    "future_observations_seen": false,
+    "auto_model_promotion": false
+  },
+  "original_sha256": "3737af68b153a4065553a3cdc85b6d46161ede1406e809c1f4db5b7cd461e4b4",
+  "critic_sha256": "425427fef8958865fa909b22e0b4ec68058782e5723e8dc13803ca9c6a13ee1f",
+  "frozen_before_future_observations": true
+}
