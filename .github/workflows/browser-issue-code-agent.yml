@@ -89,6 +89,9 @@ jobs:
           assert report['status']=='SOURCE_PROPOSAL_AWAITING_REVIEW'
           assert report['candidate_sha256']==hashlib.sha256(candidate).hexdigest()
           assert report['model_executed'] and report['source_candidate_syntax_verified']
+          assert report['source_candidate_structurally_complete']
+          from plenum_ai.browser_issue_coder import review_candidate_structure
+          review_candidate_structure(candidate)
           assert not report['production_written'] and not report['external_account_actions']
           assert not report['independent_behavior_verified']
           print('Actual local OpenHands candidate: syntax verified, behavior NOT verified')
@@ -107,10 +110,21 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ISSUE: ${{ github.event.issue.number }}
         run: |
-          if test -s "reports/browser-agent/issue-$ISSUE/proposal.py"; then
-            gh issue comment "$ISSUE" --body "OpenHands SOURCE_PROPOSAL_AWAITING_REVIEW: model wrote an isolated syntax-checked candidate. See the seven-day Actions artifact. NOT reviewed, merged, deployed, authenticated, or evidence of TinyFish parity. Run: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          if python - "$ISSUE" <<'PY'
+          import json,sys
+          from pathlib import Path
+          try:
+              record=json.loads((Path("reports/browser-agent")/("issue-"+sys.argv[1])/"result.json").read_text())
+              assert record["status"]=="SOURCE_PROPOSAL_AWAITING_REVIEW"
+              assert record["source_candidate_structurally_complete"] is True
+              assert record["model_executed"] is True
+          except Exception:
+              sys.exit(1)
+          PY
+          then
+            gh issue comment "$ISSUE" --body "OpenHands SOURCE_PROPOSAL_AWAITING_REVIEW: actual model wrote a syntactically valid, generic no-stub-screened public candidate. Independently functional correctness NOT verified. Seven-day artifact available. No deployment or private account access. Run: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           else
-            gh issue comment "$ISSUE" --body "OpenHands BLOCKED: no independently syntax-checked browser source candidate. No production code, accounts or credentials touched. Run: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            gh issue comment "$ISSUE" --body "OpenHands BLOCKED: no independently accepted structurally complete browser source candidate. No production code, accounts or credentials touched. Run: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           fi
       - name: Destroy temporary inference server
         if: always()
