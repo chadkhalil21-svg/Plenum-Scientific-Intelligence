@@ -46,9 +46,9 @@ def read_crossref(doi: str, *, opener=None, sleep_fn=time.sleep) -> dict:
             with client.open(req, timeout=12) as response:
                 if response.status != 200:
                     raise RuntimeError("Crossref HTTP not 200")
-                raw = response.read(110001)
-                if len(raw) > 110000:
-                    raise ValueError("Crossref response exceeded safe size")
+                raw = response.read(2000001)
+                if len(raw) > 2000000:
+                    raise ValueError("Crossref response exceeded 2 MB bounded metadata size")
                 message = json.loads(raw).get("message")
             if not isinstance(message, dict):
                 raise ValueError("Invalid Crossref record")
