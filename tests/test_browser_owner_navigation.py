@@ -32,6 +32,20 @@ class NavigationPolicyTests(unittest.TestCase):
             owner_navigation.validate_navigation(
                 site="https://example.com", path="/logout", labels="Help")
 
+    def test_private_navigation_confirms_each_link_before_next_click(self):
+        import inspect
+        source = inspect.getsource(owner_navigation.read_owner_link_sequence)
+        # Reuse the original private Chromium, no model, no duplicate browser.
+        self.assertIn('confirm_step=confirm_step', source)
+        self.assertIn('recover_observation=recover_observation', source)
+        self.assertIn('wait_until="domcontentloaded"', source)
+        self.assertIn('await current.wait_for_timeout(180)', source)
+        self.assertIn('if current_origin != site:', source)
+        self.assertIn('visited.add(last_target)', source)
+        self.assertIn('index += 1', source)
+        self.assertNotIn('current.reload(', source)
+        self.assertNotIn('current.goto(', source)
+
     def test_best_exact_label_and_ambiguity(self):
         items = [{"label": "Help center", "selector": "a1"},
                  {"label": "Help", "selector": "a2"}]
