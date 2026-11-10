@@ -9,8 +9,13 @@
     "publish_enabled": false,
     "private_app_access": false,
     "auto_start_gateway": false,
-    "group_platform_preference": "telegram",
-    "owner_invocation_only": true
+    "group_platform_preference": "whatsapp",
+    "owner_invocation_only": true,
+    "whatsapp_first_mode": "official_business_dm",
+    "official_whatsapp_groups_enabled": false,
+    "baileys_group_opt_in_required": true,
+    "personal_whatsapp_pairing_allowed": false,
+    "live_whatsapp_connected": false
   },
   "pilot_roles": [
     "chief",
