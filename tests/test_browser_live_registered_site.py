@@ -151,7 +151,10 @@ class RegisteredOwnerLiveTests(unittest.TestCase):
         self.assertIn('fetch("/owner/live-access?site="+encodeURIComponent(target)',page)
         self.assertLess(page.index('access=await fetch('),
                         page.index('const connection=new WebSocket(u);'))
-        self.assertIn('Website not yet authorized',page)
+        self.assertIn('site_authorization_denied', open(
+            "services/computer_browser/private_login.py",
+            encoding="utf-8").read())
+        self.assertIn('resource_scope_rejected',page)
         self.assertIn('max_lifetime=600', open(
             "services/computer_browser/private_login.py",
             encoding="utf-8").read())
