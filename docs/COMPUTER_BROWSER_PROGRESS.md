@@ -1,5 +1,12 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-10 UTC | First real OpenHands browser-code candidate rejected for NO FUNCTIONAL LOGIC
+
+The founder-assigned original local OpenHands model [issue #399](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/399), [run #42879660948](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42879660948) **executed successfully** and emitted an archived 448-byte `proposal.py` with matching SHA-256 `a37ca281d9b6ce65b0c4116adbdb46a8523104f15b92ac5f6f99b6af0e2e8447`. Independent inspection found both requested functions `get_approved_elements` and `rank_elements` have only `pass` bodies. **Verdict REJECTED_NONFUNCTIONAL_DRAFT**: the reported `SOURCE_PROPOSAL_AWAITING_REVIEW` meant syntax and artifact integrity only, not an implemented element ranker. No source merged/deployed, no signed-in task performed. See original issue comment; preserve the negative result.
+
+The follow-up smallest system improvement adds a **generic AST no-stub filter** to the already-existing founder-owned OpenHands issue coder. It rejects `pass`, ellipsis, `NotImplementedError`, missing functions or missing computed returns before classifying output as an acceptable candidate; one bounded FileEditorTool repair is permitted with precise structural feedback. It does **not** execute untrusted code or claim independent functional behavior, and no new model/host is installed. The founder issue workflow now verifies a complete receipt before declaring candidate success; it no longer treats the mere presence of `proposal.py` as evidence. The existing independent security/source review still must gate all source integration. Real private site login, multi-step result proof, in-chat MCP/browser control and TinyFish parity remain unverified. Do not rerun unchanged test #399 or treat a generic AST filter as a general code correctness theorem.
+
+
 ## 2026-11-10 | Agent-first browser coding delegation — source PR, not production
 
 Founder again directs the **agents** to finish the existing browser, not a succession of manual browser demos. Current honest bottleneck: original n8n Browser Department #394 delivered only an unverified text draft; the OpenHands local coder runs in a disposable sandbox and previously discarded its syntax-valid example rather than accepting source-aware browser tasks. Neither is a private account operator.
