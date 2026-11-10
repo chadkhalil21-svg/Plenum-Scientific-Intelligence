@@ -55,7 +55,7 @@ def render_chief_routes(roles=None):
         "  backend: profile_routes",
         "  max_concurrent_children: 2",
         "  max_spawn_depth: 1",
-        "  subagent_auto_approve: false",
+        "  orchestrator_enabled: false",
         "  backends:",
         "    profile_routes:",
         "      profiles:",
