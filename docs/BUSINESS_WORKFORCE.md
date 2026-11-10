@@ -1,6 +1,6 @@
 # Plenum Business Workforce | First Adopted Integrations
 
-**Status:** Source integration in review; not a live, complete autonomous company.
+**Status:** Native n8n model-backed draft workflow verified on disposable public GitHub runners; no persistent business-account workforce. OpenHands local-small-model coding trial failed its required file-output acceptance.
 **Purpose:** Reuse the existing LangGraph orchestrator, official OpenHands SDK,
 and n8n's free self-hosted Community edition, without reimplementing their engines.
 
@@ -44,8 +44,7 @@ the official FileEditorExecutor on a disposable synthetic fixture. That
 test was **not** an LLM-led software repair.
 
 The new `src/plenum_ai/openhands_coding_agent.py` uses the real OpenHands
-`LLM → Agent → Conversation → FileEditorTool` interface. It can propose
-one inspectable public Python file, syntax-check it, and record a checksum.
+`LLM → Agent → Conversation → FileEditorTool` interface. It is designed to propose one inspectable public Python file, syntax-check it, and record a checksum; the actual Qwen3:0.6b trial did NOT produce the required file.
 It does not run proposed code or write into a production repository.
 Its temporary candidate file is deleted, not auto-merged or deployed.
 
@@ -67,7 +66,7 @@ python -m plenum_ai.openhands_coding_agent --execute \
 ```
 
 Install the pinned SDK in this disposable runner with
-`python -m pip install -e ".[openhands_sdk]"`. A suitable local
+`python -m pip install -e ".[openhands_tools]"`. A suitable local
 OpenHands-compatible model may not follow file-edit instructions reliably.
 Alternatively configure `PLENUM_OPENHANDS_API_KEY` and an approved remote
 model (which may incur charges). The SDK uses a six-iteration and $0.20
@@ -90,10 +89,12 @@ The target is **not** satisfied by nine prompts. Completion requires:
   action artifacts or unapproved third-party models.
 - Tested rollback, audit trail, human takeover, and measured operating cost.
 
-**Deployment evidence as of this source change:** Plenum has no n8n service
-in the connected Render service inventory. No n8n server, Ollama endpoint,
-genuine OpenHands LLM run or autonomous customer task has been deployed or
-verified by this integration. Do not claim otherwise.
+**Verified independent execution evidence (2026-11-10 UTC):**
+- [Native n8n 9-role real-model run #42746275674](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42746275674) passed: local Qwen3:0.6b, real n8n AI Agent, nine review outputs, no production account credentials or external writes. The model's example claims and citations remain unverified.
+- [Independent one-role n8n real-model acceptance #42746585905](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42746585905) passed: temporary local Ollama credential, execute-workflow trigger, real draft status and no external account changes.
+- [Actual pinned OpenHands trial #42746265510](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42746265510) FAILED the original output criterion: SDK 1.60.1 and official file-editor tool loaded, model interaction ran, but Qwen3:0.6b produced no inspectable proposal.py. A green package installation must not be reported as successful autonomous coding.
+
+There is **no deployed production n8n, customer-support agent, persistent Ollama host, working OpenHands coding worker or verified real company action**. No paid Render service was created; connected Render account had no n8n deployment. A more capable model and appropriate compute or approved free-tier API are needed before the coding agent can pass its genuine acceptance. Do not rerun the same weak model without changing the evidence-producing capability.
 
 Official sources:
 - OpenHands SDK: https://github.com/OpenHands/software-agent-sdk
