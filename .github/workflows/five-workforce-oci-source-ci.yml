@@ -1,0 +1,26 @@
+name: Plenum Workforces | Five Divisions and OCI Staging Safety
+on:
+  pull_request:
+    paths:
+      - 'integrations/workforces/**'
+      - 'deploy/oracle-always-free/**'
+      - 'tests/test_five_workforces.py'
+      - '.github/workflows/five-workforce-oci-source-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  review-source-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Independently test five-way permission separation and private OCI configuration
+        run: python -m unittest discover -s tests -p 'test_five_workforces.py' -v
+      - name: Validate Docker Compose without creating machines or containers
+        run: docker compose --env-file deploy/oracle-always-free/.env.example -f deploy/oracle-always-free/compose.yaml config --quiet
