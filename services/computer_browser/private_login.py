@@ -169,10 +169,14 @@ def login_html(nonce):
     For App Store Connect only: permit Apple's four documented sign-in hosts
     during this private browser session. All other websites remain blocked.
     Sign-in and MFA remain thine own actions.</label>
-    <p><label>Optional extra website resource origins (comma-separated HTTPS origins;
-    no paths or wildcards; up to five)
-    <input id="resource-origins" maxlength="650" autocomplete="off"
-      placeholder="https://github.githubassets.com,https://avatars.githubusercontent.com"></label></p>
+    <p><label for="resource-origins">Optional extra website resource origins
+    (comma-separated, full HTTPS addresses; up to five; no paths or wildcards)</label>
+    <textarea id="resource-origins" rows="3" maxlength="650"
+      autocomplete="off" autocapitalize="off" spellcheck="false"
+      style="display:block;box-sizing:border-box;width:100%;max-width:720px"
+      placeholder="Example only: https://github.githubassets.com,https://avatars.githubusercontent.com"></textarea>
+    <small>The grey example is not entered automatically. Paste full addresses,
+    with no slash at the end, then tick the separate permission checkbox.</small></p>
     <label><input id="approve-resources" type="checkbox">
     I approve these exact resource hosts for this browser session only.
     They may supply scripts, styles, images and fonts; their scripts run on
@@ -247,10 +251,16 @@ def login_html(nonce):
         return;
       }
       if(!access.ok){
+        let reason="";
+        if(access.status===403){
+          try{const problem=await access.json();reason=problem.detail||"";}catch(_){}
+        }
         status.textContent=access.status===401
-          ?"Owner sign-in expired. Sign into the owner portal in this same Edge tab."
+          ?"Owner sign-in expired. Sign into the owner portal in this same tab."
+          :access.status===403&&reason==="resource_scope_rejected"
+          ?"Extra resource permission rejected. Check that each entry is a COMPLETE HTTPS origin separated by a comma, with no trailing /, path or spaces; keep the resource consent checkbox checked. This does NOT mean thy main website registration failed."
           :access.status===403
-          ?"Website not yet authorized for private sign-in. First register its exact HTTPS origin under Manage registered websites."
+          ?"This website is not currently permitted for the verified owner. Check its original site registration and expiration under Manage registered websites."
           :"Website access preflight unavailable. Browser was not opened.";
         return;
       }
@@ -454,13 +464,17 @@ def mount_private_login(app):
         try:
             origin, pinned=owner_live_origin(
                 owner_id=_owner["private_owner_id"],site=site)
+        except PermissionError as exc:
+            raise HTTPException(status_code=403,
+                                detail="site_authorization_denied") from exc
+        try:
             approved_origins=_approved_live_origins(
                 origin,dynamic=pinned,apple_auth=apple_auth,
                 resource_origins=resource_origins,
                 approve_resources=approve_resources)
         except PermissionError as exc:
             raise HTTPException(status_code=403,
-                                detail="Website not approved for private sign-in") from exc
+                                detail="resource_scope_rejected") from exc
         return {"approved":True,"pinned_single_origin":pinned and apple_auth=="0",
                 "pinned_exact_origins":len(approved_origins) if pinned else 0,
                 "site_specific_owner_consent":True,

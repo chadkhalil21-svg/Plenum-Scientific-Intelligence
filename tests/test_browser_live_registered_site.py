@@ -111,12 +111,50 @@ class RegisteredOwnerLiveTests(unittest.TestCase):
                 self.assertNotIn(SITE, str(ok.json()))
                 self.assertNotIn("password", str(ok.json()))
 
+    def test_registered_site_resource_typo_does_not_masquerade_as_expired_grant(self):
+        with patch.dict(os.environ, ENV):
+            app.dependency_overrides[require_verified_owner] = (
+                lambda: {"private_owner_id": OWNER})
+            self.addCleanup(app.dependency_overrides.pop,
+                            require_verified_owner, None)
+            client = TestClient(app)
+            with patch.object(private_login, "owner_live_origin",
+                              return_value=(SITE, True)):
+                bad = client.get("/owner/live-access", params={
+                    "site": SITE, "resource_origins": "https://assets.example.org/",
+                    "approve_resources": "1"})
+                self.assertEqual(bad.status_code, 403)
+                self.assertEqual(bad.json()["detail"], "resource_scope_rejected")
+                self.assertNotIn("assets.example.org", str(bad.json()))
+                good = client.get("/owner/live-access", params={
+                    "site": SITE, "resource_origins": "https://assets.example.org",
+                    "approve_resources": "1"})
+                self.assertEqual(good.status_code, 200)
+                self.assertEqual(good.json()["pinned_exact_origins"], 2)
+            with patch.object(private_login, "owner_live_origin",
+                              side_effect=PermissionError("unregistered")):
+                denied = client.get("/owner/live-access", params={"site": SITE})
+                self.assertEqual(denied.status_code, 403)
+                self.assertEqual(denied.json()["detail"], "site_authorization_denied")
+
+    def test_mobile_extra_origins_form_is_visible_and_rejection_is_specific(self):
+        html = private_login.login_html("safe-test-nonce")
+        self.assertIn('<textarea id="resource-origins" rows="3"', html)
+        self.assertIn("The grey example is not entered automatically", html)
+        self.assertIn('reason==="resource_scope_rejected"', html)
+        self.assertIn("This does NOT mean thy main website registration failed", html)
+        self.assertIn('u.searchParams.set("resource_origins",resources)', html)
+        self.assertIn("autocapitalize=\"off\" spellcheck=\"false\"", html)
+
     def test_live_html_checks_access_before_websocket_without_leaking_site(self):
         page = private_login.login_html("synthetic-nonce")
         self.assertIn('fetch("/owner/live-access?site="+encodeURIComponent(target)',page)
         self.assertLess(page.index('access=await fetch('),
                         page.index('const connection=new WebSocket(u);'))
-        self.assertIn('Website not yet authorized',page)
+        self.assertIn('site_authorization_denied', open(
+            "services/computer_browser/private_login.py",
+            encoding="utf-8").read())
+        self.assertIn('resource_scope_rejected',page)
         self.assertIn('max_lifetime=600', open(
             "services/computer_browser/private_login.py",
             encoding="utf-8").read())
