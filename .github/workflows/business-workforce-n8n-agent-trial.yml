@@ -1,0 +1,103 @@
+name: Business Workforce | Real n8n Nine-Agent Local-Qwen Trial
+on:
+  push:
+    branches: [feat/live-business-workforce-20261110]
+    paths: ['.github/workflows/business-workforce-n8n-agent-trial.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: plenum-nine-agent-trial-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  run-nine-public-agents:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Start ephemeral private network and free Ollama
+        run: |
+          docker network create plenum-trial-network
+          docker volume create plenum-n8n-trial
+          docker run -d --rm --name plenum-ollama-trial \
+            --network plenum-trial-network --memory=5g --cpus=3 \
+            -e OLLAMA_CONTEXT_LENGTH=8192 -e OLLAMA_NUM_PARALLEL=1 \
+            ollama/ollama:latest
+          for i in $(seq 1 40); do
+            docker exec plenum-ollama-trial ollama list >/dev/null 2>&1 && break
+            sleep 2
+          done
+          docker exec plenum-ollama-trial ollama pull qwen3:0.6b
+      - name: Build PUBLIC and disposable Ollama credential / workflow
+        run: |
+          mkdir -p runtime-trial
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          cred_id='55c8f6a023f1462cbe5dfc3e20a4a9b2'
+          credentials=[{
+              'id':cred_id, 'name':'Plenum Ephemeral Ollama', 'type':'ollamaApi',
+              'data':{'baseUrl':'http://plenum-ollama-trial:11434','apiKey':''}
+          }]
+          workflow=json.loads(Path('integrations/n8n/plenum-business-workforce.json').read_text())
+          assert workflow['active'] is False and len(workflow['nodes'])==6
+          model=next(n for n in workflow['nodes'] if n['name']=='Local Ollama (Configure Credential)')
+          model['parameters']['model']='qwen3:0.6b'
+          model['credentials']={'ollamaApi':{'id':cred_id,'name':'Plenum Ephemeral Ollama'}}
+          workflow['id']='plenum-n8n-public-nine-agents'
+          Path('runtime-trial/credentials.json').write_text(json.dumps(credentials)+'\n')
+          Path('runtime-trial/workflow.json').write_text(json.dumps(workflow)+'\n')
+          print('Trial model is Qwen3 0.6B; credentials contain local host URL only, no secrets.')
+          PY
+      - name: Import exact native n8n credentials and nine-agent workflow
+        run: |
+          docker pull n8nio/n8n:latest
+          docker run --rm --network plenum-trial-network --memory=3g \
+            -v plenum-n8n-trial:/home/node/.n8n \
+            -v "$PWD/runtime-trial:/trial" \
+            -e N8N_ENCRYPTION_KEY=ephemeral-public-test-not-an-account-secret \
+            -e N8N_DIAGNOSTICS_ENABLED=false \
+            -e N8N_PERSONALIZATION_ENABLED=false \
+            n8nio/n8n:latest import:credentials --input=/trial/credentials.json
+          docker run --rm --network plenum-trial-network --memory=3g \
+            -v plenum-n8n-trial:/home/node/.n8n \
+            -v "$PWD/runtime-trial:/trial" \
+            -e N8N_ENCRYPTION_KEY=ephemeral-public-test-not-an-account-secret \
+            -e N8N_DIAGNOSTICS_ENABLED=false \
+            -e N8N_PERSONALIZATION_ENABLED=false \
+            n8nio/n8n:latest import:workflow --input=/trial/workflow.json
+      - name: Execute nine actual AI Agent node tasks (no external write tools)
+        run: |
+          set -o pipefail
+          docker run --rm --network plenum-trial-network --memory=3g --cpus=3 \
+            -v plenum-n8n-trial:/home/node/.n8n \
+            -v "$PWD/runtime-trial:/trial" \
+            -e N8N_ENCRYPTION_KEY=ephemeral-public-test-not-an-account-secret \
+            -e N8N_DIAGNOSTICS_ENABLED=false \
+            -e N8N_PERSONALIZATION_ENABLED=false \
+            -e N8N_RUNNERS_ENABLED=true \
+            n8nio/n8n:latest execute --id=plenum-n8n-public-nine-agents \
+            > runtime-trial/run.log 2>&1 || {
+              echo 'n8n model-agent execution failed, last sanitized status lines:'
+              grep -Ei 'error|fail|credential|execute|missing|node|auth' runtime-trial/run.log | tail -35 || true
+              exit 1
+            }
+          echo 'Native n8n AI-agent execution exited successfully.'
+          grep -Ei 'execute|success|completed' runtime-trial/run.log | tail -12 || true
+      - name: Verify output count and review status without publishing draft content
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          text=Path('runtime-trial/run.log').read_text(errors='replace')
+          assert 'Error executing workflow' not in text
+          print('n8n process reported success. This does not validate individual draft quality.')
+          PY
+      - name: Delete temporary credentials, n8n database and model
+        if: always()
+        run: |
+          rm -rf runtime-trial
+          docker rm -f plenum-ollama-trial >/dev/null 2>&1 || true
+          docker volume rm -f plenum-n8n-trial >/dev/null 2>&1 || true
+          docker network rm plenum-trial-network >/dev/null 2>&1 || true
