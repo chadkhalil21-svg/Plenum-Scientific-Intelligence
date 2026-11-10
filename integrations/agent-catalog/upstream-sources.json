@@ -1,0 +1,79 @@
+{
+  "schema": "plenum-upstream-tool-sources-v1",
+  "reviewed_on": "2026-11-10",
+  "comment": "Static catalogue references are not executable processes, credentials, or claims of independent agent competence.",
+  "entries": [
+    {
+      "id": "agency-agents",
+      "repository": "msitarzewski/agency-agents",
+      "kind": "persona_library",
+      "license": "MIT",
+      "source_status": "283_profile_metadata_indexed_at_immutable_commit",
+      "activation": "idle_by_default"
+    },
+    {
+      "id": "browser-use",
+      "repository": "browser-use/browser-use",
+      "kind": "browser_agent_framework",
+      "license": "MIT",
+      "source_status": "upstream_verified_preexisting_plenum_browser_use",
+      "activation": "existing_only"
+    },
+    {
+      "id": "openmontage",
+      "repository": "calesthio/OpenMontage",
+      "kind": "production_skills",
+      "license": "AGPL-3.0",
+      "source_status": "700_plus_skill_and_knowledge_files_advertised_not_imported",
+      "activation": "license_review_required"
+    },
+    {
+      "id": "agentmemory",
+      "repository": "rohitg00/agentmemory",
+      "kind": "memory_engine",
+      "license": "Apache-2.0",
+      "source_status": "upstream_verified_not_assumed_installed",
+      "activation": "evaluate_against_existing_memory"
+    },
+    {
+      "id": "graft",
+      "repository": "adrianlerer/graft",
+      "kind": "code_context",
+      "license": "MIT",
+      "source_status": "upstream_verified_not_assumed_installed",
+      "activation": "reuse_existing_code_graph_first"
+    },
+    {
+      "id": "elephant-goldfish-model",
+      "repository": "google/elephant-goldfish-model",
+      "kind": "fresh_context_review",
+      "license": "Apache-2.0",
+      "source_status": "upstream_verified_review_method",
+      "activation": "candidate_for_council_critic"
+    },
+    {
+      "id": "qwen-agentworld",
+      "repository": "QwenLM/Qwen-AgentWorld",
+      "kind": "environment_world_model",
+      "license": "Apache-2.0",
+      "source_status": "benchmark_and_model_available_no_local_install",
+      "activation": "model_compute_benchmark_first"
+    },
+    {
+      "id": "kilocode",
+      "repository": "Kilo-Org/kilocode",
+      "kind": "coding_harness",
+      "license": "MIT",
+      "source_status": "verified_optional_not_another_supervisor",
+      "activation": "when_coding_need_only"
+    },
+    {
+      "id": "awesome-ai-agents",
+      "repository": "awesome-llms-labs/awesome-ai-agents",
+      "kind": "ecosystem_directory",
+      "license": "MIT",
+      "source_status": "curation_directory_not_running_agents",
+      "activation": "discovery_only"
+    }
+  ]
+}

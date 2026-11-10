@@ -1,0 +1,2288 @@
+{
+  "schema": "plenum-upstream-specialist-index-v1",
+  "description": "Pinned, reviewed-metadata index of upstream persona definitions; not executable agents or granted permissions.",
+  "source": {
+    "repository": "msitarzewski/agency-agents",
+    "commit": "8ae6164602c95ca78828b148b9052460ee426885",
+    "license": "MIT",
+    "type": "persona_prompts_not_runtimes",
+    "url": "https://github.com/msitarzewski/agency-agents/tree/8ae6164602c95ca78828b148b9052460ee426885"
+  },
+  "count": 283,
+  "run_state": "none_installed_or_running_by_this_index",
+  "rights": "MIT license must be retained when source personas are copied; this index contains filenames and blob identifiers, not imported instructions.",
+  "selection_rules": {
+    "default": "idle",
+    "network": "none",
+    "account_permissions": "none",
+    "private_business_data": "blocked",
+    "model_inference": "on_demand_only",
+    "chief_route": "proposal_only_until_measured"
+  },
+  "profiles": [
+    {
+      "division": "academic",
+      "name": "anthropologist",
+      "path": "academic/academic-anthropologist.md",
+      "blob_sha": "f9c811f2ff7802f05e9450423c4b98ae6a08be31",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "academic",
+      "name": "geographer",
+      "path": "academic/academic-geographer.md",
+      "blob_sha": "c02b43b609c2cceb8ee057bcda9fd104fca353af",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "academic",
+      "name": "historian",
+      "path": "academic/academic-historian.md",
+      "blob_sha": "b67f5a5fcd6fb1b439a3044fcbc21e39fca2247a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "academic",
+      "name": "narratologist",
+      "path": "academic/academic-narratologist.md",
+      "blob_sha": "3976b6f63ac643fc8606cae701bf8e002056703b",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "academic",
+      "name": "psychologist",
+      "path": "academic/academic-psychologist.md",
+      "blob_sha": "e20a812c93a94b62b5c0aec96692d3ce5c6449cc",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "academic",
+      "name": "statistician",
+      "path": "academic/academic-statistician.md",
+      "blob_sha": "f06e3a98781339b15daa525f43fa9e28f983e621",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "design",
+      "name": "brand guardian",
+      "path": "design/design-brand-guardian.md",
+      "blob_sha": "c6c6feda374146d84c46087e6707994d1f17ef5c",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "design",
+      "name": "image prompt engineer",
+      "path": "design/design-image-prompt-engineer.md",
+      "blob_sha": "8f4a8dd241a8f16e75d02fbaba055a14b3e34512",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "design",
+      "name": "inclusive visuals specialist",
+      "path": "design/design-inclusive-visuals-specialist.md",
+      "blob_sha": "e3cd5fad6983b3745a1db1cd07636a7574c65853",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "design",
+      "name": "persona walkthrough",
+      "path": "design/design-persona-walkthrough.md",
+      "blob_sha": "1cc677e6220ffb4c5179b28eccfed51c8777f80a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "design",
+      "name": "ui designer",
+      "path": "design/design-ui-designer.md",
+      "blob_sha": "6744e81bf2d64a4b22881eace74d8438045dca6e",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "design",
+      "name": "ui finish gate reviewer",
+      "path": "design/design-ui-finish-gate-reviewer.md",
+      "blob_sha": "cefcf1a9787c6d5735b740f348b2b73a282cc439",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "design",
+      "name": "ux architect",
+      "path": "design/design-ux-architect.md",
+      "blob_sha": "27a951fd63ef3981f54a3e35c64666e86ea901db",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "design",
+      "name": "ux researcher",
+      "path": "design/design-ux-researcher.md",
+      "blob_sha": "0e8a2480dc9bb11a47c19621a9013bdc3466865a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "design",
+      "name": "visual storyteller",
+      "path": "design/design-visual-storyteller.md",
+      "blob_sha": "e48fde299d7e7ecc259e05819be64212dcf2bc25",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "design",
+      "name": "whimsy injector",
+      "path": "design/design-whimsy-injector.md",
+      "blob_sha": "b0ec15e5ae3bed9374d527e42120ef70eb5d5b91",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "ai data remediation engineer",
+      "path": "engineering/engineering-ai-data-remediation-engineer.md",
+      "blob_sha": "aad8795adc7bf08c46776731b31c6cd3f41c3e6c",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "ai engineer",
+      "path": "engineering/engineering-ai-engineer.md",
+      "blob_sha": "a4a8f6d548894bafaf1dfe651f44f3e7179bf569",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "api platform engineer",
+      "path": "engineering/engineering-api-platform-engineer.md",
+      "blob_sha": "dc9e62e442e4adc8417db49269a4ad7c3118a568",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "ats validator architect",
+      "path": "engineering/engineering-ats-validator-architect.md",
+      "blob_sha": "d3700dfd9585f295d0691ccb62a6d0e62de84f9c",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "autonomous optimization architect",
+      "path": "engineering/engineering-autonomous-optimization-architect.md",
+      "blob_sha": "9350ee662f3761f3175f37d76cf932fe1b2dc01a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "backend architect",
+      "path": "engineering/engineering-backend-architect.md",
+      "blob_sha": "e9272ed505b03f8487fc78715d69847b9a7c0d06",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "china network engineer",
+      "path": "engineering/engineering-china-network-engineer.md",
+      "blob_sha": "da4091deb4e9cd427f4f742be02067f05adbe009",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "cms developer",
+      "path": "engineering/engineering-cms-developer.md",
+      "blob_sha": "79bd2b553626af61c4a352b1e2eab94da3fb871b",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "code reviewer",
+      "path": "engineering/engineering-code-reviewer.md",
+      "blob_sha": "fb93291f4b94a8d5687aa1cc0d05741c3352dd22",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "codebase onboarding engineer",
+      "path": "engineering/engineering-codebase-onboarding-engineer.md",
+      "blob_sha": "cc36ec153ebe38ebf51515d8591a44e1213e5aa1",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "data engineer",
+      "path": "engineering/engineering-data-engineer.md",
+      "blob_sha": "a09bd2c4d8934e30e36f18c1a6be5206327c7cb9",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "data visualization engineer",
+      "path": "engineering/engineering-data-visualization-engineer.md",
+      "blob_sha": "2cc24e7c0a91c7b132a9ce568983ebabda8a1e3d",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "database optimizer",
+      "path": "engineering/engineering-database-optimizer.md",
+      "blob_sha": "d1c0198598a7ad154175cc3e5fbc2904bdb5cff4",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "database reliability engineer",
+      "path": "engineering/engineering-database-reliability-engineer.md",
+      "blob_sha": "1025d7626f716091cff18f982bec4758ad59a849",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "desktop app engineer",
+      "path": "engineering/engineering-desktop-app-engineer.md",
+      "blob_sha": "9c94b4966a465079ece45583a074e6c12ddd58b6",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "developer tooling engineer",
+      "path": "engineering/engineering-developer-tooling-engineer.md",
+      "blob_sha": "f737e1c6347463a542240b4273a47d64d60ef16a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "devops automator",
+      "path": "engineering/engineering-devops-automator.md",
+      "blob_sha": "7fc31412e10eb5985e79cc3581ee1e42b5b6a7de",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "drupal performance",
+      "path": "engineering/engineering-drupal-performance.md",
+      "blob_sha": "889d72dca34306442aa9c4d282aea9bcab02d4e6",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "drupal shopping cart",
+      "path": "engineering/engineering-drupal-shopping-cart.md",
+      "blob_sha": "60d478e038c4a689a7390e0389e0ff0886e8739f",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "electrical engineer",
+      "path": "engineering/engineering-electrical-engineer.md",
+      "blob_sha": "bb490e003bcd6e5f54f35cc0450961b9d05a19a6",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "email intelligence engineer",
+      "path": "engineering/engineering-email-intelligence-engineer.md",
+      "blob_sha": "a1deb89b2a18e91554822e7010680bda69140176",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "embedded firmware engineer",
+      "path": "engineering/engineering-embedded-firmware-engineer.md",
+      "blob_sha": "91265956de1c5870de4a38998f07a99f92e83d78",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "feishu integration developer",
+      "path": "engineering/engineering-feishu-integration-developer.md",
+      "blob_sha": "d1db45cdcdf060933d7e04421c9a368e3636113a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "filament optimization specialist",
+      "path": "engineering/engineering-filament-optimization-specialist.md",
+      "blob_sha": "9dfc49b30a121a6844a9ba15f3e9d7a69581ea1e",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "finops engineer",
+      "path": "engineering/engineering-finops-engineer.md",
+      "blob_sha": "5565463b84066bac927a70af1f124cb6213a6b1b",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "frontend developer",
+      "path": "engineering/engineering-frontend-developer.md",
+      "blob_sha": "7fc1a355bf6cc53b5f2b8b58db52ae2860fc0616",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "gaussdb expert",
+      "path": "engineering/engineering-gaussdb-expert.md",
+      "blob_sha": "ccab7e5c6752cfba8981bfe71aac01d2ab66e1ec",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "git workflow master",
+      "path": "engineering/engineering-git-workflow-master.md",
+      "blob_sha": "1da97ca46b2594fbdbe2ab54203ba0739e630ff6",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "i18n engineer",
+      "path": "engineering/engineering-i18n-engineer.md",
+      "blob_sha": "46a077425407793ae811d4bd2904486104e69b56",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "identity access engineer",
+      "path": "engineering/engineering-identity-access-engineer.md",
+      "blob_sha": "51c01ce994e46ccfc29d51b093acf9a8d77f50a8",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "incident response commander",
+      "path": "engineering/engineering-incident-response-commander.md",
+      "blob_sha": "6a0f82fea31cc5704eb54bb756303874b55b2c40",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "iot fleet engineer",
+      "path": "engineering/engineering-iot-fleet-engineer.md",
+      "blob_sha": "537b22dadabd4ecfd8d936a9699c147fe187354c",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "it service manager",
+      "path": "engineering/engineering-it-service-manager.md",
+      "blob_sha": "78272c20ea0caf5f52b688c1dd0f13174f08b052",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "knowledge graph engineer",
+      "path": "engineering/engineering-knowledge-graph-engineer.md",
+      "blob_sha": "e01c0c454d428d392ce38a7b5025027eb34ae486",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "llm post training engineer",
+      "path": "engineering/engineering-llm-post-training-engineer.md",
+      "blob_sha": "53a558ee6a3bad94df7c9645f5df298834670630",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "minimal change engineer",
+      "path": "engineering/engineering-minimal-change-engineer.md",
+      "blob_sha": "11d7660010fb70c5fcd4c36e2239afe357ecd335",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "mobile app builder",
+      "path": "engineering/engineering-mobile-app-builder.md",
+      "blob_sha": "71cc10024f07a0c6a19aed9f7e495284f7ce5e6a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "mobile release engineer",
+      "path": "engineering/engineering-mobile-release-engineer.md",
+      "blob_sha": "dafdb00d165c2be436df84a33dd87922f31d347e",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "multi agent systems architect",
+      "path": "engineering/engineering-multi-agent-systems-architect.md",
+      "blob_sha": "4ca4ebef41d7ec024158d8ed2a9221c2037a72cc",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "network engineer",
+      "path": "engineering/engineering-network-engineer.md",
+      "blob_sha": "803d49403b0e20efb2e84b93a214b04390fc341d",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "orgscript engineer",
+      "path": "engineering/engineering-orgscript-engineer.md",
+      "blob_sha": "c3ff0fd452bef0c79b5399371cb7ae9ae9780815",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "payments billing engineer",
+      "path": "engineering/engineering-payments-billing-engineer.md",
+      "blob_sha": "4ffffc09e63586aced1c715607d11bf6eb13b036",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "pdf engine architect",
+      "path": "engineering/engineering-pdf-engine-architect.md",
+      "blob_sha": "ed667ab6a7dc1b29a2187697217930d7a5d93ef1",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "platform engineer",
+      "path": "engineering/engineering-platform-engineer.md",
+      "blob_sha": "234fec449f0dd67d08aac51f6dcec13975cb9ebc",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "privacy engineer",
+      "path": "engineering/engineering-privacy-engineer.md",
+      "blob_sha": "67779ba76585e31e187f6f17ae1e8ab96ac8b531",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "prompt engineer",
+      "path": "engineering/engineering-prompt-engineer.md",
+      "blob_sha": "841f65a7b1f7215dd1e6191623b5a167de882acc",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "rag pipeline engineer",
+      "path": "engineering/engineering-rag-pipeline-engineer.md",
+      "blob_sha": "6f468dc0fd516ed825966de2d0bd6af2247e2d7d",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "rapid prototyper",
+      "path": "engineering/engineering-rapid-prototyper.md",
+      "blob_sha": "85395944b7bbf6357d4cf97d02aa565a125fe8dd",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "realtime collaboration engineer",
+      "path": "engineering/engineering-realtime-collaboration-engineer.md",
+      "blob_sha": "bbe961cb012dccd8c4e8c69cc8f6eec677caf67d",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "rust refactoring specialist",
+      "path": "engineering/engineering-rust-refactoring-specialist.md",
+      "blob_sha": "54d80c1b23628306e8a4ea476ec52875dbb3d7f8",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "search relevance engineer",
+      "path": "engineering/engineering-search-relevance-engineer.md",
+      "blob_sha": "2839722ce723da0ef4dfca882603fcaad4fd13e6",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "section 508 specialist",
+      "path": "engineering/engineering-section-508-specialist.md",
+      "blob_sha": "b1b1ba2c828e7a488cc282bb557c439abc23ae0a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "senior developer",
+      "path": "engineering/engineering-senior-developer.md",
+      "blob_sha": "5e31edee0f69fb0a47c008d43997b5dc895e610b",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "servicenow developer mentor",
+      "path": "engineering/engineering-servicenow-developer-mentor.md",
+      "blob_sha": "3a768ee313a22c6b869ac815fccd455d14f6c1e9",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "software architect",
+      "path": "engineering/engineering-software-architect.md",
+      "blob_sha": "1a69148c99b2c170e36e035a0c7a341e98e634e9",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "solidity smart contract engineer",
+      "path": "engineering/engineering-solidity-smart-contract-engineer.md",
+      "blob_sha": "3c83935bed50eabed723f82ab91e2d4e6f6023df",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "sre",
+      "path": "engineering/engineering-sre.md",
+      "blob_sha": "592c7ab92f0fa5f56da735e65eba4c7c40231568",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "technical writer",
+      "path": "engineering/engineering-technical-writer.md",
+      "blob_sha": "e17f72e5c9b958e9550c976c082e05cf42fa01ff",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "universal document compiler",
+      "path": "engineering/engineering-universal-document-compiler.md",
+      "blob_sha": "113055b06bab7f286653003f6e9cd067bc32b98d",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "uswds developer",
+      "path": "engineering/engineering-uswds-developer.md",
+      "blob_sha": "5e886c24054bbb954050647754bc3b41ecb573f4",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "video streaming engineer",
+      "path": "engineering/engineering-video-streaming-engineer.md",
+      "blob_sha": "ed605f9186e2632d8d993fb84cd6b3dbe779cb18",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "voice ai integration engineer",
+      "path": "engineering/engineering-voice-ai-integration-engineer.md",
+      "blob_sha": "1f824a80f8fc3a6e3fb7ae75577e048adfb16f35",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "webassembly engineer",
+      "path": "engineering/engineering-webassembly-engineer.md",
+      "blob_sha": "33b7096dd443bca86298281238e6d2fa1b735968",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "wechat mini program developer",
+      "path": "engineering/engineering-wechat-mini-program-developer.md",
+      "blob_sha": "baba54913f484351445d37781fbdb2bddf412133",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "wordpress performance",
+      "path": "engineering/engineering-wordpress-performance.md",
+      "blob_sha": "2fc8c388d5cbd4ad634a8d76f0a1043abfc1679f",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "engineering",
+      "name": "wordpress shopping cart",
+      "path": "engineering/engineering-wordpress-shopping-cart.md",
+      "blob_sha": "40bfbea344156910ecdf1abf58f8028e0260df31",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "finance",
+      "name": "bookkeeper controller",
+      "path": "finance/finance-bookkeeper-controller.md",
+      "blob_sha": "ed28a7488aa98e5e70e71392368d5a010da7882a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "finance",
+      "name": "financial analyst",
+      "path": "finance/finance-financial-analyst.md",
+      "blob_sha": "8ec0dbcbcc77eda73e6ed680dc88762aad02b609",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "finance",
+      "name": "fpa analyst",
+      "path": "finance/finance-fpa-analyst.md",
+      "blob_sha": "a398f97d4ea11b80f1282cd041c5e0c015c75cdb",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "finance",
+      "name": "investment researcher",
+      "path": "finance/finance-investment-researcher.md",
+      "blob_sha": "50ff87cf7f4571d7796c7a4c31352c0887cb3420",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "finance",
+      "name": "tax strategist",
+      "path": "finance/finance-tax-strategist.md",
+      "blob_sha": "bcaac1dc70092e1235d933044157ea72a39d4f83",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "addon engineer",
+      "path": "game-development/blender/blender-addon-engineer.md",
+      "blob_sha": "db7de69a1fcddcd8c765eaf1bb802d20021ca94d",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "architect",
+      "path": "game-development/unity/unity-architect.md",
+      "blob_sha": "ccae7118f8afdad4f4e272fb6ffb9b0de97e13d4",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "artist",
+      "path": "game-development/technical-artist.md",
+      "blob_sha": "d47b0f3bbb088c5cf62f8fa2de95a5fd5a43bd9a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "audio engineer",
+      "path": "game-development/game-audio-engineer.md",
+      "blob_sha": "5dcf286a81d4f9bf80cb6ef94dc439ed17c44c4a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "avatar creator",
+      "path": "game-development/roblox-studio/roblox-avatar-creator.md",
+      "blob_sha": "752e0ed0e30764d85eb064b90568555709608b56",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "designer",
+      "path": "game-development/economy-designer.md",
+      "blob_sha": "f965052a867bd93dfb4996b779add5787d175aa2",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "designer",
+      "path": "game-development/game-designer.md",
+      "blob_sha": "64f719fac09531dfeea308c258ade32d1d74db3c",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "designer",
+      "path": "game-development/level-designer.md",
+      "blob_sha": "4997edd6c2696e2754a44e96bc349e90f1c434a0",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "designer",
+      "path": "game-development/narrative-designer.md",
+      "blob_sha": "261a5d792c14ad46af144d06e01e21fe5a41db89",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "editor tool developer",
+      "path": "game-development/unity/unity-editor-tool-developer.md",
+      "blob_sha": "62feebc4d80e9d89b1ac2c40d9ebd42e153f74c5",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "experience designer",
+      "path": "game-development/roblox-studio/roblox-experience-designer.md",
+      "blob_sha": "770a87233112650da459b880db312192da7c0f9a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "gameplay scripter",
+      "path": "game-development/godot/godot-gameplay-scripter.md",
+      "blob_sha": "c747562b62a95c0f63593cf6229fec53a6925577",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "multiplayer architect",
+      "path": "game-development/unreal-engine/unreal-multiplayer-architect.md",
+      "blob_sha": "bbb8dba3092208ee56e7679895216894cd019b21",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "multiplayer engineer",
+      "path": "game-development/godot/godot-multiplayer-engineer.md",
+      "blob_sha": "8c7b9c4442f57efa461bcaa8306d0653775ebf3d",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "multiplayer engineer",
+      "path": "game-development/unity/unity-multiplayer-engineer.md",
+      "blob_sha": "fa78dcfa755985d5bbd05efa26f0713b9be4fde9",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "shader developer",
+      "path": "game-development/godot/godot-shader-developer.md",
+      "blob_sha": "f89563ea0f5a79121aa6eee5cdb6a00127665e21",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "shader graph artist",
+      "path": "game-development/unity/unity-shader-graph-artist.md",
+      "blob_sha": "1c7a0aed1ac76a5207a35c87c6a63adbca493b1c",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "systems engineer",
+      "path": "game-development/unreal-engine/unreal-systems-engineer.md",
+      "blob_sha": "f74f41ec0cfe7f2986d1698b46fa5abc0d18b98a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "systems scripter",
+      "path": "game-development/roblox-studio/roblox-systems-scripter.md",
+      "blob_sha": "93767c5b57ee5605a6c3e230e3b4af8923874550",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "technical artist",
+      "path": "game-development/unreal-engine/unreal-technical-artist.md",
+      "blob_sha": "772b39f0914705ff13b2ec93a6cbdec889d1ec8c",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "game-development",
+      "name": "world builder",
+      "path": "game-development/unreal-engine/unreal-world-builder.md",
+      "blob_sha": "867d4e7dce87f8ff10dadce22515ba2afee309da",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "gis",
+      "name": "3d scene developer",
+      "path": "gis/gis-3d-scene-developer.md",
+      "blob_sha": "7350a782b4a0e14c89eac2fa39faba9de7230e67",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "gis",
+      "name": "analyst",
+      "path": "gis/gis-analyst.md",
+      "blob_sha": "9b767f21d39a1e74c442105e6a35655ebc85b97a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "gis",
+      "name": "bim specialist",
+      "path": "gis/gis-bim-specialist.md",
+      "blob_sha": "d1093aa391923a21cea5bb8eb2bd757eccef917d",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "gis",
+      "name": "cartography designer",
+      "path": "gis/gis-cartography-designer.md",
+      "blob_sha": "eb26a215a1e5fb06b7143a7aa0c02790396bdb18",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "gis",
+      "name": "drone reality mapping",
+      "path": "gis/gis-drone-reality-mapping.md",
+      "blob_sha": "3798608259d4ee5ac855961bea575720df077d88",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "gis",
+      "name": "geoai ml engineer",
+      "path": "gis/gis-geoai-ml-engineer.md",
+      "blob_sha": "5f1a02813434c352e3f3e565d34e5f7079bb3236",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "gis",
+      "name": "geoprocessing specialist",
+      "path": "gis/gis-geoprocessing-specialist.md",
+      "blob_sha": "d77c976dd9270af61094264d7cc572f2ff3a8ee8",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "gis",
+      "name": "qa engineer",
+      "path": "gis/gis-qa-engineer.md",
+      "blob_sha": "888139f2c4f3c9e596f2bf8086d8c4c5f93658c4",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "gis",
+      "name": "solution engineer",
+      "path": "gis/gis-solution-engineer.md",
+      "blob_sha": "aa220f1887075e12263744c0fb8f4074e258801b",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "gis",
+      "name": "spatial data engineer",
+      "path": "gis/gis-spatial-data-engineer.md",
+      "blob_sha": "4b36b8322447454c44f55b445b040a81a6ee9a92",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "gis",
+      "name": "spatial data scientist",
+      "path": "gis/gis-spatial-data-scientist.md",
+      "blob_sha": "aebba260541a49e74ddb32b049b474e38b4fc0e2",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "gis",
+      "name": "technical consultant",
+      "path": "gis/gis-technical-consultant.md",
+      "blob_sha": "22d15085ab56fdfaaa6da2723f2f99eebc012b45",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "gis",
+      "name": "web gis developer",
+      "path": "gis/gis-web-gis-developer.md",
+      "blob_sha": "7b05be4287d62490d7322b211eb4dfe0cfbcfa11",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "healthcare",
+      "name": "clinical evidence agent",
+      "path": "healthcare/healthcare-clinical-evidence-agent.md",
+      "blob_sha": "bedd73f3b88a25899025494e4d8c54870eaf1877",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "healthcare",
+      "name": "innovation strategist",
+      "path": "healthcare/healthcare-innovation-strategist.md",
+      "blob_sha": "8674e138f04b40d22c7922385025a9ed7a91a3a5",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "healthcare",
+      "name": "sovereign health systems agent",
+      "path": "healthcare/healthcare-sovereign-health-systems-agent.md",
+      "blob_sha": "b0efcf89cc98acc8427ef52bffd533a8f1eaf5d8",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "aeo foundations",
+      "path": "marketing/marketing-aeo-foundations.md",
+      "blob_sha": "5f4fcb7df38037f57be0204825f6701a95218b6d",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "agentic search optimizer",
+      "path": "marketing/marketing-agentic-search-optimizer.md",
+      "blob_sha": "dbd2018c76fa2cdb67add8af05f612fbc83d8d1c",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "ai citation strategist",
+      "path": "marketing/marketing-ai-citation-strategist.md",
+      "blob_sha": "f4cc136a1c1a9b4479cd01520a8c088b887eca16",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "app store optimizer",
+      "path": "marketing/marketing-app-store-optimizer.md",
+      "blob_sha": "031b6898d4c4f53fe0f87ba4076bf72d160de63d",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "baidu seo specialist",
+      "path": "marketing/marketing-baidu-seo-specialist.md",
+      "blob_sha": "98658b2165be91e71baf768d214271ee302ca776",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "bilibili content strategist",
+      "path": "marketing/marketing-bilibili-content-strategist.md",
+      "blob_sha": "532441cc3bc3cb800797874ee14f586056690c6c",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "book co author",
+      "path": "marketing/marketing-book-co-author.md",
+      "blob_sha": "a8ec749f5c27f273dfcf6f7b12958cf7f98f8deb",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "carousel growth engine",
+      "path": "marketing/marketing-carousel-growth-engine.md",
+      "blob_sha": "bfc0eb91dcab905843cb75b127843c05cc788cb4",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "china ecommerce operator",
+      "path": "marketing/marketing-china-ecommerce-operator.md",
+      "blob_sha": "544a566313175ca5c5f23d520cf086e4adbd073e",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "china market localization strategist",
+      "path": "marketing/marketing-china-market-localization-strategist.md",
+      "blob_sha": "e9723ece0955f275916fac8b8c40cfcdf814f283",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "content creator",
+      "path": "marketing/marketing-content-creator.md",
+      "blob_sha": "4beedb05f5e4f8754c63125649ac8a9763609330",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "cross border ecommerce",
+      "path": "marketing/marketing-cross-border-ecommerce.md",
+      "blob_sha": "7054b8f705b6287b7604e45ef75a8b52c304c611",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "developer community builder",
+      "path": "marketing/marketing-developer-community-builder.md",
+      "blob_sha": "83bdd2d922413901a96d0b0a77d2fefff9c777bc",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "douyin strategist",
+      "path": "marketing/marketing-douyin-strategist.md",
+      "blob_sha": "e1b321f41263be00e967398f91cc2c978989d129",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "email strategist",
+      "path": "marketing/marketing-email-strategist.md",
+      "blob_sha": "89f2a81502deeed160986be6faee80b01661298a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "global podcast strategist",
+      "path": "marketing/marketing-global-podcast-strategist.md",
+      "blob_sha": "0745fa762d38a3c88b662e1d6b6e2be6fbe40f27",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "growth hacker",
+      "path": "marketing/marketing-growth-hacker.md",
+      "blob_sha": "b5c20e59d361b19f277ee1410ce4ec985edde4c7",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "instagram curator",
+      "path": "marketing/marketing-instagram-curator.md",
+      "blob_sha": "85b373a5743f20ba27e042c65b771da047d9ac06",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "kuaishou strategist",
+      "path": "marketing/marketing-kuaishou-strategist.md",
+      "blob_sha": "983afa67d96764a46b485a46217886198b63670a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "linkedin content creator",
+      "path": "marketing/marketing-linkedin-content-creator.md",
+      "blob_sha": "13edc8b02f2ac651810b123767886ffbae4b4878",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "livestream commerce coach",
+      "path": "marketing/marketing-livestream-commerce-coach.md",
+      "blob_sha": "66c02c60f6f8e2e692488812cbf1ef35fb170b48",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "multi platform publisher",
+      "path": "marketing/marketing-multi-platform-publisher.md",
+      "blob_sha": "5e56049823679fa654f264757b4b7b4f239b63d5",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "podcast strategist",
+      "path": "marketing/marketing-podcast-strategist.md",
+      "blob_sha": "d8db7e2fb90b1fae4b3461991bf65e4e4ff14821",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "pr communications manager",
+      "path": "marketing/marketing-pr-communications-manager.md",
+      "blob_sha": "e2bc725c01dfbf2d6a4214793f70bd2d88791b51",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "private domain operator",
+      "path": "marketing/marketing-private-domain-operator.md",
+      "blob_sha": "cf4b24d47ab70bc81f99a3491f4e678745789525",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "reddit community builder",
+      "path": "marketing/marketing-reddit-community-builder.md",
+      "blob_sha": "10166a042723f432f1080e6656c54066d47f3d06",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "seo specialist",
+      "path": "marketing/marketing-seo-specialist.md",
+      "blob_sha": "35cb5e3c0a7f285d2669176ad03a2ed11252e176",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "short video editing coach",
+      "path": "marketing/marketing-short-video-editing-coach.md",
+      "blob_sha": "8ddde08d79d5032ba224dce5261829f7bd83bdac",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "social media strategist",
+      "path": "marketing/marketing-social-media-strategist.md",
+      "blob_sha": "fd39bfa5782fa36b862472e8a2b1cd3d517609e1",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "tiktok strategist",
+      "path": "marketing/marketing-tiktok-strategist.md",
+      "blob_sha": "d04641cadf4aab60ba5bf1144ee1036fa539c578",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "twitter engager",
+      "path": "marketing/marketing-twitter-engager.md",
+      "blob_sha": "6651b2f76afe4cb5e404e338ba500032d7fc0164",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "video optimization specialist",
+      "path": "marketing/marketing-video-optimization-specialist.md",
+      "blob_sha": "3d5fbb416b05f297f8649a3ecf39279d150e2290",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "wechat official account",
+      "path": "marketing/marketing-wechat-official-account.md",
+      "blob_sha": "952ee3298191456c8b88e2af06a6de20062a9a16",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "weibo strategist",
+      "path": "marketing/marketing-weibo-strategist.md",
+      "blob_sha": "64f24ac05c76f26dd11a146a1a4731f7eb5b65df",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "x twitter intelligence analyst",
+      "path": "marketing/marketing-x-twitter-intelligence-analyst.md",
+      "blob_sha": "3d3ca03f49e2503d719f9ba385b685de1e884828",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "xiaohongshu specialist",
+      "path": "marketing/marketing-xiaohongshu-specialist.md",
+      "blob_sha": "e4dde95726abc734e0c15efcc6d1b39b5dd2ca76",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "marketing",
+      "name": "zhihu strategist",
+      "path": "marketing/marketing-zhihu-strategist.md",
+      "blob_sha": "f5be4c4ebc1b5965be39e9b57a5bf60dcce4d5b5",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "paid-media",
+      "name": "media auditor",
+      "path": "paid-media/paid-media-auditor.md",
+      "blob_sha": "de532679bb1aceade5a8f6056fc2e025a73968b1",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "paid-media",
+      "name": "media creative strategist",
+      "path": "paid-media/paid-media-creative-strategist.md",
+      "blob_sha": "6dd3dc860327d79c599f26cac4074f8fe40f815d",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "paid-media",
+      "name": "media paid social strategist",
+      "path": "paid-media/paid-media-paid-social-strategist.md",
+      "blob_sha": "ba13efa57eadb794c7864d3ba35c047112826d6b",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "paid-media",
+      "name": "media ppc strategist",
+      "path": "paid-media/paid-media-ppc-strategist.md",
+      "blob_sha": "b767b0c2a8662a84c6f0420d8de6d2449063bb2c",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "paid-media",
+      "name": "media programmatic buyer",
+      "path": "paid-media/paid-media-programmatic-buyer.md",
+      "blob_sha": "338a3ce3929824531d9986453c4d084fbae7e9dd",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "paid-media",
+      "name": "media search query analyst",
+      "path": "paid-media/paid-media-search-query-analyst.md",
+      "blob_sha": "17a63b46adaccb2f4787b4d40e27f8d9838805b2",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "paid-media",
+      "name": "media tracking specialist",
+      "path": "paid-media/paid-media-tracking-specialist.md",
+      "blob_sha": "edbe1ffed0a4f400c6604c1cca3d4f1f7a8cf708",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "product",
+      "name": "behavioral nudge engine",
+      "path": "product/product-behavioral-nudge-engine.md",
+      "blob_sha": "3f94fdb45837c0dd5da87804c0386cfd92b3816c",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "product",
+      "name": "dx engineer",
+      "path": "product/product-dx-engineer.md",
+      "blob_sha": "1ae03eb3bc0c09d72a9a75a64d2402ae272a0cd6",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "product",
+      "name": "feedback synthesizer",
+      "path": "product/product-feedback-synthesizer.md",
+      "blob_sha": "c36d9a913dea536b9ab922ae3d0da427528b153c",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "product",
+      "name": "manager",
+      "path": "product/product-manager.md",
+      "blob_sha": "6a617be2dbf1a1321b23b0b40e693041a1178cbe",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "product",
+      "name": "sprint prioritizer",
+      "path": "product/product-sprint-prioritizer.md",
+      "blob_sha": "126aec497fb452ddaa211a993d1a9d9fd9b0c959",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "product",
+      "name": "trend researcher",
+      "path": "product/product-trend-researcher.md",
+      "blob_sha": "3f33f9406a60fd38e10d1075ba0bb82d36822e80",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "project-management",
+      "name": "management experiment tracker",
+      "path": "project-management/project-management-experiment-tracker.md",
+      "blob_sha": "e2690da9fd4ee656bf2417e71e638c6142475d16",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "project-management",
+      "name": "management jira workflow steward",
+      "path": "project-management/project-management-jira-workflow-steward.md",
+      "blob_sha": "053e6d2d3803af7efa11581dfc407b25ed822232",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "project-management",
+      "name": "management meeting notes specialist",
+      "path": "project-management/project-management-meeting-notes-specialist.md",
+      "blob_sha": "a02904f92594986147691e5aa69191b49d1e0060",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "project-management",
+      "name": "management project shepherd",
+      "path": "project-management/project-management-project-shepherd.md",
+      "blob_sha": "e2b625a8905b90bd1c4a05aa23014a08621d1370",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "project-management",
+      "name": "management studio operations",
+      "path": "project-management/project-management-studio-operations.md",
+      "blob_sha": "d3f8335e348de080d5a782476756f738aca011f1",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "project-management",
+      "name": "management studio producer",
+      "path": "project-management/project-management-studio-producer.md",
+      "blob_sha": "78c481019a0ab3ccf269d7518759b11f1677218c",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "project-management",
+      "name": "manager senior",
+      "path": "project-management/project-manager-senior.md",
+      "blob_sha": "52bb3a7012fb249e30a2d2f6ae3ed3287e6024d1",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "research",
+      "name": "synthesist",
+      "path": "research/research-synthesist.md",
+      "blob_sha": "ff5741421e8cdbc953a930f9b54aff78f3715677",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "sales",
+      "name": "account strategist",
+      "path": "sales/sales-account-strategist.md",
+      "blob_sha": "9ccea292f982d70c105edd0b99e646d4676110fe",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "sales",
+      "name": "coach",
+      "path": "sales/sales-coach.md",
+      "blob_sha": "d9e5fd19114108a55e4551769e61f4262dc1fa4f",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "sales",
+      "name": "deal strategist",
+      "path": "sales/sales-deal-strategist.md",
+      "blob_sha": "01b220ce103cbb1f816140b1039ced1838ee4e89",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "sales",
+      "name": "discovery coach",
+      "path": "sales/sales-discovery-coach.md",
+      "blob_sha": "76b82c89c7a3f90d784d8ae2e893d914b1d6dc7b",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "sales",
+      "name": "engineer",
+      "path": "sales/sales-engineer.md",
+      "blob_sha": "3093e53a6eccca46d18fbd1f5d225b4b87454eb7",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "sales",
+      "name": "offer lead gen strategist",
+      "path": "sales/sales-offer-lead-gen-strategist.md",
+      "blob_sha": "deb1e7e18cb65de2903011dc31c366b82129c298",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "sales",
+      "name": "outbound strategist",
+      "path": "sales/sales-outbound-strategist.md",
+      "blob_sha": "f2bf4f77133386b481073f5c209f31d4b7cedb62",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "sales",
+      "name": "pipeline analyst",
+      "path": "sales/sales-pipeline-analyst.md",
+      "blob_sha": "75182c76e1a17498b10295733ff75befd7d908e4",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "sales",
+      "name": "proposal strategist",
+      "path": "sales/sales-proposal-strategist.md",
+      "blob_sha": "cca0a66ddb053f487e243c8a12fc030f6b8f7f27",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "security",
+      "name": "ai generated code auditor",
+      "path": "security/security-ai-generated-code-auditor.md",
+      "blob_sha": "a09c474ef6a722cd75d0c064aca187155edbe206",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "security",
+      "name": "appsec engineer",
+      "path": "security/security-appsec-engineer.md",
+      "blob_sha": "f7b2d4dece5d32a84137411f2b8a9b7f7e962aad",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "security",
+      "name": "architect",
+      "path": "security/security-architect.md",
+      "blob_sha": "8a36aadd070f30b7324964815401cc533563447f",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "security",
+      "name": "blockchain security auditor",
+      "path": "security/security-blockchain-security-auditor.md",
+      "blob_sha": "9611ccaac84c0b991f780ca8c19d34f949d428dd",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "security",
+      "name": "cloud security architect",
+      "path": "security/security-cloud-security-architect.md",
+      "blob_sha": "dd30e562c135d42169eaf8f3fa69cd1b6f4da135",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "security",
+      "name": "compliance auditor",
+      "path": "security/security-compliance-auditor.md",
+      "blob_sha": "d6c07687324fda4e15270dc4184fd228a48b0b12",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "security",
+      "name": "incident responder",
+      "path": "security/security-incident-responder.md",
+      "blob_sha": "8b573c2fe9fe02eb2e7c8ce7172733e90be02554",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "security",
+      "name": "penetration tester",
+      "path": "security/security-penetration-tester.md",
+      "blob_sha": "8b415cc9573fe490d6b2b623dd08ea61f87a2807",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "security",
+      "name": "secrets credential engineer",
+      "path": "security/security-secrets-credential-engineer.md",
+      "blob_sha": "f2ce43a7465ce89e3a871ea09dce2fe79e784233",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "security",
+      "name": "senior secops",
+      "path": "security/security-senior-secops.md",
+      "blob_sha": "3f9bb882db415ce788e09982462b07b4fd668222",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "security",
+      "name": "threat detection engineer",
+      "path": "security/security-threat-detection-engineer.md",
+      "blob_sha": "b85cae0a5ace2f3ff6825516d47d7c04ad845923",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "security",
+      "name": "threat intelligence analyst",
+      "path": "security/security-threat-intelligence-analyst.md",
+      "blob_sha": "5465d5c4510c15d13ea783cb127a62ee6b355497",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "spatial-computing",
+      "name": "cockpit interaction specialist",
+      "path": "spatial-computing/xr-cockpit-interaction-specialist.md",
+      "blob_sha": "b2ee725761dc9ef207e2ed3baa2bae80cd59c8c4",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "spatial-computing",
+      "name": "immersive developer",
+      "path": "spatial-computing/xr-immersive-developer.md",
+      "blob_sha": "5452a8f530d8c55c8c3994d8c9be2ba20f619d80",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "spatial-computing",
+      "name": "integration specialist",
+      "path": "spatial-computing/terminal-integration-specialist.md",
+      "blob_sha": "e3e998110cf0fae08b2270b6221c6d359e71dd6b",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "spatial-computing",
+      "name": "interface architect",
+      "path": "spatial-computing/xr-interface-architect.md",
+      "blob_sha": "3c9d16e6750cd13c4889dff5447d668fc021e0e5",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "spatial-computing",
+      "name": "spatial engineer",
+      "path": "spatial-computing/visionos-spatial-engineer.md",
+      "blob_sha": "800140ca5d90405e5911fb77017f6125c15b6cdd",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "spatial-computing",
+      "name": "spatial metal engineer",
+      "path": "spatial-computing/macos-spatial-metal-engineer.md",
+      "blob_sha": "98ddc701740ea7472713f0f3a99f952733cb2c53",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "abroad advisor",
+      "path": "specialized/study-abroad-advisor.md",
+      "blob_sha": "3dac06871207503d6e3c04bf15ddaf89f7d429db",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "aging parent care companion",
+      "path": "specialized/healthcare-aging-parent-care-companion.md",
+      "blob_sha": "926892f25a051cd642fdf9717e1c4ff1491fa826",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "billing coding specialist",
+      "path": "specialized/medical-billing-coding-specialist.md",
+      "blob_sha": "e4bd4450185472439f3a04f40194aa90eb0fe7b8",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "billing time tracking",
+      "path": "specialized/legal-billing-time-tracking.md",
+      "blob_sha": "2a88efad414c564a63f37ab85faa9bab1324f33f",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "chain strategist",
+      "path": "specialized/supply-chain-strategist.md",
+      "blob_sha": "51eb455a59c0b197f454a9c47239e4d6d2912205",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "chief of staff",
+      "path": "specialized/specialized-chief-of-staff.md",
+      "blob_sha": "0ea4026aa8a187abd6f177c37591bef58286c35f",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "civil engineer",
+      "path": "specialized/specialized-civil-engineer.md",
+      "blob_sha": "9f6048ebfa99dd25ebbb419362284e29ca55d404",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "client intake",
+      "path": "specialized/legal-client-intake.md",
+      "blob_sha": "5da0a03e680614a9dfbab49a50afac9d9a04e026",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "codebase archaeologist",
+      "path": "specialized/specialized-codebase-archaeologist.md",
+      "blob_sha": "2e60756a4c905d1bd8233733b0ba67cd4bc7c8c8",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "consolidation agent",
+      "path": "specialized/data-consolidation-agent.md",
+      "blob_sha": "ac60571965067bf6d65d3c5e9a7cc16c935ad182",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "cultural intelligence strategist",
+      "path": "specialized/specialized-cultural-intelligence-strategist.md",
+      "blob_sha": "c534589093a3bfe57f3a88af35d6bdc0bcaa53a2",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "customer returns",
+      "path": "specialized/retail-customer-returns.md",
+      "blob_sha": "998a9d8c16b7f2931db34a5b8dff14e819b3c46e",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "customer service",
+      "path": "specialized/healthcare-customer-service.md",
+      "blob_sha": "388054fb7b47f82a1fea4921535c3adc369b2d16",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "data extraction agent",
+      "path": "specialized/sales-data-extraction-agent.md",
+      "blob_sha": "2d1d6124ce6ea974d8972eb5660e90c2b39fa2fa",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "developer advocate",
+      "path": "specialized/specialized-developer-advocate.md",
+      "blob_sha": "54255dc50626808742fb396f289c706a542127c2",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "digital presales consultant",
+      "path": "specialized/government-digital-presales-consultant.md",
+      "blob_sha": "c2c0ebacca2cb6f417e06a7de0689d166ae5df33",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "distribution agent",
+      "path": "specialized/report-distribution-agent.md",
+      "blob_sha": "c94540ba988a7a64df6724d301b6a6ddebd483bd",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "document generator",
+      "path": "specialized/specialized-document-generator.md",
+      "blob_sha": "1817b2a881152af9c482f6d30cdb2567e531cb35",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "document review",
+      "path": "specialized/legal-document-review.md",
+      "blob_sha": "7d3a1ffd8d88553d760ddaae27fadc4abd49af5a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "estate buyer seller",
+      "path": "specialized/real-estate-buyer-seller.md",
+      "blob_sha": "57aaf3ab55610aa250b956ec7f984a5dda94b672",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "fedramp rmf compliance",
+      "path": "specialized/specialized-fedramp-rmf-compliance.md",
+      "blob_sha": "2d70c8ba4e1b12b26babaa1eddc4fb29e3820268",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "financial officer",
+      "path": "specialized/chief-financial-officer.md",
+      "blob_sha": "7b13199e6d7f69cfc3eae2180b38368b9232445f",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "focus music architect",
+      "path": "specialized/specialized-focus-music-architect.md",
+      "blob_sha": "3722c2aea1c707bf2d85fb4d19d1f566f105ab9f",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "french consulting market",
+      "path": "specialized/specialized-french-consulting-market.md",
+      "blob_sha": "688d265f805d803cb1c65346a5f1f20e71c3de64",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "governance architect",
+      "path": "specialized/automation-governance-architect.md",
+      "blob_sha": "e0fa2004b1ef2132aa2ce257020d3e1295bdb1e2",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "graph operator",
+      "path": "specialized/identity-graph-operator.md",
+      "blob_sha": "55388c44ae18041b4819aef7cdab2db06b347790",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "growth mentor",
+      "path": "specialized/personal-growth-mentor.md",
+      "blob_sha": "6bc5d5cfc5623ce5f6b2e6ad1975f7fec488806a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "guest services",
+      "path": "specialized/hospitality-guest-services.md",
+      "blob_sha": "3b5bb06f8153057526fbf46b51d27200ecb118a8",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "identity trust",
+      "path": "specialized/agentic-identity-trust.md",
+      "blob_sha": "59cdcfccf0fe3a66ffdf21f5e15601bfd79e5218",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "index engineer",
+      "path": "specialized/lsp-index-engineer.md",
+      "blob_sha": "b7560dd42913fa9b5e0f5e0f0252f13433074d1e",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "integration manager",
+      "path": "specialized/ma-integration-manager.md",
+      "blob_sha": "08c258fcec7a7e0907b2e930366b3e89eb5bc00a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "korean business navigator",
+      "path": "specialized/specialized-korean-business-navigator.md",
+      "blob_sha": "6d4145728fea1a5d077b03ef46c836a2298b1cd9",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "management consultant",
+      "path": "specialized/change-management-consultant.md",
+      "blob_sha": "b38f981bcad3733fee93399a94356c198567b66a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "manager",
+      "path": "specialized/operations-manager.md",
+      "blob_sha": "c4ff42a209ca1e5ef4717bc1183a7e6fd3128fb7",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "marketing compliance",
+      "path": "specialized/healthcare-marketing-compliance.md",
+      "blob_sha": "8e958ecce049771a1ea800736cf76c1159c520a6",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "master plan architect",
+      "path": "specialized/specialized-master-plan-architect.md",
+      "blob_sha": "7d641e5d404b50cc9ccc7a003ebf2cb9759ba1c0",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "mcp builder",
+      "path": "specialized/specialized-mcp-builder.md",
+      "blob_sha": "6b8c2a4dc7f7fcf88383df0a9f958e26ec27eef2",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "model qa",
+      "path": "specialized/specialized-model-qa.md",
+      "blob_sha": "0b7aa0249868c3175e93c346f6b665258f57f90a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "officer assistant",
+      "path": "specialized/loan-officer-assistant.md",
+      "blob_sha": "fc45f86ff5d916964617efcc673b846f16ff07a7",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "onboarding",
+      "path": "specialized/hr-onboarding.md",
+      "blob_sha": "15aa1ac614f31c1dd1c11256ce92f3191e04abfe",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "orchestrator",
+      "path": "specialized/agents-orchestrator.md",
+      "blob_sha": "9d62d814d3c5153ef7b403bb4ecba2e9dc21f8ae",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "outreach",
+      "path": "specialized/sales-outreach.md",
+      "blob_sha": "842dbc2665cc8d7ed7ff096b0559f3710ac31169",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "payable agent",
+      "path": "specialized/accounts-payable-agent.md",
+      "blob_sha": "9d794ca5b48a0f0ccad03516ac05e827bc3365e9",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "pricing analyst",
+      "path": "specialized/specialized-pricing-analyst.md",
+      "blob_sha": "f16471e3ff010105d10066bb48c0fb90ba460df1",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "privacy officer",
+      "path": "specialized/data-privacy-officer.md",
+      "blob_sha": "955deeb093eeecb3dd2899d2cb070f334eb507bb",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "psychologist",
+      "path": "specialized/organizational-psychologist.md",
+      "blob_sha": "859b960780299b2fdda8917bce7b5c4bae1eca01",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "salesforce architect",
+      "path": "specialized/specialized-salesforce-architect.md",
+      "blob_sha": "6ffd539c17948ab8db0bbe11dcefb2a0d3779cab",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "service",
+      "path": "specialized/customer-service.md",
+      "blob_sha": "f6d8b1bdd778f89879b39921d95f3042b319aee6",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "specialist",
+      "path": "specialized/recruitment-specialist.md",
+      "blob_sha": "4a2864a91f0092a6c944db7d27548d71d45d0f5f",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "steward",
+      "path": "specialized/zk-steward.md",
+      "blob_sha": "c3bc8972dbbc60b6c1e036dd9248606a560f34eb",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "strategist",
+      "path": "specialized/business-strategist.md",
+      "blob_sha": "21b0f276c29f19ecdf0d803f5141019a2d681381",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "strategy duel agent",
+      "path": "specialized/specialized-strategy-duel-agent.md",
+      "blob_sha": "17e2ac99b0e59c79a5d59148874214dfc79c0003",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "success manager",
+      "path": "specialized/customer-success-manager.md",
+      "blob_sha": "a7e7fa4e44c26bd169e2c6f7fc1aef8b895049a8",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "sustainability officer",
+      "path": "specialized/esg-sustainability-officer.md",
+      "blob_sha": "555c6873574d84ca49e54327b45f62388dfb7fcf",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "tailor",
+      "path": "specialized/resume-tailor.md",
+      "blob_sha": "5428a52180dda748b40ea787ac11cfb03fa3912b",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "training designer",
+      "path": "specialized/corporate-training-designer.md",
+      "blob_sha": "d8191adbdaab0e671fc14c884879092147261e5a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "translator",
+      "path": "specialized/language-translator.md",
+      "blob_sha": "a2bea23c4495bf17740e1e1613bc673cea550dd6",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "workflow architect",
+      "path": "specialized/specialized-workflow-architect.md",
+      "blob_sha": "b1b8b4b4bc9f874af2abbe360c22bad6833fc2f5",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "specialized",
+      "name": "writer",
+      "path": "specialized/grant-writer.md",
+      "blob_sha": "7b9b177e4317ad676b0b3a681b814d6cd132e40b",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "support",
+      "name": "analytics reporter",
+      "path": "support/support-analytics-reporter.md",
+      "blob_sha": "6ffc5033afd72f37f5a1e000d87c2f9d48663114",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "support",
+      "name": "executive summary generator",
+      "path": "support/support-executive-summary-generator.md",
+      "blob_sha": "c8338a5eac9d8351d98687518d4471c25fa67f19",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "support",
+      "name": "finance tracker",
+      "path": "support/support-finance-tracker.md",
+      "blob_sha": "961cbecc28a320fccef294253dca8c8949c4569a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "support",
+      "name": "infrastructure maintainer",
+      "path": "support/support-infrastructure-maintainer.md",
+      "blob_sha": "50a3053456b44db76dfcba411be44a402af51466",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "support",
+      "name": "legal compliance checker",
+      "path": "support/support-legal-compliance-checker.md",
+      "blob_sha": "d94914e128658abca8b997059ce3ab2a1a73e32f",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "support",
+      "name": "support responder",
+      "path": "support/support-support-responder.md",
+      "blob_sha": "df74b467abb7da893ca7463fc1e8f21c20752d78",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "testing",
+      "name": "accessibility auditor",
+      "path": "testing/testing-accessibility-auditor.md",
+      "blob_sha": "350dc3d468b96015a6b3cdefbb06f4a33f673cb1",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "testing",
+      "name": "api tester",
+      "path": "testing/testing-api-tester.md",
+      "blob_sha": "9b9efe53685b250e0c66fd99c71921fd0827355b",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "testing",
+      "name": "evidence collector",
+      "path": "testing/testing-evidence-collector.md",
+      "blob_sha": "321ce36bd2586254b0d7194c5f62965204170532",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "testing",
+      "name": "performance benchmarker",
+      "path": "testing/testing-performance-benchmarker.md",
+      "blob_sha": "9bdff4c3fd34595dec284a6566b1fa996fd11a31",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "testing",
+      "name": "reality checker",
+      "path": "testing/testing-reality-checker.md",
+      "blob_sha": "e534cfbd20d3115d5265387f19db7d3b25649421",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "testing",
+      "name": "test automation engineer",
+      "path": "testing/testing-test-automation-engineer.md",
+      "blob_sha": "59650291b60ed280f8f5d5da69f15fec2aea3dca",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "testing",
+      "name": "test results analyzer",
+      "path": "testing/testing-test-results-analyzer.md",
+      "blob_sha": "318d30e32d0037a39079f4a2b26e30007e8d7063",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "testing",
+      "name": "tool evaluator",
+      "path": "testing/testing-tool-evaluator.md",
+      "blob_sha": "016b2f749ec94160284c0f43e569992545c4858a",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    },
+    {
+      "division": "testing",
+      "name": "workflow optimizer",
+      "path": "testing/testing-workflow-optimizer.md",
+      "blob_sha": "73bf662292a3065eb42bbe43871454c840cf383d",
+      "status": "catalogued_idle",
+      "activation": "manual_owner_task_only"
+    }
+  ]
+}

@@ -17,3 +17,7 @@
 **Source evidence:** `integrations/hermes/roster.json`, `.github/workflows/founder-chief-workforce-command.yml`, `.github/workflows/business-workforce-n8n-agent-trial.yml`, `.github/workflows/workforce-public-inbox.yml`.
 
 **Definition of done:** Verify the deployed HTTPS URL, observe live public GitHub data (not injected fixtures), render on mobile, use browser speech or document the unavailable feature, confirm task-preparation link requires founder submission. Real private task/agent control needs separate authenticated backend and should not be conflated with this public dashboard.
+
+## Council & Catalogue (2026-11-10)
+
+The Council tab lists **283** pinned MIT-licensed Agency Agents persona metadata, across 18 divisions, all idle. It does not execute agent files. The public agenda composer prepares a founder-reviewed GitHub issue; after submission, an ephemeral local Qwen performs four fresh-perspective deliberations and a fifth independent reviewer critiques the proposals. Founder approval is still required; no sensitive private tasks are supported in the PUBLIC page. Full design: [Agent Council and Catalogue](../docs/AGENT_COUNCIL_AND_CATALOGUE.md).

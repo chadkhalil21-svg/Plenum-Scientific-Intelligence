@@ -1,0 +1,126 @@
+name: Plenum Council | On-Demand Fresh-Context Deliberation
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    paths:
+      - 'src/plenum_ai/agent_council.py'
+      - 'tests/test_agent_council.py'
+      - 'src/plenum_ai/agent_library.py'
+      - 'tests/test_agent_library.py'
+      - 'integrations/agent-catalog/**'
+      - '.github/workflows/plenum-agent-council.yml'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-council-${{ github.event.issue.number || github.ref }}
+  cancel-in-progress: false
+jobs:
+  contract:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify dormant indexed roles and founder-only council scope
+        run: |
+          python -m pip install -e .
+          python -m unittest discover -s tests -p 'test_agent_council.py' -v
+          python -m unittest discover -s tests -p 'test_agent_library.py' -v
+  convene:
+    if: >-
+      github.event_name == 'issues' &&
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == '[Plenum Council] public agenda'
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    permissions:
+      contents: read
+      issues: write
+    env:
+      PLENUM_EPHEMERAL_RUNNER: confirmed
+      PLENUM_COUNCIL_MODEL_URL: http://127.0.0.1:11434/api/chat
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate founder nonsensitive public agenda BEFORE model start
+        run: |
+          python -m pip install -e .
+          python -m plenum_ai.agent_council \
+            --event "$GITHUB_EVENT_PATH" \
+            --output reports/agent-council/preflight.json
+      - name: Use ephemeral local model, zero hosted inference credits
+        run: |
+          docker pull ollama/ollama:latest
+          docker run -d --rm --name plenum-agent-council-qwen \
+            --memory=5g --cpus=3 \
+            -p 127.0.0.1:11434:11434 \
+            -e OLLAMA_NUM_PARALLEL=1 ollama/ollama:latest
+          for i in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
+            sleep 2
+          done
+          docker exec plenum-agent-council-qwen ollama pull qwen3:1.7b
+      - name: Four independent proposals and separate fresh-context critique
+        run: |
+          timeout 720 python -m plenum_ai.agent_council \
+            --event "$GITHUB_EVENT_PATH" \
+            --output reports/agent-council/result.json --execute
+      - name: Publish status and artifact link without leaking raw thought text
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          GH_ISSUE: ${{ github.event.issue.number }}
+        run: |
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          from urllib.request import Request,urlopen
+          p=Path("reports/agent-council/result.json")
+          status="BLOCKED_NO_VERIFIED_COUNCIL"
+          seats=0
+          if p.exists():
+              d=json.loads(p.read_text())
+              status=d.get("status",status)
+              seats=d.get("seats_completed",0)
+          run=os.environ["GITHUB_RUN_ID"]
+          message=(
+              "**Plenum council status: "+status+"**\n"+
+              "Independent model perspectives completed: "+str(seats)+"/4.\n"+
+              "Founder decision pending; no accounts or external actions executed.\n"+
+              "Evidence: https://github.com/"+os.environ["GH_REPO"]+"/actions/runs/"+run
+          )
+          uri="https://api.github.com/repos/"+os.environ["GH_REPO"]+"/issues/"+os.environ["GH_ISSUE"]+"/comments"
+          headers={
+              "Authorization":"Bearer "+os.environ["GH_TOKEN"],
+              "Content-Type":"application/json",
+              "Accept":"application/vnd.github+json",
+              "User-Agent":"PlenumAgentCouncil/1",
+          }
+          req=Request(uri,data=json.dumps({"body":message}).encode(),headers=headers,method="POST")
+          with urlopen(req,timeout=20) as response:
+              assert response.status==201
+          print("Council status recorded; private business data not admitted")
+          PY
+      - name: Save founder-review evidence, untrusted suggestions only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: plenum-council-public-${{ github.event.issue.number }}
+          path: reports/agent-council/result.json
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Shut down model, no always-on agent costs
+        if: always()
+        run: docker rm -f plenum-agent-council-qwen 2>/dev/null || true
