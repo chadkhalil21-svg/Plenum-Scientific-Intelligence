@@ -21,3 +21,5 @@
 ## Council & Catalogue (2026-11-10)
 
 The Council tab lists **283** pinned MIT-licensed Agency Agents persona metadata, across 18 divisions, all idle. It does not execute agent files. The public agenda composer prepares a founder-reviewed GitHub issue; after submission, an ephemeral local Qwen performs four fresh-perspective deliberations and a fifth independent reviewer critiques the proposals. Founder approval is still required; no sensitive private tasks are supported in the PUBLIC page. Full design: [Agent Council and Catalogue](../docs/AGENT_COUNCIL_AND_CATALOGUE.md).
+
+**Media production knowledge catalogue:** `integrations/agent-catalog/openmontage.index.json` pins **1,106 Markdown files** from the current `OpenMontageInc/OpenMontage` repository, of which **141** are `SKILL.md` entrypoints. They are **resources, not 1,106 autonomous agents**. The dashboard reports them separately from the 283 MIT-licensed Agency Agents personas. OpenMontage is AGPL-3.0; no code/content is copied or executed by this metadata-only index.
