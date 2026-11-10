@@ -18,29 +18,32 @@ from .owner_auth0 import active as auth0_active, verified_session as auth0_verif
 from .owner_console import require_verified_owner
 from .private_profiles import BrowserProfileStore
 from .owner_live_access import owner_live_origin
+from .runtime_site_grants import normalize_origin
 
 
-# Apple documents these exact HTTPS hosts as Apple Account sign-in dependencies.
-# An owner must opt in for EACH private App Store Connect session. The existing
-# public-IP pinned proxy still rejects every unlisted destination, and other
-# registered websites retain their original exact single-origin policy.
-_APP_STORE_ORIGIN = "https://appstoreconnect.apple.com"
-_APPLE_LOGIN_ORIGINS = frozenset({
-    "https://idmsa.apple.com",
-    "https://appleid.cdn-apple.com",
-    "https://account.apple.com",
-    "https://gsa.apple.com",
-})
+def _approved_live_origins(origin, *, dynamic, support_sites=""):
+    """Bounded provider-neutral owner-approved HTTPS origins for one session.
 
-
-def _approved_live_origins(origin, *, dynamic, apple_auth):
-    if apple_auth not in ("0", "1"):
-        raise PermissionError("Invalid Apple authentication permission")
-    if apple_auth == "0":
-        return frozenset({origin})
-    if origin != _APP_STORE_ORIGIN or not dynamic:
-        raise PermissionError("Apple sign-in scope requires registered private site")
-    return frozenset({origin}) | _APPLE_LOGIN_ORIGINS
+    The owner explicitly enters exact extra hosts. Nothing from website
+    content, redirects, model output or blocked requests authorizes a host.
+    The existing proxy independently resolves and pins every approved host
+    to a public IP *before* Chromium starts, refusing all other CONNECTs.
+    """
+    if not isinstance(support_sites, str) or len(support_sites) > 1200:
+        raise PermissionError("Invalid supporting website origins")
+    entries = [x for x in support_sites.replace(",", " ").split() if x]
+    if len(entries) > 5 or (entries and not dynamic):
+        raise PermissionError("Supporting hosts require a registered owner site")
+    extras = []
+    try:
+        for entry in entries:
+            canonical = normalize_origin(entry)
+            if canonical == origin or canonical in extras:
+                raise PermissionError("Duplicate HTTPS origin")
+            extras.append(canonical)
+    except (ValueError, TypeError, PermissionError) as exc:
+        raise PermissionError("Use distinct exact public HTTPS origins") from exc
+    return frozenset({origin, *extras})
 
 
 def filter_site_storage(state,site_origin):
@@ -123,10 +126,14 @@ def login_html(nonce):
     is not an account password.</p>
     <label>Website <input id="url" type="url" placeholder="https://website.example/login"
     required maxlength="1200" autocomplete="off"></label>
-    <label><input id="apple-auth" type="checkbox">
-    For App Store Connect only: permit Apple's four documented sign-in hosts
-    during this private browser session. All other websites remain blocked.
-    Sign-in and MFA remain thine own actions.</label>
+    <p><label>Optional additional login/resource hosts (up to five exact HTTPS origins,
+    separated by commas): <input id="support-sites" type="text" maxlength="1200"
+    placeholder="https://login.example.org, https://static.example.net"
+    autocomplete="off"></label></p>
+    <p>These optional hosts are approved for this session only, never across
+    all websites. Their public IP addresses are individually pinned. Use
+    only official service or identity-provider domains that thou trustest.
+    Passwords, recovery codes and MFA remain private.</p>
     <button id="open">Open secure browser</button>
     <p id="status" role="status">Not connected</p>
     <canvas width="1024" height="720" id="display" tabindex="0" aria-label="Remote Chromium view: tap or click a field to select it"></canvas>
@@ -172,12 +179,16 @@ def login_html(nonce):
       ws=null;ready=false;pageBlank=true;selected="none";pendingText=null;saveInFlight=false;
       updateTypingEnabled();clearStalePreview();
       const target=document.getElementById("url").value.trim();
-      const appleAuth=document.getElementById("apple-auth").checked?"1":"0";
+      const supportSites=document.getElementById("support-sites").value.trim();
+      if(!target){
+        status.textContent="Enter the website HTTPS address before opening the browser.";
+        return;
+      }
       status.textContent="Checking owner-approved website access...";
       let access;
       try{
         access=await fetch("/owner/live-access?site="+encodeURIComponent(target)+
-            "&apple_auth="+appleAuth,{
+            "&support_sites="+encodeURIComponent(supportSites),{
           credentials:"same-origin",cache:"no-store",headers:{"Accept":"application/json"}
         });
       }catch(_){
@@ -188,14 +199,16 @@ def login_html(nonce):
         status.textContent=access.status===401
           ?"Owner sign-in expired. Sign into the owner portal in this same Edge tab."
           :access.status===403
-          ?"Website not yet authorized for private sign-in. First register its exact HTTPS origin under Manage registered websites."
+          ?"Website or additional hosts are not authorized. Register the primary site and use only exact trusted public HTTPS supporting origins."
+          :access.status===422
+          ?"Enter a valid HTTPS website URL and up to five supporting origins."
           :"Website access preflight unavailable. Browser was not opened.";
         return;
       }
       const u=new URL("/owner/live",location.origin);
       u.protocol=location.protocol==="https:"?"wss:":"ws:";
       u.searchParams.set("site",target);
-      u.searchParams.set("apple_auth",appleAuth);
+      u.searchParams.set("support_sites",supportSites);
       const connection=new WebSocket(u);
       ws=connection;ready=false;pageBlank=true;selected="none";pendingText=null;saveInFlight=false;
       updateTypingEnabled();
@@ -382,18 +395,18 @@ async def _page_render_health(ws, page, blocked):
 def mount_private_login(app):
     @app.get("/owner/live-access")
     async def live_access(site: str=Query(min_length=9,max_length=1200),
-                          apple_auth: str="0",
+                          support_sites: str="",
                           _owner=Depends(require_verified_owner)):
         """Same-origin, verified-owner HTTP preflight; no browser or secrets."""
         try:
             origin, pinned=owner_live_origin(
                 owner_id=_owner["private_owner_id"],site=site)
             approved_origins=_approved_live_origins(
-                origin,dynamic=pinned,apple_auth=apple_auth)
+                origin,dynamic=pinned,support_sites=support_sites)
         except PermissionError as exc:
             raise HTTPException(status_code=403,
                                 detail="Website not approved for private sign-in") from exc
-        return {"approved":True,"pinned_single_origin":pinned and apple_auth=="0",
+        return {"approved":True,"pinned_single_origin":pinned and len(approved_origins)==1,
                 "pinned_exact_origins":len(approved_origins) if pinned else 0,
                 "site_specific_owner_consent":True,
                 "login_restoration_verified":False}
@@ -414,7 +427,7 @@ def mount_private_login(app):
             })
 
     @app.websocket("/owner/live")
-    async def live(ws:WebSocket,site:str,demo:str="0",apple_auth:str="0"):
+    async def live(ws:WebSocket,site:str,demo:str="0",support_sites:str=""):
         # IAP's unsigned email headers can be forged; accept only its signed JWT.
         try:
             # Auth0 portal accepts only Authlib-verified and signed owner
@@ -430,8 +443,8 @@ def mount_private_login(app):
             origin, dynamic=owner_live_origin(
                 owner_id=owner["private_owner_id"],site=site)
             approved_origins=_approved_live_origins(
-                origin,dynamic=dynamic,apple_auth=apple_auth)
-            if demo=="1" and (not ci or apple_auth=="1"):
+                origin,dynamic=dynamic,support_sites=support_sites)
+            if demo=="1" and (not ci or len(approved_origins)>1):
                 raise PermissionError("Offline demonstration is not enabled")
             if demo not in ("0","1"):
                 raise PermissionError("Unknown execution mode")
