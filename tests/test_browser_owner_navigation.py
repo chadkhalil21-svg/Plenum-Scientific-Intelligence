@@ -1,15 +1,20 @@
 """New owner-private adaptive link flow: only bounded public fixture data."""
+import importlib.util
 import os
 import unittest
 from unittest.mock import AsyncMock, patch
 
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-from services.computer_browser.owner_console import require_verified_owner
-from services.computer_browser.owner_saved_session import _owner_form_token
-from services.computer_browser import owner_navigation
+HAS_GATEWAY = all(importlib.util.find_spec(name) is not None
+                  for name in ("fastapi", "httpx", "multipart"))
+if HAS_GATEWAY:
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from services.computer_browser.owner_console import require_verified_owner
+    from services.computer_browser.owner_saved_session import _owner_form_token
+    from services.computer_browser import owner_navigation
 
 
+@unittest.skipUnless(HAS_GATEWAY, 'Dedicated browser CI installs FastAPI')
 class NavigationPolicyTests(unittest.TestCase):
     def test_valid_chain_and_prohibited_actions(self):
         self.assertEqual(
@@ -38,6 +43,7 @@ class NavigationPolicyTests(unittest.TestCase):
              {"label": "Help", "selector": "a2"}], "Help"))
 
 
+@unittest.skipUnless(HAS_GATEWAY, 'Dedicated browser CI installs FastAPI')
 class OwnerNavigationPortalTests(unittest.TestCase):
     def test_owner_session_consent_and_no_public_mount(self):
         owner = {"owner_verified": True, "private_owner_id": "owner-fixture"}
