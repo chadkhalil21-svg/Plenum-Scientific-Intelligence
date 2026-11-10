@@ -137,6 +137,57 @@ class RegisteredOwnerLiveTests(unittest.TestCase):
                 self.assertEqual(denied.status_code, 403)
                 self.assertEqual(denied.json()["detail"], "site_authorization_denied")
 
+    def test_owner_open_registers_first_site_with_existing_csrf_and_dns(self):
+        from services.computer_browser.owner_saved_session import _owner_form_token
+        from services.computer_browser.runtime_site_grants import REGISTRY_SCOPE
+        env={**ENV,
+             "BROWSER_PUBLIC_ORIGIN":"https://owner.example.org",
+             "COMPUTER_BROWSER_TOKEN":"only-a-test-owner-signing-key-of-more-than-32-characters"}
+        with patch.dict(os.environ,env):
+            app.dependency_overrides[require_verified_owner]=(
+                lambda:{"private_owner_id":OWNER})
+            self.addCleanup(app.dependency_overrides.pop,require_verified_owner,None)
+            client=TestClient(app)
+            token=_owner_form_token(OWNER,REGISTRY_SCOPE,"site_register")
+            store=MagicMock()
+            with patch.object(OwnerSiteGrantStore,"from_environment",
+                              return_value=store), patch.object(
+                    private_login,"public_dns_only") as dns:
+                no_token=client.post("/owner/sites/ensure-for-open",data={
+                    "site":SITE+"/signin"})
+                self.assertEqual(no_token.status_code,403)
+                store.register.assert_not_called()
+                wrong_owner=_owner_form_token(OTHER,REGISTRY_SCOPE,"site_register")
+                self.assertEqual(client.post("/owner/sites/ensure-for-open",data={
+                    "site":SITE,"csrf_token":wrong_owner}).status_code,403)
+                store.register.assert_not_called()
+                bad=client.post("/owner/sites/ensure-for-open",data={
+                    "site":"https://127.0.0.1/admin","csrf_token":token})
+                self.assertEqual(bad.status_code,403)
+                store.register.assert_not_called()
+                dns.assert_not_called()
+                good=client.post("/owner/sites/ensure-for-open",data={
+                    "site":SITE+"/signin","csrf_token":token})
+                self.assertEqual(good.status_code,200)
+                self.assertEqual(good.json(),{
+                    "registered":True,"site_data_returned":False,
+                    "login_verified":False})
+                dns.assert_called_once_with(SITE)
+                store.register.assert_called_once_with(owner=OWNER,origin=SITE)
+                self.assertNotIn(SITE,str(good.json()))
+                self.assertNotIn(OWNER,str(good.json()))
+
+    def test_browser_ui_reuses_owner_open_without_separate_site_register_form(self):
+        html=private_login.login_html("nonce-test","v1.safe-fixture")
+        self.assertIn('body:new URLSearchParams({',html)
+        self.assertIn('site:target,csrf_token:"v1.safe-fixture"',html)
+        self.assertIn('fetch("/owner/sites/ensure-for-open"',html)
+        self.assertIn('if(initialReason==="site_authorization_denied")',html)
+        self.assertIn("registers that exact website securely",html)
+        self.assertIn("Owner sign-in expired",html)
+        self.assertIn('u.searchParams.set("resume_saved",resumeSaved)',html)
+        self.assertNotIn("__REGISTER_TOKEN__",html)
+
     def test_mobile_extra_origins_form_is_visible_and_rejection_is_specific(self):
         html = private_login.login_html("safe-test-nonce")
         self.assertIn('<textarea id="resource-origins" rows="3"', html)
