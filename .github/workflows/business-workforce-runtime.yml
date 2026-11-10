@@ -73,7 +73,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v7
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       - name: Start Ollama locally, never expose model server on public interface
         run: |
           docker pull ollama/ollama:latest
