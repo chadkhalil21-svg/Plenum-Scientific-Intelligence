@@ -10,7 +10,10 @@
     "deployment": "No OCI provisioning or billable action without verified owner tenancy and Always Free quota",
     "model": "One existing shared inference model on demand, not one model per role",
     "verification": "No status VERIFIED without actual original worker evidence and separate readback",
-    "promotion": "Import third-party persona prompt only by pinned immutable SHA, review source and rights, tool scope first"
+    "promotion": "Import third-party persona prompt only by pinned immutable SHA, review source and rights, tool scope first",
+    "free_provider": "Owned Ollama or llama.cpp local model first for actual judgment; no token charges, but compute/electricity finite; optional Groq/Gemini/Cloudflare free tiers only with owner-approved accounts and hard 429/no-charge stop.",
+    "github_usage": "Public standard Actions runners remain free for legitimate project development/testing under GitHub terms; not for unrelated unrestricted commercial inference hosting.",
+    "third_party_reuse": "Open source catalogue is read-only; 283 persona profiles and 1106 media resources remain idle; no new paid services, active agents or downloaded code by adding registry references."
   },
   "workforces": [
     {
@@ -105,5 +108,16 @@
       "status": "metadata_only",
       "license": "AGPL-3.0"
     }
-  ]
+  ],
+  "free_first_capability_registry": {
+    "relative_path": "../agent-catalog/upstream-sources.json",
+    "registered_reusable_sources": 27,
+    "selection_command": "python -m plenum_ai.agent_library --suggest-source 'aerodynamics cfd'",
+    "selection_inference_calls": 0,
+    "source_lookup_only": true,
+    "automatic_install_or_execution": false,
+    "infer_with_owned_local_model_when_needed": true,
+    "free_cloud_hosted_inference": "optional_rate_limited_owner_authorized_not_connected",
+    "no_silent_paid_api_or_model_provisioning": true
+  }
 }

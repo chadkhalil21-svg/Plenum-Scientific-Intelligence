@@ -49,6 +49,19 @@ class FiveWorkforceContractTests(TestCase):
         self.assertIn("not yet provisioned", self.registry["hosting_candidate"])
         self.assertIn("No OCI provisioning", self.registry["rules"]["deployment"])
 
+    def test_source_registry_reuses_existing_five_workforces_without_paid_defaults(self):
+        pointer=self.registry["free_first_capability_registry"]
+        self.assertEqual(pointer["registered_reusable_sources"],27)
+        self.assertFalse(pointer["automatic_install_or_execution"])
+        self.assertEqual(pointer["selection_inference_calls"],0)
+        self.assertTrue(pointer["no_silent_paid_api_or_model_provisioning"])
+        self.assertEqual(pointer["relative_path"],"../agent-catalog/upstream-sources.json")
+        source=ROOT/"integrations/workforces"/pointer["relative_path"]
+        d=json.loads(source.resolve().read_text())
+        self.assertEqual(len(d["entries"]),27)
+        self.assertEqual(len(self.registry["workforces"]),5)
+        self.assertIn("GitHub terms",self.registry["rules"]["github_usage"])
+
     def test_oracle_compose_has_loopback_only_editor_and_private_model(self):
         txt = COMPOSE.read_text(encoding="utf-8")
         self.assertIn('127.0.0.1:5678:5678', txt)

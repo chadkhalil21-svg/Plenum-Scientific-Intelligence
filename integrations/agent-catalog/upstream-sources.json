@@ -1,7 +1,7 @@
 {
   "schema": "plenum-upstream-tool-sources-v1",
   "reviewed_on": "2026-11-10",
-  "comment": "Source references and pinned personas are not running agents. Prefer existing working Plenum tools; free code may require separately paid hosting/inference; preserve GPL/AGPL duties.",
+  "comment": "Source references are NOT installed tool executors or active AI agents. GitHub Actions public runners may only be used for eligible repository software development/testing under GitHub terms, not as an unrestricted commercial inference service. Cloud free tiers have quotas. Deterministic on-demand source lookup is read-only. AGPL/GPL/LGPL/fair-code obligations require review.",
   "entries": [
     {
       "id": "agency-agents",
@@ -9,7 +9,18 @@
       "kind": "persona_library",
       "license": "MIT",
       "source_status": "283_profile_metadata_indexed_at_immutable_commit",
-      "activation": "idle_by_default"
+      "activation": "idle_by_default",
+      "tags": [
+        "agent",
+        "personas",
+        "research",
+        "engineering",
+        "design",
+        "specialists"
+      ],
+      "free_cost_class": "free_source_only",
+      "plenum_reuse_state": "indexed_metadata",
+      "default_execution": "never_install_automatically"
     },
     {
       "id": "agency-agents-app",
@@ -17,7 +28,16 @@
       "kind": "local_native_persona_installer_not_runtime",
       "license": "MIT",
       "source_status": "official_native_installer_verified_free_source_no_plenum_install",
-      "activation": "optional_only_on_supported_owner_computer_not_iphone_runtime"
+      "activation": "optional_only_on_supported_owner_computer_not_iphone_runtime",
+      "tags": [
+        "agent",
+        "personas",
+        "desktop",
+        "install"
+      ],
+      "free_cost_class": "free_source_only",
+      "plenum_reuse_state": "optional_desktop",
+      "default_execution": "never_install_automatically"
     },
     {
       "id": "browser-use",
@@ -25,7 +45,16 @@
       "kind": "browser_agent_framework",
       "license": "MIT",
       "source_status": "upstream_verified_preexisting_plenum_browser_use",
-      "activation": "existing_only"
+      "activation": "existing_only",
+      "tags": [
+        "browser",
+        "web",
+        "navigation",
+        "automation"
+      ],
+      "free_cost_class": "requires_execution_compute",
+      "plenum_reuse_state": "existing_adapter",
+      "default_execution": "never_install_automatically"
     },
     {
       "id": "openmontage",
@@ -33,7 +62,16 @@
       "kind": "production_skills",
       "license": "AGPL-3.0",
       "source_status": "1106_markdown_skill_and_production_docs_indexed_agpl_uninstalled",
-      "activation": "license_review_required"
+      "activation": "license_review_required",
+      "tags": [
+        "video",
+        "creative",
+        "production",
+        "editing"
+      ],
+      "free_cost_class": "free_source_only_agpl_obligations",
+      "plenum_reuse_state": "indexed_knowledge",
+      "default_execution": "never_install_automatically"
     },
     {
       "id": "agentmemory",
@@ -41,7 +79,16 @@
       "kind": "memory_engine",
       "license": "Apache-2.0",
       "source_status": "upstream_verified_not_assumed_installed",
-      "activation": "evaluate_against_existing_memory"
+      "activation": "evaluate_against_existing_memory",
+      "tags": [
+        "memory",
+        "recall",
+        "agent",
+        "retrieval"
+      ],
+      "free_cost_class": "requires_execution_compute",
+      "plenum_reuse_state": "candidate",
+      "default_execution": "never_install_automatically"
     },
     {
       "id": "graft",
@@ -49,7 +96,16 @@
       "kind": "code_context",
       "license": "MIT",
       "source_status": "upstream_verified_not_assumed_installed",
-      "activation": "reuse_existing_code_graph_first"
+      "activation": "reuse_existing_code_graph_first",
+      "tags": [
+        "coding",
+        "repository",
+        "context",
+        "software"
+      ],
+      "free_cost_class": "free_source_with_local_compute",
+      "plenum_reuse_state": "candidate",
+      "default_execution": "never_install_automatically"
     },
     {
       "id": "elephant-goldfish-model",
@@ -57,7 +113,16 @@
       "kind": "fresh_context_review",
       "license": "Apache-2.0",
       "source_status": "upstream_verified_review_method",
-      "activation": "candidate_for_council_critic"
+      "activation": "candidate_for_council_critic",
+      "tags": [
+        "review",
+        "critique",
+        "planning",
+        "council"
+      ],
+      "free_cost_class": "requires_model_inference",
+      "plenum_reuse_state": "method_reused",
+      "default_execution": "never_install_automatically"
     },
     {
       "id": "qwen-agentworld",
@@ -65,7 +130,17 @@
       "kind": "environment_world_model",
       "license": "Apache-2.0",
       "source_status": "benchmark_and_model_available_no_local_install",
-      "activation": "model_compute_benchmark_first"
+      "activation": "model_compute_benchmark_first",
+      "tags": [
+        "world",
+        "planning",
+        "model",
+        "simulation",
+        "agent"
+      ],
+      "free_cost_class": "large_weights_compute_required",
+      "plenum_reuse_state": "research_only",
+      "default_execution": "never_install_automatically"
     },
     {
       "id": "kilocode",
@@ -73,7 +148,16 @@
       "kind": "coding_harness",
       "license": "MIT",
       "source_status": "verified_optional_not_another_supervisor",
-      "activation": "when_coding_need_only"
+      "activation": "when_coding_need_only",
+      "tags": [
+        "coding",
+        "editor",
+        "agent",
+        "software"
+      ],
+      "free_cost_class": "free_software_model_cost_separate",
+      "plenum_reuse_state": "candidate",
+      "default_execution": "never_install_automatically"
     },
     {
       "id": "awesome-ai-agents",
@@ -81,7 +165,316 @@
       "kind": "ecosystem_directory",
       "license": "MIT",
       "source_status": "curation_directory_not_running_agents",
-      "activation": "discovery_only"
+      "activation": "discovery_only",
+      "tags": [
+        "agents",
+        "discovery",
+        "directory"
+      ],
+      "free_cost_class": "free_directory",
+      "plenum_reuse_state": "discovery_only",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "openhands-sdk",
+      "repository": "OpenHands/software-agent-sdk",
+      "kind": "coding_agent_sdk",
+      "license": "MIT",
+      "source_status": "existing_bounded_coding_adapter",
+      "activation": "explicit_on_demand_for_scoped_task",
+      "tags": [
+        "coding",
+        "repository",
+        "software",
+        "repair",
+        "agent"
+      ],
+      "free_cost_class": "sandbox_and_local_model_optional",
+      "plenum_reuse_state": "existing_adapter",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "langgraph",
+      "repository": "langchain-ai/langgraph",
+      "kind": "agent_state_graph",
+      "license": "MIT",
+      "source_status": "existing_chief_and_sqlite_checkpoint",
+      "activation": "explicit_on_demand_for_scoped_task",
+      "tags": [
+        "memory",
+        "agent",
+        "orchestration",
+        "checkpoint",
+        "planning"
+      ],
+      "free_cost_class": "free_local_compute",
+      "plenum_reuse_state": "existing_runtime",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "hermes",
+      "repository": "NousResearch/hermes-agent",
+      "kind": "agent_messenger_gateway",
+      "license": "MIT",
+      "source_status": "source_integrated_profile_routes_no_live_private_gateway",
+      "activation": "explicit_on_demand_for_scoped_task",
+      "tags": [
+        "agent",
+        "messaging",
+        "gateway",
+        "tools"
+      ],
+      "free_cost_class": "free_self_host_compute_required",
+      "plenum_reuse_state": "existing_config",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "superpowers",
+      "repository": "obra/superpowers",
+      "kind": "coding_process_skills",
+      "license": "MIT",
+      "source_status": "existing_reviewed_coding_rubric",
+      "activation": "explicit_on_demand_for_scoped_task",
+      "tags": [
+        "coding",
+        "software",
+        "review",
+        "skills"
+      ],
+      "free_cost_class": "free_source_only",
+      "plenum_reuse_state": "method_reused",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "n8n",
+      "repository": "n8n-io/n8n",
+      "kind": "agent_workflow_orchestrator",
+      "license": "fair-code-varies",
+      "source_status": "nine_original_departments_workflow_preexisting",
+      "activation": "explicit_on_demand_for_scoped_task",
+      "tags": [
+        "workflow",
+        "automation",
+        "orchestration",
+        "agent"
+      ],
+      "free_cost_class": "self_host_compute_license_review_required",
+      "plenum_reuse_state": "existing_workflow",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "ollama",
+      "repository": "ollama/ollama",
+      "kind": "local_model_runner",
+      "license": "MIT",
+      "source_status": "original_ollama_chief_cpu_workflow_verified",
+      "activation": "explicit_on_demand_for_scoped_task",
+      "tags": [
+        "model",
+        "inference",
+        "local",
+        "qwen",
+        "offline"
+      ],
+      "free_cost_class": "free_local_inference_with_owned_hardware",
+      "plenum_reuse_state": "existing_runtime",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "llama-cpp",
+      "repository": "ggml-org/llama.cpp",
+      "kind": "local_model_inference_engine",
+      "license": "MIT",
+      "source_status": "original_evaluation_adapter_preexisting",
+      "activation": "explicit_on_demand_for_scoped_task",
+      "tags": [
+        "model",
+        "inference",
+        "local",
+        "cpu",
+        "gguf"
+      ],
+      "free_cost_class": "free_local_inference_with_owned_hardware",
+      "plenum_reuse_state": "existing_adapter",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "freecad",
+      "repository": "FreeCAD/FreeCAD",
+      "kind": "parametric_mechanical_cad",
+      "license": "LGPL-2.1",
+      "source_status": "candidate_for_engineering_not_installed_by_manifest",
+      "activation": "explicit_on_demand_for_scoped_task",
+      "tags": [
+        "mechanical",
+        "cad",
+        "engineering",
+        "design",
+        "manufacturing"
+      ],
+      "free_cost_class": "free_software_compute_separate",
+      "plenum_reuse_state": "candidate",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "su2",
+      "repository": "su2code/SU2",
+      "kind": "aerodynamics_cfd",
+      "license": "LGPL-2.1",
+      "source_status": "candidate_for_aerospace_not_installed_by_manifest",
+      "activation": "explicit_on_demand_for_scoped_task",
+      "tags": [
+        "aerodynamics",
+        "cfd",
+        "fluids",
+        "aerospace",
+        "simulation",
+        "engineering"
+      ],
+      "free_cost_class": "free_software_compute_separate",
+      "plenum_reuse_state": "candidate",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "openmdao",
+      "repository": "OpenMDAO/OpenMDAO",
+      "kind": "multidisciplinary_design_optimization",
+      "license": "Apache-2.0",
+      "source_status": "preexisting_plenum_numerical_stack",
+      "activation": "explicit_on_demand_for_scoped_task",
+      "tags": [
+        "optimization",
+        "engineering",
+        "aerospace",
+        "design",
+        "simulation"
+      ],
+      "free_cost_class": "free_local_compute",
+      "plenum_reuse_state": "existing_adapter",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "openmm",
+      "repository": "openmm/openmm",
+      "kind": "molecular_dynamics",
+      "license": "MIT-and-LGPL-components",
+      "source_status": "preexisting_plenum_science_stack",
+      "activation": "explicit_on_demand_for_scoped_task",
+      "tags": [
+        "molecular",
+        "protein",
+        "chemistry",
+        "physics",
+        "simulation"
+      ],
+      "free_cost_class": "free_local_compute_gpu_optional",
+      "plenum_reuse_state": "existing_adapter",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "pybamm",
+      "repository": "pybamm-team/PyBaMM",
+      "kind": "battery_modeling",
+      "license": "BSD-3-Clause",
+      "source_status": "preexisting_plenum_numerical_stack",
+      "activation": "explicit_on_demand_for_scoped_task",
+      "tags": [
+        "battery",
+        "energy",
+        "electrochemistry",
+        "simulation"
+      ],
+      "free_cost_class": "free_local_compute",
+      "plenum_reuse_state": "existing_adapter",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "rdkit",
+      "repository": "rdkit/rdkit",
+      "kind": "cheminformatics",
+      "license": "BSD-3-Clause",
+      "source_status": "preexisting_plenum_chemistry_stack",
+      "activation": "explicit_on_demand_for_scoped_task",
+      "tags": [
+        "chemistry",
+        "molecule",
+        "drug",
+        "materials"
+      ],
+      "free_cost_class": "free_local_compute",
+      "plenum_reuse_state": "existing_adapter",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "kicad",
+      "repository": "KiCad/kicad-source-mirror",
+      "kind": "electronic_cad",
+      "license": "GPL-3.0",
+      "source_status": "candidate_for_electronics_not_installed_by_manifest",
+      "activation": "explicit_on_demand_for_scoped_task",
+      "tags": [
+        "electronics",
+        "circuit",
+        "pcb",
+        "engineering"
+      ],
+      "free_cost_class": "free_software_copyleft_review",
+      "plenum_reuse_state": "candidate",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "monai",
+      "repository": "Project-MONAI/MONAI",
+      "kind": "medical_imaging_ai_toolkit",
+      "license": "Apache-2.0",
+      "source_status": "candidate_health_research_only",
+      "activation": "explicit_on_demand_for_scoped_task",
+      "tags": [
+        "medical",
+        "imaging",
+        "health",
+        "biomedical",
+        "ai"
+      ],
+      "free_cost_class": "free_software_compute_and_data_governance",
+      "plenum_reuse_state": "candidate",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "blender",
+      "repository": "blender/blender",
+      "kind": "3d_modeling_rendering_animation",
+      "license": "GPL-3.0",
+      "source_status": "optional_open_montage_alternative",
+      "activation": "explicit_on_demand_for_scoped_task",
+      "tags": [
+        "video",
+        "animation",
+        "3d",
+        "design",
+        "rendering"
+      ],
+      "free_cost_class": "free_software_compute_separate",
+      "plenum_reuse_state": "candidate",
+      "default_execution": "never_install_automatically"
+    },
+    {
+      "id": "ffmpeg",
+      "repository": "FFmpeg/FFmpeg",
+      "kind": "media_transcoding",
+      "license": "LGPL-and-GPL-build-dependent",
+      "source_status": "optional_video_processing_engine",
+      "activation": "explicit_on_demand_for_scoped_task",
+      "tags": [
+        "video",
+        "audio",
+        "media",
+        "editing",
+        "transcoding"
+      ],
+      "free_cost_class": "free_software_build_license_review",
+      "plenum_reuse_state": "candidate",
+      "default_execution": "never_install_automatically"
     }
   ]
 }
