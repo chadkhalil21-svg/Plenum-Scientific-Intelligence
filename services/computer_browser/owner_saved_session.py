@@ -73,7 +73,7 @@ def _owner_form_mac(owner_id, site, action, issued_hex, nonce):
 
 def _owner_form_token(owner_id, site, action):
     """Short-lived exact-owner/site/action CSRF token; no account data inside."""
-    if action not in ("preview","browse","revoke","demo_refresh","chat_demo_read","sealed_read","adaptive_revoke","exact_form_post","exact_form_revoke","site_register","site_revoke","site_preview"):
+    if action not in ("preview","browse","revoke","demo_refresh","chat_demo_read","sealed_read","adaptive_revoke","exact_form_post","exact_form_revoke","site_register","site_revoke","site_preview","navigate"):
         raise ValueError("Unrecognized owner form action")
     issued=f"{int(time.time()):08x}"
     nonce=secrets.token_hex(8)
@@ -109,7 +109,7 @@ def _verify_owner_form(request, owner_id, site, action, token):
     if not isinstance(token,str) or len(token)>1000 or not token:
         raise HTTPException(status_code=403,detail="Owner form verification required")
     match=re.fullmatch(r"v1[.]([0-9a-f]{8,10})[.]([0-9a-f]{16})[.]([0-9a-f]{64})",token)
-    if match is None or action not in ("preview","browse","revoke","demo_refresh","chat_demo_read","sealed_read","adaptive_revoke","exact_form_post","exact_form_revoke","site_register","site_revoke","site_preview"):
+    if match is None or action not in ("preview","browse","revoke","demo_refresh","chat_demo_read","sealed_read","adaptive_revoke","exact_form_post","exact_form_revoke","site_register","site_revoke","site_preview","navigate"):
         raise HTTPException(status_code=403,detail="Owner form verification required")
     issued_hex,nonce,signature=match.groups()
     now=int(time.time())
@@ -479,6 +479,7 @@ def mount_owner_saved_session(app):
             preview_token=escape(_owner_form_token(_owner["private_owner_id"],site,"preview"),quote=True)
             revoke_token=escape(_owner_form_token(_owner["private_owner_id"],site,"revoke"),quote=True)
             browse_token=escape(_owner_form_token(_owner["private_owner_id"],site,"browse"),quote=True)
+            navigate_token=escape(_owner_form_token(_owner["private_owner_id"],site,"navigate"),quote=True)
             demo_refresh_form=(
                 "<form method='post' action='/owner/sessions/demo-refresh'>"
                 "<input type='hidden' name='csrf_token' value='"
@@ -501,6 +502,15 @@ def mount_owner_saved_session(app):
                  "<input name='path' value='/' maxlength='800' required></label>"
                  "<p><button type='submit'>Read saved-session page</button></p></form>"
                  if exists is True else "") +
+                ("<form method='post' action='/owner/sessions/navigate'>"
+                 "<input type='hidden' name='site' value='" + escape(site, quote=True) + "'>"
+                 "<input type='hidden' name='csrf_token' value='" + navigate_token + "'>"
+                 "<label>Have Computer follow up to three read-only links on this site"
+                 "<input name='path' value='/' maxlength='800' required></label>"
+                 "<label>Exact link text, or a chain separated by &gt;"
+                 "<input name='labels' placeholder='Help &gt; Security' maxlength='220' required></label>"
+                 "<p><button type='submit'>Navigate approved links (read only)</button></p></form>"
+                 if exists is True and os.environ.get("K_SERVICE")=="plenum-browser-owner-auth0" else "") +
                 "<form method='post' action='/owner/sessions/revoke'>"
                 "<input type='hidden' name='site' value='" + escape(site, quote=True) + "'>"
                 "<input type='hidden' name='csrf_token' value='" + revoke_token + "'>"
