@@ -36,6 +36,39 @@ SOURCES = (
 LIMIT = 22_000
 
 
+def _require_implemented_candidate(raw: bytes) -> None:
+    """Generic independent source-quality floor, NOT a behavioral test.
+
+    The first real OpenHands browser task produced two functions containing
+    only 'pass' yet passed Python AST. Refuse all no-op stubs, fake ellipsis
+    implementations and source with no functional return. A human/independent
+    task-specific verifier must STILL establish actual correctness.
+    """
+    tree = ast.parse(raw.decode("utf-8"), filename="proposal.py")
+    funcs = [x for x in ast.walk(tree)
+             if isinstance(x, (ast.FunctionDef, ast.AsyncFunctionDef))]
+    if not funcs:
+        raise ValueError("No implemented Python functions")
+    if any(isinstance(x, ast.Pass) for x in ast.walk(tree)):
+        raise ValueError("Unimplemented pass statement in source")
+    if any(isinstance(x, ast.Constant) and x.value is Ellipsis
+           for x in ast.walk(tree)):
+        raise ValueError("Placeholder ellipsis in source")
+    if any(isinstance(x, ast.Raise) and isinstance(x.exc, ast.Call)
+           and isinstance(x.exc.func, ast.Name)
+           and x.exc.func.id == "NotImplementedError"
+           for x in ast.walk(tree)):
+        raise ValueError("NotImplementedError placeholder in source")
+    if not any(isinstance(x, ast.Return) and x.value is not None
+               for x in ast.walk(tree)):
+        raise ValueError("Source provides no returned result")
+    if any(isinstance(x, ast.Call) and isinstance(x.func, ast.Name)
+           and x.func.id in {"eval", "exec", "__import__"}
+           for x in ast.walk(tree)):
+        raise PermissionError("Dynamic evaluation is outside source proposal scope")
+
+
+
 def parse_issue(event: dict) -> dict:
     issue = event.get("issue") or {}
     if (
@@ -88,7 +121,7 @@ def run(event: dict, *, execute: bool = False) -> dict:
         return receipt
     if (
         os.getenv("PLENUM_EPHEMERAL_RUNNER") != "confirmed"
-        or os.getenv("PLENUM_OPENHANDS_MODEL") != "ollama/qwen3:1.7b"
+        or os.getenv("PLENUM_OPENHANDS_MODEL") != "ollama/qwen2.5-coder:7b"
         or os.getenv("PLENUM_OPENHANDS_BASE_URL") != "http://127.0.0.1:11434"
         or importlib.metadata.version("openhands-sdk") != PINNED_VERSION
     ):
@@ -109,13 +142,13 @@ def run(event: dict, *, execute: bool = False) -> dict:
             trusted[dest.name] = hashlib.sha256(original).hexdigest()
         agent = Agent(
             llm=LLM(
-                model="ollama/qwen3:1.7b", api_key="local-no-secret",
+                model="ollama/qwen2.5-coder:7b", api_key="local-no-secret",
                 base_url="http://127.0.0.1:11434",
             ),
             tools=[Tool(name=FileEditorTool.name)],
         )
         conversation = Conversation(
-            agent=agent, workspace=temp, max_iteration_per_run=7,
+            agent=agent, workspace=temp, max_iteration_per_run=4,
             max_budget_per_run=0.20, visualizer=None,
         )
         instructions = (
@@ -129,6 +162,10 @@ def run(event: dict, *, execute: bool = False) -> dict:
               "Do not use terminal, shell, network, browser, system secrets "
               "or any production website. Never claim the code ran, was "
               "integrated, or passed a live login. No unapproved writes. "
+              "Implement genuine functions with meaningful return values, NOT "
+              "pass, ellipsis, TODO or NotImplementedError placeholders. "
+              "Include at least two short expected-input and expected-output "
+              "examples in comments for independent review. "
               "Finish after writing proposal.py."
         )
         conversation.send_message(instructions)
@@ -142,13 +179,13 @@ def run(event: dict, *, execute: bool = False) -> dict:
                 if not 80 <= len(raw) <= LIMIT:
                     raise ValueError("Candidate must be bounded nonempty Python")
                 try:
-                    ast.parse(raw.decode("utf-8"), filename="proposal.py")
+                    _require_implemented_candidate(raw)
                     break
-                except (UnicodeDecodeError, SyntaxError):
+                except (UnicodeDecodeError, SyntaxError, ValueError):
                     if attempt:
                         raise RuntimeError("Agent could not repair syntax")
                     conversation.send_message(
-                        "Independent Python AST validation failed. "
+                        "Independent review found invalid syntax or no-op placeholder functions. "
                         "Repair proposal.py only, without executing code."
                     )
             elif attempt:
