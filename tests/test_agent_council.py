@@ -63,6 +63,27 @@ class CouncilContract(TestCase):
         self.assertEqual(calls[0][1],calls[3][1])
         self.assertGreater(len(calls[4][1]),len(calls[0][1]))
 
+    def test_ollama_api_disables_expensive_reasoning_by_default(self):
+        from unittest.mock import patch
+        import json
+        class FakeResponse:
+            status=200
+            def __enter__(self): return self
+            def __exit__(self,*args): return False
+            def read(self,n): return json.dumps({"message":{
+                "content":"Here is an independent review and reversible experiment with evidence to gather."
+            }}).encode()
+        sent=[]
+        def mock_open(req,timeout):
+            sent.append(json.loads(req.data.decode()))
+            return FakeResponse()
+        with patch.object(c.urllib.request,"urlopen",side_effect=mock_open):
+            output=c._ask_local("Act as isolated reviewer","PUBLIC sample objective")
+        self.assertIn("independent review",output)
+        self.assertEqual(sent[0]["think"],False)
+        self.assertEqual(sent[0]["stream"],False)
+        self.assertEqual(sent[0]["model"],c.MODEL)
+
     def test_no_runner_no_paid_remote_model(self):
         with patch.dict("os.environ",{
             "PLENUM_EPHEMERAL_RUNNER":"",
