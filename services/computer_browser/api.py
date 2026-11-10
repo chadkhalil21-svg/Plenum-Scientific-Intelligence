@@ -123,3 +123,9 @@ mount_owner_sealed_relay(app)
 # Dedicated Auth0 owner-only website registration. No navigation enabled by this.
 from .runtime_site_grants import mount_runtime_site_grants
 mount_runtime_site_grants(app)
+
+
+# Only the verified Auth0 owner portal admits bounded saved-session link tasks.
+# The machine service and IAP public/read APIs never mount this route.
+from .owner_navigation import mount_owner_navigation
+mount_owner_navigation(app)
