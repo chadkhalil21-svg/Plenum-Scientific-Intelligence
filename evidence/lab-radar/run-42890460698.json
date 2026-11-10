@@ -1,0 +1,246 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "42890460698",
+  "source_revision": "3c5c477577eee632353438f107133925af1cc301",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-10T19:58:00.744850+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 28,
+    "sources_returning_records": 25,
+    "source_outages": [
+      "arxiv_ai_new_submissions",
+      "gdelt_headlines",
+      "world_bank"
+    ],
+    "new_public_links_before_limit": 25,
+    "signals": [
+      {
+        "category": "universities",
+        "publisher": "MIT News",
+        "source": "mit_labs",
+        "url": "https://news.mit.edu/2026/physicist-jeffrey-goldstone-dies-1110",
+        "title_untrusted": "Professor Emeritus Jeffrey Goldstone, highly influential theoretical physicist, dies at 93",
+        "claimed_publication_date": "Tue, 10 Nov 2026 11:10:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261108233103.htm",
+        "title_untrusted": "Alzheimer’s may have early warning signs outside the brain",
+        "claimed_publication_date": "Mon, 09 Nov 2026 20:47:34 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03645-4",
+        "title_untrusted": "PhD funding mechanisms should protect the right to disagree with supervisors",
+        "claimed_publication_date": "2026-11-10",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.09967",
+        "title_untrusted": "Persistent A-homotopy of Complex Networks",
+        "claimed_publication_date": "Tue, 10 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "software",
+        "publisher": "GitHub public repository index",
+        "source": "github_public_code",
+        "url": "https://github.com/fars2026/Fars",
+        "title_untrusted": "fars2026/Fars",
+        "claimed_publication_date": "2026-11-10T16:17:47Z",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "United Nations Climate News",
+        "source": "un_climate_environment",
+        "url": "https://news.un.org/feed/view/en/story/2026/11/1168775",
+        "title_untrusted": "COP31: Energy transition takes centre stage as countries map path beyond fossil fuels",
+        "claimed_publication_date": "Tue, 10 Nov 2026 12:00:00 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "universities",
+        "publisher": "MIT News",
+        "source": "mit_labs",
+        "url": "https://news.mit.edu/2026/somebodys-got-to-do-it-why-not-me-andrew-voelsing-1110",
+        "title_untrusted": "“Somebody’s got to do it. Why not me?”",
+        "claimed_publication_date": "Tue, 10 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261108233100.htm",
+        "title_untrusted": "Scientists finally discover why we learn to love bitter coffee",
+        "claimed_publication_date": "Mon, 09 Nov 2026 18:19:35 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03278-7",
+        "title_untrusted": "A practically perfect plesiosaur",
+        "claimed_publication_date": "2026-11-10",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.09983",
+        "title_untrusted": "Stable Configurations of Dark Energy Stars in f(R,L_m,T) Gravity",
+        "claimed_publication_date": "Tue, 10 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "software",
+        "publisher": "GitHub public repository index",
+        "source": "github_public_code",
+        "url": "https://github.com/api-evangelist/iqvia",
+        "title_untrusted": "api-evangelist/iqvia",
+        "claimed_publication_date": "2026-11-10T03:38:03Z",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "United Nations Climate News",
+        "source": "un_climate_environment",
+        "url": "https://news.un.org/feed/view/en/story/2026/11/1168770",
+        "title_untrusted": "Climate crisis could push 141 million more women into extreme poverty",
+        "claimed_publication_date": "Tue, 10 Nov 2026 12:00:00 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "NASA",
+        "source": "nasa_research",
+        "url": "https://www.nasa.gov/news-release/nasa-invites-media-public-to-join-voyager-1-one-light-day-activities/",
+        "title_untrusted": "NASA Invites Media, Public to Join Voyager 1 One-Light Day Activities",
+        "claimed_publication_date": "Tue, 10 Nov 2026 19:22:45 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03643-6",
+        "title_untrusted": "Chile’s postdoc rules risk driving talent away",
+        "claimed_publication_date": "2026-11-10",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.09984",
+        "title_untrusted": "Zeroth law of black hole mechanics in general Horndeski theories",
+        "claimed_publication_date": "Tue, 10 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75464932",
+        "title_untrusted": "M 1.6 - 6 km E of Santa Venetia, CA",
+        "claimed_publication_date": "1794339865800",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "NASA",
+        "source": "nasa_research",
+        "url": "https://www.nasa.gov/news-release/nasa-to-welcome-expedition-74-astronauts-home-at-space-center-houston/",
+        "title_untrusted": "NASA to Welcome Expedition 74 Astronauts Home at Space Center Houston",
+        "claimed_publication_date": "Tue, 10 Nov 2026 18:06:33 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03644-5",
+        "title_untrusted": "Students need AI-free spaces to learn core skills",
+        "claimed_publication_date": "2026-11-10",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.09986",
+        "title_untrusted": "One-Particle Equivalence of Lorentz-Violating and Lorentz-Deformed Theories",
+        "claimed_publication_date": "Tue, 10 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41360671",
+        "title_untrusted": "M 1.1 - 5 km N of Fontana, CA",
+        "claimed_publication_date": "1794339548920",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
