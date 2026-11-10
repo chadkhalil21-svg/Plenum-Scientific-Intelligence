@@ -35,6 +35,11 @@ jobs:
           council=('data-tab="council"','id="council"','id="catalogSearch"',
                    'id="catalogGrid"','id="councilAgenda"','id="councilPrepare"')
           assert all(x in page for x in council)
+          assert 'id="councilRuns"' in page and 'id="councilChecked"' in page
+          assert 'refreshCouncilEvidence' in page and '20*60*1000' in page
+          assert "'overview','agents','council','tasks'" in page
+          assert "comment.body.match(/Plenum council status:" in page
+          assert 'Promise.allSettled(recent.map(i=>request(' in page
           assert "agency-agents.index.json" in page
           assert "PLENUM_COUNCIL_PUBLIC_V1" in page
           assert "public agenda" in page
