@@ -39,7 +39,7 @@ jobs:
       issues: write
     env:
       PLENUM_EPHEMERAL_RUNNER: confirmed
-      PLENUM_OPENHANDS_MODEL: ollama/qwen3:1.7b
+      PLENUM_OPENHANDS_MODEL: ollama/qwen2.5-coder:7b
       PLENUM_OPENHANDS_BASE_URL: http://127.0.0.1:11434
       PLENUM_OPENHANDS_API_KEY: ''
       HF_HUB_DISABLE_TELEMETRY: '1'
@@ -59,22 +59,22 @@ jobs:
       - name: Start existing disposable zero-provider-fee local Qwen
         run: |
           docker pull ollama/ollama:latest
-          docker run -d --rm --name plenum-browser-code-qwen --memory=5g --cpus=3 \
-            -e OLLAMA_CONTEXT_LENGTH=22000 -e OLLAMA_NUM_PARALLEL=1 \
+          docker run -d --rm --name plenum-browser-code-qwen --memory=6g --cpus=3 \
+            -e OLLAMA_CONTEXT_LENGTH=8192 -e OLLAMA_NUM_PARALLEL=1 \
             -p 127.0.0.1:11434:11434 ollama/ollama:latest
           for i in $(seq 1 45); do
             if curl -fsS http://127.0.0.1:11434/api/tags > /dev/null; then break; fi
             sleep 2
           done
-          docker exec plenum-browser-code-qwen ollama pull qwen3:1.7b
+          docker exec plenum-browser-code-qwen ollama pull qwen2.5-coder:7b
       - name: Use existing reviewed OpenHands SDK and file editor only
         run: |
           python -m pip install -e '.[openhands_tools]'
           python -m pip check
       - name: Agent reads original browser and writes one isolated review candidate
-        timeout-minutes: 13
+        timeout-minutes: 20
         run: |
-          timeout 700 python -m plenum_ai.browser_issue_coder \
+          timeout 1080 python -m plenum_ai.browser_issue_coder \
             --event "$GITHUB_EVENT_PATH" --execute
       - name: Independent syntax and provenance receipt
         env:
@@ -91,7 +91,7 @@ jobs:
           assert report['model_executed'] and report['source_candidate_syntax_verified']
           assert not report['production_written'] and not report['external_account_actions']
           assert not report['independent_behavior_verified']
-          print('Actual local OpenHands candidate: syntax verified, behavior NOT verified')
+          print('Actual local OpenHands candidate: AST and nonplaceholder code verified, behavior NOT verified')
           PY
       - name: Preserve review-only evidence with no private browser content
         if: always()
