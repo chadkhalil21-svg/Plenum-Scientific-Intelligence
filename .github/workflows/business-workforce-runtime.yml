@@ -62,7 +62,7 @@ jobs:
     timeout-minutes: 32
     env:
       PLENUM_EPHEMERAL_RUNNER: confirmed
-      PLENUM_OPENHANDS_MODEL: ollama/qwen3:0.6b
+      PLENUM_OPENHANDS_MODEL: ollama/qwen3:1.7b
       PLENUM_OPENHANDS_BASE_URL: http://127.0.0.1:11434
       PLENUM_OPENHANDS_API_KEY: ''
       HF_HUB_DISABLE_TELEMETRY: '1'
@@ -80,9 +80,9 @@ jobs:
           docker image inspect ollama/ollama:latest --format 'Ollama image digest {{index .RepoDigests 0}}'
           docker run -d --rm --name plenum-temporary-ollama \
             -p 127.0.0.1:11434:11434 \
-            -e OLLAMA_CONTEXT_LENGTH=16384 \
+            -e OLLAMA_CONTEXT_LENGTH=22000 \
             -e OLLAMA_NUM_PARALLEL=1 \
-            --memory=5g --cpus=3 \
+            --memory=6g --cpus=3 \
             ollama/ollama:latest
           for i in $(seq 1 60); do
             curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null && exit 0
@@ -92,7 +92,7 @@ jobs:
           exit 1
       - name: Download open-weight Qwen to disposable local model server
         run: |
-          docker exec plenum-temporary-ollama ollama pull qwen3:0.6b
+          docker exec plenum-temporary-ollama ollama pull qwen3:1.7b
           docker exec plenum-temporary-ollama ollama list
       - name: Install exact previously reviewed OpenHands SDK
         run: |
