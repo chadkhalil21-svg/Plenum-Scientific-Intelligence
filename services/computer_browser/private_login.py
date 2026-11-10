@@ -199,7 +199,7 @@ def login_html(nonce):
         status.textContent=access.status===401
           ?"Owner sign-in expired. Sign into the owner portal in this same Edge tab."
           :access.status===403
-          ?"Website or additional hosts are not authorized. Register the primary site and use only exact trusted public HTTPS supporting origins."
+          ?"Website not yet authorized, or supporting hosts rejected. Register the primary site and use only exact trusted public HTTPS supporting origins."
           :access.status===422
           ?"Enter a valid HTTPS website URL and up to five supporting origins."
           :"Website access preflight unavailable. Browser was not opened.";
