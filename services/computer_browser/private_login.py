@@ -10,13 +10,14 @@ import os
 import secrets
 from urllib.parse import urlsplit
 
-from fastapi import Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from .engine import safe_url, public_dns_only
 from .iap_identity import verify_owner_token
 from .owner_auth0 import active as auth0_active, verified_session as auth0_verified_session
 from .owner_console import require_verified_owner
 from .private_profiles import BrowserProfileStore
+from .owner_live_access import owner_live_origin
 
 
 def filter_site_storage(state,site_origin):
@@ -80,6 +81,10 @@ def login_html(nonce):
     <p>Open the actual website thou ownest or art authorized to use.
     This owner-only Chromium canvas is the LIVE browser picture; it cannot
     presently stream directly into an ordinary ChatGPT chat.</p>
+    <p>For a new website, first register its exact HTTPS origin through
+    <a href="/owner/sites">Manage registered websites</a>. Only the verified
+    owner may activate its private sign-in; traffic is limited to that site.
+    Cross-site Google/Apple identity redirects can still be blocked.</p>
     <p>Sign in or create a website account personally, and use its own
     <strong>Continue with Google</strong> button only when offered. Google may
     block automatic or embedded sign-ins, so a supported external browser
@@ -134,12 +139,32 @@ def login_html(nonce):
       fieldStatus.textContent="No live browser connection. Reopen secure browser to resume; previously typed website fields cannot be assumed saved.";
       return false;
     }
-    document.getElementById("open").onclick=()=>{
+    document.getElementById("open").onclick=async()=>{
       if(ws)ws.close();
-      clearStalePreview();
+      ws=null;ready=false;selected="none";pendingText=null;saveInFlight=false;
+      updateTypingEnabled();clearStalePreview();
+      const target=document.getElementById("url").value.trim();
+      status.textContent="Checking owner-approved website access...";
+      let access;
+      try{
+        access=await fetch("/owner/live-access?site="+encodeURIComponent(target),{
+          credentials:"same-origin",cache:"no-store",headers:{"Accept":"application/json"}
+        });
+      }catch(_){
+        status.textContent="Website access check failed. Browser not opened; check owner portal connectivity.";
+        return;
+      }
+      if(!access.ok){
+        status.textContent=access.status===401
+          ?"Owner sign-in expired. Sign into the owner portal in this same Edge tab."
+          :access.status===403
+          ?"Website not yet authorized for private sign-in. First register its exact HTTPS origin under Manage registered websites."
+          :"Website access preflight unavailable. Browser was not opened.";
+        return;
+      }
       const u=new URL("/owner/live",location.origin);
       u.protocol=location.protocol==="https:"?"wss:":"ws:";
-      u.searchParams.set("site",document.getElementById("url").value.trim());
+      u.searchParams.set("site",target);
       const connection=new WebSocket(u);
       ws=connection;ready=false;selected="none";pendingText=null;saveInFlight=false;
       updateTypingEnabled();
@@ -162,7 +187,7 @@ def login_html(nonce):
         const elapsed=openedAt===null?"":", after "+Math.round((Date.now()-openedAt)/1000)+" seconds";
         if(!serverStopped){
           if(e.code===4403||(!connected&&e.code===1006))
-            status.textContent="Browser sign-in or connection was rejected (code "+e.code+"). Sign in again if needed.";
+            status.textContent="Browser WebSocket upgrade did not complete (code "+e.code+"). Website access was prechecked; connection or owner session must be diagnosed.";
           else if(e.code===1000)
             status.textContent="Private browser session closed"+elapsed+".";
           else
@@ -273,6 +298,20 @@ async def _frame(ws,page):
 
 
 def mount_private_login(app):
+    @app.get("/owner/live-access")
+    async def live_access(site: str=Query(min_length=9,max_length=1200),
+                          _owner=Depends(require_verified_owner)):
+        """Same-origin, verified-owner HTTP preflight; no browser or secrets."""
+        try:
+            origin, pinned=owner_live_origin(
+                owner_id=_owner["private_owner_id"],site=site)
+        except PermissionError as exc:
+            raise HTTPException(status_code=403,
+                                detail="Website not approved for private sign-in") from exc
+        return {"approved":True,"pinned_single_origin":pinned,
+                "site_specific_owner_consent":True,
+                "login_restoration_verified":False}
+
     @app.get("/owner/sign-in",response_class=HTMLResponse)
     async def sign_in(_owner=Depends(require_verified_owner)):
         nonce=secrets.token_urlsafe(20)
@@ -302,8 +341,8 @@ def mount_private_login(app):
             if (not expected or ws.headers.get("origin")!=expected or
                     (not expected.startswith("https://") and not ci)):
                 raise PermissionError("Origin not owner authorized")
-            if not safe_url(site):
-                raise PermissionError("Website is not on owner's allowed origins")
+            origin, dynamic=owner_live_origin(
+                owner_id=owner["private_owner_id"],site=site)
             if demo=="1" and not ci:
                 raise PermissionError("Offline demonstration is not enabled")
             if demo not in ("0","1"):
@@ -314,15 +353,32 @@ def mount_private_login(app):
             return
 
         browser=None
+        broker=None
         phase="destination_check"
         from playwright.async_api import async_playwright
         try:
             await ws.send_json({"type":"status","message":"Opening private browser"})
             if demo=="0":
                 await asyncio.to_thread(public_dns_only,site)
+            if dynamic and demo=="0":
+                from .pinned_public_preview import PinnedOriginProxy
+                # Reuse exact public-IP-pinned CONNECT proxy already audited
+                # for registered website previews. No direct cross-site egress.
+                broker=PinnedOriginProxy(
+                    origin,max_tunnels=16,
+                    max_tunnel_bytes=30_000_000,max_lifetime=600)
+                await broker.__aenter__()
             phase="chromium_start"
             async with async_playwright() as playwright:
-                browser=await playwright.chromium.launch(headless=True)
+                launch={"headless":True}
+                if broker is not None:
+                    launch.update({
+                        "proxy":{"server":f"http://127.0.0.1:{broker.port}"},
+                        "args":["--disable-background-networking",
+                                "--disable-quic",
+                                "--force-webrtc-ip-handling-policy=disable_non_proxied_udp"],
+                    })
+                browser=await playwright.chromium.launch(**launch)
                 context=await browser.new_context(
                     viewport={"width":1024,"height":720},accept_downloads=False,
                     service_workers="block",ignore_https_errors=False,
@@ -331,11 +387,17 @@ def mount_private_login(app):
                     async def limited_origin(route):
                         req=route.request
                         if (req.method in {"GET","HEAD","POST","OPTIONS"} and
-                                safe_url(req.url)):
+                                safe_url(req.url,origins={origin})):
                             await route.continue_()
                         else:
                             await route.abort()
                     await context.route("**/*",limited_origin)
+                    if dynamic:
+                        # Browser request interception does not automatically
+                        # cover WebSocket frames. Block website-created
+                        # sockets until a separate reviewed socket policy exists.
+                        await context.route_web_socket(
+                            "**/*",lambda route:route.close())
                 else:
                     await context.route("**/*",lambda route:route.abort())
                 page=await context.new_page()
@@ -352,6 +414,13 @@ def mount_private_login(app):
                 await _frame(ws,page)
                 for number in range(160):
                     command=await ws.receive_json()
+                    if dynamic:
+                        # Revoked/expired registration must stop future owner
+                        # commands, including saving credentials.
+                        check_origin, check_pinned=owner_live_origin(
+                            owner_id=owner["private_owner_id"],site=site)
+                        if check_origin!=origin or not check_pinned:
+                            raise PermissionError("Owner site grant expired or revoked")
                     if not isinstance(command,dict) or len(str(command))>5000:
                         raise PermissionError("Oversized browser command")
                     kind=command.get("type")
@@ -416,7 +485,7 @@ def mount_private_login(app):
                         break
                     else:
                         raise PermissionError("Unknown browser operation")
-                    if demo=="0" and not safe_url(page.url):
+                    if demo=="0" and not safe_url(page.url,origins={origin}):
                         raise PermissionError("Website redirected off authorized origins")
                     await _frame(ws,page)
                 else:
@@ -441,6 +510,11 @@ def mount_private_login(app):
         finally:
             if browser is not None:
                 await browser.close()
+            if broker is not None:
+                try:
+                    await broker.__aexit__(None,None,None)
+                except Exception:
+                    pass
             try:
                 await ws.close()
             except Exception:
