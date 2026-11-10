@@ -1,3 +1,7 @@
+## November 10, 2026 | Founder supersedes messenger/dashboard priority with operational agent workforce
+
+**Current active instruction:** STOP optimizing voice, WhatsApp and dashboard appearance. Deliver evidence-producing agent cooperation first. The original Chief, four tool-backed worker routes, nine existing n8n departments and 283 indexed idle role prompts already exist; use them rather than adding competing orchestration products. [Merged PR #377](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/377) adds a founder-triggered mission for two or three REAL distinct original specialists with independent artifact checks; original [mission #378](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/378) is the live acceptance, pending independent outcome. Model routes and the issue status—not GitHub source merges alone—determine real execution. The subsequent priority is broader useful capabilities and recovery on the original nine teams, with on-demand specialist selection from the indexed 283 only when a sandboxed approved task and evaluator exist. No mass installation, unlimited inference or 24/7 worker network is implied.
+
 
 ## November 10, 2026 | Founder visual dashboard is LIVE (public telemetry only)
 
