@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from plenum_ai.browser_issue_coder import parse_issue, run, TITLE, MAGIC, REPO, OWNER
+from plenum_ai.browser_issue_coder import parse_issue, run, TITLE, MAGIC, REPO, OWNER, _require_implemented_candidate
 
 
 def fixture(objective="Create a safe selector helper for the existing browser navigation engine"):
@@ -47,6 +47,33 @@ class FounderPublicCoderContract(unittest.TestCase):
             with self.subTest(event=event["issue"]["body"][:50]):
                 with self.assertRaises((PermissionError, ValueError)):
                     parse_issue(event)
+
+    def test_rejects_actual_failed_openhands_placeholder_generically(self):
+        failed = (
+            b"def get_approved_elements():\n    pass\n"
+            b"def rank_elements(elements):\n    pass\n"
+        )
+        with self.assertRaises(ValueError):
+            _require_implemented_candidate(failed)
+        with self.assertRaises(ValueError):
+            _require_implemented_candidate(
+                b"def unimplemented():\n    return ...\n"
+            )
+        with self.assertRaises(ValueError):
+            _require_implemented_candidate(
+                b"def no_work():\n    raise NotImplementedError()\n"
+            )
+
+    def test_accepts_actual_implementation_not_just_valid_syntax(self):
+        real = (
+            b"def rank_visible(elements):\n"
+            b"    return [x for x in elements if x.get('visible') is True]\n"
+        )
+        self.assertIsNone(_require_implemented_candidate(real))
+        with self.assertRaises(PermissionError):
+            _require_implemented_candidate(
+                b"def dangerous():\n    return eval('2 + 2')\n"
+            )
 
     def test_preflight_has_no_model_or_external_access(self):
         with tempfile.TemporaryDirectory() as root:

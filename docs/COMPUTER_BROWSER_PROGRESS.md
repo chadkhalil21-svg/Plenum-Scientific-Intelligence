@@ -1,5 +1,12 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-10 | First real source-aware OpenHands browser code attempt FAILS independent engineering review
+
+Merged [PR #398](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/398) added founder-only PUBLIC GitHub issue → original OpenHands FileEditorTool → local Qwen → source artifact. Real [issue #399](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/399) and [run #42879660948](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42879660948) PASS **as actual model/tool execution**, with a 448-byte artifact and correct SHA. Independent review downloaded and opened the actual `proposal.py`: both functions are just `pass`. It has no working element ranking, visible page handling, approval, task result or browser integration; the candidate was REJECTED, not deployed or promoted. Local Qwen3 1.7B plus AST checks failed the useful software task. This is new negative engineering evidence, not operational autonomy.
+
+**One justified new repair instead of repeating unchanged prompts:** strengthen existing source verifier to universally reject `pass` / ellipsis / unimplemented source and require meaningful returns; retain independent real-world functional review. Replace general 1.7B agent candidate model with the original Apache-2.0-licensed **Qwen2.5-Coder-7B Instruct**, local Ollama quantized model (Ollama ~4.7 GB) in one disposable GitHub Actions software-development task with strict memory/context/time limits. Qwen official model-size/license table: https://qwenlm.github.io/blog/qwen2.5-coder-family/ ; registry: https://registry.ollama.ai/library/qwen2.5-coder . Do **not** substitute Qwen2.5-Coder **3B**, whose Qwen Research license is non-commercial without separate rights. This is a new pending source change, not evidence a 7B run succeeded or that available CPU can run it within limits. Preserve all prior negative results; do not turn this into repeated indefinite model trials.
+
+
 ## 2026-11-10 | Agent-first browser coding delegation — source PR, not production
 
 Founder again directs the **agents** to finish the existing browser, not a succession of manual browser demos. Current honest bottleneck: original n8n Browser Department #394 delivered only an unverified text draft; the OpenHands local coder runs in a disposable sandbox and previously discarded its syntax-valid example rather than accepting source-aware browser tasks. Neither is a private account operator.
