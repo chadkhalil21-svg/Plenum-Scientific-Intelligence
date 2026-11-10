@@ -114,6 +114,19 @@ def preflight(event: dict) -> dict:
     }
 
 
+
+def independently_accept_delegation(expected: str, routed_roles: list,
+                                    observations: list, total_calls: int) -> bool:
+    """Real worker count must equal one. Redundant *same-role* requests are inert."""
+    return (
+        expected in KIND_TO_AGENT
+        and total_calls >= 1
+        and len(routed_roles) == total_calls
+        and len(observations) == 1
+        and all(role == KIND_TO_AGENT[expected] for role in routed_roles)
+        and observations[0]["kind"] == expected
+    )
+
 def execute(event: dict, *, output_dir: Path) -> dict:
     report = preflight(event)
     if (
@@ -211,10 +224,11 @@ def execute(event: dict, *, output_dir: Path) -> dict:
         for c in calls if isinstance(c.get("args"), dict)
     ]
     outcome = observations[0]["outcome"] if len(observations) == 1 else {}
-    correct = (
-        len(calls) == 1 and len(observations) == 1
-        and routed_roles == [KIND_TO_AGENT[expected]]
-        and observations[0]["kind"] == expected
+    # Local Qwen can redundantly call Deep Agents' task router several times.
+    # A repeated *request* is not a second external execution: the tool enforces
+    # one real specialist invocation. Reject even one wrong-role delegation.
+    correct = independently_accept_delegation(
+        expected, routed_roles, observations, len(calls)
     )
     verified = correct and outcome.get("status") == "DRAFT_READY_FOR_FOUNDER"
     report.update({
@@ -222,6 +236,10 @@ def execute(event: dict, *, output_dir: Path) -> dict:
         "model_called": True,
         "chief_delegated": bool(calls),
         "delegation_count": len(calls),
+        "redundant_delegation_attempts": max(0, len(calls)-1),
+        "routed_roles": routed_roles[:12],
+        "executed_worker_kind": observations[0]["kind"] if len(observations)==1 else None,
+        "executed_worker_status": outcome.get("status"),
         "correct_specialist_selected": correct,
         "specialist_executed": bool(observations),
         "specialist": KIND_TO_AGENT[expected] if correct else None,
