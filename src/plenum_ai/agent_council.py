@@ -61,12 +61,12 @@ def parse_event(event):
 
 def _ask_local(system, user):
     payload = json.dumps({
-        "model": MODEL, "stream": False,
+        "model": MODEL, "stream": False, "think": False,
         "messages": [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
         ],
-        "options": {"num_predict": 350, "temperature": 0.2, "num_ctx": 4096},
+        "options": {"num_predict": 500, "temperature": 0.2, "num_ctx": 4096},
     }).encode()
     request = urllib.request.Request(
         MODEL_URL, data=payload, method="POST",
