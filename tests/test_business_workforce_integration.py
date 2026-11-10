@@ -49,7 +49,7 @@ class BusinessWorkforceContractTest(unittest.TestCase):
         self.assertEqual(script.count('["'), 9)
         self.assertIn("rubric:rubrics[role]", script)
         self.assertIn("NEEDS_VERIFICATION", script)
-        self.assertIn("Never", next(n for n in flow["nodes"] if n["name"] == "Plenum Specialist Agent")["parameters"]["options"]["systemMessage"])
+        self.assertIn("Do not claim", next(n for n in flow["nodes"] if n["name"] == "Plenum Specialist Agent")["parameters"]["options"]["systemMessage"])
         for role in ("research", "engineering", "browser", "creative", "marketing",
                      "operations", "simulation", "support", "verification"):
             self.assertIn('["' + role + '"', script)
