@@ -199,7 +199,8 @@ class RegisteredOwnerLiveTests(unittest.TestCase):
 
     def test_live_html_checks_access_before_websocket_without_leaking_site(self):
         page = private_login.login_html("synthetic-nonce")
-        self.assertIn('fetch("/owner/live-access?site="+encodeURIComponent(target)',page)
+        self.assertIn('const preflight="/owner/live-access?site="+encodeURIComponent(target)',page)
+        self.assertIn('access=await fetch(preflight',page)
         self.assertLess(page.index('access=await fetch('),
                         page.index('const connection=new WebSocket(u);'))
         self.assertIn('site_authorization_denied', open(
