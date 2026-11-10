@@ -67,6 +67,13 @@ def normalize_owner_entry(origin: str) -> str:
     return normalize_origin(candidate)
 
 
+def _registry_error(page: HTMLResponse, *, status_code: int) -> HTMLResponse:
+    # Shared owner _page() already constructs a response with no-store,
+    # nosniff and CSP; do not wrap a Response inside HTMLResponse again.
+    page.status_code = status_code
+    return page
+
+
 class OwnerSiteGrantStore:
     """One encrypted owner-specific GCS index with CAS updates and 7-day expiry."""
 
@@ -275,7 +282,7 @@ def mount_runtime_site_grants(app):
         try:
             site = normalize_owner_entry(site)
         except PermissionError:
-            return HTMLResponse(_page(
+            return _registry_error(_page(
                 "Website address not accepted",
                 "<article>Enter a public HTTPS website origin only, for example "
                 "<code>https://appstoreconnect.apple.com</code>. A final slash "
@@ -289,14 +296,14 @@ def mount_runtime_site_grants(app):
         except PermissionError as exc:
             detail = str(exc)
             if detail in {"Cannot verify destination DNS", "Unresolved destination"}:
-                return HTMLResponse(_page(
+                return _registry_error(_page(
                     "Website DNS unavailable",
                     "<article>The website address passed validation, but the "
                     "Plenum server could not resolve its public DNS records. "
                     "No registration was saved. This is not an Apple login "
                     "refusal.</article><p><a href='/owner/sites'>Return to registry</a></p>"),
                     status_code=503)
-            return HTMLResponse(_page(
+            return _registry_error(_page(
                 "Website destination denied",
                 "<article>Plenum could not verify exclusively public IP "
                 "addresses for this HTTPS website. Registration was blocked "
