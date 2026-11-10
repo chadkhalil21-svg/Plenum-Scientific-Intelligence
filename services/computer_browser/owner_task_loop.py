@@ -48,6 +48,8 @@ async def execute_owner_adaptive_loop(
     max_actions: int = 6,
     upload_root=None,
     progress=None,
+    confirm_step=None,
+    recover_observation=None,
 ) -> dict:
     """Execute approved steps selected from fresh page observations.
 
@@ -57,6 +59,10 @@ async def execute_owner_adaptive_loop(
       consent(step) -> EXACT boolean True only after checking original owner
                        grant, origin, action, target and side-effect policy;
       verify(page) -> EXACT boolean True only after independent final readback;
+      confirm_step(page,step) -> optional EXACT boolean that the PRECEDING
+                         already-executed action reached its expected state;
+      recover_observation(page,feedback) -> optional EXACT boolean requesting
+                         another passive observation, never a new website action;
       progress(redacted_event) -> optional owner-only status event.
 
     Missing locators are safe to reconsider BEFORE consent and BEFORE action.
@@ -70,6 +76,8 @@ async def execute_owner_adaptive_loop(
             or not all(isinstance(x, str) for x in authorized_origins)
             or not all(callable(x) for x in (observe, decide, consent, verify))
             or (progress is not None and not callable(progress))
+            or (confirm_step is not None and not callable(confirm_step))
+            or (recover_observation is not None and not callable(recover_observation))
             or type(max_actions) is not int or not 1 <= max_actions <= MAX_ACTIONS):
         raise ValueError("Trusted owner task callbacks and bounded origins required")
     if not safe_url(page.url, origins=authorized_origins):
@@ -94,9 +102,26 @@ async def execute_owner_adaptive_loop(
             verified = await _call(verify, page)
             if type(verified) is not bool:
                 raise PermissionError("Trusted outcome verifier must return boolean")
-            status = "CALLER_VERIFIED" if verified else "BLOCKED_NO_NEXT_STEP"
-            await event(status, executed)
-            return _result(status, executed=executed, replans=replans, checks=checks)
+            if verified:
+                await event("CALLER_VERIFIED", executed)
+                return _result("CALLER_VERIFIED",
+                               executed=executed, replans=replans, checks=checks)
+            # A missing *observation* may recover without replaying a click.
+            # The callback may only wait/inspect the already-authorized page.
+            if recover_observation is not None and replans < MAX_REPLANS:
+                if not safe_url(page.url, origins=authorized_origins):
+                    raise PermissionError("Page left the approved origin")
+                refreshed = await _call(recover_observation, page, feedback)
+                if type(refreshed) is not bool:
+                    raise PermissionError("Trusted passive recovery must return boolean")
+                if refreshed:
+                    replans += 1
+                    feedback = "observation_stale"
+                    await event("REOBSERVE_WITHOUT_ACTION", executed)
+                    continue
+            await event("BLOCKED_NO_NEXT_STEP", executed)
+            return _result("BLOCKED_NO_NEXT_STEP",
+                           executed=executed, replans=replans, checks=checks)
         validate_steps([step])
         if step.operation != "snapshot":
             # A pre-action missing locator is safe to re-observe and re-plan.
@@ -136,6 +161,18 @@ async def execute_owner_adaptive_loop(
         executed += 1
         feedback = "step_complete"
         await event("ACTION_COMPLETE", executed)
+        # Never repeat a prior click merely because the website's response
+        # is not yet observed. An independent per-step readback is required
+        # before the coordinator may choose another action.
+        if confirm_step is not None:
+            checks += 1
+            confirmed = await _call(confirm_step, page, step)
+            if type(confirmed) is not bool:
+                raise PermissionError("Trusted step confirmation must return boolean")
+            if not confirmed:
+                await event("BLOCKED_POST_ACTION_UNVERIFIED_NO_RETRY", executed)
+                return _result("BLOCKED_POST_ACTION_UNVERIFIED_NO_RETRY",
+                               executed=executed, replans=replans, checks=checks)
         checks += 1
         verified = await _call(verify, page)
         if type(verified) is not bool:
