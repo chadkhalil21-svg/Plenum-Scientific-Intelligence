@@ -115,6 +115,18 @@ class DirectNineDepartmentTests(TestCase):
         self.assertIn("github.event.issue.user.login == 'chadkhalil21-svg'",workflow)
         self.assertIn("[Plenum Department] public assignment",workflow)
 
+    def test_durable_issue_receipt_does_not_publish_untrusted_agent_content(self):
+        text=(ROOT/".github/workflows/business-workforce-n8n-agent-trial.yml").read_text()
+        self.assertIn("issues: write",text)
+        self.assertIn("plenum-department-public:",text)
+        self.assertIn("independent_fact_verification",text)
+        receipt=text.split("- name: Publish bounded public department status",1)[1]
+        receipt=receipt.split("- name: Delete temporary credentials",1)[0]
+        for forbidden in ("draft_untrusted","run.log","credentials.json",
+                          "public-department-reply.json"):
+            self.assertNotIn(forbidden,receipt)
+        self.assertIn("Founder-visible department status published",receipt)
+
     def test_no_model_network_write_or_private_credentials_in_parser(self):
         src=(ROOT/"src/plenum_ai/workforce_department_command.py").read_text()
         for forbidden in ("subprocess.run(", "requests.post(", "gcloud run deploy",
