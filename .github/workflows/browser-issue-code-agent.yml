@@ -26,6 +26,20 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -e .
       - run: python -m unittest discover -s tests -p 'test_browser_issue_coder.py' -v
+      - name: Verify exact OpenHands SDK non-thinking options with no model or download
+        run: |
+          python -m pip install -e '.[openhands_tools]'
+          python - <<'PY'
+          from plenum_ai.browser_issue_coder import make_pinned_coder_llm
+          from openhands.sdk.llm.options.chat_options import select_chat_options
+          llm=make_pinned_coder_llm()
+          options=select_chat_options(llm,{},has_tools=True)
+          assert not llm._model_features().supports_reasoning_effort
+          assert llm._model_features().thinking_mode=='none'
+          assert 'reasoning_effort' not in options
+          assert 'thinking' not in options and 'think' not in options
+          print('PASS: original pinned SDK will NOT request unsupported thinking from Ollama')
+          PY
   actual-founder-code-agent:
     if: >-
       github.event_name == 'issues' &&
