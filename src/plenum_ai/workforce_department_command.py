@@ -7,9 +7,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import re
+from urllib.parse import urlsplit
 
 from .workforce_public_inbox import OWNER, REPO, TOPIC
-from .agent_library import suggest_sources
+from .agent_library import load_sources, suggest_sources
 
 TITLE = "[Plenum Department] public assignment"
 MAGIC = "PLENUM_DEPARTMENT_PUBLIC_V1"
@@ -98,6 +100,53 @@ def tailor_original_n8n_workflow(source: dict, task: dict) -> dict:
     workflow["id"] = "plenum-n8n-single-public-department"
     return workflow
 
+
+
+
+def audit_public_draft_repositories(draft: str, *, catalogue=None) -> dict:
+    """Offline source-identity check. NEVER mistake a known repo for proof.
+
+    All external model text is untrusted. Check only whether explicit GitHub
+    links name an entry in the already reviewed, read-only source registry.
+    No HTTP request, model call, auto-install, account rights or claim grading.
+    Unknown repos are flagged; genuine new sources can be reviewed separately.
+    """
+    if not isinstance(draft, str) or not 1 <= len(draft) <= 12_000:
+        raise ValueError("Only bounded, nonempty public draft text may be audited")
+    index = load_sources() if catalogue is None else catalogue
+    known_repos = {x["repository"].casefold() for x in index["entries"]}
+    approved, unreviewed, malformed = set(), set(), 0
+    for matched in re.finditer(r"https?://[^\\s\\[\\]<>\\(\\)\\{\\}]+", draft, re.I):
+        raw = matched.group(0).rstrip(".,;:!?")
+        url = urlsplit(raw)
+        if (url.hostname or "").casefold() not in ("github.com", "www.github.com"):
+            continue
+        parts = url.path.strip("/").split("/")
+        if (len(parts) < 2 or
+                any(not re.fullmatch(r"[A-Za-z0-9_.-]{1,100}", part)
+                    for part in parts[:2])):
+            malformed += 1
+            continue
+        candidate = parts[0] + "/" + parts[1].removesuffix(".git")
+        if candidate.casefold() in known_repos:
+            approved.add(candidate)
+        else:
+            unreviewed.add(candidate)
+    return {
+        "schema": "plenum-public-draft-repository-audit-v1",
+        "status": ("REVIEW_REQUIRED_UNREGISTERED_SOURCE"
+                   if unreviewed or malformed else
+                   "REVIEW_REQUIRED_CLAIMS_NOT_FACT_CHECKED"),
+        "matched_reviewed_repository_count": len(approved),
+        "unreviewed_github_repository_count": len(unreviewed) + malformed,
+        "unreviewed_github_repositories": sorted(unreviewed)[:5],
+        "malformed_github_urls": malformed,
+        "scientific_claims_independently_verified": False,
+        "repository_identity_is_not_scientific_evidence": True,
+        "model_calls": 0,
+        "network_requests": 0,
+        "code_installed_or_executed": False,
+    }
 
 
 def extract_untrusted_public_department_reply(log: str) -> str:
