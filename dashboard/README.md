@@ -18,6 +18,12 @@
 
 **Definition of done:** Verify the deployed HTTPS URL, observe live public GitHub data (not injected fixtures), render on mobile, use browser speech or document the unavailable feature, confirm task-preparation link requires founder submission. Real private task/agent control needs separate authenticated backend and should not be conflated with this public dashboard.
 
+## Live public council evidence (2026-11-10)
+
+The Council tab now reads the newest three genuine GitHub council issues and their **posted workflow-status comments**. It distinguishes a completed four-perspective meeting (`ADVISORY_DELIBERATION_AWAITING_FOUNDER`), a blocked run, a pending issue, and an unavailable readback rather than assuming every opened agenda succeeded. Each item opens the original public issue with its independently checked Actions run link. The spoken browser briefing reports the latest council status when present.
+
+A public visitor is rate-limited by unauthenticated GitHub API quotas: council comments are requested at most once every 20 minutes (three requests maximum per refresh window), with a manual Refresh override. All remote content is rendered with `textContent`, never HTML injection. The static page holds **no tokens or private data**. Council output artifacts still expire after seven days and recommendations remain advisory, not automatically executed. A successful HTTP load of this static site must not be described as a private 24/7 AI operator.
+
 ## Council & Catalogue (2026-11-10)
 
 The Council tab lists **283** pinned MIT-licensed Agency Agents persona metadata, across 18 divisions, all idle. It does not execute agent files. The public agenda composer prepares a founder-reviewed GitHub issue; after submission, an ephemeral local Qwen performs four fresh-perspective deliberations and a fifth independent reviewer critiques the proposals. Founder approval is still required; no sensitive private tasks are supported in the PUBLIC page. Full design: [Agent Council and Catalogue](../docs/AGENT_COUNCIL_AND_CATALOGUE.md).
