@@ -1,15 +1,16 @@
-"""Multi-specialist mission contract: real original tool routes, no new supervisor."""
+"""No-model, PUBLIC founder team dispatch: independently check ACTUAL old tools."""
 from __future__ import annotations
 
+import tempfile
+from pathlib import Path
 from unittest import TestCase
 from unittest.mock import patch
-from pathlib import Path
 
 from plenum_ai.chief_team_mission import (
     MISSION_MAGIC, MISSION_TITLE, independent_expected_team,
     independently_accept_team, parse_mission, preflight, execute,
 )
-from plenum_ai.chief_workforce_command import KIND_TO_AGENT, worker_event
+from plenum_ai.chief_workforce_command import worker_event
 from plenum_ai.workforce_public_inbox import parse_public_issue
 
 REPO = "chadkhalil21-svg/Plenum-Scientific-Intelligence"
@@ -21,8 +22,7 @@ def mission(objective="Survey public research sources and create a data validato
     return {
         "action": "opened", "repository": {"full_name": REPO},
         "issue": {
-            "number": issue_number, "title": title,
-            "user": {"login": actor},
+            "number": issue_number, "title": title, "user": {"login": actor},
             "body": body if body is not None else
                 MISSION_MAGIC + "\nobjective: " + objective,
         },
@@ -30,23 +30,29 @@ def mission(objective="Survey public research sources and create a data validato
 
 
 class ChiefTeamMissionTests(TestCase):
-    def test_founder_carries_two_real_original_worker_kinds(self):
+    def test_founder_can_route_only_distinct_existing_tools(self):
         e = mission()
         parsed = parse_mission(e)
         self.assertEqual(parsed["team"], ("public_research", "public_program"))
         self.assertEqual(preflight(e)["expected_team"], list(parsed["team"]))
+        self.assertFalse(preflight(e)["model_called"])
         for kind in parsed["team"]:
-            routed = worker_event(parsed["legacy_event"], kind)
-            self.assertEqual(parse_public_issue(routed)["kind"], kind)
-            self.assertEqual(routed["issue"]["number"], 1001)
+            self.assertEqual(
+                parse_public_issue(worker_event(parsed["original"], kind))["kind"], kind
+            )
 
-    def test_two_other_approved_actual_artifact_kinds(self):
+    def test_second_pair_and_three_roles(self):
         e = mission("Create a public data validator program and an original SVG illustration")
         self.assertEqual(parse_mission(e)["team"], ("public_program", "public_creative"))
-        e = mission("Survey public research sources and calculate known thermal numerical model")
-        self.assertEqual(parse_mission(e)["team"], ("public_research", "public_science"))
+        e = mission("Survey sources, create code validator, and draw an original SVG map")
+        self.assertEqual(parse_mission(e)["team"],
+                         ("public_research", "public_program", "public_creative"))
+        with self.assertRaises(ValueError):
+            independent_expected_team("Survey public research sources only")
+        with self.assertRaises(ValueError):
+            independent_expected_team("Survey sources, create code, simulate thermal, draw SVG")
 
-    def test_exact_founder_policy_and_sensitive_rejection(self):
+    def test_exact_public_founder_identity_and_sensitivity(self):
         blocked = [
             mission(actor="someone-else"),
             mission(title="[Plenum Chief] public assignment"),
@@ -54,35 +60,68 @@ class ChiefTeamMissionTests(TestCase):
             mission(body=MISSION_MAGIC+"\nobjective: Deploy program with private password"),
             mission(body=MISSION_MAGIC+"\nobjective: Survey research sources\npermission: all"),
             mission(issue_number=0),
-            {**mission(), "repository":{"full_name":"another/repo"}},
+            {**mission(), "repository": {"full_name":"someone-else/repo"}},
             {**mission(), "action":"edited"},
         ]
         for e in blocked:
-            with self.subTest(e=str(e)[:70]), self.assertRaises((ValueError, PermissionError)):
+            with self.subTest(e=str(e)[:60]), self.assertRaises((ValueError, PermissionError)):
                 parse_mission(e)
-        with self.assertRaises(ValueError):
-            independent_expected_team("Survey public research sources only")
-        with self.assertRaises(ValueError):
-            independent_expected_team("Survey sources, create code, simulate thermal model, and draw SVG")
 
-    def test_independent_verifier_requires_distinct_genuine_outcomes(self):
-        kinds = ("public_program", "public_creative")
-        roles = [KIND_TO_AGENT[k] for k in kinds]
-        actual = {k: {"status":"DRAFT_READY_FOR_FOUNDER", "verified":True} for k in kinds}
-        self.assertTrue(independently_accept_team(kinds, roles, actual, 2))
-        self.assertTrue(independently_accept_team(kinds, roles+roles[:1], actual, 3))
-        self.assertFalse(independently_accept_team(kinds, roles[:1], actual, 1))
-        self.assertFalse(independently_accept_team(kinds, roles+["research-specialist"], actual, 3))
-        self.assertFalse(independently_accept_team(kinds, roles, {kinds[0]:actual[kinds[0]]}, 2))
-        actual[kinds[1]] = {"status":"BLOCKED_WORKER_OR_VERIFICATION","verified":False}
-        self.assertFalse(independently_accept_team(kinds, roles, actual, 2))
+    def test_actual_distinct_worker_outputs_recovered_and_verified_without_llm(self):
+        e = mission("Create a public data validator program and an original SVG illustration")
+        calls = []
+        def actual_public_worker(event, *, output_dir):
+            task = parse_public_issue(event)
+            calls.append((task["kind"], output_dir))
+            return {
+                "status":"DRAFT_READY_FOR_FOUNDER", "verified":True,
+                "worker":task["worker"], "verified_scope":"syntactic artifact check",
+                "output_artifact":"issue-1001/code" if task["kind"] == "public_program" else "issue-1001/creative",
+            }
+        with tempfile.TemporaryDirectory() as d, patch(
+            "plenum_ai.chief_team_mission.run_issue", side_effect=actual_public_worker
+        ):
+            outcome = execute(e, output_dir=Path(d))
+        self.assertEqual(outcome["status"], "VERIFIED_BOUNDED_TEAM")
+        self.assertEqual(outcome["executed_workers"], 2)
+        self.assertEqual(outcome["successfully_verified_workers"], 2)
+        self.assertTrue(outcome["independent_verified"])
+        self.assertFalse(outcome["model_called"])
+        self.assertFalse(outcome["chief_model_delegated"])
+        self.assertEqual([x[0] for x in calls], ["public_program","public_creative"])
+        self.assertEqual(len(set(str(x[1]) for x in calls)), 2)
+        self.assertEqual(len(outcome["worker_results"]), 2)
+        self.assertTrue(all(x["output_artifact"].startswith("workers/") for x in outcome["worker_results"]))
 
-    def test_execution_fails_closed_without_real_runner(self):
-        with patch.dict("os.environ", {
-            "PLENUM_EPHEMERAL_RUNNER":"", "PLENUM_CHIEF_MODEL_URL":"http://127.0.0.1:11434",
-        }):
-            with self.assertRaises(PermissionError):
-                execute(mission(), output_dir=Path("reports/workforce-chief"))
+    def test_failure_is_explicit_and_other_worker_preserved(self):
+        e = mission("Create a public data validator program and an original SVG illustration")
+        def worker(event, *, output_dir):
+            t = parse_public_issue(event)
+            if t["kind"] == "public_program":
+                raise RuntimeError("syntactic error")
+            return {"status":"DRAFT_READY_FOR_FOUNDER","verified":True,
+                    "worker":t["worker"],"output_artifact":"issue-1001/creative"}
+        with tempfile.TemporaryDirectory() as d, patch(
+            "plenum_ai.chief_team_mission.run_issue", side_effect=worker
+        ):
+            result = execute(e, output_dir=Path(d))
+        self.assertEqual(result["status"], "BLOCKED_PARTIAL_TEAM")
+        self.assertFalse(result["independent_verified"])
+        self.assertEqual(result["successfully_verified_workers"], 1)
+        self.assertEqual(result["worker_results"][0]["failure_type"],"RuntimeError")
+        self.assertEqual(result["worker_results"][1]["status"],"DRAFT_READY_FOR_FOUNDER")
+
+    def test_verifier_rejects_missing_workers_or_unverified_artifacts(self):
+        expected = ("public_program","public_creative")
+        ok = {
+            kind: {"status":"DRAFT_READY_FOR_FOUNDER","verified":True,
+                   "worker":"existing_original","output_artifact":"issue-1001"}
+            for kind in expected
+        }
+        self.assertTrue(independently_accept_team(expected,ok))
+        self.assertFalse(independently_accept_team(expected,{"public_program":ok["public_program"]}))
+        self.assertFalse(independently_accept_team(expected,{**ok,"public_research":ok["public_program"]}))
+        self.assertFalse(independently_accept_team(expected,{**ok,"public_creative":{**ok["public_creative"],"verified":False}}))
 
 
 if __name__ == "__main__":
