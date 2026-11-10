@@ -6,6 +6,8 @@ on:
     paths:
       - 'src/plenum_ai/chief_workforce_command.py'
       - 'tests/test_chief_workforce_command.py'
+      - 'src/plenum_ai/chief_team_mission.py'
+      - 'tests/test_chief_team_mission.py'
       - '.github/workflows/founder-chief-workforce-command.yml'
 permissions:
   contents: read
@@ -28,12 +30,14 @@ jobs:
         run: |
           python -m pip install -e .
           python -m unittest discover -s tests -p 'test_chief_workforce_command.py' -v
+          python -m unittest discover -s tests -p 'test_chief_team_mission.py' -v
   founder-command:
     if: >-
       github.event_name == 'issues' &&
       github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
       github.event.issue.user.login == 'chadkhalil21-svg' &&
-      github.event.issue.title == '[Plenum Chief] public assignment'
+      (github.event.issue.title == '[Plenum Chief] public assignment' ||
+       github.event.issue.title == '[Plenum Chief] public mission')
     runs-on: ubuntu-latest
     timeout-minutes: 35
     permissions:
@@ -42,6 +46,7 @@ jobs:
     env:
       PLENUM_EPHEMERAL_RUNNER: confirmed
       PLENUM_CHIEF_MODEL_URL: http://127.0.0.1:11434
+      PLENUM_TASK_KIND: ${{ github.event.issue.title }}
       LANGSMITH_TRACING: 'false'
       LANGCHAIN_TRACING_V2: 'false'
       HF_HUB_DISABLE_TELEMETRY: '1'
@@ -55,7 +60,11 @@ jobs:
       - name: First validate founder and PUBLIC task without starting a model
         run: |
           python -m pip install -e .
-          python -m plenum_ai.chief_workforce_command --event "$GITHUB_EVENT_PATH"
+          if [ "$PLENUM_TASK_KIND" = '[Plenum Chief] public mission' ]; then
+            python -m plenum_ai.chief_team_mission --event "$GITHUB_EVENT_PATH"
+          else
+            python -m plenum_ai.chief_workforce_command --event "$GITHUB_EVENT_PATH"
+          fi
       - name: Start free disposable local Qwen, not a paid inference API
         run: |
           docker pull ollama/ollama:latest
@@ -72,10 +81,15 @@ jobs:
         run: |
           python -m pip install -e '.[chief_of_staff,numerical,orchestration]'
           python -m pip check
-      - name: Model-driven Chief delegates one founder request and verifies actual worker
+      - name: Model-driven Chief delegates to actual permitted original specialists
         run: |
-          timeout 700 python -m plenum_ai.chief_workforce_command \
-            --event "$GITHUB_EVENT_PATH" --execute --out-dir reports/workforce-chief
+          if [ "$PLENUM_TASK_KIND" = '[Plenum Chief] public mission' ]; then
+            timeout 950 python -m plenum_ai.chief_team_mission \
+              --event "$GITHUB_EVENT_PATH" --execute --out-dir reports/workforce-chief
+          else
+            timeout 700 python -m plenum_ai.chief_workforce_command \
+              --event "$GITHUB_EVENT_PATH" --execute --out-dir reports/workforce-chief
+          fi
       - name: Durable founder status, no task text or credentials in comment
         if: always()
         env:
@@ -93,9 +107,16 @@ jobs:
           if p.is_file():
               item=json.loads(p.read_text())
               status=item.get('status','BLOCKED')
-              keys=['specialist','chief_delegated','specialist_executed',
-                    'independent_verified','worker_verified_scope']
-              lines=['; '.join(k+'='+str(item.get(k))[:110] for k in keys)]
+              if item.get('mode') == 'multi':
+                  lines=['team='+','.join(item.get('specialists',[])[:3])[:180]
+                         +'; executed='+str(item.get('executed_workers',0))
+                         +'; independently_verified='+str(item.get('independent_verified',False))
+                         +'; scopes='+','.join(str(x.get('verified_scope',''))[:60]
+                                             for x in item.get('worker_results',[])[:3])]
+              else:
+                  keys=['specialist','chief_delegated','specialist_executed',
+                        'independent_verified','worker_verified_scope']
+                  lines=['; '.join(k+'='+str(item.get(k))[:110] for k in keys)]
           else:
               status='BLOCKED_CHIEF_OR_VERIFICATION'
               lines=['No independently verified model/worker result']
@@ -127,7 +148,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: chief-founder-public-${{ github.event.issue.number }}
-          path: reports/workforce-chief/chief-result-*.json
+          path: |
+            reports/workforce-chief/chief-result-*.json
+            reports/workforce-chief/workers/*/issue-*/code/**
+            reports/workforce-chief/workers/*/issue-*/creative/**
+            reports/workforce-chief/workers/*/issue-*/public-science-summary.json
+            reports/workforce-chief/workers/*/workforce-public-*.json
           if-no-files-found: ignore
           retention-days: 7
       - name: Remove ephemeral model
