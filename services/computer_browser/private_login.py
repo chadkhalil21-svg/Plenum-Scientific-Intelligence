@@ -10,7 +10,7 @@ import os
 import secrets
 from urllib.parse import urlsplit
 
-from fastapi import Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import Depends, Form, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from .engine import safe_url, public_dns_only
 from .iap_identity import verify_owner_token
@@ -152,7 +152,24 @@ def _load_existing_owner_state(*, owner_id: str, origin: str):
     return scoped
 
 
-def login_html(nonce):
+def _owner_open_registration_origin(target):
+    """Canonical site for the owner's *explicit* Open click, not page input."""
+    from .runtime_site_grants import normalize_origin
+    if not isinstance(target, str) or not 9 <= len(target) <= 1200:
+        raise PermissionError("Owner must select a public HTTPS website")
+    try:
+        parts = urlsplit(target)
+        if parts.port is not None or not parts.hostname:
+            raise PermissionError("Noncanonical HTTPS website")
+        origin = normalize_origin("https://" + parts.hostname)
+    except (TypeError, ValueError) as exc:
+        raise PermissionError("Invalid owner-selected website") from exc
+    if not safe_url(target, origins={origin}):
+        raise PermissionError("Unsafe owner-selected website")
+    return origin
+
+
+def login_html(nonce, register_token=""):
     return """<!doctype html><html lang="en"><head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Computer · Secure Website Login</title>
@@ -166,10 +183,12 @@ def login_html(nonce):
     <p>Open the actual website thou ownest or art authorized to use.
     This owner-only Chromium canvas is the LIVE browser picture; it cannot
     presently stream directly into an ordinary ChatGPT chat.</p>
-    <p>For a new website, first register its exact HTTPS origin through
-    <a href="/owner/sites">Manage registered websites</a>. Only the verified
-    owner may activate its private sign-in; traffic is limited to that site.
-    Cross-site Google/Apple identity redirects can still be blocked.</p>
+    <p>Choose any public HTTPS website and tap <strong>Open secure browser</strong>.
+    If it is new, the verified owner click registers that exact website securely,
+    without a second page or confirmation word. Existing registrations are reused.
+    Private/internal addresses remain blocked. Cross-site Google/Apple sign-in
+    may still require separate permission or owner verification.
+    <a href="/owner/sites">Review or revoke registered websites</a>.</p>
     <p>Sign in or create a website account personally, and use its own
     <strong>Continue with Google</strong> button only when offered. Google may
     block automatic or embedded sign-ins, so a supported external browser
@@ -185,6 +204,11 @@ def login_html(nonce):
     is not an account password.</p>
     <label>Website <input id="url" type="url" placeholder="https://website.example/login"
     required maxlength="1200" autocomplete="off"></label>
+    <p><small>One owner click on <strong>Open secure browser</strong> also
+    registers a new exact HTTPS website in the existing encrypted owner vault
+    for seven days, if not already registered. No separate website-registry
+    form is required. This doth not sign into the website or authorize
+    account changes.</small></p>
     <label><input id="apple-auth" type="checkbox">
     For App Store Connect only: permit Apple's four documented sign-in hosts
     during this private browser session. All other websites remain blocked.
@@ -284,16 +308,43 @@ def login_html(nonce):
         return;
       }
       status.textContent="Checking owner-approved website access...";
+      const preflight="/owner/live-access?site="+encodeURIComponent(target)+
+          "&apple_auth="+appleAuth+
+          "&resource_origins="+encodeURIComponent(resources)+
+          "&approve_resources="+resourceConsent;
       let access;
       try{
-        access=await fetch("/owner/live-access?site="+encodeURIComponent(target)+
-            "&apple_auth="+appleAuth+
-            "&resource_origins="+encodeURIComponent(resources)+
-            "&approve_resources="+resourceConsent,{
+        access=await fetch(preflight,{
           credentials:"same-origin",cache:"no-store",headers:{"Accept":"application/json"}
         });
+        if(access.status===403){
+          let initialReason="";
+          try{initialReason=(await access.json()).detail||"";}catch(_){}
+          if(initialReason==="site_authorization_denied"){
+            status.textContent="Saving the owner-selected website registration securely...";
+            const grant=await fetch("/owner/sites/ensure-for-open",{
+              method:"POST",credentials:"same-origin",cache:"no-store",
+              headers:{"Content-Type":"application/x-www-form-urlencoded",
+                       "Accept":"application/json"},
+              body:new URLSearchParams({
+                site:target,csrf_token:"__REGISTER_TOKEN__"
+              }).toString()
+            });
+            if(!grant.ok){
+              status.textContent="Selected website cannot be registered. "
+                +"Check its HTTPS address and that it resolves publicly; "
+                +"private/internal hosts are not allowed.";
+              return;
+            }
+            access=await fetch(preflight,{
+              credentials:"same-origin",cache:"no-store",
+              headers:{"Accept":"application/json"}
+            });
+          }
+        }
       }catch(_){
-        status.textContent="Website access check failed. Browser not opened; check owner portal connectivity.";
+        status.textContent="Website access or owner registration unavailable. "
+          +"No private browser was opened.";
         return;
       }
       if(!access.ok){
@@ -461,7 +512,7 @@ def login_html(nonce):
       }
     };
     document.getElementById("close").onclick=()=>{send({type:"close"});if(ws)ws.close()};
-    </script></body></html>""".replace("__NONCE__",nonce)
+    </script></body></html>""".replace("__NONCE__",nonce).replace("__REGISTER_TOKEN__",register_token)
 
 
 async def _frame(ws,page):
@@ -527,10 +578,47 @@ def mount_private_login(app):
                 "site_specific_owner_consent":True,
                 "login_restoration_verified":False}
 
+    @app.post("/owner/sites/ensure-for-open")
+    async def ensure_site_for_explicit_owner_open(
+        request: Request, site: str=Form(), csrf_token: str=Form(default=""),
+        _owner=Depends(require_verified_owner),
+    ):
+        """Owner's explicit Open click replaces a separate registration form.
+
+        Never runnable through public GitHub, models, or an anonymous browser.
+        The old exact HTTPS+public DNS checks and encrypted GCS CAS are reused.
+        """
+        from .runtime_site_grants import (
+            enabled, REGISTRY_SCOPE, OwnerSiteGrantStore,
+        )
+        from .owner_saved_session import _verify_owner_form
+        if not enabled():
+            raise HTTPException(status_code=403,detail="Owner site grants unavailable")
+        owner_id=_owner["private_owner_id"]
+        _verify_owner_form(request,owner_id,REGISTRY_SCOPE,"site_register",csrf_token)
+        try:
+            origin=_owner_open_registration_origin(site)
+            await asyncio.to_thread(public_dns_only,origin)
+        except PermissionError as exc:
+            raise HTTPException(status_code=403,
+                                detail="Unsafe website origin") from exc
+        try:
+            await asyncio.to_thread(
+                lambda: OwnerSiteGrantStore.from_environment().register(
+                    owner=owner_id,origin=origin))
+        except Exception as exc:
+            raise HTTPException(status_code=503,
+                                detail="Owner site registration unavailable") from exc
+        return {"registered":True,"site_data_returned":False,
+                "login_verified":False}
+
     @app.get("/owner/sign-in",response_class=HTMLResponse)
     async def sign_in(_owner=Depends(require_verified_owner)):
         nonce=secrets.token_urlsafe(20)
-        return HTMLResponse(login_html(nonce),
+        from .runtime_site_grants import REGISTRY_SCOPE
+        from .owner_saved_session import _owner_form_token
+        token=_owner_form_token(_owner["private_owner_id"],REGISTRY_SCOPE,"site_register")
+        return HTMLResponse(login_html(nonce,register_token=token),
             headers={
                 "Cache-Control":"no-store",
                 "X-Content-Type-Options":"nosniff",
