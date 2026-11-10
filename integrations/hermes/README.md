@@ -47,3 +47,7 @@ See [HOSTING_FREE_AGENT_GATEWAYS.md](HOSTING_FREE_AGENT_GATEWAYS.md). **Recommen
 - For actual GitHub issues from Telegram: install/activate only the reviewed Chief-profile plugin with the owner-scoped Issues credential, require authorized founder Telegram sender, then demonstrate one founder task with recorded GitHub Issue and independently verified bot status/comment; no other business account rights. No private customer, patent, email, payment or release action authorized.
 
 **What is NOT live:** Hermes host, Telegram bots, WhatsApp bridge, private credentials, Superpowers executable plugin or named AI employees in a real messaging chat. The code and original reusable method are prepared; the human-controlled Telegram/hosting account step remains genuinely necessary.
+
+## Nine specialist routes for WhatsApp Chief (offline integration)
+
+Run `python integrations/hermes/prepare_whatsapp_chief.py` to verify all nine original specialist routes. On an owner-controlled Hermes 0.22.5+ host, `--output /private/folder/chief-routes.yaml` creates a NEW 0600-only YAML snippet. Merge this into the private Chief profile after the official `advanced-delegation` plugin, specialist profiles, models and scoped permissions are actually installed. This does not activate WhatsApp or create phone numbers; full WhatsApp-first and official-group constraints are in [WHATSAPP_FIRST.md](WHATSAPP_FIRST.md).

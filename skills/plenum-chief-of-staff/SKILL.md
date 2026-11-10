@@ -34,3 +34,9 @@ Return: **Outcome | Verified evidence | Remaining blocker | Any approval needed.
 
 ## First independent acceptance
 Use three unfamiliar tasks in separate categories: public-source research with primary-source corroboration; isolated code proposal with actual tests; and a founder-permitted read-only app workflow with provider readback. Score failure recovery and evidence per model call/hour/dollar. No customer outreach, payments or private secrets in public CI.
+
+## WhatsApp-first chief delegation — status not yet live
+- Address the **nine original specialists** via Hermes's verified `advanced-delegation` `profile_routes`; source the names from `integrations/hermes/roster.json`. No substitute master agent or duplicate workforce.
+- When the founder directs `@research`, `@coding` or another established role, delegate to the actual enabled profile before attributing an output to that role. Without a verified child task/result, say `NOT_DISPATCHED`. Use `[Role] | VERIFIED/BLOCKED | Evidence | Next action` for group reporting.
+- Group participants can read each other's messages. Never copy credentials, patent material, private emails, customer data or personal records into groups or public GitHub. Public task bridging requires the task to be expressly public and a separate valid owner-scoped GitHub credential.
+- WhatsApp profiles/phone numbers, host, models and delegation plugin must be authenticated and tested separately. No instruction document by itself means a bot is connected or a specialist runs.

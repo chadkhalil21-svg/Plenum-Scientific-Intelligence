@@ -25,6 +25,14 @@ Hermes's native group adapter uses **unofficial Baileys**, with QR/device pairin
 
 **Never claim the group is connected until a real owner-authenticated group message, an actual specialist task, and an independently verified WhatsApp reply have occurred.** No number/QR/token/session is presently available in our connected provider tools.
 
+## Complete nine-specialist Chief routing (prepared, not connected)
+
+The existing roster defines **one Chief and nine named specialists**. The new `integrations/hermes/prepare_whatsapp_chief.py` reads the exact approved roles and prepares the official Hermes `advanced-delegation` `profile_routes` configuration. It does not install Hermes, create an AI model, enable a WhatsApp number, start an instance or copy credentials.
+
+On a future owner-controlled host, first run `python integrations/hermes/prepare_whatsapp_chief.py` to inspect the safe plan. After provisioning approved profiles and installing Hermes 0.22.5+ and its official `advanced-delegation` plugin in the Chief profile, run `python integrations/hermes/prepare_whatsapp_chief.py --output ~/.hermes/plenum-chief-routes.yaml` to write a fresh private `0600` YAML snippet. Copy its `delegation` block into the Chief's private configuration after reviewing; it will not overwrite existing `config.yaml`.
+
+**Pilot:** begin with Research, Coding and Verification, two concurrent specialist tasks. The all-nine configuration is an authorized role manifest, not proof all nine profiles have models or can run yet. Hermes declines unavailable roles, not silently substituting one model for a different specialist. For a real WhatsApp group, the Chief is one actual group participant and may report outcomes labeled `[Research]`, `[Coding]`, etc. Nine individually visible WhatsApp bots would each need a separate authorized number/session. Official Hermes Cloud API remains DMs-only; Baileys is unofficial and must use a dedicated expendable number after owner risk approval.
+
 ## Minimal native specialist delegation configuration
 
 Hermes officially supports named profile routing **with the built-in advanced-delegation plugin enabled**. An example of nonsecret roles to add to the **private Chief profile** `config.yaml` *only after* approved profiles and models exist:
