@@ -187,16 +187,16 @@ class PinnedProxyOriginalSocketTests(unittest.IsolatedAsyncioTestCase):
                                      "login.example.net:8080"):
                             reader,writer=await original_connect("127.0.0.1",proxy.port)
                             target=host if ":" in host else host+":443"
-                            writer.write(("CONNECT "+target+" HTTP/1.1\\r\\n\\r\\n").encode())
+                            writer.write(("CONNECT "+target+" HTTP/1.1\r\n\r\n").encode())
                             await writer.drain()
                             self.assertIn(b"403 Forbidden",await reader.read(150))
                             writer.close()
                             await writer.wait_closed()
                         reader,writer=await original_connect("127.0.0.1",proxy.port)
-                        writer.write(b"CONNECT login.example.net:443 HTTP/1.1\\r\\n\\r\\n")
+                        writer.write(b"CONNECT login.example.net:443 HTTP/1.1\r\n\r\n")
                         await writer.drain()
                         self.assertIn(b"200 Connection Established",
-                                      await reader.readuntil(b"\\r\\n\\r\\n"))
+                                      await reader.readuntil(b"\r\n\r\n"))
                         self.assertEqual(await reader.read(5),b"proof")
                         writer.close()
                         await writer.wait_closed()
