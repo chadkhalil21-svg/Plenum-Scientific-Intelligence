@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 
 from .workforce_public_inbox import OWNER, REPO, TOPIC
+from .agent_library import suggest_sources
 
 TITLE = "[Plenum Department] public assignment"
 MAGIC = "PLENUM_DEPARTMENT_PUBLIC_V1"
@@ -75,7 +76,19 @@ def tailor_original_n8n_workflow(source: dict, task: dict) -> dict:
     )
     if script.count(original) != 1 or script.count("return roles.map(") != 1:
         raise ValueError("Original n8n role dispatcher changed; fail closed")
-    script = script.replace(original, "const mission = " + json.dumps(task["objective"]) + ";")
+    # A source catalogue is NOT a tool. Give a role factual reviewed GitHub
+    # references for its planning draft, never external content or credentials.
+    # Only the original founder's bounded, PUBLIC objective drives matching.
+    sources = suggest_sources(task["objective"], limit=3)
+    hints = "; ".join(x["id"] + " [" + x["repository"] + "]" for x in sources)
+    mission = task["objective"]
+    if hints:
+        mission += (
+            "\\nReviewed FREE-source references to CONSIDER, not installed: "
+            + hints
+            + ". These are candidates only; never claim code or a solver ran."
+        )
+    script = script.replace(original, "const mission = " + json.dumps(mission) + ";")
     script = script.replace(
         "return roles.map(",
         "return roles.filter(([role]) => role === "
