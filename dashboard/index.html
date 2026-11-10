@@ -27,7 +27,7 @@
   <p class="hint">These are AI role prompts, not real people, university endorsements or a substitute for independently sourced evidence.</p></section>
 </div>
 <div class="section"><div class="overline">PINNED OPEN-SOURCE LIBRARY</div><h2>Specialists available on demand <span class="muted" id="catalogCount">Loading…</span></h2>
-<p class="muted">Indexed profiles remain idle. No model, service or account access is created by cataloguing them.</p>
+<p class="muted">Indexed profiles remain idle. No model, service or account access is created by cataloguing them.</p><p class="muted" id="mediaCatalogCount">Checking indexed media production resources…</p>
 <input class="catalog-search" id="catalogSearch" type="search" aria-label="Filter indexed specialists" placeholder="Search by division or specialist name" maxlength="70"/>
 </div><div id="catalogGrid" class="gridagents"><p class="muted">Loading verified source catalogue…</p></div><p class="hint" id="catalogHint">Only approved tasks activate actual agent runtimes; profiles alone cannot execute.</p>
 </section>
@@ -128,5 +128,14 @@ $('catalogSearch').addEventListener('input',renderCouncilCatalog);$('councilPrep
 $('refresh').addEventListener('click',refresh);$('prepare').addEventListener('click',prepare);$('mic').addEventListener('click',listen);$('hear').addEventListener('click',listen);$('speak').addEventListener('click',speak);
 for(const [id,name]of defaults){if(id==='chief')continue;const option=node('option','',name);option.value=id==='coding'?'engineering':id;$('role').append(option)}
 show(['overview','agents','tasks','schedules','command'].includes(location.hash.slice(1))?location.hash.slice(1):'overview');
-refresh();loadSchedules();loadCouncilCatalog();setInterval(refresh,300000);
+async function loadMediaResources(){
+ try{
+   const data=await request(raw+'/integrations/agent-catalog/openmontage.index.json');
+   if(data.schema!=='plenum-openmontage-resource-index-v1' || data.count!==1106 ||
+      !Array.isArray(data.files) || data.files.length!==1106 ||
+      data.source.license!=='AGPL-3.0')throw Error('Unverified media index');
+   $('mediaCatalogCount').textContent=data.count+' additional video-production skill and knowledge files indexed (AGPL-3.0; not individual AI agents).';
+ }catch(err){$('mediaCatalogCount').textContent='Media resource registry unavailable';}
+}
+refresh();loadSchedules();loadCouncilCatalog();loadMediaResources();setInterval(refresh,300000);
 </script></body></html>
