@@ -41,6 +41,20 @@ class ChiefTeamMissionTests(TestCase):
                 parse_public_issue(worker_event(parsed["original"], kind))["kind"], kind
             )
 
+    def test_founder_team_identifies_relevant_free_upstream_without_inference(self):
+        task=mission("Survey public battery sources and create a code validator")
+        with patch("urllib.request.urlopen", side_effect=AssertionError("No network allowed")):
+            report=preflight(task)
+        self.assertEqual(report["expected_team"],["public_research","public_program"])
+        self.assertIn("pybamm",[x["id"] for x in report["candidate_sources"]])
+        self.assertFalse(report["model_called"])
+        self.assertEqual(report["source_selection_inference_calls"],0)
+        self.assertEqual(report["upstream_sources_installed"],0)
+        self.assertEqual(report["new_external_models_started"],0)
+        self.assertTrue(all(x["activation"]=="SOURCE_REFERENCE_ONLY_NOT_INSTALLED"
+                            and x["additional_paid_services_enabled"] is False
+                            for x in report["candidate_sources"]))
+
     def test_second_pair_and_three_roles(self):
         e = mission("Create a public data validator program and an original SVG illustration")
         self.assertEqual(parse_mission(e)["team"], ("public_program", "public_creative"))

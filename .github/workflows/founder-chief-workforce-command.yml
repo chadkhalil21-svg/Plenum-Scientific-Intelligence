@@ -129,6 +129,10 @@ jobs:
                          +'; independently_verified='+str(item.get('independent_verified',False))
                          +'; scopes='+','.join(str(x.get('verified_scope',''))[:60]
                                              for x in item.get('worker_results',[])[:3])]
+                  options=[x['id'] for x in item.get('candidate_sources',[])[:3]
+                           if x.get('activation')=='SOURCE_REFERENCE_ONLY_NOT_INSTALLED']
+                  if options:
+                      lines[0]+='; upstream_references_not_installed='+','.join(options)[:140]
               else:
                   keys=['specialist','chief_delegated','specialist_executed',
                         'independent_verified','worker_verified_scope']

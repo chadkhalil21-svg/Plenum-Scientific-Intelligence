@@ -19,6 +19,7 @@ from .chief_workforce_command import (
     parse_founder_chief, worker_event,
 )
 from .workforce_public_inbox import run_issue
+from .agent_library import suggest_sources
 
 MISSION_TITLE = "[Plenum Chief] public mission"
 MISSION_MAGIC = "PLENUM_CHIEF_PUBLIC_MISSION_V1"
@@ -57,6 +58,12 @@ def preflight(event: dict) -> dict:
         "mode": "multi",
         "dispatcher": "deterministic_existing_chief_scope_gate",
         "expected_team": list(task["team"]),
+        # Read-only source suggestions; never import third-party source into the
+        # runner or treat a reference as a verified executable worker.
+        "candidate_sources": suggest_sources(task["objective"], limit=6),
+        "upstream_sources_installed": 0,
+        "new_external_models_started": 0,
+        "source_selection_inference_calls": 0,
         "model_called": False,
         "chief_model_delegated": False,
         "executed_workers": 0,
