@@ -15,6 +15,22 @@ import math
 from pathlib import Path
 
 
+def independent_amp_hours(times_s, currents_A) -> float:
+    """Numerical charge integral independent from the PyBaMM capacity field."""
+    if len(times_s) != len(currents_A) or len(times_s) < 2:
+        raise ValueError("Current and time samples must match")
+    if any(not math.isfinite(float(v)) for v in [*times_s, *currents_A]):
+        raise ValueError("Nonfinite physical values")
+    if any(float(t1) <= float(t0) for t0, t1 in zip(times_s, times_s[1:])):
+        raise ValueError("Time must increase")
+    return sum(
+        (float(c0) + float(c1)) * (float(t1) - float(t0)) / 2.0
+        for t0, t1, c0, c1 in zip(
+            times_s, times_s[1:], currents_A, currents_A[1:]
+        )
+    ) / 3600.0
+
+
 def run_spm_first_use() -> dict:
     import numpy as np
     import pybamm
@@ -51,7 +67,7 @@ def run_spm_first_use() -> dict:
             raise RuntimeError("Nonmonotone solver timeline")
         # Independent analytic constant-current integral from the ACTUAL output
         # samples, instead of trusting the model's discharge-capacity variable.
-        amp_hours_from_current = float(np.sum((amps[:-1] + amps[1:]) * np.diff(t_s) / 2.0) / 3600.0)
+        amp_hours_from_current = independent_amp_hours(t_s, amps)
         model_discharge_Ah = float(discharged_Ah[-1] - discharged_Ah[0])
         reference_Ah = float(applied_A * (t_s[-1] - t_s[0]) / 3600.0)
         current_error = float(np.max(np.abs(amps - applied_A)))
