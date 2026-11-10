@@ -1,6 +1,6 @@
 # Plenum Business Workforce | First Adopted Integrations
 
-**Status:** Native n8n model-backed draft workflow verified on disposable public GitHub runners; no persistent business-account workforce. OpenHands local-small-model coding trial failed its required file-output acceptance.
+**Status:** Nine native n8n model-backed specialist drafts and one OpenHands/Qwen3:1.7B syntax-valid coding proposal have been verified on disposable public GitHub runners. No persistent or trustworthy production business-account workforce is deployed.
 **Purpose:** Reuse the existing LangGraph orchestrator, official OpenHands SDK,
 and n8n's free self-hosted Community edition, without reimplementing their engines.
 
@@ -94,7 +94,9 @@ The target is **not** satisfied by nine prompts. Completion requires:
 - [Independent one-role n8n real-model acceptance #42746585905](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42746585905) passed: temporary local Ollama credential, execute-workflow trigger, real draft status and no external account changes.
 - [Actual pinned OpenHands trial #42746265510](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42746265510) FAILED the original output criterion: SDK 1.60.1 and official file-editor tool loaded, model interaction ran, but Qwen3:0.6b produced no inspectable proposal.py. A green package installation must not be reported as successful autonomous coding.
 
-There is **no deployed production n8n, customer-support agent, persistent Ollama host, working OpenHands coding worker or verified real company action**. No paid Render service was created; connected Render account had no n8n deployment. A more capable model and appropriate compute or approved free-tier API are needed before the coding agent can pass its genuine acceptance. Do not rerun the same weak model without changing the evidence-producing capability.
+[OpenHands Qwen3:1.7B first real syntax attempt #42747513864](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42747513864) created a real Python file but failed independent AST validation. [One bounded-error-feedback model trial #42748382323](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42748382323) subsequently passed its original review-only acceptance: real OpenHands FileEditorTool yielded an inspectable syntax-valid candidate with SHA-256 `dc27ae496620429f633e4cbbb0c6fe09456e52da9c8ad3efe34eb769957c571d`. The new controller and tests permit exactly one model repair pass and reject a second invalid file; the passing run's exact `repair_passes` count was not separately inspected. This is **one narrow syntax outcome**, not a demonstrated correct program, unfamiliar repository repair, deployment or autonomous professional developer.
+
+There is **no persistent production n8n, customer-support agent, Ollama host or verified real company account action**. No paid Render service was created. A capable model and adequate owner-controlled compute, permissioned connectors, independent task-quality evaluation and operational auditing remain necessary for reliable coding/business agents.
 
 Official sources:
 - OpenHands SDK: https://github.com/OpenHands/software-agent-sdk
