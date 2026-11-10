@@ -96,6 +96,27 @@ def parse_issue(event: dict) -> dict:
     }
 
 
+def make_pinned_coder_llm():
+    """Exact original SDK model config: no unsupported Ollama thinking field.
+
+    Used by the real agent AND the cheap no-inference option regression. The
+    OpenHands 1.60.1 LLM default reasoning_effort='high' causes Ollama to
+    reject non-thinking Qwen2.5-Coder. Do not silently change model rights.
+    """
+    from openhands.sdk import LLM
+
+    return LLM(
+        model="ollama/qwen2.5-coder:7b",
+        api_key="local-no-secret",
+        base_url="http://127.0.0.1:11434",
+        reasoning_effort=None,
+        capability_overrides={
+            "supports_reasoning_effort": False,
+            "thinking_mode": "none",
+        },
+    )
+
+
 def _out_dir(issue_number: int) -> Path:
     if type(issue_number) is not int or not 1 <= issue_number <= 999_999_999:
         raise ValueError("Invalid founder issue")
@@ -126,7 +147,7 @@ def run(event: dict, *, execute: bool = False) -> dict:
         or importlib.metadata.version("openhands-sdk") != PINNED_VERSION
     ):
         raise PermissionError("Pinned local model and ephemeral OpenHands required")
-    from openhands.sdk import Agent, Conversation, LLM, Tool
+    from openhands.sdk import Agent, Conversation, Tool
     from openhands.tools.file_editor import FileEditorTool
 
     with tempfile.TemporaryDirectory(prefix="plenum-browser-code-") as temp:
@@ -141,19 +162,7 @@ def run(event: dict, *, execute: bool = False) -> dict:
             dest.write_bytes(original)
             trusted[dest.name] = hashlib.sha256(original).hexdigest()
         agent = Agent(
-            llm=LLM(
-                model="ollama/qwen2.5-coder:7b", api_key="local-no-secret",
-                base_url="http://127.0.0.1:11434",
-                # Official pinned OpenHands SDK 1.60.1 defaults to
-                # reasoning_effort='high' and maps this to an Ollama think
-                # request. Qwen2.5-Coder 7B is NON-thinking. Disable this
-                # capability before the very first model tool call.
-                reasoning_effort=None,
-                capability_overrides={
-                    "supports_reasoning_effort": False,
-                    "thinking_mode": "none",
-                },
-            ),
+            llm=make_pinned_coder_llm(),
             tools=[Tool(name=FileEditorTool.name)],
         )
         conversation = Conversation(
