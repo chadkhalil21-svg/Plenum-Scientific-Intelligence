@@ -1,0 +1,10 @@
+name: plenum-public-workforce
+kind: standalone
+version: "1.0.0"
+author: Plenum Industries
+description: Founder-only public GitHub assignment bridge for existing Plenum specialist workers
+provides_tools:
+  - plenum_assign_public_task
+  - plenum_read_public_task_status
+requires_env:
+  - PLENUM_GITHUB_PUBLIC_ISSUES_TOKEN
