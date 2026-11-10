@@ -5,6 +5,7 @@ from unittest import TestCase
 
 from plenum_ai.workforce_department_command import (
     MAGIC, TITLE, ROLES, parse_founder_department, tailor_original_n8n_workflow,
+    audit_public_draft_repositories,
 )
 
 REPO="chadkhalil21-svg/Plenum-Scientific-Intelligence"
@@ -115,11 +116,43 @@ class DirectNineDepartmentTests(TestCase):
         self.assertIn("github.event.issue.user.login == 'chadkhalil21-svg'",workflow)
         self.assertIn("[Plenum Department] public assignment",workflow)
 
+    def test_offline_repo_auditor_catches_actual_su2_agent_link_error(self):
+        # The first original SU2 model task #390 cited a nonexistent/wrong
+        # upstream identity, rather than the vetted source repo.
+        from unittest.mock import patch
+        text=("[1](https://github.com/su2/su2) "
+              "[2](https://github.com/su2code/SU2/tree/master)")
+        with patch("urllib.request.urlopen", side_effect=AssertionError("No HTTP allowed")):
+            result=audit_public_draft_repositories(text)
+        self.assertEqual(result["matched_reviewed_repository_count"],1)
+        self.assertEqual(result["unreviewed_github_repository_count"],1)
+        self.assertEqual(result["unreviewed_github_repositories"],["su2/su2"])
+        self.assertEqual(result["status"],"REVIEW_REQUIRED_UNREGISTERED_SOURCE")
+        self.assertFalse(result["scientific_claims_independently_verified"])
+        self.assertEqual(result["model_calls"],0)
+        self.assertEqual(result["network_requests"],0)
+        self.assertFalse(result["code_installed_or_executed"])
+
+    def test_known_repo_never_means_technical_claim_is_verified(self):
+        audit=audit_public_draft_repositories(
+            "Use https://github.com/pybamm-team/PyBaMM for battery modeling.")
+        self.assertEqual(audit["matched_reviewed_repository_count"],1)
+        self.assertEqual(audit["unreviewed_github_repository_count"],0)
+        self.assertEqual(audit["status"],"REVIEW_REQUIRED_CLAIMS_NOT_FACT_CHECKED")
+        self.assertFalse(audit["scientific_claims_independently_verified"])
+        invalid=audit_public_draft_repositories("See https://github.com/su2code")
+        self.assertEqual(invalid["malformed_github_urls"],1)
+        with self.assertRaises(ValueError):
+            audit_public_draft_repositories("")
+        with self.assertRaises(ValueError):
+            audit_public_draft_repositories("x"*12001)
+
     def test_durable_issue_receipt_does_not_publish_untrusted_agent_content(self):
         text=(ROOT/".github/workflows/business-workforce-n8n-agent-trial.yml").read_text()
         self.assertIn("issues: write",text)
         self.assertIn("plenum-department-public:",text)
         self.assertIn("independent_fact_verification",text)
+        self.assertIn("audit_public_draft_repositories(draft)",text)
         receipt=text.split("- name: Publish bounded public department status",1)[1]
         receipt=receipt.split("- name: Delete temporary credentials",1)[0]
         for forbidden in ("draft_untrusted","run.log","credentials.json",
