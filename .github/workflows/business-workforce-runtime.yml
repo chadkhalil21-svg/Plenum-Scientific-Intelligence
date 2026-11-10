@@ -1,0 +1,125 @@
+name: Business Workforce | Real n8n Import and OpenHands Local-Model Trial
+
+# One-time isolated execution evidence on the integration branch; manual thereafter.
+# Never run on a schedule, production account or default-branch push.
+on:
+  push:
+    branches: [feat/live-business-workforce-20261110]
+    paths:
+      - '.github/workflows/business-workforce-runtime.yml'
+      - 'integrations/n8n/plenum-business-workforce.json'
+      - 'src/plenum_ai/openhands_coding_agent.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: workforce-runtime-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-n8n-import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Verify nine public specialist assignments without external accounts
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          w=json.loads(Path('integrations/n8n/plenum-business-workforce.json').read_text())
+          assert w['active'] is False and len(w['nodes']) == 6
+          assert 'Founder Review Queue' in [n['name'] for n in w['nodes']]
+          code=next(n for n in w['nodes'] if n['name']=='Founder Review Queue')['parameters']['jsCode']
+          assert 'role:' in code and 'DRAFT_AWAITING_FOUNDER_REVIEW' in code
+          assert 'external_actions_executed: false' in code
+          assert not any('credentials' in n for n in w['nodes'])
+          print('Nine-role review-only input contract PASS')
+          PY
+      - name: Pull official n8n Community engine into disposable runner
+        run: |
+          docker pull n8nio/n8n:latest
+          docker image inspect n8nio/n8n:latest --format 'n8n image digest {{index .RepoDigests 0}}'
+      - name: Import exact Plenum JSON with official n8n CLI (no production deployment)
+        env:
+          N8N_DIAGNOSTICS_ENABLED: 'false'
+          N8N_PERSONALIZATION_ENABLED: 'false'
+        run: |
+          docker run --rm --network none --memory=3g --cpus=2 \
+            -v "$PWD/integrations/n8n/plenum-business-workforce.json:/plenum/workforce.json:ro" \
+            -e N8N_USER_FOLDER=/tmp/n8n \
+            -e N8N_DIAGNOSTICS_ENABLED=false \
+            -e N8N_PERSONALIZATION_ENABLED=false \
+            -e N8N_ENCRYPTION_KEY=public-ephemeral-prototype-not-a-secret-2026 \
+            n8nio/n8n:latest import:workflow --input=/plenum/workforce.json
+          echo 'Native n8n workflow import SUCCESS, execution/model connectivity not yet tested.'
+
+  isolated-openhands-actual-model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 32
+    env:
+      PLENUM_EPHEMERAL_RUNNER: confirmed
+      PLENUM_OPENHANDS_MODEL: ollama/qwen3:0.6b
+      PLENUM_OPENHANDS_BASE_URL: http://127.0.0.1:11434
+      PLENUM_OPENHANDS_API_KEY: ''
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      OLLAMA_KEEP_ALIVE: '2m'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Start Ollama locally, never expose model server on public interface
+        run: |
+          docker pull ollama/ollama:latest
+          docker image inspect ollama/ollama:latest --format 'Ollama image digest {{index .RepoDigests 0}}'
+          docker run -d --rm --name plenum-temporary-ollama \
+            -p 127.0.0.1:11434:11434 \
+            -e OLLAMA_CONTEXT_LENGTH=16384 \
+            -e OLLAMA_NUM_PARALLEL=1 \
+            --memory=5g --cpus=3 \
+            ollama/ollama:latest
+          for i in $(seq 1 60); do
+            curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null && exit 0
+            sleep 2
+          done
+          docker logs plenum-temporary-ollama
+          exit 1
+      - name: Download open-weight Qwen to disposable local model server
+        run: |
+          docker exec plenum-temporary-ollama ollama pull qwen3:0.6b
+          docker exec plenum-temporary-ollama ollama list
+      - name: Install exact previously reviewed OpenHands SDK
+        run: |
+          python -m pip install -e ".[openhands_sdk]"
+          python -m pip check
+      - name: Run actual model-driven OpenHands file creation (bounded, no secret inputs)
+        run: |
+          timeout 600 python -m plenum_ai.openhands_coding_agent --execute --out reports/openhands-agent-review.json
+      - name: Verify real model call and inspectable public candidate without publication
+        run: |
+          python - <<'PY'
+          import json
+          data=json.load(open('reports/openhands-agent-review.json'))
+          assert data['model_run_completed'] and data['candidate_syntax_valid']
+          assert data['status']=='PROPOSAL_AWAITING_REVIEW'
+          assert not data['generated_code_executed']
+          assert not data['production_written'] and not data['external_accounts_changed']
+          print('OpenHands model and real candidate PASS; SHA256:',data['candidate_sha256'])
+          PY
+      - name: Preserve only public proof, no generated code or credentials
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: openhands-isolated-public-trial
+          path: reports/openhands-agent-review.json
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Delete transient local model container
+        if: always()
+        run: docker rm -f plenum-temporary-ollama 2>/dev/null || true
