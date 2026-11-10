@@ -90,8 +90,9 @@ value="https://example.com/" maxlength="1200">
                 else "") + (
                 """<h2>Authorize a new website</h2>
 <p><a href="/owner/sites">Manage registered websites</a></p>
-<small>New registration does not authorize navigation until the separately
-verified network execution gate is enabled.</small>"""
+<small>Registration enables verified-owner sign-in for one pinned HTTPS
+origin. ChatGPT browser actions, cross-site sign-in, and website writes remain
+gated.</small>"""
                 if (os.environ.get("K_SERVICE")=="plenum-browser-owner-auth0"
                     and os.environ.get("PLENUM_RUNTIME_SITE_GRANTS_ENABLED")=="true")
                 else "") + (
