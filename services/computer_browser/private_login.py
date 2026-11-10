@@ -20,17 +20,25 @@ from .private_profiles import BrowserProfileStore
 
 
 def filter_site_storage(state,site_origin):
-    """Save only target-site cookies and local storage, never IdP credentials."""
-    h=urlsplit(site_origin).hostname
-    if not h:
-        raise ValueError("Missing site origin")
+    """Keep only the selected HTTPS site's encrypted cookies/localStorage/IndexedDB.
+
+    Never retain Google/other IdP origins. IndexedDB may contain authentication
+    tokens, so it is treated as sensitive session state, never model output.
+    """
+    parsed=urlsplit(site_origin)
+    h=parsed.hostname
+    if (parsed.scheme!="https" or not h or parsed.path or parsed.query
+            or parsed.fragment or parsed.username or parsed.password):
+        raise ValueError("Expected exact HTTPS site origin")
     def same_site(cookie):
         d=str(cookie.get("domain","")).lower().lstrip(".")
         return d==h or h.endswith("."+d)
     return {
         "cookies":[c for c in state.get("cookies",[]) if same_site(c)],
+        # Exact origin, not hostname-only: never copy an insecure http:
+        # origin or a different port into the owner's HTTPS session.
         "origins":[o for o in state.get("origins",[])
-                   if urlsplit(o.get("origin","")).hostname==h]
+                   if isinstance(o,dict) and o.get("origin")==site_origin],
     }
 
 
@@ -80,8 +88,11 @@ def login_html(nonce):
     Never share credentials or recovery codes in ChatGPT or GitHub.</p>
     <p>After a successful website sign-in, choose
     <strong>Save this website login</strong> to encrypt its site-specific
-    session for later approved Plenum tasks. Saved state can expire and
-    doth not bypass future MFA. A saved session is not an account password.</p>
+    session for later approved Plenum tasks. The encrypted copy may include
+    this website's cookies, local storage and IndexedDB authentication data,
+    but never your Google password or other websites' login data.
+    Saved state can expire and doth not bypass future MFA. A saved session
+    is not an account password.</p>
     <label>Website <input id="url" type="url" placeholder="https://website.example/login"
     required maxlength="1200" autocomplete="off"></label>
     <button id="open">Open secure browser</button>
@@ -376,7 +387,14 @@ def mount_private_login(app):
                             continue
                         try:
                             origin="https://"+urlsplit(site).hostname
-                            storage=filter_site_storage(await context.storage_state(),origin)
+                            # Official Playwright supports IndexedDB auth state
+                            # (e.g. Firebase); default storage_state() omits it.
+                            # The origin filter below keeps only THIS website.
+                            # We intentionally exclude virtual WebAuthn private keys
+                            # and OPFS data by not requesting those options.
+                            storage=filter_site_storage(
+                                await context.storage_state(indexed_db=True), origin
+                            )
                             if not storage["cookies"] and not storage["origins"]:
                                 await ws.send_json({"type":"save_result","ok":False,
                                     "message":"No website session data to save. Browser remains open."})
