@@ -82,24 +82,56 @@ def execute(task: str = DEFAULT_TASK) -> dict:
               "paths, environment variables, credentials, or proprietary data. "
               "Do not execute generated code. Finish with a summary."
         )
-        conversation.run()
         candidate = Path(tmp) / "proposal.py"
-        if not candidate.is_file() or candidate.is_symlink():
-            raise RuntimeError("Agent produced no inspectable proposal.py")
-        raw = candidate.read_bytes()
-        if len(raw) > 20_000:
-            raise RuntimeError("Candidate exceeds bounded review size")
-        ast.parse(raw.decode("utf-8"), filename="proposal.py")
-        return {
-            **result,
-            "status": "PROPOSAL_AWAITING_REVIEW",
-            "model_run_completed": True,
-            "generated_file": "proposal.py",
-            "candidate_bytes": len(raw),
-            "candidate_sha256": hashlib.sha256(raw).hexdigest(),
-            "candidate_syntax_valid": True,
-            "note": "Candidate discarded with ephemeral workspace; not executed, merged, or deployed.",
-        }
+        # A real, independently computed SyntaxError is given back to the model
+        # ONCE. This validates adaptive repair without running untrusted code.
+        # No shell/browser tool, credentials, production path or auto-merge.
+        for attempt in range(2):
+            conversation.run()
+            if not candidate.is_file() or candidate.is_symlink():
+                if attempt == 0:
+                    conversation.send_message(
+                        "Independent review found that proposal.py was NOT created. "
+                        "Use FileEditorTool to create only proposal.py now; do not "
+                        "execute or write any other file."
+                    )
+                    continue
+                raise RuntimeError("No proposal.py after bounded repair attempt")
+            raw = candidate.read_bytes()
+            if len(raw) > 20_000:
+                raise RuntimeError("Candidate exceeds bounded review size")
+            try:
+                ast.parse(raw.decode("utf-8"), filename="proposal.py")
+            except (SyntaxError, UnicodeDecodeError) as exc:
+                if attempt == 0:
+                    if isinstance(exc, SyntaxError):
+                        feedback = (
+                            f"Python AST verifier found SyntaxError on line "
+                            f"{exc.lineno}, offset {exc.offset}: {exc.msg}."
+                        )
+                    else:
+                        feedback = "Python AST verifier rejected non-UTF-8 text."
+                    conversation.send_message(
+                        feedback + " Repair only proposal.py via FileEditorTool. "
+                        "Do not execute or deploy code. Confirm the syntax."
+                    )
+                    continue
+                raise RuntimeError(
+                    "Candidate still failed independent Python syntax validation "
+                    "after one bounded agent repair"
+                ) from None
+            return {
+                **result,
+                "status": "PROPOSAL_AWAITING_REVIEW",
+                "model_run_completed": True,
+                "generated_file": "proposal.py",
+                "candidate_bytes": len(raw),
+                "candidate_sha256": hashlib.sha256(raw).hexdigest(),
+                "candidate_syntax_valid": True,
+                "repair_passes": attempt,
+                "note": "Independent AST check passed. Candidate discarded; never executed or deployed.",
+            }
+        raise AssertionError("Unreachable bounded repair exit")
 
 
 def main() -> None:
