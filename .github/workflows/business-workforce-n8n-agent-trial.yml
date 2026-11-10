@@ -68,30 +68,33 @@ jobs:
         run: |
           mkdir -p runtime-trial
           python - <<'PY'
-          import json
+          import json, os
           from pathlib import Path
           cred_id='55c8f6a023f1462cbe5dfc3e20a4a9b2'
           credentials=[{
               'id':cred_id, 'name':'Plenum Ephemeral Ollama', 'type':'ollamaApi',
               'data':{'baseUrl':'http://plenum-ollama-trial:11434','apiKey':''}
           }]
-          workflow=json.loads(Path('integrations/n8n/plenum-business-workforce.json').read_text())
+          if os.environ.get('GITHUB_EVENT_NAME') == 'issues':
+              workflow=json.loads(Path('runtime-trial/department-workflow.json').read_text())
+              assert Path('runtime-trial/department-metadata.json').is_file()
+          else:
+              workflow=json.loads(Path('integrations/n8n/plenum-business-workforce.json').read_text())
+              evidence=json.loads(Path('reports/public-business-readback.json').read_text())
+              assert evidence['schema']=='plenum-public-business-readback-v1'
+              assert len(evidence['reports'])==3
+              allowed={'corporate','platform','public_server'}
+              assert set(x['service'] for x in evidence['reports'])==allowed
+              assert all(x['status'] in {'PUBLIC_HTTP_VERIFIED','UNVERIFIED'} for x in evidence['reports'])
+              summary='; '.join(x['service']+'='+x['status'] for x in evidence['reports'])
+              mission=('Review independently reread PUBLIC business web availability: '+summary+
+                  '. Give bounded, testable next steps for your specialist role. Do not invent customer transactions, send messages, or claim accounts were accessed.')
+              node=next(n for n in workflow['nodes'] if n['name']=='Assign Nine Roles')
+              original='const mission = "Prepare an evidence-based, non-confidential operating plan for a one-person technology company.";'
+              assert original in node['parameters']['jsCode']
+              node['parameters']['jsCode']=node['parameters']['jsCode'].replace(
+                  original,'const mission = '+json.dumps(mission)+';')
           assert workflow['active'] is False and len(workflow['nodes'])==6
-          # The nine specialists see ONLY evidence-graded, public status labels.
-          evidence=json.loads(Path('reports/public-business-readback.json').read_text())
-          assert evidence['schema']=='plenum-public-business-readback-v1'
-          assert len(evidence['reports'])==3
-          allowed={'corporate','platform','public_server'}
-          assert set(x['service'] for x in evidence['reports'])==allowed
-          assert all(x['status'] in {'PUBLIC_HTTP_VERIFIED','UNVERIFIED'} for x in evidence['reports'])
-          summary='; '.join(x['service']+'='+x['status'] for x in evidence['reports'])
-          mission=('Review independently reread PUBLIC business web availability: '+summary+
-              '. Give bounded, testable next steps for your specialist role. Do not invent customer transactions, send messages, or claim accounts were accessed.')
-          node=next(n for n in workflow['nodes'] if n['name']=='Assign Nine Roles')
-          original='const mission = "Prepare an evidence-based, non-confidential operating plan for a one-person technology company.";'
-          assert original in node['parameters']['jsCode']
-          node['parameters']['jsCode']=node['parameters']['jsCode'].replace(
-              original,'const mission = '+json.dumps(mission)+';')
 
           model=next(n for n in workflow['nodes'] if n['name']=='Local Ollama (Configure Credential)')
           model['parameters']['model']='qwen3:0.6b'
