@@ -63,6 +63,42 @@ def parse_issue(event: dict) -> dict:
     }
 
 
+def review_candidate_structure(raw: bytes) -> None:
+    """Independent first-pass rejection of model-generated empty implementations.
+
+    This is NOT functional testing or a security audit. Human/independent
+    behavior tests are still needed for every browser helper.
+    """
+    if not isinstance(raw, bytes) or not 80 <= len(raw) <= LIMIT:
+        raise ValueError("Bounded Python source candidate required")
+    try:
+        parsed = ast.parse(raw.decode("utf-8"), filename="proposal.py")
+    except (SyntaxError, UnicodeDecodeError) as exc:
+        raise ValueError("Candidate has invalid Python syntax") from exc
+    functions = [
+        node for node in ast.walk(parsed)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    ]
+    if not functions:
+        raise ValueError("Candidate contains no executable function")
+    if not any(isinstance(node, ast.Return) and node.value is not None
+               for node in ast.walk(parsed)):
+        raise ValueError("Candidate has no computed function result")
+    for node in ast.walk(parsed):
+        if isinstance(node, ast.Pass):
+            raise ValueError("Candidate contains empty pass implementation")
+        if isinstance(node, ast.Constant) and node.value is Ellipsis:
+            raise ValueError("Candidate contains ellipsis placeholder")
+        if isinstance(node, ast.Raise) and isinstance(node.exc, ast.Name) \
+                and node.exc.id == "NotImplementedError":
+            raise ValueError("Candidate raises unimplemented placeholder")
+        if (isinstance(node, ast.Raise)
+                and isinstance(node.exc, ast.Call)
+                and isinstance(node.exc.func, ast.Name)
+                and node.exc.func.id == "NotImplementedError"):
+            raise ValueError("Candidate raises unimplemented placeholder")
+
+
 def _out_dir(issue_number: int) -> Path:
     if type(issue_number) is not int or not 1 <= issue_number <= 999_999_999:
         raise ValueError("Invalid founder issue")
@@ -77,6 +113,7 @@ def run(event: dict, *, execute: bool = False) -> dict:
         **task,
         "model_executed": False,
         "source_candidate_syntax_verified": False,
+        "source_candidate_structurally_complete": False,
         "production_written": False,
         "external_account_actions": False,
         "independent_behavior_verified": False,
@@ -129,7 +166,10 @@ def run(event: dict, *, execute: bool = False) -> dict:
               "Do not use terminal, shell, network, browser, system secrets "
               "or any production website. Never claim the code ran, was "
               "integrated, or passed a live login. No unapproved writes. "
-              "Finish after writing proposal.py."
+              "Implement genuine Python logic, including at least one returned "
+              "computed result. Empty pass bodies, ellipsis, TODOs and "
+              "NotImplementedError are not acceptable. Finish after writing "
+              "proposal.py."
         )
         conversation.send_message(instructions)
         candidate = root / "proposal.py"
@@ -142,13 +182,18 @@ def run(event: dict, *, execute: bool = False) -> dict:
                 if not 80 <= len(raw) <= LIMIT:
                     raise ValueError("Candidate must be bounded nonempty Python")
                 try:
-                    ast.parse(raw.decode("utf-8"), filename="proposal.py")
+                    review_candidate_structure(raw)
                     break
-                except (UnicodeDecodeError, SyntaxError):
+                except ValueError as exc:
                     if attempt:
-                        raise RuntimeError("Agent could not repair syntax")
+                        raise RuntimeError(
+                            "Agent produced a nonfunctional or invalid candidate "
+                            "after one bounded repair"
+                        ) from None
                     conversation.send_message(
-                        "Independent Python AST validation failed. "
+                        "Independent structural reviewer rejected proposal.py: "
+                        + str(exc) + ". Provide actual implemented function "
+                        "logic and a computed return result; no placeholders. "
                         "Repair proposal.py only, without executing code."
                     )
             elif attempt:
@@ -168,10 +213,11 @@ def run(event: dict, *, execute: bool = False) -> dict:
             "status": "SOURCE_PROPOSAL_AWAITING_REVIEW",
             "model_executed": True,
             "source_candidate_syntax_verified": True,
+            "source_candidate_structurally_complete": True,
             "candidate_sha256": hashlib.sha256(raw).hexdigest(),
             "candidate_bytes": len(raw),
             "repair_rounds": attempt,
-            "note": "Actual FileEditor model code candidate, not a deployed feature.",
+            "note": "AST and generic no-stub gate only; independent functional validation still required.",
         })
     (output / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
     return receipt
