@@ -63,7 +63,19 @@ def resolve_public_ip(origin: str) -> str:
 class PinnedOriginProxy:
     """Single-origin loopback CONNECT broker, using *only* pinned public IP."""
 
-    def __init__(self, origin: str):
+    def __init__(self, origin: str, *, max_tunnels=MAX_TUNNELS,
+                 max_tunnel_bytes=MAX_TUNNEL_BYTES, max_lifetime=MAX_LIFETIME):
+        # Defaults preserve the original public-preview security envelope.
+        # Larger bounded values may be supplied only by a trusted owner worker.
+        if (not all(type(v) is int for v in
+                    (max_tunnels, max_tunnel_bytes, max_lifetime))
+                or not 1 <= max_tunnels <= 16
+                or not 1 <= max_tunnel_bytes <= 30_000_000
+                or not 1 <= max_lifetime <= 600):
+            raise ValueError("Invalid owner proxy transport bounds")
+        self.max_tunnels = max_tunnels
+        self.max_tunnel_bytes = max_tunnel_bytes
+        self.max_lifetime = max_lifetime
         self.origin = normalize_origin(origin)
         self.host = urlsplit(origin).hostname
         self.ip = None
@@ -85,7 +97,7 @@ class PinnedOriginProxy:
 
     async def _handle(self, reader, writer):
         remote = None
-        if self._active >= MAX_TUNNELS:
+        if self._active >= self.max_tunnels:
             writer.close()
             await writer.wait_closed()
             return
@@ -124,7 +136,7 @@ class PinnedOriginProxy:
                     if not chunk:
                         return
                     total += len(chunk)
-                    if total > MAX_TUNNEL_BYTES:
+                    if total > self.max_tunnel_bytes:
                         raise PermissionError("Public preview transfer bounded")
                     destination.write(chunk)
                     await destination.drain()
@@ -132,7 +144,7 @@ class PinnedOriginProxy:
                      asyncio.create_task(pump(rr, writer))]
             try:
                 done, pending = await asyncio.wait(
-                    tasks, timeout=MAX_LIFETIME,
+                    tasks, timeout=self.max_lifetime,
                     return_when=asyncio.FIRST_COMPLETED)
             finally:
                 for task in tasks:

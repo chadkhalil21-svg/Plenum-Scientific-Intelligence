@@ -1,11 +1,9 @@
 """Owner-verified self-service website origin registration.
 
 Reuses the existing owner Auth0 session, signed CSRF tokens, encrypted
-GCS vault and single-owner scope. This is a FIRST stage for a universal
-browser; registration deliberately does NOT enable Chromium navigation.
-The original BROWSER_ALLOWED_ORIGINS browser network policy remains intact
-until a separately tested per-origin egress/network isolation enforcement
-can consume these grants. Never read this from untrusted web content,
+GCS vault and single-owner scope. Owner-only private sign-in now consumes active grants using the existing
+pinned-public-IP CONNECT proxy; general model-controlled navigation does not.
+The original BROWSER_ALLOWED_ORIGINS signed chat action policy remains intact. Never read this from untrusted web content,
 GitHub issue instructions, or a model-generated request alone.
 """
 from __future__ import annotations
@@ -176,8 +174,9 @@ def mount_runtime_site_grants(app):
             "<small>Only your verified owner session can register a site. "
             "Registration is encrypted, limited to exact public HTTPS origins "
             "and expires automatically after seven days. "
-            "<strong>Registration alone does NOT activate browser navigation</strong>; "
-            "a separate network isolation and approval gate is required.</small>",
+            "<strong>Registration enables only owner-operated private sign-in</strong> "
+            "through an IP-pinned single-origin browser. ChatGPT account "
+            "actions and cross-site sign-in remain separately gated.</small>",
             "<form method='post' action='/owner/sites/authorize'>"
             "<label>Website HTTPS origin (for example https://example.org)"
             "<input name='site' type='url' maxlength='240' autocomplete='off' required>"
@@ -201,7 +200,8 @@ def mount_runtime_site_grants(app):
                 if preview_enabled else "")
             parts.append(
                 "<article><strong>" + escape(origin) + "</strong>"
-                "<p>Registration active. Signed-in browsing and website changes "
+                "<p>Registration active. Owner-only private sign-in is available "
+                "through pinned Chromium. ChatGPT actions and website changes "
                 "remain separately gated.</p>" + preview_form +
                 "<form method='post' action='/owner/sites/revoke'>"
                 "<input type='hidden' name='site' value='" + escape(origin, quote=True) + "'>"
@@ -271,8 +271,9 @@ def mount_runtime_site_grants(app):
         return _page("Website registration saved",
             "<article>Owner-only website <strong>" + escape(result["site"]) +
             "</strong> was saved in the existing encrypted vault for seven days. "
-            "Browser navigation to dynamically registered sites remains "
-            "disabled until the separate safe-network execution gate passes.</article>"
+            "Owner-only private Chromium may now open this exact website through "
+            "its pinned-origin gateway. ChatGPT actions, cross-site sign-in "
+            "and website changes are NOT authorized.</article>"
             "<p><a href='/owner/sites'>Manage registered sites</a></p>")
 
     @app.post("/owner/sites/revoke", response_class=HTMLResponse)

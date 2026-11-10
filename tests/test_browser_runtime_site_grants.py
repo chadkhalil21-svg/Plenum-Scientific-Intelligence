@@ -177,7 +177,7 @@ class OwnerSiteRegistrationHttpTests(unittest.TestCase):
     def test_owner_only_ui_and_exact_site_confirmation(self):
         page = self.client.get("/owner/sites")
         self.assertEqual(page.status_code, 200)
-        self.assertIn("Registration alone does NOT activate browser navigation", page.text)
+        self.assertIn("Registration enables only owner-operated private sign-in", page.text)
         self.assertIn("Register owner-approved website", page.text)
         self.assertEqual(page.headers.get("cache-control"), "no-store")
         with patch.object(grants, "public_dns_only", return_value=None) as dns:
@@ -189,7 +189,7 @@ class OwnerSiteRegistrationHttpTests(unittest.TestCase):
         self.assertEqual(result.status_code, 200)
         dns.assert_called_once_with(SITE)
         self.assertTrue(self.store.authorized(owner=OWNER, origin=SITE))
-        self.assertIn("does NOT activate browser navigation", page.text)
+        self.assertIn("ChatGPT account actions and cross-site sign-in remain separately gated", page.text)
         self.assertNotIn("browser_navigation_enabled", result.text)
         self.assertIn(SITE, self.client.get("/owner/sites").text)
 
