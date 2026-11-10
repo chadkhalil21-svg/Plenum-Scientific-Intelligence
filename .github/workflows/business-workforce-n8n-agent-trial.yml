@@ -142,16 +142,41 @@ jobs:
       - name: Verify output count and review status without publishing draft content
         run: |
           python - <<'PY'
+          import os, json
           from pathlib import Path
           text=Path('runtime-trial/run.log').read_text(errors='replace')
           assert 'Error executing workflow' not in text
-          assert text.count('DRAFT_AWAITING_FOUNDER_REVIEW')>=9, 'Expected nine founder-review entries'
-          for role in ('research','engineering','browser','creative','marketing',
-                       'operations','simulation','support','verification'):
-              assert '"role": "'+role+'"' in text, 'Missing role '+role
-          print('PASS: Nine actual model-produced drafts with role-labeled founder review; factual accuracy remains unverified.')
+          if os.environ.get('GITHUB_EVENT_NAME') == 'issues':
+              meta=json.loads(Path('runtime-trial/department-metadata.json').read_text())
+              role=meta['role']
+              assert text.count('DRAFT_AWAITING_FOUNDER_REVIEW')>=1
+              assert '"role": "'+role+'"' in text, 'Assigned role did not execute'
+              for other in ('research','engineering','browser','creative','marketing',
+                            'operations','simulation','support','verification'):
+                  if other != role:
+                      assert '"role": "'+other+'"' not in text, 'Unapproved role executed'
+              Path('runtime-trial/verified-department.json').write_text(json.dumps({
+                  'role':role,'status':'DRAFT_AWAITING_FOUNDER_REVIEW',
+                  'model_executed':True,'independent_fact_verification':False,
+                  'external_account_actions':False,
+              })+'\n')
+              print('PASS: One assigned n8n AI department produced founder-review draft')
+          else:
+              assert text.count('DRAFT_AWAITING_FOUNDER_REVIEW')>=9, 'Expected nine founder-review entries'
+              for role in ('research','engineering','browser','creative','marketing',
+                           'operations','simulation','support','verification'):
+                  assert '"role": "'+role+'"' in text, 'Missing role '+role
+              print('PASS: Nine native model drafts; factual quality not independently verified.')
 
           PY
+      - name: Preserve public-only single-department outcome, not chat contents
+        if: always() && github.event_name == 'issues'
+        uses: actions/upload-artifact@v4
+        with:
+          name: plenum-department-public-status-${{ github.event.issue.number }}
+          path: runtime-trial/verified-department.json
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Delete temporary credentials, n8n database and model
         if: always()
         run: |
