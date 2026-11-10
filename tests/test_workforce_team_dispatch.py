@@ -74,7 +74,7 @@ class TeamDispatchIntegration(unittest.TestCase):
     def test_worker_failure_is_recorded_not_marked_success(self):
         with tempfile.TemporaryDirectory() as d, patch(
             "plenum_ai.workforce_team_dispatch.dispatch",
-            side_effect=RuntimeError("unverified"):
+            side_effect=RuntimeError("unverified")
         ):
             r=run_issue(event(),output_dir=Path(d))
             self.assertEqual(r["status"],"BLOCKED_WORKER_OR_VERIFICATION")
