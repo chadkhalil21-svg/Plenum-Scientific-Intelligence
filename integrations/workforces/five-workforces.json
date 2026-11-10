@@ -111,7 +111,7 @@
   ],
   "free_first_capability_registry": {
     "relative_path": "../agent-catalog/upstream-sources.json",
-    "registered_reusable_sources": 33,
+    "registered_reusable_sources": 35,
     "selection_command": "python -m plenum_ai.agent_library --suggest-source 'aerodynamics cfd'",
     "selection_inference_calls": 0,
     "source_lookup_only": true,
