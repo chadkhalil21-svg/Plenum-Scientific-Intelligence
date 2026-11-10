@@ -1,5 +1,12 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-10 UTC | Owner-private bounded read-only site navigation — SOURCE PR ONLY, NOT DEPLOYED
+
+Following founder browser workforce command, the existing code now has a reviewable owner-only real-runtime adapter `services/computer_browser/owner_navigation.py`: a verified Auth0 owner can submit at most three literal link labels on one already-approved saved-session website. The adapter restores the original encrypted per-origin Playwright state inside the private service, forces the original public-IP-pinned CONNECT transport, blocks cross-origin traffic, non-GET/HEAD methods, WebSockets, downloads and active session-control paths, and delegates bounded steps to the existing `owner_task_loop.py` and `browser_actions.py`. It fails closed on missing/ambiguous elements and post-click uncertainty without replay. No model sees private page data or grants consent; the owner CSRF token is bound to the exact website and action, and the result remains in the authenticated owner portal.
+
+This is a **deterministic link-following convenience**, NOT TinyFish-equivalent general autonomous browsing, model-directed visual planning, verified authenticated account restoration, private account changes, secure OAuth signup, or live ChatGPT MCP viewer. Even HTTP GET can have effects on incorrectly designed websites. A saved encrypted state does not prove login remains active. New code requires targeted CI review, merge, protected deployment and a **new real owner-authorized logged-in website acceptance** before operational success can be claimed. Original [issue #310](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/310) remains open and no cloud permission or paid service is requested.
+
+
 ## 2026-11-10 UTC | Bounded adaptive browser action adapter in PR #395 — SOURCE REVIEW, NOT PRODUCTION
 
 Founder directed the existing Plenum workforce to complete Computer Browser for general TinyFish-like authorized tasks. Native **Browser Department agent #394 / run #42870239361** executed one actual local Qwen n8n draft and reported `DRAFT_AWAITING_FOUNDER_REVIEW`, independently fact-verified false; it did **not** write repository code, operate private websites, or deploy a browser. This distinction remains mandatory.
