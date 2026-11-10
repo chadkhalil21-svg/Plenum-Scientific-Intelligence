@@ -580,13 +580,13 @@ def mount_private_login(app):
                         if demo=="0":
                             await page.reload(wait_until="domcontentloaded",timeout=25000)
                     elif kind=="save":
-                        if not safe_url(page.url,origins={origin}):
-                            await ws.send_json({"type":"save_result","ok":False,
-                                "message":"Return to the original website before saving its session."})
-                            continue
                         if demo=="1":
                             await ws.send_json({"type":"save_result","ok":False,
                                 "message":"Offline test does not save login state"})
+                            continue
+                        if not safe_url(page.url,origins={origin}):
+                            await ws.send_json({"type":"save_result","ok":False,
+                                "message":"Return to the original website before saving its session."})
                             continue
                         try:
                             origin="https://"+urlsplit(site).hostname
