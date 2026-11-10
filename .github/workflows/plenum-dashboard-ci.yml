@@ -1,0 +1,51 @@
+name: Plenum Command Center | Static Dashboard Safety
+on:
+  pull_request:
+    paths:
+      - 'dashboard/**'
+      - '.github/workflows/plenum-dashboard-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'dashboard/**'
+permissions:
+  contents: read
+jobs:
+  static-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check public-dashboard contract and JavaScript syntax
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          import re
+          page=Path('dashboard/index.html').read_text(encoding='utf-8')
+          required=('Command Center','id="chart"','id="runsHome"','id="tasksHome"',
+                    'id="agentGrid"','id="scheduleGrid"','id="objective"',
+                    'id="prepare"','id="mic"','id="speak"')
+          assert all(x in page for x in required)
+          assert "api.github.com/repos/" in page
+          assert 'window.open(url' in page, 'Founder review required, not direct autonomous issue post'
+          assert 'github.com/'+ 'chadkhalil21-svg/Plenum-Scientific-Intelligence' in page
+          assert 'SpeechRecognition' in page and 'SpeechSynthesisUtterance' in page
+          assert 'PLENUM_CHIEF_PUBLIC_V1' in page
+          assert 'PLENUM_DEPARTMENT_PUBLIC_V1' in page
+          assert 'ELEVENLABS_API_KEY' not in page
+          assert 'xi-api-key' not in page
+          assert 'ghp_' not in page and 'github_pat_' not in page
+          assert 'customer account' in page.lower() or 'customer data' in page.lower()
+          assert re.search(r'const repo=',page)
+          scripts=re.findall(r'<script>(.*?)</script>',page,flags=re.S)
+          assert len(scripts)==1
+          Path('/tmp/plenum-command-center.js').write_text(scripts[0],encoding='utf-8')
+          print('PASS: dashboard source-only security contract')
+          PY
+          node --check /tmp/plenum-command-center.js
