@@ -1,5 +1,12 @@
 # Engineering and Scientific Ledger
 
+## 2026-11-09 21:22 ET | Owner registry rejects website; targeted URL/DNS diagnostics proposed
+
+Owner Edge screenshot of /owner/sites/authorize shows JSON detail "Invalid or unsafe HTTPS origin" on attempted App Store Connect registration. Submitted field and backend DNS records are not visible, so the exact rejecting condition is NOT established. Original normalize_origin rejects harmless trailing root slash, and same error can mean DNS failure or a nonpublic destination. This is a Plenum registration failure BEFORE any Apple login response, not Apple refusing automation.
+
+New original-registry-only proposed correction: accept one optional trailing root slash at owner form boundary, keep exact strict canonical HTTPS origin stored encrypted with original owner Auth0, CSRF/AUTHORIZE, public DNS guard, GCS CAS and IP-pinned proxy; distinguish user-readable malformed 400, resolver unavailable 503, unsafe IP 403. Focused tests exercise actual appstoreconnect.apple.com URL, malformed paths and credentials, and DNS failures. Evidence status: SOURCE ONLY until CI, protected Cloud Run release, and new real owner registration. This is not authenticated autonomy or an Apple saved session. Keep original issue #310 open.
+
+
 ## 2026-11-09 ET / 2026-11-10 UTC | Original pinned registered-owner sign-in deployed — PR #315, protected release SUCCESS
 
 New owner UI evidence: authenticated Edge had shown WebSocket 1006 with blank Chromium canvas upon attempting an unregistered `appstoreconnect.apple.com` URL; 1006 alone did not establish website rejection. Existing `/owner/sites` encrypted dynamic registration previously did NOT authorize `/owner/live`, which enforced static `BROWSER_ALLOWED_ORIGINS`. This general architectural mismatch has now been repaired *for owner-operated single-origin private sign-in only*, reusing the original Playwright browser, Auth0 owner identity, encrypted GCS site registry and IP-pinned HTTPS CONNECT broker, without a new browser or universal account write permission. Owner preflight distinguishes no grant from bad WebSocket upgrade; owner-saved sessions can be listed/read on active registered origins with pinned same-site navigation. Cross-site OAuth identity redirects, JS-dependent third-party data flows, autonomous agent reasoning and native in-chat viewer remain not demonstrated.
