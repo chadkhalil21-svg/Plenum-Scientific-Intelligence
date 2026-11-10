@@ -23,6 +23,8 @@ REPO = "chadkhalil21-svg/Plenum-Scientific-Intelligence"
 OWNER = "chadkhalil21-svg"
 TITLE = "[Plenum Workforce] public research"
 MAGIC = "PLENUM_PUBLIC_WORKFORCE_V1"
+MAGIC_V2 = "PLENUM_PUBLIC_WORKFORCE_V2"
+PUBLIC_KINDS = frozenset({"public_research", "public_program", "public_science", "public_creative"})
 TOPIC = re.compile(r"^[\w\s,\-.()/+]{20,120}$", re.UNICODE)
 
 
@@ -37,16 +39,26 @@ def parse_public_issue(event: dict) -> dict:
             or not isinstance(issue.get("body"), str)):
         raise ValueError("Not a founder-authorized public research assignment")
     lines = issue["body"].splitlines()
-    if (len(lines) != 2 or lines[0] != MAGIC
-            or not lines[1].startswith("objective: ")):
-        raise ValueError("Public task must use exact two-line workforce form")
-    objective = lines[1][11:].strip()
+    if len(lines) == 2 and lines[0] == MAGIC and lines[1].startswith("objective: "):
+        kind = "public_research"
+        objective = lines[1][11:].strip()
+    elif (len(lines) == 3 and lines[0] == MAGIC_V2
+          and lines[1].startswith("kind: ")
+          and lines[2].startswith("objective: ")):
+        kind = lines[1][6:].strip()
+        objective = lines[2][11:].strip()
+    else:
+        raise ValueError("Use exact Plenum public workforce v1 or v2 task form")
+    if kind not in PUBLIC_KINDS:
+        raise ValueError("Unknown public worker type")
     if (not TOPIC.fullmatch(objective) or
             any(word in objective.lower() for word in
                 ("password", "secret", "credential", "token", "confidential", "private key"))):
         raise ValueError("Only a bounded, explicitly PUBLIC objective is allowed")
+    from .workforce_team_dispatch import ROLES
+    worker = "existing_plenum_world_horizon" if kind == "public_research" else ROLES[kind]
     return {"issue_number": issue["number"], "objective": objective,
-            "kind": "public_research", "worker": "existing_plenum_world_horizon",
+            "kind": kind, "worker": worker,
             "requested_by": OWNER, "cost_ceiling_usd": 0,
             "approval": "read_only_public_sources_only"}
 
@@ -80,6 +92,17 @@ def validate_original_report(path: Path, objective: str) -> dict:
 def run_issue(event: dict, *, output_dir: Path, runner=subprocess.run) -> dict:
     task = parse_public_issue(event)
     output_dir.mkdir(parents=True, exist_ok=True)
+    if task["kind"] != "public_research":
+        from .workforce_team_dispatch import dispatch
+        try:
+            outcome = dispatch(task, output_dir)
+        except (OSError, ValueError, RuntimeError, SyntaxError, KeyError, TypeError):
+            return {**task, "status": "BLOCKED_WORKER_OR_VERIFICATION",
+                    "verified": False, "reason": "Specialist did not pass independent review",
+                    "output_artifact": None}
+        return {**task, **outcome, "business_accounts_touched": False,
+                "no_money_spent_by_worker": True,
+                "completed_at_utc": datetime.now(timezone.utc).isoformat()}
     output = output_dir / ("workforce-public-" + str(task["issue_number"]) + ".json")
     # Reuse the ALREADY tested worker. No shell, model install, tokens, or new browser.
     command = [
@@ -144,12 +167,17 @@ def publish_status(issue_number: int, summary: dict, *, token: str,
     if any(isinstance(x, dict) and marker in str(x.get("body", "")) for x in comments):
         return "ALREADY_RECORDED"
     status = summary["status"]
-    notes = ("Status: **" + status + "**. "
-             "Worker: existing Plenum public research reader. "
-             "Public source records: " + str(summary.get("source_linked_records", 0))
-             + ". Findings are unreviewed leads, not validated discoveries. "
-             "No customer accounts, private data or business writes accessed. "
-             "Run evidence: https://github.com/" + REPO + "/actions/runs/" + run_id)
+    notes = (
+        "Status: **" + status + "**. "
+        "Assigned original Plenum worker: " + str(summary.get("worker", "unverified"))
+        + ". Task type: " + str(summary.get("kind", "unverified"))
+        + ". Verified scope: " + str(summary.get("verified_scope",
+                                "blocked or incomplete"))
+        + ". Public research leads: " + str(summary.get("source_linked_records", 0))
+        + ". Output requires founder review; no customer accounts, "
+          "private data, paid services or business writes used. "
+        + "Run evidence: https://github.com/" + REPO + "/actions/runs/" + run_id
+    )
     body = marker + "\n" + notes[:1200]
     data = json.dumps({"body": body}).encode()
     with client.open(Request(url, data=data,
