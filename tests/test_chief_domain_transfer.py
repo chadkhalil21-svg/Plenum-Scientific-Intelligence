@@ -60,7 +60,7 @@ class CrossDomainContracts(unittest.TestCase):
             def read(self,n):
                 return b'{"message":{"DOI":"10.1234/WRONG","title":["Bad metadata"],"publisher":"Fake Publisher","published":{"date-parts":[[2016]]}}}'
         class Fake(Client):
-            def open(self,*args): return Wrong()
+            def open(self,*args,**kwargs): return Wrong()
         with self.assertRaises(ValueError):
             x.read_crossref(x.DOI, opener=Fake())
 
@@ -68,7 +68,7 @@ class CrossDomainContracts(unittest.TestCase):
         from urllib.error import URLError
         class Transient(Client):
             def __init__(self): self.calls=0
-            def open(self, *args):
+            def open(self, *args, **kwargs):
                 self.calls += 1
                 if self.calls==1: raise URLError("temporary")
                 return Response()
