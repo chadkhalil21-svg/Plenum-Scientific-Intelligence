@@ -16,6 +16,65 @@ if HAS_TEST:
 
 @unittest.skipUnless(HAS_TEST,"Dedicated browser CI installs optional Playwright and IAP SDK")
 class PrivateLoginTests(unittest.TestCase):
+    def test_trusted_owner_saved_login_reused_without_cross_site_secrets(self):
+        from unittest.mock import MagicMock
+        site="https://github.com"
+        private_id="owner-fixture"
+        vault=MagicMock()
+        vault.status.return_value={"profile_exists":False}
+        with patch.object(private_login.BrowserProfileStore,"from_environment",
+                          return_value=vault):
+            self.assertIsNone(private_login._load_existing_owner_state(
+                owner_id=private_id,origin=site))
+        vault.load_for_trusted_worker.assert_not_called()
+        vault.status.return_value={"profile_exists":True}
+        vault.load_for_trusted_worker.return_value=({
+            "cookies":[
+                {"domain":".github.com","name":"owner-cookie","value":"confidential"},
+                {"domain":"accounts.example.org","name":"other","value":"deny"},
+            ],
+            "origins":[
+                {"origin":site,"localStorage":[{"name":"auth","value":"private"}]},
+                {"origin":"https://accounts.example.org","localStorage":[]},
+            ],
+        },42)
+        with patch.object(private_login.BrowserProfileStore,"from_environment",
+                          return_value=vault):
+            state=private_login._load_existing_owner_state(
+                owner_id=private_id,origin=site)
+        self.assertEqual([x["name"] for x in state["cookies"]],["owner-cookie"])
+        self.assertEqual([x["origin"] for x in state["origins"]],[site])
+        vault.status.assert_called_with(owner=private_id,origin=site)
+        vault.load_for_trusted_worker.assert_called_once_with(
+            owner=private_id,origin=site)
+
+    def test_corrupt_saved_site_state_fails_closed_not_credentials_disclosed(self):
+        from unittest.mock import MagicMock
+        vault=MagicMock()
+        vault.status.return_value={"profile_exists":True}
+        vault.load_for_trusted_worker.return_value=({"cookies":[],"origins":[]},4)
+        with patch.object(private_login.BrowserProfileStore,"from_environment",
+                          return_value=vault):
+            with self.assertRaises(PermissionError):
+                private_login._load_existing_owner_state(
+                    owner_id="owner",origin="https://example.com")
+
+    def test_click_to_approve_github_assets_and_resume_are_owner_only(self):
+        html=private_login.login_html("fixture-nonce")
+        self.assertIn('id="github-quick-open"',html)
+        self.assertIn('site.origin!=="https://github.com"',html)
+        self.assertIn('"https://github.githubassets.com,https://avatars.githubusercontent.com"',html)
+        self.assertIn('document.getElementById("approve-resources").checked=true',html)
+        self.assertIn('document.getElementById("open").click()',html)
+        self.assertIn('id="resume-saved" type="checkbox" checked',html)
+        self.assertIn('u.searchParams.set("resume_saved",resumeSaved)',html)
+        import inspect
+        route=inspect.getsource(private_login.mount_private_login)
+        self.assertIn('resume_saved not in ("0", "1")',route)
+        self.assertIn('owner_id=owner["private_owner_id"], origin=origin',route)
+        self.assertIn('**({"storage_state": saved_state} if saved_state is not None else {})',route)
+        self.assertIn('Website login validity is not yet verified.',route)
+
     def test_registered_site_may_approve_exact_static_resource_origins(self):
         main="https://github.com"
         resource="https://github.githubassets.com"
