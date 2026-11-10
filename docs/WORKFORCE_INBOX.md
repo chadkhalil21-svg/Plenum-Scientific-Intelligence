@@ -2,6 +2,27 @@
 
 **Scope:** Public, nonsensitive tasks only. This is an ACTUAL input path to one approved existing research worker, not a universal autonomous company.
 
+## 2026-11-10: Four existing specialist teams through one founder inbox
+
+A single founder instruction now supports four **PUBLIC-only** task kinds, selected by Computer when creating a GitHub issue (the founder need not write technical syntax):
+
+- `public_research`: existing World Horizon worker; delivers public source leads, not verified conclusions.
+- `public_program`: existing Program Foundry; builds a bounded review-only data-validator starter with syntax+SHA-256 verification, **not** autonomous full application coding.
+- `public_science`: original durable LangGraph known-model numerical worker; uses existing SQLite checkpoint and independent state readback, **not** a new scientific prediction or original discovery.
+- `public_creative`: original Creative Studio; creates original SVG and MusicXML sketches with independent XML parsing, **not** independently judged artistic excellence.
+
+Title stays `[Plenum Workforce] public research` for compatibility with the previously verified founder-only trigger. New strict issue body:
+
+```
+PLENUM_PUBLIC_WORKFORCE_V2
+kind: public_program
+objective: Create a public data validator for scientific observations
+```
+
+Computer may substitute `public_science`, `public_creative` or `public_research` after choosing the most appropriate **existing** worker. The original two-line V1 format remains working. The new program/science/creative tasks use existing templates or fixtures; none constitutes a new free-running model or general agent reasoning. The Chief of Staff's Deep Agents model-backed route remains a *separate*, previously demonstrated bounded pilot, **not** secretly connected to every issue.
+
+The issue and outcome comment are durable public task memory; the worker is a temporary standard GitHub Actions runner. A private encrypted credential vault and an owner-approved always-on host are still missing; ChatGPT-connected Gmail/Stripe/Resend tokens do not automatically transfer. Important: public issues must never contain secrets, customers' details, confidential proposals or patent information.
+
 ## How the founder uses it
 In any chat with the connected GitHub app, ask Computer to **assign a public research task to the Plenum workforce**. Computer creates one issue in the existing `chadkhalil21-svg/Plenum-Scientific-Intelligence` repository:
 
