@@ -7,7 +7,6 @@ authorize cross-site SSO, general ChatGPT actions, or unrestricted website write
 from urllib.parse import urlsplit
 
 from .engine import safe_url
-from .runtime_site_grants import enabled, normalize_origin, OwnerSiteGrantStore
 
 
 def owner_live_origin(*, owner_id: str, site: str) -> tuple[str, bool]:
@@ -18,6 +17,7 @@ def owner_live_origin(*, owner_id: str, site: str) -> tuple[str, bool]:
     """
     if not isinstance(owner_id, str) or not owner_id or not isinstance(site, str):
         raise PermissionError("Verified owner and website are required")
+    from .runtime_site_grants import enabled, normalize_origin, OwnerSiteGrantStore
     try:
         parsed = urlsplit(site)
         if parsed.port is not None or not parsed.hostname:
