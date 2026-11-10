@@ -79,6 +79,24 @@ class FounderChiefWorkforcePolicy(TestCase):
                     "PLENUM_PUBLIC_WORKFORCE_V2\nkind: "+kind))
         self.assertFalse(any("payment" in x for x in KIND_TO_AGENT))
 
+    def test_redundant_model_task_calls_never_claim_another_executed_worker(self):
+        from plenum_ai.chief_workforce_command import independently_accept_delegation
+        expected="public_program"
+        role="coding-specialist"
+        once=[{"kind":"public_program","outcome":{"status":"DRAFT_READY_FOR_FOUNDER"}}]
+        self.assertTrue(independently_accept_delegation(expected,[role],once,1))
+        self.assertTrue(independently_accept_delegation(expected,[role]*5,once,5))
+        self.assertFalse(independently_accept_delegation(
+            expected,["research-specialist",role],once,2))
+        self.assertFalse(independently_accept_delegation(
+            expected,[role],[],1))
+        self.assertFalse(independently_accept_delegation(
+            expected,[role],once*2,1))
+        self.assertFalse(independently_accept_delegation(
+            expected,[],once,0))
+        self.assertFalse(independently_accept_delegation(
+            expected,[role],once,2))
+
     def test_preflight_no_model_call_no_business_account_access(self):
         x=preflight(event())
         self.assertEqual(x["status"],"SOURCE_READY_NOT_EXECUTED")
