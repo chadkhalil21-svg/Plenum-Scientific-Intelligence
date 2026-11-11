@@ -1,0 +1,3 @@
+# GitHub source and public project tasks
+Reuse original repo chadkhalil21-svg/Plenum-Scientific-Intelligence and original Chief, Worker, Research and Goldfish. Read `docs/PLENUM_COMPUTER_SOURCE_INDEX.md` before searching all files. Keep every job bounded and project-related. For changes create a narrow PR, run the **one relevant existing workflow**, and independently read its exact-head result; no repeated full-repo tests.
+A source-only PR is NOT proof of a paired WhatsApp account, persistent host, signed-in browser, research fact validity or video playback. Original GitHub Issues and workflow artifacts preserve accepted PUBLIC outputs; no private account content or API keys in issue body. A failed agent attempt is a blocker, not a completed task.
