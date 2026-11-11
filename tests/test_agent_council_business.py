@@ -28,7 +28,9 @@ class BusinessAdvisoryContractTests(TestCase):
         self.assertEqual(report["council_type"], "business_advisory")
         self.assertEqual([x["role"] for x in report["perspectives"]],
                          ["operations", "finance", "strategy", "governance"])
-        self.assertEqual(ask.call_count, 5)
+        self.assertEqual(ask.call_count, 6)
+        self.assertTrue(report["founder_business_advisor_recommendation"])
+        self.assertFalse(report["recommendation_verified_against_external_sources"])
         self.assertFalse(report["sources_independently_checked"])
         self.assertFalse(report["account_actions_executed"])
         self.assertFalse(report["next_steps_approved"])
