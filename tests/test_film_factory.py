@@ -23,6 +23,27 @@ class FilmFactoryTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 validate(data, root)
 
+    def test_original_narration_and_music_require_individual_rights(self):
+        # Metadata-only validation; no new render or TTS call.
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / "voice.wav").write_bytes(b"author-owned-test-placeholder")
+            (root / "score.wav").write_bytes(b"author-owned-test-placeholder")
+            data = json.loads(FIXTURE.read_text())
+            data["music"] = {
+                "path": "score.wav", "creator": "Plenum composer",
+                "license": "original", "origin": "self-composed", "rights_reviewed": True
+            }
+            data["narration"] = {
+                "path": "voice.wav", "creator": "Plenum voice actor",
+                "license": "original", "origin": "self-recorded", "rights_reviewed": True,
+                "voice_usage_rights_reviewed": True
+            }
+            self.assertEqual(len(validate(data, root)), 4)
+            data["narration"]["voice_usage_rights_reviewed"] = False
+            with self.assertRaises(ValueError):
+                validate(data, root)
+
     @unittest.skipUnless(shutil.which("ffmpeg") and shutil.which("ffprobe"), "System FFmpeg absent")
     def test_original_movie_has_real_audio_and_video(self):
         # One small integrated render, not every scene permutation.

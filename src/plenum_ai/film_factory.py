@@ -57,6 +57,26 @@ def _validate_provenance(item: dict, *, original: bool) -> None:
         raise ValueError("A human must first confirm the precise asset license and context")
 
 
+
+def _validate_audio_provenance(item: dict, kind: str) -> None:
+    """Permit rights-reviewed original tracks while requiring explicit voice rights.
+
+    A track marked original must be genuinely authored/recorded by its creator.
+    Textual declarations are still claims, not independent copyright clearance.
+    """
+    if item.get("license") == "original":
+        if (item.get("rights_reviewed") is not True
+                or not isinstance(item.get("creator"), str)
+                or not item["creator"].strip()
+                or item.get("origin") not in {"self-recorded", "self-composed", "original-procedural"}
+                or item.get("source_url")):
+            raise ValueError("Original audio needs creator, origin and explicit rights review")
+    else:
+        _validate_provenance(item, original=False)
+    if kind == "narration" and item.get("voice_usage_rights_reviewed") is not True:
+        raise ValueError("Narration must have voice identity and commercial-usage rights reviewed")
+
+
 def validate(storyboard: dict, root: Path) -> list[dict]:
     if storyboard.get("schema") != "plenum-film-storyboard-v1":
         raise ValueError("Unsupported film storyboard schema")
@@ -96,7 +116,7 @@ def validate(storyboard: dict, root: Path) -> list[dict]:
             if not isinstance(item, dict):
                 raise ValueError("Track must be a dictionary")
             _local_file(item.get("path"), root)
-            _validate_provenance(item, original=False)
+            _validate_audio_provenance(item, kind=name)
     return scenes
 
 
@@ -227,7 +247,17 @@ def render(storyboard_path: Path, output_dir: Path) -> dict:
               "ffprobe_streams": info["streams"],
               "source_ledger": [{"scene": i + 1, "kind": s["type"], "license": s["license"],
                                  "source_url": s.get("source_url"), "rights_reviewed_claimed": s.get("rights_reviewed", False),
-                                 "concept_visualization": s["concept"]} for i, s in enumerate(scenes)]}
+                                 "concept_visualization": s["concept"]} for i, s in enumerate(scenes)],
+              "audio_source_ledger": {name: {
+                  "license": item.get("license"),
+                  "creator": item.get("creator"),
+                  "origin": item.get("origin"),
+                  "source_url": item.get("source_url"),
+                  "rights_reviewed_claimed": item.get("rights_reviewed") is True,
+                  "voice_usage_rights_reviewed_claimed": (
+                      item.get("voice_usage_rights_reviewed") is True if name == "narration" else None
+                  )
+              } for name in ("music", "narration") if (item := data.get(name)) is not None}}
     (output_dir / "render_receipt.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     return report
 
