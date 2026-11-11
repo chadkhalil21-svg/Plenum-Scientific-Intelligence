@@ -49,7 +49,7 @@ def inspect_roster():
     data = json.loads(ROSTER.read_text(encoding="utf-8"))
     roles = data["roles"]
     names = [x["name"] for x in roles]
-    if (len(names) != 10 or len(set(names)) != 10
+    if (len(names) != 11 or len(set(names)) != 10
             or not MANDATORY.issubset(names)
             or any(not x["name"].islower() or not x["name"].isalpha()
                    for x in roles)
