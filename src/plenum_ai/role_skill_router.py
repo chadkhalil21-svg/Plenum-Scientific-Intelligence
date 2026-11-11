@@ -25,6 +25,10 @@ MATCHES = {
     "plenum-independent-verification": ("verify", "audit", "check", "evidence", "independent", "source"),
     "plenum-simulation-validity": ("simulate", "model", "physics", "numerical", "thermal"),
     "plenum-skill-curation": ("skill", "plugin", "install", "repository", "license", "import"),
+    "plenum-platform-adoption": ("adopt", "integrate", "platform", "software", "tools", "free", "license", "vendor", "install", "plugin"),
+    "plenum-recency-research": ("recent", "last 30", "trends", "new developments", "youtube", "news", "research", "up to date"),
+    "plenum-design-audit": ("design", "website", "deck", "presentation", "visual", "interface", "layout", "slides"),
+    "plenum-local-media": ("audio", "transcript", "subtitle", "video", "music", "render", "recording", "whisper"),
 }
 WRITING_TRIGGERS = (
     "write", "draft", "rewrite", "edit", "proofread", "article", "email", "letter",
