@@ -67,3 +67,10 @@ Primary references (consult current versions when acting):
 4. Only after accepted public pilot, a founder-scoped private business-advice workflow may be activated on a real persistent host. The current public council is not a private CFO.
 
 Prepared from original-source research and founder constraints; review periodically as products and official guidance change.
+
+## Founder Business Advisor — separate from council (2026-11-11)
+The founder has explicitly requested a **decision-making adviser**, not merely a panel generating disconnected opinions. The new `business_advisor` named specialist role belongs to Commercial Operations and loads the `plenum-business-advisor` portable skill. The council's four independent views and external critic are *inputs* to the adviser, whose output must start with a **recommended choice and causal rationale**; also give alternatives, tradeoffs, urgency, next work owner and measurable acceptance. This is the *practical adviser* function. It is still untrusted public Qwen inference, not verified external counsel or a private financial analyst.
+
+Our decision procedure draws on Stanford Graduate School of Business's disciplined comparisons of alternatives, Harvard Business Review's decision framing and confirmation-bias critique, and SBA cost-benefit/cash-flow guidance. These are methodological references, not university sponsorship or actual named human advisers. The adviser should question the founder constructively where evidence is weak and revise advice after observing outcomes rather than merely affirming requests.
+
+The original five workforces remain intact, with this specialist added to **Commercial Operations**, not a sixth department. Skill mapping and adoption decisions reside in `docs/PLENUM_AGENT_SKILLS_AND_TOOL_LEDGER.md`. There is no separate production Hermes process, private account authorization or retained corporate adviser established solely by the profile definition.

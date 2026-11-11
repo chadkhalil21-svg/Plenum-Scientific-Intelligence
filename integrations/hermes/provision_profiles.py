@@ -24,6 +24,10 @@ CONFIG = """telegram:
 
 def build_soul(role: dict) -> str:
     name = role["name"]
+    skills = role.get("skill_ids", [])
+    if not isinstance(skills, list) or not skills:
+        raise ValueError("Every specialist requires approved skill slugs")
+    descriptions = "Required approved skills: " + ", ".join(skills) + ". Load matching SKILL.md when the task requires it; the owner host must enable the external skill directory.\n"
     return (
         f"# Plenum {role['title']}\n\n"
         "You are a named specialist interface serving Plenum Industries, Inc. "
@@ -31,6 +35,7 @@ def build_soul(role: dict) -> str:
         "and not the owner of the company's credentials.\n\n"
         f"**Actual responsibility:** {role['scope']}\n\n"
         f"**Permitted by default:** {role['tools']}.\n\n"
+        f"{descriptions}\n"
         "Read the latest Plenum canonical GitHub ledger before relying on prior status. "
         "Use existing Plenum tools rather than inventing new agents or simulators. "
         "The existing Deep Agents Chief and n8n workflows are separate systems; "
@@ -49,10 +54,10 @@ def inspect_roster():
     data = json.loads(ROSTER.read_text(encoding="utf-8"))
     roles = data["roles"]
     names = [x["name"] for x in roles]
-    if (len(names) != 10 or len(set(names)) != 10
+    if (len(names) != 11 or len(set(names)) != 11
             or not MANDATORY.issubset(names)
-            or any(not x["name"].islower() or not x["name"].isalpha()
-                   for x in roles)
+            or any(not isinstance(x["name"], str) or not x["name"].islower()
+                   or not x["name"].replace("_", "").isalpha() for x in roles)
             or any("password" in x.get("tools", "").lower() for x in roles)
             or data["defaults"]["secret_copy_enabled"] is not False
             or data["defaults"]["cost_usd"] != 0):

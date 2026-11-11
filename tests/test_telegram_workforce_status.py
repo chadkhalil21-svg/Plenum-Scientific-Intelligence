@@ -61,7 +61,8 @@ class TelegramAndHermesIntegrationTests(unittest.TestCase):
         module=importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         roster=module.inspect_roster()
-        self.assertEqual(len(roster),10)
+        self.assertEqual(len(roster),11)
+        self.assertIn("business_advisor",roster)
         self.assertIn("chief",roster)
         self.assertIn("verification",roster)
         with tempfile.TemporaryDirectory() as d:

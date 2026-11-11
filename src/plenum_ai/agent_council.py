@@ -151,12 +151,35 @@ def deliberate(event):
         "Clearly mark unverified claims. Do not decide for the founder.",
         "PUBLIC founder agenda: " + task["objective"] + "\n\n" + dossier[:9000],
     )
+    # Founder Business Advisor synthesizes the five existing council
+    # deliberation calls into a recommendation with action/why.
+    is_business = council_seats(task["objective"]) is BUSINESS_SEATS
+    advisor_decision = None
+    if is_business:
+        advisor_decision = _ask_local(
+            "You are the founder's BUSINESS ADVISOR, not merely a committee. "
+            "Give a decisive RECOMMENDATION FIRST: DO X rather than Y BECAUSE "
+            "A and B. Follow Stanford disciplined decision choice, Harvard "
+            "alternatives and SBA cash/operations principles. Assess at least "
+            "two realistic alternatives including defer; identify the greatest "
+            "business bottleneck, evidence quality, plausible risks, cost only "
+            "where directly supported, the named Plenum workforce to execute, "
+            "one concrete next step and independently observable success. "
+            "Clearly flag unsupported assumptions. Do NOT invent financial "
+            "numbers, sources, legal approval, an account action or grant. "
+            "This is preliminary public AI advice; founder retains decision.",
+            "PUBLIC founder decision: " + task["objective"]
+            + "\n\nIndependent reviewer proposals:\n" + dossier[:7200]
+            + "\n\nAdversarial critique:\n" + fresh[:1800],
+        )
     return {
         "schema": "plenum-ai-council-result-v1",
         "issue": task["issue"], "objective": task["objective"],
         "status": "ADVISORY_DELIBERATION_AWAITING_FOUNDER",
         "seats_completed": len(results),
-        "council_type": ("business_advisory" if council_seats(task["objective"]) is BUSINESS_SEATS else "general"),
+        "council_type": ("business_advisory" if is_business else "general"),
+        "founder_business_advisor_recommendation": advisor_decision,
+        "recommendation_verified_against_external_sources": False,
         "review_completed": True,
         "independent_counsel_or_advisors_contacted": False,
         "sources_independently_checked": False,

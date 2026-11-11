@@ -1,6 +1,6 @@
 {
   "schema": "plenum-five-workforce-registry-v1",
-  "updated_utc": "2026-11-10",
+  "updated_utc": "2026-11-11",
   "authority": "founder_approves_consequential_actions",
   "control_plane": "existing Plenum Chief, GitHub founder issue queue, n8n nine departments, council",
   "hosting_candidate": "Oracle Always Free Ampere A1; not yet provisioned",
@@ -57,7 +57,8 @@
       "roles": [
         "operations",
         "marketing",
-        "support"
+        "support",
+        "business_advisor"
       ],
       "public_kinds": [],
       "original_capability": "nine n8n drafts, public American Rider health audits",

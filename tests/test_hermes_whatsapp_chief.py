@@ -15,16 +15,16 @@ spec.loader.exec_module(mod)
 
 
 class WhatsAppChiefRoutingContract(unittest.TestCase):
-    def test_exact_original_nine_roles_and_chief_as_only_supervisor(self):
+    def test_nine_original_roles_plus_business_advisor_and_chief_as_only_supervisor(self):
         roles = mod.read_roles()
-        self.assertEqual(len(roles), 10)
+        self.assertEqual(len(roles), 11)
         self.assertEqual(set(roles), mod.EXPECTED)
         yaml = mod.render_chief_routes(roles)
         self.assertIn("backend: profile_routes", yaml)
         self.assertIn("max_concurrent_children: 2", yaml)
         self.assertIn("max_spawn_depth: 1", yaml)
         self.assertIn("orchestrator_enabled: false", yaml)
-        self.assertEqual(yaml.count("- name: "), 9)
+        self.assertEqual(yaml.count("- name: "), 10)
         self.assertNotIn("- name: chief", yaml)
         for role in mod.EXPECTED - {"chief"}:
             self.assertIn("- name: " + role + "\n", yaml)
@@ -67,7 +67,7 @@ class WhatsAppChiefRoutingContract(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root:
             path = Path(root) / "chief-routing.yaml"
             mod.safe_write(path, mod.render_chief_routes())
-            self.assertEqual(path.read_text().count("- name: "), 9)
+            self.assertEqual(path.read_text().count("- name: "), 10)
             self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o600)
             with self.assertRaises(FileExistsError):
                 mod.safe_write(path, "bad overwrite")

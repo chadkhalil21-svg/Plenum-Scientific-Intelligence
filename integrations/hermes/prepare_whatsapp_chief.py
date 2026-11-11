@@ -15,7 +15,7 @@ from pathlib import Path
 ROSTER = Path(__file__).with_name("roster.json")
 EXPECTED = frozenset({
     "chief", "research", "coding", "browser", "creative", "marketing",
-    "operations", "simulation", "support", "verification",
+    "operations", "simulation", "support", "verification", "business_advisor",
 })
 MAX_CONCURRENT = 2
 
@@ -25,18 +25,23 @@ def read_roles(path=ROSTER):
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     roles = data.get("roles")
     if (data.get("schema") != "plenum-hermes-profile-roster-v1"
-            or not isinstance(roles, list) or len(roles) != 10
+            or not isinstance(roles, list) or len(roles) != 11
             or any(not isinstance(r, dict) for r in roles)):
         raise ValueError("Invalid canonical Hermes roster")
     by_name = {role.get("name"): role for role in roles}
-    if len(by_name) != 10 or set(by_name) != EXPECTED:
-        raise ValueError("Expected exactly one original Chief and nine existing specialists")
+    if len(by_name) != 11 or set(by_name) != EXPECTED:
+        raise ValueError("Expected one Chief, nine original specialists, and one Business Advisor")
     if data.get("defaults", {}).get("cost_usd") != 0 or data.get("defaults", {}).get("private_app_access") is not False:
         raise PermissionError("The existing zero-spend and no-private-account policy must remain")
     for name, role in by_name.items():
         if (not isinstance(role.get("scope"), str) or not 5 <= len(role["scope"]) <= 500
                 or "\n" in role["scope"] or "\r" in role["scope"]):
             raise ValueError("Unreviewed or multiline specialist scope")
+        ids = role.get("skill_ids")
+        if not isinstance(ids, list) or not ids or any(
+                not isinstance(v, str) or not v.startswith("plenum-")
+                or not v.replace("-", "").isalnum() for v in ids):
+            raise ValueError("Role requires approved portable skill slugs")
     return by_name
 
 
@@ -44,7 +49,7 @@ def render_chief_routes(roles=None):
     """Use official advanced-delegation names and only already-approved roles."""
     roles = read_roles() if roles is None else roles
     if set(roles) != EXPECTED:
-        raise ValueError("All original nine specialist routes are required")
+        raise ValueError("Original specialists and the Business Advisor are required")
     lines = [
         "# OFFLINE EXAMPLE. Requires Hermes >=0.22.5 and its official",
         "# advanced-delegation plugin enabled in the Chief profile.",
@@ -91,7 +96,7 @@ def main(argv=None):
     if args.output is None:
         print(json.dumps({
             "status": "OFFLINE_CHIEF_CONFIG_READY",
-            "specialist_count": 9,
+            "specialist_count": 10,
             "roles": sorted(EXPECTED - {"chief"}),
             "max_concurrent_children": MAX_CONCURRENT,
             "whatsapp_group_connected": False,
@@ -101,7 +106,7 @@ def main(argv=None):
             "requires": [
                 "owner-controlled Hermes 0.22.5+ host",
                 "official advanced-delegation plugin",
-                "nine separately provisioned permitted profiles with model",
+                "ten separately provisioned permitted profiles with model",
                 "authorized dedicated WhatsApp number and founder/group allowlists",
             ],
         }, indent=2))

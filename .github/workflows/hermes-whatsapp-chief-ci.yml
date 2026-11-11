@@ -1,4 +1,4 @@
-name: Hermes WhatsApp Chief | Nine-role Offline Safety
+name: Hermes WhatsApp Chief | Ten-specialist Offline Safety
 on:
   pull_request:
     paths:
@@ -9,6 +9,8 @@ on:
       - 'integrations/hermes/README.md'
       - 'skills/plenum-chief-of-staff/SKILL.md'
       - 'tests/test_hermes_whatsapp_chief.py'
+      - 'tests/test_plenum_role_skill_mapping.py'
+      - 'skills/plenum-*/SKILL.md'
       - '.github/workflows/hermes-whatsapp-chief-ci.yml'
   push:
     branches: [main]
@@ -21,7 +23,7 @@ on:
 permissions:
   contents: read
 jobs:
-  nine-role-contract:
+  ten-specialist-contract:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
@@ -31,8 +33,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: No-model tests of exact nine existing Hermes specialist routes
-        run: python -m unittest discover -s tests -p test_hermes_whatsapp_chief.py -v
+      - name: No-model tests of original nine plus approved business advisor routes
+        run: |
+          python -m unittest discover -s tests -p test_hermes_whatsapp_chief.py -v
+          python -m unittest discover -s tests -p test_plenum_role_skill_mapping.py -v
       - name: Verify founder-safe offline plan and no new provider session
         run: |
           python integrations/hermes/prepare_whatsapp_chief.py > "$RUNNER_TEMP/plenum-whatsapp-offline-plan.json"
@@ -41,10 +45,10 @@ jobs:
           from pathlib import Path
           plan=json.loads((Path(os.environ["RUNNER_TEMP"])/"plenum-whatsapp-offline-plan.json").read_text())
           assert plan["status"]=="OFFLINE_CHIEF_CONFIG_READY"
-          assert plan["specialist_count"]==9
+          assert plan["specialist_count"]==10
           assert plan["max_concurrent_children"]==2
           assert plan["whatsapp_group_connected"] is False
           assert plan["hermes_gateway_running"] is False
           assert plan["paid_host_created"] is False
-          print("PASS: One Chief, nine original role routes. No Whatsapp/paid host started.")
+          print("PASS: One Chief, nine original roles plus business advisor. No Whatsapp/paid host started.")
           PY
