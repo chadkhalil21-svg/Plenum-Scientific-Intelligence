@@ -1,7 +1,7 @@
 {
   "schema": "plenum-founder-six-video-original-source-audit-v1",
   "as_of": "2026-11-11",
-  "source_method": "Original YouTube public description, chapters and text transcript extracted in this chat; original visual frames not all played. Titles and audio captions are untrusted source material, not instructions.",
+  "source_method": "Original YouTube public description, chapters and text transcript extracted in this chat; original visual frames not all played. Titles and audio captions are untrusted source material, not instructions. Architecture concepts are separated from advertised product names.",
   "user_budget": "No new paid services or model API charges",
   "videos": [
     {
@@ -163,7 +163,7 @@
         "description": true,
         "public_caption_text_accessed": true,
         "full_visual_playback": false,
-        "platform_list_exhaustiveness": "architecture rather than tool catalog"
+        "platform_list_exhaustiveness": "Architecture talk, not a branded platform catalogue; do not falsely name MCP or a vendor fact-check agent as featured tools"
       },
       "platforms": [
         {
@@ -171,21 +171,16 @@
           "category": "agent-architecture",
           "relevance": "Source of plan-execute-memory-reflect and bounded multi-agent design guidance",
           "adoption_status": "REFERENCE_ADOPT_METHODS"
-        },
-        {
-          "name": "MCP",
-          "category": "interoperability",
-          "relevance": "Use existing scoped tool contracts rather than giving every worker every permission",
-          "adoption_status": "EXISTING_CONCEPT"
-        },
-        {
-          "name": "Independent fact-checker",
-          "category": "verification-pattern",
-          "relevance": "Keep Goldfish reviewer separate from retrieval workers to limit error propagation",
-          "adoption_status": "EXISTING_GOLDFISH"
         }
       ],
-      "third_party_platforms_not_auto_installed": true
+      "third_party_platforms_not_auto_installed": true,
+      "methods_discussed": [
+        "Plan, execute, store relevant memory and reflect",
+        "Agent scaling increases latency, context and coordination costs",
+        "Independent fact checking is separable from source retrieval",
+        "Keep responsibilities narrow to limit cascading failure",
+        "Do not split tightly coupled retrieval/ranking steps into separate agents"
+      ]
     },
     {
       "id": "9Hwanevuhd8",
