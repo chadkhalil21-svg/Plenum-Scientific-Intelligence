@@ -24,3 +24,6 @@ Verified public source table: capability | source and date | claimed benefit | v
 
 ## Shared constraints
 Use public sources for public GitHub jobs. Private financial information, credentials, patents, customer records, and external actions require an independently authorized private integration. A skill file is portable instructions, not a running model, installed third-party integration, paid resource, or proof of completing a real task.
+
+## Uploader-description completeness before inference
+For public videos with numbered software lists, prefer the creator's complete published description over platform tags alone, and independently cross-check a timestamped chapter-by-chapter summary or real published subtitles. Record each research input as Uploader Description, Timestamp Summary, Full Caption, or Full Playback; NEVER claim the latter two occurred when only the first two were obtained. An agent returning 100 generic URLs has not completed a video-specific tool list. Cross-reference the October 6 Fyv5CHAzq_A correction in docs/PLENUM_VIDEO_FYV5CHAZQ_A_REVIEW.md.

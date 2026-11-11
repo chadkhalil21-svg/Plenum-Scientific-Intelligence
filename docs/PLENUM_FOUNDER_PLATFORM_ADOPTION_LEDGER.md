@@ -2,7 +2,7 @@
 **11 November 2026 — PUBLIC ONLY — Owner: Plenum Chief and independent Goldfish reviewer**
 
 ## Decision
-Preserve the original GitHub event-driven agents, Qwen council, five logical workforces, and existing browser. Incorporate free tools selectively by role, not 81 duplicated installations. A source reference, executable, connected service, paid API, or deployed agent is a distinct state. Zero new spending and no unsolicited account connections.
+Preserve the original GitHub event-driven agents, Qwen council, five logical workforces, and existing browser. Incorporate free tools selectively by role, not 84 duplicated installations. A source reference, executable, connected service, paid API, or deployed agent is a distinct state. Zero new spending and no unsolicited account connections.
 
 ## Priority order: what, how and why
 | Priority | Decision | Why | Acceptance / remaining condition |
@@ -45,7 +45,7 @@ Descriptions and page tags were accessible, NOT full spoken transcripts. Do not 
 - [Qwen Council #457](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/457) — independent 4-view analysis plus fresh Goldfish critique.
 - [Public Research #458](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/458) — retrieval leads for relevant tools, not full transcript fact-checking.
 
-## Full deduplicated inventory — 81 tools and platforms
+## Full deduplicated inventory — 84 tools and platforms
 The following inventory records the intended result, current status, accountable workforce role, and next action; it does not grant accounts or authorize subscriptions. Machine-readable source: [founder_all_tools_registry.json](../integrations/workforces/founder_all_tools_registry.json).
 
 
@@ -167,14 +167,14 @@ The following inventory records the intended result, current status, accountable
 
 
 ## Operating handoff
-- There is one Chief and established specialist workforces, not 81 independently running models. The four source-level role-specific skills created for this request are plenum-platform-adoption, plenum-recency-research, plenum-design-audit, plenum-local-media. Their role mapping is in integrations/hermes/roster.json and the lazy selector in src/plenum_ai/role_skill_router.py.
+- There is one Chief and established specialist workforces, not 84 independently running models. The four source-level role-specific skills created for this request are plenum-platform-adoption, plenum-recency-research, plenum-design-audit, plenum-local-media. Their role mapping is in integrations/hermes/roster.json and the lazy selector in src/plenum_ai/role_skill_router.py.
 - Accept actual external operations only with real user-authorized connected tools and independently observed completion. Source registration or passing CI is not runtime installation.
 - If an app is paid, identity-uncertain, a duplicate or requires an account, classify it honestly and preserve the original no-spend baseline. Keep confidential company records, credentials, private patents and emails OUT of this public repo.
 - The immediate practical goal is a genuine Cloudflare Free owner-authenticated event to original GitHub worker to accepted result. A host and paired WhatsApp remain necessary for private full-time Hermes/Paperclip features.
 
 
 ## 11 further videos, instruction-coverage audit and working free local adapter — 11 November 2026
-The 81-platform original registry remains intact. Eleven later YouTube links and 31 new or overlapping named references are in [founder_eleven_video_appendix.json](../integrations/workforces/founder_eleven_video_appendix.json). Full platform/source analysis and actionable recommendations are in [PLENUM_VIDEO_WORKFORCE_ACTIONS_20261111.md](PLENUM_VIDEO_WORKFORCE_ACTIONS_20261111.md); all video-caption completeness limits are explicit. Do not add these counts without deduplicating original names.
+The 84-platform original registry remains intact. Eleven later YouTube links and 31 new or overlapping named references are in [founder_eleven_video_appendix.json](../integrations/workforces/founder_eleven_video_appendix.json). Full platform/source analysis and actionable recommendations are in [PLENUM_VIDEO_WORKFORCE_ACTIONS_20261111.md](PLENUM_VIDEO_WORKFORCE_ACTIONS_20261111.md); all video-caption completeness limits are explicit. Do not add these counts without deduplicating original names.
 
 The new [founder instruction coverage](PLENUM_FOUNDER_INSTRUCTION_COVERAGE.json) contains 28 currently reconstructed public objectives, owners, evidence scopes and missing acceptances. A new `plenum-instruction-oversight` skill and the deterministic auditor `src/plenum_ai/founder_instruction_audit.py` are routed through the **existing** weekly Minister workflow and an exact founder-only public audit command. They do not automatically read past or future private ChatGPT chats.
 
@@ -182,3 +182,6 @@ Actual $0-local reuse: Plenum already runs bounded Ollama/Qwen local inference; 
 
 ### Reconciled priorities
 **First:** execution and correction of prompts, not additional catalogues. **Second:** approved owner-local free tools on real compute. **Third:** Cloudflare Free event entrance, third-party browser acceptance, secure persistent WhatsApp/Hermes, subject to genuine owner-controlled accounts. Media SaaS, no-code marketing templates that rely on paid image/video APIs, and paid duplicate agents are deliberately deferred.
+
+## Correction: October 6 free-tools video's ten featured programs (11 November 2026)
+The creator's complete published description confirms all ten names: **Napkin AI, Upscayl, Whisper (OpenAI), Hugging Face Spaces, Google AI Studio, Perplexity, LM Studio, Ollama, NotebookLM, ChatGPT Free**. The earlier 8-name metadata extract was incomplete. Three genuinely missing catalogue entries were added; Whisper is serviced by our existing `whisper.cpp` route. See [full ten-platform, timestamped source audit](PLENUM_VIDEO_FYV5CHAZQ_A_REVIEW.md). Verified as **uploader description plus a full timestamped third-party chapter outline, not the entire original caption track or direct audiovisual playback**. Free Spaces sleep and may require a paid plan to create compute Spaces; not a permanent AI server. No free-tier cloud credentials, media files, subscribed SaaS or owner account logins were installed through this inventory update.

@@ -11,8 +11,8 @@ class FounderCatalogContract(unittest.TestCase):
     def test_complete_deduplicated_free_first_registry(self):
         d=json.loads(DATA.read_text(encoding="utf-8"))
         self.assertEqual(d["schema"],"plenum-founder-all-tools-registry-v1")
-        self.assertEqual(len(d["items"]),81)
-        self.assertEqual(len({x["key"] for x in d["items"]}),81)
+        self.assertEqual(len(d["items"]),84)
+        self.assertEqual(len({x["key"] for x in d["items"]}),84)
         self.assertEqual(len(d["videos"]),4)
         self.assertEqual(len(d["screenshot_requested_milestones"]),5)
         self.assertFalse(d["summary"]["installed_all"])
@@ -24,6 +24,20 @@ class FounderCatalogContract(unittest.TestCase):
         self.assertIn("PAID",names["Airia"]["adoption_status"])
         self.assertIn("QUOTA",names["Freebuff"]["adoption_status"])
         self.assertIn("SOURCE_READY",names["Cloudflare Workers Free"]["adoption_status"])
+
+    def test_creator_ten_platforms_complete_and_no_false_full_view_claim(self):
+        d=json.loads(DATA.read_text(encoding="utf-8"))
+        video=next(v for v in d["videos"] if v["id"]=="Fyv5CHAzq_A")
+        expected=["Napkin AI", "Upscayl", "Whisper (OpenAI)", "Hugging Face Spaces",
+                  "Google AI Studio","Perplexity AI","LM Studio","Ollama",
+                  "NotebookLM","ChatGPT Free"]
+        self.assertEqual(video["mentioned"],expected)
+        self.assertTrue(d["video_focus_evidence"]["ten_tools_verified_against_uploader_description"])
+        self.assertFalse(d["video_focus_evidence"]["full_video_watched"])
+        self.assertFalse(d["video_focus_evidence"]["original_full_caption_transcript_available"])
+        names={x["name"] for x in d["items"]}
+        self.assertTrue({"Upscayl","Hugging Face Spaces","ChatGPT Free"} <= names)
+        self.assertIn("free",next(x for x in d["items"] if x["name"]=="Hugging Face Spaces")["purpose"].lower())
 
     def test_role_approved_specific_skills_exist(self):
         roster=json.loads((ROOT/"integrations/hermes/roster.json").read_text(encoding="utf-8"))
@@ -42,7 +56,7 @@ class FounderCatalogContract(unittest.TestCase):
     def test_original_council_uses_only_bounded_source_facts_on_demand(self):
         decisions=agent_council.read_public_tool_adoption_context(
             "Evaluate free specialist software tools")
-        self.assertIn("not 81 installations",decisions)
+        self.assertIn("not 84 installations",decisions)
         self.assertIn("Google AQuA=IDENTITY_UNVERIFIED",decisions)
         self.assertIn("Airia=PAID_DEFER",decisions)
         self.assertEqual(agent_council.read_public_tool_adoption_context(
@@ -50,7 +64,7 @@ class FounderCatalogContract(unittest.TestCase):
 
     def test_readable_master_ledger_and_owner_gate(self):
         doc=(ROOT/"docs/PLENUM_FOUNDER_PLATFORM_ADOPTION_LEDGER.md").read_text(encoding="utf-8")
-        self.assertIn("81 tools",doc)
+        self.assertIn("84 tools",doc)
         self.assertIn("Google AQuA",doc)
         self.assertIn("Cloudflare",doc)
         self.assertIn("founder_all_tools_registry.json",doc)

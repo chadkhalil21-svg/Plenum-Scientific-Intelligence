@@ -5,15 +5,15 @@
   "founder_intent": "Catalog and prudently incorporate everything mentioned, free-first, role-scoped and evidence-gated; avoid duplicate subscriptions",
   "status_meaning": "Source-ready, configured, running, connected and independently verified are different; candidate entries are NOT installed",
   "summary": {
-    "unique_items": 81,
+    "unique_items": 84,
     "categories": {
       "Agent skills, software engineering and quality": 13,
       "Research, data, marketing and communications": 17,
-      "Browsers, hosting and automation": 13,
-      "Creative tools": 9,
+      "Browsers, hosting and automation": 14,
+      "Creative tools": 10,
       "Document and local AI tools": 6,
       "Highlighted discoveries": 4,
-      "Video-specific additions": 19
+      "Video-specific additions": 20
     },
     "no_new_spend_authorized": true,
     "installed_all": false,
@@ -98,18 +98,20 @@
       "id": "Fyv5CHAzq_A",
       "title": "10 AI Tools That Feel Almost Too Powerful To Be Free",
       "creator": "This Guy Knows Stuff",
-      "verified_by": "YouTube page title, description and tags; not ten full transcript mentions",
+      "verified_by": "Uploader's original complete ten-name description in public YouTube mirror and independent third-party timestamped chapter summary for all ten segments; full original spoken captions and visual playback NOT inspected",
       "mentioned": [
-        "NotebookLM",
-        "Ollama",
-        "LM Studio",
-        "Whisper",
+        "Napkin AI",
+        "Upscayl",
+        "Whisper (OpenAI)",
+        "Hugging Face Spaces",
         "Google AI Studio",
         "Perplexity AI",
-        "Hugging Face",
-        "Napkin AI"
+        "LM Studio",
+        "Ollama",
+        "NotebookLM",
+        "ChatGPT Free"
       ],
-      "notes": "List reflects metadata tags; not verified as exact complete list of ten featured tools"
+      "notes": "Earlier eight-name tag-only list omitted Upscayl, Hugging Face Spaces and ChatGPT Free. Video calls Whisper an OpenAI speech model; Plenum has whisper.cpp adapter source. Video uses outdated model labels (GPT-4o, Gemini 1.5 Pro), not current availability facts."
     }
   ],
   "items": [
@@ -1165,6 +1167,45 @@
       "live_test_evidence": null,
       "private_account_rights_granted": false,
       "no_new_spend_approved": true
+    },
+    {
+      "key": "upscayl",
+      "name": "Upscayl",
+      "category": "Creative tools",
+      "purpose": "Free open-source locally GPU-accelerated image upscaling for original presentation and research visuals; models may hallucinate details",
+      "adoption_status": "FREE_DESKTOP_GPU_REQUIRED_NOT_INSTALLED",
+      "accountable_role": "creative",
+      "next_action": "Use only on available Vulkan-compatible owner desktop GPU; inspect AGPL-3.0 if adapting; do not substitute enhanced pixels for original scientific measurements",
+      "source_url": "https://github.com/upscayl/upscayl",
+      "live_test_evidence": null,
+      "private_account_rights_granted": false,
+      "no_new_spend_approved": true
+    },
+    {
+      "key": "hugging-face-spaces",
+      "name": "Hugging Face Spaces",
+      "category": "Browsers, hosting and automation",
+      "purpose": "Browse and evaluate public machine-learning demos; free CPU Basics are subject to account and lifecycle rules and sleep when idle",
+      "adoption_status": "PUBLIC_DEMOS_FREE_NEW_COMPUTE_SPACE_MAY_REQUIRE_PAID_PLAN",
+      "accountable_role": "research",
+      "next_action": "Use public Spaces only for approved nonsensitive demos; verify per-Space cost/privacy; never treat sleeping free demo as always-on Hermes host",
+      "source_url": "https://huggingface.co/spaces",
+      "live_test_evidence": null,
+      "private_account_rights_granted": false,
+      "no_new_spend_approved": true
+    },
+    {
+      "key": "chatgpt-free",
+      "name": "ChatGPT Free",
+      "category": "Video-specific additions",
+      "purpose": "Free ChatGPT consumer tier with limited chat, web, file and data tools; not a new independent cloud compute or permanent agent server",
+      "adoption_status": "AVAILABLE_OPTION_NOT_NEW_EXECUTION_INFRA",
+      "accountable_role": "chief",
+      "next_action": "Continue original authorized ChatGPT workflows; no second account or plan change; account-level feature quotas vary",
+      "source_url": "https://help.openai.com/en/articles/9275245-using-chatgpt-without-logging-in",
+      "live_test_evidence": null,
+      "private_account_rights_granted": false,
+      "no_new_spend_approved": true
     }
   ],
   "decision_rules": [
@@ -1180,5 +1221,26 @@
     457,
     458
   ],
-  "source_of_truth": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/docs/PLENUM_WORKFORCE_MASTER_LEDGER.md"
+  "source_of_truth": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/docs/PLENUM_WORKFORCE_MASTER_LEDGER.md",
+  "video_focus_evidence": {
+    "video_id": "Fyv5CHAzq_A",
+    "creator": "This Guy Knows Stuff",
+    "published": "2026-10-06",
+    "ten_tools_verified_against_uploader_description": true,
+    "full_video_watched": false,
+    "original_full_caption_transcript_available": false,
+    "timestamped_independent_summary_available": true,
+    "timestamp_summary_url": "https://saltshakerpress.blogspot.com/2026/10/whisper-audio-transcription.html",
+    "creator_description_mirror_url": "https://zolotube.com/watch?v=Fyv5CHAzq_A",
+    "independent_vendor_checks": [
+      "https://www.napkin.ai/pricing/",
+      "https://github.com/upscayl/upscayl",
+      "https://huggingface.co/docs/hub/spaces-overview",
+      "https://ai.google.dev/gemini-api/docs/pricing",
+      "https://lmstudio.ai/blog/free-for-work",
+      "https://ollama.com/pricing",
+      "https://help.openai.com/en/articles/9275245-using-chatgpt-without-logging-in"
+    ],
+    "note": "Do not claim direct full audiovisual review."
+  }
 }
