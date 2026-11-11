@@ -14,6 +14,8 @@ class WorkforceDirectoryTests(TestCase):
         self.assertIn("Global Intelligence", format_chart(report))
         self.assertIn("Verification & Advisory Council", format_chart(report))
         self.assertIn("business_advisor", format_chart(report))
+        self.assertTrue(all(m["required_skill_ids"] for g in report["groups"] for m in g["members"]))
+        self.assertIn("plenum-business-advisor", report["business_advisory"]["named_business_advisor_skills"])
 
     def test_business_advisory_spans_existing_divisions_and_has_no_private_access(self):
         report = build_directory()
