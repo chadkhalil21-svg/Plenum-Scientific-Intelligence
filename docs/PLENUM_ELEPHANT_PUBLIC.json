@@ -1,0 +1,42 @@
+{
+  "schema": "plenum-elephant-public-facts-v1",
+  "updated_utc": "2026-11-11",
+  "purpose": "Dated fact-only summary for original Chief and Qwen council; not original chain-of-thought or private data",
+  "records": [
+    {
+      "fact": "Five logical workforce divisions exist in the original public registry, not five confirmed continuously running teams.",
+      "status": "VERIFIED_BOUNDED",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/integrations/workforces/five-workforces.json"
+    },
+    {
+      "fact": "Eleven Hermes profile definitions exist including Chief and Founder Business Advisor; live Hermes gateway has not been verified.",
+      "status": "SOURCE_ONLY",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/integrations/hermes/roster.json"
+    },
+    {
+      "fact": "Original founder public issue agents can execute bounded research, science, code starter and creative work with evidence.",
+      "status": "VERIFIED_BOUNDED",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/435"
+    },
+    {
+      "fact": "Original public business advisory council completed model perspectives with separate independent fresh-context review.",
+      "status": "VERIFIED_BOUNDED",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/443"
+    },
+    {
+      "fact": "Paperclip Hermes OpenClaw hosted services and authorized WhatsApp connection remain unverified.",
+      "status": "BLOCKED",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/integrations/workforces/INTEGRATION_MATRIX.md"
+    },
+    {
+      "fact": "Authentic owner-approved third-party signed-in browser task and persistent free VM remain unresolved.",
+      "status": "BLOCKED",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/310"
+    },
+    {
+      "fact": "Humanizer is a language-editing skill and must never change sourced facts or legal or scientific meaning.",
+      "status": "SOURCE_ONLY",
+      "url": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/skills/plenum-editorial-quality/SKILL.md"
+    }
+  ]
+}
