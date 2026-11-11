@@ -39,8 +39,8 @@ def read_roles(path=ROSTER):
             raise ValueError("Unreviewed or multiline specialist scope")
         ids = role.get("skill_ids")
         if not isinstance(ids, list) or not ids or any(
-                not isinstance(v, str) or not v.startswith("plenum-")
-                or not v.replace("-", "").isalnum() for v in ids):
+                not isinstance(v, str)
+                or not v.replace("-", "").isalnum() or (not v.startswith("plenum-") and v != "humanizer") for v in ids):
             raise ValueError("Role requires approved portable skill slugs")
     return by_name
 

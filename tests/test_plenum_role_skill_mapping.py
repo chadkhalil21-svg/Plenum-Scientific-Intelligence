@@ -16,6 +16,8 @@ class PlenumSkillContract(unittest.TestCase):
         for role in x["roles"]:
             with self.subTest(role=role["name"]):
                 self.assertTrue(role["skill_ids"])
+                self.assertIn("plenum-editorial-quality", role["skill_ids"])
+                self.assertIn("humanizer", role["skill_ids"])
                 for slug in role["skill_ids"]:
                     content=(ROOT/"skills"/slug/"SKILL.md").read_text()
                     self.assertIn("name: "+slug,content)

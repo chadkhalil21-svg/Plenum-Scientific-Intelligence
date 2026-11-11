@@ -16,6 +16,16 @@ TITLE = "[Plenum Council] public agenda"
 MARKER = "PLENUM_COUNCIL_PUBLIC_V1"
 MODEL_URL = "http://127.0.0.1:11434/api/chat"
 MODEL = "qwen3:1.7b"
+# Compact instruction derived from pinned MIT Humanizer and Plenum editorial standard.
+# Full 32k Markdown skill is for an approved Hermes skill-loader, not every Qwen call.
+EDITORIAL_DIRECTIVE = (
+    "Be factual, natural, concise and specific. Lead with the real answer; "
+    "omit inflated claims, staged slogans, rote three-item lists and closing "
+    "fragments. Vary sentence rhythm without changing evidence, citations, "
+    "names, financial values or uncertainty. Plain prose must not disguise "
+    "lack of source verification or pretend a model recommendation is execution."
+)
+
 BANNED = (
     "password", "credential", "token", "secret", "private", "confidential",
     "customer", "patient", "patent", "bank", "account", "production",
@@ -101,7 +111,7 @@ def _ask_local(system, user):
     payload = json.dumps({
         "model": MODEL, "stream": False, "think": False,
         "messages": [
-            {"role": "system", "content": system},
+            {"role": "system", "content": system + "\n" + EDITORIAL_DIRECTIVE},
             {"role": "user", "content": user},
         ],
         "options": {"num_predict": 500, "temperature": 0.2, "num_ctx": 4096},
