@@ -46,6 +46,15 @@ class FounderChiefWorkforcePolicy(TestCase):
                 self.assertEqual(independent_expected_kind(objective),expected)
                 self.assertEqual(parse_founder_chief(event(objective))["objective"],objective)
 
+    def test_founder_research_about_software_does_not_misroute_to_coding(self):
+        original = "Research free local software and reusable AI agent skills"
+        self.assertEqual(independent_expected_kind(original), "public_research")
+        self.assertEqual(preflight(event(original))["expected_independent_kind"],
+                         "public_research")
+        # Creating software remains distinct from merely researching it.
+        with self.assertRaises(ValueError):
+            independent_expected_kind("Create research software for exploring papers")
+
     def test_reject_unauthorized_sensitive_and_ambiguous_tasks(self):
         for unauthorized in [
             event(actor="untrusted-user"),
