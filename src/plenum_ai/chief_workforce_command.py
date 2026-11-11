@@ -70,6 +70,20 @@ def independent_expected_kind(objective: str) -> str:
     """Independent narrow capability gate, NOT a tool call or LLM decision."""
     words = set(re.findall(r"[a-z]+", objective.lower()))
     hits = [kind for kind, nouns in HINTS.items() if nouns & words]
+    if len(hits) > 1:
+        # The natural founder verb "Research software..." requests references,
+        # not software construction. Only clear research-first wording with
+        # generic software/application nouns may resolve to the original
+        # public read-only researcher. Mixed programming/science/media work
+        # still requires triage; no broader tool permissions are enabled.
+        generic = HINTS["public_program"] & words
+        active = set(hits)
+        if (active == {"public_research", "public_program"}
+                and re.match(r"^(?:research|survey)\b", objective, re.I)
+                and generic <= {"software", "application"}
+                and not (words & {"create", "build", "develop", "implement",
+                                  "write", "code", "coding", "script", "validator", "program"})):
+            return "public_research"
     if len(hits) != 1:
         raise ValueError("Unfamiliar or ambiguous public task requires founder triage")
     return hits[0]
