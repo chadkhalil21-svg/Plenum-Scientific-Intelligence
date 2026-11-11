@@ -1,6 +1,6 @@
 {
   "schema": "plenum-hermes-profile-roster-v1",
-  "source": "Original Plenum nine-role n8n workforce and Chief of Staff; new profiles are NOT running bots",
+  "source": "Original Plenum nine-role n8n workforce plus founder-requested business advisory specialist; profiles are not necessarily running bots",
   "hermes_upstream_sha": "825322b16656905a4607be2fd6ce3d3db7d6b4a7",
   "superpowers_upstream_sha": "22f0b463e7a5e579904dd6211a520321035526f7",
   "defaults": {
@@ -88,6 +88,12 @@
       "title": "Independent Verification Officer",
       "scope": "Audit claimed completion against independently fetched evidence. Challenge unsupported success; no broad access to worker credentials.",
       "tools": "read-only evidence and safety audit"
+    },
+    {
+      "name": "business_advisor",
+      "title": "Founder Business Advisor",
+      "scope": "Assess founder business decisions using verifiable facts, comparisons of alternatives, economics and uncertainties; recommend what to do, why, priority, next steps and accountable owners. Independent advisory recommendations only; no private accounts without separate permission.",
+      "tools": "public business research and decision memo drafting; no direct financial, legal, account or external write rights"
     }
   ]
 }
