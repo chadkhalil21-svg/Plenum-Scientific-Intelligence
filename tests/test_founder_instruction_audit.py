@@ -63,6 +63,11 @@ class FounderInstructionAuditTests(unittest.TestCase):
         self.assertIn("OPEN_LIVE_ACCEPTANCE_MISSING",report)
         self.assertIn("prompts",report.lower())
         self.assertNotIn("all tasks completed",report.lower())
+        changed = [dict(x) for x in rows]
+        changed[0]["status"] = "OPEN_LIVE_ACCEPTANCE_MISSING"
+        changed_report = a.render(changed, as_of_date="2026-11-11", doc=doc)
+        self.assertNotEqual(report.splitlines()[0], changed_report.splitlines()[0])
+        self.assertEqual(report.splitlines()[0], a.render(rows, as_of_date="2026-11-11", doc=doc).splitlines()[0])
 
 
 if __name__=="__main__":
