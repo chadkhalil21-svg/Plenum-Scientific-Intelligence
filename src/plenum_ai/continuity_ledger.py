@@ -14,6 +14,25 @@ ALLOWED_STATUS={
     "verified_foundation", "measured_failure", "scheduled", "planned",
     "not_achieved", "running_unverified", "verified_diagnostic",
     "correction_merged_for_future_runs", "measured_regression",
+    # Explicitly observed historical statuses on the original research-memory
+    # branch; preserve their distinct evidence grades rather than collapsing
+    # a screenshot, mock test or diagnostic into scientific proof.
+    "completed_ungraded_original_agent_attempt_with_real_repetition_failure",
+    "configuration_merged_no_new_model_inference",
+    "independently_scored_new_model_no_improvement",
+    "independently_scored_real_model_result",
+    "official-pricing-verified",
+    "original_NOAA_documented_source_and_mock_adapter_tests_verified_no_real_data_or_forecast_yet",
+    "scheduling_safeguard_merged_and_source_verified_not_prospective_science_result",
+    "source_documented_and_adapter_contract_tests_verified_not_real_source_or_science_yet",
+    "user_screenshot_confirmed",
+    "verified_blocker",
+    "verified_independent_new_candidate_negative",
+    "verified_narrow_authenticated_public_demo",
+    "verified_observational_historical_replay_not_operational_twin",
+    "verified_original_archived_trace_diagnostic_no_new_model_inference",
+    "verified_original_new_task_native_tool_use_and_final_submission",
+    "verified_original_public_science_scoring_1_of_3",
 }
 TRUSTED="https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/"
 MAX_BYTES=250000
@@ -121,10 +140,27 @@ def validate(value):
             raise ValueError("Invalid evidence status")
         identifier=row.get("id")
         link=row.get("url")
+        # Preserve two specifically identified lower-confidence source classes.
+        # An owner's screenshot is not externally verified. A vendor's official
+        # pricing page is a primary reference, not an original Plenum run.
+        owner_screenshot = (
+            identifier == "computer-browser-gcp-project-created-20261107"
+            and row.get("status") == "user_screenshot_confirmed"
+            and link is None
+            and isinstance(row.get("notes"), str)
+            and 20 <= len(row["notes"]) <= 2500
+        )
+        official_pricing = (
+            identifier == "computer-browser-google-cloud-free-tier-capacity-20261107"
+            and row.get("status") == "official-pricing-verified"
+            and link == "https://cloud.google.com/run/pricing"
+        )
+        ordinary_source = (
+            isinstance(link, str) and len(link) <= 500 and link.startswith(TRUSTED)
+        )
         if (not isinstance(identifier,str) or not identifier.isascii()
             or not 1<=len(identifier)<=64 or identifier in seen
-            or not isinstance(link,str) or not link.startswith(TRUSTED)
-            or len(link)>500):
+            or not (ordinary_source or owner_screenshot or official_pricing)):
             raise ValueError("Duplicate evidence or unreviewed source")
         seen.add(identifier)
         score=row.get("result")
@@ -183,7 +219,9 @@ def brief(state):
                    str(measurement["baseline_attempted"])+
                    "; "+str(measurement["outputs_at_128_token_cap"])+
                    " at token cap)")
-        lines.append("  - "+item["id"]+": "+item["status"]+ratio)
+        caution = (" [founder screenshot; not independently source-verified]"
+                   if item.get("status") == "user_screenshot_confirmed" else "")
+        lines.append("  - "+item["id"]+": "+item["status"]+ratio+caution)
     lines.append("Next priorities:")
     for item in s["next_actions"]:
         lines.append("  "+str(item["priority"])+". "+item["action"])
