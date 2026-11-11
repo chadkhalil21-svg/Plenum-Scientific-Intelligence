@@ -171,3 +171,14 @@ The following inventory records the intended result, current status, accountable
 - Accept actual external operations only with real user-authorized connected tools and independently observed completion. Source registration or passing CI is not runtime installation.
 - If an app is paid, identity-uncertain, a duplicate or requires an account, classify it honestly and preserve the original no-spend baseline. Keep confidential company records, credentials, private patents and emails OUT of this public repo.
 - The immediate practical goal is a genuine Cloudflare Free owner-authenticated event to original GitHub worker to accepted result. A host and paired WhatsApp remain necessary for private full-time Hermes/Paperclip features.
+
+
+## 11 further videos, instruction-coverage audit and working free local adapter — 11 November 2026
+The 81-platform original registry remains intact. Eleven later YouTube links and 31 new or overlapping named references are in [founder_eleven_video_appendix.json](../integrations/workforces/founder_eleven_video_appendix.json). Full platform/source analysis and actionable recommendations are in [PLENUM_VIDEO_WORKFORCE_ACTIONS_20261111.md](PLENUM_VIDEO_WORKFORCE_ACTIONS_20261111.md); all video-caption completeness limits are explicit. Do not add these counts without deduplicating original names.
+
+The new [founder instruction coverage](PLENUM_FOUNDER_INSTRUCTION_COVERAGE.json) contains 28 currently reconstructed public objectives, owners, evidence scopes and missing acceptances. A new `plenum-instruction-oversight` skill and the deterministic auditor `src/plenum_ai/founder_instruction_audit.py` are routed through the **existing** weekly Minister workflow and an exact founder-only public audit command. They do not automatically read past or future private ChatGPT chats.
+
+Actual $0-local reuse: Plenum already runs bounded Ollama/Qwen local inference; new `src/plenum_ai/free_local_tool_adapter.py` provides binary availability inspection and opt-in whisper.cpp WAV transcription when the owner already has a local machine and approved weights. There is **no paid API or automatic hardware / software installation**, and no proof of a continuous private host. A `plenum-continuous-improvement` skill formalizes one-change, measurable rubric and independent Goldfish acceptance, rather than promising autonomous model self-upgrading.
+
+### Reconciled priorities
+**First:** execution and correction of prompts, not additional catalogues. **Second:** approved owner-local free tools on real compute. **Third:** Cloudflare Free event entrance, third-party browser acceptance, secure persistent WhatsApp/Hermes, subject to genuine owner-controlled accounts. Media SaaS, no-code marketing templates that rely on paid image/video APIs, and paid duplicate agents are deliberately deferred.
