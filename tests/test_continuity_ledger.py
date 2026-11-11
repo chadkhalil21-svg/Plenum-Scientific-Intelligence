@@ -187,5 +187,56 @@ class PublicStrategicContinuityTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             ledger.validate(wrong)
 
+
+    def test_original_historical_status_is_recognized_without_upgrading_confidence(self):
+        state=fixture()
+        original=state["evidence"][0]
+        for status in ("verified_blocker", "verified_narrow_authenticated_public_demo",
+                       "independently_scored_new_model_no_improvement",
+                       "source_documented_and_adapter_contract_tests_verified_not_real_source_or_science_yet"):
+            with self.subTest(status=status):
+                original["status"]=status
+                checked=ledger.validate(state)
+                self.assertEqual(checked["evidence"][0]["status"],status)
+                self.assertFalse(checked["AGI_achieved"])
+        original["status"]="invented_success_of_agi"
+        with self.assertRaisesRegex(ValueError,"Invalid evidence status"):
+            ledger.validate(state)
+
+    def test_original_screenshot_and_exact_official_pricing_are_not_github_runs(self):
+        state=fixture()
+        item=state["evidence"][0]
+        item.update({"id":"computer-browser-gcp-project-created-20261107",
+                     "status":"user_screenshot_confirmed",
+                     "notes":"Founder-provided screenshot of the public browser project; no independent external proof."})
+        item.pop("url")
+        validated=ledger.validate(state)
+        self.assertIn("not independently source-verified",ledger.brief(validated))
+        invalid=copy.deepcopy(state)
+        invalid["evidence"][0]["notes"]=""
+        with self.assertRaises(ValueError):
+            ledger.validate(invalid)
+        state["evidence"][0].update({
+            "id":"computer-browser-google-cloud-free-tier-capacity-20261107",
+            "status":"official-pricing-verified",
+            "url":"https://cloud.google.com/run/pricing"})
+        self.assertEqual(ledger.validate(state)["evidence"][0]["status"],"official-pricing-verified")
+        state["evidence"][0]["url"]="https://example.com/not-official"
+        with self.assertRaises(ValueError):
+            ledger.validate(state)
+
+    def test_source_exception_cannot_apply_to_untethered_other_record(self):
+        state=fixture()
+        item=state["evidence"][0]
+        item["status"]="official-pricing-verified"
+        item["url"]="https://cloud.google.com/run/pricing"
+        with self.assertRaises(ValueError):
+            ledger.validate(state)
+        item["status"]="user_screenshot_confirmed"
+        item.pop("url")
+        item["notes"]="A different fabricated item must never be permitted to skip source checks."
+        with self.assertRaises(ValueError):
+            ledger.validate(state)
+
 if __name__=="__main__":
     unittest.main()
