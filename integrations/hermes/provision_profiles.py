@@ -56,8 +56,8 @@ def inspect_roster():
     names = [x["name"] for x in roles]
     if (len(names) != 11 or len(set(names)) != 10
             or not MANDATORY.issubset(names)
-            or any(not x["name"].islower() or not x["name"].isalpha()
-                   for x in roles)
+            or any(not isinstance(x["name"], str) or not x["name"].islower()
+                   or not x["name"].replace("_", "").isalpha() for x in roles)
             or any("password" in x.get("tools", "").lower() for x in roles)
             or data["defaults"]["secret_copy_enabled"] is not False
             or data["defaults"]["cost_usd"] != 0):
