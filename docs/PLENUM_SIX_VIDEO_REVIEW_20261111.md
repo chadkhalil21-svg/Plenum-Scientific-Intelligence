@@ -161,3 +161,10 @@
 - Jeff Su's six tips and source templates: https://www.jeffsu.org/ai-productivity-tips-for-work/
 - Jan offline product docs: https://docs.jan.ai/desktop
 - Native Plenum source index: `docs/PLENUM_COMPUTER_SOURCE_INDEX.md`
+
+## 2026-11-11 | Genuine caption access failure and free no-key fallback
+A real founder-issued original Research Director run for six videos, issue [#473](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/473), returned **0/6 public caption tracks** from the normal `youtube-transcript-api` on GitHub's public hosted network. The Action exited successfully because it accurately reported `CAPTION_UNAVAILABLE`; this is **not proof that any six videos lack captions**, and is **not an accepted working agent**.
+
+We therefore added a single **anonymous Jina Reader** secondary provider using the exact documented public YouTube transcript-toggle method in https://github.com/jina-ai/reader/blob/main/cookbooks.md . Its Reader endpoint supports no-key calls within rate limits: https://jina.ai/en-US/reader/ . It receives only the public video ID/URL, with no private login, payment method or ChatGPT content. The original worker will try YouTube once, then anonymous Reader once. It extracts only clearly timestamped transcript sections and reports product names/time offsets, **never reproducing full copyrighted transcript text**.
+
+The fallback must still earn actual status through a second founder-authorized GitHub issue and independent comment/artifact review. Until positive live caption retrieval is observed, source readiness is not continuous reliability. Existing interactive ChatGPT research already accessed full public text captions through a connected browsing provider; that access is not automatically available to GitHub Actions. Do not buy or silently spend trial credits for hosted transcript APIs.

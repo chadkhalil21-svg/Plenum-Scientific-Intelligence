@@ -80,11 +80,64 @@ def _patterns(name):
             for x in names if len(x) >= 3]
 
 
-def review_video(video: dict, *, fetch=None):
+
+def fetch_public_jina_captions(video_id: str, *, post=None):
+    """Try official documented Jina Reader public YouTube transcript toggle.
+
+    Anonymous Reader currently offers limited free requests. It gets ONLY
+    the public video URL. No API key, cookies, private account or media
+    download. Failure means unavailable, never a reason to purchase credits.
+    https://github.com/jina-ai/reader/blob/main/cookbooks.md
+    """
+    if not VIDEO_ID.fullmatch(video_id):
+        raise ValueError("Only permitted public video IDs")
+    if post is None:
+        import requests
+        post = requests.post
+    script = ("waitForSelector('ytd-video-description-transcript-section-renderer button')"
+              ".then((el) => el.click())")
+    response = post(
+        "https://r.jina.ai/",
+        files={
+            "url":(None, "https://www.youtube.com/watch?v=" + video_id),
+            "injectPageScript":(None,script),
+        },
+        headers={"Accept":"application/json","X-Timeout":"25000"},
+        timeout=35
+    )
+    response.raise_for_status()
+    doc = response.json()
+    payload = doc.get("data",doc)
+    content = payload.get("content") or payload.get("markdown") or ""
+    if not isinstance(content,str) or not 300 <= len(content) <= 220000:
+        raise ValueError("Jina response does not contain bounded public caption text")
+    # Accept only clearly marked, timestamped caption rows after a transcript
+    # heading; avoid misidentifying video chapter navigation as subtitles.
+    markers = list(re.finditer(r"(?im)^\s*#{0,3}\s*(?:video )?transcript\s*:?\s*$",content))
+    if not markers:
+        raise ValueError("No verified transcript section in public reader output")
+    scoped = content[markers[-1].end():]
+    line = re.compile(r"(?m)^\s*(?:[-*]\s*)?\[?(\d{1,2}:\d{2}(?::\d{2})?)\]?\s*(?:[-|:]\s*)?(.{12,650})$")
+    rows=[]
+    for match in line.finditer(scoped):
+        timecode, words=match.groups()
+        parts=[int(v) for v in timecode.split(":")]
+        seconds = parts[0]*60 + parts[1] if len(parts)==2 else parts[0]*3600 + parts[1]*60 + parts[2]
+        if seconds > 86400 or not words.strip():
+            continue
+        rows.append({"start":float(seconds),"text":words.strip()})
+        if len(rows) >= 5000:
+            break
+    if len(rows) < 15 or sum(len(x["text"]) for x in rows) < 750:
+        raise ValueError("Only chapters/navigation or no usable captions from Jina")
+    return rows
+
+def review_video(video: dict, *, fetch=None, fallback=None):
     video_id = video["id"]
     if fetch is None:
         from youtube_transcript_api import YouTubeTranscriptApi
         fetch = YouTubeTranscriptApi().fetch
+        fallback = fetch_public_jina_captions  # only for real GitHub project jobs
     result = {"id":video_id,"title":video["title"],
         "url":"https://www.youtube.com/watch?v="+video_id,
         "status":"CAPTION_UNAVAILABLE","caption_source":"YouTube public captions only",
@@ -93,8 +146,16 @@ def review_video(video: dict, *, fetch=None):
                       "found_in_caption":False,"timestamps_seconds":[]}
                      for x in video["platforms"]]}
     try:
-        captions = fetch(video_id)
-        rows = captions.to_raw_data() if hasattr(captions,"to_raw_data") else captions
+        try:
+            captions = fetch(video_id)
+            rows = captions.to_raw_data() if hasattr(captions,"to_raw_data") else captions
+        except Exception as original_exc:
+            result["direct_failure_type"] = type(original_exc).__name__[:90]
+            if fallback is None:
+                raise
+            rows = fallback(video_id)
+            result["caption_source"] = "Jina Reader anonymous public YouTube caption view"
+            result["free_fallback_used"] = True
         if not isinstance(rows, list) or not 8 <= len(rows) <= 5000:
             raise ValueError("Unusable or unbounded captions")
         if any(not isinstance(x,dict) or not isinstance(x.get("text"),str) or
@@ -149,7 +210,7 @@ def post_result(report: dict, issue: int, token: str):
     for row in report["outcomes"]:
         n = row.get("names_confirmed_in_captions",0)
         lines.append(f"- [{row['id']}]({row['url']}): **{row['status']}**; "+
-                     f"{n} of {len(row['platforms'])} previously identified names directly matched in captions.")
+                     f"{n} of {len(row['platforms'])} previously identified names directly matched in captions; source: {row['caption_source']}.")
     lines.append("A failed caption request cannot certify a video has no captions; YouTube sometimes blocks public cloud IPs. Matching names alone does not validate vendor claims or prove exhaustive audiovisual review.")
     uri = f"https://api.github.com/repos/{REPO}/issues/{issue}/comments"
     body = json.dumps({"body":"\n".join(lines)})
