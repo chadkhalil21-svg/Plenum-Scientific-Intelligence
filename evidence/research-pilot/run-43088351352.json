@@ -1,0 +1,224 @@
+{
+  "revision": "46da612e44b142bb4be581a9af748f93f8ba814d",
+  "proposal": {
+    "schema": "plenum-research-pilot-proposal-v1",
+    "sealed": {
+      "question": "Compare scientific numerical integration efficiency",
+      "development_domain": "materials",
+      "holdout_domain": "electronics",
+      "development": [
+        {
+          "method": "RK45",
+          "calls": 320,
+          "error": 1.932687473952456e-11,
+          "invariant": 0.0
+        },
+        {
+          "method": "DOP853",
+          "calls": 266,
+          "error": 1.3191376896650861e-15,
+          "invariant": 0.0
+        },
+        {
+          "method": "Radau",
+          "calls": 1198,
+          "error": 2.9021029172631894e-14,
+          "invariant": 0.0
+        }
+      ],
+      "model": "Qwen/Qwen3-0.6B pinned",
+      "answer": "A",
+      "method": "RK45"
+    },
+    "seal_sha256": "3955fd1d952f309501d0d7f91ce35ce699bd05028b3de328218e4a5326179587",
+    "hypothesis": "RK45 uses the fewest derivative evaluations on the withheld different-domain fixture while maintaining verified accuracy.",
+    "falsifier": "Any allowed solver uses fewer evaluations, or accuracy fails.",
+    "source_metadata_untrusted": {
+      "providers": [
+        {
+          "provider": "openalex",
+          "status": "retrieved_metadata",
+          "records": [
+            {
+              "source": "openalex",
+              "id": "https://openalex.org/W1948181630",
+              "title": "Comparing the efficiency of numerical techniques for the integration of variational equations",
+              "year": 2010,
+              "doi": "https://doi.org/10.48550/arxiv.1008.1890",
+              "url": "http://arxiv.org/abs/1008.1890"
+            },
+            {
+              "source": "openalex",
+              "id": "https://openalex.org/W1996317117",
+              "title": "Runge–Kutta–Nyström methods adapted to the numerical integration of perturbed oscillators",
+              "year": 2002,
+              "doi": "https://doi.org/10.1016/s0010-4655(02)00460-5",
+              "url": "https://doi.org/10.1016/s0010-4655(02)00460-5"
+            },
+            {
+              "source": "openalex",
+              "id": "https://openalex.org/W7221198058",
+              "title": "Techniques for reducing numerical error in the calculation of numerical integration: a comparative study",
+              "year": 2025,
+              "doi": "https://doi.org/10.65418/ajapas.v4i2.1229",
+              "url": "https://aaasjournals.com/index.php/ajapas/article/view/1229"
+            }
+          ],
+          "query_url": "https://api.openalex.org/works?search=Compare+scientific+numerical+integration+efficiency&per_page=3",
+          "citation_verified": false
+        },
+        {
+          "provider": "europepmc",
+          "status": "retrieved_metadata",
+          "records": [
+            {
+              "source": "europepmc",
+              "id": "MED/42901898",
+              "title": "Bayesian bilevel operator learning with low-rank adaptation for efficient uncertainty quantification of PDE inverse problems.",
+              "year": 2026,
+              "doi": "https://doi.org/10.1038/s41467-026-77768-7",
+              "url": "https://europepmc.org/article/MED/42901898"
+            },
+            {
+              "source": "europepmc",
+              "id": "MED/42448754",
+              "title": "Dynamics near equilibria in the Jupiter-Europa system using the Lie-series technique.",
+              "year": 2026,
+              "doi": "https://doi.org/10.1038/s41598-026-60837-8",
+              "url": "https://europepmc.org/article/MED/42448754"
+            },
+            {
+              "source": "europepmc",
+              "id": "MED/42646240",
+              "title": "Comparative Numerical Evaluation of Feed-Spacer Geometries in Reverse Osmosis Modules for Enhanced Water Treatment Sustainability.",
+              "year": 2026,
+              "doi": "https://doi.org/10.3390/membranes16080265",
+              "url": "https://europepmc.org/article/MED/42646240"
+            }
+          ],
+          "query_url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=Compare+scientific+numerical+integration+efficiency&format=json&pageSize=3&resultType=lite",
+          "citation_verified": false
+        },
+        {
+          "provider": "semanticscholar",
+          "status": "unavailable",
+          "error_type": "HTTPError",
+          "records": []
+        }
+      ],
+      "records": [
+        {
+          "source": "openalex",
+          "id": "https://openalex.org/W1948181630",
+          "title": "Comparing the efficiency of numerical techniques for the integration of variational equations",
+          "year": 2010,
+          "doi": "https://doi.org/10.48550/arxiv.1008.1890",
+          "url": "http://arxiv.org/abs/1008.1890",
+          "also_indexed_by": [
+            "openalex"
+          ]
+        },
+        {
+          "source": "openalex",
+          "id": "https://openalex.org/W1996317117",
+          "title": "Runge–Kutta–Nyström methods adapted to the numerical integration of perturbed oscillators",
+          "year": 2002,
+          "doi": "https://doi.org/10.1016/s0010-4655(02)00460-5",
+          "url": "https://doi.org/10.1016/s0010-4655(02)00460-5",
+          "also_indexed_by": [
+            "openalex"
+          ]
+        },
+        {
+          "source": "openalex",
+          "id": "https://openalex.org/W7221198058",
+          "title": "Techniques for reducing numerical error in the calculation of numerical integration: a comparative study",
+          "year": 2025,
+          "doi": "https://doi.org/10.65418/ajapas.v4i2.1229",
+          "url": "https://aaasjournals.com/index.php/ajapas/article/view/1229",
+          "also_indexed_by": [
+            "openalex"
+          ]
+        },
+        {
+          "source": "europepmc",
+          "id": "MED/42901898",
+          "title": "Bayesian bilevel operator learning with low-rank adaptation for efficient uncertainty quantification of PDE inverse problems.",
+          "year": 2026,
+          "doi": "https://doi.org/10.1038/s41467-026-77768-7",
+          "url": "https://europepmc.org/article/MED/42901898",
+          "also_indexed_by": [
+            "europepmc"
+          ]
+        },
+        {
+          "source": "europepmc",
+          "id": "MED/42448754",
+          "title": "Dynamics near equilibria in the Jupiter-Europa system using the Lie-series technique.",
+          "year": 2026,
+          "doi": "https://doi.org/10.1038/s41598-026-60837-8",
+          "url": "https://europepmc.org/article/MED/42448754",
+          "also_indexed_by": [
+            "europepmc"
+          ]
+        },
+        {
+          "source": "europepmc",
+          "id": "MED/42646240",
+          "title": "Comparative Numerical Evaluation of Feed-Spacer Geometries in Reverse Osmosis Modules for Enhanced Water Treatment Sustainability.",
+          "year": 2026,
+          "doi": "https://doi.org/10.3390/membranes16080265",
+          "url": "https://europepmc.org/article/MED/42646240",
+          "also_indexed_by": [
+            "europepmc"
+          ]
+        }
+      ],
+      "all_providers_healthy": false,
+      "scientific_truth_verified": false,
+      "limitations": "Public metadata only. Provider rate limits and attribution; no full-text or experimental validation."
+    },
+    "model_inference_executed": true,
+    "holdout_seen_by_model": false,
+    "AGI_demonstrated": false,
+    "scientific_discovery_verified": false,
+    "code_or_model_deployed": false
+  },
+  "audit": {
+    "schema": "plenum-research-pilot-audit-v1",
+    "proposal_sha256": "3955fd1d952f309501d0d7f91ce35ce699bd05028b3de328218e4a5326179587",
+    "development_reproduced": true,
+    "holdout_computed_only_after_sealing": true,
+    "holdout_domain": "electronics",
+    "measurements": [
+      {
+        "method": "RK45",
+        "calls": 806,
+        "error": 1.1180398769129845e-10,
+        "invariant": 0.0
+      },
+      {
+        "method": "DOP853",
+        "calls": 254,
+        "error": 5.130990937079177e-12,
+        "invariant": 0.0
+      },
+      {
+        "method": "Radau",
+        "calls": 3515,
+        "error": 7.043990448302339e-14,
+        "invariant": 0.0
+      }
+    ],
+    "model_selected": "RK45",
+    "selected_is_best_on_one_fixture": false,
+    "selected_beats_RK45_on_one_fixture": false,
+    "calls_saved_vs_RK45": 0,
+    "strongest_reference_calls": 254,
+    "scientific_discovery_verified": false,
+    "AGI_demonstrated": false,
+    "generalizable_improvement_established": false,
+    "auto_deployed": false
+  },
+  "AI_breakthrough_verified": false
+}
