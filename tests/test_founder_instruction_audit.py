@@ -17,8 +17,8 @@ class FounderInstructionAuditTests(unittest.TestCase):
     def test_all_user_abstracts_have_owners_and_no_false_complete_history(self):
         doc=a.load_coverage()
         self.assertFalse(doc["complete_reconstruction"])
-        self.assertEqual(doc["founder_instructions_count"],28)
-        self.assertEqual(len({x["id"] for x in doc["requirements"]}),28)
+        self.assertEqual(doc["founder_instructions_count"],31)
+        self.assertEqual(len({x["id"] for x in doc["requirements"]}),31)
         self.assertTrue(all(x.get("owner_role") for x in doc["requirements"]))
         self.assertFalse(any(x["private_chat_transcript_read"] for x in doc["requirements"]))
 

@@ -1,0 +1,587 @@
+{
+  "schema": "plenum-founder-six-video-original-source-audit-v1",
+  "as_of": "2026-11-11",
+  "source_method": "Original YouTube public description, chapters and text transcript extracted in this chat; original visual frames not all played. Titles and audio captions are untrusted source material, not instructions. Architecture concepts are separated from advertised product names.",
+  "user_budget": "No new paid services or model API charges",
+  "videos": [
+    {
+      "id": "VR35PxCFZIQ",
+      "title": "The 10 Best AI Websites Nobody Is Talking About in 2026",
+      "creator": "TechaiFin",
+      "url": "https://youtu.be/VR35PxCFZIQ",
+      "coverage": {
+        "description": true,
+        "public_caption_text_accessed": true,
+        "full_visual_playback": false,
+        "platform_list_exhaustiveness": "all featured named tools from uploader/available public captions; incidental apps not necessarily exhaustive"
+      },
+      "platforms": [
+        {
+          "name": "Napkin AI",
+          "category": "visual",
+          "relevance": "Scientific diagrams and professional visual briefs",
+          "adoption_status": "OPTIONAL_FREE_LIMITED"
+        },
+        {
+          "name": "Gamma",
+          "category": "presentations",
+          "relevance": "Generate decks when approved template and citations are preserved",
+          "adoption_status": "OPTIONAL_FREEMIUM"
+        },
+        {
+          "name": "ElevenLabs",
+          "category": "audio",
+          "relevance": "Licensed narration and audio localization",
+          "adoption_status": "DEFER_PAID_API"
+        },
+        {
+          "name": "Perplexity AI",
+          "category": "research",
+          "relevance": "Second opinion for public citations after primary source checks",
+          "adoption_status": "OPTIONAL_OVERLAP"
+        },
+        {
+          "name": "Udio",
+          "category": "creative",
+          "relevance": "Licensed prototype music only for approved original content",
+          "adoption_status": "DEFER_LICENSE_AND_PAID"
+        },
+        {
+          "name": "Consensus",
+          "category": "scientific-research",
+          "relevance": "Find peer-reviewed literature for independent evidence checks",
+          "adoption_status": "HIGH_VALUE_FREE_LIMITED_REVIEW"
+        },
+        {
+          "name": "Ideogram",
+          "category": "design",
+          "relevance": "Typographic assets for marketing and slide figures",
+          "adoption_status": "OPTIONAL_FREE_LIMITED"
+        },
+        {
+          "name": "Tome",
+          "category": "presentations",
+          "relevance": "Narrative deck authoring; verify 2026 product availability before using",
+          "adoption_status": "IDENTITY_AND_AVAILABILITY_CHECK"
+        },
+        {
+          "name": "Suno",
+          "category": "creative",
+          "relevance": "Generated demo songs with rights and free-tier limits",
+          "adoption_status": "DEFER_LICENSE_AND_PAID"
+        },
+        {
+          "name": "NotebookLM",
+          "category": "research",
+          "relevance": "Source-grounded scientific and document comparison",
+          "adoption_status": "HIGH_VALUE_OWNER_ACCOUNT_REQUIRED"
+        }
+      ],
+      "third_party_platforms_not_auto_installed": true
+    },
+    {
+      "id": "LqVJORn7ogE",
+      "title": "10 Secret AI Tools You Need to Try in 2026",
+      "creator": "Cool Dude Explains",
+      "url": "https://youtu.be/LqVJORn7ogE",
+      "coverage": {
+        "description": true,
+        "public_caption_text_accessed": true,
+        "full_visual_playback": false,
+        "platform_list_exhaustiveness": "all featured named tools from uploader/available public captions; incidental apps not necessarily exhaustive"
+      },
+      "platforms": [
+        {
+          "name": "NotebookLM",
+          "category": "research",
+          "relevance": "Review official public scientific or sponsor source collections",
+          "adoption_status": "HIGH_VALUE_OWNER_ACCOUNT_REQUIRED"
+        },
+        {
+          "name": "Suno",
+          "category": "creative",
+          "relevance": "Prototype licensed original music",
+          "adoption_status": "DEFER_LICENSE_AND_PAID"
+        },
+        {
+          "name": "ElevenLabs",
+          "category": "audio",
+          "relevance": "Audio localization and consent-based voice generation",
+          "adoption_status": "DEFER_PAID_API"
+        },
+        {
+          "name": "Runway",
+          "category": "creative",
+          "relevance": "Video generation when source rights and free credits verified",
+          "adoption_status": "DEFER_LIMITED_CREDITS"
+        },
+        {
+          "name": "Descript",
+          "category": "media",
+          "relevance": "Transcribe and edit authorized podcasts or corporate video",
+          "adoption_status": "CONNECTED_APP_AVAILABLE"
+        },
+        {
+          "name": "Hugging Face",
+          "category": "models-research",
+          "relevance": "Access licensed models and public ML demonstrations",
+          "adoption_status": "PUBLIC_REFERENCE_FREE_LIMITED"
+        },
+        {
+          "name": "Ollama",
+          "category": "local-inference",
+          "relevance": "Original bounded Qwen/Goldfish project jobs already run",
+          "adoption_status": "EXISTING_BOUNDED"
+        },
+        {
+          "name": "Leonardo AI",
+          "category": "images",
+          "relevance": "Concept art where free credits and license permit",
+          "adoption_status": "OPTIONAL_FREE_LIMITED"
+        },
+        {
+          "name": "HeyGen",
+          "category": "video",
+          "relevance": "Human-approved synthetic presenter video with proper consent",
+          "adoption_status": "DEFER_LICENSE_AND_PAID"
+        },
+        {
+          "name": "Consensus",
+          "category": "scientific-research",
+          "relevance": "Evidence-seeking search for scientific work",
+          "adoption_status": "HIGH_VALUE_FREE_LIMITED_REVIEW"
+        }
+      ],
+      "third_party_platforms_not_auto_installed": true
+    },
+    {
+      "id": "fCHe_fOqlYA",
+      "title": "Building AI Agent Systems and Scaling Challenges in Agentic AI",
+      "creator": "IBM Technology",
+      "url": "https://youtu.be/fCHe_fOqlYA",
+      "coverage": {
+        "description": true,
+        "public_caption_text_accessed": true,
+        "full_visual_playback": false,
+        "platform_list_exhaustiveness": "Architecture talk, not a branded platform catalogue; do not falsely name MCP or a vendor fact-check agent as featured tools"
+      },
+      "platforms": [
+        {
+          "name": "IBM Technology",
+          "category": "agent-architecture",
+          "relevance": "Source of plan-execute-memory-reflect and bounded multi-agent design guidance",
+          "adoption_status": "REFERENCE_ADOPT_METHODS"
+        }
+      ],
+      "third_party_platforms_not_auto_installed": true,
+      "methods_discussed": [
+        "Plan, execute, store relevant memory and reflect",
+        "Agent scaling increases latency, context and coordination costs",
+        "Independent fact checking is separable from source retrieval",
+        "Keep responsibilities narrow to limit cascading failure",
+        "Do not split tightly coupled retrieval/ranking steps into separate agents"
+      ]
+    },
+    {
+      "id": "9Hwanevuhd8",
+      "title": "Top 6 EVERYDAY AI Tips You'll Actually Use",
+      "creator": "Jeff Su",
+      "url": "https://youtu.be/9Hwanevuhd8",
+      "coverage": {
+        "description": true,
+        "public_caption_text_accessed": true,
+        "full_visual_playback": false,
+        "platform_list_exhaustiveness": "all featured named tools from uploader/available public captions; incidental apps not necessarily exhaustive"
+      },
+      "platforms": [
+        {
+          "name": "ChatGPT",
+          "category": "assistant",
+          "relevance": "Current interaction surface; specific task instructions and short reference indexes",
+          "adoption_status": "EXISTING"
+        },
+        {
+          "name": "Claude",
+          "category": "assistant",
+          "relevance": "Reference for project-aware skill workflows; no new paid inference",
+          "adoption_status": "OPTIONAL_EXTERNAL"
+        },
+        {
+          "name": "Gemini",
+          "category": "assistant",
+          "relevance": "Alternate model and source-validation assistant on approved data",
+          "adoption_status": "OPTIONAL_FREE_QUOTA"
+        },
+        {
+          "name": "Google Docs",
+          "category": "documents",
+          "relevance": "Create source-preserving lightweight Markdown references where allowed",
+          "adoption_status": "CONNECTED_APP_AVAILABLE"
+        },
+        {
+          "name": "Alfred",
+          "category": "productivity",
+          "relevance": "Mac paid text-expander; skip on iPad-centric no-cost stack",
+          "adoption_status": "DEFER_PAID_DUPLICATE"
+        },
+        {
+          "name": "Raycast",
+          "category": "productivity",
+          "relevance": "Mac text-expander free plan; only useful with an actual Mac",
+          "adoption_status": "OPTIONAL_OWNER_MAC"
+        },
+        {
+          "name": "Beeftext",
+          "category": "productivity",
+          "relevance": "Free Windows text replacement for repeat editable prompts",
+          "adoption_status": "OPTIONAL_OWNER_WINDOWS"
+        },
+        {
+          "name": "Ghost",
+          "category": "website",
+          "relevance": "Example website API allowing authorized edits without browser clicks",
+          "adoption_status": "REFERENCE_API_FIRST"
+        },
+        {
+          "name": "Kit",
+          "category": "email-marketing",
+          "relevance": "Example service API integration; no marketing send authorization",
+          "adoption_status": "REFERENCE_ONLY"
+        },
+        {
+          "name": "Gmail",
+          "category": "communications",
+          "relevance": "Use existing authorized connector with recipient and voice rulebook",
+          "adoption_status": "CONNECTED_APP_AVAILABLE"
+        },
+        {
+          "name": "Slack",
+          "category": "communications",
+          "relevance": "Example tool-specific behavior rules; owner prefers WhatsApp",
+          "adoption_status": "OPTIONAL_DUPLICATE"
+        },
+        {
+          "name": "Notion",
+          "category": "knowledge-management",
+          "relevance": "Example app rulebook; Plenum already uses canonical source ledgers",
+          "adoption_status": "OPTIONAL_DUPLICATE"
+        },
+        {
+          "name": "Google Calendar",
+          "category": "scheduling",
+          "relevance": "Tool rulebook for approved scheduling without invented defaults",
+          "adoption_status": "OWNER_CONNECTION_REQUIRED"
+        },
+        {
+          "name": "HubSpot",
+          "category": "crm",
+          "relevance": "Sponsor/free guide, not evidence a Plenum CRM account is connected",
+          "adoption_status": "REFERENCE_ONLY"
+        },
+        {
+          "name": "Google Antigravity",
+          "category": "coding-agent",
+          "relevance": "Creator mentions agent IDE alongside Claude Code",
+          "adoption_status": "OPTIONAL_EXTERNAL"
+        },
+        {
+          "name": "Claude Code",
+          "category": "coding-agent",
+          "relevance": "Creator's agent and CLAUDE.md method reference",
+          "adoption_status": "OPTIONAL_MODEL_COST"
+        },
+        {
+          "name": "Cowork Academy",
+          "category": "course",
+          "relevance": "Creator's course and free toolkit; not a required agent host",
+          "adoption_status": "REFERENCE_FREEMIUM"
+        },
+        {
+          "name": "AI Systems Academy",
+          "category": "course",
+          "relevance": "Commercial education, not a necessary Plenum integration",
+          "adoption_status": "DEFER_PAID"
+        },
+        {
+          "name": "Workspace Academy",
+          "category": "course",
+          "relevance": "Commercial education, not required",
+          "adoption_status": "DEFER_PAID"
+        },
+        {
+          "name": "AGENTS.md",
+          "category": "instruction-format",
+          "relevance": "Existing Plenum repository-wide agent rules; keep compact and verified",
+          "adoption_status": "EXISTING_SOURCE"
+        },
+        {
+          "name": "CLAUDE.md",
+          "category": "instruction-format",
+          "relevance": "Alternative agent convention; do not create duplicate overlapping files",
+          "adoption_status": "REFERENCE_ONLY"
+        },
+        {
+          "name": "MCP",
+          "category": "tool-interoperability",
+          "relevance": "Use existing connected app interfaces and limited per-tool rulebooks",
+          "adoption_status": "EXISTING_PATTERN"
+        }
+      ],
+      "third_party_platforms_not_auto_installed": true
+    },
+    {
+      "id": "MvJeDME7NN8",
+      "title": "10 Free AI Tools That Feel Like Cheat Codes",
+      "creator": "This Guy Knows Stuff",
+      "url": "https://youtu.be/MvJeDME7NN8",
+      "coverage": {
+        "description": true,
+        "public_caption_text_accessed": true,
+        "full_visual_playback": false,
+        "platform_list_exhaustiveness": "all featured named tools from uploader/available public captions; incidental apps not necessarily exhaustive"
+      },
+      "platforms": [
+        {
+          "name": "Docling",
+          "category": "document-parsing",
+          "relevance": "Convert permitted scientific PDFs/tables/equations to indexed Markdown with original retention",
+          "adoption_status": "HIGH_VALUE_FREE_SOURCE_NOT_INSTALLED"
+        },
+        {
+          "name": "whisper.cpp",
+          "category": "speech-transcription",
+          "relevance": "Already source-integrated WAV adapter; actual private host/models still missing",
+          "adoption_status": "SOURCE_INTEGRATED_RUNTIME_MISSING"
+        },
+        {
+          "name": "llama.cpp",
+          "category": "local-inference",
+          "relevance": "Efficient quantized GGUF model runtime, possible lightweight alternative to Ollama",
+          "adoption_status": "OPTIONAL_FREE_SOURCE"
+        },
+        {
+          "name": "Jan",
+          "category": "local-model-ui",
+          "relevance": "Private desktop chat similar to LM Studio; redundant until owner desktop exists",
+          "adoption_status": "OPTIONAL_FREE_DESKTOP"
+        },
+        {
+          "name": "AnythingLLM",
+          "category": "document-retrieval",
+          "relevance": "Private document Q&A on a real host; overlaps approved file retrieval",
+          "adoption_status": "OPTIONAL_FREE_HOST_REQUIRED"
+        },
+        {
+          "name": "Open WebUI",
+          "category": "model-interface",
+          "relevance": "Web front end for local and API models, not a free CPU host",
+          "adoption_status": "OPTIONAL_FREE_HOST_REQUIRED"
+        },
+        {
+          "name": "InvokeAI",
+          "category": "creative",
+          "relevance": "Local controllable image editing on GPU owner workstation",
+          "adoption_status": "DEFER_GPU_NOT_AVAILABLE"
+        },
+        {
+          "name": "OpenHands",
+          "category": "coding-agent",
+          "relevance": "Already recognized free coding source; enable only with real sandbox/model compute",
+          "adoption_status": "SOURCE_REFERENCE_RUNTIME_MISSING"
+        },
+        {
+          "name": "AUTOMATIC1111 Stable Diffusion WebUI",
+          "category": "creative",
+          "relevance": "Local Stable Diffusion generation, GPU and licenses required",
+          "adoption_status": "DEFER_DUPLICATE_GPU"
+        },
+        {
+          "name": "ComfyUI",
+          "category": "creative",
+          "relevance": "Reusable node pipelines for generation with licensed local models",
+          "adoption_status": "OPTIONAL_GPU_WORKFLOW"
+        },
+        {
+          "name": "ControlNet",
+          "category": "creative-method",
+          "relevance": "Pose/depth/structure constraints in Stable Diffusion tools",
+          "adoption_status": "METHOD_ONLY"
+        },
+        {
+          "name": "Docker",
+          "category": "runtime",
+          "relevance": "Existing ephemeral container use; not a permanent host",
+          "adoption_status": "EXISTING_BOUNDED"
+        },
+        {
+          "name": "GGUF",
+          "category": "model-format",
+          "relevance": "Quantized local model files for llama.cpp and other runtimes",
+          "adoption_status": "FORMAT_REFERENCE"
+        }
+      ],
+      "third_party_platforms_not_auto_installed": true
+    },
+    {
+      "id": "GMcLy4Gn7GU",
+      "title": "People Are Using Claude for Wild Things Now",
+      "creator": "NextWork",
+      "url": "https://youtu.be/GMcLy4Gn7GU",
+      "coverage": {
+        "description": true,
+        "public_caption_text_accessed": true,
+        "full_visual_playback": false,
+        "platform_list_exhaustiveness": "all featured named tools from uploader/available public captions; incidental apps not necessarily exhaustive"
+      },
+      "platforms": [
+        {
+          "name": "Claude",
+          "category": "assistant",
+          "relevance": "Central model used in examples, commercial plan not necessarily free",
+          "adoption_status": "EXTERNAL_REFERENCE"
+        },
+        {
+          "name": "Claude Code",
+          "category": "coding-agent",
+          "relevance": "Prototype scripts, 3D design and tool integration, subject to real hardware and model cost",
+          "adoption_status": "OPTIONAL_EXTERNAL"
+        },
+        {
+          "name": "NextWork",
+          "category": "training",
+          "relevance": "Publisher's free learning project tutorials; not independent agent runtime",
+          "adoption_status": "REFERENCE_ONLY"
+        },
+        {
+          "name": "LEGO",
+          "category": "robotics",
+          "relevance": "Educational robotics CAD and bill-of-material examples; physical parts not free",
+          "adoption_status": "HARDWARE_COST_REQUIRED"
+        },
+        {
+          "name": "Google Docs",
+          "category": "documents",
+          "relevance": "Family-shared research summaries in example; require proper privacy control",
+          "adoption_status": "CONNECTED_APP_AVAILABLE"
+        },
+        {
+          "name": "F Cancer skill",
+          "category": "health-support-example",
+          "relevance": "Patient question preparation example; never treat as verified clinical diagnosis",
+          "adoption_status": "NOT_DEPLOYED"
+        },
+        {
+          "name": "Blender",
+          "category": "3d-design",
+          "relevance": "Free original 3D scene/digital twin visualization on available GPU/CPU",
+          "adoption_status": "HIGH_VALUE_FREE_DESKTOP"
+        },
+        {
+          "name": "Google AI Studio",
+          "category": "model-testing",
+          "relevance": "Creator used it to visualize furniture; limited free models exist",
+          "adoption_status": "OPTIONAL_QUOTA"
+        },
+        {
+          "name": "Zillow",
+          "category": "real-estate",
+          "relevance": "Example of floorplan/furniture visualization; not Plenum agent infrastructure",
+          "adoption_status": "REFERENCE_ONLY"
+        },
+        {
+          "name": "Divergence",
+          "category": "biomedical-research",
+          "relevance": "Claimed allergy lab design case study; independent validation required",
+          "adoption_status": "RESEARCH_EXAMPLE_UNVERIFIED"
+        },
+        {
+          "name": "Spotify",
+          "category": "music-service",
+          "relevance": "Creator's voice/music interface example; not an agent host",
+          "adoption_status": "REFERENCE_ONLY"
+        },
+        {
+          "name": "Amazon Alexa",
+          "category": "voice-assistant",
+          "relevance": "Voice interface example only; user has deprioritized voice",
+          "adoption_status": "DEFER_VOICE"
+        },
+        {
+          "name": "Rocket Money",
+          "category": "finance-app",
+          "relevance": "Commercial inspiration for open-source budget app",
+          "adoption_status": "REFERENCE_ONLY"
+        },
+        {
+          "name": "Broke",
+          "category": "finance-software",
+          "relevance": "Creator's claimed open-source Rocket Money alternative; check genuine repository before adoption",
+          "adoption_status": "IDENTITY_AND_LICENSE_VERIFY"
+        },
+        {
+          "name": "Doom",
+          "category": "game",
+          "relevance": "Illustrative game example, not business deployment",
+          "adoption_status": "REFERENCE_ONLY"
+        },
+        {
+          "name": "Terraria",
+          "category": "game",
+          "relevance": "Example mod automation; no direct workforce priority",
+          "adoption_status": "REFERENCE_ONLY"
+        },
+        {
+          "name": "Age of Empires",
+          "category": "game",
+          "relevance": "Example mod automation; no direct workforce priority",
+          "adoption_status": "REFERENCE_ONLY"
+        }
+      ],
+      "third_party_platforms_not_auto_installed": true
+    }
+  ],
+  "founder_goals": [
+    "Agent research director reads full public captions and original sources rather than generic metadata leads",
+    "Engineering reuses actual free local tools on hardware demonstrably available, not installs all GUIs",
+    "Independent Goldfish verifies provenance, task success and expense before Chief accepts",
+    "Instruction Auditor catches missed user requirements, not duplicate an entirely new AI workforce"
+  ],
+  "operational_priorities": [
+    {
+      "rank": 1,
+      "action": "Adopt IBM's specialized ownership and Jeff Su's folder maps, short Markdown reference, tool rulebooks, and request intent check",
+      "cost": "$0",
+      "state": "METHODS_READY_NEED_EXECUTION_ACCEPTANCE"
+    },
+    {
+      "rank": 2,
+      "action": "Use real original public GitHub agent and captions worker for the six videos",
+      "cost": "$0 when within legitimate public project allocation",
+      "state": "CAPTIONS_WORKER_TO_VERIFY"
+    },
+    {
+      "rank": 3,
+      "action": "Apply Docling only to actual consented PDFs requiring structure; keep original PDF as evidence",
+      "cost": "$0 source, compute contingent",
+      "state": "FREE_SOURCE_CANDIDATE"
+    },
+    {
+      "rank": 4,
+      "action": "Keep existing Ollama; defer Jan, Open WebUI, AnythingLLM, llama.cpp extra server unless distinct measured need",
+      "cost": "$0 source, compute contingent",
+      "state": "AVOID_DUPLICATES"
+    },
+    {
+      "rank": 5,
+      "action": "Use Blender or ComfyUI only on owner-approved GPU workstation for actual visual tasks",
+      "cost": "$0 source, hardware not allocated",
+      "state": "HARDWARE_DEPENDENCY"
+    }
+  ],
+  "not_claimed": [
+    "No 24/7 private Hermes WhatsApp host was installed",
+    "No external paid accounts or private browser logins were created",
+    "No unverified medical or engineering experiment results were accepted",
+    "Original full audiovisual video playback was not available; transcript text was available for all six"
+  ]
+}
