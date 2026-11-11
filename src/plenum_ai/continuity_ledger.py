@@ -111,8 +111,11 @@ def _validate_result(score, evidence_id=None):
                 or not _count(score["actual_tool_responses"])
                 or score["actual_tool_responses"] > score["actual_tool_calls"]):
                 raise ValueError("Historical tool responses exceed calls")
-        if all(k in score for k in ("biology","chemistry","physics")) and all(
-            isinstance(score[k],dict) for k in ("biology","chemistry","physics")
+        if ("correct" in score and "attempted" in score
+            and all(k in score for k in ("biology","chemistry","physics"))
+            and all(isinstance(score[k],dict)
+                    and set(score[k]) == {"correct","attempted"}
+                    for k in ("biology","chemistry","physics"))
         ):
             if (any(not _count(score[k].get("correct"))
                     or not _count(score[k].get("attempted"))
