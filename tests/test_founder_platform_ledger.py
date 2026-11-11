@@ -11,8 +11,8 @@ class FounderCatalogContract(unittest.TestCase):
     def test_complete_deduplicated_free_first_registry(self):
         d=json.loads(DATA.read_text(encoding="utf-8"))
         self.assertEqual(d["schema"],"plenum-founder-all-tools-registry-v1")
-        self.assertEqual(len(d["items"]),81)
-        self.assertEqual(len({x["key"] for x in d["items"]}),81)
+        self.assertEqual(len(d["items"]),84)
+        self.assertEqual(len({x["key"] for x in d["items"]}),84)
         self.assertEqual(len(d["videos"]),4)
         self.assertEqual(len(d["screenshot_requested_milestones"]),5)
         self.assertFalse(d["summary"]["installed_all"])
@@ -50,7 +50,7 @@ class FounderCatalogContract(unittest.TestCase):
 
     def test_readable_master_ledger_and_owner_gate(self):
         doc=(ROOT/"docs/PLENUM_FOUNDER_PLATFORM_ADOPTION_LEDGER.md").read_text(encoding="utf-8")
-        self.assertIn("81 tools",doc)
+        self.assertIn("84 tools",doc)
         self.assertIn("Google AQuA",doc)
         self.assertIn("Cloudflare",doc)
         self.assertIn("founder_all_tools_registry.json",doc)
