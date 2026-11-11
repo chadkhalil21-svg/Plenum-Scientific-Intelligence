@@ -107,3 +107,57 @@ To avoid limiting voice selection to the first two tools, evaluate these as **li
 - **Google AI Studio Gemini Flash TTS:** official pricing currently shows free-tier eligibility for some Flash models; access, limits and commercial terms need a task-specific check before requesting generation. https://ai.google.dev/gemini-api/docs/pricing.
 
 **Priority:** Kokoro on accessible CPU -> Qwen3-TTS or Parler on verified compatible GPU -> conditional Google/HeyGen included quota. Do not install every model or use an unauthorized voice clone. Pick a 15s narrator only after listening and actual usage-rights audit.
+
+
+## STRICT $0 POLICY ADDENDUM — founder direction, 11 November 2026
+**Interpretation:** approved software must be free to use for Plenum's intended commercial videos, not merely downloadable without charge. A limited free plan is eligible *only if* it requires no new payment card, paid upgrade, or billable overage and the render actually fits the allowed quota; prefer fully local alternatives. Public/GitHub source is *not* equivalent to installed tool or commercial license. Do not engage paid services, pay-as-you-go inference, storage egress charges, trial signups or credit-card verification as workarounds.
+
+### Actual free execution design
+1. Existing Chief selects exactly one story/audience/genre and assigns a script to Creative Studio. A one-paragraph treatment and numbered shot plan exist before rendering. Use plain-text Fountain or Markdown script; no paid screenwriter.
+2. Native free tools generate original graphics. FFmpeg/MoviePy compose actual H.264/AAC MP4, timings, transitions, split stems and SRT. HyperFrames local CLI (Apache-2.0) may replace hand-authored animations after one accepted original pilot; never route to an unspecified paid HeyGen cloud render.
+3. Source **real** moving background footage from Pexels under the official Pexels License (commercial-usable); per-asset record title, author, page, date, license and third-party brand/person restrictions. Do not imply stock or generated scenes are Plenum laboratory findings.
+4. Local narrator: Kokoro-82M rights-checked voices for CPU-first; Piper specific licensed voice if Kokoro unavailable; optional Qwen3-TTS on confirmed compatible local hardware. No voice cloning without subject consent. A/B voice quality on identical audio.
+5. Original score: LMMS/MuseScore Studio/MIDI + licensable soundfonts; or individual Mixkit free-music assets within permitted online-film uses. Foley and ambience from attributable CC0/CC BY Freesound files or appropriate Mixkit SFX assets. CC BY-NC audio prohibited for commercial work.
+6. Clip/voice/sound scene editorial decisions reside with the existing Plenum virtual Director, not a proliferation of unverified third-party 'director' agents. The Verifier checks a playable file with picture, actual audio, captions, continuity, scientific claims, and a full license ledger.
+7. Free versioning/source delivery via GitHub for **public non-sensitive code and metadata** only. Do not publicly commit unpublished patent details or secrets. Retain video output in appropriately authorized file/artifact storage with expiry limits clearly stated.
+
+### Hosting / GPU reality checked against primary 2026 documentation
+| Option | Genuine $0 capability | What it **cannot** honestly promise |
+|---|---|---|
+| Existing local CPU with FFmpeg, Python | Deterministic footage assembly, motion typography, subtitles, MIDI and light TTS; no per-export vendor fee | Local CPU will not efficiently run high-quality large video diffusion models |
+| GitHub Actions public standard runner | 4 vCPU/16 GB class ephemeral CPU run available on public repo; source-linked finite automation | Not 24/7 persistent agent host or GPU-backed unlimited commercial inference/video farm; use bounded permitted workflows and artifact retention |
+| Cloudflare Workers Free | HTTP orchestration/dashboard/control; 100,000 daily requests, 10 ms CPU per request (as of 29 Oct 2026) | Not continuous encoder or general FFmpeg render host. Workers AI has 10,000 free Neurons/day, model eligibility restrictions and hard quota; not GPU render guarantee |
+| Google Colab Free | Manual interactive experiments sometimes receive GPU | GPUs not guaranteed; free tier disallows unattended distributed workers and some primarily web-UI generation use cases; not a production hosting workaround |
+| Hugging Face Spaces static | Free static websites | **As of November 2026 Gradio/Docker compute Spaces require a paid subscription even on $0/hour cpu-basic.** Exclude new compute Space for strict $0 account baseline |
+| Existing paid/proprietary cloud accounts | No automatic eligibility assumption | Exclude unless founder explicitly verifies the specific task is $0 and billing cannot occur |
+
+Primary docs:
+- GitHub Actions free standard public runners: https://docs.github.com/en/actions/how-tos/write-workflows/choose-where-workflows-run/choose-the-runner-for-a-job
+- Cloudflare Workers Free CPU and limits: https://developers.cloudflare.com/workers/platform/limits/
+- Cloudflare Workers AI free daily Neurons (and paid-only models): https://developers.cloudflare.com/workers-ai/platform/pricing/
+- Colab FAQ terms and prohibited free unattended workers: https://research.google.com/colaboratory/faq.html
+- Hugging Face Spaces 2026 compute creation paid subscription gate: https://huggingface.co/docs/hub/en/spaces-overview and https://huggingface.co/docs/huggingface_hub/guides/manage-spaces
+- Pexels original commercial-use license: https://www.pexels.com/legal-pages/license/
+- Mixkit free music license (online ads/videos allowed, broadcasts/discs/video games barred): https://mixkit.co/license/modal/musicFree/
+
+### Free YouTube/tutorial curriculum (verified source descriptions; not claims of full video viewing)
+1. **Script-to-film / directorial craft:** ScreenWeaver 21-lesson free 104-minute film course on script, visual bible, consistent character references, storyboard, shot list, sound and final edit: https://www.screenweaver.ai/academy/courses/ai-filmmaking-course
+2. **Free editing:** Kevin Stratvert, “Kdenlive Tutorial for Beginners” (Nov 9, 2025), covers proxies, cuts, grades, sound and exporting: https://www.youtube.com/watch?v=YnSE9qgGui4
+3. **Free local AI video setup:** Kevin Stratvert, “How to Create Free AI Videos Locally with ComfyUI” (July 6, 2026); no API charges but needs substantial local storage/GPU/appropriate model license: https://www.youtube.com/watch?v=0z8Pp4TaAl8
+4. **Shot-by-shot storytelling and continuity:** Mickmumpitz, “Build your own AI MOVIES shot by shot” (Nov 1, 2025): Qwen Image Edit + ComfyUI + Wan workflows, reference consistency and shot continuity; no proof the founder has GPU: https://www.youtube.com/watch?v=YpuSE9hcal8
+5. **Smartphone-footage transformation:** Mickmumpitz, “Shoot ENTIRE MOVIES with this FREE AI WORKFLOW!” (May 2025): base footage + local ComfyUI video-to-video; example ran on 8/24GB VRAM test GPUs: https://www.youtube.com/watch?v=pd76XGHCavY
+6. **Broad practical lessons:** free Pixaroma ComfyUI course, 42 episodes on image, video, audio and 3D: https://workflows.pixaroma.com/comfyui-course/
+
+### Additional new candidate — agent-friendly long-form narration
+- **LocalText2Voice** https://github.com/estebanstifli/LocalText2Voice — free MIT app with optional offline Kokoro, Piper, Chatterbox, Qwen3-TTS; script segment editing, soundtrack mix, storyboard/video export; packaged Windows, Linux from source; optional cloud services remain excluded. Specific model/voice licenses must be inspected. Candidate *instead of* inventing a new voice manager; not verified installed. Official README warns free local render does not make paid APIs free.
+- **ShotForward** https://github.com/shotforward/shotforward — Apache-2.0 local video client that can manage scenes and storyboards, but its hosted AI video model generation requires other credits/account; no proven genuinely $0 complete generation path; use only as offline layout candidate if useful.
+- **LudwigKienle AI Video Production Editor** https://github.com/LudwigKienle/ai-video-production-editor — GPL open local film UI but defaults to bring-your-own keys to paid models; not the first zero-cost choice.
+- **KoraCut** https://koracut.org/en/ — free open-source editor on macOS, but the named agent departments are marked in development; cannot count them as ready employees.
+
+**No dishonest free alternatives:** pirated APIs, temporary free trial farms, multi-account quota evasion, bypassing usage limits, noncommercial model weights for commercial Plenum films, generic public GitHub Actions converted into persistent GPU hosting.
+
+### Existing execution link and current acceptance boundary
+- Founder correctly triggered exact multi-worker mission [#498](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/498) with public **research + creative** scope via existing Chief source-defined workflow, no paid inference.
+- Prior director task [#497](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/497) is a **planning issue** whose title does not match the exact automatic worker inbox trigger and must not be represented as executed.
+- Real video production remains governed by [#496](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/496) and actual finished-film acceptance by [#494](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/494).
+- The original team can currently output research metadata and original SVG/MusicXML structural drafts. **It does not yet support independently creating and artistically verifying a 30–60 second cinematic MP4.** Engineering must build/verify that bounded skill and capture the result, rather than report the issue workflow as a finished movie.
