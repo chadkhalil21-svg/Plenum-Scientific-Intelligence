@@ -119,7 +119,7 @@ def read_public_tool_adoption_context(objective: str, path=PLATFORM_PUBLIC_REGIS
     registry = json.loads(Path(path).read_text(encoding="utf-8"))
     items = registry.get("items")
     if (registry.get("schema") != "plenum-founder-all-tools-registry-v1"
-            or not isinstance(items, list) or len(items) != 81
+            or not isinstance(items, list) or len(items) != 84
             or registry.get("summary", {}).get("installed_all") is not False):
         raise ValueError("Unexpected or unchecked public platform registry")
     wanted = ("Humanizer", "Last30Days", "SkillSpector", "Superpowers",
@@ -129,8 +129,8 @@ def read_public_tool_adoption_context(objective: str, path=PLATFORM_PUBLIC_REGIS
     if len(selected) != len(wanted):
         raise ValueError("Missing core founder adoption evidence")
     decisions = "; ".join(name + "=" + selected[name]["adoption_status"] for name in wanted)
-    return ("Founder no-new-spend policy. Verified PUBLIC 81-platform registry,"
-            " not 81 installations; role-specific skills only. " + decisions +
+    return ("Founder no-new-spend policy. Verified PUBLIC 84-platform registry,"
+            " not 84 installations; role-specific skills only. " + decisions +
             ". Full vendor apps and owner accounts NOT auto-installed. ")
 
 
