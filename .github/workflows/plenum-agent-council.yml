@@ -7,6 +7,8 @@ on:
       - 'src/plenum_ai/agent_council.py'
       - 'tests/test_agent_council.py'
       - 'tests/test_agent_council_business.py'
+      - 'tests/test_elephant_goldfish_public.py'
+      - 'docs/PLENUM_ELEPHANT_PUBLIC.json'
       - 'src/plenum_ai/agent_library.py'
       - 'tests/test_agent_library.py'
       - 'integrations/agent-catalog/**'
@@ -33,6 +35,7 @@ jobs:
           python -m pip install -e .
           python -m unittest discover -s tests -p 'test_agent_council.py' -v
           python -m unittest discover -s tests -p 'test_agent_council_business.py' -v
+          python -m unittest discover -s tests -p 'test_elephant_goldfish_public.py' -v
           python -m unittest discover -s tests -p 'test_agent_library.py' -v
   convene:
     if: >-
