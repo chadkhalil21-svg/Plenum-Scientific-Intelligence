@@ -65,7 +65,8 @@ def build_directory(registry_path: Path = REGISTRY, roster_path: Path = ROSTER) 
         "named_profiles_confirmed_running": None,
         "division_members_can_overlap": True,
         "business_advisory": {
-            "status": "original_model_public_council_only; not an actual corporate board",
+            "status": "business_advisor_profile_defined_and_public_council_available; private execution not verified",
+            "named_business_advisor_role": "business_advisor",
             "owner_divisions": ["commercial_operations", "verification_council"],
             "advice_areas": [
                 "strategy", "operations", "finance_and_funding",
@@ -95,7 +96,7 @@ def format_chart(directory: dict) -> str:
     for index, group in enumerate(directory["groups"], 1):
         people = ", ".join(m["named_hermes_profile"] for m in group["members"])
         lines.append(f"    {index}. {group['name']} — roles: {people}")
-    lines.append("  Business Advisory Council — consultative function spanning Commercial Operations + Verification")
+    lines.append("  Business Advisor — named profile in Commercial Operations; Advisory Council — consultative review across Commercial Operations + Verification")
     lines.append("  Source-only profiles and workforces are not all always-on employees.")
     return "\n".join(lines)
 
