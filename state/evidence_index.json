@@ -3,7 +3,7 @@
   "kind": "read_only_public_record_inventory",
   "source": "research-memory/evidence",
   "mission_reference": "research-memory/state/AGI_PROGRAM.json",
-  "record_count": 39,
+  "record_count": 66,
   "records": [
     {
       "track": "agent-experiments",
@@ -78,6 +78,30 @@
       "size_bytes": 57195
     },
     {
+      "track": "discovery",
+      "path": "evidence/discovery/2026-11-08-run-42501551474.json",
+      "sha256": "eaf55e32b59d98f6cd87200f1313c2d7f5bbecd178a60b6c17d896debd88ee76",
+      "size_bytes": 65917
+    },
+    {
+      "track": "discovery",
+      "path": "evidence/discovery/2026-11-09-run-42698265506.json",
+      "sha256": "4b15147f355bb3560872b6e0cd9791448c4cbe0d5929219a34f8c23eddfed669",
+      "size_bytes": 104304
+    },
+    {
+      "track": "discovery",
+      "path": "evidence/discovery/2026-11-10-run-42872202846.json",
+      "sha256": "04d224bc0a86240e416b0f227387863349dfda54ad379b17ccedb4829c30581e",
+      "size_bytes": 82022
+    },
+    {
+      "track": "discovery",
+      "path": "evidence/discovery/2026-11-11-run-43073581577.json",
+      "sha256": "3799a15adfa6696fe25d75c860d1f31f4fd9f55420f51f26f655561df1f5e481",
+      "size_bytes": 84549
+    },
+    {
       "track": "frontiers",
       "path": "evidence/frontiers/run-42170871194.json",
       "sha256": "c6b9faf684a785cf62a157a1ffd912a6312a8167d32d3fa0288542f7d5ae7422",
@@ -93,6 +117,30 @@
       "track": "frontiers",
       "path": "evidence/frontiers/run-42392956799.json",
       "sha256": "903705112b2516f6a91736d16937ca12f76feb9cf15cb5447c1b6a6eaf89807a",
+      "size_bytes": 4072
+    },
+    {
+      "track": "frontiers",
+      "path": "evidence/frontiers/run-42502361309.json",
+      "sha256": "1aaa84101c80c1d1eaa5964a92013ca509fb30043542ba0ef26e51d4ac81fa4d",
+      "size_bytes": 4072
+    },
+    {
+      "track": "frontiers",
+      "path": "evidence/frontiers/run-42701388982.json",
+      "sha256": "5ebed87794a558e1898b3eb2002e0b6fd895fa56c3a590d1c33039576c806725",
+      "size_bytes": 4072
+    },
+    {
+      "track": "frontiers",
+      "path": "evidence/frontiers/run-42875783736.json",
+      "sha256": "78f3f39fa6081d29a33cd53b4fc5a11959aeffe271d72bdae0add6886dd825bb",
+      "size_bytes": 4072
+    },
+    {
+      "track": "frontiers",
+      "path": "evidence/frontiers/run-43077683186.json",
+      "sha256": "7b3a360b78d4726cb9ca99c6affd855eac1894e8fea9bf933fae9673df147243",
       "size_bytes": 4072
     },
     {
@@ -156,10 +204,64 @@
       "size_bytes": 1362
     },
     {
+      "track": "invention-scouting",
+      "path": "evidence/invention-scouting/2026-11-09-public-source-triage.json",
+      "sha256": "6e139c8584d43af5e5ba6273b094d0a38f9762866b747b1bc403c222c5c77608",
+      "size_bytes": 8560
+    },
+    {
       "track": "iterative-hypotheses",
       "path": "evidence/iterative-hypotheses/run-42320309673.json",
       "sha256": "07cbf697fff238c52cf8d69dd47ba71b0cae77dc2a76a5a6e371a382ab64859c",
       "size_bytes": 11558
+    },
+    {
+      "track": "lab-radar",
+      "path": "evidence/lab-radar/run-42405802931.json",
+      "sha256": "bf3429e11358833ea338b8935a25ec154d3009f441b09c37e16a0620d55f5243",
+      "size_bytes": 16668
+    },
+    {
+      "track": "lab-radar",
+      "path": "evidence/lab-radar/run-42406132860.json",
+      "sha256": "8c05efeeea30439b6fae0efae604ff4d99799462bafbf74f7e848e92dcb46cc0",
+      "size_bytes": 910
+    },
+    {
+      "track": "lab-radar",
+      "path": "evidence/lab-radar/run-42406781760.json",
+      "sha256": "f6325ab8afce5cdfdef30f1f625834d81bf7d13be1b6acf88a3b0bdf7dbfbde9",
+      "size_bytes": 5845
+    },
+    {
+      "track": "lab-radar",
+      "path": "evidence/lab-radar/run-42507999191.json",
+      "sha256": "dadfa50d7a9ade30da6a02d97939ded026f53900a097b23cef4a029ecd789889",
+      "size_bytes": 4457
+    },
+    {
+      "track": "lab-radar",
+      "path": "evidence/lab-radar/run-42673765169.json",
+      "sha256": "b16da1c594c0dfa01d594155315f8b292d0749d3fd5888e06fbb9649d64eb5b5",
+      "size_bytes": 12412
+    },
+    {
+      "track": "lab-radar",
+      "path": "evidence/lab-radar/run-42713770685.json",
+      "sha256": "e3b748d6111b87c9459bfdfe55be6e107bced55f461047a114e22e5a80f7dc1e",
+      "size_bytes": 5078
+    },
+    {
+      "track": "lab-radar",
+      "path": "evidence/lab-radar/run-42890460698.json",
+      "sha256": "7f78fcd09467f709377dcdfa9c46a655aa5a3c81fe3f72183a6f6078acd36a33",
+      "size_bytes": 10822
+    },
+    {
+      "track": "lab-radar",
+      "path": "evidence/lab-radar/seen-links.json",
+      "sha256": "2ddd62e7a5b2a44627e706b488c606fba1086d50cb59b4ce57e0a673b7289102",
+      "size_bytes": 9990
     },
     {
       "track": "noaa-independent-critic",
@@ -178,6 +280,18 @@
       "path": "evidence/paired-qwen/run-42342242561.json",
       "sha256": "4317280bc1e2b5663e2e1056bbf350c8abc9053c9f16f1e6fc9ddd1013f6e9c5",
       "size_bytes": 4343
+    },
+    {
+      "track": "prospective-noaa",
+      "path": "evidence/prospective-noaa/frozen-2026-11.json",
+      "sha256": "a021eb2c7be355cfed186c919fde2e4b73d0eccf108a4bc59994b4c11a472a3f",
+      "size_bytes": 6678
+    },
+    {
+      "track": "prospective-usgs-hydrology",
+      "path": "evidence/prospective-usgs-hydrology/frozen-2026-11.json",
+      "sha256": "183877a8452b9871f6b1b0e4917c4c0ce481340d311b1ac9f153fd16d7ae2a73",
+      "size_bytes": 5681
     },
     {
       "track": "qwen17-math-budget",
@@ -216,6 +330,12 @@
       "size_bytes": 114817
     },
     {
+      "track": "universal-brief",
+      "path": "evidence/universal-brief/run-42716691921.json",
+      "sha256": "ecd958a62d52dcb30b9577ad550e855fd8032d4f66cb7239c3ae3cbf38f0863a",
+      "size_bytes": 144703
+    },
+    {
       "track": "world-horizon",
       "path": "evidence/world-horizon/2026-11-06-run-42173285138.json",
       "sha256": "62e253fe8da76eba4de971560fdc09c18146d83aab56c90e8a27cd4bfcfaf4ae",
@@ -238,6 +358,48 @@
       "path": "evidence/world-horizon/2026-11-07-run-42398262189.json",
       "sha256": "6999cdc011d9bfefd6ab8f8c82ce0162e3b0e0546a332334afe653261d626b38",
       "size_bytes": 97577
+    },
+    {
+      "track": "world-horizon",
+      "path": "evidence/world-horizon/2026-11-07-run-42405802931.json",
+      "sha256": "245a2364b3cd7e0f6a7abba0df3788822a3c97d143a488ca1705a86a09e3a76c",
+      "size_bytes": 95316
+    },
+    {
+      "track": "world-horizon",
+      "path": "evidence/world-horizon/2026-11-07-run-42406132860.json",
+      "sha256": "07abc8f5d1fd2193a761e686a080b09413729c4b6d5115868ced553b6aac4e09",
+      "size_bytes": 95316
+    },
+    {
+      "track": "world-horizon",
+      "path": "evidence/world-horizon/2026-11-07-run-42406781760.json",
+      "sha256": "240a3861c11264c73affde9e4bdc326a210693ab5b507871c20a1f267fed30e8",
+      "size_bytes": 105093
+    },
+    {
+      "track": "world-horizon",
+      "path": "evidence/world-horizon/2026-11-08-run-42507999191.json",
+      "sha256": "20df4f39a648633f2207828224059347dfe8b52426aad47cebbc0b05cb44ba3f",
+      "size_bytes": 92855
+    },
+    {
+      "track": "world-horizon",
+      "path": "evidence/world-horizon/2026-11-09-run-42673765169.json",
+      "sha256": "a3f4dc670363661955b22cf446c60e484ace866bc93e5d03914df81549bf8020",
+      "size_bytes": 120130
+    },
+    {
+      "track": "world-horizon",
+      "path": "evidence/world-horizon/2026-11-09-run-42713770685.json",
+      "sha256": "7393d5c5aecbf31e740d7b10f0fc34e00d5a39cea5aafab17fbf77a9c7db569c",
+      "size_bytes": 123106
+    },
+    {
+      "track": "world-horizon",
+      "path": "evidence/world-horizon/2026-11-10-run-42890460698.json",
+      "sha256": "b48a0ec215724da195efadf1d5a26dbe7925c65eba9b3d123d7fd3193603f1db",
+      "size_bytes": 118244
     }
   ],
   "groups": [
@@ -266,7 +428,7 @@
     },
     {
       "track": "discovery",
-      "records": 7,
+      "records": 11,
       "paths": [
         "evidence/discovery/2026-11-06-run-42168813339.json",
         "evidence/discovery/2026-11-06-run-42169260144.json",
@@ -274,16 +436,24 @@
         "evidence/discovery/2026-11-06-run-42169739986.json",
         "evidence/discovery/2026-11-06-run-42170083885.json",
         "evidence/discovery/2026-11-06-run-42263598305.json",
-        "evidence/discovery/2026-11-07-run-42392121263.json"
+        "evidence/discovery/2026-11-07-run-42392121263.json",
+        "evidence/discovery/2026-11-08-run-42501551474.json",
+        "evidence/discovery/2026-11-09-run-42698265506.json",
+        "evidence/discovery/2026-11-10-run-42872202846.json",
+        "evidence/discovery/2026-11-11-run-43073581577.json"
       ]
     },
     {
       "track": "frontiers",
-      "records": 3,
+      "records": 7,
       "paths": [
         "evidence/frontiers/run-42170871194.json",
         "evidence/frontiers/run-42265129530.json",
-        "evidence/frontiers/run-42392956799.json"
+        "evidence/frontiers/run-42392956799.json",
+        "evidence/frontiers/run-42502361309.json",
+        "evidence/frontiers/run-42701388982.json",
+        "evidence/frontiers/run-42875783736.json",
+        "evidence/frontiers/run-43077683186.json"
       ]
     },
     {
@@ -345,10 +515,31 @@
       ]
     },
     {
+      "track": "invention-scouting",
+      "records": 1,
+      "paths": [
+        "evidence/invention-scouting/2026-11-09-public-source-triage.json"
+      ]
+    },
+    {
       "track": "iterative-hypotheses",
       "records": 1,
       "paths": [
         "evidence/iterative-hypotheses/run-42320309673.json"
+      ]
+    },
+    {
+      "track": "lab-radar",
+      "records": 8,
+      "paths": [
+        "evidence/lab-radar/run-42405802931.json",
+        "evidence/lab-radar/run-42406132860.json",
+        "evidence/lab-radar/run-42406781760.json",
+        "evidence/lab-radar/run-42507999191.json",
+        "evidence/lab-radar/run-42673765169.json",
+        "evidence/lab-radar/run-42713770685.json",
+        "evidence/lab-radar/run-42890460698.json",
+        "evidence/lab-radar/seen-links.json"
       ]
     },
     {
@@ -370,6 +561,20 @@
       "records": 1,
       "paths": [
         "evidence/paired-qwen/run-42342242561.json"
+      ]
+    },
+    {
+      "track": "prospective-noaa",
+      "records": 1,
+      "paths": [
+        "evidence/prospective-noaa/frozen-2026-11.json"
+      ]
+    },
+    {
+      "track": "prospective-usgs-hydrology",
+      "records": 1,
+      "paths": [
+        "evidence/prospective-usgs-hydrology/frozen-2026-11.json"
       ]
     },
     {
@@ -403,25 +608,33 @@
     },
     {
       "track": "universal-brief",
-      "records": 1,
+      "records": 2,
       "paths": [
-        "evidence/universal-brief/run-42174318660.json"
+        "evidence/universal-brief/run-42174318660.json",
+        "evidence/universal-brief/run-42716691921.json"
       ]
     },
     {
       "track": "world-horizon",
-      "records": 4,
+      "records": 11,
       "paths": [
         "evidence/world-horizon/2026-11-06-run-42173285138.json",
         "evidence/world-horizon/2026-11-06-run-42174424616.json",
         "evidence/world-horizon/2026-11-06-run-42281464473.json",
-        "evidence/world-horizon/2026-11-07-run-42398262189.json"
+        "evidence/world-horizon/2026-11-07-run-42398262189.json",
+        "evidence/world-horizon/2026-11-07-run-42405802931.json",
+        "evidence/world-horizon/2026-11-07-run-42406132860.json",
+        "evidence/world-horizon/2026-11-07-run-42406781760.json",
+        "evidence/world-horizon/2026-11-08-run-42507999191.json",
+        "evidence/world-horizon/2026-11-09-run-42673765169.json",
+        "evidence/world-horizon/2026-11-09-run-42713770685.json",
+        "evidence/world-horizon/2026-11-10-run-42890460698.json"
       ]
     }
   ],
   "unindexed_records": [],
   "inventory_complete": true,
-  "digest_sha256": "23e54f2bb43ec058aa78d78bd7a91f39fe264c503ded1a46282b7c2794260f3e",
+  "digest_sha256": "d19cf6b6c95093528e3de69e815fcd93821a94e1d66f5393a2d1a46cd9f0c769",
   "scientific_claims_verified_by_index": false,
   "AGI_demonstrated": false,
   "automatic_model_promotion": false,
