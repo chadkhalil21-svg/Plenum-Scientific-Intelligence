@@ -2,9 +2,13 @@
 import json
 from pathlib import Path
 import unittest
-from plenum_ai.agent_council import EDITORIAL_DIRECTIVE
+import importlib.util
 
 ROOT=Path(__file__).resolve().parents[1]
+spec=importlib.util.spec_from_file_location("plenum_editorial_council",ROOT/"src/plenum_ai/agent_council.py")
+module=importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+EDITORIAL_DIRECTIVE=module.EDITORIAL_DIRECTIVE
 
 
 class PlenumEditorialQualityTests(unittest.TestCase):
