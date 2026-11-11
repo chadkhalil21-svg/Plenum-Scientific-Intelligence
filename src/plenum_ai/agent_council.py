@@ -107,6 +107,28 @@ def parse_event(event):
     return {"issue": issue["number"], "objective": objective}
 
 
+ELEPHANT_PUBLIC_FILE = Path(__file__).resolve().parents[2] / "docs/PLENUM_ELEPHANT_PUBLIC.json"
+
+def read_elephant_public(path=ELEPHANT_PUBLIC_FILE):
+    """Read founder-approved public fact links, not a previous model's thoughts."""
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    rows = data.get("records")
+    if (data.get("schema") != "plenum-elephant-public-facts-v1"
+            or not isinstance(rows,list) or not 1 <= len(rows) <= 8):
+        raise ValueError("Missing or unreviewed Elephant facts")
+    lines=[]
+    for row in rows:
+        fact, url, status = row.get("fact"), row.get("url"), row.get("status")
+        if (not isinstance(fact,str) or not 20 <= len(fact) <= 180
+                or any(c in fact for c in "\\n\\r<>")
+                or not isinstance(url,str)
+                or not url.startswith("https://github.com/" + REPO + "/")
+                or status not in ("VERIFIED_BOUNDED","SOURCE_ONLY","BLOCKED","APPROVAL_NEEDED")):
+            raise ValueError("Unreviewed Elephant fact or reference")
+        lines.append(status + ": " + fact + " (" + url + ")")
+    return "DATED PUBLIC ELEPHANT EVIDENCE ONLY; verify live status independently:\\n" + "\\n".join(lines)
+
+
 def _ask_local(system, user):
     payload = json.dumps({
         "model": MODEL, "stream": False, "think": False,
@@ -135,12 +157,13 @@ def deliberate(event):
     if (os.environ.get("PLENUM_EPHEMERAL_RUNNER") != "confirmed"
             or os.environ.get("PLENUM_COUNCIL_MODEL_URL") != MODEL_URL):
         raise PermissionError("Council requires explicit isolated Qwen runner")
+    elephant = read_elephant_public()
     results = []
     for name, remit in council_seats(task["objective"]):
         # Distinct fresh model contexts, not synthetic labels on one response.
         draft = _ask_local(
             "You are a separate Plenum AI council reviewer. " + VERIFIED_CONTEXT +
-            " " + remit +
+            " " + elephant + " " + remit +
             " Return: proposal, strongest objection, suggested small first test. "
             "Do not access tools, accounts or invent citations. You are an AI "
             "using an intellectual lens, NOT the historical person or institution.",
@@ -177,7 +200,7 @@ def deliberate(event):
             "one concrete next step and independently observable success. "
             "Clearly flag unsupported assumptions. Do NOT invent financial "
             "numbers, sources, legal approval, an account action or grant. "
-            "This is preliminary public AI advice; founder retains decision.",
+            "This is preliminary public AI advice; founder retains decision. " + elephant,
             "PUBLIC founder decision: " + task["objective"]
             + "\n\nIndependent reviewer proposals:\n" + dossier[:7200]
             + "\n\nAdversarial critique:\n" + fresh[:1800],
@@ -198,6 +221,8 @@ def deliberate(event):
         "next_steps_approved": False,
         "model": MODEL,
         "perspectives": results,
+        "elephant_public_facts_used": True,
+        "goldfish_received_elephant_history": False,
         "fresh_reviewer": {"role": "goldfish-verifier", "draft_untrusted": fresh},
     }
 
