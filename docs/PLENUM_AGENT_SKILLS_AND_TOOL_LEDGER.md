@@ -96,3 +96,11 @@ Research issues #439 (video and agent workflows), #440 (university decisions), #
 - [ ] Make every report decision-focused and performance-focused, not a recital of installed products.
 
 **Do not count completed source files as installed runtime processes or accepted private business work.**
+
+## 2026-11-11 | Humanizer 4.0.0 vendor skill and universal professional writing standard
+
+Plenum now vendors **original MIT Humanizer** from pinned `blader/humanizer` commit `b48c832f0f809c1b5658edbb838c2521b72f2413`, with the author's LICENSE and original unmodified SKILL.md in `skills/humanizer`. The companion `plenum-editorial-quality` skill applies company recipient/genre policy and verified evidence BEFORE any Humanizer stylistic editing. Both skills are mapped to **all 11** Hermes profile definitions and are included in their forthcoming SOUL descriptions. This is real source integration, not proof that a Hermes gateway or hosted model already loaded the files.
+
+For all natural-language output and relevant visual/presentation copy: choose audience and medium; consult founder's private Document Production Standards Ledger when connected; verify original source facts, recipient requirements and evidence; draft with plain precise language; use Humanizer for structure and unnatural AI patterns without changing data, equations, citations, patents, identity, or meaning; audit the final output. A source-preserving editing pass is not an AI-detection guarantee or proof of human authorship. Source guidance: OpenAI updated Model Spec (2026-10-29), Google Developer Style, Apple's HIG Writing, Anthropic skills/context guides, plus relevant journal, university or sponsor-specific standards. Primary references and acceptance in `skills/plenum-editorial-quality/SKILL.md` and `docs/PLENUM_HUMANIZER_EDITORIAL_POLICY.md`.
+
+**Private ChatGPT editorial skill:** the founder's connected Google Drive ledger records that a private Plenum Editorial Council plugin with Humanizer guidance was created on 2026-11-10. This repository addition complements rather than duplicates or installs that private ChatGPT plugin. It does not force future ChatGPT chats to load these repo skills automatically.
