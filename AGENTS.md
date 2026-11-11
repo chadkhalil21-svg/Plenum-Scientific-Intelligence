@@ -1,5 +1,10 @@
 # Project working instructions
 
+## 2026-11-11 | Concise universal editorial quality rule
+
+For **any prose or presentation copy produced in this repository**, read `skills/plenum-editorial-quality/SKILL.md` to choose the correct audience, institution/sponsor requirements, claim accuracy and voice. For the last **style-only** pass on AI-like prose, load the pinned original MIT `skills/humanizer/SKILL.md`, with license and immutable source in `skills/humanizer/UPSTREAM.md`. Preserve facts, names, dates, legal clauses, grant constraints, formulas, citations, confidence and all underlying meaning. The private founder Google Drive document standards prevail when actually accessible; do not copy them into public repo. This guidance applies to agent outputs in this repo, **not automatically to all ChatGPT conversations**. Avoid useless repeated stylistic revisions once the work meets the actual reader's needs.
+
+
 ## 2026-11-10 | Free-first browser and source-preserving proposal review
 
 Before external browser automation or importing editorial/agent skills, read [docs/FREE_BROWSER_AND_SUBMISSION_WORKFLOW.md](docs/FREE_BROWSER_AND_SUBMISSION_WORKFLOW.md) and the original computer browser progress ledger. The new six reviewed source entries are NOT installed/connected browser services, and do not demonstrate signed-in application control. Prefer direct authenticated connectors, existing Plenum-supported actions, owner-approved no-new-fee local options, then carefully scoped metered services only for a real blocker. Never use confidential project patents or personal portal credentials in public repo issues or issue artifacts.
