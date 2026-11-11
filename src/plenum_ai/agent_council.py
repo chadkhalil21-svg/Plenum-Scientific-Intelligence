@@ -109,6 +109,32 @@ def parse_event(event):
 
 ELEPHANT_PUBLIC_FILE = Path(__file__).resolve().parents[2] / "docs/PLENUM_ELEPHANT_PUBLIC.json"
 
+PLATFORM_PUBLIC_REGISTRY = Path(__file__).resolve().parents[2] / "integrations/workforces/founder_all_tools_registry.json"
+
+def read_public_tool_adoption_context(objective: str, path=PLATFORM_PUBLIC_REGISTRY) -> str:
+    """Selective fact context for approved PUBLIC tool-adoption council agendas."""
+    text = objective.casefold()
+    if not any(term in text for term in ("tool", "skills", "platform", "software", "adopt", "free", "workforce")):
+        return ""
+    registry = json.loads(Path(path).read_text(encoding="utf-8"))
+    items = registry.get("items")
+    if (registry.get("schema") != "plenum-founder-all-tools-registry-v1"
+            or not isinstance(items, list) or len(items) != 81
+            or registry.get("summary", {}).get("installed_all") is not False):
+        raise ValueError("Unexpected or unchecked public platform registry")
+    wanted = ("Humanizer", "Last30Days", "SkillSpector", "Superpowers",
+              "whisper.cpp", "Freebuff", "Airia", "Google AQuA",
+              "Cloudflare Workers Free", "GitHub Actions", "Hermes Agent")
+    selected = {row["name"]: row for row in items if row.get("name") in wanted}
+    if len(selected) != len(wanted):
+        raise ValueError("Missing core founder adoption evidence")
+    decisions = "; ".join(name + "=" + selected[name]["adoption_status"] for name in wanted)
+    return ("Founder no-new-spend policy. Verified PUBLIC 81-platform registry,"
+            " not 81 installations; role-specific skills only. " + decisions +
+            ". Full vendor apps and owner accounts NOT auto-installed. ")
+
+
+
 def read_elephant_public(path=ELEPHANT_PUBLIC_FILE):
     """Read founder-approved public fact links, not a previous model's thoughts."""
     data = json.loads(Path(path).read_text(encoding="utf-8"))
@@ -158,12 +184,13 @@ def deliberate(event):
             or os.environ.get("PLENUM_COUNCIL_MODEL_URL") != MODEL_URL):
         raise PermissionError("Council requires explicit isolated Qwen runner")
     elephant = read_elephant_public()
+    tool_decisions = read_public_tool_adoption_context(task["objective"])
     results = []
     for name, remit in council_seats(task["objective"]):
         # Distinct fresh model contexts, not synthetic labels on one response.
         draft = _ask_local(
             "You are a separate Plenum AI council reviewer. " + VERIFIED_CONTEXT +
-            " " + elephant + " " + remit +
+            " " + elephant + " " + tool_decisions + " " + remit +
             " Return: proposal, strongest objection, suggested small first test. "
             "Do not access tools, accounts or invent citations. You are an AI "
             "using an intellectual lens, NOT the historical person or institution.",
@@ -221,6 +248,7 @@ def deliberate(event):
         "next_steps_approved": False,
         "model": MODEL,
         "perspectives": results,
+        "founder_public_tool_registry_used": bool(tool_decisions),
         "elephant_public_facts_used": True,
         "goldfish_received_elephant_history": False,
         "fresh_reviewer": {"role": "goldfish-verifier", "draft_untrusted": fresh},
