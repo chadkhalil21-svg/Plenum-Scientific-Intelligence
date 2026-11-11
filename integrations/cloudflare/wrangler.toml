@@ -1,0 +1,8 @@
+name = "plenum-public-wake"
+main = "plenum-github-wake-worker.mjs"
+compatibility_date = "2026-11-01"
+workers_dev = true
+# Intentionally no paid Workers AI model, R2 buckets or durable objects.
+# This is NOT a server for Hermes, Paperclip or private WhatsApp sessions.
+# Set PLENUM_WEBHOOK_HMAC_SECRET and PLENUM_GITHUB_DISPATCH_TOKEN
+# using Cloudflare secrets on the owner's account, never in git.
