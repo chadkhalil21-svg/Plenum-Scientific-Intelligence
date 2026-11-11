@@ -1,0 +1,42 @@
+{
+  "schema": "plenum-film-storyboard-v1",
+  "title": "Plenum Terra — first fully local rendering proof",
+  "scenes": [
+    {
+      "type": "color",
+      "color": "#152A33",
+      "seconds": 2.5,
+      "title": "PLENUM TERRA",
+      "caption": "Research rooted in the pasture",
+      "concept": false,
+      "license": "original"
+    },
+    {
+      "type": "color",
+      "color": "#294B3C",
+      "seconds": 2.5,
+      "title": "THE QUESTION",
+      "caption": "Could science reshape tomorrow's forage?",
+      "concept": true,
+      "license": "original"
+    },
+    {
+      "type": "color",
+      "color": "#253749",
+      "seconds": 2.5,
+      "title": "THE RESEARCH",
+      "caption": "Production • retention • safety: questions to test",
+      "concept": true,
+      "license": "original"
+    },
+    {
+      "type": "color",
+      "color": "#102C34",
+      "seconds": 2.5,
+      "title": "PLENUM TERRA",
+      "caption": "An experimental concept, not proven results",
+      "concept": false,
+      "license": "original"
+    }
+  ]
+}
