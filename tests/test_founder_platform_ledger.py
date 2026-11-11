@@ -25,6 +25,20 @@ class FounderCatalogContract(unittest.TestCase):
         self.assertIn("QUOTA",names["Freebuff"]["adoption_status"])
         self.assertIn("SOURCE_READY",names["Cloudflare Workers Free"]["adoption_status"])
 
+    def test_creator_ten_platforms_complete_and_no_false_full_view_claim(self):
+        d=json.loads(DATA.read_text(encoding="utf-8"))
+        video=next(v for v in d["videos"] if v["id"]=="Fyv5CHAzq_A")
+        expected=["Napkin AI", "Upscayl", "Whisper (OpenAI)", "Hugging Face Spaces",
+                  "Google AI Studio","Perplexity AI","LM Studio","Ollama",
+                  "NotebookLM","ChatGPT Free"]
+        self.assertEqual(video["mentioned"],expected)
+        self.assertTrue(d["video_focus_evidence"]["ten_tools_verified_against_uploader_description"])
+        self.assertFalse(d["video_focus_evidence"]["full_video_watched"])
+        self.assertFalse(d["video_focus_evidence"]["original_full_caption_transcript_available"])
+        names={x["name"] for x in d["items"]}
+        self.assertTrue({"Upscayl","Hugging Face Spaces","ChatGPT Free"} <= names)
+        self.assertIn("Free",next(x for x in d["items"] if x["name"]=="Hugging Face Spaces")["purpose"])
+
     def test_role_approved_specific_skills_exist(self):
         roster=json.loads((ROOT/"integrations/hermes/roster.json").read_text(encoding="utf-8"))
         union=set()
