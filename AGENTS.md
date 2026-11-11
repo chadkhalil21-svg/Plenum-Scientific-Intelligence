@@ -1,5 +1,9 @@
 # Project working instructions
 
+## 2026-11-11 | Founder-instruction completion gate — applies to multi-part work
+
+Before declaring a founder request done, review the public-only `docs/PLENUM_FOUNDER_INSTRUCTION_COVERAGE.json`, the original issue/PR evidence and `skills/plenum-instruction-oversight/SKILL.md`. Every distinct requested deliverable needs an owner, evidence class, and next real action; existing code/source/council output is not proof of real account, browser, host or message execution. Honor founder $0-new-spend preference, do not repeatedly retest already validated upstream components, and do not expose private ChatGPT transcripts to public GitHub. Use the existing Chief/GitHub worker and independent Goldfish instead of starting another AI supervisor. On an authorized owner host, call only actually present free binaries through `src/plenum_ai/free_local_tool_adapter.py`; skill descriptions never establish installed software.
+
 ## 2026-11-11 | Concise universal editorial quality rule
 
 For **any prose or presentation copy produced in this repository**, read `skills/plenum-editorial-quality/SKILL.md` to choose the correct audience, institution/sponsor requirements, claim accuracy and voice. For the last **style-only** pass on AI-like prose, load the pinned original MIT `skills/humanizer/SKILL.md`, with license and immutable source in `skills/humanizer/UPSTREAM.md`. Preserve facts, names, dates, legal clauses, grant constraints, formulas, citations, confidence and all underlying meaning. The private founder Google Drive document standards prevail when actually accessible; do not copy them into public repo. This guidance applies to agent outputs in this repo, **not automatically to all ChatGPT conversations**. Avoid useless repeated stylistic revisions once the work meets the actual reader's needs.
