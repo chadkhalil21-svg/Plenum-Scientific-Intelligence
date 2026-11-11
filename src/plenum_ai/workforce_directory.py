@@ -43,6 +43,7 @@ def build_directory(registry_path: Path = REGISTRY, roster_path: Path = ROSTER) 
                 "role": role,
                 "named_hermes_profile": slug,
                 "display_title": roles[slug]["title"],
+                "required_skill_ids": roles[slug].get("skill_ids", []),
                 "profile_only_not_proof_of_running_agent": True,
             })
         groups.append({
@@ -67,6 +68,7 @@ def build_directory(registry_path: Path = REGISTRY, roster_path: Path = ROSTER) 
         "business_advisory": {
             "status": "business_advisor_profile_defined_and_public_council_available; private execution not verified",
             "named_business_advisor_role": "business_advisor",
+            "named_business_advisor_skills": roles["business_advisor"].get("skill_ids", []),
             "owner_divisions": ["commercial_operations", "verification_council"],
             "advice_areas": [
                 "strategy", "operations", "finance_and_funding",
