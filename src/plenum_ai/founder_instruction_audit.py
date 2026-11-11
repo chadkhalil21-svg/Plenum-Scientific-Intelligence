@@ -177,10 +177,23 @@ def main(argv=None):
         print(json.dumps({"status":"REVIEWED_PUBLIC_COVERAGE_ONLY","objectives":len(doc["requirements"]),
                           "github_writes":False,"full_private_chat_access":False}))
         return
+    event_name = os.getenv("GITHUB_EVENT_NAME")
     if (os.getenv("GITHUB_ACTIONS") != "true"
             or os.getenv("GITHUB_REPOSITORY") != REPO
-            or os.getenv("GITHUB_EVENT_NAME") not in {"schedule","workflow_dispatch"}):
-        raise PermissionError("Only original GitHub Minister schedule may run this public audit")
+            or event_name not in {"schedule","workflow_dispatch","issues"}):
+        raise PermissionError("Only original GitHub Minister workflow may run this public audit")
+    if event_name == "issues":
+        event_path = os.getenv("GITHUB_EVENT_PATH")
+        if not event_path:
+            raise PermissionError("Founder event record missing")
+        event = json.loads(Path(event_path).read_text(encoding="utf-8"))
+        issue = event.get("issue") or {}
+        if (event.get("action") != "opened"
+                or (event.get("repository") or {}).get("full_name") != REPO
+                or (issue.get("user") or {}).get("login") != "chadkhalil21-svg"
+                or issue.get("title") != "[Plenum Oversight] public audit"
+                or issue.get("body", "").strip() != "PLENUM_OVERSIGHT_PUBLIC_V1"):
+            raise PermissionError("Only exact founder public oversight command may activate audit")
     token = os.environ.get("GH_TOKEN")
     if not token:
         raise PermissionError("Original GitHub Actions token missing")
