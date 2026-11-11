@@ -12,6 +12,10 @@ on:
       - 'tests/test_weekly_founder_brief.py'
       - 'src/plenum_ai/founder_instruction_audit.py'
       - 'tests/test_founder_instruction_audit.py'
+      - 'src/plenum_ai/free_local_tool_adapter.py'
+      - 'tests/test_free_local_tool_adapter.py'
+      - 'integrations/workforces/founder_eleven_video_appendix.json'
+      - 'docs/PLENUM_VIDEO_WORKFORCE_ACTIONS_20261111.md'
       - 'docs/PLENUM_FOUNDER_INSTRUCTION_COVERAGE.json'
       - '.github/workflows/weekly-founder-business-brief.yml'
 permissions:
@@ -34,6 +38,7 @@ jobs:
       - run: python -m pip install -e .
       - run: python -m unittest discover -s tests -p 'test_weekly_founder_brief.py' -v
       - run: python -m unittest discover -s tests -p 'test_founder_instruction_audit.py' -v
+      - run: python -m unittest discover -s tests -p 'test_free_local_tool_adapter.py' -v
   actual-public-status:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
