@@ -8,12 +8,16 @@ class WeeklyPublicEvidenceTests(unittest.TestCase):
         self.assertEqual(b.verified_comment_status([]), "NO_VERIFIED_RESULT_IN_COMMENTS")
         self.assertEqual(b.verified_comment_status([{"body": "Status: **DRAFT_READY_FOR_FOUNDER**"}]), "DRAFT_READY_FOR_FOUNDER")
         self.assertEqual(b.verified_comment_status([{"body": "**Chief status: VERIFIED_BOUNDED_TEAM**"}]), "VERIFIED_BOUNDED_TEAM")
+        self.assertEqual(b.verified_comment_status([{"body": "**Overall: BLOCKED_UPSTREAM_CAPTIONS**"}]), "BLOCKED_UPSTREAM_CAPTIONS")
 
     def test_brief_lists_all_original_dependencies_without_claiming_host(self):
         rows = [{"number": n, "state": "open", "status": "NO_VERIFIED_RESULT_IN_COMMENTS"}
                 for n, _ in b.ISSUES]
         report = b.render_brief(rows, as_of_date="2026-11-11")
         self.assertIn("Minister of Operations", report)
+        self.assertIn("Six-video Research Engineering Verification receipt", report)
+        self.assertIn("Cloudflare Free ingress and quota-capped inference commissioning", report)
+        self.assertIn("Scientific evidence reconciliation engineering repair", report)
         self.assertEqual(report.count("https://github.com/" + b.REPO + "/issues/"), len(b.ISSUES))
         self.assertIn("not independently established as live", report)
         self.assertIn("plenum-weekly-public-operating-brief:2026-11-11", report)
