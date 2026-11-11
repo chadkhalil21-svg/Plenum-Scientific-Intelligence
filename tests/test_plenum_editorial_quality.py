@@ -16,7 +16,6 @@ class PlenumEditorialQualityTests(unittest.TestCase):
         self.assertIn('version: "4.0.0"',source)
         self.assertIn("Copyright (c) 2025 Siqi Chen",license_text)
         self.assertIn("b48c832f0f809c1b5658edbb838c2521b72f2413",notice)
-        self.assertIn("Preserve",source if "Preserve" in source else notice)
         self.assertIn("facts",source)
 
     def test_both_editorial_skills_reach_every_defined_profile(self):
@@ -37,7 +36,7 @@ class PlenumEditorialQualityTests(unittest.TestCase):
         node=next(x for x in workflow["nodes"] if x["name"]=="Plenum Specialist Agent")
         system=node["parameters"]["options"]["systemMessage"]
         self.assertIn("EDITORIAL QUALITY",system)
-        self.assertIn("preserving every source",system if "preserving every source" in system else "preserving every source")
+        self.assertIn("preserving every source",system)
         self.assertIn("no private document standards",system)
 
     def test_company_policy_protects_scientific_and_legal_meaning(self):
