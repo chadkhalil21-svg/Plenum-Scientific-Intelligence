@@ -31,7 +31,9 @@
       "name": "chief",
       "title": "Chief of Staff",
       "scope": "Translate founder goals into measurable tasks, route to original Plenum tools only when those tools are actually available; keep a durable approval and results record.",
-      "tools": "coordination,read-only status,founder-approved public assignment"
+      "tools": "coordination,read-only status,founder-approved public assignment",
+      "proposed_display_title": "AI Minister of Operations",
+      "title_remains_unchanged_until_founder_confirms": true
     },
     {
       "name": "research",
