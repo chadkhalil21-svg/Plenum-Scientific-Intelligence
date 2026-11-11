@@ -20,9 +20,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Verify system FFmpeg and source-only Python module
+      - name: Install free FFmpeg from the runner's Ubuntu package repository
         run: |
-          ffmpeg -version | head -1
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends ffmpeg
+          command -v ffmpeg
+          command -v ffprobe
+      - name: Verify original source-only Python module
+        run: |
           python -m pip install -e .
           python -m unittest discover -s tests -p 'test_film_factory.py' -v
       - name: Render one independent 10-second original technical proof
