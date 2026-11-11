@@ -8,6 +8,9 @@ on:
       - 'tests/test_agent_council.py'
       - 'tests/test_agent_council_business.py'
       - 'tests/test_elephant_goldfish_public.py'
+      - 'integrations/workforces/founder_all_tools_registry.json'
+      - 'docs/PLENUM_FOUNDER_PLATFORM_ADOPTION_LEDGER.md'
+      - 'tests/test_founder_platform_ledger.py'
       - 'docs/PLENUM_ELEPHANT_PUBLIC.json'
       - 'src/plenum_ai/agent_library.py'
       - 'tests/test_agent_library.py'
@@ -36,6 +39,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_agent_council.py' -v
           python -m unittest discover -s tests -p 'test_agent_council_business.py' -v
           python -m unittest discover -s tests -p 'test_elephant_goldfish_public.py' -v
+          python -m unittest discover -s tests -p 'test_founder_platform_ledger.py' -v
           python -m unittest discover -s tests -p 'test_agent_library.py' -v
   convene:
     if: >-
