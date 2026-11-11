@@ -18,6 +18,7 @@ TOOLS = {
     "ffmpeg": "ffmpeg",
     "Ollama": "ollama",
     "llama.cpp": "llama-cli",
+    "Upscayl CLI": "upscayl-ncnn",
 }
 
 
