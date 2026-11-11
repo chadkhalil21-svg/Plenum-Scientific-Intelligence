@@ -9,6 +9,8 @@ on:
       - 'integrations/hermes/README.md'
       - 'skills/plenum-chief-of-staff/SKILL.md'
       - 'tests/test_hermes_whatsapp_chief.py'
+      - 'tests/test_plenum_role_skill_mapping.py'
+      - 'skills/plenum-*/SKILL.md'
       - '.github/workflows/hermes-whatsapp-chief-ci.yml'
   push:
     branches: [main]
@@ -32,7 +34,9 @@ jobs:
         with:
           python-version: '3.11'
       - name: No-model tests of original nine plus approved business advisor routes
-        run: python -m unittest discover -s tests -p test_hermes_whatsapp_chief.py -v
+        run: |
+          python -m unittest discover -s tests -p test_hermes_whatsapp_chief.py -v
+          python -m unittest discover -s tests -p test_plenum_role_skill_mapping.py -v
       - name: Verify founder-safe offline plan and no new provider session
         run: |
           python integrations/hermes/prepare_whatsapp_chief.py > "$RUNNER_TEMP/plenum-whatsapp-offline-plan.json"
