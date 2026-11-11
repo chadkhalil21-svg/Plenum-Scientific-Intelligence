@@ -1,0 +1,508 @@
+{
+  "schema": "plenum-founder-eleven-video-appendix-v1",
+  "as_of": "2026-11-11",
+  "public_only": true,
+  "claim_boundary": "Video descriptions, tags, chapters, partial transcript and independent educational notes. No claim full 11 spoken or on-screen inventories have been read.",
+  "video_count": 11,
+  "previous_video_ledger": "integrations/workforces/founder_all_tools_registry.json",
+  "videos": [
+    {
+      "id": "nA9MVCDHCQo",
+      "url": "https://www.youtube.com/watch?v=nA9MVCDHCQo",
+      "title": "10 Things AI Can Do That Most People Still Don’t Know About",
+      "creator": "This Guy Knows Stuff",
+      "mentioned": [
+        "Transkribus",
+        "Ultimate Vocal Remover",
+        "Whisper",
+        "LlamaParse",
+        "NotebookLM",
+        "Cursor",
+        "Claude Computer Use",
+        "Ollama",
+        "LM Studio"
+      ],
+      "evidence": "VIDEO_DESCRIPTION",
+      "full_transcript_confirmed": false
+    },
+    {
+      "id": "cRM_PzpmFEY",
+      "url": "https://www.youtube.com/watch?v=cRM_PzpmFEY",
+      "title": "AI Agents Are Dead. Build Claude Employees Instead.",
+      "creator": "Luuk Alleman",
+      "mentioned": [
+        "Claude",
+        "Claude Code",
+        "Claude Skills",
+        "Claude Cowork",
+        "Build Loop"
+      ],
+      "evidence": "VIDEO_TAGS_AND_DESCRIPTION",
+      "full_transcript_confirmed": false
+    },
+    {
+      "id": "eA9Zf2-qYYM",
+      "url": "https://www.youtube.com/watch?v=eA9Zf2-qYYM",
+      "title": "Building AI Agents that actually work (Full Course)",
+      "creator": "Greg Isenberg",
+      "mentioned": [
+        "Claude Code",
+        "Codex",
+        "Claude Cowork",
+        "Google Antigravity",
+        "Manus",
+        "OpenClaw",
+        "MCP",
+        "Monologue",
+        "WhisperFlow"
+      ],
+      "evidence": "VIDEO_DESCRIPTION_AND_CHAPTERS",
+      "full_transcript_confirmed": false
+    },
+    {
+      "id": "_k5hb5q_yHc",
+      "url": "https://www.youtube.com/watch?v=_k5hb5q_yHc",
+      "title": "I Built a Team of Self-Improving AI Agents (opus 5.5)",
+      "creator": "Duncan Rogoff",
+      "mentioned": [
+        "Claude Code",
+        "Claude Opus",
+        "autoresearch",
+        "Obsidian",
+        "Substack"
+      ],
+      "evidence": "VIDEO_DESCRIPTION_AND_PARTIAL_TRANSCRIPT",
+      "full_transcript_confirmed": false
+    },
+    {
+      "id": "Axnt-ug7jhc",
+      "url": "https://www.youtube.com/watch?v=Axnt-ug7jhc",
+      "title": "How to Build an AI Agent Workforce with Allie K. Miller",
+      "creator": "The Information",
+      "mentioned": [
+        "Claude Code"
+      ],
+      "evidence": "VIDEO_DESCRIPTION",
+      "full_transcript_confirmed": false
+    },
+    {
+      "id": "_ZehNseg0Qg",
+      "url": "https://www.youtube.com/watch?v=_ZehNseg0Qg",
+      "title": "How to Build AI Agent Teams Better Than 99% of People",
+      "creator": "Samin Yasar",
+      "mentioned": [
+        "Buzz",
+        "ClickUp",
+        "Claude",
+        "Mac mini",
+        "VPS"
+      ],
+      "evidence": "VIDEO_DESCRIPTION_AND_CHAPTERS",
+      "full_transcript_confirmed": false
+    },
+    {
+      "id": "rPNKWE4GrWA",
+      "url": "https://www.youtube.com/watch?v=rPNKWE4GrWA",
+      "title": "Which Free AI Tools Can Actually Build a Business? A VC Decides",
+      "creator": "The Next New Thing",
+      "mentioned": [
+        "GitHub"
+      ],
+      "evidence": "VIDEO_TITLE_AND_CHAPTER; seven actual repo names unverified",
+      "full_transcript_confirmed": false
+    },
+    {
+      "id": "ldETapkr8Hg",
+      "url": "https://www.youtube.com/watch?v=ldETapkr8Hg",
+      "title": "I Built a Marketing Team with 1 AI Agent and No Code (free n8n template)",
+      "creator": "Nate Herk",
+      "mentioned": [
+        "n8n",
+        "Telegram",
+        "Google Sheets",
+        "OpenRouter",
+        "Flux",
+        "Runway",
+        "ElevenLabs",
+        "Creatomate",
+        "Piapi",
+        "Tavily"
+      ],
+      "evidence": "VIDEO_DESCRIPTION_PLUS_THIRD_PARTY_TRANSCRIPT_AND_CREATOR_RESOURCE",
+      "full_transcript_confirmed": false
+    },
+    {
+      "id": "MHXp9RkxKmY",
+      "url": "https://www.youtube.com/watch?v=MHXp9RkxKmY",
+      "title": "New Grok Bot Updates are INSANE!",
+      "creator": "Julian Goldie SEO",
+      "mentioned": [
+        "Grok Bot",
+        "Team Bots",
+        "Hermes Jarvis",
+        "Hermes Kanban"
+      ],
+      "evidence": "VIDEO_DESCRIPTION",
+      "full_transcript_confirmed": false
+    },
+    {
+      "id": "_vLi76x43b0",
+      "url": "https://www.youtube.com/watch?v=_vLi76x43b0",
+      "title": "Top 7 AI Agent Tools That Actually Work",
+      "creator": "Futurepedia",
+      "mentioned": [
+        "ChatGPT Agent",
+        "Manus",
+        "Claude Cowork",
+        "OpenClaw",
+        "Zapier",
+        "n8n",
+        "Claude Code"
+      ],
+      "evidence": "VIDEO_DESCRIPTION_AND_CHAPTERS",
+      "full_transcript_confirmed": false
+    },
+    {
+      "id": "Fyv5CHAzq_A",
+      "url": "https://www.youtube.com/watch?v=Fyv5CHAzq_A",
+      "title": "10 AI Tools That Feel Almost Too Powerful To Be Free",
+      "creator": "This Guy Knows Stuff",
+      "mentioned": [
+        "Napkin AI",
+        "NotebookLM",
+        "Ollama",
+        "LM Studio",
+        "Whisper",
+        "Google AI Studio",
+        "Perplexity AI",
+        "Hugging Face"
+      ],
+      "evidence": "VIDEO_TAGS_AND_DESCRIPTION; not all ten verified",
+      "full_transcript_confirmed": false
+    }
+  ],
+  "new_or_overlap_platforms": [
+    {
+      "name": "Claude Code",
+      "role": "coding",
+      "purpose": "Commercial model-driven coding; learn orchestration patterns, no API subscription",
+      "status": "EXTERNAL_LIMITED_OR_PAID",
+      "source": "https://claude.com/product/claude-code",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Claude Cowork",
+      "role": "operations",
+      "purpose": "AI desktop work assistant; reference pattern rather than automatic chat host",
+      "status": "EXTERNAL_LIMITED_OR_PAID",
+      "source": "https://claude.com/",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Codex",
+      "role": "coding",
+      "purpose": "Code-agent workflow and reviews; use connected approved coding tools when available",
+      "status": "EXTERNAL_ENTITLEMENT_REQUIRED",
+      "source": "https://openai.com/codex/",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Google Antigravity",
+      "role": "coding",
+      "purpose": "Google agentic IDE, compare with current GitHub/OpenHands only",
+      "status": "EXTERNAL_COST_AND_ACCESS_CHECK",
+      "source": null,
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Manus",
+      "role": "operations",
+      "purpose": "External hosted long-running agent; compare costs, privacy and execution proof",
+      "status": "EXTERNAL_PAID_OR_CREDIT_LIMIT",
+      "source": "https://manus.im/",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "OpenClaw",
+      "role": "operations",
+      "purpose": "Optional self-hosted messaging and automation; Hermes overlap",
+      "status": "FREE_SOURCE_HOST_REQUIRED",
+      "source": "https://github.com/openclaw/openclaw",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "MCP",
+      "role": "research",
+      "purpose": "Standard interface exposing approved tools to agents; use existing connector contracts",
+      "status": "STANDARD_ALREADY_REUSED",
+      "source": "https://modelcontextprotocol.io/",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Monologue",
+      "role": "support",
+      "purpose": "Voice dictation app, not always-on worker",
+      "status": "EXTERNAL_ACCOUNT_AND_PRICE_CHECK",
+      "source": null,
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "WhisperFlow",
+      "role": "support",
+      "purpose": "Voice-to-text dictation software, not always-on worker",
+      "status": "EXTERNAL_ACCOUNT_AND_PRICE_CHECK",
+      "source": null,
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "autoresearch",
+      "role": "verification",
+      "purpose": "Karpathy self-improvement loop; reuse evidence scoring and approved trials, no retraining claims",
+      "status": "FREE_SOURCE_IMPORT_REVIEW",
+      "source": "https://github.com/karpathy/autoresearch",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Obsidian",
+      "role": "research",
+      "purpose": "Personal knowledge base; not a substitute for confidential source-of-truth ledger",
+      "status": "FREE_PERSONAL_TOOL_LOCAL",
+      "source": "https://obsidian.md/",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Substack",
+      "role": "marketing",
+      "purpose": "Newsletter publishing, no publication or subscription without approval",
+      "status": "FREEMIUM_CONNECTED_ACCOUNT_REQUIRED",
+      "source": "https://substack.com/",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Build Loop",
+      "role": "operations",
+      "purpose": "Vendor's paid employee-agent blueprint and consulting offer, not an installed tool",
+      "status": "PAID_OR_UNVERIFIED_VENDOR",
+      "source": "https://build-loop.ai/",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Buzz",
+      "role": "chief",
+      "purpose": "Multimodel team coordination product in video, likely requires host/credits",
+      "status": "COST_AND_RUNTIME_UNVERIFIED",
+      "source": null,
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "ClickUp",
+      "role": "operations",
+      "purpose": "Task management; existing GitHub issue queue is sufficient for public tasks",
+      "status": "FREEMIUM_DUPLICATE",
+      "source": "https://clickup.com/",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Mac mini",
+      "role": "operations",
+      "purpose": "Physical local macOS device for persistent AI assistants, not free hardware",
+      "status": "HARDWARE_COST_REQUIRED",
+      "source": "https://www.apple.com/mac-mini/",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "VPS",
+      "role": "operations",
+      "purpose": "Paid server infrastructure, not equivalent to no-cost Cloudflare gateway",
+      "status": "PAID_HOST_INFRA",
+      "source": null,
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Google Sheets",
+      "role": "operations",
+      "purpose": "Structured research/output logging, requires owner connection for private data",
+      "status": "CONNECTED_APP_AVAILABLE_NOT_AUTOMATIC",
+      "source": "https://sheets.google.com/",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Flux",
+      "role": "creative",
+      "purpose": "Image model, free weights and hosted commercial inference distinct",
+      "status": "MODEL_OR_PAID_API_CHOICE",
+      "source": "https://blackforestlabs.ai/",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "ElevenLabs",
+      "role": "creative",
+      "purpose": "Speech/audio generation; hosted costs and rights check",
+      "status": "HOSTED_PAID_OR_LIMITED",
+      "source": "https://elevenlabs.io/",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Creatomate",
+      "role": "creative",
+      "purpose": "Hosted video rendering with usage-based pricing; defer new charges",
+      "status": "PAID_RENDER_SERVICE",
+      "source": "https://creatomate.com/",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Piapi",
+      "role": "creative",
+      "purpose": "Hosted image/video inference API; defer usage fees",
+      "status": "PAID_OR_QUOTA_API",
+      "source": "https://piapi.ai/",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Tavily",
+      "role": "research",
+      "purpose": "Agent search API; use free public sources first, API quota varies",
+      "status": "LIMITED_FREE_API",
+      "source": "https://tavily.com/",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Grok Bot",
+      "role": "chief",
+      "purpose": "Proprietary agent and mobile/phone team service; compare workflow, not installed",
+      "status": "PROPRIETARY_EXTERNAL_ACCESS",
+      "source": "https://x.ai/",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Team Bots",
+      "role": "operations",
+      "purpose": "Grok Bot named team feature; owner account needed",
+      "status": "PROPRIETARY_FEATURE_NOT_LIVE",
+      "source": null,
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Hermes Jarvis",
+      "role": "chief",
+      "purpose": "Creator's Hermes configuration/prompt, not a new independent platform",
+      "status": "SOURCE_REFERENCE_ONLY",
+      "source": "https://github.com/NousResearch/hermes-agent",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Hermes Kanban",
+      "role": "operations",
+      "purpose": "Creator's Kanban board/configuration example; prefer existing GitHub issues",
+      "status": "SOURCE_REFERENCE_ONLY",
+      "source": null,
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "ChatGPT Agent",
+      "role": "chief",
+      "purpose": "ChatGPT Work or agent workflow, availability and limits depend on account",
+      "status": "INTERACTIVE_HOSTED_NOT_SELF_HOST",
+      "source": "https://chatgpt.com/",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Claude Computer Use",
+      "role": "browser",
+      "purpose": "Model-driven UI operation, not automatically owner-authorized universal browser",
+      "status": "EXTERNAL_MODEL_ACCESS_REQUIRED",
+      "source": "https://www.anthropic.com/",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "LinkedIn",
+      "role": "marketing",
+      "purpose": "Optional channel for founder-approved business content; not autonomous posting",
+      "status": "ACCOUNT_AND_APPROVAL_REQUIRED",
+      "source": "https://www.linkedin.com/",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    },
+    {
+      "name": "Google Drive",
+      "role": "operations",
+      "purpose": "Documents connector; private records only via approved authenticated tool",
+      "status": "ALREADY_CONNECTED_APP",
+      "source": "https://drive.google.com/",
+      "source_only": true,
+      "installed_by_this_appendix": false,
+      "zero_new_spend": true
+    }
+  ],
+  "rejected_assumptions": [
+    "Seven open source repositories in rPNKWE4GrWA remain individually unidentified; do not invent them.",
+    "A video's free setup guide is not free inference, free compute, free SaaS quotas or permitted video/image rights.",
+    "No external app automatically gets owner passwords or platform authorization.",
+    "A new skill file alone does not install a model or make a host persistent."
+  ],
+  "source_recommendations": [
+    "Schedule only real recurring jobs; do not leave GitHub runners alive as servers.",
+    "Reuse existing trusted agent memory, evaluation, context files and skills before adding an agent manager.",
+    "Keep an independent reviewer separate from the creator; record corrections and unresolved founder tasks.",
+    "For local software use free source packages only when a lawful accessible compute runtime exists."
+  ]
+}
