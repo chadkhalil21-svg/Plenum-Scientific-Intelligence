@@ -1,0 +1,152 @@
+{
+  "schema": "plenum-usgs-river-frozen-v1",
+  "protocol_commit": "5599f4b8037e6d2a0dca78d0e3a03a034eb37c44",
+  "source_commit": "c201c88b6f74aeee629410e3af745a7821e92eb1",
+  "run_id": "43065114780",
+  "frozen_at_utc": "2026-11-11T17:12:11.968202+00:00",
+  "original": {
+    "schema": "plenum-usgs-river-proposer-v1",
+    "model": "Qwen/Qwen3-1.7B",
+    "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+    "protocol_commit": "5599f4b8037e6d2a0dca78d0e3a03a034eb37c44",
+    "protocol_sha256": "479bd05df4862ce9776ef785576c08f61800f4e41f5c52aef9044b697f45f8b6",
+    "target_days": [
+      "2026-11-12",
+      "2026-11-13"
+    ],
+    "sites": [
+      {
+        "site": "01646500",
+        "development_sha256": "287b64b2d9b0567384efd43c7b919204087210213abaf63ed709c43b77a240fc",
+        "source_response_sha256": "9bc4e030d09681755bdd339b6cda7b17672e7efabec3f6c63161a27cecdb06fb",
+        "source_statuses": [
+          "Approved",
+          "Provisional"
+        ],
+        "baseline_fold_errors": {
+          "last_day": [
+            0.5811103,
+            0.44714883
+          ],
+          "last_week_mean": [
+            1.23033354,
+            0.92930284
+          ],
+          "damped_log_trend": [
+            0.03336344,
+            0.05371587
+          ]
+        },
+        "candidate": {
+          "alpha": 0.6,
+          "beta": 0.02,
+          "hypothesis": "The forecast will have a mean of 0.6*last-seven-training-day-mean + 0.02*damped-14day-log-linear-trend.",
+          "falsifier": "The forecast mean will be less than 0.6*last-seven-training-day-mean + 0.02*damped-14day-log-linear-trend."
+        },
+        "status": "valid",
+        "candidate_fold_errors": [
+          0.67778358,
+          0.482585
+        ],
+        "model_response_sha256": "9da421c27500c1e926a59c7884dc8ec4412f59be0f7a8ee66bb182ba5f88f564",
+        "observed_future_data": false,
+        "seal_sha256": "8bb73fcadc7480c0590aff41007898a66379b8fda5361f3b6d627d204c0cd1bd"
+      },
+      {
+        "site": "01491000",
+        "development_sha256": "76720124728859247364d5c8383353895df76449b01d480942390017751d3aca",
+        "source_response_sha256": "64a5795a3730fff66c5d8999f40df2605018733b5a628a5dd2545f9d63dff147",
+        "source_statuses": [
+          "Provisional"
+        ],
+        "baseline_fold_errors": {
+          "last_day": [
+            0.25154188,
+            0.2389565
+          ],
+          "last_week_mean": [
+            0.54411011,
+            0.39066545
+          ],
+          "damped_log_trend": [
+            0.13197561,
+            0.06620135
+          ]
+        },
+        "candidate": {
+          "alpha": 0.6,
+          "beta": 0.03,
+          "hypothesis": "The forecast will have a higher relative error than the last week mean if days_into_future is greater than 7.",
+          "falsifier": "If days_into_future is less than 7, the forecast error will be lower than the last week mean."
+        },
+        "status": "valid",
+        "candidate_fold_errors": [
+          0.47624938,
+          0.2785284
+        ],
+        "model_response_sha256": "77241db227cf9eb4a959abeb39c39dfc9df5862b6d94ffdaa28b43884fb0c449",
+        "observed_future_data": false,
+        "seal_sha256": "cab4a651e38aee903d9028407a35f2e7cd04f979c61c0c1162804304ef88ecf7"
+      }
+    ],
+    "model_calls": 2,
+    "future_observations_seen": false,
+    "automatic_model_promotion": false
+  },
+  "critic": {
+    "schema": "plenum-usgs-river-critic-v1",
+    "critic_model": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+    "revision": "31b70e2e869a7173562077fd711b654946d38674",
+    "original_report_sha256": "48425e1e2a3359770ad44ab2e7c848d5be617b72da8e554cf5c14fdb3fae1285",
+    "sites": [
+      {
+        "site": "01646500",
+        "status": "valid",
+        "candidate": {
+          "alpha": 0.6,
+          "beta": 0.02,
+          "hypothesis": "The forecast will have a mean of 0.6*last-seven-training-day-mean + 0.02*damped-14day-log-linear-trend.",
+          "falsifier": "The forecast mean will be less than 0.6*last-seven-training-day-mean + 0.02*damped-14day-log-linear-trend."
+        },
+        "candidate_fold_errors": [
+          0.67778358,
+          0.482585
+        ],
+        "selection": {
+          "source": "baseline",
+          "candidate": "damped_log_trend"
+        },
+        "model_response_sha256": "9da421c27500c1e926a59c7884dc8ec4412f59be0f7a8ee66bb182ba5f88f564",
+        "observed_future_data": false,
+        "seal_sha256": "71af04a510cdfc75cfb5d087420162cf54223453c1b20df1e249c6c219159f23"
+      },
+      {
+        "site": "01491000",
+        "status": "valid",
+        "candidate": {
+          "alpha": 0.6,
+          "beta": -0.05,
+          "hypothesis": "The forecast will have a higher relative error than the last week mean if days_into_future is greater than 7.",
+          "falsifier": "If days_into_future is less than 7, the forecast error will be lower than the last week mean."
+        },
+        "candidate_fold_errors": [
+          0.08316903,
+          0.07621435
+        ],
+        "selection": {
+          "source": "baseline",
+          "candidate": "damped_log_trend"
+        },
+        "model_response_sha256": "b45c4562a9114363283f8beda4ce18b7c2fff9d527da9d337f77a48668b3f5cf",
+        "observed_future_data": false,
+        "seal_sha256": "13c1dbdac8cb6ffda86d4711c10856d2d81d6be9d8ae0cd739eb785e0eb21723"
+      }
+    ],
+    "critic_calls": 2,
+    "future_observations_seen": false,
+    "automatic_model_promotion": false
+  },
+  "original_sha256": "48425e1e2a3359770ad44ab2e7c848d5be617b72da8e554cf5c14fdb3fae1285",
+  "critic_sha256": "96dd7e3e051c6de80b2abf554d56ad7d756fafb9a43f172d7c093c6e61e02d11",
+  "frozen_before_test": true
+}
