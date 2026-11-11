@@ -21,6 +21,7 @@ class WhatsAppChiefRoutingContract(unittest.TestCase):
         self.assertEqual(set(roles), mod.EXPECTED)
         yaml = mod.render_chief_routes(roles)
         self.assertIn("backend: profile_routes", yaml)
+        self.assertIn("- name: business_advisor", yaml)
         self.assertIn("max_concurrent_children: 2", yaml)
         self.assertIn("max_spawn_depth: 1", yaml)
         self.assertIn("orchestrator_enabled: false", yaml)
