@@ -3,7 +3,7 @@
   "as_of": "2026-11-11",
   "source": "Public-only abstracts of explicit founder instructions across Plenum Prometheus recent chats; NOT automatic account-wide transcript retrieval or guarantees of full historical prompt coverage",
   "complete_reconstruction": false,
-  "founder_instructions_count": 28,
+  "founder_instructions_count": 31,
   "requirements": [
     {
       "id": "video-17",
@@ -365,6 +365,45 @@
       "issue": null,
       "priority": 20,
       "remaining_action": "No new approved paid platforms; free hosting/inference quotas limited",
+      "private_chat_transcript_read": false,
+      "secret_included": false,
+      "founder_acceptance_recorded": false
+    },
+    {
+      "id": "six-video-completeness",
+      "public_objective_summary": "Read six named public YouTube videos, list all platform examples and rank their actual Plenum value",
+      "owner_role": "research",
+      "acceptance_scope": "partial",
+      "pr": 472,
+      "issue": null,
+      "priority": 4,
+      "remaining_action": "Captions and creator descriptions source-read; confirm GitHub agent actual caption access and acknowledge original visual playback not available",
+      "private_chat_transcript_read": false,
+      "secret_included": false,
+      "founder_acceptance_recorded": false
+    },
+    {
+      "id": "live-public-caption-agent",
+      "public_objective_summary": "Give original Research Director free, reliable transcript retrieval and precise timestamps instead of generic source leads",
+      "owner_role": "research",
+      "acceptance_scope": "source_only",
+      "pr": 472,
+      "issue": null,
+      "priority": 3,
+      "remaining_action": "Run one founder-authorized six-video caption issue; report any GitHub cloud-IP blocks, no paid credits or false full-video claims",
+      "private_chat_transcript_read": false,
+      "secret_included": false,
+      "founder_acceptance_recorded": false
+    },
+    {
+      "id": "computer-workforce-supervision",
+      "public_objective_summary": "Let Computer's Chief, Engineering, Research and independent Verification perform work with measurable evidence and no duplicate Chief",
+      "owner_role": "chief",
+      "acceptance_scope": "partial",
+      "pr": 472,
+      "issue": 471,
+      "priority": 5,
+      "remaining_action": "Verify actual output, cycle time and correctness from each bounded specialist; no always-on private host or WhatsApp pairing verified",
       "private_chat_transcript_read": false,
       "secret_included": false,
       "founder_acceptance_recorded": false
