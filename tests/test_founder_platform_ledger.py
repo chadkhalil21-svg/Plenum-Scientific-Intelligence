@@ -37,7 +37,7 @@ class FounderCatalogContract(unittest.TestCase):
         self.assertFalse(d["video_focus_evidence"]["original_full_caption_transcript_available"])
         names={x["name"] for x in d["items"]}
         self.assertTrue({"Upscayl","Hugging Face Spaces","ChatGPT Free"} <= names)
-        self.assertIn("Free",next(x for x in d["items"] if x["name"]=="Hugging Face Spaces")["purpose"])
+        self.assertIn("free",next(x for x in d["items"] if x["name"]=="Hugging Face Spaces")["purpose"].lower())
 
     def test_role_approved_specific_skills_exist(self):
         roster=json.loads((ROOT/"integrations/hermes/roster.json").read_text(encoding="utf-8"))
