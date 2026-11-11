@@ -7,6 +7,7 @@ is implied: future sessions must fetch the state before making status claims.
 import argparse
 from datetime import datetime, timezone
 import json
+import math
 from pathlib import Path
 
 SCHEMA="plenum-agi-program-continuity-v1"
@@ -37,8 +38,23 @@ ALLOWED_STATUS={
 TRUSTED="https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/"
 MAX_BYTES=250000
 MAX_EVIDENCE=128
-MAX_DECISIONS=100
-MAX_ACTION_CHARS=700
+MAX_DECISIONS=160
+MAX_ACTION_CHARS=2000
+MAX_DECISION_REASON_CHARS=3000
+MAX_ID_CHARS=96
+HISTORICAL_RESULT_FIELDS = {
+    "world-model-action-conditioned-synthetic-20261108": frozenset(["heldout_horizon8_action_blind_rmse","heldout_horizon8_action_conditioned_rmse","heldout_horizon8_persistence_rmse","holdout_transitions","shifted_physics_horizon8_action_conditioned_rmse","train_transitions"]),
+    "world-model-paired-intervention-synthetic-20261108": frozenset(["JEPA_trained","action_intervention","changed_physics_action_aware_effect_rmse","horizons_steps","nominal_action_aware_effect_rmse","nominal_action_blind_effect_rmse","paired_episodes","real_digital_twin_verified","real_world_causality_verified"]),
+    "noaa-observation-shadow-twin-historical-replay-20261108": frozenset(["boston_frozen_harmonic_mae_m","boston_one_hour_persistence_mae_m","boston_shadow_mae_m","historical_replay_not_live_synchronization","next_hour_evaluations_each","noaa_stations","operational_digital_twin_verified","real_NOAA_measurements_retrieved","reference_study_day","residual_update_gain","training_samples_each","virginia_key_frozen_harmonic_mae_m","virginia_key_one_hour_persistence_mae_m","virginia_key_shadow_mae_m"]),
+    "qwen35-4b-quantized-gpqa-original-same-three-20261109": frozenset(["biology","candidate","candidate_correct","candidate_quant_sha256","candidate_revision","chemistry","model_promoted","original_evaluator","original_new_candidate_inference_executed","original_three_cases","paid_model_api_calls","paired_difference","physics","previous_model_rerun","prior_Qwen3_0_6B_correct"]),
+    "qwen35-4b-original-gpqa-three-negative-20261108": frozenset(["automatic_promotion","biology_correct","candidate","candidate_attempted","candidate_correct","chemistry_correct","original_inspect_eval","original_llama_cpp_release","original_previous_qwen3_06b_attempted","original_previous_qwen3_06b_correct","paid_model_api_calls","physics_correct","prior_baseline_reexecuted","quant_revision","quant_sha256","same_question_ids_as_frozen_qwen3_06b"]),
+    "original-react-three-native-failure-mode-review-20261108": frozenset(["HumanEval_0","HumanEval_1","HumanEval_2","native_tool_calls","native_tool_responses","new_model_calls","new_scoring_runs","original_attempted","original_direct_correct","original_model","original_react_correct"]),
+    "original-swebench-django11790-scorer-incompat-and-agent-loop-20261109": frozenset(["AGI_demonstrated","failing_scorer","fixed_swebench_for_future","independent_grader_completed","installed_broken_swebench","model","observed_model_calls","observed_tool_responses","official_score","original_repo","python_calls","repeat_model_inference_after_failure","repeated_bash_command","repeated_identical_bash_calls","repository_edits_observed","source_issue_id","turn_limit_exceeded","valid_model_patch_observed"]),
+    "one-time-nov-2026-prospective-archive-backup-main-configuration": frozenset(["NOAA_backup_utc","NOAA_original_utc","USGS_backup_utc","USGS_original_utc","audit_dates_unchanged","duplicate_proposal_guard","frozen_before_utc","model_inference_executed_by_this_change","original_heldout_observations_viewed","research_memory_precommitted_files_exist_yet","scientific_results_verified"]),
+    "frozen-monthly-synthetic-model-job-retirement-main-20261109": frozenset(["daily_public_source_radar_unchanged","dollar_savings_measured","iterative_hypotheses_monthly_cron_removed","main_branch_source_change_trigger_preserved","manual_dispatch_preserved","model_challenge_monthly_cron_removed","prospective_NOAA_USGS_unchanged"]),
+    "noaa-nov2026-preissuance-observation-source-clarification-20261109": frozenset(["AGI_demonstrated","CI_result","CI_total_unit_tests","UTC_hourly_sample","actual_original_product","frozen_source_metadata","future_measurements_accessed","independent_scientific_result","model_weights_modified","new_scientific_forecast_issued","original_live_NOAA_API_development_data_verification","original_test_days","paid_API_spending","protocol_and_frozen_forecast_method_unchanged","quality","reason","response_max_bytes","six_minute_original_NOAA_observed_values"]),
+    "usgs-nov2026-preissuance-datetime-interval-source-correction-20261109": frozenset(["AGI_demonstrated","CI_status","CI_unit_tests","corrected_query_key","future_observations_accessed","live_USGS_source_verified","original_bug","original_precommitted_models_and_forecast_method_unchanged","original_source_and_sites_unchanged","paid_API_spending","protocol_json_byte_identical","returned_observation_property_unchanged","scientific_forecasts_issued"]),
+}
 
 
 
@@ -47,7 +63,27 @@ def _count(value, maximum=100000):
     return type(value) is int and 0 <= value <= maximum
 
 
-def _validate_result(score):
+def _bounded_historical_metric(value, depth=0):
+    """Schema-bounded original observation. Not a measured benchmark grade."""
+    if depth > 4:
+        return False
+    if value is None or type(value) is bool:
+        return True
+    if type(value) in (int,float):
+        return math.isfinite(value) and abs(value) <= 10**15
+    if isinstance(value,str):
+        return len(value) <= 1200
+    if isinstance(value,list):
+        return len(value) <= 50 and all(_bounded_historical_metric(v,depth+1) for v in value)
+    if isinstance(value,dict):
+        return len(value) <= 40 and all(
+            isinstance(k,str) and 1 <= len(k) <= 100 and _bounded_historical_metric(v,depth+1)
+            for k,v in value.items()
+        )
+    return False
+
+
+def _validate_result(score, evidence_id=None):
     """Accept only actual scored results or the separately labeled diagnostics.
 
     The continuity ledger stores an append-only mixture of real independent
@@ -105,7 +141,23 @@ def _validate_result(score):
         "outputs_at_128_token_cap", "correct_among_at_cap",
     }
     if set(score)!=expected:
-        raise ValueError("Unreviewed or missing diagnostic count fields")
+        # Exact already archived original IDs and key sets; not broad upgrades.
+        fields = HISTORICAL_RESULT_FIELDS.get(evidence_id)
+        if fields is None or set(score) != fields:
+            raise ValueError("Unreviewed or missing diagnostic count fields")
+        if not _bounded_historical_metric(score):
+            raise ValueError("Malformed historical observational measurement")
+        for key in (
+            "JEPA_trained", "real_world_causality_verified",
+            "real_digital_twin_verified", "operational_digital_twin_verified",
+            "model_promoted", "automatic_promotion", "scientific_results_verified",
+            "independent_scientific_result", "AGI_demonstrated",
+            "future_observations_accessed", "new_scientific_forecast_issued",
+            "scientific_forecasts_issued",
+        ):
+            if key in score and score[key] is not False:
+                raise ValueError("Historical record falsely upgrades evidence")
+        return
     if any(not _count(v) for v in score.values()):
         raise ValueError("Negative, boolean or noninteger diagnostic")
     if not (score["correct_among_at_cap"] <= score["outputs_at_128_token_cap"]
@@ -159,19 +211,24 @@ def validate(value):
             isinstance(link, str) and len(link) <= 500 and link.startswith(TRUSTED)
         )
         if (not isinstance(identifier,str) or not identifier.isascii()
-            or not 1<=len(identifier)<=64 or identifier in seen
+            or not 1<=len(identifier)<=MAX_ID_CHARS or identifier in seen
             or not (ordinary_source or owner_screenshot or official_pricing)):
             raise ValueError("Duplicate evidence or unreviewed source")
         seen.add(identifier)
         score=row.get("result")
         if score is not None:
-            _validate_result(score)
+            _validate_result(score, identifier)
         if row.get("AGI_demonstrated") is not False:
             raise ValueError("Experiment cannot imply AGI")
     goals=value.get("next_actions")
     if not isinstance(goals,list) or not 1<=len(goals)<=12:
         raise ValueError("Missing ordered, bounded next actions")
-    for i,row in enumerate(goals,1):
+    # Original research-memory priorities are zero-based; older fixtures
+    # were one-based. Permit either contiguous series, not gaps or duplicates.
+    start = goals[0].get("priority") if isinstance(goals[0],dict) else None
+    if type(start) is not int or start not in (0,1):
+        raise ValueError("Invalid priority origin")
+    for i,row in enumerate(goals,start):
         if (not isinstance(row,dict)
             or row.get("priority")!=i
             or not isinstance(row.get("action"),str)
@@ -181,9 +238,11 @@ def validate(value):
     if not isinstance(decisions,list) or not decisions or len(decisions)>MAX_DECISIONS:
         raise ValueError("Missing decisions and outcomes")
     for d in decisions:
-        if not isinstance(d,dict) or not all(isinstance(d.get(k),str)
-                                             and 4<=len(d[k])<=400
-                                             for k in ("decision","reason")):
+        if (not isinstance(d,dict)
+            or not isinstance(d.get("decision"),str)
+            or not 4<=len(d["decision"])<=400
+            or not isinstance(d.get("reason"),str)
+            or not 4<=len(d["reason"])<=MAX_DECISION_REASON_CHARS):
             raise ValueError("Invalid durable decision note")
     return value
 
@@ -213,12 +272,14 @@ def brief(state):
                    str(measurement["attempted"])+", tool-using "+
                    str(measurement["react_correct"])+"/"+str(measurement["attempted"])+
                    ", delta "+str(measurement["delta_correct"])+")")
-        else:
+        elif "baseline_correct" in measurement:
             ratio=(" (diagnostic baseline "+
                    str(measurement["baseline_correct"])+"/"+
                    str(measurement["baseline_attempted"])+
                    "; "+str(measurement["outputs_at_128_token_cap"])+
                    " at token cap)")
+        else:
+            ratio=" (historical structured observation; not an independently scored benchmark)"
         caution = (" [founder screenshot; not independently source-verified]"
                    if item.get("status") == "user_screenshot_confirmed" else "")
         lines.append("  - "+item["id"]+": "+item["status"]+ratio+caution)
