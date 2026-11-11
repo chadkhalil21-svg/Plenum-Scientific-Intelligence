@@ -46,9 +46,12 @@ HISTORICAL_RESULT_FIELDS = {
     "world-model-action-conditioned-synthetic-20261108": frozenset(["heldout_horizon8_action_blind_rmse","heldout_horizon8_action_conditioned_rmse","heldout_horizon8_persistence_rmse","holdout_transitions","shifted_physics_horizon8_action_conditioned_rmse","train_transitions"]),
     "world-model-paired-intervention-synthetic-20261108": frozenset(["JEPA_trained","action_intervention","changed_physics_action_aware_effect_rmse","horizons_steps","nominal_action_aware_effect_rmse","nominal_action_blind_effect_rmse","paired_episodes","real_digital_twin_verified","real_world_causality_verified"]),
     "noaa-observation-shadow-twin-historical-replay-20261108": frozenset(["boston_frozen_harmonic_mae_m","boston_one_hour_persistence_mae_m","boston_shadow_mae_m","historical_replay_not_live_synchronization","next_hour_evaluations_each","noaa_stations","operational_digital_twin_verified","real_NOAA_measurements_retrieved","reference_study_day","residual_update_gain","training_samples_each","virginia_key_frozen_harmonic_mae_m","virginia_key_one_hour_persistence_mae_m","virginia_key_shadow_mae_m"]),
+    "gpqa-original-science-qwen06b-one-of-three-20261108": frozenset(["attempted","biology_correct","chemistry_correct","correct","paid_model_api_calls","physics_correct","total_input_tokens","total_output_tokens","total_tokens"]),
+    "original-qwen-gpqa-science-three-domain-grades-20261108": frozenset(["attempted","biology","chemistry","correct","model","model_inference_repeated_for_recovery","original_evaluator","paid_model_api_calls","physics","revision"]),
     "qwen35-4b-quantized-gpqa-original-same-three-20261109": frozenset(["biology","candidate","candidate_correct","candidate_quant_sha256","candidate_revision","chemistry","model_promoted","original_evaluator","original_new_candidate_inference_executed","original_three_cases","paid_model_api_calls","paired_difference","physics","previous_model_rerun","prior_Qwen3_0_6B_correct"]),
     "qwen35-4b-original-gpqa-three-negative-20261108": frozenset(["automatic_promotion","biology_correct","candidate","candidate_attempted","candidate_correct","chemistry_correct","original_inspect_eval","original_llama_cpp_release","original_previous_qwen3_06b_attempted","original_previous_qwen3_06b_correct","paid_model_api_calls","physics_correct","prior_baseline_reexecuted","quant_revision","quant_sha256","same_question_ids_as_frozen_qwen3_06b"]),
     "original-react-three-native-failure-mode-review-20261108": frozenset(["HumanEval_0","HumanEval_1","HumanEval_2","native_tool_calls","native_tool_responses","new_model_calls","new_scoring_runs","original_attempted","original_direct_correct","original_model","original_react_correct"]),
+    "original-inspect-no-submit-new-humaneval3-verified-20261109": frozenset(["actual_tool_calls","actual_tool_responses","attempted","correct","final_answer_nonempty","literal_tool_marker_in_final_answer","model","model_sha","official_agent","original_scorer","original_task","paid_model_api_calls","previous_HumanEval_0_1_2_not_rerun","previous_submit_mode_paired_on_this_problem"]),
     "original-swebench-django11790-scorer-incompat-and-agent-loop-20261109": frozenset(["AGI_demonstrated","failing_scorer","fixed_swebench_for_future","independent_grader_completed","installed_broken_swebench","model","observed_model_calls","observed_tool_responses","official_score","original_repo","python_calls","repeat_model_inference_after_failure","repeated_bash_command","repeated_identical_bash_calls","repository_edits_observed","source_issue_id","turn_limit_exceeded","valid_model_patch_observed"]),
     "one-time-nov-2026-prospective-archive-backup-main-configuration": frozenset(["NOAA_backup_utc","NOAA_original_utc","USGS_backup_utc","USGS_original_utc","audit_dates_unchanged","duplicate_proposal_guard","frozen_before_utc","model_inference_executed_by_this_change","original_heldout_observations_viewed","research_memory_precommitted_files_exist_yet","scientific_results_verified"]),
     "frozen-monthly-synthetic-model-job-retirement-main-20261109": frozenset(["daily_public_source_radar_unchanged","dollar_savings_measured","iterative_hypotheses_monthly_cron_removed","main_branch_source_change_trigger_preserved","manual_dispatch_preserved","model_challenge_monthly_cron_removed","prospective_NOAA_USGS_unchanged"]),
@@ -92,6 +95,42 @@ def _validate_result(score, evidence_id=None):
     """
     if not isinstance(score, dict):
         raise ValueError("Non-object evidence measurement")
+    if evidence_id in HISTORICAL_RESULT_FIELDS:
+        # Preserve exact archived structure; never pretend an observational
+        # report is an independently scored benchmark.
+        fields = HISTORICAL_RESULT_FIELDS[evidence_id]
+        if set(score) != fields or not _bounded_historical_metric(score):
+            raise ValueError("Unreviewed historical result fields")
+        if "correct" in score or "attempted" in score:
+            if (not _count(score.get("correct"))
+                or not _count(score.get("attempted"))
+                or score["correct"] > score["attempted"]):
+                raise ValueError("Invalid historical independent grade")
+        if "actual_tool_calls" in score and "actual_tool_responses" in score:
+            if (not _count(score["actual_tool_calls"])
+                or not _count(score["actual_tool_responses"])
+                or score["actual_tool_responses"] > score["actual_tool_calls"]):
+                raise ValueError("Historical tool responses exceed calls")
+        if all(k in score for k in ("biology","chemistry","physics")) and all(
+            isinstance(score[k],dict) for k in ("biology","chemistry","physics")
+        ):
+            if (any(not _count(score[k].get("correct"))
+                    or not _count(score[k].get("attempted"))
+                    or score[k]["correct"] > score[k]["attempted"]
+                    for k in ("biology","chemistry","physics"))
+                or sum(score[k]["correct"] for k in ("biology","chemistry","physics")) != score.get("correct")
+                or sum(score[k]["attempted"] for k in ("biology","chemistry","physics")) != score.get("attempted")):
+                raise ValueError("Historical science domain grades do not reconcile")
+        for key in (
+            "JEPA_trained","real_world_causality_verified","real_digital_twin_verified",
+            "operational_digital_twin_verified","model_promoted","automatic_promotion",
+            "scientific_results_verified","independent_scientific_result",
+            "AGI_demonstrated","future_observations_accessed",
+            "new_scientific_forecast_issued","scientific_forecasts_issued",
+        ):
+            if key in score and score[key] is not False:
+                raise ValueError("Historical record falsely upgrades evidence")
+        return
     comparative={
         "attempted", "one_shot_correct", "react_correct", "delta_correct",
         "repairs", "regressions", "actual_tool_calls", "actual_tool_responses",
@@ -141,23 +180,7 @@ def _validate_result(score, evidence_id=None):
         "outputs_at_128_token_cap", "correct_among_at_cap",
     }
     if set(score)!=expected:
-        # Exact already archived original IDs and key sets; not broad upgrades.
-        fields = HISTORICAL_RESULT_FIELDS.get(evidence_id)
-        if fields is None or set(score) != fields:
-            raise ValueError("Unreviewed or missing diagnostic count fields")
-        if not _bounded_historical_metric(score):
-            raise ValueError("Malformed historical observational measurement")
-        for key in (
-            "JEPA_trained", "real_world_causality_verified",
-            "real_digital_twin_verified", "operational_digital_twin_verified",
-            "model_promoted", "automatic_promotion", "scientific_results_verified",
-            "independent_scientific_result", "AGI_demonstrated",
-            "future_observations_accessed", "new_scientific_forecast_issued",
-            "scientific_forecasts_issued",
-        ):
-            if key in score and score[key] is not False:
-                raise ValueError("Historical record falsely upgrades evidence")
-        return
+        raise ValueError("Unreviewed or missing diagnostic count fields")
     if any(not _count(v) for v in score.values()):
         raise ValueError("Negative, boolean or noninteger diagnostic")
     if not (score["correct_among_at_cap"] <= score["outputs_at_128_token_cap"]
