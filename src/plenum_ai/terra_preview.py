@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -18,6 +19,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 W, H, FPS, SCENE_SECONDS = 800, 450, 12, 5
 MODEL_CARD = "https://huggingface.co/hexgrad/Kokoro-82M"
+CC0_CATTLE_PAGE = "https://commons.wikimedia.org/wiki/File:Video_Cattle_Sep26.webm"
 SOURCE = ("https://github.com/chadkhalil21-svg/"
           "Plenum-Scientific-Intelligence/blob/main/src/plenum_ai/terra_preview.py")
 
@@ -148,7 +150,7 @@ def make_clip(scene: int, path: Path):
             process.kill()
 
 
-def create_storyboard(workspace: Path, voice_file: Path) -> Path:
+def create_storyboard(workspace: Path, voice_file: Path, cattle_footage: Path | None = None) -> Path:
     if workspace.exists() and any(workspace.iterdir()):
         raise FileExistsError("Use an empty workspace; never silently overwrite")
     workspace.mkdir(parents=True,exist_ok=True)
@@ -161,6 +163,22 @@ def create_storyboard(workspace: Path, voice_file: Path) -> Path:
     )
     scenes=[]
     for i,(title,caption) in enumerate(captions):
+        if i == 0 and cattle_footage is not None:
+            # Exact Commons source is CC0, independently source-checked;
+            # this illustrative real footage is NOT a Plenum field trial.
+            if (not cattle_footage.is_file() or cattle_footage.is_symlink()
+                    or cattle_footage.stat().st_size < 100000):
+                raise ValueError("Actual CC0 cattle motion file unavailable")
+            filename = "licensed_cattle_broll.webm"
+            shutil.copyfile(cattle_footage, workspace / filename)
+            scenes.append({
+                "type":"video","path":filename,"seconds":SCENE_SECONDS,
+                "title":"ILLUSTRATIVE B-ROLL — GERMANY",
+                "caption":caption,"concept":False,
+                "license":"cc0","creator":"Tvabutzku1234 / Wikimedia Commons",
+                "source_url":CC0_CATTLE_PAGE,"rights_reviewed":True,
+            })
+            continue
         filename=f"motion_{i+1}.mp4"
         make_clip(i,workspace/filename)
         scenes.append({
@@ -188,8 +206,9 @@ def main():
     parser=argparse.ArgumentParser()
     parser.add_argument("--voice-file",type=Path,required=True)
     parser.add_argument("--workspace",type=Path,required=True)
+    parser.add_argument("--cattle-footage",type=Path)
     args=parser.parse_args()
-    storyboard=create_storyboard(args.workspace,args.voice_file)
+    storyboard=create_storyboard(args.workspace,args.voice_file,args.cattle_footage)
     from .film_factory import render
     receipt=render(storyboard,args.workspace/"final")
     # A genuine playable preview, never an authorized public documentary.

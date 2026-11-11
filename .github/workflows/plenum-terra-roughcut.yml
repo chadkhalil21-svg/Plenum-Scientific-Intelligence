@@ -1,4 +1,4 @@
-name: Plenum Studio | Free Narrated Terra Rough Cut
+name: Plenum Studio | Free CC0 Cattle Footage and Narrated Terra Preview
 on:
   push:
     paths:
@@ -36,9 +36,16 @@ jobs:
       - name: Confirm voice-file identity to previous independently verified run
         run: |
           echo 'c01e1e2aa705ee2ecf62b4f030b9d1f6d51dc76c90311d0726cc66ebffcc5289  reports/source-voices/am_michael.wav' | sha256sum -c -
-      - name: Assemble one private moving science concept with existing narrator
+      - name: Acquire only the documented CC0 moving-cattle source
         run: |
-          python -m plenum_ai.terra_preview --voice-file reports/source-voices/am_michael.wav --workspace reports/terra-roughcut
+          curl --fail --location --retry 2 --max-time 180 \
+            'https://upload.wikimedia.org/wikipedia/commons/f/fa/Video_Cattle_Sep26.webm' \
+            -o reports/cc0-cattle-source.webm
+          test "$(stat -c%s reports/cc0-cattle-source.webm)" -gt 100000
+          ffprobe -v error -show_entries stream=codec_type,width,height -of json reports/cc0-cattle-source.webm
+      - name: Assemble real CC0 pasture footage and original science animation
+        run: |
+          python -m plenum_ai.terra_preview --voice-file reports/source-voices/am_michael.wav --cattle-footage reports/cc0-cattle-source.webm --workspace reports/terra-roughcut
       - name: Verify real 15-second moving-picture MP4 and audible narration
         run: |
           python - <<'PY'
@@ -51,6 +58,9 @@ jobs:
           assert receipt['status']=='TECHNICAL_RENDER_COMPLETE'
           assert receipt['voice_included'] is True
           assert receipt['scenes']==3
+          assert receipt['source_ledger'][0]['license']=='cc0'
+          assert receipt['source_ledger'][0]['concept_visualization'] is False
+          assert receipt['source_ledger'][1]['concept_visualization'] is True
           assert receipt['natural_voice_approved'] is False
           assert receipt['public_distribution_approved'] is False
           assert not receipt['paid_services_used']
@@ -62,12 +72,12 @@ jobs:
           assert {s['codec_type'] for s in meta['streams']}=={'audio','video'}
           assert any(s['codec_name']=='aac' for s in meta['streams'])
           assert any(s['codec_name']=='h264' for s in meta['streams'])
-          print('REAL PRIVATE DRAFT VERIFIED: 15s, original animation, licensed-model speech')
+          print('REAL PRIVATE DRAFT VERIFIED: 15s, genuine CC0 cattle footage, original animation, licensed-model speech')
           PY
       - name: Preserve draft film for review only; do not publish
         uses: actions/upload-artifact@v4
         with:
-          name: terra-free-narrated-concept-draft
+          name: terra-free-cattle-narrated-concept-draft
           path: |
             reports/terra-roughcut/final/film.mp4
             reports/terra-roughcut/final/render_receipt.json
