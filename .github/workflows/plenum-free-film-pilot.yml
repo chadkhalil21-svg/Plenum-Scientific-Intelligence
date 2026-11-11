@@ -1,0 +1,37 @@
+name: Plenum Studio | Free CPU Film Renderer Acceptance
+on:
+  push:
+    paths:
+      - 'src/plenum_ai/film_factory.py'
+      - 'tests/test_film_factory.py'
+      - 'fixtures/terra_technical_demo.json'
+      - '.github/workflows/plenum-free-film-pilot.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  film-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify system FFmpeg and source-only Python module
+        run: |
+          ffmpeg -version | head -1
+          python -m pip install -e .
+          python -m unittest discover -s tests -p 'test_film_factory.py' -v
+      - name: Render one independent 10-second original technical proof
+        run: |
+          python -m plenum_ai.film_factory --storyboard fixtures/terra_technical_demo.json --out-dir reports/film-pilot
+          ffprobe -v error -show_entries format=duration:stream=codec_name,codec_type -of json reports/film-pilot/film.mp4
+      - name: Retain evidence only, never post or publish promotional media
+        uses: actions/upload-artifact@v4
+        with:
+          name: plenum-free-film-pilot
+          path: reports/film-pilot/
+          retention-days: 7
