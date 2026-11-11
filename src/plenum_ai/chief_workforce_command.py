@@ -79,7 +79,7 @@ def independent_expected_kind(objective: str) -> str:
         generic = HINTS["public_program"] & words
         active = set(hits)
         if (active == {"public_research", "public_program"}
-                and re.match(r"^(?:research|survey)\\b", objective, re.I)
+                and re.match(r"^(?:research|survey)\b", objective, re.I)
                 and generic <= {"software", "application"}
                 and not (words & {"create", "build", "develop", "implement",
                                   "write", "code", "coding", "script", "validator", "program"})):
