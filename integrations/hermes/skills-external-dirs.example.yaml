@@ -1,0 +1,6 @@
+# Owner-host example only; no public GitHub permission, message connection or model setup.
+# SKILLS_REPO must be defined privately to a pinned READ-ONLY checkout.
+skills:
+  external_dirs:
+    - ${SKILLS_REPO}/skills
+# Reference: https://hermes-agent.nousresearch.com/docs/user-guide/features/skills/
