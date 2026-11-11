@@ -1,0 +1,268 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "43090780866",
+  "source_revision": "46da612e44b142bb4be581a9af748f93f8ba814d",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-11T19:49:53.981333+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 28,
+    "sources_returning_records": 25,
+    "source_outages": [
+      "un_climate_environment",
+      "un_global_news",
+      "gdelt_headlines"
+    ],
+    "new_public_links_before_limit": 28,
+    "signals": [
+      {
+        "category": "universities",
+        "publisher": "MIT News",
+        "source": "mit_labs",
+        "url": "https://news.mit.edu/2026/mit-schwarzman-college-computing-welcomes-new-faculty-1110",
+        "title_untrusted": "MIT Schwarzman College of Computing welcomes seven new faculty for 2026",
+        "claimed_publication_date": "Tue, 10 Nov 2026 17:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261110042558.htm",
+        "title_untrusted": "Where are all the males? Ancient human fossils reveal a startling mystery",
+        "claimed_publication_date": "Wed, 11 Nov 2026 04:43:55 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03642-7",
+        "title_untrusted": "Iconic first image of black hole holds up to scrutiny",
+        "claimed_publication_date": "2026-11-11",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.12933",
+        "title_untrusted": "Auditable Human-Agent Teams for Autonomous X-ray Experimentation",
+        "claimed_publication_date": "Wed, 11 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.12890",
+        "title_untrusted": "Pooling ETAS triggering parameters across subduction margins: forecast transfer, estimator stability and sequence-limited skill in Mexico",
+        "claimed_publication_date": "Wed, 11 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "software",
+        "publisher": "GitHub public repository index",
+        "source": "github_public_code",
+        "url": "https://github.com/nhassan277/sci-conference-2026",
+        "title_untrusted": "nhassan277/sci-conference-2026",
+        "claimed_publication_date": "2026-11-11T18:25:58Z",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026wjmdrz",
+        "title_untrusted": "M 0.7 - 62 km ENE of Pedro Bay, Alaska",
+        "claimed_publication_date": "1794425869134",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261110042546.htm",
+        "title_untrusted": "NASA reveals Earth's ozone hole has grown to a size not seen in a decade",
+        "claimed_publication_date": "Wed, 11 Nov 2026 07:32:48 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03671-2",
+        "title_untrusted": "Too dry for cacti: extreme droughts could push iconic species to extinction",
+        "claimed_publication_date": "2026-11-11",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.12934",
+        "title_untrusted": "EarthRecord: From Pixels to Land Change with Multimodal Agents over Four Decades of Satellite Imagery",
+        "claimed_publication_date": "Wed, 11 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.12891",
+        "title_untrusted": "Applicability of a Thermodynamic Model to Rich-Hydrogen Flammability Assessment in SMR Containments",
+        "claimed_publication_date": "Wed, 11 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000txmq",
+        "title_untrusted": "M 5.0 - 48 km NW of Ancud, Chile",
+        "claimed_publication_date": "1794424877374",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261110042543.htm",
+        "title_untrusted": "Energy drinks linked to 11 times more reports of cardiac arrest",
+        "claimed_publication_date": "Wed, 11 Nov 2026 08:10:51 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03591-1",
+        "title_untrusted": "Getting a grasp on the global wildlife trade",
+        "claimed_publication_date": "2026-11-11",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.12935",
+        "title_untrusted": "Train on prefill, monitor at decode: Using sparse autoencoders for topic monitoring",
+        "claimed_publication_date": "Wed, 11 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.12893",
+        "title_untrusted": "First-passage tests of anomalous transport closures in heterogeneous aquifers",
+        "claimed_publication_date": "Wed, 11 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/pr71539078",
+        "title_untrusted": "M 1.7 - 2 km S of Pastos, Puerto Rico",
+        "claimed_publication_date": "1794424727130",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261110042539.htm",
+        "title_untrusted": "Even occasional marijuana use linked to 40% higher odds of stroke",
+        "claimed_publication_date": "Tue, 10 Nov 2026 22:47:25 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/s41586-026-11391-w",
+        "title_untrusted": "Efficient catalyst-controlled C–H arylation of arenes",
+        "claimed_publication_date": "2026-11-11",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.12936",
+        "title_untrusted": "LandslideFM: A Foundation Model Towards Unified Landslide Perception and Understanding",
+        "claimed_publication_date": "Wed, 11 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.12894",
+        "title_untrusted": "D-TINs for Track-Sampled Ice Sheet Surface Reconstruction from Satellite Altimetry Data",
+        "claimed_publication_date": "Wed, 11 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026wjlmbp",
+        "title_untrusted": "M 1.8 - 58 km NW of Petersville, Alaska",
+        "claimed_publication_date": "1794424648940",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
