@@ -9,7 +9,7 @@ const github = "fake-token-for-test-not-a-provider-secret";
 const env = {PLENUM_WEBHOOK_HMAC_SECRET:secret, PLENUM_GITHUB_DISPATCH_TOKEN:github};
 const encoder = new TextEncoder();
 
-async function signed(id, *, stamp = Math.floor(Date.now() / 1000)) {
+async function signed(id, {stamp = Math.floor(Date.now() / 1000)} = {}) {
   const body = JSON.stringify({issue_number:id});
   const key = await crypto.subtle.importKey("raw", encoder.encode(secret),
     {name:"HMAC",hash:"SHA-256"},false,["sign"]);
