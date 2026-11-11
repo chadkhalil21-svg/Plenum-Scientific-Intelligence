@@ -45,6 +45,28 @@ SEATS = (
 )
 
 
+# Separate simulated business-advisory lenses. One shared ephemeral model;
+# these are not employees, a board of directors, or licensed advisors.
+BUSINESS_SEATS = (
+    ("operations", "As a fractional COO lens, prioritize deliverables, owners, milestones, and evidence of completed work; do not assume business account access."),
+    ("finance", "As a CFO lens, challenge cash runway and funding assumptions, identify data still needed, prefer zero new cost, and never invent cash or revenue numbers."),
+    ("strategy", "As a strategy and commercialization lens, identify customer hypotheses, go-to-market experiments, alternatives, and a measurable next decision."),
+    ("governance", "As a nonbinding governance and IP-risk lens, flag matters for qualified professional counsel, distinguish advisory advice from corporate board authority, and challenge unsupported claims."),
+)
+
+
+def council_seats(objective: str):
+    """Route business advisory agendas to useful specialist perspectives.
+
+    No new models, credentials, tools, executive appointments or payments.
+    The same existing founder-public council invocation runs either set.
+    """
+    topic = objective.lower()
+    if "business advisory" in topic or "business operations" in topic:
+        return BUSINESS_SEATS
+    return SEATS
+
+
 def _valid_objective(s):
     return (
         isinstance(s, str) and 20 <= len(s) <= 120
@@ -104,7 +126,7 @@ def deliberate(event):
             or os.environ.get("PLENUM_COUNCIL_MODEL_URL") != MODEL_URL):
         raise PermissionError("Council requires explicit isolated Qwen runner")
     results = []
-    for name, remit in SEATS:
+    for name, remit in council_seats(task["objective"]):
         # Distinct fresh model contexts, not synthetic labels on one response.
         draft = _ask_local(
             "You are a separate Plenum AI council reviewer. " + VERIFIED_CONTEXT +
@@ -134,6 +156,7 @@ def deliberate(event):
         "issue": task["issue"], "objective": task["objective"],
         "status": "ADVISORY_DELIBERATION_AWAITING_FOUNDER",
         "seats_completed": len(results),
+        "council_type": ("business_advisory" if council_seats(task["objective"]) is BUSINESS_SEATS else "general"),
         "review_completed": True,
         "independent_counsel_or_advisors_contacted": False,
         "sources_independently_checked": False,
