@@ -187,5 +187,114 @@ class PublicStrategicContinuityTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             ledger.validate(wrong)
 
+
+    def test_original_historical_status_is_recognized_without_upgrading_confidence(self):
+        state=fixture()
+        original=state["evidence"][0]
+        for status in ("verified_blocker", "verified_narrow_authenticated_public_demo",
+                       "independently_scored_new_model_no_improvement",
+                       "source_documented_and_adapter_contract_tests_verified_not_real_source_or_science_yet"):
+            with self.subTest(status=status):
+                original["status"]=status
+                checked=ledger.validate(state)
+                self.assertEqual(checked["evidence"][0]["status"],status)
+                self.assertFalse(checked["AGI_achieved"])
+        original["status"]="invented_success_of_agi"
+        with self.assertRaisesRegex(ValueError,"Invalid evidence status"):
+            ledger.validate(state)
+
+    def test_original_screenshot_and_exact_official_pricing_are_not_github_runs(self):
+        state=fixture()
+        item=state["evidence"][0]
+        item.update({"id":"computer-browser-gcp-project-created-20261107",
+                     "status":"user_screenshot_confirmed",
+                     "notes":"Founder-provided screenshot of the public browser project; no independent external proof."})
+        item.pop("url")
+        validated=ledger.validate(state)
+        self.assertIn("not independently source-verified",ledger.brief(validated))
+        invalid=copy.deepcopy(state)
+        invalid["evidence"][0]["notes"]=""
+        with self.assertRaises(ValueError):
+            ledger.validate(invalid)
+        state["evidence"][0].update({
+            "id":"computer-browser-google-cloud-free-tier-capacity-20261107",
+            "status":"official-pricing-verified",
+            "url":"https://cloud.google.com/run/pricing"})
+        self.assertEqual(ledger.validate(state)["evidence"][0]["status"],"official-pricing-verified")
+        state["evidence"][0]["url"]="https://example.com/not-official"
+        with self.assertRaises(ValueError):
+            ledger.validate(state)
+
+    def test_source_exception_cannot_apply_to_untethered_other_record(self):
+        state=fixture()
+        item=state["evidence"][0]
+        item["status"]="official-pricing-verified"
+        item["url"]="https://cloud.google.com/run/pricing"
+        with self.assertRaises(ValueError):
+            ledger.validate(state)
+        item["status"]="user_screenshot_confirmed"
+        item.pop("url")
+        item["notes"]="A different fabricated item must never be permitted to skip source checks."
+        with self.assertRaises(ValueError):
+            ledger.validate(state)
+
+
+    def test_original_zero_based_priority_and_long_history_are_bounded(self):
+        x=fixture()
+        x["next_actions"]=[{"priority":i,"action":"Original public research goal "+str(i)} for i in range(12)]
+        x["decisions"]=[{"decision":"Historical fact preserved "+str(i),
+                         "reason":"Original source-linked rationale. "+"a"*2000} for i in range(119)]
+        self.assertEqual(len(ledger.validate(x)["decisions"]),119)
+        x["next_actions"][3]["priority"]=4
+        with self.assertRaisesRegex(ValueError,"Unprioritized"):
+            ledger.validate(x)
+        x["next_actions"][3]["priority"]=3
+        x["decisions"][0]["reason"]="x"*(ledger.MAX_DECISION_REASON_CHARS+1)
+        with self.assertRaisesRegex(ValueError,"Invalid durable"):
+            ledger.validate(x)
+
+    def test_exact_existing_structured_result_is_not_generic_scientific_score(self):
+        x=fixture()
+        evidence=x["evidence"][0]
+        ident="world-model-action-conditioned-synthetic-20261108"
+        evidence["id"]=ident
+        evidence["status"]="verified_foundation"
+        evidence["result"]={
+            "heldout_horizon8_action_conditioned_rmse":0.026,
+            "heldout_horizon8_action_blind_rmse":0.240,
+            "heldout_horizon8_persistence_rmse":0.880,
+            "shifted_physics_horizon8_action_conditioned_rmse":0.059,
+            "train_transitions":448,
+            "holdout_transitions":192,
+        }
+        self.assertIn("historical structured observation",ledger.brief(ledger.validate(x)))
+        evidence["result"]["fabricated_success"]=42
+        with self.assertRaises(ValueError):
+            ledger.validate(x)
+        evidence["result"].pop("fabricated_success")
+        evidence["result"]["train_transitions"]=float("nan")
+        with self.assertRaises(ValueError):
+            ledger.validate(x)
+
+    def test_exact_historical_false_flags_cannot_be_promoted(self):
+        x=fixture()
+        e=x["evidence"][0]
+        e["id"]="world-model-paired-intervention-synthetic-20261108"
+        e["result"]={
+            "paired_episodes":6,
+            "action_intervention":"same simulator initial condition; opposite action forces",
+            "horizons_steps":[1,8,32],
+            "nominal_action_aware_effect_rmse":[0.0016384,0.031683,0.1200611],
+            "nominal_action_blind_effect_rmse":[0.2499226,0.2937382,0.6383155],
+            "changed_physics_action_aware_effect_rmse":[0.0410067,0.1464238,0.2702026],
+            "JEPA_trained":False,
+            "real_world_causality_verified":False,
+            "real_digital_twin_verified":False,
+        }
+        self.assertFalse(ledger.validate(x)["AGI_achieved"])
+        e["result"]["real_world_causality_verified"]=True
+        with self.assertRaisesRegex(ValueError,"falsely upgrades"):
+            ledger.validate(x)
+
 if __name__=="__main__":
     unittest.main()
