@@ -238,5 +238,63 @@ class PublicStrategicContinuityTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             ledger.validate(state)
 
+
+    def test_original_zero_based_priority_and_long_history_are_bounded(self):
+        x=fixture()
+        x["next_actions"]=[{"priority":i,"action":"Original public research goal "+str(i)} for i in range(12)]
+        x["decisions"]=[{"decision":"Historical fact preserved "+str(i),
+                         "reason":"Original source-linked rationale. "+"a"*2000} for i in range(119)]
+        self.assertEqual(len(ledger.validate(x)["decisions"]),119)
+        x["next_actions"][3]["priority"]=4
+        with self.assertRaisesRegex(ValueError,"Unprioritized"):
+            ledger.validate(x)
+        x["next_actions"][3]["priority"]=3
+        x["decisions"][0]["reason"]="x"*(ledger.MAX_DECISION_REASON_CHARS+1)
+        with self.assertRaisesRegex(ValueError,"Invalid durable"):
+            ledger.validate(x)
+
+    def test_exact_existing_structured_result_is_not_generic_scientific_score(self):
+        x=fixture()
+        evidence=x["evidence"][0]
+        ident="world-model-action-conditioned-synthetic-20261108"
+        evidence["id"]=ident
+        evidence["status"]="verified_foundation"
+        evidence["result"]={
+            "heldout_horizon8_action_conditioned_rmse":0.026,
+            "heldout_horizon8_action_blind_rmse":0.240,
+            "heldout_horizon8_persistence_rmse":0.880,
+            "shifted_physics_horizon8_action_conditioned_rmse":0.059,
+            "train_transitions":448,
+            "holdout_transitions":192,
+        }
+        self.assertIn("historical structured observation",ledger.brief(ledger.validate(x)))
+        evidence["result"]["fabricated_success"]=42
+        with self.assertRaises(ValueError):
+            ledger.validate(x)
+        evidence["result"].pop("fabricated_success")
+        evidence["result"]["train_transitions"]=float("nan")
+        with self.assertRaises(ValueError):
+            ledger.validate(x)
+
+    def test_exact_historical_false_flags_cannot_be_promoted(self):
+        x=fixture()
+        e=x["evidence"][0]
+        e["id"]="world-model-paired-intervention-synthetic-20261108"
+        e["result"]={
+            "paired_episodes":6,
+            "action_intervention":"same simulator initial condition; opposite action forces",
+            "horizons_steps":[1,8,32],
+            "nominal_action_aware_effect_rmse":[0.0016384,0.031683,0.1200611],
+            "nominal_action_blind_effect_rmse":[0.2499226,0.2937382,0.6383155],
+            "changed_physics_action_aware_effect_rmse":[0.0410067,0.1464238,0.2702026],
+            "JEPA_trained":False,
+            "real_world_causality_verified":False,
+            "real_digital_twin_verified":False,
+        }
+        self.assertFalse(ledger.validate(x)["AGI_achieved"])
+        e["result"]["real_world_causality_verified"]=True
+        with self.assertRaisesRegex(ValueError,"falsely upgrades"):
+            ledger.validate(x)
+
 if __name__=="__main__":
     unittest.main()
