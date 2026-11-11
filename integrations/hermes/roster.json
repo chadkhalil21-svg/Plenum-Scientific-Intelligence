@@ -37,7 +37,9 @@
       "skill_ids": [
         "plenum-minister-operations",
         "plenum-business-advisor",
-        "plenum-independent-verification"
+        "plenum-independent-verification",
+        "plenum-editorial-quality",
+        "humanizer"
       ]
     },
     {
@@ -48,7 +50,9 @@
       "skill_ids": [
         "plenum-research-youtube",
         "plenum-science-evidence",
-        "plenum-skill-curation"
+        "plenum-skill-curation",
+        "plenum-editorial-quality",
+        "humanizer"
       ]
     },
     {
@@ -58,7 +62,9 @@
       "tools": "sandbox coding; no deployment",
       "skill_ids": [
         "plenum-coding-delivery",
-        "plenum-skill-curation"
+        "plenum-skill-curation",
+        "plenum-editorial-quality",
+        "humanizer"
       ]
     },
     {
@@ -68,7 +74,9 @@
       "tools": "approved web access; no logins by default",
       "skill_ids": [
         "plenum-browser-operations",
-        "plenum-research-youtube"
+        "plenum-research-youtube",
+        "plenum-editorial-quality",
+        "humanizer"
       ]
     },
     {
@@ -77,7 +85,9 @@
       "scope": "Design original illustrative and media work with clear provenance and author review; do not publish copyrighted outputs.",
       "tools": "creative sketches; no publication",
       "skill_ids": [
-        "plenum-creative-quality"
+        "plenum-creative-quality",
+        "plenum-editorial-quality",
+        "humanizer"
       ]
     },
     {
@@ -87,7 +97,9 @@
       "tools": "public marketing research; no campaigns",
       "skill_ids": [
         "plenum-growth-sales",
-        "plenum-research-youtube"
+        "plenum-research-youtube",
+        "plenum-editorial-quality",
+        "humanizer"
       ]
     },
     {
@@ -98,7 +110,9 @@
       "skill_ids": [
         "plenum-minister-operations",
         "plenum-finance-operations",
-        "plenum-business-advisor"
+        "plenum-business-advisor",
+        "plenum-editorial-quality",
+        "humanizer"
       ]
     },
     {
@@ -108,7 +122,9 @@
       "tools": "known-model numerical analyses",
       "skill_ids": [
         "plenum-simulation-validity",
-        "plenum-science-evidence"
+        "plenum-science-evidence",
+        "plenum-editorial-quality",
+        "humanizer"
       ]
     },
     {
@@ -117,7 +133,9 @@
       "scope": "Draft sensitive, precise, empathetic support replies for founder review; no access to customers and no outbound send by default.",
       "tools": "nonconfidential drafts only",
       "skill_ids": [
-        "plenum-support-service"
+        "plenum-support-service",
+        "plenum-editorial-quality",
+        "humanizer"
       ]
     },
     {
@@ -127,7 +145,9 @@
       "tools": "read-only evidence and safety audit",
       "skill_ids": [
         "plenum-independent-verification",
-        "plenum-skill-curation"
+        "plenum-skill-curation",
+        "plenum-editorial-quality",
+        "humanizer"
       ]
     },
     {
@@ -139,8 +159,19 @@
         "plenum-business-advisor",
         "plenum-finance-operations",
         "plenum-growth-sales",
-        "plenum-independent-verification"
+        "plenum-independent-verification",
+        "plenum-editorial-quality",
+        "humanizer"
       ]
     }
-  ]
+  ],
+  "editorial_skill_source": {
+    "original": "blader/humanizer",
+    "version": "4.0.0",
+    "pinned_upstream_commit": "b48c832f0f809c1b5658edbb838c2521b72f2413",
+    "license": "MIT",
+    "source_mode": "portable_skills_mapped_to_profiles_not_running_by_itself",
+    "company_standard": "plenum-editorial-quality",
+    "compliance_note": "Recipient and verified evidence outrank prose polishing; private document ledger only if independently accessible."
+  }
 }
