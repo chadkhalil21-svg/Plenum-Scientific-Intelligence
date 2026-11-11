@@ -1,5 +1,10 @@
 name: Reconcile Public Scientific Evidence Ledger
 on:
+  pull_request:
+    paths:
+      - 'src/plenum_ai/continuity_ledger.py'
+      - 'tests/test_continuity_ledger.py'
+      - '.github/workflows/evidence-ledger-index.yml'
   workflow_dispatch:
   schedule:
     - cron: '35 6 * * *'
@@ -16,6 +21,29 @@ concurrency:
   group: plenum-public-research-ledger-reconciliation
   cancel-in-progress: false
 jobs:
+  focused-original-evidence-compatibility:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e .
+      - name: Verify precise historical evidence and source restrictions
+        run: python -m unittest discover -s tests -p 'test_continuity_ledger.py' -v
+      - uses: actions/checkout@v7
+        with:
+          ref: research-memory
+          path: ledger
+          persist-credentials: false
+      - name: Validate all original current research records without changing them
+        run: python -m plenum_ai.continuity_ledger --state ledger/state/AGI_PROGRAM.json --print-brief
   reconcile-public-evidence:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
