@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from hashlib import sha256
 from datetime import datetime, timezone
 import json
 import os
@@ -134,8 +135,11 @@ def render(rows, *, as_of_date: str, doc):
         raise ValueError("Cannot omit requested founder objectives")
     ordered = sorted(rows, key=lambda a: (a["priority"], a["id"]))
     counts = Counter(x["status"] for x in rows)
+    # Idempotent for the SAME evidence, but a changed original issue or newly
+    # added objective on the same calendar date must not leave a stale receipt.
+    evidence_hash = sha256(json.dumps(rows, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()[:12]
     lines = [
-        f"<!-- plenum-founder-instruction-audit:{as_of_date} -->",
+        f"<!-- plenum-founder-instruction-audit:{as_of_date}:{evidence_hash} -->",
         f"## Original Chief | Independent founder-instruction coverage — {as_of_date}",
         f"**{len(rows)} PUBLIC instruction summaries checked.** This ledger is only a partial reconstruction of previous chat prompts, not a private or account-wide transcript connection.",
         "Only a merged source PR or an original GitHub Actions bot comment is accepted as evidence, each within its narrow scope. No private deployment is inferred.",
