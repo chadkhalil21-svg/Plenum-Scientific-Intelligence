@@ -24,8 +24,12 @@ ISSUES = (
     (433, "Workforce public research"),
     (435, "Two-specialist Chief mission"),
     (437, "Business Advisory Council"),
+    (478, "Six-video Research Engineering Verification receipt"),
+    (482, "Scientific evidence reconciliation engineering repair"),
+    (483, "Cloudflare Free ingress and quota-capped inference commissioning"),
+    (484, "Founder workforce priorities council"),
 )
-STATUS_RE = re.compile(r"(?:Chief status: |Plenum council status: |Status: \*\*)([A-Z_]+)")
+STATUS_RE = re.compile(r"(?:Chief status: |Plenum council status: |Status: \*\*|Overall: )([A-Z_]+)")
 
 
 def verified_comment_status(comments: list[dict]) -> str:
@@ -69,6 +73,10 @@ def render_brief(rows: list[dict], *, as_of_date: str) -> str:
         "- Review the Business Advisory Council's *actual* public artifact under #437, compare with qualified human guidance, then authorize only specific next actions.",
         "- Check grant diligence #428/#429 for confirmed facts, partner requirements and decision deadlines; do not assume a budget or award.",
         "- Review accepted specialist artifacts #433/#435; metadata and output structure are not equivalent to independently fact-checked recommendations.",
+    "- Review original #478 honestly as 0/6 retrieved captions until new verified source evidence exists; do not count passing CI as transcript completion.",
+    "- Route specific research-memory continuity schema fault #482 to Engineering and distinct verification; do not overwrite historical science or whitelabel unknown evidence statuses.",
+    "- Cloudflare Free #483 requires genuine owner account and a live original dispatch; eligible hosted inference is capped and not verified connected.",
+    "- Use latest original council #484 as advisory only; a model discussion never establishes a running workforce or supplier pricing.",
         "",
         "### Deployment claim boundary",
         "Existing GitHub public worker routes are bounded and verified on actual jobs. Paperclip, Hermes WhatsApp and OpenClaw are not independently established as live services; source-only integrations are not running agents.",
