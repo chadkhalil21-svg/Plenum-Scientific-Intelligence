@@ -6,6 +6,8 @@ on:
     paths:
       - 'src/plenum_ai/youtube_public_caption_worker.py'
       - 'tests/test_youtube_public_caption_worker.py'
+      - 'src/plenum_ai/youtube_caption_director_review.py'
+      - 'tests/test_youtube_caption_director_review.py'
       - 'integrations/workforces/six_video_platforms_20261111.json'
       - '.github/workflows/plenum-public-youtube-captions.yml'
 permissions:
@@ -26,7 +28,10 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -e .
-      - run: python -m unittest discover -s tests -p 'test_youtube_public_caption_worker.py' -v
+      - name: Focused original Research and Independent Verifier contracts
+        run: |
+          python -m unittest discover -s tests -p 'test_youtube_public_caption_worker.py' -v
+          python -m unittest discover -s tests -p 'test_youtube_caption_director_review.py' -v
   public-caption-research:
     if: >-
       github.event_name == 'issues' &&
@@ -53,11 +58,98 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_ACTIONS: 'true'
-        run: timeout 480 python -m plenum_ai.youtube_public_caption_worker --event "$GITHUB_EVENT_PATH" --execute
+        run: timeout 480 python -m plenum_ai.youtube_public_caption_worker --event "$GITHUB_EVENT_PATH" --execute --defer-report
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: plenum-video-caption-evidence-${{ github.run_id }}
           path: reports/youtube-research/free-caption-evidence.json
+          if-no-files-found: ignore
+          retention-days: 7
+
+  engineering-director:
+    name: Engineering Director | Diagnose actual free caption source outcomes
+    needs: public-caption-research
+    if: >-
+      always() &&
+      github.event_name == 'issues' &&
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == '[Plenum Research] public video captions'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - name: Receive original Research Director artifact (or record missing)
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: plenum-video-caption-evidence-${{ github.run_id }}
+          path: reports/youtube-research
+      - name: Engineering Director classifies actual source and fallback state
+        run: python -m plenum_ai.youtube_caption_director_review --mode engineering --event "$GITHUB_EVENT_PATH"
+      - name: Preserve Engineering Director diagnosis
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: plenum-caption-engineering-${{ github.run_id }}
+          path: reports/youtube-research/engineering-diagnosis.json
+          if-no-files-found: ignore
+          retention-days: 7
+
+  independent-verifier:
+    name: Independent Verifier | Chief's sole founder status and acceptance receipt
+    needs: [public-caption-research, engineering-director]
+    if: >-
+      always() &&
+      github.event_name == 'issues' &&
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == '[Plenum Research] public video captions'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - name: Independently receive original Research evidence
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: plenum-video-caption-evidence-${{ github.run_id }}
+          path: reports/youtube-research
+      - name: Independently receive Engineering Director diagnosis
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: plenum-caption-engineering-${{ github.run_id }}
+          path: reports/youtube-research
+      - name: Verify bounded evidence and publish ONE accountable Chief-of-Staff receipt
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m plenum_ai.youtube_caption_director_review --mode verify --event "$GITHUB_EVENT_PATH"
+      - name: Preserve independently reviewed acceptance result even on blocked upstream
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: plenum-caption-director-verification-${{ github.run_id }}
+          path: reports/youtube-research/director-verification.json
           if-no-files-found: ignore
           retention-days: 7
