@@ -111,11 +111,11 @@ def fetch_public_jina_captions(video_id: str):
         raise ValueError("Jina response does not contain bounded public caption text")
     # Accept only clearly marked, timestamped caption rows after a transcript
     # heading; avoid misidentifying video chapter navigation as subtitles.
-    markers = list(re.finditer(r"(?im)^\\s*#{0,3}\\s*(?:video )?transcript\\s*:?\\s*$",content))
+    markers = list(re.finditer(r"(?im)^\s*#{0,3}\s*(?:video )?transcript\s*:?\s*$",content))
     if not markers:
         raise ValueError("No verified transcript section in public reader output")
     scoped = content[markers[-1].end():]
-    line = re.compile(r"(?m)^\\s*(?:[-*]\\s*)?\\[?(\\d{1,2}:\\d{2}(?::\\d{2})?)\\]?\\s*(?:[-|:]\\s*)?(.{12,650})$")
+    line = re.compile(r"(?m)^\s*(?:[-*]\s*)?\[?(\d{1,2}:\d{2}(?::\d{2})?)\]?\s*(?:[-|:]\s*)?(.{12,650})$")
     rows=[]
     for match in line.finditer(scoped):
         timecode, words=match.groups()
