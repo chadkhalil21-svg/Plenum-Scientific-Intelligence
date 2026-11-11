@@ -1,6 +1,6 @@
 {
   "schema": "plenum-hermes-profile-roster-v1",
-  "source": "Original Plenum nine-role n8n workforce plus founder-requested business advisory specialist; profiles are not necessarily running bots",
+  "source": "Original Plenum nine-role n8n workforce plus founder-requested business advisory specialist; profiles are not necessarily running bots; 2026-11-11 source-only extension with scoped adoption/recency/design/media skills and 81-item non-secret tool ledger",
   "hermes_upstream_sha": "825322b16656905a4607be2fd6ce3d3db7d6b4a7",
   "superpowers_upstream_sha": "22f0b463e7a5e579904dd6211a520321035526f7",
   "defaults": {
@@ -39,7 +39,8 @@
         "plenum-business-advisor",
         "plenum-independent-verification",
         "plenum-editorial-quality",
-        "humanizer"
+        "humanizer",
+        "plenum-platform-adoption"
       ],
       "load_skills_on_demand": true
     },
@@ -52,7 +53,9 @@
         "plenum-research-youtube",
         "plenum-science-evidence",
         "plenum-skill-curation",
-        "plenum-editorial-quality"
+        "plenum-editorial-quality",
+        "plenum-platform-adoption",
+        "plenum-recency-research"
       ],
       "load_skills_on_demand": true
     },
@@ -63,7 +66,8 @@
       "tools": "sandbox coding; no deployment",
       "skill_ids": [
         "plenum-coding-delivery",
-        "plenum-skill-curation"
+        "plenum-skill-curation",
+        "plenum-platform-adoption"
       ],
       "load_skills_on_demand": true
     },
@@ -86,7 +90,9 @@
       "skill_ids": [
         "plenum-creative-quality",
         "plenum-editorial-quality",
-        "humanizer"
+        "humanizer",
+        "plenum-design-audit",
+        "plenum-local-media"
       ],
       "load_skills_on_demand": true
     },
@@ -99,7 +105,9 @@
         "plenum-growth-sales",
         "plenum-research-youtube",
         "plenum-editorial-quality",
-        "humanizer"
+        "humanizer",
+        "plenum-recency-research",
+        "plenum-design-audit"
       ],
       "load_skills_on_demand": true
     },
@@ -112,7 +120,8 @@
         "plenum-minister-operations",
         "plenum-finance-operations",
         "plenum-business-advisor",
-        "plenum-editorial-quality"
+        "plenum-editorial-quality",
+        "plenum-platform-adoption"
       ],
       "load_skills_on_demand": true
     },
@@ -135,7 +144,8 @@
       "skill_ids": [
         "plenum-support-service",
         "plenum-editorial-quality",
-        "humanizer"
+        "humanizer",
+        "plenum-local-media"
       ],
       "load_skills_on_demand": true
     },
@@ -146,7 +156,8 @@
       "tools": "read-only evidence and safety audit",
       "skill_ids": [
         "plenum-independent-verification",
-        "plenum-skill-curation"
+        "plenum-skill-curation",
+        "plenum-platform-adoption"
       ],
       "load_skills_on_demand": true
     },
@@ -161,7 +172,8 @@
         "plenum-growth-sales",
         "plenum-independent-verification",
         "plenum-editorial-quality",
-        "humanizer"
+        "humanizer",
+        "plenum-recency-research"
       ],
       "load_skills_on_demand": true
     }
