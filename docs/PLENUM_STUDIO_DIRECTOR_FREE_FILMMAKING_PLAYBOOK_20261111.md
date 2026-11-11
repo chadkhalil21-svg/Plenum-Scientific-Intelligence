@@ -96,3 +96,14 @@ Narrator audition is **not** a general TTS installation check. Produce 12–20 s
 - Always verify against upstream docs, hardware and model rights before adopting claims shown by a YouTube presenter.
 
 **Current execution caveat (11 November 2026):** HeyGen Video Agent session df8081fe038f414ba82ef003071480af is present under the connected free account but reports generating/progress 0, video pending, no playback URL. The screenshot's 404 may be a deep-link/session-access mismatch; not evidence of completed delivery or confirmed deletion. A separate original locally rendered first-cut Terra MP4 is recorded in #494, but its independent artistic/publication quality is unaccepted. This playbook is a specification and source review, not proof of installed new tools, delegated live production or a finished second cut.
+
+
+## Additional voice shortlist — source verification 11 November 2026
+To avoid limiting voice selection to the first two tools, evaluate these as **license/hardware-gated audition candidates**, not as already installed or free hosted computation:
+- **Qwen3-TTS 0.6B / 1.7B CustomVoice:** original Apache-2.0 repo and model card, multiple built-in timbres, instruction-controlled expressive speech; 1.7B is a larger hardware requirement and voice identity/consent remain important. Sources: https://github.com/QwenLM/Qwen3-TTS and https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice.
+- **Parler-TTS Mini (880M):** permissively licensed Apache-2.0 model, prompt-directed speaking style; heavier than Kokoro. Sources: https://github.com/huggingface/parler-tts and https://huggingface.co/parler-tts/parler-tts-mini-v1.
+- **MeloTTS:** MIT engine, multilingual, CPU real-time option; lower-resource alternative. Source: https://github.com/myshell-ai/MeloTTS.
+- **Nari Labs Dia 1.6B:** Apache-2.0 repo for realistic multi-speaker dialogue and nonverbal speech; stronger dialogue use case than a short scientific voiceover; upstream estimated 4.4 GB or more for fp16/bfloat16 model context, no verified local GPU here. Source: https://github.com/nari-labs/dia.
+- **Google AI Studio Gemini Flash TTS:** official pricing currently shows free-tier eligibility for some Flash models; access, limits and commercial terms need a task-specific check before requesting generation. https://ai.google.dev/gemini-api/docs/pricing.
+
+**Priority:** Kokoro on accessible CPU -> Qwen3-TTS or Parler on verified compatible GPU -> conditional Google/HeyGen included quota. Do not install every model or use an unauthorized voice clone. Pick a 15s narrator only after listening and actual usage-rights audit.
