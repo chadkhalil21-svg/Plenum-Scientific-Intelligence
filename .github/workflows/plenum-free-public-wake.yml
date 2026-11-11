@@ -1,0 +1,66 @@
+name: Plenum Public Workforce | Free Event Wake
+on:
+  repository_dispatch:
+    types: [plenum_public_issue_wakeup]
+  pull_request:
+    paths:
+      - 'integrations/cloudflare/**'
+      - 'src/plenum_ai/public_issue_wake.py'
+      - 'src/plenum_ai/role_skill_router.py'
+      - 'tests/test_public_issue_wake.py'
+      - 'tests/test_role_skill_router.py'
+      - '.github/workflows/plenum-free-public-wake.yml'
+permissions:
+  contents: read
+concurrency:
+  # Same repository-wide issue lock as original public inbox workflow.
+  group: plenum-public-inbox-${{ github.event.client_payload.issue_number || github.ref }}
+  cancel-in-progress: false
+jobs:
+  focused-scope-check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - run: python -m unittest discover -s tests -p 'test_public_issue_wake.py' -v
+      - run: python -m unittest discover -s tests -p 'test_role_skill_router.py' -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test integrations/cloudflare/plenum-github-wake-worker.test.mjs
+  resume-original-task:
+    if: >-
+      github.event_name == 'repository_dispatch' &&
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    env:
+      PLENUM_PUBLIC_ISSUE: ${{ github.event.client_payload.issue_number }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - name: Check genuine original issue owner, status, and original public task
+        run: python -m plenum_ai.public_issue_wake --issue-number "$PLENUM_PUBLIC_ISSUE" --execute
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: plenum-public-wake-${{ github.run_id }}
+          path: reports/public-wake/
+          if-no-files-found: ignore
+          retention-days: 3

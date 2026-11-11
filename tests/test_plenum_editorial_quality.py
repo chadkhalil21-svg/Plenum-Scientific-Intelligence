@@ -22,13 +22,16 @@ class PlenumEditorialQualityTests(unittest.TestCase):
         self.assertIn("b48c832f0f809c1b5658edbb838c2521b72f2413",notice)
         self.assertIn("facts",source)
 
-    def test_both_editorial_skills_reach_every_defined_profile(self):
+    def test_humanizer_is_available_only_to_relevant_prose_roles(self):
         data=json.loads((ROOT/"integrations/hermes/roster.json").read_text())
         self.assertEqual(len(data["roles"]),11)
         for role in data["roles"]:
             with self.subTest(name=role["name"]):
-                self.assertIn("humanizer",role["skill_ids"])
-                self.assertIn("plenum-editorial-quality",role["skill_ids"])
+                self.assertTrue(role["load_skills_on_demand"])
+                if role["name"] in {"chief", "creative", "marketing", "support", "business_advisor"}:
+                    self.assertIn("humanizer", role["skill_ids"])
+                else:
+                    self.assertNotIn("humanizer", role["skill_ids"])
         self.assertFalse(data["defaults"]["private_app_access"])
         self.assertFalse(data["defaults"]["auto_start_gateway"])
 

@@ -27,7 +27,7 @@ def build_soul(role: dict) -> str:
     skills = role.get("skill_ids", [])
     if not isinstance(skills, list) or not skills:
         raise ValueError("Every specialist requires approved skill slugs")
-    descriptions = "Required approved skills: " + ", ".join(skills) + ". Load matching SKILL.md when the task requires it; the owner host must enable the external skill directory.\n"
+    descriptions = "Available role-approved skills (select by task, do NOT load all by default): " + ", ".join(skills) + ". Use the source-backed role_skill_router to choose on demand. A vetted Hermes host must separately enable an external skill directory.\n"
     return (
         f"# Plenum {role['title']}\n\n"
         "You are a named specialist interface serving Plenum Industries, Inc. "
