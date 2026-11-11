@@ -153,7 +153,12 @@ def review_video(video: dict, *, fetch=None, fallback=None):
             result["direct_failure_type"] = type(original_exc).__name__[:90]
             if fallback is None:
                 raise
-            rows = fallback(video_id)
+            result["fallback_attempted"] = True
+            try:
+                rows = fallback(video_id)
+            except Exception as fallback_exc:
+                result["fallback_failure_type"] = type(fallback_exc).__name__[:90]
+                raise
             result["caption_source"] = "Jina Reader anonymous public YouTube caption view"
             result["free_fallback_used"] = True
         if not isinstance(rows, list) or not 8 <= len(rows) <= 5000:
@@ -230,6 +235,7 @@ def main(argv=None):
     parser=argparse.ArgumentParser()
     parser.add_argument("--event",required=True)
     parser.add_argument("--execute",action="store_true")
+    parser.add_argument("--defer-report",action="store_true",help="Independent verifier posts the sole founder receipt")
     parser.add_argument("--out",default="reports/youtube-research/free-caption-evidence.json")
     args=parser.parse_args(argv)
     event=json.loads(Path(args.event).read_text(encoding="utf-8"))
@@ -252,8 +258,11 @@ def main(argv=None):
     token=os.getenv("GH_TOKEN")
     if not token:
         raise PermissionError("Scoped original GitHub issue token missing")
-    url=post_result(report,event["issue"]["number"],token)
-    print("PUBLIC_CAPTION_RESEARCH "+url)
+    if args.defer_report:
+        print("PUBLIC_CAPTION_RESEARCH evidence saved for independent verifier")
+    else:
+        url=post_result(report,event["issue"]["number"],token)
+        print("PUBLIC_CAPTION_RESEARCH "+url)
 
 
 if __name__=="__main__":
