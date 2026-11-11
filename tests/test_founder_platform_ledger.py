@@ -56,7 +56,7 @@ class FounderCatalogContract(unittest.TestCase):
     def test_original_council_uses_only_bounded_source_facts_on_demand(self):
         decisions=agent_council.read_public_tool_adoption_context(
             "Evaluate free specialist software tools")
-        self.assertIn("not 81 installations",decisions)
+        self.assertIn("not 84 installations",decisions)
         self.assertIn("Google AQuA=IDENTITY_UNVERIFIED",decisions)
         self.assertIn("Airia=PAID_DEFER",decisions)
         self.assertEqual(agent_council.read_public_tool_adoption_context(
