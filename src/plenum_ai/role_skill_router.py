@@ -29,6 +29,9 @@ MATCHES = {
     "plenum-recency-research": ("recent", "last 30", "trends", "new developments", "youtube", "news", "research", "up to date"),
     "plenum-design-audit": ("design", "website", "deck", "presentation", "visual", "interface", "layout", "slides"),
     "plenum-local-media": ("audio", "transcript", "subtitle", "video", "music", "render", "recording", "whisper"),
+    "plenum-instruction-oversight": ("audit", "track", "unfinished", "promises", "request", "instructions", "completeness", "gap", "completion"),
+    "plenum-continuous-improvement": ("evaluate", "improve", "rubric", "feedback", "measure", "experiment", "baseline", "autoresearch"),
+    "plenum-free-local-tools": ("whisper", "transcript", "audio", "offline", "free local", "ollama", "ffmpeg"),
 }
 WRITING_TRIGGERS = (
     "write", "draft", "rewrite", "edit", "proofread", "article", "email", "letter",
