@@ -157,7 +157,7 @@ def create_storyboard(workspace: Path, voice_file: Path) -> Path:
     captions = (
         ("THE PASTURE","Across the world's pastures, a quiet challenge persists."),
         ("THE METHANE QUESTION","Cattle release methane as part of digestion."),
-        ("PLENUM TERRA","Exploring a potential research pathway."),
+        ("PLENUM TERRA","Plenum Terra explores a potential research pathway."),
     )
     scenes=[]
     for i,(title,caption) in enumerate(captions):
@@ -165,7 +165,7 @@ def create_storyboard(workspace: Path, voice_file: Path) -> Path:
         make_clip(i,workspace/filename)
         scenes.append({
             "type":"video","path":filename,"seconds":SCENE_SECONDS,
-            "title":title,"caption":caption,"concept":True,
+            "caption":caption,"concept":True,
             "license":"owned","creator":"Plenum original procedural studio",
             "source_url":SOURCE,"rights_reviewed":True,
         })
