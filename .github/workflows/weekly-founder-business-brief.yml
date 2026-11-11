@@ -1,0 +1,56 @@
+name: Plenum Minister | Weekly Public Operating Evidence
+on:
+  schedule:
+    # 14:00 UTC Mondays = 09:00 EST / 10:00 EDT; avoids claiming exact local delivery.
+    - cron: '0 14 * * 1'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src/plenum_ai/weekly_founder_brief.py'
+      - 'tests/test_weekly_founder_brief.py'
+      - '.github/workflows/weekly-founder-business-brief.yml'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-weekly-public-minister-${{ github.event_name == 'pull_request' && github.ref || 'weekly' }}
+  cancel-in-progress: false
+jobs:
+  focused-tests:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - run: python -m unittest discover -s tests -p 'test_weekly_founder_brief.py' -v
+  actual-public-status:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - name: Independently fetch fixed PUBLIC issues, post idempotent brief to original Chief queue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m plenum_ai.weekly_founder_brief --execute
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: plenum-weekly-public-minister-brief
+          path: reports/minister-weekly-brief.json
+          retention-days: 7
+          if-no-files-found: ignore
