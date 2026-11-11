@@ -1,0 +1,1047 @@
+{
+  "schema": "plenum.tools-catalog.v1",
+  "updated": "2026-11-11",
+  "source": "founder enumerated list",
+  "unique_count": 138,
+  "categories": [
+    {
+      "category": "Agent skills, methods & verification",
+      "owner": "Verification & Advisory Council",
+      "count": 16
+    },
+    {
+      "category": "Coding, agent execution & developer tools",
+      "owner": "Engineering & Manufacturing",
+      "count": 12
+    },
+    {
+      "category": "Models, inference & local AI interfaces",
+      "owner": "Engineering & Manufacturing",
+      "count": 13
+    },
+    {
+      "category": "Research, documents & evidence",
+      "owner": "Scientific Research / Global Intelligence",
+      "count": 13
+    },
+    {
+      "category": "Business data, sales, outreach & support",
+      "owner": "Commercial Operations",
+      "count": 24
+    },
+    {
+      "category": "Browsers & interactive web use",
+      "owner": "Global Intelligence / Engineering & Manufacturing",
+      "count": 8
+    },
+    {
+      "category": "Hosting, workflow automation & integrations",
+      "owner": "Engineering & Manufacturing / Commercial Operations",
+      "count": 10
+    },
+    {
+      "category": "Images, design & spatial visualization",
+      "owner": "Engineering & Manufacturing / Creative",
+      "count": 13
+    },
+    {
+      "category": "Video, animation & media production",
+      "owner": "Engineering & Manufacturing / Creative",
+      "count": 9
+    },
+    {
+      "category": "Audio, voice, speech & music",
+      "owner": "Engineering & Manufacturing / Creative",
+      "count": 7
+    },
+    {
+      "category": "Personal productivity & communication",
+      "owner": "Commercial Operations",
+      "count": 3
+    },
+    {
+      "category": "Education & training sources",
+      "owner": "Global Intelligence",
+      "count": 3
+    },
+    {
+      "category": "Robotics, manufacturing & physical systems",
+      "owner": "Engineering & Manufacturing",
+      "count": 4
+    },
+    {
+      "category": "Games & simulation environments",
+      "owner": "Scientific Research / Engineering & Manufacturing",
+      "count": 3
+    }
+  ],
+  "items": [
+    {
+      "name": "Last30Days",
+      "purpose": "Recent multi-source scouting",
+      "state": "ADAPT",
+      "owner": "Verification & Advisory Council",
+      "category": "Agent skills, methods & verification"
+    },
+    {
+      "name": "Humanizer",
+      "purpose": "Source-preserving prose polish",
+      "state": "EXISTING_SKILL",
+      "owner": "Verification & Advisory Council",
+      "category": "Agent skills, methods & verification"
+    },
+    {
+      "name": "Superpowers",
+      "purpose": "Structured coding process",
+      "state": "EXISTING_METHOD",
+      "owner": "Verification & Advisory Council",
+      "category": "Agent skills, methods & verification"
+    },
+    {
+      "name": "gstack",
+      "purpose": "Coding/review/release workflow",
+      "state": "EVALUATE",
+      "owner": "Verification & Advisory Council",
+      "category": "Agent skills, methods & verification"
+    },
+    {
+      "name": "Impeccable",
+      "purpose": "Design quality audit",
+      "state": "EVALUATE",
+      "owner": "Verification & Advisory Council",
+      "category": "Agent skills, methods & verification"
+    },
+    {
+      "name": "NVIDIA SkillSpector",
+      "purpose": "Scan third-party skills before adoption",
+      "state": "PRIORITY",
+      "owner": "Verification & Advisory Council",
+      "category": "Agent skills, methods & verification"
+    },
+    {
+      "name": "Google AQuA",
+      "purpose": "Unverified name for agent failure analysis; use established evaluation tools instead",
+      "state": "IDENTIFY",
+      "owner": "Verification & Advisory Council",
+      "category": "Agent skills, methods & verification"
+    },
+    {
+      "name": "Karpathy autoresearch",
+      "purpose": "Bounded automated research/experiments",
+      "state": "EVALUATE",
+      "owner": "Verification & Advisory Council",
+      "category": "Agent skills, methods & verification"
+    },
+    {
+      "name": "Scheduled agents",
+      "purpose": "Timed task execution pattern, not a vendor",
+      "state": "EXISTING_PATTERN",
+      "owner": "Verification & Advisory Council",
+      "category": "Agent skills, methods & verification"
+    },
+    {
+      "name": "Evaluation rubric",
+      "purpose": "Outcome scorecard, not a vendor",
+      "state": "REQUIRED_METHOD",
+      "owner": "Verification & Advisory Council",
+      "category": "Agent skills, methods & verification"
+    },
+    {
+      "name": "Build Loop",
+      "purpose": "Iteration/review loop; ambiguous product identity",
+      "state": "IDENTIFY",
+      "owner": "Verification & Advisory Council",
+      "category": "Agent skills, methods & verification"
+    },
+    {
+      "name": "Natural-language agent orchestration",
+      "purpose": "User-command interface pattern, not a vendor",
+      "state": "EXISTING_PATTERN",
+      "owner": "Verification & Advisory Council",
+      "category": "Agent skills, methods & verification"
+    },
+    {
+      "name": "Hermes Jarvis",
+      "purpose": "Proposed voice/personal agent interface; exact package unverified",
+      "state": "IDENTIFY",
+      "owner": "Verification & Advisory Council",
+      "category": "Agent skills, methods & verification"
+    },
+    {
+      "name": "Hermes Kanban",
+      "purpose": "Proposed agent work board; exact package unverified",
+      "state": "IDENTIFY",
+      "owner": "Verification & Advisory Council",
+      "category": "Agent skills, methods & verification"
+    },
+    {
+      "name": "F Cancer skill",
+      "purpose": "Unidentified health-related skill; verify source/meaning and domain authorization",
+      "state": "IDENTIFY",
+      "owner": "Verification & Advisory Council",
+      "category": "Agent skills, methods & verification"
+    },
+    {
+      "name": "Divergence",
+      "purpose": "Ambiguous research/agent product name; verify exact source",
+      "state": "IDENTIFY",
+      "owner": "Verification & Advisory Council",
+      "category": "Agent skills, methods & verification"
+    },
+    {
+      "name": "Cursor",
+      "purpose": "AI coding editor",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing",
+      "category": "Coding, agent execution & developer tools"
+    },
+    {
+      "name": "Freebuff",
+      "purpose": "Ad-supported coding agent; quotas, privacy and sign-in conditions",
+      "state": "PILOT_PUBLIC_ONLY",
+      "owner": "Engineering & Manufacturing",
+      "category": "Coding, agent execution & developer tools"
+    },
+    {
+      "name": "OpenHands",
+      "purpose": "Autonomous code workspace",
+      "state": "EXISTING_PARTIAL",
+      "owner": "Engineering & Manufacturing",
+      "category": "Coding, agent execution & developer tools"
+    },
+    {
+      "name": "Google Antigravity",
+      "purpose": "Agentic software-development IDE",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing",
+      "category": "Coding, agent execution & developer tools"
+    },
+    {
+      "name": "Claude Computer Use",
+      "purpose": "Computer-control capability dependent on access, not a general free browser",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing",
+      "category": "Coding, agent execution & developer tools"
+    },
+    {
+      "name": "Graft",
+      "purpose": "Agent-created MCP tools; independent permission audit required",
+      "state": "PILOT_PUBLIC_ONLY",
+      "owner": "Engineering & Manufacturing",
+      "category": "Coding, agent execution & developer tools"
+    },
+    {
+      "name": "Docker",
+      "purpose": "Containers and reproducible runtimes",
+      "state": "EXISTING_INFRA",
+      "owner": "Engineering & Manufacturing",
+      "category": "Coding, agent execution & developer tools"
+    },
+    {
+      "name": "GitHub",
+      "purpose": "Source, issues, code review and permitted Actions",
+      "state": "EXISTING",
+      "owner": "Engineering & Manufacturing",
+      "category": "Coding, agent execution & developer tools"
+    },
+    {
+      "name": "GitHub Actions",
+      "purpose": "Bounded event-driven jobs, not 24/7 private servers",
+      "state": "EXISTING",
+      "owner": "Engineering & Manufacturing",
+      "category": "Coding, agent execution & developer tools"
+    },
+    {
+      "name": "ControlNet",
+      "purpose": "Conditioning/control for diffusion workflows",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing",
+      "category": "Coding, agent execution & developer tools"
+    },
+    {
+      "name": "GGUF",
+      "purpose": "Quantized model-file format, not an inference provider",
+      "state": "EXISTING_FORMAT",
+      "owner": "Engineering & Manufacturing",
+      "category": "Coding, agent execution & developer tools"
+    },
+    {
+      "name": "NextWork",
+      "purpose": "Hands-on guided tech projects; also learning",
+      "state": "DEFER",
+      "owner": "Engineering & Manufacturing",
+      "category": "Coding, agent execution & developer tools"
+    },
+    {
+      "name": "Ollama",
+      "purpose": "Run supported models locally",
+      "state": "EXISTING_BOUNDED",
+      "owner": "Engineering & Manufacturing",
+      "category": "Models, inference & local AI interfaces"
+    },
+    {
+      "name": "LM Studio",
+      "purpose": "Desktop model downloads, chat and local APIs",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing",
+      "category": "Models, inference & local AI interfaces"
+    },
+    {
+      "name": "llama.cpp",
+      "purpose": "Local CPU/GPU inference runtime",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing",
+      "category": "Models, inference & local AI interfaces"
+    },
+    {
+      "name": "Jan",
+      "purpose": "Local-first AI desktop assistant",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing",
+      "category": "Models, inference & local AI interfaces"
+    },
+    {
+      "name": "Open WebUI",
+      "purpose": "Self-hosted chat UI for models",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing",
+      "category": "Models, inference & local AI interfaces"
+    },
+    {
+      "name": "AnythingLLM",
+      "purpose": "Document chat, local and cloud model connectors",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing",
+      "category": "Models, inference & local AI interfaces"
+    },
+    {
+      "name": "OpenRouter",
+      "purpose": "Paid/free-limited model API routing",
+      "state": "OPTIONAL_CAPPED",
+      "owner": "Engineering & Manufacturing",
+      "category": "Models, inference & local AI interfaces"
+    },
+    {
+      "name": "DeepSeek",
+      "purpose": "Model family and hosted-provider options",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing",
+      "category": "Models, inference & local AI interfaces"
+    },
+    {
+      "name": "GLM",
+      "purpose": "Model family, check licenses and inference route",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing",
+      "category": "Models, inference & local AI interfaces"
+    },
+    {
+      "name": "Hugging Face",
+      "purpose": "Model/dataset hub and downloads",
+      "state": "EXISTING_SOURCE",
+      "owner": "Engineering & Manufacturing",
+      "category": "Models, inference & local AI interfaces"
+    },
+    {
+      "name": "Google AI Studio",
+      "purpose": "Gemini model experimentation, provider quotas",
+      "state": "OPTIONAL_CAPPED",
+      "owner": "Engineering & Manufacturing",
+      "category": "Models, inference & local AI interfaces"
+    },
+    {
+      "name": "ChatGPT Free",
+      "purpose": "General-purpose consumer chat plan, not Plenum compute",
+      "state": "REFERENCE",
+      "owner": "Engineering & Manufacturing",
+      "category": "Models, inference & local AI interfaces"
+    },
+    {
+      "name": "Microsoft Build",
+      "purpose": "Developer conference/announcements, not a deployable worker",
+      "state": "REFERENCE",
+      "owner": "Engineering & Manufacturing",
+      "category": "Models, inference & local AI interfaces"
+    },
+    {
+      "name": "LlamaIndex",
+      "purpose": "Retrieval and document agent framework",
+      "state": "OPTIONAL",
+      "owner": "Scientific Research / Global Intelligence",
+      "category": "Research, documents & evidence"
+    },
+    {
+      "name": "LlamaParse",
+      "purpose": "Document parsing service with usage limits",
+      "state": "OPTIONAL",
+      "owner": "Scientific Research / Global Intelligence",
+      "category": "Research, documents & evidence"
+    },
+    {
+      "name": "Docling",
+      "purpose": "Local document conversion/parsing",
+      "state": "PILOT",
+      "owner": "Scientific Research / Global Intelligence",
+      "category": "Research, documents & evidence"
+    },
+    {
+      "name": "NotebookLM",
+      "purpose": "Source-grounded notebook research",
+      "state": "OPTIONAL",
+      "owner": "Scientific Research / Global Intelligence",
+      "category": "Research, documents & evidence"
+    },
+    {
+      "name": "Consensus",
+      "purpose": "Search academic research, validate citations",
+      "state": "OPTIONAL",
+      "owner": "Scientific Research / Global Intelligence",
+      "category": "Research, documents & evidence"
+    },
+    {
+      "name": "Perplexity",
+      "purpose": "Search/research assistant, provider rules apply",
+      "state": "OPTIONAL",
+      "owner": "Scientific Research / Global Intelligence",
+      "category": "Research, documents & evidence"
+    },
+    {
+      "name": "Transkribus",
+      "purpose": "Handwriting and historical document recognition",
+      "state": "OPTIONAL",
+      "owner": "Scientific Research / Global Intelligence",
+      "category": "Research, documents & evidence"
+    },
+    {
+      "name": "Whisper",
+      "purpose": "Speech recognition model family",
+      "state": "PILOT",
+      "owner": "Scientific Research / Global Intelligence",
+      "category": "Research, documents & evidence"
+    },
+    {
+      "name": "whisper.cpp",
+      "purpose": "Local Whisper transcription implementation",
+      "state": "PILOT",
+      "owner": "Scientific Research / Global Intelligence",
+      "category": "Research, documents & evidence"
+    },
+    {
+      "name": "Google Docs",
+      "purpose": "Collaborative editable documents",
+      "state": "CONNECTED_VIA_DRIVE",
+      "owner": "Scientific Research / Global Intelligence",
+      "category": "Research, documents & evidence"
+    },
+    {
+      "name": "Markdown",
+      "purpose": "Portable text format, not an app",
+      "state": "EXISTING_FORMAT",
+      "owner": "Scientific Research / Global Intelligence",
+      "category": "Research, documents & evidence"
+    },
+    {
+      "name": "Folder maps",
+      "purpose": "Knowledge organization technique, not a vendor",
+      "state": "EXISTING_METHOD",
+      "owner": "Scientific Research / Global Intelligence",
+      "category": "Research, documents & evidence"
+    },
+    {
+      "name": "APIs",
+      "purpose": "Programmatic connection mechanism, not a product",
+      "state": "EXISTING_METHOD",
+      "owner": "Scientific Research / Global Intelligence",
+      "category": "Research, documents & evidence"
+    },
+    {
+      "name": "Airbyte",
+      "purpose": "Move authorized external data to a warehouse",
+      "state": "DEFER",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "ClickHouse",
+      "purpose": "Analytical event database",
+      "state": "DEFER",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "Google Analytics",
+      "purpose": "Product/site traffic measurement",
+      "state": "OPTIONAL_AUTH",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "Google Ads",
+      "purpose": "Paid acquisition and campaign management",
+      "state": "DEFER_PAID",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "Facebook Ads",
+      "purpose": "Meta ad network and paid campaigns",
+      "state": "DEFER_PAID",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "HubSpot",
+      "purpose": "CRM and marketing workflow",
+      "state": "OPTIONAL_AUTH",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "Apollo",
+      "purpose": "B2B prospecting and sales intelligence",
+      "state": "OPTIONAL_AUTH",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "Git Leads",
+      "purpose": "GitHub-derived lead prospecting; exact provider/license check",
+      "state": "IDENTIFY",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "Idea Browser",
+      "purpose": "Idea and business trend discovery",
+      "state": "OPTIONAL",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "Intercom Fin",
+      "purpose": "Customer support AI service",
+      "state": "DEFER_PAID",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "Gmail",
+      "purpose": "Email correspondence and workflow",
+      "state": "CONNECTED_CHAT_ONLY",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "Telegram",
+      "purpose": "Messaging bot/group for optional agents",
+      "state": "OPTIONAL_AUTH",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "Zoom",
+      "purpose": "Video meetings and recordings",
+      "state": "OPTIONAL_AUTH",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "Tribe",
+      "purpose": "Creator/community marketing (exact vendor variant to confirm)",
+      "state": "IDENTIFY",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "SideShift",
+      "purpose": "Creator campaigns, ad amplification and payouts",
+      "state": "DEFER_PAID",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "Google Sheets",
+      "purpose": "Tables and business workflow",
+      "state": "CONNECTED_VIA_DRIVE",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "Ghost",
+      "purpose": "Newsletter/site publishing",
+      "state": "OPTIONAL",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "Kit",
+      "purpose": "Creator email marketing and newsletter CRM",
+      "state": "OPTIONAL",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "Notion",
+      "purpose": "Notes, knowledge base and work coordination",
+      "state": "OPTIONAL",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "Wix",
+      "purpose": "Hosted website builder",
+      "state": "DEFER",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "Zillow",
+      "purpose": "Property listings and market research data",
+      "state": "REFERENCE",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "Google Calendar",
+      "purpose": "Schedules and meeting orchestration",
+      "state": "OPTIONAL_AUTH",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "Slack",
+      "purpose": "Team messaging and automation",
+      "state": "OPTIONAL_AUTH",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "HubSpot guides",
+      "purpose": "Vendor educational reference, not a tool",
+      "state": "REFERENCE",
+      "owner": "Commercial Operations",
+      "category": "Business data, sales, outreach & support"
+    },
+    {
+      "name": "Perplexity Comet",
+      "purpose": "Browser with AI assistance",
+      "state": "OPTIONAL",
+      "owner": "Global Intelligence / Engineering & Manufacturing",
+      "category": "Browsers & interactive web use"
+    },
+    {
+      "name": "Brave Leo",
+      "purpose": "Browser-integrated AI assistant",
+      "state": "OPTIONAL",
+      "owner": "Global Intelligence / Engineering & Manufacturing",
+      "category": "Browsers & interactive web use"
+    },
+    {
+      "name": "Dia",
+      "purpose": "AI-oriented browser",
+      "state": "OPTIONAL",
+      "owner": "Global Intelligence / Engineering & Manufacturing",
+      "category": "Browsers & interactive web use"
+    },
+    {
+      "name": "Arc",
+      "purpose": "Alternative web browser",
+      "state": "OPTIONAL",
+      "owner": "Global Intelligence / Engineering & Manufacturing",
+      "category": "Browsers & interactive web use"
+    },
+    {
+      "name": "SigmaOS",
+      "purpose": "Tab/workspace oriented web browser",
+      "state": "OPTIONAL",
+      "owner": "Global Intelligence / Engineering & Manufacturing",
+      "category": "Browsers & interactive web use"
+    },
+    {
+      "name": "Opera Aria",
+      "purpose": "Browser-integrated AI",
+      "state": "OPTIONAL",
+      "owner": "Global Intelligence / Engineering & Manufacturing",
+      "category": "Browsers & interactive web use"
+    },
+    {
+      "name": "Chrome",
+      "purpose": "Browser base, DevTools and automation ecosystem",
+      "state": "EXISTING_BASIS",
+      "owner": "Global Intelligence / Engineering & Manufacturing",
+      "category": "Browsers & interactive web use"
+    },
+    {
+      "name": "Plenum Computer Browser",
+      "purpose": "Original Plenum browser under signed-in acceptance review",
+      "state": "EXISTING_PARTIAL",
+      "owner": "Global Intelligence / Engineering & Manufacturing",
+      "category": "Browsers & interactive web use"
+    },
+    {
+      "name": "Cloudflare Workers Free",
+      "purpose": "Public webhook ingress, not persistent private model runtime",
+      "state": "SOURCE_READY_NOT_LIVE",
+      "owner": "Engineering & Manufacturing / Commercial Operations",
+      "category": "Hosting, workflow automation & integrations"
+    },
+    {
+      "name": "Google Cloud",
+      "purpose": "Cloud hosting/services, free tier is bounded",
+      "state": "EXISTING_PROVIDER",
+      "owner": "Engineering & Manufacturing / Commercial Operations",
+      "category": "Hosting, workflow automation & integrations"
+    },
+    {
+      "name": "Hostinger",
+      "purpose": "Web/VPS hosting, normally paid",
+      "state": "DEFER_PAID",
+      "owner": "Engineering & Manufacturing / Commercial Operations",
+      "category": "Hosting, workflow automation & integrations"
+    },
+    {
+      "name": "Zapier",
+      "purpose": "SaaS workflow automation, quotas",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing / Commercial Operations",
+      "category": "Hosting, workflow automation & integrations"
+    },
+    {
+      "name": "Make",
+      "purpose": "Visual integration automations, quotas",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing / Commercial Operations",
+      "category": "Hosting, workflow automation & integrations"
+    },
+    {
+      "name": "n8n",
+      "purpose": "Workflow automation and departmental agent drafts",
+      "state": "EXISTING_PREPARED",
+      "owner": "Engineering & Manufacturing / Commercial Operations",
+      "category": "Hosting, workflow automation & integrations"
+    },
+    {
+      "name": "Airia",
+      "purpose": "No-code agent orchestration and governance; pricing evidence conflicts",
+      "state": "DEFER_COST_CHECK",
+      "owner": "Engineering & Manufacturing / Commercial Operations",
+      "category": "Hosting, workflow automation & integrations"
+    },
+    {
+      "name": "Creatomate",
+      "purpose": "Video production automation API",
+      "state": "DEFER",
+      "owner": "Engineering & Manufacturing / Commercial Operations",
+      "category": "Hosting, workflow automation & integrations"
+    },
+    {
+      "name": "GitHub Issues",
+      "purpose": "Durable public work intake/receipts",
+      "state": "EXISTING",
+      "owner": "Engineering & Manufacturing / Commercial Operations",
+      "category": "Hosting, workflow automation & integrations"
+    },
+    {
+      "name": "Oracle Cloud Always Free",
+      "purpose": "Potential private VM; free capacity not verified",
+      "state": "BLOCKED_EXTERNAL",
+      "owner": "Engineering & Manufacturing / Commercial Operations",
+      "category": "Hosting, workflow automation & integrations"
+    },
+    {
+      "name": "Kai AI",
+      "purpose": "Ambiguous creative assistant/provider name",
+      "state": "IDENTIFY",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Images, design & spatial visualization"
+    },
+    {
+      "name": "fal",
+      "purpose": "Hosted inference/media API; generally metered",
+      "state": "DEFER_COST",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Images, design & spatial visualization"
+    },
+    {
+      "name": "Midjourney",
+      "purpose": "Image generation",
+      "state": "DEFER_PAID",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Images, design & spatial visualization"
+    },
+    {
+      "name": "Flux",
+      "purpose": "Image generation model family (FLUX)",
+      "state": "OPTIONAL_LOCAL",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Images, design & spatial visualization"
+    },
+    {
+      "name": "Napkin AI",
+      "purpose": "Visualize prose as diagrams",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Images, design & spatial visualization"
+    },
+    {
+      "name": "Ideogram",
+      "purpose": "Text-centric image generation",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Images, design & spatial visualization"
+    },
+    {
+      "name": "Leonardo AI",
+      "purpose": "Image creation and editing",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Images, design & spatial visualization"
+    },
+    {
+      "name": "InvokeAI",
+      "purpose": "Local image generation studio",
+      "state": "OPTIONAL_LOCAL",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Images, design & spatial visualization"
+    },
+    {
+      "name": "AUTOMATIC1111",
+      "purpose": "Stable Diffusion local web UI",
+      "state": "OPTIONAL_LOCAL",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Images, design & spatial visualization"
+    },
+    {
+      "name": "ComfyUI",
+      "purpose": "Node-based local generative media pipelines",
+      "state": "OPTIONAL_LOCAL",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Images, design & spatial visualization"
+    },
+    {
+      "name": "Blender",
+      "purpose": "3D modeling, rendering and animation",
+      "state": "OPTIONAL_LOCAL",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Images, design & spatial visualization"
+    },
+    {
+      "name": "Gamma",
+      "purpose": "AI decks and documents",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Images, design & spatial visualization"
+    },
+    {
+      "name": "Tome",
+      "purpose": "Presentation/storytelling platform; verify current availability",
+      "state": "IDENTIFY",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Images, design & spatial visualization"
+    },
+    {
+      "name": "Claude-video",
+      "purpose": "Video analysis agent skill / project, exact implementation review",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Video, animation & media production"
+    },
+    {
+      "name": "Remotion",
+      "purpose": "Programmatic React video rendering, license varies by use",
+      "state": "OPTIONAL_LICENSE",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Video, animation & media production"
+    },
+    {
+      "name": "HyperFrames",
+      "purpose": "Motion/map animation tools; confirm specific project",
+      "state": "IDENTIFY",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Video, animation & media production"
+    },
+    {
+      "name": "Higgsfield",
+      "purpose": "AI video and effects",
+      "state": "DEFER_COST",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Video, animation & media production"
+    },
+    {
+      "name": "Descript",
+      "purpose": "Video/audio editing and transcription",
+      "state": "CONNECTED_CHAT",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Video, animation & media production"
+    },
+    {
+      "name": "OpusClip",
+      "purpose": "Automated short video clips",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Video, animation & media production"
+    },
+    {
+      "name": "Runway",
+      "purpose": "AI video creation",
+      "state": "DEFER_COST",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Video, animation & media production"
+    },
+    {
+      "name": "Google Veo",
+      "purpose": "Google generative video model",
+      "state": "DEFER_COST",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Video, animation & media production"
+    },
+    {
+      "name": "HeyGen",
+      "purpose": "Avatar/video presentations",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Video, animation & media production"
+    },
+    {
+      "name": "Ultimate Vocal Remover",
+      "purpose": "Local source separation for lawful media",
+      "state": "OPTIONAL_LOCAL",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Audio, voice, speech & music"
+    },
+    {
+      "name": "ElevenLabs",
+      "purpose": "Voice synthesis, dubbing and speech APIs",
+      "state": "OPTIONAL_CAPPED",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Audio, voice, speech & music"
+    },
+    {
+      "name": "Monologue",
+      "purpose": "Voice dictation/notes; multiple unrelated products share name",
+      "state": "IDENTIFY",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Audio, voice, speech & music"
+    },
+    {
+      "name": "Udio",
+      "purpose": "Music creation service",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Audio, voice, speech & music"
+    },
+    {
+      "name": "Suno",
+      "purpose": "Music generation service",
+      "state": "OPTIONAL",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Audio, voice, speech & music"
+    },
+    {
+      "name": "Spotify",
+      "purpose": "Music distribution/listening API within provider rules",
+      "state": "REFERENCE",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Audio, voice, speech & music"
+    },
+    {
+      "name": "Amazon Alexa",
+      "purpose": "Consumer voice assistant/ecosystem",
+      "state": "REFERENCE",
+      "owner": "Engineering & Manufacturing / Creative",
+      "category": "Audio, voice, speech & music"
+    },
+    {
+      "name": "Alfred",
+      "purpose": "macOS launch and keyboard automation",
+      "state": "OPTIONAL_LOCAL",
+      "owner": "Commercial Operations",
+      "category": "Personal productivity & communication"
+    },
+    {
+      "name": "Raycast",
+      "purpose": "Mac launcher and extensions",
+      "state": "OPTIONAL_LOCAL",
+      "owner": "Commercial Operations",
+      "category": "Personal productivity & communication"
+    },
+    {
+      "name": "Beeftext",
+      "purpose": "Text expansion utility",
+      "state": "OPTIONAL_LOCAL",
+      "owner": "Commercial Operations",
+      "category": "Personal productivity & communication"
+    },
+    {
+      "name": "Cowork Academy",
+      "purpose": "Learning material; verify provider/course",
+      "state": "REFERENCE",
+      "owner": "Global Intelligence",
+      "category": "Education & training sources"
+    },
+    {
+      "name": "AI Systems Academy",
+      "purpose": "Agent/software training; verify provider",
+      "state": "REFERENCE",
+      "owner": "Global Intelligence",
+      "category": "Education & training sources"
+    },
+    {
+      "name": "Workspace Academy",
+      "purpose": "Productivity training; verify provider",
+      "state": "REFERENCE",
+      "owner": "Global Intelligence",
+      "category": "Education & training sources"
+    },
+    {
+      "name": "LEGO",
+      "purpose": "Robotics prototyping ecosystem",
+      "state": "EXPERIMENTAL",
+      "owner": "Engineering & Manufacturing",
+      "category": "Robotics, manufacturing & physical systems"
+    },
+    {
+      "name": "3D printing",
+      "purpose": "Additive prototyping and fabrication category",
+      "state": "EXPERIMENTAL",
+      "owner": "Engineering & Manufacturing",
+      "category": "Robotics, manufacturing & physical systems"
+    },
+    {
+      "name": "Robot arms",
+      "purpose": "Manipulation hardware category",
+      "state": "EXPERIMENTAL",
+      "owner": "Engineering & Manufacturing",
+      "category": "Robotics, manufacturing & physical systems"
+    },
+    {
+      "name": "CNC manufacturing",
+      "purpose": "Computer numerical control manufacturing category",
+      "state": "EXPERIMENTAL",
+      "owner": "Engineering & Manufacturing",
+      "category": "Robotics, manufacturing & physical systems"
+    },
+    {
+      "name": "Doom",
+      "purpose": "Game benchmark/environment, rights and automation policy check",
+      "state": "RESEARCH_ONLY",
+      "owner": "Scientific Research / Engineering & Manufacturing",
+      "category": "Games & simulation environments"
+    },
+    {
+      "name": "Terraria",
+      "purpose": "Game simulation/exploration environment",
+      "state": "RESEARCH_ONLY",
+      "owner": "Scientific Research / Engineering & Manufacturing",
+      "category": "Games & simulation environments"
+    },
+    {
+      "name": "Age of Empires",
+      "purpose": "Strategy-game sandbox, game terms apply",
+      "state": "RESEARCH_ONLY",
+      "owner": "Scientific Research / Engineering & Manufacturing",
+      "category": "Games & simulation environments"
+    }
+  ],
+  "status_notes": "Inventory only, not proof of execution, integration or connected accounts."
+}
