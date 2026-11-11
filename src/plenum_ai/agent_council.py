@@ -120,13 +120,13 @@ def read_elephant_public(path=ELEPHANT_PUBLIC_FILE):
     for row in rows:
         fact, url, status = row.get("fact"), row.get("url"), row.get("status")
         if (not isinstance(fact,str) or not 20 <= len(fact) <= 180
-                or any(c in fact for c in "\\n\\r<>")
+                or any(c in fact for c in (chr(10), chr(13), "<", ">"))
                 or not isinstance(url,str)
                 or not url.startswith("https://github.com/" + REPO + "/")
                 or status not in ("VERIFIED_BOUNDED","SOURCE_ONLY","BLOCKED","APPROVAL_NEEDED")):
             raise ValueError("Unreviewed Elephant fact or reference")
         lines.append(status + ": " + fact + " (" + url + ")")
-    return "DATED PUBLIC ELEPHANT EVIDENCE ONLY; verify live status independently:\\n" + "\\n".join(lines)
+    return "DATED PUBLIC ELEPHANT EVIDENCE ONLY; verify live status independently:" + chr(10) + chr(10).join(lines)
 
 
 def _ask_local(system, user):
