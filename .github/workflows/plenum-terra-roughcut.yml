@@ -1,0 +1,76 @@
+name: Plenum Studio | Free Narrated Terra Rough Cut
+on:
+  push:
+    paths:
+      - 'src/plenum_ai/terra_preview.py'
+      - '.github/workflows/plenum-terra-roughcut.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  original-narrated-concept:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install only free, local picture and sound tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends ffmpeg
+          python -m pip install --disable-pip-version-check -e . pillow==11.3.0
+          command -v ffmpeg
+          command -v ffprobe
+      - name: Reuse actual previously verified narrator artifact, not generate again
+        uses: actions/download-artifact@v4
+        with:
+          name: plenum-free-narrator-auditions
+          run-id: 43119083066
+          github-token: ${{ github.token }}
+          path: reports/source-voices
+      - name: Confirm voice-file identity to previous independently verified run
+        run: |
+          echo 'c01e1e2aa705ee2ecf62b4f030b9d1f6d51dc76c90311d0726cc66ebffcc5289  reports/source-voices/am_michael.wav' | sha256sum -c -
+      - name: Assemble one private moving science concept with existing narrator
+        run: |
+          python -m plenum_ai.terra_preview --voice-file reports/source-voices/am_michael.wav --workspace reports/terra-roughcut
+      - name: Verify real 15-second moving-picture MP4 and audible narration
+        run: |
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          base=Path('reports/terra-roughcut/final')
+          media=base/'film.mp4'
+          receipt=json.loads((base/'render_receipt.json').read_text())
+          assert media.stat().st_size > 50_000
+          assert receipt['status']=='TECHNICAL_RENDER_COMPLETE'
+          assert receipt['voice_included'] is True
+          assert receipt['scenes']==3
+          assert receipt['natural_voice_approved'] is False
+          assert receipt['public_distribution_approved'] is False
+          assert not receipt['paid_services_used']
+          output=subprocess.check_output(['ffprobe','-v','error',
+              '-show_entries','format=duration:stream=codec_type,codec_name',
+              '-of','json',str(media)],text=True)
+          meta=json.loads(output)
+          assert abs(float(meta['format']['duration'])-15.0)<0.3
+          assert {s['codec_type'] for s in meta['streams']}=={'audio','video'}
+          assert any(s['codec_name']=='aac' for s in meta['streams'])
+          assert any(s['codec_name']=='h264' for s in meta['streams'])
+          print('REAL PRIVATE DRAFT VERIFIED: 15s, original animation, licensed-model speech')
+          PY
+      - name: Preserve draft film for review only; do not publish
+        uses: actions/upload-artifact@v4
+        with:
+          name: terra-free-narrated-concept-draft
+          path: |
+            reports/terra-roughcut/final/film.mp4
+            reports/terra-roughcut/final/render_receipt.json
+            reports/terra-roughcut/storyboard.json
+          retention-days: 7
+          if-no-files-found: error
