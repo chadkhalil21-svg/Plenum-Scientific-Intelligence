@@ -81,7 +81,7 @@ def _patterns(name):
 
 
 
-def fetch_public_jina_captions(video_id: str):
+def fetch_public_jina_captions(video_id: str, *, post=None):
     """Try official documented Jina Reader public YouTube transcript toggle.
 
     Anonymous Reader currently offers limited free requests. It gets ONLY
@@ -91,10 +91,12 @@ def fetch_public_jina_captions(video_id: str):
     """
     if not VIDEO_ID.fullmatch(video_id):
         raise ValueError("Only permitted public video IDs")
-    import requests
+    if post is None:
+        import requests
+        post = requests.post
     script = ("waitForSelector('ytd-video-description-transcript-section-renderer button')"
               ".then((el) => el.click())")
-    response = requests.post(
+    response = post(
         "https://r.jina.ai/",
         files={
             "url":(None, "https://www.youtube.com/watch?v=" + video_id),
