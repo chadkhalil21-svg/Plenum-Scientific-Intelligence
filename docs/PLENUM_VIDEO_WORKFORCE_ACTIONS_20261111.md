@@ -2,7 +2,7 @@
 **11 November 2026. PUBLIC, nonconfidential, evidence-limited.** Founder wants working employees, not another listicle or extra subscriptions.
 
 ## Method and outcome
-The eleven new videos were identified from public YouTube titles, creator descriptions and chapters, and for selected ones partial accessible transcripts/creator resource guides. Do not claim exhaustive footage/visual extraction. Full individual repository names from the VC's seven-repository video remain unverified. Existing 81-item inventory in `docs/PLENUM_FOUNDER_PLATFORM_ADOPTION_LEDGER.md` remains authoritative; this video's additional reference inventory is `integrations/workforces/founder_eleven_video_appendix.json`. The instruction coverage matrix is `docs/PLENUM_FOUNDER_INSTRUCTION_COVERAGE.json`.
+The eleven new videos were identified from public YouTube titles, creator descriptions and chapters, and for selected ones partial accessible transcripts/creator resource guides. Do not claim exhaustive footage/visual extraction. Full individual repository names from the VC's seven-repository video remain unverified. Existing 84-item inventory in `docs/PLENUM_FOUNDER_PLATFORM_ADOPTION_LEDGER.md` remains authoritative; this video's additional reference inventory is `integrations/workforces/founder_eleven_video_appendix.json`. The instruction coverage matrix is `docs/PLENUM_FOUNDER_INSTRUCTION_COVERAGE.json`.
 
 ### 11-video recommendation matrix
 
@@ -39,3 +39,5 @@ The eleven new videos were identified from public YouTube titles, creator descri
 - `n8n`: https://github.com/n8n-io/n8n
 - Creator marketing template source https://www.skool.com/ai-automation-society/new-video-i-built-a-marketing-team-with-one-ai-agent-and-no-code-free-n8n-template
 - Relevant original workflow: `.github/workflows/weekly-founder-business-brief.yml`
+
+**October 6 video correction:** The complete uploader-supplied ten-name list is now separately reviewed in [PLENUM_VIDEO_FYV5CHAZQ_A_REVIEW.md](PLENUM_VIDEO_FYV5CHAZQ_A_REVIEW.md). Earlier tag-only list missed Upscayl, Hugging Face Spaces and ChatGPT Free; new entries have been added to the 84-item registry.
