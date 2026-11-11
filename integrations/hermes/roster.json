@@ -40,7 +40,8 @@
         "plenum-independent-verification",
         "plenum-editorial-quality",
         "humanizer"
-      ]
+      ],
+      "load_skills_on_demand": true
     },
     {
       "name": "research",
@@ -51,9 +52,9 @@
         "plenum-research-youtube",
         "plenum-science-evidence",
         "plenum-skill-curation",
-        "plenum-editorial-quality",
-        "humanizer"
-      ]
+        "plenum-editorial-quality"
+      ],
+      "load_skills_on_demand": true
     },
     {
       "name": "coding",
@@ -62,10 +63,9 @@
       "tools": "sandbox coding; no deployment",
       "skill_ids": [
         "plenum-coding-delivery",
-        "plenum-skill-curation",
-        "plenum-editorial-quality",
-        "humanizer"
-      ]
+        "plenum-skill-curation"
+      ],
+      "load_skills_on_demand": true
     },
     {
       "name": "browser",
@@ -74,10 +74,9 @@
       "tools": "approved web access; no logins by default",
       "skill_ids": [
         "plenum-browser-operations",
-        "plenum-research-youtube",
-        "plenum-editorial-quality",
-        "humanizer"
-      ]
+        "plenum-research-youtube"
+      ],
+      "load_skills_on_demand": true
     },
     {
       "name": "creative",
@@ -88,7 +87,8 @@
         "plenum-creative-quality",
         "plenum-editorial-quality",
         "humanizer"
-      ]
+      ],
+      "load_skills_on_demand": true
     },
     {
       "name": "marketing",
@@ -100,7 +100,8 @@
         "plenum-research-youtube",
         "plenum-editorial-quality",
         "humanizer"
-      ]
+      ],
+      "load_skills_on_demand": true
     },
     {
       "name": "operations",
@@ -111,9 +112,9 @@
         "plenum-minister-operations",
         "plenum-finance-operations",
         "plenum-business-advisor",
-        "plenum-editorial-quality",
-        "humanizer"
-      ]
+        "plenum-editorial-quality"
+      ],
+      "load_skills_on_demand": true
     },
     {
       "name": "simulation",
@@ -122,10 +123,9 @@
       "tools": "known-model numerical analyses",
       "skill_ids": [
         "plenum-simulation-validity",
-        "plenum-science-evidence",
-        "plenum-editorial-quality",
-        "humanizer"
-      ]
+        "plenum-science-evidence"
+      ],
+      "load_skills_on_demand": true
     },
     {
       "name": "support",
@@ -136,7 +136,8 @@
         "plenum-support-service",
         "plenum-editorial-quality",
         "humanizer"
-      ]
+      ],
+      "load_skills_on_demand": true
     },
     {
       "name": "verification",
@@ -145,10 +146,9 @@
       "tools": "read-only evidence and safety audit",
       "skill_ids": [
         "plenum-independent-verification",
-        "plenum-skill-curation",
-        "plenum-editorial-quality",
-        "humanizer"
-      ]
+        "plenum-skill-curation"
+      ],
+      "load_skills_on_demand": true
     },
     {
       "name": "business_advisor",
@@ -162,7 +162,8 @@
         "plenum-independent-verification",
         "plenum-editorial-quality",
         "humanizer"
-      ]
+      ],
+      "load_skills_on_demand": true
     }
   ],
   "editorial_skill_source": {
@@ -170,8 +171,8 @@
     "version": "4.0.0",
     "pinned_upstream_commit": "b48c832f0f809c1b5658edbb838c2521b72f2413",
     "license": "MIT",
-    "source_mode": "portable_skills_mapped_to_profiles_not_running_by_itself",
+    "source_mode": "selective_on_demand_role_approved_no_auto_full_skill_load",
     "company_standard": "plenum-editorial-quality",
-    "compliance_note": "Recipient and verified evidence outrank prose polishing; private document ledger only if independently accessible."
+    "compliance_note": "Editorial rubric is cross-functional guidance; role powers and Humanizer loading are scoped. Only language-producing roles may select Humanizer after relevant task intent."
   }
 }
