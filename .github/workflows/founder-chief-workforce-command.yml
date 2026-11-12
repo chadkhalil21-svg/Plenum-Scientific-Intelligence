@@ -63,8 +63,7 @@ jobs:
           else
             python -m plenum_ai.chief_workforce_command --event "$GITHUB_EVENT_PATH"
           fi
-      - name: Reuse numerical tools only when a multi-team mission asks for known science
-        if: github.event.issue.title == '[Plenum Chief] public mission'
+      - name: Install original numerical extras only for science scope
         run: |
           python - <<'PY'
           import glob,json,subprocess,sys
@@ -72,7 +71,8 @@ jobs:
           assert len(paths)==1, 'Missing preflight founder scope record'
           data=json.load(open(paths[0],encoding='utf-8'))
           assert data['status']=='SOURCE_READY_NOT_EXECUTED'
-          if 'public_science' in data['expected_team']:
+          if ('public_science' in data.get('expected_team',[])
+                  or data.get('expected_independent_kind') == 'public_science'):
               subprocess.check_call([sys.executable,'-m','pip','install','-e','.[numerical,orchestration]'])
           else:
               print('Existing standard-library workers only; no extra model/dependencies installed')
