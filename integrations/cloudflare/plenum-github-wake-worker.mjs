@@ -48,6 +48,19 @@ export function parsePublicIssueId(raw) {
 // If GitHub fails, fail closed until the short lock expires, never retry a write.
 export class PublicWakeReplayGuard {
   constructor(ctx) { this.ctx = ctx; }
+  // The legacy Durable Object HTTP interface remains fully supported and
+  // avoids requiring a Cloudflare-only runtime import in Node source tests.
+  async fetch(request) {
+    if (request.method !== "POST" || new URL(request.url).pathname !== "/claim")
+      return new Response(null, {status:404});
+    try {
+      const {issue, now} = await request.json();
+      const first = await this.claim(issue, now);
+      return new Response(null, {status:first ? 204 : 409});
+    } catch {
+      return new Response(null, {status:503});
+    }
+  }
   async claim(issue, now) {
     if (!Number.isSafeInteger(issue) || issue < 1 || issue >= 1000000000
         || !Number.isSafeInteger(now) || now < 0) return false;
@@ -81,8 +94,12 @@ export default {
     // strongly consistent Durable Object storage before external dispatch.
     try {
       const guard = env.PLENUM_REPLAY_GUARD.getByName("plenum-public-wake");
-      const first = await guard.claim(number, Math.floor(Date.now() / 1000));
-      if (!first) return response(409, {error:"duplicate_issue_wake"});
+      const replay = await guard.fetch("https://replay-guard.internal/claim", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({issue:number, now:Math.floor(Date.now() / 1000)})
+      });
+      if (replay.status === 409) return response(409, {error:"duplicate_issue_wake"});
+      if (replay.status !== 204) return response(503, {error:"replay_guard_unavailable"});
     } catch {
       return response(503, {error:"replay_guard_unavailable"});
     }
