@@ -2,7 +2,7 @@
   "schema": "plenum-five-workforce-registry-v1",
   "updated_utc": "2026-11-11",
   "authority": "founder_approves_consequential_actions",
-  "control_plane": "existing Plenum Chief, GitHub founder issue queue, n8n nine departments, council",
+  "control_plane": "Minister of Operations (the original Plenum Chief of Staff), founder-authorized GitHub issue queue, five workforces, n8n nine departments, verifier council",
   "hosting_candidate": "Oracle Always Free Ampere A1; not yet provisioned",
   "default_cost_ceiling_usd": 0,
   "rules": {
@@ -123,5 +123,9 @@
     "browser_tooling_note": "Existing Plenum Playwright and browser-use adapter FIRST when capable; four additional original free source refs are NOT installed, signed in, or directly ChatGPT-connected. Separate human approval and host required for real portal account changes.",
     "writing_quality_note": "Humanizer MIT skill reference and NVIDIA SkillSpector Apache security scanner are reviewed source candidates; founder private Plenum Editorial Council skill plugin saved separately, no account data or model fees.",
     "new_source_refs_executable": false
-  }
+  },
+  "minister_title": "Minister of Operations",
+  "minister_technical_role": "existing Plenum Chief of Staff; one original supervisor, not an additional agent",
+  "minister_canonical_queue": "#432",
+  "minister_mandate": "Own completion of one founder-authorized, evidence-verified free software fleet: Browser Use + Playwright MCP, permitted saved site sessions, existing paid-credit TinyFish as temporary bridge, a credential vault through owner-approved connector, five workforces, Paperclip if suitable free runtime, and existing n8n/Hermes otherwise; incorporate SkillOpt, TokenEconomizer, OpenShell and Context Mode only via applicable upstream integrations in the existing worker, without reimplementing or counting source links as active services. No new spending; report deployed/run/blocked distinctly."
 }
