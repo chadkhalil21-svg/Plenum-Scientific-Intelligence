@@ -101,7 +101,12 @@ def github_json(url: str, token: str, *, method: str = "GET", body=None):
         },
     )
     with urlopen(req, timeout=20) as reply:
-        return json.loads(reply.read(180000))
+        # GitHub issue comment lists can exceed 180 KB. Never parse a
+        # silently truncated JSON prefix or mistake it for missing evidence.
+        raw = reply.read(4_000_001)
+    if len(raw) > 4_000_000:
+        raise ValueError("Original GitHub response exceeds bounded audit limit")
+    return json.loads(raw)
 
 
 def collect_public_evidence(token: str):
