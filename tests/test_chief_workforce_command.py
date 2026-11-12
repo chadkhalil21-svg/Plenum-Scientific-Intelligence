@@ -6,7 +6,7 @@ from unittest.mock import patch
 from plenum_ai.chief_workforce_command import (
     CHIEF_MAGIC, CHIEF_TITLE, FORBIDDEN, KIND_TO_AGENT, MODEL_URL,
     execute, independent_expected_kind, parse_founder_chief, preflight,
-    worker_event, recover_unexecuted_correct_model_route,
+    worker_event, recover_unexecuted_correct_model_route, execute_bounded_direct,
 )
 
 REPO = "chadkhalil21-svg/Plenum-Scientific-Intelligence"
@@ -155,6 +155,41 @@ class FounderChiefWorkforcePolicy(TestCase):
         self.assertTrue(recovered)
         self.assertEqual(obs[0]["outcome"]["status"],"BLOCKED_WORKER_OR_VERIFICATION")
         self.assertFalse(obs[0]["outcome"]["verified"])
+
+
+    def test_bounded_direct_real_original_worker_called_once_without_any_model(self):
+        from pathlib import Path
+        calls=[]
+        def original_worker(e, *, output_dir):
+            calls.append(e)
+            return {"status":"DRAFT_READY_FOR_FOUNDER","verified":True,
+                    "output_artifact":"issue-902/code",
+                    "verified_scope":"original syntax and hash"}
+        with patch("plenum_ai.chief_workforce_command.run_issue",side_effect=original_worker):
+            result=execute_bounded_direct(event(),output_dir=Path("reports/workforce-chief"))
+        self.assertEqual(len(calls),1)
+        self.assertEqual(result["status"],"VERIFIED_BOUNDED_DIRECT_WORKER")
+        self.assertTrue(result["specialist_executed"])
+        self.assertTrue(result["independent_verified"])
+        self.assertFalse(result["model_called"])
+        self.assertFalse(result["general_autonomy_claimed"])
+
+    def test_direct_worker_failure_never_reported_as_accepted(self):
+        from pathlib import Path
+        with patch("plenum_ai.chief_workforce_command.run_issue",
+                   return_value={"status":"BLOCKED_WORKER_OR_VERIFICATION",
+                                 "verified":False}):
+            x=execute_bounded_direct(event(), output_dir=Path("reports/workforce-chief"))
+        self.assertEqual(x["status"],"BLOCKED_WORKER_OR_VERIFICATION")
+        self.assertFalse(x["independent_verified"])
+
+    def test_direct_worker_refuses_unapproved_actor_before_tool(self):
+        from pathlib import Path
+        with patch("plenum_ai.chief_workforce_command.run_issue",
+                   side_effect=AssertionError("must not run")):
+            with self.assertRaises(PermissionError):
+                execute_bounded_direct(event(actor="other-user"),
+                                       output_dir=Path("reports/workforce-chief"))
 
     def test_preflight_no_model_call_no_business_account_access(self):
         x=preflight(event())
