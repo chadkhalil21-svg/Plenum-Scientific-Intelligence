@@ -13,6 +13,7 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 
 from .workforce_public_inbox import REPO, OWNER, parse_public_issue, run_issue
+from .chief_team_mission import MISSION_TITLE, parse_mission, execute as execute_original_team
 
 MAX_ISSUE = 10 ** 9
 BASE = "https://api.github.com/repos/" + REPO + "/issues/"
@@ -40,12 +41,16 @@ def build_original_event(issue: dict, comments: list[dict]) -> dict | None:
             "user": {"login": (issue.get("user") or {}).get("login")}
         }
     }
-    parse_public_issue(event)  # exact original founder/title/kind/public guards
+    if issue.get("title") == MISSION_TITLE:
+        parse_mission(event)  # SAME founder/public/two-or-three specialist guards
+    else:
+        parse_public_issue(event)  # existing single-worker permission gate
     for item in comments:
         if not isinstance(item, dict):
             raise ValueError("Untrusted comment history")
         if ((item.get("user") or {}).get("login") == "github-actions[bot]"
                 and ("<!-- plenum-public-workforce-run:" in str(item.get("body", ""))
+                     or "<!-- plenum-founder-chief-run:" in str(item.get("body", ""))
                      or "Status: **DRAFT_READY_FOR_FOUNDER**" in str(item.get("body", "")))):
             return None  # Already attempted: no re-running old work
     return event
@@ -77,20 +82,42 @@ def process(number: int, token: str, output_dir: Path):
     event = build_original_event(original, comments)
     if event is None:
         return {"status":"ALREADY_RECORDED", "issue_number":number, "worker_reexecuted":False}
-    outcome = run_issue(event, output_dir=output_dir)
+    mission = original.get("title") == MISSION_TITLE
+    if mission:
+        # Reuse the SAME Chief/team engine and original hashed public artifacts.
+        # A wake is only for an original issue whose prior execution is missing.
+        outcome = execute_original_team(event, output_dir=output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        (output_dir / f"chief-result-{number}.json").write_text(
+            json.dumps(outcome, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+    else:
+        outcome = run_issue(event, output_dir=output_dir)
     run = os.environ["GITHUB_RUN_ID"]
     marker = "<!-- plenum-public-workforce-run:" + run + " -->"
     status = outcome.get("status", "BLOCKED")
-    body = (marker + "\nStatus: **" + status + "**. "
-            "Original Plenum worker re-woken for a missing PUBLIC task. "
-            "Independent scope: " + str(outcome.get("verified_scope", "unverified"))[:220]
-            + ". This is NOT authenticated account work, not persistent hosting, "
-            "and not permission to rerun a completed task.")
+    if mission:
+        summary = (
+            "Original Chief public multi-specialist mission re-woken. "
+            "Specialists: " + str(outcome.get("executed_workers", 0))[:4]
+            + "; independent verification: "
+            + str(outcome.get("independent_verified", False))
+            + "; original issue is the same mission. "
+        )
+    else:
+        summary = ("Original Plenum single public worker re-woken. "
+                   "Independent scope: "
+                   + str(outcome.get("verified_scope", "unverified"))[:170] + ". ")
+    body = (marker + "\nStatus: **" + status + "**. " + summary
+            + "No authenticated account work or persistent hosting. "
+            + "Never re-run completed public tasks.")
     reply = gh_json(path + "/comments", token, body={"body":body})
     if not reply.get("html_url"):
         raise RuntimeError("Missing independently acknowledged issue comment")
     return {"status":status, "issue_number":number, "worker_reexecuted":True,
-            "comment_url":reply["html_url"],"public_only":True}
+            "comment_url":reply["html_url"],"public_only":True,
+            "original_multi_specialist":mission,
+            "independent_verified":outcome.get("independent_verified", False) if mission else outcome.get("verified", False)}
 
 
 def main(argv=None):
