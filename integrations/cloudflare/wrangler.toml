@@ -2,7 +2,17 @@ name = "plenum-public-wake"
 main = "plenum-github-wake-worker.mjs"
 compatibility_date = "2026-11-01"
 workers_dev = true
-# Intentionally no paid Workers AI model, R2 buckets or durable objects.
+# Uses a Free-plan SQLite Durable Object for atomic replay rejection only.
+# No paid Workers AI model, R2 bucket, resident agent or overage.
 # This is NOT a server for Hermes, Paperclip or private WhatsApp sessions.
 # Set PLENUM_WEBHOOK_HMAC_SECRET and PLENUM_GITHUB_DISPATCH_TOKEN
 # using Cloudflare secrets on the owner's account, never in git.
+
+# Replay protection is mandatory: missing binding makes /wake return 503.
+[[durable_objects.bindings]]
+name = "PLENUM_REPLAY_GUARD"
+class_name = "PublicWakeReplayGuard"
+
+[exports.PublicWakeReplayGuard]
+type = "durable-object"
+storage = "sqlite"
