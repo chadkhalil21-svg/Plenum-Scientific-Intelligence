@@ -38,6 +38,9 @@ def public_agent_settings() -> dict:
         "timeout_seconds": 240,
         "headless": True,
         "cloud_browser": False,
+        # Official Browser Use 0.13.14 BrowserProfile.args on isolated public CI.
+        # Original #540 Chrome exited before CDP; this is NOT a model error.
+        "ephemeral_ci_launch_args": ["--no-sandbox", "--disable-dev-shm-usage"],
         "site_mutations_approved": False,
         "user_credentials_available": False,
         "task": PUBLIC_TASK,
@@ -80,6 +83,9 @@ async def run_public_agent() -> dict:
     browser = Browser(
         headless=True, allowed_domains=settings["allowed_domains"],
         use_cloud=False,
+        # Never pass these flags to the separate private owner browser.
+        args=settings["ephemeral_ci_launch_args"],
+        enable_default_extensions=False,
     )
     try:
         if llm_config["provider"] == "local_ollama":
