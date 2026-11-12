@@ -48,12 +48,12 @@ def station_records(document: object) -> list:
 
 
 def valid_coordinate(value: object, minimum: float, maximum: float) -> bool:
-    return (
-        isinstance(value, (int, float))
-        and not isinstance(value, bool)
-        and math.isfinite(value)
-        and minimum <= value <= maximum
-    )
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    try:
+        return math.isfinite(float(value)) and minimum <= value <= maximum
+    except (OverflowError, ValueError, TypeError):
+        return False
 
 
 def validate_station_metadata(document: object) -> dict:
