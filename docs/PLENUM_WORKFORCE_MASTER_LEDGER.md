@@ -3,6 +3,11 @@ Version: 1.2 | Prepared: 2026-11-11; operational evidence reconciled 2026-11-12 
 Purpose: A single operational checklist for existing agents. This ledger does not grant credentials, authorize spending, install agents, or prove a task was executed. The canonical truth is source plus separately observed run/output, not a checkmark.
 
 
+## 2026-11-12 | Official Minister of Operations command (same original Chief)
+
+The Founder has expressly designated the original Plenum Chief of Staff as **Minister of Operations**, not a new independent supervisor. The full standing execution order, assigned workforces, free repository tools, original browser/vault acceptance and proof states are in the existing [issue #432](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/432), top of [AGENTS.md](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/AGENTS.md), and [Minister skill](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/skills/plenum-chief-of-staff/SKILL.md); registry display name updated without breaking founder issue envelope or original model roles. **This is a live authenticated GitHub instruction/source change; not proof that Paperclip, SkillOpt, TokenEconomizer, OpenShell, Context Mode, Bitwarden or all five private teams are installed and running.** True acceptance requires actual eligible free host, original named specialist execution, scoped credentials, and independent readback. Existing Browser Use/Ollama original #540 failed and shall not be repeated unchanged. Daily browser acceptance remains separately scheduled; don't duplicate that watch.
+
+---
 ## 2026-11-12 | Founder North Star: one goal, one Chief, reusable free systems, no rework
 
 **Objective (fixed):** From an ordinary ChatGPT conversation, the Founder gives one authorized request; the ORIGINAL Plenum Chief assigns the right specialist(s) across the five registered divisions; they use preexisting open-source tools or connected provider APIs and a reusable **per-site**, owner-approved authenticated session; a distinct verifier checks the actual result and returns one concise founder receipt. Minimize repeated manual intervention and spending. **Never treat a new catalogue entry, source merge, CI green mark or draft as a working agent.**
