@@ -249,7 +249,7 @@ def login_html(nonce, register_token=""):
     <button id="close">Close</button></p>
     <script nonce="__NONCE__">
     let ws=null,ready=false,selected="none",pendingText=null,frameNumber=0;
-    let pageBlank=true;
+    let pageBlank=true,challengeBlocked=false;
     let lastTouchAt=0,saveInFlight=false;
     const canvas=document.getElementById("display"),
       ctx=canvas.getContext("2d"),
@@ -262,7 +262,7 @@ def login_html(nonce, register_token=""):
       for(const id of ["enter","tab","reload"]){
         document.getElementById(id).disabled=!ready;
       }
-      document.getElementById("save").disabled=!ready||saveInFlight||pageBlank;
+      document.getElementById("save").disabled=!ready||saveInFlight||pageBlank||challengeBlocked;
     }
     function clearStalePreview(){
       ++frameNumber;
@@ -294,7 +294,7 @@ def login_html(nonce, register_token=""):
     };
     document.getElementById("open").onclick=async()=>{
       if(ws)ws.close();
-      ws=null;ready=false;pageBlank=true;selected="none";pendingText=null;saveInFlight=false;
+      ws=null;ready=false;pageBlank=true;challengeBlocked=false;selected="none";pendingText=null;saveInFlight=false;
       updateTypingEnabled();clearStalePreview();
       const target=document.getElementById("url").value.trim();
       const appleAuth=document.getElementById("apple-auth").checked?"1":"0";
@@ -369,7 +369,7 @@ def login_html(nonce, register_token=""):
       u.searchParams.set("approve_resources",resourceConsent);
       u.searchParams.set("resume_saved",resumeSaved);
       const connection=new WebSocket(u);
-      ws=connection;ready=false;pageBlank=true;selected="none";pendingText=null;saveInFlight=false;
+      ws=connection;ready=false;pageBlank=true;challengeBlocked=false;selected="none";pendingText=null;saveInFlight=false;
       updateTypingEnabled();
       fieldStatus.textContent="Waiting for live browser picture.";
       let connected=false,serverStopped=false,openedAt=null;
@@ -385,7 +385,7 @@ def login_html(nonce, register_token=""):
       };
       connection.onclose=e=>{
         if(ws!==connection)return;
-        ready=false;pageBlank=true;selected="none";pendingText=null;saveInFlight=false;updateTypingEnabled();
+        ready=false;pageBlank=true;challengeBlocked=false;selected="none";pendingText=null;saveInFlight=false;updateTypingEnabled();
         clearStalePreview();
         const elapsed=openedAt===null?"":", after "+Math.round((Date.now()-openedAt)/1000)+" seconds";
         if(!serverStopped){
@@ -404,7 +404,7 @@ def login_html(nonce, register_token=""):
         if(m.type==="status"){
           status.textContent=m.message;
           if(m.failure===true){
-            serverStopped=true;ready=false;pageBlank=true;selected="none";saveInFlight=false;updateTypingEnabled();
+            serverStopped=true;ready=false;pageBlank=true;challengeBlocked=false;selected="none";saveInFlight=false;updateTypingEnabled();
             clearStalePreview();
             fieldStatus.textContent="Browser operation ended; previous image cleared. Reopen secure browser.";
           }
@@ -436,7 +436,13 @@ def login_html(nonce, register_token=""):
         }
         if(m.type==="page_health"){
           pageBlank=m.blank===true||m.render_unverified===true;
-          if(m.render_unverified===true){
+          challengeBlocked=m.unsupported_cloudflare_challenge===true;
+          if(challengeBlocked){
+            status.textContent="Cloudflare security verification is incompatible "+
+              "with this automated browser. No login was confirmed; do not "+
+              "save a session or repeat the challenge here. Use the ordinary "+
+              "Edge dashboard or an authorized Cloudflare API instead.";
+          }else if(m.render_unverified===true){
             status.textContent="Browser connected, but website rendering could not be verified. "+
               "Login is not confirmed; do not save this session.";
           }else if(pageBlank&&m.blocked_cross_origin>0){
@@ -505,7 +511,7 @@ def login_html(nonce, register_token=""):
     document.getElementById("tab").onclick=()=>send({type:"key",key:"Tab"});
     document.getElementById("reload").onclick=()=>send({type:"reload"});
     document.getElementById("save").onclick=()=>{
-      if(saveInFlight||!ready)return;
+      if(saveInFlight||!ready||pageBlank||challengeBlocked)return;
       if(send({type:"save"})){
         saveInFlight=true;updateTypingEnabled();
         status.textContent="Saving encrypted website session...";
@@ -518,6 +524,23 @@ def login_html(nonce, register_token=""):
 async def _frame(ws,page):
     jpeg=await page.screenshot(type="jpeg",quality=55,timeout=12000)
     await ws.send_json({"type":"frame","image":base64.b64encode(jpeg).decode("ascii")})
+
+
+async def _unsupported_cloudflare_challenge(page) -> bool:
+    """Detect the exact dashboard's known incompatible automated challenge.
+
+    Return one Boolean, not website text, credentials, cookies or a bypass.
+    """
+    try:
+        if urlsplit(page.url).hostname != "dash.cloudflare.com":
+            return False
+        return await page.evaluate("""() => {
+          const text=(document.body?.innerText || "").slice(0,10000).toLowerCase();
+          return text.includes("performing security verification") &&
+            text.includes("incompatible browser extension or network configuration");
+        }""") is True
+    except Exception:
+        return False
 
 
 async def _page_render_health(ws, page, blocked):
@@ -548,7 +571,9 @@ async def _page_render_health(ws, page, blocked):
                             "blocked_cross_origin":min(99,blocked["cross_origin"])})
         return
     await ws.send_json({"type":"page_health","blank":blank,
-                        "blocked_cross_origin":min(99,blocked["cross_origin"])})
+                        "blocked_cross_origin":min(99,blocked["cross_origin"]),
+                        "unsupported_cloudflare_challenge":
+                            await _unsupported_cloudflare_challenge(page)})
 
 
 def mount_private_login(app):
@@ -817,6 +842,11 @@ def mount_private_login(app):
                         if demo=="0":
                             await page.reload(wait_until="domcontentloaded",timeout=25000)
                     elif kind=="save":
+                        if demo=="0" and await _unsupported_cloudflare_challenge(page):
+                            await ws.send_json({"type":"save_result","ok":False,
+                                "message":"Cloudflare security verification is unsupported here. "
+                                          "No authenticated login state was saved."})
+                            continue
                         if demo=="1":
                             await ws.send_json({"type":"save_result","ok":False,
                                 "message":"Offline test does not save login state"})
