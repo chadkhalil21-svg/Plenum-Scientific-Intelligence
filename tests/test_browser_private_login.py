@@ -557,7 +557,8 @@ class OwnerBlankPageDiagnostics(unittest.IsolatedAsyncioTestCase):
         await private_login._page_render_health(ws,page,{"cross_origin":6})
         report=ws.send_json.await_args.args[0]
         self.assertEqual(report,{"type":"page_health",
-                                 "blank":True,"blocked_cross_origin":6})
+                                 "blank":True,"blocked_cross_origin":6,
+                                 "unsupported_cloudflare_challenge":False})
         self.assertNotIn("https",str(report))
         self.assertNotIn("cookie",str(report))
         self.assertNotIn("account",str(report))
@@ -565,8 +566,9 @@ class OwnerBlankPageDiagnostics(unittest.IsolatedAsyncioTestCase):
         page.evaluate=AsyncMock(return_value=True)
         await private_login._page_render_health(ws,page,{"cross_origin":200})
         self.assertEqual(ws.send_json.await_args.args[0],
-                         {"type":"page_health",
-                          "blank":False,"blocked_cross_origin":99})
+                         {"type":"page_health","blank":False,
+                          "blocked_cross_origin":99,
+                          "unsupported_cloudflare_challenge":False})
 
     async def test_unavailable_js_does_not_claim_blank(self):
         page=unittest.mock.Mock()
