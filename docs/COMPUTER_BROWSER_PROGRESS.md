@@ -1,4 +1,14 @@
 # Plenum Computer Browser: progress and acceptance ledger
+## 2026-11-12 | Minister: actual Browser Use Chrome launch diagnosis and narrowly scoped repair
+
+The original latest bounded free local Browser Use attempt, founder issue [#540](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/540), [run #43257767287](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43257767287), job `131320531913`, reached pinned `browser-use==0.13.14` and local `qwen3:1.7b`, but **Chrome terminated before CDP started**. The preserved original log explicitly says `Browser process (PID 3213) exited before CDP became available on port 43009`; Browser Use produced no model/browser steps. **Do NOT attribute this failed trial to model reasoning quality.** This is a genuine startup fault, not an invitation to endlessly rerun demos.
+
+Source correction in [PR #541](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/541): reuse exact upstream tagged `BrowserProfile.args` to pass `--no-sandbox` and `--disable-dev-shm-usage` only to the original fixed public task's **temporary GitHub Ubuntu runner**. Disable upstream browser's unnecessary extension downloads in that disposable public run. No other permissions, website destinations, cloud model accounts, existing Playwright MCP, owner Browser, Auth0, GCS profile store or Cloud Run are altered. `--no-sandbox` reduces Chrome's defense in depth and must NEVER be generalized to the persistent private browser; its exception is restricted to the credential-free, allowlisted throwaway CI task.
+
+Independent acceptance: original repository unit checks plus one actual fixed-target public browser runner must prove Chrome launches and the agent completes the public heading. A green test or source merge is NOT a live model/browser success. If Chromium still cannot start, inspect exact original log and stop unless a distinct confirmed cause is identified; do not assume general autonomy, saved sign-in, or in-chat browser access. Canonical private browser acceptance remains #310.
+
+---
+
 ## 2026-11-12 | Local Browser Use job-specific installation correction
 
 The single follow-up public founder run [#537](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/537) used the new local job but still failed before AI inference because prior #535 corrected the **legacy optional-key job's** identical install command, not the separate `owner-local-ollama` job. Its original job logs still showed `python -m pip install browser-use==0.13.14` followed by missing `uvx`. Exact scoped correction: add pinned free `uv==0.9.7` and `command -v uvx` **inside owner-local-ollama** only, and perform one targeted live run. Previous successful browser source or empty output must not count as autonomous agent success. No paid inference or private account operations are authorized.
