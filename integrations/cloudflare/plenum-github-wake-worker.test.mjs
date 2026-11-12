@@ -15,7 +15,7 @@ function replayBinding() {
   const guard = new PublicWakeReplayGuard(ctx);
   return {getByName: (name) => {
     assert.equal(name,"plenum-public-wake");
-    return guard;
+    return {fetch: (url, opts) => guard.fetch(new Request(url, opts))};
   }};
 }
 const env = {PLENUM_WEBHOOK_HMAC_SECRET:secret,
