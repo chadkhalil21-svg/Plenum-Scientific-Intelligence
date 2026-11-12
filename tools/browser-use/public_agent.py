@@ -10,6 +10,8 @@ import asyncio
 import json
 import os
 import sys
+import re
+from urllib.parse import urlsplit
 
 OWNER = "chadkhalil21-svg"
 TITLE = "Computer Browser: optional Browser Use public agent"
@@ -17,6 +19,12 @@ BODY = "RUN_BROWSER_USE_PUBLIC:example.com:MAX_STEPS_5:2026-11-08"
 LOCAL_TITLE = "Computer Browser: optional Browser Use local Ollama"
 LOCAL_BODY = "RUN_BROWSER_USE_LOCAL_OLLAMA:arxiv.org:SKILLOPT_TITLE:MAX_STEPS_4:2026-11-12"
 DOMAIN = "example.com"
+MISSION_TITLE = "Computer Browser: free public research"
+MISSION_SCHEMA = "plenum-browser-use-public-research-v1"
+# Public, research-grade destinations only. No credentials, query strings or ports.
+MISSION_HOSTS = frozenset({"arxiv.org", "science.nasa.gov", "news.mit.edu",
+                           "www.nasa.gov", "www.nih.gov"})
+MISSION_QUESTION = re.compile(r"[A-Za-z0-9 ,?.()/-]{15,160}\Z")
 LOCAL_RESEARCH_URL = "https://arxiv.org/abs/2605.23904"
 # The answer is deliberately NOT in the task prompt; it is an external acceptance invariant.
 LOCAL_RESEARCH_EXPECTED_TITLE = "SkillOpt: Executive Strategy for Self-Evolving Agent Skills"
@@ -28,15 +36,53 @@ PUBLIC_TASK = (
 )
 
 
+def parse_public_research(author: str, title: str, body: str) -> dict:
+    """Strict founder-owned, uncredentialed, public-only web research envelope."""
+    if author != OWNER or title != MISSION_TITLE:
+        raise PermissionError("Not an authorized public research command")
+    if not isinstance(body, str) or len(body) > 700:
+        raise ValueError("Oversized public research request")
+    try:
+        obj = json.loads(body)
+    except (ValueError, TypeError) as exc:
+        raise ValueError("Invalid research request") from exc
+    if not isinstance(obj, dict) or set(obj) != {"schema", "url", "question"}:
+        raise ValueError("Unexpected research request fields")
+    url, question = obj["url"], obj["question"]
+    if obj["schema"] != MISSION_SCHEMA or not isinstance(url, str) or len(url) > 350:
+        raise ValueError("Unsupported research envelope")
+    parsed = urlsplit(url)
+    if (parsed.scheme != "https" or parsed.hostname not in MISSION_HOSTS
+            or parsed.netloc != parsed.hostname or parsed.query or parsed.fragment
+            or not parsed.path.startswith("/") or "//" in parsed.path
+            or any(ord(x) < 33 for x in url)):
+        raise PermissionError("Only pre-approved public HTTPS research locations")
+    if not isinstance(question, str) or not MISSION_QUESTION.fullmatch(question):
+        raise ValueError("Use one plain-language public research question")
+    forbidden = ("password", "login", "log in", "sign in", "credential", "token",
+                 "secret", "account", "upload", "submit", "purchase", "download")
+    if any(term in question.lower() for term in forbidden):
+        raise PermissionError("Research task cannot request private or external actions")
+    return {"url": url, "host": parsed.hostname, "question": question}
+
+
 def founder_task_valid(*, author: str, title: str, body: str) -> bool:
-    return author == OWNER and (title, body) in ((TITLE, BODY), (LOCAL_TITLE, LOCAL_BODY))
+    if author == OWNER and (title, body) in ((TITLE, BODY), (LOCAL_TITLE, LOCAL_BODY)):
+        return True
+    try:
+        parse_public_research(author, title, body)
+        return True
+    except (ValueError, PermissionError, TypeError):
+        return False
 
 
-def public_agent_settings(*, local_ollama: bool = False) -> dict:
+def public_agent_settings(*, local_ollama: bool = False, mission: dict | None = None) -> dict:
     """Return frozen task boundaries, never caller-controlled URLs or prompts."""
+    if mission is not None and not local_ollama:
+        raise ValueError("Public research uses the existing zero-key local worker only")
     return {
-        "target": LOCAL_RESEARCH_URL if local_ollama else "https://example.com/",
-        "allowed_domains": ["arxiv.org"] if local_ollama else [DOMAIN],
+        "target": mission["url"] if mission else (LOCAL_RESEARCH_URL if local_ollama else "https://example.com/"),
+        "allowed_domains": [mission["host"]] if mission else (["arxiv.org"] if local_ollama else [DOMAIN]),
         "max_steps": 4 if local_ollama else 5,
         "timeout_seconds": 240,
         "headless": True,
@@ -47,6 +93,11 @@ def public_agent_settings(*, local_ollama: bool = False) -> dict:
         "site_mutations_approved": False,
         "user_credentials_available": False,
         "task": (
+            "Read the public page at " + mission["url"] + ". Answer only this question: "
+            + mission["question"] + " Include the exact page title and a brief answer "
+            "supported by that page. Do not follow links to other sites, log in, "
+            "send forms, upload, execute code or change any website data."
+        ) if mission else (
             "Open https://arxiv.org/abs/2605.23904 and report ONLY the exact "
             "paper title visible on the page. Do not navigate to other sites, "
             "use credentials, click a form, change data, or execute code."
@@ -78,7 +129,7 @@ def free_model_config() -> dict | None:
     }
 
 
-async def run_public_agent() -> dict:
+async def run_public_agent(*, mission: dict | None = None) -> dict:
     llm_config = free_model_config()
     if llm_config is None:
         return {"status": "not_configured", "browser_use_used": False,
@@ -87,7 +138,7 @@ async def run_public_agent() -> dict:
     # Import only inside the explicit founder-authorized, key-scoped path.
     from browser_use import Agent, Browser, ChatOpenAI, ChatOllama
     is_local = llm_config["provider"] == "local_ollama"
-    settings = public_agent_settings(local_ollama=is_local)
+    settings = public_agent_settings(local_ollama=is_local, mission=mission)
     browser = Browser(
         headless=True, allowed_domains=settings["allowed_domains"],
         use_cloud=False,
@@ -129,23 +180,35 @@ async def run_public_agent() -> dict:
         )
         answer = str(history.final_result() or "")
         visited = history.urls()
-        expected = LOCAL_RESEARCH_EXPECTED_TITLE if is_local else "Example Domain"
-        observed = expected in answer
+        expected = None if mission else (LOCAL_RESEARCH_EXPECTED_TITLE if is_local else "Example Domain")
+        observed = bool(expected and expected in answer)
         source_observed = any(
             isinstance(url, str) and url.startswith(settings["target"])
             for url in visited
         )
-        accepted = bool(
-            observed and source_observed and history.is_done()
+        model_completed = bool(
+            source_observed and history.is_done()
             and history.is_successful() is True
         )
+        accepted = bool(observed and model_completed) if not mission else bool(model_completed and len(answer.strip()) >= 20)
+        # The independent source/title acceptance belongs to the original fixed
+        # task. On arbitrary pages we verify navigation and task completion,
+        # but NEVER claim the AI's factual answer has been independently checked.
+        status = (
+            ("completed_public_research_unverified_facts" if accepted else "blocked_public_research")
+            if mission else ("verified_public_heading" if accepted else "unverified_public_heading")
+        )
+        answer_untrusted = " ".join(answer.replace("`", "'").replace("<", "‹").replace(">", "›").split())[:850]
         return {
-            "status": "verified_public_heading" if accepted else "unverified_public_heading",
+            "status": status,
             "browser_use_used": True, "model_called": True,
             "model_provider": llm_config["provider"],
             "expected_public_heading_observed_in_agent_output": observed,
             "verified_real_source_visit": source_observed,
-            "independently_accepted_by_success_and_source_check": accepted,
+            "independently_accepted_by_success_and_source_check": accepted if not mission else False,
+            "model_navigation_and_completion_verified": model_completed,
+            "factual_answer_independently_verified": accepted if not mission else False,
+            "answer_untrusted": answer_untrusted if mission else "",
             "task_source": settings["target"],
             "website_changed": False, "account_access_enabled": False,
         }
@@ -161,7 +224,8 @@ def main() -> None:
     if not founder_task_valid(author=author, title=title, body=body):
         raise SystemExit("Not an approved founder public browser task")
     try:
-        report = asyncio.run(run_public_agent())
+        mission = parse_public_research(author, title, body) if title == MISSION_TITLE else None
+        report = asyncio.run(run_public_agent(mission=mission))
     except Exception as exc:
         # No untrusted page content or model error messages in GitHub logs.
         report = {"status": "execution_failed", "browser_use_used": False,
