@@ -54,6 +54,9 @@ class BrowserUsePolicyTest(unittest.TestCase):
         self.assertEqual(s["target"], "https://example.com/")
         self.assertEqual(s["allowed_domains"], ["example.com"])
         self.assertEqual(s["max_steps"], 5)
+        self.assertEqual(s["ephemeral_ci_launch_args"], [
+            "--no-sandbox", "--disable-dev-shm-usage"
+        ])
         self.assertEqual(s["cloud_browser"], False)
         self.assertEqual(s["site_mutations_approved"], False)
         self.assertEqual(s["user_credentials_available"], False)
