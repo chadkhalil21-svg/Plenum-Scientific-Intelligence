@@ -43,6 +43,7 @@ class TestWaterLevelMetadata(unittest.TestCase):
             self.valid(tidal="true"),
             self.valid(name=" "),
             self.valid(lat=True),
+            self.valid(lat=10**350),
             "not a station",
         ]
         result = validate_station_metadata(bad)
