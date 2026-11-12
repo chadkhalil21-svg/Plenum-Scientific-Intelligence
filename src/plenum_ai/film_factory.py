@@ -194,6 +194,37 @@ def _original_ambient(out: Path, seconds: float) -> None:
             wav.writeframesraw(bytes(samples))
 
 
+
+def _srt_timestamp(frame: int) -> str:
+    """Frame-exact SubRip timestamps at the existing fixed 24 fps."""
+    total_ms = round(frame * 1000 / FPS)
+    total_seconds, ms = divmod(total_ms, 1000)
+    hours, rem = divmod(total_seconds, 3600)
+    minutes, seconds = divmod(rem, 60)
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d},{ms:03d}"
+
+
+def write_scene_caption_sidecar(scenes: list[dict], path: Path) -> int:
+    """Export scene captions already shown in video: no synthetic word timings.
+
+    This exports a useful accessible text alternative, not an independent
+    transcript of narration and not proof the spoken word cue is synchronized.
+    """
+    position, cues = 0, []
+    for scene in scenes:
+        frames = scene["_frames"]
+        caption = scene.get("caption", "").strip()
+        if caption:
+            cues.append(
+                f"{len(cues)+1}\n{_srt_timestamp(position)} --> "
+                f"{_srt_timestamp(position + frames)}\n{caption}\n"
+            )
+        position += frames
+    if cues:
+        path.write_text("\n".join(cues) + "\n", encoding="utf-8")
+    return len(cues)
+
+
 def render(storyboard_path: Path, output_dir: Path) -> dict:
     if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
         raise RuntimeError("Requires free locally installed FFmpeg and FFprobe")
@@ -237,9 +268,13 @@ def render(storyboard_path: Path, output_dir: Path) -> dict:
     types = {stream.get("codec_type") for stream in info.get("streams", [])}
     if not {"video", "audio"} <= types or abs(float(info["format"]["duration"]) - duration) > 0.3:
         raise RuntimeError("Actual MP4 audio/video/duration failed independent probe")
+    cue_count = write_scene_caption_sidecar(scenes, output_dir / "film.srt")
     report = {"schema": "plenum-free-film-render-v1", "status": "TECHNICAL_RENDER_COMPLETE",
               "film": str(final), "seconds": duration, "scenes": len(scenes),
               "image": f"{SIZE[0]}x{SIZE[1]}", "fps": FPS,
+              "separate_subtitle_sidecar": str(output_dir / "film.srt") if cue_count else None,
+              "subtitle_cues": cue_count,
+              "caption_timing_scope": "scene_boundaries_only_not_narration_word_aligned",
               "audio": music_status, "voice_included": bool(data.get("narration")),
               "natural_voice_approved": False, "third_party_rights_independently_audited": False,
               "creative_quality_independently_accepted": False,
