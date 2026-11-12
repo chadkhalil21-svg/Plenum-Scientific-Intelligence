@@ -82,7 +82,7 @@ def process(number: int, token: str, output_dir: Path):
     event = build_original_event(original, comments)
     if event is None:
         return {"status":"ALREADY_RECORDED", "issue_number":number, "worker_reexecuted":False}
-    mission = issue.get("title") == MISSION_TITLE
+    mission = original.get("title") == MISSION_TITLE
     if mission:
         # Reuse the SAME Chief/team engine and original hashed public artifacts.
         # A wake is only for an original issue whose prior execution is missing.
