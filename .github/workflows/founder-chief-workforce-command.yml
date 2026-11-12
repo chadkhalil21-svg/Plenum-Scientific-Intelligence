@@ -44,8 +44,6 @@ jobs:
       contents: read
       issues: write
     env:
-      PLENUM_EPHEMERAL_RUNNER: confirmed
-      PLENUM_CHIEF_MODEL_URL: http://127.0.0.1:11434
       PLENUM_TASK_KIND: ${{ github.event.issue.title }}
       LANGSMITH_TRACING: 'false'
       LANGCHAIN_TRACING_V2: 'false'
@@ -65,24 +63,6 @@ jobs:
           else
             python -m plenum_ai.chief_workforce_command --event "$GITHUB_EVENT_PATH"
           fi
-      - name: Start free disposable local Qwen for legacy single-role model Chief only
-        if: github.event.issue.title == '[Plenum Chief] public assignment'
-        run: |
-          docker pull ollama/ollama:latest
-          docker run -d --rm --name plenum-founder-chief-qwen \
-            --memory=5g --cpus=3 -p 127.0.0.1:11434:11434 \
-            -e OLLAMA_CONTEXT_LENGTH=8192 -e OLLAMA_NUM_PARALLEL=1 \
-            ollama/ollama:latest
-          for i in $(seq 1 45); do
-            if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
-            sleep 2
-          done
-          docker exec plenum-founder-chief-qwen ollama pull qwen3:1.7b
-      - name: Reuse pinned Deep Agents for legacy single-role Chief only
-        if: github.event.issue.title == '[Plenum Chief] public assignment'
-        run: |
-          python -m pip install -e '.[chief_of_staff,numerical,orchestration]'
-          python -m pip check
       - name: Reuse numerical tools only when a multi-team mission asks for known science
         if: github.event.issue.title == '[Plenum Chief] public mission'
         run: |
@@ -97,7 +77,7 @@ jobs:
           else:
               print('Existing standard-library workers only; no extra model/dependencies installed')
           PY
-      - name: Dispatch bounded original specialist tools; legacy Chief remains model-directed
+      - name: Dispatch original specialists deterministically for known public task scopes
         run: |
           if [ "$PLENUM_TASK_KIND" = '[Plenum Chief] public mission' ]; then
             timeout 600 python -m plenum_ai.chief_team_mission \
@@ -176,6 +156,3 @@ jobs:
             reports/workforce-chief/workers/*/workforce-public-*.json
           if-no-files-found: ignore
           retention-days: 7
-      - name: Remove ephemeral model
-        if: always()
-        run: docker rm -f plenum-founder-chief-qwen 2>/dev/null || true
