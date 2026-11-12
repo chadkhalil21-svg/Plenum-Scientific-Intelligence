@@ -14,6 +14,8 @@ import sys
 OWNER = "chadkhalil21-svg"
 TITLE = "Computer Browser: optional Browser Use public agent"
 BODY = "RUN_BROWSER_USE_PUBLIC:example.com:MAX_STEPS_5:2026-11-08"
+LOCAL_TITLE = "Computer Browser: optional Browser Use local Ollama"
+LOCAL_BODY = "RUN_BROWSER_USE_LOCAL_OLLAMA:example.com:MAX_STEPS_5:2026-11-12"
 DOMAIN = "example.com"
 PUBLIC_TASK = (
     "Open https://example.com/ and report the exact primary heading shown. "
@@ -24,7 +26,7 @@ PUBLIC_TASK = (
 
 
 def founder_task_valid(*, author: str, title: str, body: str) -> bool:
-    return author == OWNER and title == TITLE and body == BODY
+    return author == OWNER and (title, body) in ((TITLE, BODY), (LOCAL_TITLE, LOCAL_BODY))
 
 
 def public_agent_settings() -> dict:
@@ -33,7 +35,7 @@ def public_agent_settings() -> dict:
         "target": "https://example.com/",
         "allowed_domains": [DOMAIN],
         "max_steps": 5,
-        "timeout_seconds": 115,
+        "timeout_seconds": 240,
         "headless": True,
         "cloud_browser": False,
         "site_mutations_approved": False,
@@ -43,11 +45,18 @@ def public_agent_settings() -> dict:
 
 
 def free_model_config() -> dict | None:
-    """Use only OpenRouter's zero-priced free router with a dedicated key.
+    """Use local Ollama when explicitly selected, else OpenRouter's zero-priced free router with a dedicated key.
 
     Existing OPENAI_API_KEY is deliberately ignored to avoid accidental
     spending, and no site credentials may be provided to this public agent.
     """
+    if os.environ.get("PLENUM_BROWSER_FREE_LOCAL") == "confirmed":
+        return {
+            "provider": "local_ollama",
+            "model": "qwen3:1.7b",
+            "base_url": "http://127.0.0.1:11434",
+            "key": None,
+        }
     key = os.environ.get("BROWSER_USE_OPENROUTER_FREE_KEY", "")
     if not key or not key.strip():
         return None
@@ -66,20 +75,28 @@ async def run_public_agent() -> dict:
                 "model_called": False, "website_changed": False,
                 "explanation": "Optional OpenRouter free-model key not configured. No paid model fallback."}
     # Import only inside the explicit founder-authorized, key-scoped path.
-    from browser_use import Agent, Browser, ChatOpenAI
+    from browser_use import Agent, Browser, ChatOpenAI, ChatOllama
     settings = public_agent_settings()
     browser = Browser(
         headless=True, allowed_domains=settings["allowed_domains"],
         use_cloud=False,
     )
     try:
-        agent = Agent(
-            task=settings["task"],
-            llm=ChatOpenAI(
+        if llm_config["provider"] == "local_ollama":
+            llm = ChatOllama(
+                model=llm_config["model"],
+                host=llm_config["base_url"],
+                ollama_options={"num_ctx": 8192},
+            )
+        else:
+            llm = ChatOpenAI(
                 model=llm_config["model"],
                 base_url=llm_config["base_url"],
                 api_key=llm_config["key"],
-            ),
+            )
+        agent = Agent(
+            task=settings["task"],
+            llm=llm,
             browser=browser,
             use_vision=False,
         )
@@ -92,7 +109,7 @@ async def run_public_agent() -> dict:
         return {
             "status": "verified_public_heading" if observed else "unverified_public_heading",
             "browser_use_used": True, "model_called": True,
-            "model_provider": "openrouter_free",
+            "model_provider": llm_config["provider"],
             "expected_public_heading_observed_in_agent_output": observed,
             "website_changed": False, "account_access_enabled": False,
         }
