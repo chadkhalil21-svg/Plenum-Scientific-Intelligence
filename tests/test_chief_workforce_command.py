@@ -6,7 +6,7 @@ from unittest.mock import patch
 from plenum_ai.chief_workforce_command import (
     CHIEF_MAGIC, CHIEF_TITLE, FORBIDDEN, KIND_TO_AGENT, MODEL_URL,
     execute, independent_expected_kind, parse_founder_chief, preflight,
-    worker_event,
+    worker_event, recover_unexecuted_correct_model_route,
 )
 
 REPO = "chadkhalil21-svg/Plenum-Scientific-Intelligence"
@@ -105,6 +105,56 @@ class FounderChiefWorkforcePolicy(TestCase):
             expected,[],once,0))
         self.assertFalse(independently_accept_delegation(
             expected,[role],once,2))
+
+
+    def test_correct_model_route_with_no_tool_execution_has_one_bounded_recovery(self):
+        from pathlib import Path
+        e=event(issue_number=903)
+        calls=[]
+        observations=[]
+        def worker(original, *, output_dir):
+            calls.append((original["issue"]["body"],output_dir))
+            return {"status":"DRAFT_READY_FOR_FOUNDER","verified":True,
+                    "output_artifact":"issue-903/code","worker":"program_foundry"}
+        with patch("plenum_ai.chief_workforce_command.run_issue",side_effect=worker):
+            recovered=recover_unexecuted_correct_model_route(
+                e, expected="public_program",
+                routed_roles=["coding-specialist"], observations=observations,
+                output_dir=Path("reports/workforce-chief"))
+        self.assertTrue(recovered)
+        self.assertEqual(len(calls),1)
+        self.assertEqual(len(observations),1)
+        self.assertEqual(observations[0]["outcome"]["status"],"DRAFT_READY_FOR_FOUNDER")
+        self.assertEqual(observations[0]["kind"],"public_program")
+
+    def test_wrong_route_or_already_called_worker_never_recovers_or_duplicates(self):
+        from pathlib import Path
+        e=event(issue_number=904)
+        for roles, observations in [
+            (["research-specialist"],[]),
+            ([],[]),
+            (["coding-specialist"],[{"kind":"public_program","outcome":{}}]),
+        ]:
+            with self.subTest(roles=roles):
+                with patch("plenum_ai.chief_workforce_command.run_issue",
+                           side_effect=AssertionError("must not execute second job")):
+                    recovered=recover_unexecuted_correct_model_route(
+                        e, expected="public_program", routed_roles=roles,
+                        observations=observations, output_dir=Path("reports/workforce-chief"))
+                self.assertFalse(recovered)
+
+    def test_bounded_recovery_records_worker_failure_without_claiming_success(self):
+        from pathlib import Path
+        with patch("plenum_ai.chief_workforce_command.run_issue",
+                   side_effect=RuntimeError("original worker failed")):
+            obs=[]
+            recovered=recover_unexecuted_correct_model_route(
+                event(issue_number=905),expected="public_program",
+                routed_roles=["coding-specialist"],observations=obs,
+                output_dir=Path("reports/workforce-chief"))
+        self.assertTrue(recovered)
+        self.assertEqual(obs[0]["outcome"]["status"],"BLOCKED_WORKER_OR_VERIFICATION")
+        self.assertFalse(obs[0]["outcome"]["verified"])
 
     def test_preflight_no_model_call_no_business_account_access(self):
         x=preflight(event())

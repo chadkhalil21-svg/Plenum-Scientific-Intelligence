@@ -141,6 +141,33 @@ def independently_accept_delegation(expected: str, routed_roles: list,
         and observations[0]["kind"] == expected
     )
 
+def recover_unexecuted_correct_model_route(event: dict, *, expected: str,
+                                           routed_roles: list,
+                                           observations: list,
+                                           output_dir: Path) -> bool:
+    """One original safe worker if model delegated correctly but its subagent never called a tool.
+
+    This is DETERMINISTIC recovery, not model self-correction or a second agent.
+    No recovery for wrong-role routes or after any worker was already executed.
+    """
+    if (observations or not routed_roles or
+            expected not in KIND_TO_AGENT or
+            any(role != KIND_TO_AGENT[expected] for role in routed_roles)):
+        return False
+    original = worker_event(event, expected)  # same owner/public/scope check
+    try:
+        result = run_issue(original, output_dir=output_dir)
+    except (RuntimeError, OSError, ValueError, KeyError, TypeError) as exc:
+        observations.append({"kind":expected,"outcome":{
+            "status":"BLOCKED_WORKER_OR_VERIFICATION",
+            "verified":False,
+            "failure_type":type(exc).__name__,
+        }})
+    else:
+        observations.append({"kind":expected,"outcome":result})
+    return True
+
+
 def execute(event: dict, *, output_dir: Path) -> dict:
     report = preflight(event)
     if (
@@ -237,6 +264,11 @@ def execute(event: dict, *, output_dir: Path) -> dict:
         c.get("args", {}).get("subagent_type")
         for c in calls if isinstance(c.get("args"), dict)
     ]
+    model_subagent_executed_tool = bool(observations)
+    recovered_bounded_worker = recover_unexecuted_correct_model_route(
+        event, expected=expected, routed_roles=routed_roles,
+        observations=observations, output_dir=output_dir
+    )
     outcome = observations[0]["outcome"] if len(observations) == 1 else {}
     # Local Qwen can redundantly call Deep Agents' task router several times.
     # A repeated *request* is not a second external execution: the tool enforces
@@ -244,9 +276,18 @@ def execute(event: dict, *, output_dir: Path) -> dict:
     correct = independently_accept_delegation(
         expected, routed_roles, observations, len(calls)
     )
-    verified = correct and outcome.get("status") == "DRAFT_READY_FOR_FOUNDER"
+    verified = (
+        correct and outcome.get("status") == "DRAFT_READY_FOR_FOUNDER"
+        and outcome.get("verified") is True
+        and bool(outcome.get("output_artifact"))
+    )
+    mode = ("VERIFIED_BOUNDED_RECOVERY" if recovered_bounded_worker
+            else "VERIFIED_CHIEF_DELEGATION")
     report.update({
-        "status": "VERIFIED_CHIEF_DELEGATION" if verified else "BLOCKED_CHIEF_OR_VERIFICATION",
+        "status": mode if verified else "BLOCKED_CHIEF_OR_VERIFICATION",
+        "model_subagent_executed_tool": model_subagent_executed_tool,
+        "deterministic_recovery_executed": recovered_bounded_worker,
+        "recovery_is_general_autonomy": False,
         "model_called": True,
         "chief_delegated": bool(calls),
         "delegation_count": len(calls),
@@ -283,7 +324,8 @@ def main() -> None:
     path = out / ("chief-result-" + str(report["issue_number"]) + ".json")
     path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print("CHIEF_FOUNDER_WORKFORCE " + report["status"])
-    if args.execute and report["status"] != "VERIFIED_CHIEF_DELEGATION":
+    if args.execute and report["status"] not in ("VERIFIED_CHIEF_DELEGATION",
+                                                   "VERIFIED_BOUNDED_RECOVERY"):
         raise SystemExit(1)
 
 
