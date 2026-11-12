@@ -8,6 +8,7 @@ on:
       - 'tests/test_chief_workforce_command.py'
       - 'src/plenum_ai/chief_team_mission.py'
       - 'tests/test_chief_team_mission.py'
+      - 'src/plenum_ai/mission_checkpoint.py'
       - '.github/workflows/founder-chief-workforce-command.yml'
 permissions:
   contents: read
@@ -77,6 +78,15 @@ jobs:
           else:
               print('Existing standard-library workers only; no extra model/dependencies installed')
           PY
+      - name: Restore ORIGINAL completed specialist artifacts on an exact same-run failed-job retry
+        if: github.run_attempt > 1
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: chief-founder-public-${{ github.event.issue.number }}
+          run-id: ${{ github.run_id }}
+          github-token: ${{ github.token }}
+          path: reports/workforce-chief
       - name: Dispatch original specialists deterministically for known public task scopes
         run: |
           if [ "$PLENUM_TASK_KIND" = '[Plenum Chief] public mission' ]; then
@@ -150,9 +160,8 @@ jobs:
           name: chief-founder-public-${{ github.event.issue.number }}
           path: |
             reports/workforce-chief/chief-result-*.json
-            reports/workforce-chief/workers/*/issue-*/code/**
-            reports/workforce-chief/workers/*/issue-*/creative/**
-            reports/workforce-chief/workers/*/issue-*/public-science-summary.json
-            reports/workforce-chief/workers/*/workforce-public-*.json
+            reports/workforce-chief/chief-checkpoint-*.json
+            reports/workforce-chief/workers/**
+          overwrite: true
           if-no-files-found: ignore
           retention-days: 7

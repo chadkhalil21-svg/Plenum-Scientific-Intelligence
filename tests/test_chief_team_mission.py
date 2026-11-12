@@ -11,6 +11,7 @@ from plenum_ai.chief_team_mission import (
     independently_accept_team, parse_mission, preflight, execute,
 )
 from plenum_ai.chief_workforce_command import worker_event
+from plenum_ai.mission_checkpoint import artifact_digest, load_checkpoint
 from plenum_ai.workforce_public_inbox import parse_public_issue
 
 REPO = "chadkhalil21-svg/Plenum-Scientific-Intelligence"
@@ -87,6 +88,9 @@ class ChiefTeamMissionTests(TestCase):
         def actual_public_worker(event, *, output_dir):
             task = parse_public_issue(event)
             calls.append((task["kind"], output_dir))
+            path=output_dir/("issue-1001/code" if task["kind"]=="public_program" else "issue-1001/creative")
+            path.mkdir(parents=True, exist_ok=True)
+            (path/"original-public-output.txt").write_text(task["kind"])
             return {
                 "status":"DRAFT_READY_FOR_FOUNDER", "verified":True,
                 "worker":task["worker"], "verified_scope":"syntactic artifact check",
@@ -113,6 +117,9 @@ class ChiefTeamMissionTests(TestCase):
             t = parse_public_issue(event)
             if t["kind"] == "public_program":
                 raise RuntimeError("syntactic error")
+            path=output_dir/"issue-1001/creative"
+            path.mkdir(parents=True, exist_ok=True)
+            (path/"original-public-output.txt").write_text("original creative output")
             return {"status":"DRAFT_READY_FOR_FOUNDER","verified":True,
                     "worker":t["worker"],"output_artifact":"issue-1001/creative"}
         with tempfile.TemporaryDirectory() as d, patch(
@@ -124,6 +131,67 @@ class ChiefTeamMissionTests(TestCase):
         self.assertEqual(result["successfully_verified_workers"], 1)
         self.assertEqual(result["worker_results"][0]["failure_type"],"RuntimeError")
         self.assertEqual(result["worker_results"][1]["status"],"DRAFT_READY_FOR_FOUNDER")
+
+
+    def test_failed_mission_rerun_restores_verified_sibling_without_duplicate(self):
+        event = mission("Create a public data validator program and an original SVG illustration")
+        seen = []
+        def worker(original, *, output_dir):
+            task = parse_public_issue(original)
+            seen.append((task["kind"], str(output_dir)))
+            if task["kind"] == "public_program" and "retry-2" not in str(output_dir):
+                raise RuntimeError("bounded, first-run worker failure")
+            folder = output_dir / ("issue-1001/code" if task["kind"] == "public_program"
+                                   else "issue-1001/creative")
+            folder.mkdir(parents=True, exist_ok=True)
+            (folder / "original-public-output.txt").write_text(task["kind"])
+            return {
+                "status": "DRAFT_READY_FOR_FOUNDER", "verified": True,
+                "worker": task["worker"], "verified_scope": "bounded public artifact syntax",
+                "output_artifact": str(folder.relative_to(output_dir)),
+            }
+        with tempfile.TemporaryDirectory() as folder, patch(
+            "plenum_ai.chief_team_mission.run_issue", side_effect=worker
+        ):
+            root = Path(folder)
+            first = execute(event, output_dir=root)
+            self.assertEqual(first["status"], "BLOCKED_PARTIAL_TEAM")
+            self.assertEqual(first["reused_prior_verified_workers"], 0)
+            self.assertEqual(first["new_worker_invocations"], 2)
+            self.assertTrue((root / "chief-checkpoint-1001.json").is_file())
+            second = execute(event, output_dir=root)
+            self.assertEqual(second["status"], "VERIFIED_BOUNDED_TEAM")
+            self.assertEqual(second["reused_prior_verified_workers"], 1)
+            self.assertEqual(second["new_worker_invocations"], 1)
+            self.assertEqual(len(seen), 3)
+            self.assertEqual([x[0] for x in seen],
+                             ["public_program", "public_creative", "public_program"])
+            self.assertIn("retry-2", second["worker_results"][0]["output_artifact"])
+            self.assertTrue(second["independent_verified"])
+            with self.assertRaises(ValueError):
+                # A changed objective may NOT inherit prior worker proof.
+                execute(mission("Survey public sources and create a code validator"),
+                        output_dir=root)
+            checkpoint=load_checkpoint(
+                root, issue=1001, objective=
+                    "Create a public data validator program and an original SVG illustration",
+                team=("public_program", "public_creative"),
+            )
+            self.assertEqual(checkpoint["public_program"]["attempt"], 2)
+
+    def test_tampered_previous_artifact_is_not_accepted_as_resume_proof(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            artifact = root / "workers/public_program/issue-1001/code"
+            artifact.mkdir(parents=True)
+            (artifact / "output.txt").write_text("original")
+            relative = "workers/public_program/issue-1001/code"
+            original_hash = artifact_digest(root, relative)
+            self.assertTrue(original_hash)
+            (artifact / "output.txt").write_text("modified")
+            self.assertNotEqual(artifact_digest(root, relative), original_hash)
+            self.assertIsNone(artifact_digest(root, "../secret.txt"))
+            self.assertIsNone(artifact_digest(root, "/tmp/secret.txt"))
 
     def test_verifier_rejects_missing_workers_or_unverified_artifacts(self):
         expected = ("public_program","public_creative")

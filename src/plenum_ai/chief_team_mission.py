@@ -20,6 +20,9 @@ from .chief_workforce_command import (
 )
 from .workforce_public_inbox import run_issue
 from .agent_library import suggest_sources
+from .mission_checkpoint import (
+    artifact_digest, load_checkpoint, save_checkpoint, verified_previous_result,
+)
 
 MISSION_TITLE = "[Plenum Chief] public mission"
 MISSION_MAGIC = "PLENUM_CHIEF_PUBLIC_MISSION_V1"
@@ -93,26 +96,77 @@ def independently_accept_team(expected: tuple[str, ...], observed: dict) -> bool
 def execute(event: dict, *, output_dir: Path) -> dict:
     report = preflight(event)
     task = parse_mission(event)
+    # The SAME founder issue and bounded public artifacts are the only mission
+    # identity. When a failed GitHub job is retried, its original artifact
+    # restores the checkpoint first; do not re-execute completed specialists.
+    progress = load_checkpoint(
+        output_dir, issue=task["issue_number"],
+        objective=task["objective"], team=task["team"],
+    )
     observed = {}
+    resumed = 0
+    executed = 0
     for kind in task["team"]:
-        # No LLM role selection is needed when the founder's public objective
-        # identifies exact existing capabilities. Tools run once each.
+        saved = progress.get(kind)
+        recovered = verified_previous_result(output_dir, kind, saved)
+        if recovered is not None:
+            observed[kind] = recovered
+            resumed += 1
+            continue
+        attempt = int(saved.get("attempt", 0)) + 1 if isinstance(saved, dict) else 1
+        if attempt > 2:
+            observed[kind] = {
+                "status": "BLOCKED_RETRY_LIMIT", "verified": False,
+                "failure_type": "PreviouslyAttemptedTwice",
+            }
+            continue
         original_event = worker_event(task["original"], kind)
+        base = output_dir / "workers" / kind
+        worker_dir = base if attempt == 1 else base / "retry-2"
+        executed += 1
         try:
-            result = run_issue(
-                original_event, output_dir=output_dir / "workers" / kind,
-            )
+            result = run_issue(original_event, output_dir=worker_dir)
             if not isinstance(result, dict):
                 raise ValueError("Original worker returned a non-object")
-            observed[kind] = result
         except (OSError, ValueError, RuntimeError, KeyError, TypeError, ImportError) as exc:
-            # Preserve the outcome of any other completed specialist, while
-            # withholding a positive mission status if one fails.
-            observed[kind] = {
+            result = {
                 "status": "BLOCKED_WORKER_OR_VERIFICATION",
                 "verified": False,
                 "failure_type": type(exc).__name__,
             }
+        artifact = result.get("output_artifact")
+        relative = (
+            (worker_dir / artifact).relative_to(output_dir).as_posix()
+            if isinstance(artifact, str) and artifact and not
+               (artifact.startswith("/") or ".." in artifact.split("/"))
+            else None
+        )
+        fingerprint = artifact_digest(output_dir, relative) if relative else None
+        if (result.get("status") == "DRAFT_READY_FOR_FOUNDER"
+                and result.get("verified") is True and not fingerprint):
+            result = {
+                **result, "status": "BLOCKED_ARTIFACT_NOT_PRESERVED",
+                "verified": False, "failure_type": "MissingOrUnsafeArtifact",
+            }
+        if fingerprint:
+            result["_artifact_path"] = relative
+        observed[kind] = result
+        progress[kind] = {
+            "attempt": attempt,
+            "status": result.get("status", "BLOCKED"),
+            "verified": result.get("verified") is True,
+            "worker": result.get("worker"),
+            "verified_scope": result.get("verified_scope"),
+            "output_artifact": artifact,
+            "artifact_path": relative if fingerprint else None,
+            "sha256": fingerprint,
+        }
+        # Atomic checkpoint after EACH original specialist, even on failure.
+        save_checkpoint(
+            output_dir, issue=task["issue_number"],
+            objective=task["objective"], team=task["team"],
+            results=progress,
+        )
     verified = independently_accept_team(task["team"], observed)
     report.update({
         "status": ("VERIFIED_BOUNDED_TEAM" if verified
@@ -121,6 +175,10 @@ def execute(event: dict, *, output_dir: Path) -> dict:
         "model_called": False,
         "chief_model_delegated": False,
         "executed_workers": len(observed),
+        "new_worker_invocations": executed,
+        "reused_prior_verified_workers": resumed,
+        "resume_checkpoint": ("chief-checkpoint-" + str(task["issue_number"]) + ".json"),
+        "checkpoint_is_reusable_across_same_run_retries": True,
         "successfully_verified_workers": sum(
             x.get("status") == "DRAFT_READY_FOR_FOUNDER"
             and x.get("verified") is True for x in observed.values()
@@ -134,7 +192,7 @@ def execute(event: dict, *, output_dir: Path) -> dict:
             "status": observed[kind].get("status", "BLOCKED"),
             "verified_scope": observed[kind].get("verified_scope", "not_verified"),
             "output_artifact": (
-                "workers/" + kind + "/" + observed[kind]["output_artifact"]
+                observed[kind].get("_artifact_path")
                 if observed[kind].get("output_artifact") else None
             ),
             "failure_type": observed[kind].get("failure_type"),
