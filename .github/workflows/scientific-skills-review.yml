@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - run: python -m pip install -e .
       - name: Confirm skill references cannot execute code
         run: python -m unittest discover -s tests -p "test_skill_catalog.py" -v
@@ -35,6 +35,28 @@ jobs:
           assert doc["status"]=="untrusted_document_for_human_review_only"
           assert len(json.loads(Path("reports/skill_catalog.json").read_text())["skills"])==6
           print("Pinned RDKit skill fetched for review; no instructions executed.")
+          PY
+      - name: Read-only free NVIDIA scan of the same pinned RDKit candidate
+        run: |
+          python -m pip install --disable-pip-version-check "git+https://github.com/NVIDIA/SkillSpector.git@3c2c5d7a1ee148d228398070b91d3beaf0d73b11"
+          mkdir -p reports/skill-scans reports/skill-scan-input/rdkit
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          record=json.loads(Path("reports/rdkit_skill_review.json").read_text(encoding="utf-8"))
+          content=record["text"].encode("utf-8")
+          assert hashlib.sha256(content).hexdigest()==record["sha256"]
+          Path("reports/skill-scan-input/rdkit/SKILL.md").write_bytes(content)
+          print("Using existing pinned RDKit document; no new URL or code execution.")
+          PY
+          skillspector scan reports/skill-scan-input/rdkit/SKILL.md --no-llm --format json --output reports/skill-scans/rdkit-static.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path("reports/skill-scans/rdkit-static.json").read_text(encoding="utf-8"))
+          assert isinstance(report,dict)
+          print("Original skill review now includes independent no-LLM scanner JSON.")
           PY
       - uses: actions/upload-artifact@v7
         with:
