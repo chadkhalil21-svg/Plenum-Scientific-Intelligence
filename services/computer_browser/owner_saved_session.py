@@ -15,7 +15,7 @@ from html import escape
 from urllib.parse import urlsplit, urljoin
 
 from fastapi import Depends, HTTPException, Request, Form
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from .engine import _origin_syntax, allowed_origins, safe_url, public_dns_only
 from .owner_console import require_verified_owner
@@ -443,6 +443,58 @@ async def _refresh_and_verify_public_demo(owner):
 
 
 def mount_owner_saved_session(app):
+    @app.get("/owner/sessions/inventory", response_class=JSONResponse)
+    async def owner_session_inventory(_owner=Depends(require_verified_owner)):
+        """Owner-only safe vault inventory for the EXISTING session broker.
+
+        This NEVER returns cookies, access tokens, browser storage, private
+        page text or a claim that the third-party account is signed in.
+        Inventory lists ONLY origins already granted to this owner.
+        """
+        from .runtime_site_grants import enabled as site_grants_enabled, OwnerSiteGrantStore
+        origins = set(allowed_origins())
+        if site_grants_enabled():
+            try:
+                registered = OwnerSiteGrantStore.from_environment().list_active(
+                    owner=_owner["private_owner_id"])
+                origins.update(row["origin"] for row in registered)
+            except Exception as exc:
+                raise HTTPException(status_code=503,
+                                    detail="Owner site registry unavailable") from exc
+        if (not os.environ.get("BROWSER_PROFILE_BUCKET")
+                or not os.environ.get("BROWSER_SESSION_KEY")):
+            raise HTTPException(status_code=503,
+                                detail="Private session inventory unavailable")
+        if len(origins) > 100:
+            raise HTTPException(status_code=503,
+                                detail="Owner site registry exceeds bounded inventory")
+        store = BrowserProfileStore.from_environment()
+        sites = []
+        for origin in sorted(origins):
+            try:
+                exists = bool(store.status(
+                    owner=_owner["private_owner_id"], origin=origin
+                )["profile_exists"])
+            except Exception:
+                exists = None
+            sites.append({
+                "origin": origin,
+                "encrypted_profile_exists": exists,
+                "website_login_verified": False,
+            })
+        return JSONResponse(
+            {
+                "schema": "plenum-owner-session-metadata-v1",
+                "sites": sites,
+                "owner_authentication_required": True,
+                "decrypted_storage_exposed": False,
+                "session_exists_does_not_prove_active_login": True,
+            },
+            headers={"Cache-Control": "no-store",
+                     "X-Content-Type-Options": "nosniff",
+                     "Referrer-Policy": "no-referrer"},
+        )
+
     @app.get("/owner/sessions", response_class=HTMLResponse)
     async def owner_sessions(_owner=Depends(require_verified_owner)):
         from .runtime_site_grants import enabled as site_grants_enabled, OwnerSiteGrantStore
