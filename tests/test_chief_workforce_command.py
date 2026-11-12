@@ -7,6 +7,7 @@ from plenum_ai.chief_workforce_command import (
     CHIEF_MAGIC, CHIEF_TITLE, FORBIDDEN, KIND_TO_AGENT, MODEL_URL,
     execute, independent_expected_kind, parse_founder_chief, preflight,
     worker_event, recover_unexecuted_correct_model_route,
+    execute_bounded_single,
 )
 
 REPO = "chadkhalil21-svg/Plenum-Scientific-Intelligence"
@@ -155,6 +156,48 @@ class FounderChiefWorkforcePolicy(TestCase):
         self.assertTrue(recovered)
         self.assertEqual(obs[0]["outcome"]["status"],"BLOCKED_WORKER_OR_VERIFICATION")
         self.assertFalse(obs[0]["outcome"]["verified"])
+
+    def test_direct_known_scope_executes_exact_original_worker_once_without_model(self):
+        from pathlib import Path
+        e=event(issue_number=911)
+        calls=[]
+        def worker(item, *, output_dir):
+            calls.append(item)
+            return {"status":"DRAFT_READY_FOR_FOUNDER",
+                    "verified":True,"output_artifact":"issue-911/code",
+                    "verified_scope":"public starter syntax/hash"}
+        with patch("plenum_ai.chief_workforce_command.run_issue",side_effect=worker):
+            item=execute_bounded_single(e,output_dir=Path("reports/workforce-chief"))
+        self.assertEqual(len(calls),1)
+        self.assertEqual(item["status"],"VERIFIED_BOUNDED_SINGLE")
+        self.assertFalse(item["model_called"])
+        self.assertFalse(item["chief_delegated"])
+        self.assertTrue(item["specialist_executed"])
+        self.assertTrue(item["independent_verified"])
+        self.assertFalse(item["general_autonomy_proved"])
+        self.assertEqual(item["specialist"],"coding-specialist")
+
+    def test_direct_worker_failure_does_not_claim_autonomy_or_result(self):
+        from pathlib import Path
+        with patch("plenum_ai.chief_workforce_command.run_issue",
+                   side_effect=RuntimeError("unavailable")):
+            item=execute_bounded_single(event(issue_number=912),
+                                        output_dir=Path("reports/workforce-chief"))
+        self.assertEqual(item["status"],"BLOCKED_ORIGINAL_BOUNDED_SPECIALIST")
+        self.assertFalse(item["independent_verified"])
+        self.assertEqual(item["failure_type"],"RuntimeError")
+        self.assertFalse(item["model_called"])
+
+    def test_direct_route_still_rejects_ambiguous_or_private_work(self):
+        from pathlib import Path
+        with patch("plenum_ai.chief_workforce_command.run_issue",
+                   side_effect=AssertionError("unauthorized tool called")):
+            with self.assertRaises((PermissionError,ValueError)):
+                execute_bounded_single(event("Review confidential private account secrets"),
+                    output_dir=Path("reports/workforce-chief"))
+            with self.assertRaises((PermissionError,ValueError)):
+                execute_bounded_single(event("Create research software for exploring papers"),
+                    output_dir=Path("reports/workforce-chief"))
 
     def test_preflight_no_model_call_no_business_account_access(self):
         x=preflight(event())
