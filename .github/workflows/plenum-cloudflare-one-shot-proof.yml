@@ -1,0 +1,87 @@
+name: Plenum Cloudflare | One-Shot Signed Public Wake Proof
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+
+jobs:
+  founder-signed-wake:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == '[Plenum Cloudflare] one-shot signed wake proof'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PLENUM_WEBHOOK_HMAC_SECRET: ${{ secrets.PLENUM_WEBHOOK_HMAC_SECRET }}
+      ORIGINAL_EVENT_BODY: ${{ github.event.issue.body }}
+      TRIGGER_ISSUE_NUMBER: ${{ github.event.issue.number }}
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate original public work and make exactly one HMAC-signed wake
+        run: |
+          node --input-type=module <<'JS'
+          import {createHmac} from "node:crypto";
+
+          const repo = "chadkhalil21-svg/Plenum-Scientific-Intelligence";
+          const endpoint = "https://plenum-public-wake.chadkhalil21.workers.dev/wake";
+          const secret = process.env.PLENUM_WEBHOOK_HMAC_SECRET || "";
+          const body = (process.env.ORIGINAL_EVENT_BODY || "").trim();
+          const capture = /^PLENUM_CLOUDFLARE_WAKE_PROOF_V1\nissue_number: ([1-9][0-9]{0,8})$/.exec(body);
+
+          if (!capture) throw new Error("BLOCKED_BAD_PUBLIC_FOUNDER_PROOF_ENVELOPE");
+          if (secret.length < 32) throw new Error("BLOCKED_GITHUB_HMAC_SECRET_NOT_CONFIGURED");
+          const target = Number(capture[1]);
+          if (target === Number(process.env.TRIGGER_ISSUE_NUMBER))
+            throw new Error("BLOCKED_RECURSIVE_PROOF");
+
+          const checked = await fetch("https://api.github.com/repos/" + repo + "/issues/" + target, {
+            headers: {
+              Authorization: "Bearer " + process.env.GH_TOKEN,
+              Accept: "application/vnd.github+json",
+              "User-Agent": "PlenumCloudflareOneShotProof/1"
+            }
+          });
+          if (checked.status !== 200) throw new Error("BLOCKED_ORIGINAL_ISSUE_READ");
+          const issue = await checked.json();
+          const originalBody =
+            "PLENUM_PUBLIC_WORKFORCE_V2\nkind: public_program\n" +
+            "objective: Create a public Python validator for open research metadata records";
+          if (issue.state !== "open"
+              || issue.title !== "[Plenum Workforce] public research"
+              || issue.user?.login !== "chadkhalil21-svg"
+              || issue.body?.trim() !== originalBody
+              || issue.number !== target) {
+            throw new Error("BLOCKED_ORIGINAL_PUBLIC_WORK_SCOPE");
+          }
+
+          const requestBody = JSON.stringify({issue_number:target});
+          const timestamp = String(Math.floor(Date.now()/1000));
+          const signature = createHmac("sha256", secret)
+            .update(timestamp + "." + requestBody).digest("hex");
+          const response = await fetch(endpoint, {
+            method:"POST",
+            headers:{
+              "Content-Type":"application/json",
+              "X-Plenum-Timestamp":timestamp,
+              "X-Plenum-Signature":"sha256=" + signature
+            },
+            body:requestBody
+          });
+          if (response.status !== 202) {
+            throw new Error("BLOCKED_CLOUDFLARE_SIGNED_WAKE_HTTP_" + response.status);
+          }
+          const observed = await response.json();
+          if (observed.public_issue !== target || observed.status !== "WAKE_REQUESTED_NOT_COMPLETED")
+            throw new Error("BLOCKED_CLOUDFLARE_RESPONSE_READBACK");
+          console.log("CLOUDFLARE_WAKE_ACCEPTED_NOT_WORKER_COMPLETED original_issue=" + target);
+          console.log("Independent acceptance still requires GitHub repository_dispatch run plus original work readback.");
+          JS
