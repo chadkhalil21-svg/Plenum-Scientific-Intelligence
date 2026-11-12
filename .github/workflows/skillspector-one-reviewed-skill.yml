@@ -1,0 +1,47 @@
+name: SkillSpector — one public third-party skill
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/skillspector-one-reviewed-skill.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  static-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install pinned NVIDIA SkillSpector (static; no provider key)
+        run: |
+          python -m pip install --disable-pip-version-check "git+https://github.com/NVIDIA/SkillSpector.git@3c2c5d7a1ee148d228398070b91d3beaf0d73b11"
+      - name: Download one pinned public upstream skill for review only
+        run: |
+          mkdir -p vendor-review/superpowers-verification reports/skill-scans
+          curl --fail --location --silent --show-error --retry 2 \
+            "https://raw.githubusercontent.com/obra/superpowers/22f0b463e7a5e579904dd6211a520321035526f7/skills/verification-before-completion/SKILL.md" \
+            --output vendor-review/superpowers-verification/SKILL.md
+          test -s vendor-review/superpowers-verification/SKILL.md
+          sha256sum vendor-review/superpowers-verification/SKILL.md > reports/skill-scans/source-sha256.txt
+      - name: Real no-LLM SkillSpector scan and JSON validity check
+        run: |
+          skillspector scan vendor-review/superpowers-verification/SKILL.md --no-llm --format json --output reports/skill-scans/skillspector-report.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = Path("reports/skill-scans/skillspector-report.json")
+          record = json.loads(report.read_text(encoding="utf-8"))
+          assert isinstance(record, dict) and report.stat().st_size > 2
+          print("SkillSpector produced nonempty parseable JSON; independent risk review still required.")
+          PY
+      - name: Preserve evidence for Independent Verifier
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: skillspector-one-public-skill
+          path: reports/skill-scans/
+          if-no-files-found: warn
+          retention-days: 14
