@@ -333,6 +333,30 @@ class PrivateLoginTests(unittest.TestCase):
                     self.assertIn("Offline test",response["message"])
                     ws.send_json({"type":"close"})
 
+
+    def test_cloudflare_challenge_returns_boolean_for_exact_host_only(self):
+        from unittest.mock import AsyncMock, MagicMock
+        import asyncio
+        page=MagicMock()
+        page.url="https://dash.cloudflare.com/"
+        page.evaluate=AsyncMock(return_value=True)
+        self.assertTrue(asyncio.run(private_login._unsupported_cloudflare_challenge(page)))
+        self.assertIn("incompatible browser extension",page.evaluate.call_args.args[0])
+        page.url="https://github.com/"
+        page.evaluate.reset_mock()
+        self.assertFalse(asyncio.run(private_login._unsupported_cloudflare_challenge(page)))
+        page.evaluate.assert_not_called()
+        page.url="https://dash.cloudflare.com/"
+        page.evaluate=AsyncMock(return_value=False)
+        self.assertFalse(asyncio.run(private_login._unsupported_cloudflare_challenge(page)))
+
+    def test_known_cloudflare_challenge_disables_save_without_leaking_page(self):
+        html=private_login.login_html("test-nonce")
+        self.assertIn("m.unsupported_cloudflare_challenge===true",html)
+        self.assertIn("!ready||saveInFlight||pageBlank||challengeBlocked",html)
+        self.assertIn("Cloudflare security verification is incompatible",html)
+        self.assertIn("if(saveInFlight||!ready||pageBlank||challengeBlocked)return;",html)
+
     def test_mobile_touch_and_confirmation_ui_in_real_offline_chromium(self):
         """Verify rendered portal sends touch coordinates and preserves text
         until an actual server acknowledgment, without any network."""
