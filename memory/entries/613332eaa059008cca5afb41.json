@@ -1,0 +1,66 @@
+{
+  "candidate_deployed": false,
+  "candidate_holdout_accuracy": 1.0,
+  "candidate_ranker_weight": 0.5,
+  "hypotheses_status": "unverified",
+  "id": "613332eaa059008cca5afb41",
+  "independent_audit_passed": true,
+  "prior_memory_ids": [
+    "77b85e0ac6f55a87dcb43a6f",
+    "b76e97d4aeb442c726ab5311",
+    "8472db95d2905fbe6dee39a0"
+  ],
+  "question": "artificial intelligence for scientific discovery",
+  "recorded_utc": "2026-11-12T17:38:47.526634+00:00",
+  "revision": "46c3540fa911fc370b670630e806fc897ae68a1f",
+  "run_id": "43271596498",
+  "schema": "plenum-memory-v1",
+  "scientific_discovery_verified": false,
+  "sha256": "613332eaa059008cca5afb41d2edaf579ed3ae41145bbfedf643670cc453084f",
+  "simulation_benchmark_passed": true,
+  "source_status": "retrieved_metadata",
+  "sources": [
+    {
+      "doi": "https://doi.org/10.1016/j.respol.2024.104989",
+      "id": "https://openalex.org/W4393124223",
+      "title": "Artificial intelligence and scientific discovery: a model of prioritized search",
+      "url": "https://doi.org/10.1016/j.respol.2024.104989",
+      "year": 2024
+    },
+    {
+      "doi": "https://doi.org/10.1098/rsta.2024.0591",
+      "id": "https://openalex.org/W7152457584",
+      "title": "The need for verification in artificial intelligence-driven scientific discovery",
+      "url": "https://doi.org/10.1098/rsta.2024.0591",
+      "year": 2026
+    },
+    {
+      "doi": "",
+      "id": "https://openalex.org/W7217921299",
+      "title": "The impact of artificial intelligence on scientific discovery and automation",
+      "url": "https://sibe.rpress.co.in/index.php/jimr/article/view/29",
+      "year": 2024
+    },
+    {
+      "doi": "",
+      "id": "https://openalex.org/W2566764188",
+      "title": "Artificial Intelligence for Scientific Discovery",
+      "url": "http://ci.nii.ac.jp/naid/110009900418/en/",
+      "year": 2015
+    },
+    {
+      "doi": "",
+      "id": "https://openalex.org/W7217506496",
+      "title": "Artificial Intelligence in Scientific Discovery and Research Automation",
+      "url": "https://jistm.info/index.php/jistm/article/view/40",
+      "year": 2026
+    },
+    {
+      "doi": "https://doi.org/10.1007/978-3-031-27019-2",
+      "id": "https://openalex.org/W4364856241",
+      "title": "Artificial Intelligence for Scientific Discoveries",
+      "url": "https://doi.org/10.1007/978-3-031-27019-2",
+      "year": 2023
+    }
+  ]
+}
