@@ -80,7 +80,6 @@ jobs:
           PY
       - name: Restore ORIGINAL completed specialist artifacts on an exact same-run failed-job retry
         if: github.run_attempt > 1
-        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: chief-founder-public-${{ github.event.issue.number }}
