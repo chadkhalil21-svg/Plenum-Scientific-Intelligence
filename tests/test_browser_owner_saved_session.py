@@ -67,6 +67,44 @@ class SavedWebsiteSessionRoutes(unittest.TestCase):
         store.status.assert_called_once_with(
             owner=owner["private_owner_id"], origin="https://example.com")
 
+
+    def test_owner_only_machine_readable_inventory_reuses_original_vault(self):
+        store = self._store(exists=True)
+        with patch.object(owner_saved_session.BrowserProfileStore,
+                          "from_environment", return_value=store):
+            resp = client.get("/owner/sessions/inventory")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.headers["cache-control"], "no-store")
+        record = resp.json()
+        self.assertEqual(record["schema"], "plenum-owner-session-metadata-v1")
+        self.assertEqual(record["sites"], [{
+            "origin": "https://example.com",
+            "encrypted_profile_exists": True,
+            "website_login_verified": False,
+        }])
+        self.assertFalse(record["decrypted_storage_exposed"])
+        self.assertNotIn("SYNTHETIC", resp.text)
+        self.assertNotIn("cookie", resp.text.lower())
+        self.assertNotIn("token", resp.text.lower())
+        store.status.assert_called_once_with(
+            owner=owner["private_owner_id"], origin="https://example.com")
+
+    def test_inventory_distinguishes_unknown_from_absent_and_requires_owner(self):
+        store = self._store(exists=False)
+        with patch.object(owner_saved_session.BrowserProfileStore,
+                          "from_environment", return_value=store):
+            data = client.get("/owner/sessions/inventory").json()
+        self.assertIs(data["sites"][0]["encrypted_profile_exists"], False)
+        store.status.side_effect = OSError("private store failed")
+        with patch.object(owner_saved_session.BrowserProfileStore,
+                          "from_environment", return_value=store):
+            data = client.get("/owner/sessions/inventory").json()
+        self.assertIsNone(data["sites"][0]["encrypted_profile_exists"])
+        with patch.dict(os.environ, {"BROWSER_PROFILE_BUCKET": ""}):
+            self.assertEqual(client.get("/owner/sessions/inventory").status_code, 503)
+        app.dependency_overrides.clear()
+        self.assertIn(client.get("/owner/sessions/inventory").status_code, (401, 403))
+
     def test_approved_demo_preview_checks_protected_page(self):
         self.assertEqual(
             owner_saved_session.safe_session_preview_url("https://the-internet.herokuapp.com"),
