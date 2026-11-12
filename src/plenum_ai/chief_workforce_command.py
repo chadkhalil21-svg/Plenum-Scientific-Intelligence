@@ -178,7 +178,7 @@ def execute_bounded_single(event: dict, *, output_dir: Path) -> dict:
     kind = report["expected_independent_kind"]
     task = worker_event(event, kind)
     try:
-        outcome = run_issue(task, output_dir=output_dir)
+        outcome = run_issue(task, output_dir=output_dir / "workers" / kind)
     except (RuntimeError, OSError, ValueError, KeyError, TypeError) as exc:
         outcome = {"status":"BLOCKED_WORKER_OR_VERIFICATION",
                    "verified":False,"failure_type":type(exc).__name__}
@@ -198,7 +198,8 @@ def execute_bounded_single(event: dict, *, output_dir: Path) -> dict:
         "executed_worker_status": outcome.get("status"),
         "independent_verified": accepted,
         "worker_verified_scope": outcome.get("verified_scope"),
-        "output_artifact": outcome.get("output_artifact"),
+        "output_artifact": ("workers/" + kind + "/" + outcome["output_artifact"]
+                            if outcome.get("output_artifact") else None),
         "failure_type": outcome.get("failure_type"),
         "founder_review_required": True,
         "no_new_workforce_model_created": True,
