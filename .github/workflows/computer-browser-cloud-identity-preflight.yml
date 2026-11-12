@@ -90,3 +90,36 @@ jobs:
           echo "Cloud Run private service identity and security verified. Owner OAuth/IAP sign-in and ChatGPT connection remain untested."
 
           echo "NO DEPLOYMENT, NO BUILD, NO SECRET VALUES OR WEBSITE LOGINS ACCESSED."
+
+      - name: Verify existing Auth0 portal revision against merged source (read-only)
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCP_PROJECT_ID" = "plenum-computer-browser"
+          umask 077
+          FILE="$RUNNER_TEMP/plenum-owner-revision.json"
+          trap 'rm -f "$FILE"' EXIT
+          gcloud run services describe plenum-browser-owner-auth0 \
+            --project="$GCP_PROJECT_ID" --region=us-east1 --format=json > "$FILE"
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          obj=json.loads(Path(os.environ["RUNNER_TEMP"]).joinpath("plenum-owner-revision.json").read_text())
+          assert obj["metadata"]["name"]=="plenum-browser-owner-auth0"
+          assert obj["status"]["url"]=="https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app"
+          template=obj["spec"]["template"]
+          spec=template["spec"]
+          assert spec["serviceAccountName"]=="plenum-browser-runtime@plenum-computer-browser.iam.gserviceaccount.com"
+          img=spec["containers"][0]["image"]
+          merged_sha="44962c76b264959abe3db2535a19b6a3411bf849"
+          print("LIVE_OWNER_SOURCE_FIX_525_DEPLOYED:",
+                "YES" if img.endswith(":"+merged_sha) else "NOT_VERIFIED")
+          print("LIVE_OWNER_REVISION_READY:",bool(obj.get("status",{}).get("latestReadyRevisionName")))
+          ann=template.get("metadata",{}).get("annotations",{})
+          print("SERVICE_MIN_INSTANCES:",obj["metadata"].get("annotations",{}).get("run.googleapis.com/minScale",ann.get("autoscaling.knative.dev/minScale","NOT_REPORTED")))
+          print("OWNER_BROWSER_COST_PROVEN_ZERO: NO")
+          print("Official Google Cloud Free Tier is monthly/account-shared; project metadata cannot prove remaining unused allowance or exclude Artifact Registry, storage and network charges.")
+          print("READ_ONLY_PRIVATE_BROWSER_AUDIT: SUCCESS")
+          PY

@@ -1,4 +1,12 @@
 # Plenum Computer Browser: progress and acceptance ledger
+## 2026-11-12 | Read-only owner browser live-revision audit before any further cloud release
+
+The original browser source fix [PR #525](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/525) was merged SHA `44962c76b264959abe3db2535a19b6a3411bf849` after four exact-head green CI checks, but no matching new owner Cloud Run revision was established. Rather than repeat tests or submit a potentially billed Cloud Build, Engineering reused the pre-existing `.github/workflows/computer-browser-cloud-identity-preflight.yml` GitHub OIDC workflow and added ONE read-only production metadata gate: verify only the existing Auth0 `plenum-browser-owner-auth0` service identity and original signed URL, and report whether its image tag matches the merged fix. The check returns sanitized Boolean evidence without exposing cookies, account data, tokens, arbitrary URLs or Cloud Run environment variables, and changes NOTHING in Google Cloud. It explicitly labels `OWNER_BROWSER_COST_PROVEN_ZERO: NO`: Cloud Build, Cloud Run and Artifact Registry are free only within account-shared/usage bounds, and the linked Google service account may not have billing-history permissions. Free-tier descriptions are **not** proof that an additional build/release will be $0. Official: https://cloud.google.com/build/pricing and https://cloud.google.com/run/pricing .
+
+A genuine subsequent protected production release is a separate action requiring verified zero-new-charge entitlement and the original founder-approved owner deploy environment; do not use paid projects automatically. If status confirms not deployed, keep corrected source evidence accepted separately from runtime acceptance. The Cloudflare challenge remains unsupported for remote Playwright; no new browser login test is authorized. Real signed-in autonomy still needs a different, permitted owner website and private session consent.
+
+---
+
 ## 2026-11-11 23:55 EST | Original browser Cloudflare challenge UI/save gate correction — SOURCE PR
 
 **Owner's actual first-use feedback:** the original Playwright Chromium view loaded `https://dash.cloudflare.com/` but displayed the site's own Cloudflare `Performing security verification` plus `Incompatible browser extension or network configuration`, while the Plenum owner UI called it a loaded page and potentially allowed saving the invalid session. The prior original-site acceptance verdict remained **BLOCKED_EXTERNAL_CLOUDFLARE_UNSUPPORTED_CHALLENGE**, not authenticated success.
