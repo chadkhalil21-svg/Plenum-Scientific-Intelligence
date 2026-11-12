@@ -168,6 +168,47 @@ def recover_unexecuted_correct_model_route(event: dict, *, expected: str,
     return True
 
 
+def execute_bounded_direct(event: dict, *, output_dir: Path) -> dict:
+    """Efficient original one-role dispatcher for unambiguous founder PUBLIC work.
+
+    Does not claim model reasoning. The existing independent founder parser
+    selects exactly one known scope; original worker runs exactly once.
+    """
+    report = preflight(event)
+    expected = report["expected_independent_kind"]
+    checked = worker_event(event, expected)
+    try:
+        result = run_issue(checked, output_dir=output_dir)
+    except (RuntimeError, OSError, ValueError, KeyError, TypeError) as exc:
+        result = {"status":"BLOCKED_WORKER_OR_VERIFICATION","verified":False,
+                  "failure_type":type(exc).__name__}
+    verified = (
+        result.get("status") == "DRAFT_READY_FOR_FOUNDER"
+        and result.get("verified") is True
+        and bool(result.get("output_artifact"))
+    )
+    report.update({
+        "status": ("VERIFIED_BOUNDED_DIRECT_WORKER" if verified
+                   else "BLOCKED_WORKER_OR_VERIFICATION"),
+        "mode": "independent_scope_gate_without_model",
+        "model_called": False,
+        "chief_delegated": False,
+        "specialist_executed": True,
+        "specialist": KIND_TO_AGENT[expected],
+        "correct_specialist_selected": True,
+        "executed_worker_kind": expected,
+        "executed_worker_status": result.get("status"),
+        "independent_verified": verified,
+        "worker_verified_scope": result.get("verified_scope"),
+        "output_artifact": result.get("output_artifact"),
+        "model_tool_executed": False,
+        "general_autonomy_claimed": False,
+        "paid_model_used": False,
+        "founder_review_required": True,
+    })
+    return report
+
+
 def execute(event: dict, *, output_dir: Path) -> dict:
     report = preflight(event)
     if (
@@ -311,6 +352,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--event", required=True)
     parser.add_argument("--execute", action="store_true")
+    parser.add_argument("--no-model", action="store_true",
+                        help="Reuse original scope-gated worker; no Qwen manager")
     parser.add_argument("--out-dir", default="reports/workforce-chief")
     args = parser.parse_args()
     out = Path(args.out_dir)
@@ -319,13 +362,15 @@ def main() -> None:
     event = json.loads(Path(args.event).read_text(encoding="utf-8"))
     report = preflight(event)
     if args.execute:
-        report = execute(event, output_dir=out)
+        report = (execute_bounded_direct(event, output_dir=out)
+                  if args.no_model else execute(event, output_dir=out))
     out.mkdir(parents=True, exist_ok=True)
     path = out / ("chief-result-" + str(report["issue_number"]) + ".json")
     path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print("CHIEF_FOUNDER_WORKFORCE " + report["status"])
     if args.execute and report["status"] not in ("VERIFIED_CHIEF_DELEGATION",
-                                                   "VERIFIED_BOUNDED_RECOVERY"):
+                                                   "VERIFIED_BOUNDED_RECOVERY",
+                                                   "VERIFIED_BOUNDED_DIRECT_WORKER"):
         raise SystemExit(1)
 
 
