@@ -1,0 +1,67 @@
+name: Plenum Chief | One Bounded Original Mission Recovery
+on:
+  workflow_run:
+    workflows:
+      - Plenum Chief | Founder Model-Directed Specialist Command
+    types: [completed]
+  pull_request:
+    paths:
+      - 'src/plenum_ai/chief_retry_gate.py'
+      - 'tests/test_chief_retry_gate.py'
+      - '.github/workflows/chief-mission-auto-retry.yml'
+permissions:
+  contents: read
+concurrency:
+  group: original-chief-retry-${{ github.event.workflow_run.id || github.ref }}
+  cancel-in-progress: false
+jobs:
+  original-owner-partial-team-only:
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.workflow_run.event == 'issues' &&
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.run_attempt == 1 &&
+      github.event.workflow_run.actor.login == 'chadkhalil21-svg'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    permissions:
+      contents: read
+      issues: read
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download ONLY same original failed Chief run public artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: chief-founder-public-*
+          merge-multiple: true
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          path: reports/workforce-chief
+      - name: One GitHub native retry ONLY for provably failed sibling and valid completed artifact
+        run: >-
+          PYTHONPATH=src python -m plenum_ai.chief_retry_gate
+          --event "$GITHUB_EVENT_PATH" --artifact-dir reports/workforce-chief
+  source-policy-only:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate public owner scope and one-attempt proof WITHOUT network or AI
+        run: PYTHONPATH=src python -m unittest discover -s tests -p test_chief_retry_gate.py -v
