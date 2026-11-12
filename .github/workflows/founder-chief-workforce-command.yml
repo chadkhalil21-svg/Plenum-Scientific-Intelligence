@@ -84,10 +84,10 @@ jobs:
         run: |
           if [ "$PLENUM_TASK_KIND" = '[Plenum Chief] public mission' ]; then
             timeout 600 python -m plenum_ai.chief_team_mission \
-              --event "$GITHUB_EVENT_PATH" --execute --no-model --out-dir reports/workforce-chief
+              --event "$GITHUB_EVENT_PATH" --execute --out-dir reports/workforce-chief
           else
             timeout 700 python -m plenum_ai.chief_workforce_command \
-              --event "$GITHUB_EVENT_PATH" --execute --out-dir reports/workforce-chief
+              --event "$GITHUB_EVENT_PATH" --execute --no-model --out-dir reports/workforce-chief
           fi
       - name: Durable founder status, no task text or credentials in comment
         if: always()
