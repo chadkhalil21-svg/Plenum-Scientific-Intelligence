@@ -130,8 +130,12 @@ jobs:
           else:
               status='BLOCKED_CHIEF_OR_VERIFICATION'
               lines=['No independently verified model/worker result']
-          marker='<!-- plenum-founder-chief-run:'+run+' -->'
+          attempt=os.environ.get('GITHUB_RUN_ATTEMPT','1')
+          if not attempt.isdecimal() or len(attempt)>3:
+              raise ValueError('Invalid original GitHub run attempt')
+          marker='<!-- plenum-founder-chief-run:'+run+':attempt:'+attempt+' -->'
           body=(marker+'\n**Chief status: '+status+'**\n'+lines[0]+
+                '\nAttempt: '+attempt+
                 '\nRun: https://github.com/'+os.environ['GH_REPO']+
                 '/actions/runs/'+run+
                 '\nPublic-only research or drafts; no credentials or external account changes.')
