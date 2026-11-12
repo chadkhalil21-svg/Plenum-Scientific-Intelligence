@@ -169,6 +169,7 @@ class FounderChiefWorkforcePolicy(TestCase):
         with patch("plenum_ai.chief_workforce_command.run_issue",side_effect=worker):
             item=execute_bounded_single(e,output_dir=Path("reports/workforce-chief"))
         self.assertEqual(len(calls),1)
+        self.assertEqual(item["output_artifact"],"workers/public_program/issue-911/code")
         self.assertEqual(item["status"],"VERIFIED_BOUNDED_SINGLE")
         self.assertFalse(item["model_called"])
         self.assertFalse(item["chief_delegated"])
