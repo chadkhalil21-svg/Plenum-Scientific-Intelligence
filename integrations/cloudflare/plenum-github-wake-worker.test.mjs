@@ -1,12 +1,26 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {webcrypto} from "node:crypto";
-import worker, {parsePublicIssueId} from "./plenum-github-wake-worker.mjs";
+import worker, {parsePublicIssueId, PublicWakeReplayGuard} from "./plenum-github-wake-worker.mjs";
 
 if (!globalThis.crypto) globalThis.crypto = webcrypto;
 const secret = "plenum-test-HMAC-nonproduction-secret-0123456789";
 const github = "fake-token-for-test-not-a-provider-secret";
-const env = {PLENUM_WEBHOOK_HMAC_SECRET:secret, PLENUM_GITHUB_DISPATCH_TOKEN:github};
+function replayBinding() {
+  const items = new Map();
+  const ctx = {storage:{transaction: async (fn) => fn({
+    get: async (key) => items.get(key),
+    put: async (key, value) => {items.set(key, value);}
+  })}};
+  const guard = new PublicWakeReplayGuard(ctx);
+  return {getByName: (name) => {
+    assert.equal(name,"plenum-public-wake");
+    return guard;
+  }};
+}
+const env = {PLENUM_WEBHOOK_HMAC_SECRET:secret,
+  PLENUM_GITHUB_DISPATCH_TOKEN:github,
+  PLENUM_REPLAY_GUARD:replayBinding()};
 const encoder = new TextEncoder();
 
 async function signed(id, {stamp = Math.floor(Date.now() / 1000)} = {}) {
@@ -47,6 +61,28 @@ test("valid signed public issue ID wakes original repo without sending message c
       client_payload:{issue_number:789}});
     assert.equal(calls[0].init.body.includes(secret),false);
   } finally {globalThis.fetch=old;}
+});
+
+test("second valid signed wake for the same issue is rejected without a dispatch",async () => {
+  const old = globalThis.fetch, calls=[];
+  globalThis.fetch=async (...args) => {
+    calls.push(args);
+    return new Response(null,{status:204});
+  };
+  try {
+    const scoped = {...env,PLENUM_REPLAY_GUARD:replayBinding()};
+    assert.equal((await worker.fetch(await signed(987654),scoped)).status,202);
+    const second=await worker.fetch(await signed(987654),scoped);
+    assert.equal(second.status,409);
+    assert.equal((await second.json()).error,"duplicate_issue_wake");
+    assert.equal(calls.length,1);
+  } finally {globalThis.fetch=old;}
+});
+
+test("missing replay binding fails closed before dispatch",async () => {
+  const scoped={PLENUM_WEBHOOK_HMAC_SECRET:secret,
+    PLENUM_GITHUB_DISPATCH_TOKEN:github};
+  assert.equal((await worker.fetch(await signed(867530),scoped)).status,503);
 });
 
 test("invalid signature and expired request cannot dispatch",async () => {
