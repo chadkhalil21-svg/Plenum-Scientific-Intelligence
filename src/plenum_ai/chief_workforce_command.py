@@ -168,6 +168,46 @@ def recover_unexecuted_correct_model_route(event: dict, *, expected: str,
     return True
 
 
+def execute_bounded_single(event: dict, *, output_dir: Path) -> dict:
+    """Use existing original worker for already-known public kind without waking Qwen.
+
+    This is deterministic and independently checked, NOT model-directed autonomy.
+    A failed model run cannot be rehabilitated merely by a green status here.
+    """
+    report = preflight(event)
+    kind = report["expected_independent_kind"]
+    task = worker_event(event, kind)
+    try:
+        outcome = run_issue(task, output_dir=output_dir)
+    except (RuntimeError, OSError, ValueError, KeyError, TypeError) as exc:
+        outcome = {"status":"BLOCKED_WORKER_OR_VERIFICATION",
+                   "verified":False,"failure_type":type(exc).__name__}
+    accepted = (
+        outcome.get("status") == "DRAFT_READY_FOR_FOUNDER"
+        and outcome.get("verified") is True
+        and bool(outcome.get("output_artifact"))
+    )
+    report.update({
+        "status": ("VERIFIED_BOUNDED_SINGLE" if accepted
+                   else "BLOCKED_ORIGINAL_BOUNDED_SPECIALIST"),
+        "model_called": False,
+        "chief_delegated": False,
+        "specialist_executed": True,
+        "specialist": KIND_TO_AGENT[kind],
+        "executed_worker_kind": kind,
+        "executed_worker_status": outcome.get("status"),
+        "independent_verified": accepted,
+        "worker_verified_scope": outcome.get("verified_scope"),
+        "output_artifact": outcome.get("output_artifact"),
+        "failure_type": outcome.get("failure_type"),
+        "founder_review_required": True,
+        "no_new_workforce_model_created": True,
+        "general_autonomy_proved": False,
+        "deterministic_original_specialist": True,
+    })
+    return report
+
+
 def execute(event: dict, *, output_dir: Path) -> dict:
     report = preflight(event)
     if (
@@ -319,13 +359,19 @@ def main() -> None:
     event = json.loads(Path(args.event).read_text(encoding="utf-8"))
     report = preflight(event)
     if args.execute:
-        report = execute(event, output_dir=out)
+        # Keep the historical Qwen/Deep Agents path only for explicit private
+        # experimental invocation, never the ordinary GitHub issue queue.
+        if os.environ.get("PLENUM_CHIEF_EXPERIMENTAL_MODEL") == "true":
+            report = execute(event, output_dir=out)
+        else:
+            report = execute_bounded_single(event, output_dir=out)
     out.mkdir(parents=True, exist_ok=True)
     path = out / ("chief-result-" + str(report["issue_number"]) + ".json")
     path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print("CHIEF_FOUNDER_WORKFORCE " + report["status"])
     if args.execute and report["status"] not in ("VERIFIED_CHIEF_DELEGATION",
-                                                   "VERIFIED_BOUNDED_RECOVERY"):
+                                                   "VERIFIED_BOUNDED_RECOVERY",
+                                                   "VERIFIED_BOUNDED_SINGLE"):
         raise SystemExit(1)
 
 
