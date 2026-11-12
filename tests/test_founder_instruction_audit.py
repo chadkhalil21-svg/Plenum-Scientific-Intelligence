@@ -1,5 +1,8 @@
 """Focused checks for *new* founder-instruction acceptance gate, no network."""
 import unittest
+import io
+import json
+from unittest.mock import patch
 
 from plenum_ai import founder_instruction_audit as a
 
@@ -14,6 +17,16 @@ def objective(scope, pr=None, issue=None):
 
 
 class FounderInstructionAuditTests(unittest.TestCase):
+    def test_original_github_read_does_not_truncate_large_valid_comment_json(self):
+        from plenum_ai.weekly_founder_brief import github_json, REPO
+        big = json.dumps({"body": "x" * 181000}).encode("utf-8")
+        with patch("plenum_ai.weekly_founder_brief.urlopen", return_value=io.BytesIO(big)):
+            result = github_json(
+                "https://api.github.com/repos/" + REPO + "/issues/432/comments",
+                "redacted-test-only",
+            )
+        self.assertEqual(len(result["body"]), 181000)
+
     def test_all_user_abstracts_have_owners_and_no_false_complete_history(self):
         doc=a.load_coverage()
         self.assertFalse(doc["complete_reconstruction"])
