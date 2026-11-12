@@ -1,4 +1,10 @@
 # Plenum Computer Browser: progress and acceptance ledger
+## 2026-11-12 | Local Browser Use job-specific installation correction
+
+The single follow-up public founder run [#537](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/537) used the new local job but still failed before AI inference because prior #535 corrected the **legacy optional-key job's** identical install command, not the separate `owner-local-ollama` job. Its original job logs still showed `python -m pip install browser-use==0.13.14` followed by missing `uvx`. Exact scoped correction: add pinned free `uv==0.9.7` and `command -v uvx` **inside owner-local-ollama** only, and perform one targeted live run. Previous successful browser source or empty output must not count as autonomous agent success. No paid inference or private account operations are authorized.
+
+---
+
 ## 2026-11-12 | First genuine local Browser Use run: missing free uvx dependency, targeted correction
 
 The original founder command [issue #533](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/533) triggered live local Ollama Browser Use workflow [run #43256360216](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43256360216). The pinned upstream `browser-use==0.13.14` installed successfully; **`browser-use install` failed before any local Qwen inference or Chromium visit** because it calls `uvx` (not on the GitHub runner), confirmed in exact original logs: `FileNotFoundError: [Errno 2] No such file or directory: 'uvx'`. This is a simple prerequisite fault, NOT evidence of Browser Use AI success or failure.
