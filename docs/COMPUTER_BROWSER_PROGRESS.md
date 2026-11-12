@@ -1,4 +1,12 @@
 # Plenum Computer Browser: progress and acceptance ledger
+## 2026-11-12 | Minister public Browser Use general research admission (proposed)
+
+Following independently accepted one-primary-source model-directed free [original run #43279483647](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43279483647), the Minister is extending the **original** Browser Use 0.13.14 local Qwen worker through one founder-only JSON issue envelope, **not** adding another agent, credential broker, browser service or model. New `Computer Browser: free public research` issue must have exact `plenum-browser-use-public-research-v1` schema, one direct approved public HTTPS host (arxiv.org, science.nasa.gov, news.mit.edu, www.nasa.gov, www.nih.gov), queryless URL, a bounded plain-language question, no site writes and no account access. Existing owner-identity and original dedicated GitHub workflow supply the $0 on-demand temporary Ollama. Existing official Browser Use `flash_mode` and Ollama `think=false` retained. Proposed answer is explicitly **untrusted and not fact-checked**, even if original browser history verifies actual source visit, model done and source question completion. Legacy fixed arXiv acceptance remains preserved; do **not** rerun. No claims about private GCS profiles, universal login/vault, all websites, continuous hosting or flawless model autonomy.
+
+**Acceptance gate:** merge only after existing browser guard and targeted unit checks. Then execute one NEW useful public source question (not the old fixed paper) and read its actual original GitHub issue answer and worker JSON. Report real execution or diagnosed blocker exactly once.
+
+---
+
 
 ## 2026-11-12 | ACCEPTED: real free model-directed Browser Use primary-source read
 
