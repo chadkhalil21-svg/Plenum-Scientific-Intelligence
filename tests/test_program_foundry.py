@@ -27,6 +27,21 @@ class ProgramFoundryTests(unittest.TestCase):
                 )
                 self.assertEqual(done.returncode,0,done.stderr[-1200:])
 
+    def test_founder_workforce_objective_up_to_120_characters(self):
+        """The specialist must accept objectives already authorized by the 120-char Chief inbox."""
+        objective = (
+            "Research sources and prepare Python program starter for Browser Use "
+            "and Playwright MCP workforce integration"
+        )
+        self.assertEqual(len(objective), 108)
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = pathlib.Path(tmp) / "accepted"
+            result = generate_program("data_validator", objective, folder)
+            self.assertEqual(result["public_topic"], objective)
+            self.assertTrue((folder / "main.py").is_file())
+            with self.assertRaises(ValueError):
+                generate_program("data_validator", "A" * 121, pathlib.Path(tmp) / "too_long")
+
     def test_path_and_topics_are_restricted(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=pathlib.Path(tmp)
