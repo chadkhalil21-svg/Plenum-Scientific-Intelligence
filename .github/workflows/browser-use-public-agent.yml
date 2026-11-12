@@ -97,7 +97,7 @@ jobs:
       github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
       github.event.issue.user.login == 'chadkhalil21-svg' &&
       github.event.issue.title == 'Computer Browser: optional Browser Use local Ollama' &&
-      github.event.issue.body == 'RUN_BROWSER_USE_LOCAL_OLLAMA:example.com:MAX_STEPS_5:2026-11-12'
+      github.event.issue.body == 'RUN_BROWSER_USE_LOCAL_OLLAMA:arxiv.org:SKILLOPT_TITLE:MAX_STEPS_4:2026-11-12'
     runs-on: ubuntu-latest
     timeout-minutes: 17
     steps:
@@ -126,7 +126,7 @@ jobs:
             sleep 2
           done
           docker exec plenum-browser-use-local-ollama ollama pull qwen3:1.7b
-      - name: Run one founder-scoped public browser task without paid inference
+      - name: Run one genuine founder-scoped SkillOpt paper-title research task without paid inference
         timeout-minutes: 5
         env:
           PLENUM_BROWSER_FREE_LOCAL: confirmed
@@ -152,7 +152,7 @@ jobs:
           else
             STATUS="$(python -c 'import json,sys;print(json.load(open(sys.argv[1])).get("status","unknown"))' "$REPORT_PATH")"
             if [ "$STATUS" = verified_public_heading ]; then
-              gh issue comment "$ISSUE" --body "PASS LIMITED: Browser Use with self-hosted Qwen/Ollama reported public example.com heading in <=5 steps, no model API key. This does NOT prove general browser autonomy or authenticated websites."
+              gh issue comment "$ISSUE" --body "PASS LIMITED: Browser Use with local Qwen/Ollama navigated the real SkillOpt arXiv paper, independently matched its visible title, and completed the task in <=4 model-directed steps, no model API key. This does NOT prove general browser autonomy or authenticated websites."
             else
               gh issue comment "$ISSUE" --body "NOT VERIFIED: Browser Use with free local Qwen/Ollama returned $STATUS. Do not retry unchanged model, install paid API, or count task as completed."
             fi

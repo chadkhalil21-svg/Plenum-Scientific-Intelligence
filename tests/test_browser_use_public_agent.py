@@ -49,6 +49,21 @@ class BrowserUsePolicyTest(unittest.TestCase):
         with patch.dict(os.environ, {"PLENUM_BROWSER_FREE_LOCAL": "no"}, clear=True):
             self.assertIsNone(MODULE["free_model_config"]())
 
+    def test_local_mode_is_nonrepetitive_primary_source_and_answer_not_leaked(self):
+        settings = MODULE["public_agent_settings"](local_ollama=True)
+        self.assertEqual(settings["target"], "https://arxiv.org/abs/2605.23904")
+        self.assertEqual(settings["allowed_domains"], ["arxiv.org"])
+        self.assertEqual(settings["max_steps"], 4)
+        # A model parroting the task prompt must not count as browser success.
+        self.assertNotIn(MODULE["LOCAL_RESEARCH_EXPECTED_TITLE"], settings["task"])
+        self.assertFalse(settings["site_mutations_approved"])
+        self.assertFalse(settings["user_credentials_available"])
+        self.assertTrue(MODULE["founder_task_valid"](
+            author=MODULE["OWNER"], title=MODULE["LOCAL_TITLE"], body=MODULE["LOCAL_BODY"]))
+        self.assertFalse(MODULE["founder_task_valid"](
+            author=MODULE["OWNER"], title=MODULE["LOCAL_TITLE"],
+            body="RUN_BROWSER_USE_LOCAL_OLLAMA:example.com:MAX_STEPS_5:2026-11-12"))
+
     def test_upstream_is_optional_and_domain_is_frozen(self):
         s = MODULE["public_agent_settings"]()
         self.assertEqual(s["target"], "https://example.com/")
