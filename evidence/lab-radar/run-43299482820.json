@@ -1,0 +1,201 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "43299482820",
+  "source_revision": "e9d1dc5268a54cb772b0f0cf7c7b6cebbffda40a",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-12T20:21:46.419198+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 28,
+    "sources_returning_records": 24,
+    "source_outages": [
+      "un_climate_environment",
+      "gdelt_headlines"
+    ],
+    "new_public_links_before_limit": 25,
+    "signals": [
+      {
+        "category": "universities",
+        "publisher": "MIT News",
+        "source": "mit_labs",
+        "url": "https://news.mit.edu/2026/new-research-could-lead-faster-trustworthy-ai-models-climate-prediction-1112",
+        "title_untrusted": "New research could lead to faster, trustworthy AI models for climate prediction",
+        "claimed_publication_date": "Thu, 12 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261112025527.htm",
+        "title_untrusted": "Common forever chemicals linked to nearly double the rate of aggressive breast cancer",
+        "claimed_publication_date": "Thu, 12 Nov 2026 04:34:53 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03639-2",
+        "title_untrusted": "This little brown mushroom is laced with a hallucinogen — and lethal toxins",
+        "claimed_publication_date": "2026-11-12",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "health",
+        "publisher": "U.S. National Institutes of Health",
+        "source": "nih_biomedical_news",
+        "url": "https://www.nih.gov/news-events/news-releases/first-time-researchers-map-out-brains-behavioral-gatekeeper",
+        "title_untrusted": "For the first time, researchers map out the brain’s behavioral gatekeeper",
+        "claimed_publication_date": "Thu, 11/12/2026 - 11:00",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "software",
+        "publisher": "GitHub public repository index",
+        "source": "github_public_code",
+        "url": "https://github.com/jatinmahajan06/Shadow-Byte-Syndicate",
+        "title_untrusted": "jatinmahajan06/Shadow-Byte-Syndicate",
+        "claimed_publication_date": "2026-11-12T06:13:12Z",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026wljclj",
+        "title_untrusted": "M 1.3 - 54 km NW of Ninilchik, Alaska",
+        "claimed_publication_date": "1794513941639",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261111221501.htm",
+        "title_untrusted": "Scientists discover a common sugar may help cancer cells break free and spread",
+        "claimed_publication_date": "Wed, 11 Nov 2026 23:39:31 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03665-0",
+        "title_untrusted": "Who needs sex? Kelp reproduce asexually when no mate is nearby",
+        "claimed_publication_date": "2026-11-12",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "software",
+        "publisher": "GitHub public repository index",
+        "source": "github_public_code",
+        "url": "https://github.com/sjsj0101/science-of-science-papers",
+        "title_untrusted": "sjsj0101/science-of-science-papers",
+        "claimed_publication_date": "2026-11-12T02:14:42Z",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026wlizan",
+        "title_untrusted": "M 1.4 - 30 km WSW of Tatitlek, Alaska",
+        "claimed_publication_date": "1794513706481",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261110042601.htm",
+        "title_untrusted": "Walking and weight training may not be enough to keep your bones strong",
+        "claimed_publication_date": "Wed, 11 Nov 2026 19:10:23 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/s41586-026-11409-3",
+        "title_untrusted": "Author Correction: SLAMF6 as a drug-targetable suppressor of T cell immunity against cancer",
+        "claimed_publication_date": "2026-11-12",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026wlipva",
+        "title_untrusted": "M 1.4 - 33 km W of Salamatof, Alaska",
+        "claimed_publication_date": "1794513065687",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "NASA",
+        "source": "nasa_research",
+        "url": "https://www.nasa.gov/missions/artemis/i-am-artemis-katie-spicer/",
+        "title_untrusted": "I Am Artemis Katie Spicer",
+        "claimed_publication_date": "Thu, 12 Nov 2026 20:10:02 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03666-z",
+        "title_untrusted": "Record-breaking Ebola outbreak: phone data reconstruct first weeks of spread",
+        "claimed_publication_date": "2026-11-12",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75465862",
+        "title_untrusted": "M 2.6 - 1 km ENE of Aromas, CA",
+        "claimed_publication_date": "1794512457270",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
