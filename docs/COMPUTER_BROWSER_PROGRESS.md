@@ -1,4 +1,14 @@
 # Plenum Computer Browser: progress and acceptance ledger
+## 2026-11-11 23:55 EST | Original browser Cloudflare challenge UI/save gate correction — SOURCE PR
+
+**Owner's actual first-use feedback:** the original Playwright Chromium view loaded `https://dash.cloudflare.com/` but displayed the site's own Cloudflare `Performing security verification` plus `Incompatible browser extension or network configuration`, while the Plenum owner UI called it a loaded page and potentially allowed saving the invalid session. The prior original-site acceptance verdict remained **BLOCKED_EXTERNAL_CLOUDFLARE_UNSUPPORTED_CHALLENGE**, not authenticated success.
+
+**Engineering correction, do not confuse with bypass:** [PR #525](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/525) adds exactly one private, Boolean-only `unsupported_cloudflare_challenge` health flag when Chromium on **exact hostname** `dash.cloudflare.com` observes both error phrases in document text. No page text, challenge text, credential, cookie, or URL is returned to the client or a public GitHub issue; only the one-bit classified state. Existing iPad `/owner/sign-in` displays the accurate blocked outcome and disables Save; original owner-verified WebSocket server also refuses a forged Save when that same challenge is present. No cross-origin host exceptions, security challenge workaround, extra browser, external paid service, saved session change for other sites or private credential routing. Additional targeted original-browser regressions require that exact host and refuse inferred authentication. **SOURCE ONLY / MERGE AND PROTECTED RELEASE NOT YET ACCEPTED** at creation; live screenshot cannot prove new code deployed.
+
+**Independent verification:** Run existing Private Cloud Run Browser Gateway original check and exact-head browser ledger guard; correct only actual check failures. Original online Cloudflare login challenge is unsupported by provider and MUST NOT be repeated. Cloudflare's public HMAC GitHub wake remains accepted and unaffected. For actual Cloudflare account work, prefer a properly owner-authorized read-only Cloudflare API integration; for authenticated Playwright acceptance, require another real site permitting automation and owner sign-in/consent, then ≥3 meaningful saved-session read-only actions and independent outcome.
+
+---
+
 
 ## 2026-11-11 23:45 EST | REAL Cloudflare challenge stop-loss — supersedes earlier candidate
 
