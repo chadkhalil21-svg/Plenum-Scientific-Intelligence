@@ -10,7 +10,7 @@ import json
 import re
 
 KINDS = ("research_cli", "data_validator", "geometry_designer")
-TOPIC = re.compile(r"^[A-Za-z0-9 ,._()/-]{3,100}$")
+TOPIC = re.compile(r"^[A-Za-z0-9 ,._()/-]{3,120}$")
 
 
 def _scaffold(kind, topic):
