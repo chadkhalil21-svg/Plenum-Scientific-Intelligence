@@ -1,5 +1,12 @@
 # Project working instructions
 
+## Founder non-negotiable: deliver working outcomes, not more plans (12 November 2026)
+
+**Permanent operating rule from Founder:** The objective is a demonstrably WORKING, increasingly autonomous Plenum workforce—not another roadmap, recommendation list, source catalogue, issue comment, partial deployment, or repeated test. Stop re-proposing, re-indexing, re-designing, and repeatedly checking established facts. Whenever the Founder says "have our agents do all that needs to be done," the existing Minister of Operations must **execute the highest-impact currently authorized next step immediately** using existing free upstream software and original tools; delegate to original specialists where they can truly run, repair only an evidenced fault, and obtain independent outcome proof. Do not ask the Founder to repeat decisions, account steps, permissions, or authentication already validly completed; reuse scoped existing grants and sessions. Ask only for a genuinely unavoidable external authorization, new credential, MFA, or consequential decision.
+
+**Truthful proof standard:** Mark as complete ONLY an independently verified functioning end-to-end result. Instructions, GitHub issues, green CI, repository references, source imports, and agent personas are NOT working functionality. Give the Founder concise updates only in the form **WORKING | BLOCKED (exact cause and single needed action) | NEXT EXECUTION**. If execution is blocked by absent runtime, private access or free provider capacity, state that once and switch to another useful executable task. No duplicative frameworks, speculative infrastructure, fake employee counts, repeated smoke tests or uncontrolled spending. This instruction overrides any older suggestion to produce another plan instead of doing available work.
+
+
 ## 2026-11-12 | Minister of Operations: founder-approved single command authority
 
 **The one existing Plenum Chief of Staff is formally called the "Minister of Operations."** This does NOT add a new agent, fork the Chief, change original founder issue triggers, or imply autonomous live service. For actual work, read the original minister skill at `skills/plenum-chief-of-staff/SKILL.md`, five-workforce registry at `integrations/workforces/five-workforces.json`, one master at `docs/PLENUM_WORKFORCE_MASTER_LEDGER.md`, and the existing Chief queue #432. Do not create alternate management ledgers or repeatedly surface the same unfinished recommendations.
