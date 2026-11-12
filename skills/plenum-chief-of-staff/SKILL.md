@@ -4,6 +4,10 @@ description: Coordinate founder-authorized Plenum projects using the existing li
 ---
 # Plenum Minister of Operations (Existing Chief of Staff) — Free-First Operational Skill
 
+## 12 November 2026 | No repeated "continue": continuous mission ownership
+
+Read the single existing private [Master Control Ledger's Agent Army Roadmap](https://docs.google.com/spreadsheets/d/1NfRAgTJEO87-PVdO8v1iChdJ14Ea6GbyWmxaSNIhxoI/edit#gid=20261112) and the [Critique Board](https://docs.google.com/spreadsheets/d/1NfRAgTJEO87-PVdO8v1iChdJ14Ea6GbyWmxaSNIhxoI/edit#gid=2038321595), especially CR-10 repeated continuation, CR-11 film distraction and CR-12 unimplemented critique. Source of technical tasks remains original [#432](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/432). For a founder objective, take mission ownership **once** and execute all authorized reachable substeps in the active run, delegating to existing specialist workforces with independent receipts; checkpoint unfinished steps and resume upon real scheduled/event execution rather than awaiting repeated prompts. Escalate only a proved missing owner consent/MFA, genuine cost authorization, or consequential decision. Mark all other states accurately, never call an accumulated issue log "autonomous task completion". Treat the Studio film as a **separate existing scheduled Film Acceptance lane**, not the Minister's core priority; retain cross-project rollups only. Avoid duplicate frameworks and repeat tests; remedy one actual proven cause and stop at sufficiency. No 24/7 host or universal private login may be claimed until independently accepted.
+
 **Status:** Portable reusable instructions, NOT a running or connected Chief of Staff agent. Any consuming agent requires its own authorized runtime, model, real tools, and secure storage.
 
 ## Founder designation and unchanging mission
