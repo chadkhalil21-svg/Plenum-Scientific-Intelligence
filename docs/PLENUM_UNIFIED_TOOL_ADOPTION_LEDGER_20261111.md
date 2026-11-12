@@ -23,15 +23,15 @@ This is the canonical **deduplicated register of the founder's enumerated names*
 | gstack | Coding/review/release workflow | `EVALUATE` |
 | Impeccable | Design quality audit | `EVALUATE` |
 | NVIDIA SkillSpector | Scan third-party skills before adoption | `PRIORITY` |
-| Google AQuA | Unverified name for agent failure analysis; use established evaluation tools instead | `IDENTIFY` |
+| Google AQuA | Google's open-source Ambient Quality Agent for diagnosing production agent failures; Google Cloud deployment may incur charges | `SOURCE_VERIFIED_COST_GATED` |
 | Karpathy autoresearch | Bounded automated research/experiments | `EVALUATE` |
 | Scheduled agents | Timed task execution pattern, not a vendor | `EXISTING_PATTERN` |
 | Evaluation rubric | Outcome scorecard, not a vendor | `REQUIRED_METHOD` |
 | Build Loop | Iteration/review loop; ambiguous product identity | `IDENTIFY` |
 | Natural-language agent orchestration | User-command interface pattern, not a vendor | `EXISTING_PATTERN` |
 | Hermes Jarvis | Proposed voice/personal agent interface; exact package unverified | `IDENTIFY` |
-| Hermes Kanban | Proposed agent work board; exact package unverified | `IDENTIFY` |
-| F Cancer skill | Unidentified health-related skill; verify source/meaning and domain authorization | `IDENTIFY` |
+| Hermes Kanban | Official Hermes SQLite-based multi-agent task board; free source, requires a real authorized Hermes runtime | `SOURCE_VERIFIED_HOST_GATED` |
+| F Cancer skill | petergyang/fuck-cancer: MIT-licensed patient-care navigation skill, not general agent tooling or clinical advice | `SOURCE_VERIFIED_DOMAIN_LIMITED` |
 | Divergence | Ambiguous research/agent product name; verify exact source | `IDENTIFY` |
 
 ### Coding, agent execution & developer tools — 12 entries
@@ -249,7 +249,9 @@ This is the canonical **deduplicated register of the founder's enumerated names*
 | CAT-10 | P2 | Chief + Verification | Roll up status by platform: REVIEWED / ADOPTED_SOURCE / EXECUTED / INDEPENDENTLY_ACCEPTED / DEFERRED / BLOCKED, with exact evidence URI and elapsed/cost readback | OPEN |
 
 ## Original-source verification and cost notes
-- **Google AQuA:** precise Google project label is **not corroborated**; prefer the official [Google ADK agent evaluation documentation](https://google.github.io/adk-docs/evaluate/) and established failure-classification guidance rather than assuming this tool exists.
+- **Google AQuA (corrected 2026-11-12):** Google's [October 8, 2026 official announcement](https://developers.googleblog.com/en/the-outer-loop-insights-first-an-ambient-quality-agent-that-diagnoses-your-production-agent/) identifies the open-source Ambient Quality Agent and links to its [reference implementation](https://github.com/google/adk-recipes/tree/main/core/python/ambient-quality-agent). Code availability is **not** a free persistent Google Cloud/BigQuery/Gemini deployment; use the existing local evaluator by default when $0 spending is required.
+- **Hermes Kanban (corrected 2026-11-12):** official [Hermes multi-agent task-board documentation](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/user-guide/features/kanban.md) describes an SQLite-backed dispatcher and review workflow. Do not claim installed or running in Plenum without a real host and readback; prefer the existing GitHub queue until a host exists.
+- **F Cancer skill (corrected 2026-11-12):** [petergyang/fuck-cancer](https://github.com/petergyang/fuck-cancer), MIT-licensed care-navigation skill, includes an API-key-free trial-search helper. This does not diagnose or treat cancer. Review only for a purpose-specific patient-support mission; not relevant to Plenum coding workforce.
 - **Freebuff:** [vendor](https://freebuff.com/) and [repository](https://github.com/CodebuffAI/freebuff) describe ad-funded coding, with daily model/hour limitations, privacy terms and optional paid upgrades; **not** truly unlimited free compute for our workforce.
 - **Airia:** [official pricing listing](https://legal.airia.com/pricing/) lists paid Professional from $25/month, while other current public listings mention trial/free allowances; **do not assume ongoing free no-code agent capacity**.
 - **SideShift:** [vendor](https://sideshift.app/) describes creator campaigns and paid software; not a free-first priority.
