@@ -1,4 +1,12 @@
 # Plenum Computer Browser: progress and acceptance ledger
+## 2026-11-12 | First genuine local Browser Use run: missing free uvx dependency, targeted correction
+
+The original founder command [issue #533](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/533) triggered live local Ollama Browser Use workflow [run #43256360216](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43256360216). The pinned upstream `browser-use==0.13.14` installed successfully; **`browser-use install` failed before any local Qwen inference or Chromium visit** because it calls `uvx` (not on the GitHub runner), confirmed in exact original logs: `FileNotFoundError: [Errno 2] No such file or directory: 'uvx'`. This is a simple prerequisite fault, NOT evidence of Browser Use AI success or failure.
+
+Targeted correction (this PR): install the existing free `uv` CLI package, pinned at `uv==0.9.7`, in the one existing Browser Use local install step before `browser-use install`; no framework rewrite, new backend, paid service, private login, broad site permissions or repeated unrelated tests. One new founder issue after merged focused checks may check the **first truly model-executed task**. If small local model is unreliable, mark that specifically and stop unchanged retries; original Playwright MCP remains available.
+
+---
+
 ## 2026-11-12 | Upstream Browser Use + local Qwen/Ollama no-key first-use candidate (PR #531)
 
 Founder directs reuse of existing open-source browser rather than building another. Existing `browser-use==0.13.14` Python adapter and Microsoft Playwright MCP remain untouched as browser engines; the optional Browser Use worker now has an **explicit no-model-API-key choice** using `ChatOllama(model="qwen3:1.7b", host="http://127.0.0.1:11434")` from the exact upstream Browser Use 0.13.14 release. The original Ollama/Qwen 1.7B model executes in an isolated, temporary GitHub Actions runner on loopback and is destroyed at job end. Existing OpenRouter free API-key route remains optional. This is legitimate bounded public software integration/research, not a 24/7 commercial inference host; model download and machine usage are finite.
