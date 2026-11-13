@@ -1,5 +1,17 @@
 # Project working instructions
 
+## 2026-11-13 | FOUNDER'S STANDING NON-NEGOTIABLE: IMPORT BEFORE BUILD — ALL PLENUM WORK
+
+**Default doctrine for every project, workforce, browser, software integration, document production and research task:** "The software we require largely exists already. We should import and reuse it, not build another." Enforce this without waiting for founder to repeat it. First inspect the existing canonical ledger and running systems; locate maintained, freely usable upstream software, official provider APIs/SDKs, licensed repositories, and installed tools. **Integrate the smallest compatible upstream component into the ORIGINAL existing system**, rather than inventing a second platform, browser, memory store, vault, staff hierarchy, agent framework or custom connector. Avoid duplicate research and tests already supported by independent evidence.
+
+**Only author original code when a specific, verified integration gap remains:** assess license, cost/quotas, functionality, technical compatibility, security and maintenance first. Build only a minimal adapter, using owner-scoped permissions and independent outcome verification. Open source code is not proof of zero cloud/inference cost or automatic ChatGPT account access. Never claim "incorporated" for a link, instruction, drafted module, merged PR or CI alone; distinguish source, deployment, integration, real user mission and acceptance. Never bypass website authentication, consent, MFA or provider policies.
+
+**Browser status at this directive:** Original Playwright and encrypted owner-origin session vault exist. Independent original Browser Use + local Ollama/Qwen **public NASA FarmFlux** task succeeded (original issue [#591](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/591), original Actions run #43365791922). The separate PRIVATE GitHub ChatGPT public-browser route uses official Playwright directly (Sovereign-Gateway `.github/workflows/plenum-browser.yml`); this does not establish that every Plenum browser execution uses Browser Use. Browser Use has NOT been accepted as an agent controlling a genuine authenticated owner-saved website; issue [#310](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/310) remains OPEN. No competing browser, paid alternative, new vault or unmerged bespoke password broker.
+
+**Execution:** Minister and existing specialists must use one existing mission record, perform all actually authorized feasible steps, and report only WORKING / BLOCKED (exact single owner gate) / NEXT EXECUTION. Avoid growing an endless backlog of plans when the upstream implementation exists.
+
+---
+
 ## 2026-11-12 | Founder correction: one instruction must run an end-to-end mission
 
 **Binding critique:** CR-10..CR-12 in the *existing* Plenum Industries Master Control Ledger [Critique Board](https://docs.google.com/spreadsheets/d/1NfRAgTJEO87-PVdO8v1iChdJ14Ea6GbyWmxaSNIhxoI/edit#gid=2038321595) document the recurring repeated-"continue" loop, agent-army/film priority mixing, and governance instructions not changing real execution. [Agent Army Roadmap P0–P7](https://docs.google.com/spreadsheets/d/1NfRAgTJEO87-PVdO8v1iChdJ14Ea6GbyWmxaSNIhxoI/edit#gid=20261112) is a VIEW in the SAME founder master workbook, not a second task queue. Original technical task queue is GitHub [#432](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/432).
