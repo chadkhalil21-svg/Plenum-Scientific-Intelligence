@@ -23,11 +23,26 @@ from .owner_live_access import owner_live_origin
 from .owner_browser_use_bridge import run_owner_readonly_browser_task
 
 
+def _cloudflare_free_ready() -> bool:
+    # Account/token must be protected Cloud Run secrets, not GitHub issue text.
+    import re
+    account = os.environ.get("PLENUM_CF_AI_ACCOUNT_ID", "")
+    return (
+        os.environ.get("PLENUM_CF_AI_ENABLED") == "true"
+        and os.environ.get("PLENUM_CF_AI_FREE_PLAN_CONFIRMED") == "true"
+        and re.fullmatch(r"[A-Fa-f0-9]{32}", account) is not None
+        and bool(os.environ.get("PLENUM_CF_AI_TOKEN"))
+    )
+
+
 def _require_owner_agent_enabled():
     if (
         os.environ.get("K_SERVICE") != "plenum-browser-owner-auth0"
         or os.environ.get("PLENUM_OWNER_READONLY_AGENT_ENABLED") != "true"
-        or os.environ.get("PLENUM_BROWSER_FREE_LOCAL") != "confirmed"
+        or not (
+            os.environ.get("PLENUM_BROWSER_FREE_LOCAL") == "confirmed"
+            or _cloudflare_free_ready()
+        )
     ):
         raise HTTPException(status_code=404, detail="Private agent is not enabled")
 
@@ -76,6 +91,15 @@ def mount_owner_agent_read(app):
         _require_owner_agent_enabled()
         owner = _owner["private_owner_id"]
         forms = []
+        cloud_opt = _cloudflare_free_ready()
+        external_notice = (
+            "<p><strong>External inference privacy:</strong> selecting Workers AI "
+            "will transmit site observations and task text to Cloudflare's "
+            "zero-retention hosted model. The site login cookies remain in "
+            "the original Plenum browser. Never use this option with "
+            "unapproved sensitive website content.</p>"
+            if cloud_opt else ""
+        )
         for site in _owner_saved_origins(owner):
             token = escape(_owner_form_token(owner, site, "agent_read"), quote=True)
             forms.append(
@@ -87,6 +111,10 @@ def mount_owner_agent_read(app):
                 "autocomplete='off' required></label>"
                 "<label>Exact expected page title (independent readback) "
                 "<input name='expected_title' maxlength='180' autocomplete='off' required></label>"
+                + ("<label><input type='checkbox' name='use_cloudflare' "
+                   "value='yes'> I explicitly authorize Cloudflare Workers AI "
+                   "to process this site's task and page observations</label>"
+                   if cloud_opt else "") +
                 "<label>Type READ to authorize this website task "
                 "<input name='confirmation' maxlength='4' autocomplete='off' required></label>"
                 "<button type='submit'>Run one approved read-only task</button></form></article>"
@@ -97,11 +125,12 @@ def mount_owner_agent_read(app):
                      "</article>"]
         return _page(
             "Original Plenum private read-only agent",
-            "<p>This uses our existing Browser Use + local Qwen. Navigation and "
-            "inspection only; no click, form submission, uploading, password "
-            "entry, new account, purchases or permissions changes. "
-            "This page does not establish that a website login remains valid.</p>"
-            + "".join(forms),
+            "<p>This uses our existing Browser Use and the previously "
+            "authorized inference provider. Navigation and inspection only; "
+            "no click, form submission, uploading, password entry, new "
+            "account, purchases or permissions changes. This page does not "
+            "establish that a website login remains valid.</p>"
+            + external_notice + "".join(forms),
         )
 
     @app.post("/owner/agent-read", response_class=HTMLResponse)
@@ -112,6 +141,7 @@ def mount_owner_agent_read(app):
         expected_title: str = Form(),
         confirmation: str = Form(),
         csrf_token: str = Form(default=""),
+        use_cloudflare: str = Form(default=""),
         _owner=Depends(require_verified_owner),
     ):
         _require_owner_agent_enabled()
@@ -120,6 +150,13 @@ def mount_owner_agent_read(app):
         _verify_owner_form(request, owner, site, "agent_read", csrf_token)
         if confirmation != "READ":
             raise HTTPException(status_code=403, detail="Exact owner approval required")
+        if use_cloudflare not in ("", "yes"):
+            raise HTTPException(status_code=403, detail="Inference selection invalid")
+        external = use_cloudflare == "yes"
+        if (external and not _cloudflare_free_ready()) or (
+            not external and os.environ.get("PLENUM_BROWSER_FREE_LOCAL") != "confirmed"
+        ):
+            raise HTTPException(status_code=403, detail="Selected inference not authorized")
         _validate_owner_task(objective, expected_title)
         if not safe_url(site, origins={site}) or site not in _owner_saved_origins(owner):
             raise HTTPException(status_code=403, detail="Original saved owner session missing")
@@ -159,6 +196,7 @@ def mount_owner_agent_read(app):
                         existing_chromium_executable=pw.chromium.executable_path,
                         approval_callback=approved, independent_verify=verified,
                         approval_expires_at=deadline, max_steps=6,
+                        external_inference_consent=external,
                     )
         except HTTPException:
             raise
@@ -178,6 +216,7 @@ def mount_owner_agent_read(app):
             "<article>Task status: " + escape(status)
             + "\nWebsite: " + escape(site)
             + "\nIndependent check: exact owner-provided page title only."
+            + "\nInference route: " + ("owner-approved Cloudflare Workers AI" if external else "local")
             + "\nNo credentials, private page text or AI responses are shared."
             + "\nAccount login and three meaningful private actions remain "
               "unverified until separate provider-specific evidence is obtained."
