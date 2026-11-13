@@ -1,5 +1,9 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Corrected image BUILT; Cloud Run startup FAILED
+
+PR #618 aligned WebSocket 15.0.1; dependency dry-run and real local Uvicorn upgrade/echo/denial passed, all three PR CI passed. Authorized original release #619 / run #43473807480 successfully built Cloud Build `4abcfe1d-e6cb-4a36-a0ff-d355f7511157`, image tag `10fc08ed39b350f6b9ec8b713f05868994b640dd`. Cloud Run candidate `00042-c4p` failed startup/PORT8080 readiness; protected final readback was SKIPPED, so release NOT accepted. Do not change port/timeout blindly. Reuse existing OIDC diagnostic to pull only this exact original image and import the actual app in a read-only, no-network, no-host-mount container, without production environment, owner sessions or credentials. Print only public package versions and import exception. No new build or release until exact cause established. #310 remains OPEN.
+
 ## 2026-11-13 | Founder build logs identify exact WebSocket dependency conflict
 
 Founder original Cloud Build screenshots expose the actual failed `a6ef98ff` pip resolver error: owner Dockerfile requests `websockets==13.1`, while Browser Use 0.13.14 pulls browser-harness 0.1.13 requiring `websockets==15.0.1`. This supersedes UNKNOWN build cause; not a token, IAM or login defect. Align ONLY the original owner image pin and its build-time version assertion to 15.0.1; retain pinned Chromium, Browser Use, Uvicorn and original security boundaries. Verify dependency resolution and actual local Uvicorn WebSocket upgrade before the already-authorized original build/release retry. Source change alone is not a deployment or browser acceptance. #310 remains OPEN.
