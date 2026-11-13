@@ -32,8 +32,14 @@ def dispatch(task: dict, output_dir: Path) -> dict:
 
     if kind == "public_program":
         from .program_foundry import generate_program
-        kind_of_starter = "data_validator"
-        manifest = generate_program(kind_of_starter, objective, base / "code")
+        from .reviewed_domain_workers import match_original_capability, reuse_original_program
+        capability = match_original_capability(objective)
+        if capability:
+            # ORIGINAL reviewed validator, not another irrelevant numeric starter.
+            manifest = reuse_original_program(capability, objective, base / "code")
+        else:
+            # Unknown requests cannot claim beyond a review-only starter.
+            manifest = generate_program("data_validator", objective, base / "code")
         code = (base / "code" / "main.py").read_bytes()
         ast.parse(code.decode("utf-8"), filename="main.py")
         if (manifest.get("schema") != "plenum-reviewable-program-v1"
@@ -44,10 +50,19 @@ def dispatch(task: dict, output_dir: Path) -> dict:
             raise RuntimeError("Existing code generator integrity check failed")
         return {
             "status": "DRAFT_READY_FOR_FOUNDER", "verified": True,
-            "verified_scope": "public starter code syntax/hash only",
+            "verified_scope": (
+                "existing first-party domain tool functional tests passed, not deployed"
+                if capability else "public generic starter syntax/hash only"
+            ),
             "worker": ROLES[kind], "output_artifact": str(base.relative_to(output_dir)),
             "generated_source_files": manifest["file_count"],
-            "code_executed": False, "production_written": False,
+            "reused_existing_domain_program": bool(capability),
+            "domain_capability": capability,
+            "actual_offline_functional_test_passed": (
+                manifest.get("functional_verifier_executed_and_passed", False)
+            ),
+            "code_executed": bool(capability),
+            "production_written": False,
             "general_coding_ability_proved": False,
             "owner_review_required": True,
         }
