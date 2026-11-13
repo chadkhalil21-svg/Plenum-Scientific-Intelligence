@@ -1,5 +1,14 @@
 # Engineering and Scientific Ledger
 
+## 2026-11-13 | Timeout recovery DEPLOYED; exact live image frame readback PASS
+
+PR #642 merged28384ebee7b359e21715d3887ec14d3bbf5471b2 after all four CI checks passed (including28 original private-login tests with real Chromium/mobile controls and injected picture/action timeout recovery). Original protected release #643 / run #43489595198 SUCCEEDED: Cloud Build0a79cc69-f4b0-49d2-8a2e-8cf39cb1bf7e; owner revision00050-pxn serves100% traffic. Original identity/vault/timeout900s retained; OAuth302 and anonymous owner/internal routes401.
+
+Original post-release exact-image diagnostic #644 / run #43490079605 read actual service image28384eb and produced a17,236-byte signed-out public GitHub frame using the original pinned proxy and Chromium; no owner environment/session/credentials or model calls. This isolates image/frame operation, NOT actual owner-authenticated production WebSocket acceptance. Original metadata audit #645 / run #43490081181 PASSED ready owner, bound CFtoken, valid32hex account shape, CF/owner-Free-confirmation/agent switchesYES; setup need not be repeated.
+
+Timeouts now preserve original Chromium/website fields, disable stale-picture input, retain unconfirmed typing, and NEVER replay owner actions. Exact-origin/permission failures still close. Other fatal failures include fixed phase/category codes without private exception content. The founder's precise earlier private-session exception remains unproven; next acceptance is a fresh original signed-owner browser open and genuine site login/save/task. Actual Workers AI inference and generalized authenticated missions are NOT verified; #310 remainsOPEN. Existing authorized Google build/runtime may consume quota or incur charges; no new IAM, host, token or paid inference.
+
+
 ## 2026-11-10 | Free browser + editorial source decisions — no new runtime claimed
 
 **Verified original sources and rights:** microsoft/playwright-mcp, vercel-labs/agent-browser, BrowserMCP/mcp, ChromeDevTools/chrome-devtools-mcp (Apache-2.0); blader/humanizer (MIT); NVIDIA/skillspector (Apache-2.0). Original manifest now lists **33** reviewed source references, up from 27, with existing Browser Use still indexed rather than installed anew. Original Plenum Playwright and its GitHub routes remain unchanged. [Decision and application workflow](FREE_BROWSER_AND_SUBMISSION_WORKFLOW.md) defines cost-first selection, founder sign-in/approval, and factual/prose audit.
