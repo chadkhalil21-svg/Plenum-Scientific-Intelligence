@@ -873,7 +873,7 @@
       "key": "google-aqua",
       "name": "Google AQuA",
       "category": "Highlighted discoveries",
-      "purpose": "Google AQuA v0.3.0 diagnoses recurring trace failures. ORIGINAL pinned event schema is now used by Plenum Chief local same-job quality gate and CI tested; full official ADK/BigQuery/Cloud Run diagnosis engine is NOT deployed and could cost.",
+      "purpose": "Google AQuA v0.3.0 diagnoses recurrent failures in agent traces. ORIGINAL pinned event schema is now used by Plenum Chief local same-job quality gate and CI tested; full official ADK/BigQuery/Cloud Run diagnosis engine is NOT deployed and could cost.",
       "adoption_status": "OFFICIAL_AQUA_EVENT_SCHEMA_MERGED_CI_VALIDATED_LIVE_CHIEF_PENDING",
       "accountable_role": "verification",
       "next_action": "Merged original PR #572 reuses actual v0.3.0 Google event schema in zero-model-call Chief task-quality receipts. Focused Chief and foundation CI passed. First genuinely NEW meaningful original Chief mission must show actual quality artifact/readback; do not rerun old work. Official Google AQuA GCP runtime is separate, not required for local checks; no new paid deployment.",
