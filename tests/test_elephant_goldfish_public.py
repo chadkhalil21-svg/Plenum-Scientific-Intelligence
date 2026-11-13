@@ -50,7 +50,7 @@ class ElephantGoldfishTests(TestCase):
         self.assertIn("Google AQuA:", dossier)
         self.assertIn("diagnoses recurrent failures", dossier)
         self.assertIn("Elephant–Goldfish:", dossier)
-        self.assertIn("not the full five-stage review plugin", dossier)
+        self.assertIn("full five-stage Zoom-Out", dossier)
         self.assertIn("github.com/google/adk-recipes", dossier)
         calls = []
         event = {"action": "opened", "repository": {"full_name": c.REPO},
@@ -66,7 +66,7 @@ class ElephantGoldfishTests(TestCase):
             report = c.deliberate(event)
         self.assertEqual(len(calls), 5)
         self.assertTrue(all("Google AQuA:" in system for system, _ in calls))
-        self.assertTrue(all("not the full five-stage review plugin" in system
+        self.assertTrue(all("full five-stage Zoom-Out" in system
                             for system, _ in calls))
         self.assertNotIn("DATED PUBLIC ELEPHANT", calls[-1][0])
         self.assertFalse(report["recommendation_verified_against_external_sources"])
