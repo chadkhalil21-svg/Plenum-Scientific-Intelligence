@@ -55,6 +55,26 @@ class CrossDomainContracts(unittest.TestCase):
         self.assertEqual(c.urls[0][1:], ("GET", 12))
         self.assertEqual(set(e), {"doi", "title", "year", "publisher", "source", "retrieval_kind"})
 
+    def test_malformed_publisher_date_parts_fail_closed_without_crashing(self):
+        class Malformed(Client):
+            def __init__(self, value):
+                super().__init__()
+                self.value = value
+            def open(self, *args, **kwargs):
+                year = self.value
+                class MalformedResponse(Response):
+                    def read(self, n):
+                        return json.dumps({"message": {
+                            "DOI": x.DOI,
+                            "title": ["Observation of Gravitational Waves from a Binary Black Hole Merger"],
+                            "published": {"date-parts": year},
+                            "publisher": "American Physical Society",
+                        }}).encode()
+                return MalformedResponse()
+        for value in ([], [[]], None, [None], [["2016"]], [{"year": 2016}]):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                x.read_crossref(x.DOI, opener=Malformed(value))
+
     def test_untrusted_response_fails_identity_validation(self):
         class Wrong(Response):
             def read(self,n):
