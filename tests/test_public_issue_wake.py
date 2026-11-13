@@ -1,6 +1,6 @@
 """Focused no-network proof: only original founder issue can wake, exactly once."""
 import unittest
-from plenum_ai.public_issue_wake import build_original_event, checked_issue_number
+from plenum_ai.public_issue_wake import build_original_event, checked_issue_number, one_original_local_repair_warranted
 
 def issue(**kwargs):
     data={
@@ -98,6 +98,93 @@ class PublicWakeAcceptance(unittest.TestCase):
             single.assert_not_called()
             self.assertIn("multi-specialist", requests[-1][1]["body"])
             self.assertNotIn("Survey public research", requests[-1][1]["body"])
+
+
+    def test_original_team_recovers_one_failed_role_without_repeating_good_one(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from plenum_ai import public_issue_wake as wake
+        from plenum_ai.mission_checkpoint import artifact_digest, save_checkpoint
+        original = issue(title="[Plenum Chief] public mission",
+            body=("PLENUM_CHIEF_PUBLIC_MISSION_V1\n"
+                  "objective: Survey public research sources and create a code validator"))
+        calls = []
+        def execute(event, *, output_dir):
+            calls.append(event["issue"]["number"])
+            if len(calls) == 1:
+                relative = "workers/public_research/issue-789/research"
+                target = output_dir / relative
+                target.mkdir(parents=True)
+                (target / "result.txt").write_text("public-source evidence", encoding="utf-8")
+                hash_value = artifact_digest(output_dir, relative)
+                self.assertTrue(hash_value)
+                save_checkpoint(
+                    output_dir, issue=789,
+                    objective="Survey public research sources and create a code validator",
+                    team=("public_research", "public_program"),
+                    results={
+                        "public_research": {
+                            "status": "DRAFT_READY_FOR_FOUNDER",
+                            "attempt": 1, "verified": True,
+                            "worker": "existing_public_research",
+                            "verified_scope": "public-source metadata",
+                            "output_artifact": "issue-789/research",
+                            "artifact_path": relative,
+                            "sha256": hash_value,
+                        },
+                        "public_program": {
+                            "status": "BLOCKED_WORKER_OR_VERIFICATION",
+                            "attempt": 1, "verified": False,
+                        },
+                    },
+                )
+                return {
+                    "issue_number": 789, "status": "BLOCKED_PARTIAL_TEAM",
+                    "independent_verified": False,
+                }
+            return {
+                "issue_number": 789, "status": "VERIFIED_BOUNDED_TEAM",
+                "independent_verified": True, "reused_prior_verified_workers": 1,
+                "executed_workers": 2,
+            }
+        calls_to_gh = []
+        def fake_gh(url, token, *, body=None):
+            calls_to_gh.append((url, body))
+            if url.endswith("/789"): return original
+            if "comments?per_page" in url: return []
+            if url.endswith("/comments"): return {"html_url": "https://github.com/example/issue"}
+            raise AssertionError("unexpected URL")
+        with tempfile.TemporaryDirectory() as folder, patch.object(
+            wake, "gh_json", side_effect=fake_gh
+        ), patch.object(
+            wake, "execute_original_team", side_effect=execute
+        ), patch.dict("os.environ", {"GITHUB_RUN_ID": "999"}):
+            outcome = wake.process(789, "scoped", Path(folder))
+        self.assertEqual(calls, [789, 789])
+        self.assertEqual(outcome["status"], "VERIFIED_BOUNDED_TEAM")
+        self.assertTrue(outcome["independent_verified"])
+        self.assertTrue(outcome["original_multi_specialist"])
+        self.assertIn("Status: **VERIFIED_BOUNDED_TEAM**",
+                      calls_to_gh[-1][1]["body"])
+
+    def test_no_recovery_without_original_checkpoint_or_when_tampered(self):
+        import tempfile
+        from pathlib import Path
+        from plenum_ai import public_issue_wake as wake
+        original = issue(title="[Plenum Chief] public mission",
+            body=("PLENUM_CHIEF_PUBLIC_MISSION_V1\n"
+                  "objective: Survey public research sources and create a code validator"))
+        event = wake.build_original_event(original, [])
+        with tempfile.TemporaryDirectory() as folder:
+            self.assertFalse(one_original_local_repair_warranted(
+                event, Path(folder),
+                {"status": "BLOCKED_PARTIAL_TEAM", "independent_verified": False},
+            ))
+            self.assertFalse(one_original_local_repair_warranted(
+                event, Path(folder),
+                {"status": "VERIFIED_BOUNDED_TEAM", "independent_verified": True},
+            ))
 
     def test_closed_untrusted_or_unbounded_issues_rejected(self):
         for bad in (issue(state="closed"),issue(user={"login":"attacker"}),
