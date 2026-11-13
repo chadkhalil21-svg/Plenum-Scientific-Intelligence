@@ -22,7 +22,7 @@ STAGE = "NOT_STARTED"
 async def measure() -> dict:
     global STAGE
     STAGE = "IMPORT_UPSTREAM"
-    from browser_use import Agent, Browser, ChatOllama, Tools
+    from browser_use import Agent, Browser, BrowserProfile, ChatOllama, Tools
     from playwright.async_api import async_playwright
 
     STAGE = "INITIALIZE_READ_ONLY_TOOLS"
@@ -47,7 +47,8 @@ async def measure() -> dict:
         browser = Browser(
             headless=True, use_cloud=False, is_local=True, keep_alive=False,
             cdp_url=None, executable_path=pw.chromium.executable_path,
-            allowed_domains=["example.com"], block_ip_addresses=True,
+            allowed_domains=["example.com"],
+            browser_profile=BrowserProfile(block_ip_addresses=True),
             captcha_solver=False, auto_download_pdfs=False,
             accept_downloads=False, enable_default_extensions=False,
             permissions=[],
