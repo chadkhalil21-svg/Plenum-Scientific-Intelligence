@@ -1,5 +1,9 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Founder reports exact runtime secret permission granted
+
+Founder explicitly reports completing Secret Manager Secret Accessor for existing runtime on PLENUM_CF_AI_TOKEN. Reuse this grant: remove original activation's unconditional same-secret IAM write, because the existing deployer cannot read/write that policy and must not re-grant owner-completed access. Keep exact version1 binding and live binding/protection readback unchanged. Owner report is not yet live binding acceptance; actual activation must succeed. No additional IAM privilege or token value requested; no new build. #310 remains OPEN pending configuration/inference and real account proof.
+
 ## 2026-11-13 | Exact token-binding denial: runtime lacks accessor on new secret
 
 Original owner activation #625 / run #43475992183 passed existing Auth0/vault preflight but Google explicitly denied original runtime `plenum-browser-runtime` access to `PLENUM_CF_AI_TOKEN` version1. This establishes the missing secret-specific accessor, unlike earlier deployer metadata denial. Add only `roles/secretmanager.secretAccessor` on this one founder-selected existing secret for this one existing runtime, through original activation. No project-wide role, new principal, credential read or inference. If existing deployer cannot change that exact policy, report precise owner secret-permissions gate rather than broaden deployment privileges. Correct image revision00043-hnm was previously live verified; CF token binding remains NOT accepted until real run/readback.

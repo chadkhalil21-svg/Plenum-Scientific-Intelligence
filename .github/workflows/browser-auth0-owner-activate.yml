@@ -56,18 +56,6 @@ jobs:
           f.unlink()
           print("PASS: Existing separately registered Auth0 SPA client variable and encrypted private vault confirmed.")
           PY
-      - name: Grant existing browser runtime access to only the founder-selected Cloudflare secret
-        env:
-          PROJECT: ${{ vars.GCP_PROJECT_ID }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          test "$PROJECT" = 'plenum-computer-browser'
-          gcloud secrets add-iam-policy-binding PLENUM_CF_AI_TOKEN \
-            --project="$PROJECT" \
-            --member="serviceAccount:plenum-browser-runtime@plenum-computer-browser.iam.gserviceaccount.com" \
-            --role="roles/secretmanager.secretAccessor" --quiet >/dev/null
-          echo "PASS: Existing browser runtime granted accessor on only the requested secret; no secret value read."
       - name: Update ONLY the new Auth0 portal, never original IAP service
         id: activate
         env:
