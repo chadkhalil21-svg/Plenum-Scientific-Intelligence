@@ -91,7 +91,7 @@ class RealBoundedFounderGoalVerifierTests(TestCase):
                  "issue": {"number": 1001,
                            "user": {"login": "chadkhalil21-svg"},
                            "title": "[Plenum Chief] public mission",
-                           "body": "PLENUM_CHIEF_PUBLIC_MISSION_V1\\nobjective: " + objective}}
+                           "body": "PLENUM_CHIEF_PUBLIC_MISSION_V1\nobjective: " + objective}}
         source = DOMAIN_SOURCES["noaa_water_station_metadata"][0]
         records = [{"title": source[0], "source": source[1], "url": source[2],
                     "http_status": 200, "independently_quoted_page_text": False}]
