@@ -315,6 +315,9 @@ def execute(event: dict, *, output_dir: Path) -> dict:
             "verified": result.get("verified") is True,
             "worker": result.get("worker"),
             "verified_scope": result.get("verified_scope"),
+            "actual_offline_functional_test_passed": (
+                result.get("actual_offline_functional_test_passed") is True
+            ),
             "output_artifact": artifact,
             "artifact_path": relative if fingerprint else None,
             "sha256": fingerprint,
