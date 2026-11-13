@@ -111,6 +111,36 @@ class CrossDomainContracts(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError,"isolated"):
                 x.execute("scholarly")
 
+    def test_one_turn_model_route_is_exact_and_never_invents_tools(self):
+        scholarly = '{"role":"scholarly-auditor"}'
+        seen = [{"role": "scholarly-auditor", "value": {"doi": x.DOI}}]
+        passed = x.grade_single_real_delegate(
+            scholarly, seen, "scholarly-auditor")
+        self.assertTrue(passed["one_correct_delegation"])
+        self.assertEqual(passed["model_route_decisions"], 1)
+        self.assertEqual(passed["observed_worker_calls"], 1)
+        self.assertFalse(passed["unexpected_or_redundant_specialists"])
+        for untrusted in (
+            '{"role":"numerical-analyst"}',
+            '{"role":"scholarly-auditor","also_run":"numerical-analyst"}',
+            'scholarly-auditor',
+            '{"role":"unapproved-web-browser"}',
+            '{"role":"scholarly-auditor"}\n{"role":"numerical-analyst"}',
+        ):
+            with self.subTest(raw=untrusted):
+                self.assertFalse(x.grade_single_real_delegate(
+                    untrusted, seen, "scholarly-auditor")[
+                    "one_correct_delegation"])
+        duplicate_tool = x.grade_single_real_delegate(
+            scholarly, seen + [{"role": "numerical-analyst", "value": {}}],
+            "scholarly-auditor")
+        self.assertFalse(duplicate_tool["one_correct_delegation"])
+        missing_tool = x.grade_single_real_delegate(
+            scholarly, [], "scholarly-auditor")
+        self.assertFalse(missing_tool["one_correct_delegation"])
+        with self.assertRaises(ValueError):
+            x.grade_single_real_delegate(scholarly, seen, "unapproved-agent")
+
     def test_missions_do_not_refer_to_forced_worker_names(self):
         for case in x.CASES:
             m=x.mission(case)

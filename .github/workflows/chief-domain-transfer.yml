@@ -67,15 +67,15 @@ jobs:
             sleep 2
           done
           docker exec plenum-chief-domain-qwen ollama pull qwen3:1.7b
-      - name: Install exact reviewed Deep Agents and reused science engine
+      - name: Install existing local Qwen adapter and reused science engine
         run: |
           python -m pip install -e '.[chief_of_staff,numerical]'
           python -m pip check
-      - name: Held-out scholarly publisher metadata delegation plus fresh provider readback
+      - name: One-turn Chief delegation to real scholarly Crossref worker plus provider readback
         run: |
           timeout 420 python -m plenum_ai.chief_domain_transfer --case scholarly \
             --execute --out reports/chief-scholarly.json
-      - name: Held-out physics numerical specialist delegation plus independent calculation
+      - name: One-turn Chief delegation to existing physics tool plus independent calculation
         run: |
           timeout 420 python -m plenum_ai.chief_domain_transfer --case thermal \
             --execute --out reports/chief-thermal.json
@@ -88,6 +88,10 @@ jobs:
               assert x['status']=='VERIFIED_CROSS_DOMAIN'
               assert x['model_called'] and x['chief_delegated']
               assert x['correct_worker_selected'] and x['worker_tool_called']
+              assert x['strict_single_specialist_graded']
+              assert x['actual_route_evidence']['model_route_decisions']==1
+              assert x['actual_route_evidence']['observed_worker_calls']==1
+              assert not x['actual_route_evidence']['unexpected_or_redundant_specialists']
               assert x['independent_verified'] and not x['paid_api_used']
               assert not x['business_account_write'] and not x['private_data_used']
               print('PASS: Chief selected, delegated and independently verified', case)
