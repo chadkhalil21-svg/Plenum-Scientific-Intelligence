@@ -18,7 +18,7 @@ class RealBoundedFounderGoalVerifierTests(TestCase):
     def test_every_declared_goal_routes_to_existing_two_specialists(self):
         from plenum_ai.chief_team_mission import independent_expected_team
         from plenum_ai.reviewed_domain_workers import match_original_capability
-        self.assertEqual(len(EXACT_PUBLIC_ACCEPTANCE_GOALS), 2)
+        self.assertEqual(len(EXACT_PUBLIC_ACCEPTANCE_GOALS), 3)
         for task, capability in EXACT_PUBLIC_ACCEPTANCE_GOALS.items():
             with self.subTest(task=task):
                 self.assertEqual(
@@ -76,6 +76,29 @@ class RealBoundedFounderGoalVerifierTests(TestCase):
             with self.subTest(objective=objective):
                 self.assertEqual(parse_mission(event)["team"],
                                  ("public_research", "public_program"))
+
+    def test_one_time_recovery_guard_is_exact_public_original_run_only(self):
+        from unittest.mock import patch
+        from plenum_ai.chief_team_mission import _one_time_live_public_recovery_probe
+        mission = {"objective": "Survey NOAA station metadata sources and run existing Python coastal validator recovery"}
+        verified_original = {
+            "GITHUB_ACTIONS": "true",
+            "GITHUB_REPOSITORY": "chadkhalil21-svg/Plenum-Scientific-Intelligence",
+            "GITHUB_EVENT_NAME": "issues",
+            "GITHUB_RUN_ATTEMPT": "1",
+            "GITHUB_RUN_ID": "1234567",
+        }
+        with patch.dict("os.environ", verified_original, clear=True):
+            self.assertTrue(_one_time_live_public_recovery_probe(mission, "public_program"))
+            self.assertFalse(_one_time_live_public_recovery_probe(mission, "public_research"))
+            self.assertFalse(_one_time_live_public_recovery_probe(
+                {"objective": self.OBJECTIVE}, "public_program"))
+        with patch.dict("os.environ", {**verified_original, "GITHUB_RUN_ATTEMPT": "2"},
+                        clear=True):
+            self.assertFalse(_one_time_live_public_recovery_probe(mission, "public_program"))
+        with patch.dict("os.environ", {**verified_original, "GITHUB_EVENT_NAME": "pull_request"},
+                        clear=True):
+            self.assertFalse(_one_time_live_public_recovery_probe(mission, "public_program"))
 
     def test_actual_original_chief_executes_both_workers_and_rejects_no_evidence(self):
         # Unlike synthetic manifests, this uses both real original workers,
