@@ -239,7 +239,7 @@ def read_real_google_egm_role(role):
         raise ValueError("Missing unsafe upstream EGM source")
     raw = path.read_bytes()
     actual_sha = hashlib.sha1(
-        b"blob " + str(len(raw)).encode("ascii") + b"\\0" + raw
+        b"blob " + str(len(raw)).encode("ascii") + bytes([0]) + raw
     ).hexdigest()
     if actual_sha != expected_sha:
         raise ValueError("Google EGM v0.1.1 role checksum does not match upstream")
@@ -281,9 +281,9 @@ def full_egm_goldfish_review(objective, dossier, source_decisions):
             "prior reviewer response. Judge the supplied PUBLIC design proposal "
             "alone. Do not approve changes, claim tests ran, or infer system "
             "access. Required source facts for non-comprehension stages: "
-            + context + "\\n" + persona,
+            + context + chr(10) + persona,
             "PUBLIC software-spec review agenda: " + objective
-            + "\\nPUBLIC proposal bundle:\\n" + dossier[:9000],
+            + chr(10) + "PUBLIC proposal bundle:" + chr(10) + dossier[:9000],
         )
         results.append({"stage": stage, "source_role": role,
                         "review_untrusted": answer, "fresh_model_context": True})
