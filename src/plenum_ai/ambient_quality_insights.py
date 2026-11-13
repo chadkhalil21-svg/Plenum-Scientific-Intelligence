@@ -21,6 +21,7 @@ import re
 MAX_REPORT_BYTES = 200_000
 ALLOWED_STATUSES = frozenset({
     "VERIFIED_BOUNDED_TEAM", "BLOCKED_PARTIAL_TEAM",
+    "BLOCKED_OBJECTIVE_RELEVANCE",
     "BLOCKED_WORKER_OR_VERIFICATION", "BLOCKED_NO_PRIMARY_SOURCE_EVIDENCE",
     "SOURCE_READY_NOT_EXECUTED",
 })
@@ -110,7 +111,14 @@ def inspect_chief_report(report: dict) -> dict:
     if report.get("worker_artifacts_technically_verified") is not True:
         record("ARTIFACT_VERIFICATION_MISSING",
                "Missing verified original specialist output")
-    if report.get("named_entity_evidence") == (
+    full_goal = (
+        status == "VERIFIED_BOUNDED_TEAM"
+        and report.get("founder_objective_verified") is True
+        and isinstance(report.get("bounded_founder_goal_evidence"), dict)
+        and report["bounded_founder_goal_evidence"].get("status")
+            == "VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE"
+    )
+    if not full_goal and report.get("named_entity_evidence") == (
         "NAME_MENTION_ONLY_NOT_FULL_OBJECTIVE_PROOF"
     ):
         record("NAME_MENTION_NOT_TASK_COMPLETION",
@@ -121,7 +129,10 @@ def inspect_chief_report(report: dict) -> dict:
     if not findings:
         # Do not permit generic downstream jobs to silently promote
         # a verifier flag to account-write or global-autonomy permission.
-        disposition = "PUBLIC_TASK_FLAGS_VERIFIED_NOT_GENERAL_AUTONOMY"
+        disposition = (
+            "VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE_NOT_GENERAL_AUTONOMY"
+            if full_goal else "PUBLIC_TASK_FLAGS_VERIFIED_NOT_GENERAL_AUTONOMY"
+        )
     elif status == "VERIFIED_BOUNDED_TEAM" and all(
         x["code"] in {
             "FOUNDER_OBJECTIVE_NOT_PROVEN",
