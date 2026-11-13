@@ -50,6 +50,21 @@ class RealBoundedFounderGoalVerifierTests(TestCase):
             },
         }, public, program
 
+    def test_both_authorized_exact_goals_route_to_two_original_agents(self):
+        from plenum_ai.chief_team_mission import parse_mission
+        for objective in EXACT_PUBLIC_ACCEPTANCE_GOALS:
+            event = {"action": "opened",
+                     "repository": {"full_name": "chadkhalil21-svg/Plenum-Scientific-Intelligence"},
+                     "issue": {
+                         "number": 1001,
+                         "user": {"login": "chadkhalil21-svg"},
+                         "title": "[Plenum Chief] public mission",
+                         "body": "PLENUM_CHIEF_PUBLIC_MISSION_V1\nobjective: " + objective,
+                     }}
+            with self.subTest(objective=objective):
+                self.assertEqual(parse_mission(event)["team"],
+                                 ("public_research", "public_program"))
+
     def test_exact_goal_accepts_real_original_primary_source_and_functional_code(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
