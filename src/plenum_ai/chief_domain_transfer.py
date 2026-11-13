@@ -57,8 +57,11 @@ def read_crossref(doi: str, *, opener=None, sleep_fn=time.sleep) -> dict:
             titles = message.get("title")
             title = titles[0] if isinstance(titles, list) and titles else None
             published = message.get("published") or message.get("issued")
-            year = (published.get("date-parts", [[]])[0][0]
-                    if isinstance(published, dict) else None)
+            # Treat provider metadata as untrusted: empty or malformed
+            # date-parts must fail cleanly instead of raising IndexError.
+            parts = published.get("date-parts") if isinstance(published, dict) else None
+            first = parts[0] if isinstance(parts, list) and parts else None
+            year = first[0] if isinstance(first, list) and first and type(first[0]) is int else None
             publisher = message.get("publisher")
             if not (isinstance(title, str) and 8 <= len(title) <= 300
                     and isinstance(year, int) and 1900 <= year <= 2026
