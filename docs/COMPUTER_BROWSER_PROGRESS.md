@@ -1,5 +1,12 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Live protocol probe identifies capacity429; repair original request-slot configuration
+
+Original #647/run #43492840208 read actual image28384eb and its ONE anonymous production WebSocket Upgrade received HTTP429 before owner authentication. The subsequent isolated signed-cookie fixture was SKIPPED by the failed step; do not claim it passed. Existing live audit records containerConcurrency1 and maxScale1. Google documents WebSockets as long-running HTTP requests occupying concurrency, and429 when no instance capacity is available (https://docs.cloud.google.com/run/docs/triggering/websockets ; https://docs.cloud.google.com/run/docs/troubleshooting). This establishes a real capacity refusal, distinct from token/login failures; exact existing socket occupancy was not read.
+
+Minimally reuse original config-only repair workflow to set request concurrency4 while retaining max-instances1, timeout900s, same image/all env, runtime identity, encrypted vault, CPU/memory. No build, new server, IAM, credentials or inference. Read back all invariants plus OAuth302/anonymous401; then original anonymous live probe must return expected403 instead of429 and exact-image real signed-session fixture must actually run. Original founder real-account acceptance remains pending; #310OPEN.
+
+
 ## 2026-11-13 | New founder evidence: Upgrade1006 before stream opens
 
 Founder14:26 screenshot reports WebSocket Upgrade not completed1006 after HTTP site preflight. Distinct from prior post-open live_interaction failure and deployed timeout recovery; do NOT claim timeout fix settles this handshake. Reuse original read-only diagnostic for ONE anonymous live production WebSocket Upgrade (expect403, no cookie), plus exact-image real Uvicorn + original Auth0 signed synthetic fixture cookie + actual offline Chromium frame in a network-disabled container. No production key/cookie/session/environment or account data, no writes/IAM/inference/new host. This distinguishes public protocol routing from original signed-session application transport before selecting another change. Existing configuration accepted; #310OPEN.
