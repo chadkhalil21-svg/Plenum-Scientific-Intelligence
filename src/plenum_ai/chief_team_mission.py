@@ -191,7 +191,8 @@ def grade_complete_bounded_public_goal(objective: str, team: tuple[str, ...],
     if not (isinstance(research_name, str) and isinstance(program_name, str)):
         return rejected
     research_path = root / research_name
-    program_dir = root / program_name
+    # The original program agent reports its issue-N root, with code/ inside.
+    program_dir = root / program_name / "code"
     try:
         if (research_path.is_symlink() or not research_path.is_file()
                 or research_path.stat().st_size > 50000
