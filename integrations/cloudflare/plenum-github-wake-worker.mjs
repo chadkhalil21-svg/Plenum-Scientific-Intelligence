@@ -1,4 +1,5 @@
 import {handlePrivateMemory, PrivateContinuityMemory} from "./plenum-private-continuity.mjs";
+import {ownerMemoryCheckPage, ownerMemoryCheckScript} from "./plenum-private-memory-check.mjs";
 export {PrivateContinuityMemory};
 /*
  * Plenum no-new-charge *event-driven wake* (SOURCE TEMPLATE ONLY).
@@ -79,6 +80,10 @@ export class PublicWakeReplayGuard {
 export default {
   async fetch(request, env) {
     const pathname = new URL(request.url).pathname;
+    if (pathname === "/memory-check" && request.method === "GET")
+      return ownerMemoryCheckPage();
+    if (pathname === "/memory-check.js" && request.method === "GET")
+      return ownerMemoryCheckScript();
     if (pathname === "/memory" || pathname.startsWith("/memory/"))
       return handlePrivateMemory(request, env);
     if (pathname === "/health" && request.method === "GET")

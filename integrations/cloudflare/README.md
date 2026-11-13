@@ -2,6 +2,25 @@
 
 ## Private continuity records on this SAME Worker — founder request Nov 12
 
+### One-page owner verification on the existing Worker (no extra app)
+
+Once GitHub's original Worker deployment is confirmed current, open:
+
+**https://plenum-public-wake.chadkhalil21.workers.dev/memory-check**
+
+This is a ZERO-DEPENDENCY page added to the SAME `plenum-public-wake` Worker, not a second Worker or native ChatGPT memory integration. It is publicly loadable, but all GET/POST record operations still require the independent owner secret. It uses browser WebCrypto to sign HMAC requests locally and sends only HMAC headers and a non-sensitive proof record, never the raw secret. No analytics, third-party assets, cookies, localStorage, remote API, or model calls. The page enforces CSP same-origin scripts/connect; no external account sign-in and no hosting purchase.
+
+**Founder iPad flow:**
+
+1. Verify the browser address exactly matches the original Cloudflare Worker hostname above and HTTPS. Enter the owner **separate private memory** secret copied from the private password manager into the page's password field. Do NOT paste the key into ChatGPT or GitHub.
+2. Tap `Write harmless proof, then read`. The page first does an owner-HMAC authenticated GET to get expected revision, writes a bounded record with original GitHub source issue #483 and no personal messages, then rereads and verifies the same revision. It never overwrites a newer revision without CAS.
+3. Close/reopen page in a new browser session, paste the owner secret again and tap `Read existing proof (later session)`. Only a verified source-linked `OWNER PRIVATE READ ACCEPTED` response from this second session establishes cross-session continuity. Without that actual screenshot/readback record, retain `LIVE_MEMORY_UNVERIFIED`.
+
+**Deployment boundary:** Source merge and CI alone do not prove the Worker is serving `/memory-check`; if page 404s inspect the original existing Git-linked production deployment (do not duplicate Worker or original bindings). Existing Cloudflare private memory secret, replay guard and DO were already independently shown in Production by founder on Nov 12. DO NOT create/rotate them. If the page reports 503, inspect the existing deployment and binding; if 403, check the separately saved private-memory key, not the webhook HMAC. Never print the real HMAC into logs.
+
+**Limits:** This proves a private explicit-fact store, NOT automatic ingestion from all ChatGPT conversations, NOT native ChatGPT Memory modification, and NOT deployment of Graphiti/Mem0 model inference. The Google Drive Master Control Ledger remains authoritative and must be consulted for relevant context.
+
+
 **Existing founder-agent Python client:** \`src/plenum_ai/owner_private_memory_client.py\` signs each GET or POST with the same protocol and uses the already-original Workers URL. It does not introduce a new host. Only instantiate \`PrivateMemoryClient()\` from an owner-approved PRIVATE execution context with the secret injected via the environment (never a public GitHub Actions job or ChatGPT message). Use \`get("american-rider:app-review")\` to read an exact key; for an authorized correction, use \`put(key=..., summary=..., source=..., observed_at=..., level=..., expected_revision=...)\` and then independently read it back. Do not infer success from source creation, avoid duplicating the source-ledger row, and do not send private data to an unconnected agent.
 
 

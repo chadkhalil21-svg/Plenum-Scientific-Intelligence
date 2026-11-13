@@ -37,7 +37,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test integrations/cloudflare/plenum-github-wake-worker.test.mjs integrations/cloudflare/plenum-private-continuity.test.mjs
+      - run: node --test integrations/cloudflare/plenum-github-wake-worker.test.mjs integrations/cloudflare/plenum-private-continuity.test.mjs integrations/cloudflare/plenum-private-memory-check.test.mjs
   resume-original-task:
     if: >-
       github.event_name == 'repository_dispatch' &&
