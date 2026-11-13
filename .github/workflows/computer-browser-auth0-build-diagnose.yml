@@ -22,6 +22,29 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
       - uses: google-github-actions/setup-gcloud@v3
+      - name: Import exact built owner application without production environment
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCP_PROJECT_ID" = 'plenum-computer-browser'
+          IMAGE="us-east1-docker.pkg.dev/$GCP_PROJECT_ID/plenum-browser/browser-auth0-owner:10fc08ed39b350f6b9ec8b713f05868994b640dd"
+          gcloud auth configure-docker us-east1-docker.pkg.dev --quiet >/dev/null
+          docker pull "$IMAGE" >/dev/null
+          # No host mounts, provider credentials, owner environment, account data or egress.
+          docker run --rm --network none --read-only --tmpfs /tmp \
+            --entrypoint python "$IMAGE" -c '
+          import importlib.metadata as m
+          for package in ("fastapi","starlette","uvicorn","websockets","browser-use"):
+              print("PUBLIC_PACKAGE_VERSION",package,m.version(package))
+          try:
+              from services.computer_browser.api import app
+              print("PUBLIC_IMAGE_APP_IMPORT_OK")
+          except Exception as exc:
+              print("PUBLIC_IMAGE_APP_IMPORT_FAILURE",type(exc).__name__,str(exc)[:400])
+              raise SystemExit(1)
+          '
       - name: Inspect only fixed failed build metadata and sanitized Cloud Logging records
         id: inspect
         env:
