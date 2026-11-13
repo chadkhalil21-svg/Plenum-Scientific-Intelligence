@@ -9,6 +9,8 @@ on:
       - 'src/plenum_ai/chief_team_mission.py'
       - 'tests/test_chief_team_mission.py'
       - 'src/plenum_ai/mission_checkpoint.py'
+      - 'src/plenum_ai/ambient_quality_insights.py'
+      - 'tests/test_google_egm_aqua_quality.py'
       - '.github/workflows/founder-chief-workforce-command.yml'
 permissions:
   contents: read
@@ -32,6 +34,7 @@ jobs:
           python -m pip install -e .
           python -m unittest discover -s tests -p 'test_chief_workforce_command.py' -v
           python -m unittest discover -s tests -p 'test_chief_team_mission.py' -v
+          python -m unittest discover -s tests -p 'test_google_egm_aqua_quality.py' -v
   founder-command:
     if: >-
       github.event_name == 'issues' &&
@@ -95,6 +98,13 @@ jobs:
             timeout 700 python -m plenum_ai.chief_workforce_command \
               --event "$GITHUB_EVENT_PATH" --execute --out-dir reports/workforce-chief
           fi
+      - name: Independent local AQuA-informed review of REAL Chief output
+        if: >-
+          success() && github.event.issue.title == '[Plenum Chief] public mission'
+        run: >-
+          python -m plenum_ai.ambient_quality_insights
+          --issue "${{ github.event.issue.number }}"
+          --root reports/workforce-chief
       - name: Durable founder status, no task text or credentials in comment
         if: always()
         env:
@@ -131,11 +141,18 @@ jobs:
           else:
               status='BLOCKED_CHIEF_OR_VERIFICATION'
               lines=['No independently verified model/worker result']
+          q=Path('reports/workforce-chief')/('ambient-quality-'+str(issue)+'.json')
+          if q.is_file() and not q.is_symlink():
+              quality=json.loads(q.read_text(encoding='utf-8'))
+              if (quality.get('original_issue_number')==issue and
+                  quality.get('schema')=='plenum-chief-offline-ambient-quality-v1'):
+                  lines.append('Independent offline task-outcome gate: '+
+                               str(quality.get('disposition','UNVERIFIED'))[:90])
           attempt=os.environ.get('GITHUB_RUN_ATTEMPT','1')
           if not attempt.isdecimal() or len(attempt)>3:
               raise ValueError('Invalid original GitHub run attempt')
           marker='<!-- plenum-founder-chief-run:'+run+':attempt:'+attempt+' -->'
-          body=(marker+'\n**Chief status: '+status+'**\n'+lines[0]+
+          body=(marker+'\n**Chief status: '+status+'**\n'+'\n'.join(lines[:2])+
                 '\nAttempt: '+attempt+
                 '\nRun: https://github.com/'+os.environ['GH_REPO']+
                 '/actions/runs/'+run+
@@ -166,6 +183,7 @@ jobs:
           path: |
             reports/workforce-chief/chief-result-*.json
             reports/workforce-chief/chief-checkpoint-*.json
+            reports/workforce-chief/ambient-quality-*.json
             reports/workforce-chief/workers/**
           overwrite: true
           if-no-files-found: ignore

@@ -215,6 +215,81 @@ def read_real_google_egm_design_critic(path=EGM_PERSONA):
         raise ValueError("Original EGM reviewer instructions not verified")
     return text
 
+# Additional ORIGINAL Google EGM v0.1.1 reviewers (Apache-2.0). The
+# already-integrated design_critic.md is stage 7; all stages use independently
+# fresh Qwen requests and the source's exact immutable Git blob checksum.
+# Optional FULL review for explicit public software-spec agenda, never applied
+# automatically to every cheap public science or workflow task.
+EGM_STAGE_REVIEWERS = {
+    "zoom_out": ("zoom_out.md", "fc2b24bfa8cc295072915e7197401dd70b111129", "egm-zoom-out"),
+    "comprehension": ("comprehension.md", "b4e32cbae3cc60d322ba00cccff188d95dfb49a8", "egm-comprehension"),
+    "implementation_readiness": ("implementation_readiness.md", "51de42969dd7c4816140f55329f15bf88b27d3c1", "egm-implementation-readiness"),
+}
+
+
+def read_real_google_egm_role(role):
+    """Pinned authentic upstream persona; no user-provided arbitrary path."""
+    if role == "design_critic":
+        return read_real_google_egm_design_critic()
+    if role not in EGM_STAGE_REVIEWERS:
+        raise ValueError("Unknown pinned Google EGM reviewer")
+    filename, expected_sha, expected_name = EGM_STAGE_REVIEWERS[role]
+    path = EGM_PERSONA.parent / filename
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > 8000:
+        raise ValueError("Missing unsafe upstream EGM source")
+    raw = path.read_bytes()
+    actual_sha = hashlib.sha1(
+        b"blob " + str(len(raw)).encode("ascii") + bytes([0]) + raw
+    ).hexdigest()
+    if actual_sha != expected_sha:
+        raise ValueError("Google EGM v0.1.1 role checksum does not match upstream")
+    content = raw.decode("utf-8")
+    if ("name: " + expected_name not in content
+            or "license: Apache-2.0" not in content
+            or "Strict Read-Only Protocol" not in content):
+        raise ValueError("Invalid original Google EGM persona")
+    return content
+
+
+def wants_full_egm_review(objective):
+    """Do not turn every ordinary founder task into nine costly model calls."""
+    s = objective.casefold()
+    return "full egm" in s or "five stage goldfish" in s
+
+
+def full_egm_goldfish_review(objective, dossier, source_decisions):
+    """Five actual Google EGM stages, one fresh, isolated local Qwen call each.
+
+    No nested online agent, no cloud AI charge, no private account access.
+    These responses remain untrusted design critiques, NEVER task completion.
+    """
+    stages = (
+        ("5_zoom_out", "zoom_out"),
+        ("6_comprehension", "comprehension"),
+        ("7_design_critic", "design_critic"),
+        ("8_intermediate_zoom_out", "zoom_out"),
+        ("9_implementation_readiness", "implementation_readiness"),
+    )
+    results = []
+    for stage, role in stages:
+        persona = read_real_google_egm_role(role)
+        context = "" if role == "comprehension" else source_decisions
+        # The comprehension reviewer gets the artifact alone, as EGM requires.
+        answer = _ask_local(
+            "You are a separate read-only reviewer at ORIGINAL Google EGM "
+            "v0.1.1 stage " + stage + ". You have NO previous chat history or "
+            "prior reviewer response. Judge the supplied PUBLIC design proposal "
+            "alone. Do not approve changes, claim tests ran, or infer system "
+            "access. Required source facts for non-comprehension stages: "
+            + context + chr(10) + persona,
+            "PUBLIC software-spec review agenda: " + objective
+            + chr(10) + "PUBLIC proposal bundle:" + chr(10) + dossier[:9000],
+        )
+        results.append({"stage": stage, "source_role": role,
+                        "review_untrusted": answer, "fresh_model_context": True})
+    return results
+
+
 def _ask_local(system, user):
     payload = json.dumps({
         "model": MODEL, "stream": False, "think": False,
@@ -275,6 +350,11 @@ def deliberate(event):
         read_real_google_egm_design_critic(),
         "PUBLIC founder agenda: " + task["objective"] + "\n\n" + dossier[:9000],
     )
+    egm_stages = []
+    if wants_full_egm_review(task["objective"]):
+        egm_stages = full_egm_goldfish_review(
+            task["objective"], dossier, tool_decisions
+        )
     # Founder Business Advisor synthesizes the five existing council
     # deliberation calls into a recommendation with action/why.
     is_business = council_seats(task["objective"]) is BUSINESS_SEATS
@@ -316,6 +396,8 @@ def deliberate(event):
         "elephant_public_facts_used": True,
         "goldfish_received_elephant_history": False,
         "fresh_reviewer": {"role": "goldfish-verifier", "draft_untrusted": fresh},
+        "official_egm_full_stages_completed": len(egm_stages) == 5,
+        "official_egm_stage_reviews": egm_stages,
     }
 
 
