@@ -17,7 +17,7 @@ const ctx={storage:{
 const object=new PrivateContinuityMemory(ctx);
 const configured={
   PLENUM_PRIVATE_MEMORY_HMAC_SECRET:secret,
-  PLENUM_PRIVATE_MEMORY:{getByName:async name=>{
+  PLENUM_PRIVATE_MEMORY:{getByName:name=>{
     assert.equal(name,"plenum-private-continuity");
     return {fetch:(url,options)=>object.fetch(new Request(url,options))};
   }}
