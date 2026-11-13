@@ -316,6 +316,21 @@ jobs:
               print("unavailable")
           PY
           )"
+          DIAGNOSTIC="$(python - "$FILE" <<'PY'
+          import json,re,sys
+          try:
+              r=json.load(open(sys.argv[1]))
+              stage=r.get("failure_stage","UNKNOWN")
+              kind=r.get("exception_class","UNKNOWN")
+              if not isinstance(stage,str) or not re.fullmatch(r"[A-Z_]{2,48}",stage):
+                  stage="INVALID"
+              if not isinstance(kind,str) or not re.fullmatch(r"[A-Za-z]{2,48}",kind):
+                  kind="INVALID"
+              print("stage="+stage+";class="+kind)
+          except Exception:
+              print("stage=UNKNOWN;class=UNKNOWN")
+          PY
+          )"
           if [ "$STATUS" = "PASS_JOINT_RUNTIME_AND_3_STEP_MODEL" ] &&
              [ "$MODEL_OOM" = "false" ] && [ "$BROWSER_OOM" = "false" ]; then
             LABEL="CONDITIONAL RESOURCE FIT ONLY"
@@ -323,7 +338,7 @@ jobs:
             LABEL="NOT FIT VERIFIED"
           fi
           gh issue comment "$ISSUE" --body \
-            "$LABEL — original Playwright 1.64.1 / Browser Use 0.13.14 / Qwen3 0.6B, Qwen container max 1024MiB, browser+Python max 768MiB, 256MiB held back for original owner host. Result=$STATUS; model OOM=$MODEL_OOM; browser OOM=$BROWSER_OOM; model cgroup peak MiB=$MODEL_PEAK_MIB; browser cgroup peak MiB=$BROWSER_PEAK_MIB. No private account, model API charge, or new GCP deployment. Even a PASS does NOT prove owner Cloud Run fit, general task quality, or zero cloud billing. Original acceptance remains issue #310."
+            "$LABEL — original Playwright 1.64.1 / Browser Use 0.13.14 / Qwen3 0.6B, Qwen container max 1024MiB, browser+Python max 768MiB, 256MiB held back for original owner host. Result=$STATUS; model OOM=$MODEL_OOM; browser OOM=$BROWSER_OOM; model cgroup peak MiB=$MODEL_PEAK_MIB; browser cgroup peak MiB=$BROWSER_PEAK_MIB; $DIAGNOSTIC. No private account, model API charge, or new GCP deployment. Even a PASS does NOT prove owner Cloud Run fit, general task quality, or zero cloud billing. Original acceptance remains issue #310."
       - name: Destroy both disposable inference/browser containers
         if: always()
         shell: bash
