@@ -408,6 +408,11 @@ def login_html(nonce, register_token=""):
         const m=JSON.parse(e.data);
         if(m.type==="status"){
           status.textContent=m.message;
+          if(m.code==="picture_timeout"){
+            ready=false;pageBlank=true;selected="none";updateTypingEnabled();
+            clearStalePreview();
+            fieldStatus.textContent="Picture temporarily unavailable. Browser and website fields remain open; wait for the next live picture.";
+          }
           if(m.failure===true){
             serverStopped=true;ready=false;pageBlank=true;challengeBlocked=false;selected="none";saveInFlight=false;updateTypingEnabled();
             clearStalePreview();
@@ -948,6 +953,8 @@ def mount_private_login(app):
                             await ws.send_json({"type":"ack","action":"type","ok":False,"uncertain":True})
                         elif kind=="click":
                             await ws.send_json({"type":"ack","action":"click","field":"none"})
+                        if demo=="0" and not safe_url(page.url,origins=approved_origins):
+                            raise PermissionError("Website redirected off authorized origins")
                         # The website may have partially acted: do not replay.
                         # Preserve fields and let the owner inspect the picture.
                         await ws.send_json({"type":"status","code":"action_timeout",
