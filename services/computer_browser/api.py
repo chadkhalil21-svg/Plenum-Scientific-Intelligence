@@ -129,3 +129,7 @@ mount_runtime_site_grants(app)
 # The machine service and IAP public/read APIs never mount this route.
 from .owner_navigation import mount_owner_navigation
 mount_owner_navigation(app)
+
+# Existing verified-owner browser-only AI read task; disabled until local Qwen is verified.
+from .owner_agent_read import mount_owner_agent_read
+mount_owner_agent_read(app)

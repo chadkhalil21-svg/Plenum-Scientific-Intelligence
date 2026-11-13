@@ -104,6 +104,12 @@ exact form before approval. One native HTML form submission is supported;
 payments, deletions, permission changes and unrestricted writes are not.</small>"""
                 if (os.environ.get("K_SERVICE")=="plenum-browser-owner-auth0"
                     and os.environ.get("PLENUM_EXACT_OWNER_FORM_POST_ENABLED")=="true")
+                else "") + (
+                """<h2>Original Plenum read-only AI agent</h2>
+<p><a href="/owner/agent-read">Run a scoped private read-only task</a></p>"""
+                if (os.environ.get("K_SERVICE")=="plenum-browser-owner-auth0"
+                    and os.environ.get("PLENUM_OWNER_READONLY_AGENT_ENABLED")=="true"
+                    and os.environ.get("PLENUM_BROWSER_FREE_LOCAL")=="confirmed")
                 else ""))
 
     @app.get("/owner/public-preview",response_class=HTMLResponse)
