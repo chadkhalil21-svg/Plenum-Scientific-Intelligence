@@ -78,7 +78,7 @@ jobs:
                   label="OTHER_BUILD_STEP_ERROR"
           print("SANITIZED_FAILURE_CATEGORY="+label)
           # Emit only fixed dependency/exception diagnostics from public source builds.
-          if raw!="LOG_READ_UNAVAILABLE\\n":
+          if label != "CLOUD_LOGS_UNAVAILABLE":
               safe=[]
               for chunk in chunks:
                   for line in chunk.splitlines():
@@ -100,6 +100,7 @@ jobs:
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           CATEGORY: ${{ steps.inspect.outputs.category }}
         shell: bash
