@@ -64,7 +64,7 @@ class ElephantGoldfishTests(TestCase):
         self.assertIn("Design Critic Goldfish", calls[4][0])
         self.assertIn("Strict Read-Only Protocol", calls[4][0])
         self.assertIn("Google EGM v0.1.1", calls[4][0])
-        self.assertFalse(d["tasks_executed"])
+        self.assertFalse(report["tasks_executed"])
 
 if __name__=="__main__":
     import unittest
