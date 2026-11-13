@@ -14,6 +14,7 @@ from urllib.request import Request, urlopen
 
 from .workforce_public_inbox import REPO, OWNER, parse_public_issue, run_issue
 from .chief_team_mission import MISSION_TITLE, parse_mission, execute as execute_original_team
+from .mission_checkpoint import load_checkpoint, verified_previous_result
 
 MAX_ISSUE = 10 ** 9
 BASE = "https://api.github.com/repos/" + REPO + "/issues/"
@@ -74,6 +75,44 @@ def gh_json(url: str, token: str, *, body=None):
         return json.loads(result.read(140000))
 
 
+
+def one_original_local_repair_warranted(event: dict, output_dir: Path,
+                                       outcome: dict) -> bool:
+    """Only repair the SAME public mission when one previously saved sibling passed.
+
+    The original executor independently verifies that sibling's actual SHA-256
+    bytes before treating it as reusable. Never re-execute all specialists.
+    """
+    if (outcome.get("status") != "BLOCKED_PARTIAL_TEAM"
+            or outcome.get("independent_verified") is not False):
+        return False
+    task = parse_mission(event)
+    team = task["team"]
+    progress = load_checkpoint(
+        output_dir, issue=task["issue_number"],
+        objective=task["objective"], team=team,
+    )
+    if set(progress) != set(team):
+        return False
+    completed = 0
+    incomplete = 0
+    for kind in team:
+        entry = progress[kind]
+        if verified_previous_result(output_dir, kind, entry) is not None:
+            completed += 1
+        elif (isinstance(entry, dict)
+              and entry.get("attempt") == 1
+              and entry.get("verified") is False
+              and entry.get("status") in (
+                  "BLOCKED_WORKER_OR_VERIFICATION",
+                  "BLOCKED_ARTIFACT_NOT_PRESERVED",
+              )):
+            incomplete += 1
+        else:
+            return False
+    return completed >= 1 and incomplete == 1
+
+
 def process(number: int, token: str, output_dir: Path):
     number = checked_issue_number(number)
     path = BASE + str(number)
@@ -87,6 +126,11 @@ def process(number: int, token: str, output_dir: Path):
         # Reuse the SAME Chief/team engine and original hashed public artifacts.
         # A wake is only for an original issue whose prior execution is missing.
         outcome = execute_original_team(event, output_dir=output_dir)
+        if one_original_local_repair_warranted(event, output_dir, outcome):
+            # Same original issue, same output dir, same original Chief,
+            # existing checkpoint; the verified sibling is NOT repeated.
+            outcome = execute_original_team(event, output_dir=output_dir)
+            outcome["same_run_bounded_recovery_attempted"] = True
         output_dir.mkdir(parents=True, exist_ok=True)
         (output_dir / f"chief-result-{number}.json").write_text(
             json.dumps(outcome, indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -141,6 +185,16 @@ def main(argv=None):
         raise PermissionError("Scoped GitHub token missing")
     out = process(number, token, Path("reports/public-wake"))
     print(json.dumps(out))
+    if out.get("worker_reexecuted") and (
+        (out.get("original_multi_specialist")
+         and (out.get("status") != "VERIFIED_BOUNDED_TEAM"
+              or out.get("independent_verified") is not True))
+        or (not out.get("original_multi_specialist")
+            and out.get("status") != "DRAFT_READY_FOR_FOUNDER")
+    ):
+        # An accepted failure receipt and an uploaded artifact do NOT turn a
+        # failed public mission into a green Github Actions job.
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
