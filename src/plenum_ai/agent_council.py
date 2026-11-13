@@ -247,7 +247,7 @@ def deliberate(event):
         "history, tools or authority to approve execution. "
         "Distinguish missing verification from concrete failures. "
         "No private documents or credentials. "
-        + read_real_google_egm_design_critic(),
+        + VERIFIED_CONTEXT + " " + read_real_google_egm_design_critic(),
         "PUBLIC founder agenda: " + task["objective"] + "\n\n" + dossier[:9000],
     )
     # Founder Business Advisor synthesizes the five existing council
