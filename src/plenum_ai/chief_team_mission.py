@@ -93,6 +93,66 @@ def independently_accept_team(expected: tuple[str, ...], observed: dict) -> bool
     )
 
 
+
+def named_entity_evidence_gate(objective: str, kinds: tuple[str, ...],
+                               observed: dict, root: Path) -> dict:
+    """Reject obvious mismatch in real worker outputs; never certify task success.
+
+    This is a narrow NEGATIVE gate for explicit names, not semantic AI.
+    Read research record title/source/URL (not echoed topic) and actual Python
+    code (not README/manifest). No model, account access, or new service.
+    """
+    named = tuple(
+        word for word in ("cloudflare", "noaa", "nasa", "stripe", "github")
+        if re.search(r"\\b" + word + r"\\b", objective, re.IGNORECASE)
+    )
+    if not named:
+        return {"status": "NOT_APPLICABLE", "irrelevant_kinds": []}
+    failures = []
+    for kind in ("public_research", "public_program"):
+        if kind not in kinds:
+            continue
+        relative = observed[kind].get("_artifact_path")
+        if not isinstance(relative, str) or not relative.startswith("workers/" + kind + "/"):
+            failures.append(kind)
+            continue
+        path = root / relative
+        if path.is_symlink() or not path.resolve().is_relative_to(root.resolve()):
+            failures.append(kind)
+            continue
+        try:
+            if kind == "public_research":
+                if not path.is_file() or path.stat().st_size > 2_000_000:
+                    raise ValueError("unsafe research file")
+                data = json.loads(path.read_text("utf-8"))
+                records = data.get("records", []) if isinstance(data, dict) else []
+                if not isinstance(records, list) or len(records) > 200:
+                    raise ValueError("invalid records")
+                text = " ".join(
+                    str(rec.get(field, ""))[:2000]
+                    for rec in records if isinstance(rec, dict)
+                    for field in ("title", "source", "url")
+                )
+            else:
+                if not path.is_dir():
+                    raise ValueError("unknown code directory")
+                candidates = [p for p in path.rglob("*.py")
+                              if p.is_file() and not p.is_symlink()
+                              and not p.name.startswith("test")]
+                if len(candidates) > 20 or sum(p.stat().st_size for p in candidates) > 200_000:
+                    raise ValueError("unbounded code")
+                text = " ".join(p.read_text("utf-8") for p in candidates)
+        except (OSError, ValueError, TypeError, UnicodeError):
+            failures.append(kind)
+            continue
+        if not all(re.search(r"\\b" + word + r"\\b", text, re.IGNORECASE)
+                   for word in named):
+            failures.append(kind)
+    return {"status": "BLOCKED_NAMED_SOURCE_MISMATCH" if failures
+                      else "NAME_MENTION_ONLY_NOT_FULL_OBJECTIVE_PROOF",
+            "irrelevant_kinds": failures}
+
+
 def execute(event: dict, *, output_dir: Path) -> dict:
     report = preflight(event)
     task = parse_mission(event)
@@ -167,10 +227,19 @@ def execute(event: dict, *, output_dir: Path) -> dict:
             objective=task["objective"], team=task["team"],
             results=progress,
         )
-    verified = independently_accept_team(task["team"], observed)
+    technical_verified = independently_accept_team(task["team"], observed)
+    relevance = (named_entity_evidence_gate(
+        task["objective"], task["team"], observed, output_dir
+    ) if technical_verified else {"status": "NOT_RUN", "irrelevant_kinds": []})
+    verified = technical_verified and not relevance["irrelevant_kinds"]
     report.update({
-        "status": ("VERIFIED_BOUNDED_TEAM" if verified
-                   else "BLOCKED_PARTIAL_TEAM"),
+        "status": ("VERIFIED_BOUNDED_TEAM" if verified else
+                   "BLOCKED_OBJECTIVE_RELEVANCE" if technical_verified else
+                   "BLOCKED_PARTIAL_TEAM"),
+        "worker_artifacts_technically_verified": technical_verified,
+        "founder_objective_verified": False,
+        "named_entity_evidence": relevance["status"],
+        "irrelevant_worker_kinds": relevance["irrelevant_kinds"],
         "automated_routing": True,
         "model_called": False,
         "chief_model_delegated": False,
