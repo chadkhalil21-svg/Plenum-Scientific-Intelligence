@@ -16,3 +16,15 @@ class_name = "PublicWakeReplayGuard"
 [exports.PublicWakeReplayGuard]
 type = "durable-object"
 storage = "sqlite"
+
+
+# Separate owner-private continuity records. NOT enabled without the distinct
+# PLENUM_PRIVATE_MEMORY_HMAC_SECRET, configured privately in Cloudflare.
+# No new host, third-party provider or paid inference account.
+[[durable_objects.bindings]]
+name = "PLENUM_PRIVATE_MEMORY"
+class_name = "PrivateContinuityMemory"
+
+[exports.PrivateContinuityMemory]
+type = "durable-object"
+storage = "sqlite"
