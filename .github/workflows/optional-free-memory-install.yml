@@ -1,0 +1,71 @@
+name: Plenum | Optional Free Private Memory Install
+on:
+  pull_request:
+    paths:
+      - 'pyproject.toml'
+      - 'src/plenum_ai/optional_memory_engines.py'
+      - 'tests/test_optional_memory_engines.py'
+      - 'integrations/continuity-memory/**'
+      - '.github/workflows/optional-free-memory-install.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mem0-verified-package-install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install actual pinned Mem0 wheel and Plenum adapter
+        run: python -m pip install -e '.[memory_mem0]'
+      - name: Verify import without service activation
+        run: |
+          python - <<'PY'
+          from mem0 import Memory
+          from plenum_ai.optional_memory_engines import installed_versions
+          assert installed_versions()['mem0'] == '2.2.1'
+          print('Mem0 installed; no external LLM, private account access, or memory write')
+          PY
+      - name: Verify owner-private memory boundaries only
+        run: python -m unittest discover -s tests -p test_optional_memory_engines.py -v
+  graphiti-verified-package-install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install actual pinned Graphiti wheel with FalkorDB support
+        run: python -m pip install -e '.[memory_graphiti]'
+      - name: Verify import without service activation
+        run: |
+          python - <<'PY'
+          from graphiti_core import Graphiti
+          from plenum_ai.optional_memory_engines import installed_versions
+          assert installed_versions()['graphiti'] == '0.31.2'
+          print('Graphiti installed; no database/model service or private memory created')
+          PY
+      - name: Verify owner-private memory boundaries only
+        run: python -m unittest discover -s tests -p test_optional_memory_engines.py -v
+  mcp-verified-package-install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install actual official pinned memory MCP server
+        run: npm install --prefix integrations/continuity-memory --ignore-scripts --no-audit --no-fund
+      - name: Verify exact installed package
+        run: |
+          npm ls --prefix integrations/continuity-memory --depth=0 @modelcontextprotocol/server-memory
+          node - <<'JS'
+          const p=require('./integrations/continuity-memory/node_modules/@modelcontextprotocol/server-memory/package.json');
+          if(p.version !== '2.1.1') process.exit(1);
+          console.log('MCP Memory server installed without founder data');
+          JS
