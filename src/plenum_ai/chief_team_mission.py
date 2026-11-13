@@ -153,6 +153,102 @@ def named_entity_evidence_gate(objective: str, kinds: tuple[str, ...],
             "irrelevant_kinds": failures}
 
 
+# A very small contract whose ENTIRE goal is observable from real first-party
+# HTTP source-read receipts and functional local code execution. No broad goal,
+# provider content claim or provider account access is certified by this rule.
+# This is not a synthetic "completed all agent work" success switch.
+EXACT_PUBLIC_ACCEPTANCE_GOALS = {
+    "Verify Cloudflare Workers AI source URLs and run existing Python neuron budget validator":
+        "cloudflare_workers_ai_free",
+    "Verify NOAA station metadata source URLs and run existing Python station validator":
+        "noaa_water_station_metadata",
+}
+
+
+def grade_complete_bounded_public_goal(objective: str, team: tuple[str, ...],
+                                       observed: dict, root: Path,
+                                       technical_verified: bool,
+                                       named: dict) -> dict:
+    """Read the REAL specialists' original evidence; accept only two exact goals.
+
+    This intentionally CANNOT certify reading page body, model quality, any
+    arbitrary code generation, signed-in browser tasks or general autonomy.
+    """
+    from hashlib import sha256
+    from .reviewed_domain_workers import DOMAIN_SOURCES, DOMAIN_FILES, match_original_capability
+
+    scope = ("first-party public source URL reachability plus the already-reviewed"
+             " original Python validator functional test; no website login,"
+             " hosted inference, new program creation or private action")
+    rejected = {"status": "NOT_A_FULLY_GRADED_GOAL", "scope": scope}
+    capability = EXACT_PUBLIC_ACCEPTANCE_GOALS.get(objective)
+    if (not capability or team != ("public_research", "public_program")
+            or not technical_verified or named.get("irrelevant_kinds")
+            or match_original_capability(objective) != capability):
+        return rejected
+    research_name = observed["public_research"].get("_artifact_path")
+    program_name = observed["public_program"].get("_artifact_path")
+    if not (isinstance(research_name, str) and isinstance(program_name, str)):
+        return rejected
+    research_path = root / research_name
+    program_dir = root / program_name / "code"
+    try:
+        if (research_path.is_symlink() or not research_path.is_file()
+                or research_path.stat().st_size > 50000
+                or not research_path.resolve().is_relative_to(root.resolve())
+                or not program_dir.is_dir() or program_dir.is_symlink()
+                or not program_dir.resolve().is_relative_to(root.resolve())):
+            return rejected
+        evidence = json.loads(research_path.read_text(encoding="utf-8"))
+        records = evidence.get("records")
+        official = DOMAIN_SOURCES[capability]
+        expected_urls = {url for _, _, url in official}
+        if (evidence.get("schema") != "plenum-public-horizon-snapshot-v1"
+                or evidence.get("topic") != objective
+                or evidence.get("publisher_document_text_verified") is not False
+                or not isinstance(records, list)
+                or len(records) != len(expected_urls)
+                or {rec.get("url") for rec in records if isinstance(rec, dict)} != expected_urls
+                or any(not isinstance(rec, dict)
+                       or rec.get("http_status") != 200
+                       or rec.get("independently_quoted_page_text") is not False
+                       or rec.get("source") != organization
+                       for rec, (_, organization, _) in zip(
+                           sorted(records, key=lambda x: x.get("url", "")),
+                           sorted(official, key=lambda x: x[2])))):
+            return rejected
+        manifest_path = program_dir / "manifest.json"
+        copied_code = program_dir / "main.py"
+        original_code = DOMAIN_FILES[capability]
+        verifier = program_dir / "test_generated.py"
+        if any(p.is_symlink() or not p.is_file()
+               or p.stat().st_size > 40000 for p in (
+                   manifest_path, copied_code, original_code, verifier)):
+            return rejected
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        code = copied_code.read_bytes()
+        if (code != original_code.read_bytes()
+                or manifest.get("schema") != "plenum-reviewable-program-v1"
+                or manifest.get("kind") != capability
+                or manifest.get("public_topic") != objective
+                or manifest.get("functional_verifier_executed_and_passed") is not True
+                or manifest.get("main_sha256") != sha256(code).hexdigest()
+                or observed["public_program"].get("actual_offline_functional_test_passed") is not True
+                or manifest.get("generated_program_has_not_been_deployed") is not True
+                or manifest.get("human_code_review_required") is not True):
+            return rejected
+    except (OSError, ValueError, TypeError, KeyError, UnicodeError):
+        return rejected
+    return {
+        "status": "VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE",
+        "scope": scope,
+        "http_200_official_urls": sorted(expected_urls),
+        "original_program_sha256": sha256(code).hexdigest(),
+        "existing_validator_real_functional_test_passed": True,
+        "new_provider_account_or_paid_host_used": False,
+    }
+
+
 def execute(event: dict, *, output_dir: Path) -> dict:
     report = preflight(event)
     task = parse_mission(event)
@@ -232,12 +328,19 @@ def execute(event: dict, *, output_dir: Path) -> dict:
         task["objective"], task["team"], observed, output_dir
     ) if technical_verified else {"status": "NOT_RUN", "irrelevant_kinds": []})
     verified = technical_verified and not relevance["irrelevant_kinds"]
+    goal_proof = grade_complete_bounded_public_goal(
+        task["objective"], task["team"], observed, output_dir,
+        technical_verified, relevance,
+    )
     report.update({
         "status": ("VERIFIED_BOUNDED_TEAM" if verified else
                    "BLOCKED_OBJECTIVE_RELEVANCE" if technical_verified else
                    "BLOCKED_PARTIAL_TEAM"),
         "worker_artifacts_technically_verified": technical_verified,
-        "founder_objective_verified": False,
+        "founder_objective_verified": (
+            goal_proof["status"] == "VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE"
+        ),
+        "bounded_founder_goal_evidence": goal_proof,
         "named_entity_evidence": relevance["status"],
         "irrelevant_worker_kinds": relevance["irrelevant_kinds"],
         "automated_routing": True,
