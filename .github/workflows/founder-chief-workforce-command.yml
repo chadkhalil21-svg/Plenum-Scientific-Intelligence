@@ -151,7 +151,7 @@ jobs:
           if not attempt.isdecimal() or len(attempt)>3:
               raise ValueError('Invalid original GitHub run attempt')
           marker='<!-- plenum-founder-chief-run:'+run+':attempt:'+attempt+' -->'
-          body=(marker+'\n**Chief status: '+status+'**\n'+lines[0]+
+          body=(marker+'\n**Chief status: '+status+'**\n'+'\n'.join(lines[:2])+
                 '\nAttempt: '+attempt+
                 '\nRun: https://github.com/'+os.environ['GH_REPO']+
                 '/actions/runs/'+run+
