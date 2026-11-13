@@ -1,4 +1,4 @@
-name: Restore Auth0 Owner Browser Original Timeout (Founder Approved)
+name: Repair Existing Auth0 Owner Stream Capacity (Founder Approved)
 on:
   issues:
     types: [opened]
@@ -50,16 +50,20 @@ jobs:
               assert name in env
           current=int(spec.get("timeoutSeconds",0))
           assert current in (600,900), "Unexpected config drift; no changes authorized"
-          print("PASS: Target is exact Auth0 owner service. Current timeoutSeconds:",current)
+          assert int(spec.get("containerConcurrency",0)) in (1,4), "Unexpected concurrency drift"
+          ann=d["spec"]["template"].get("metadata",{}).get("annotations",{})
+          assert ann.get("autoscaling.knative.dev/maxScale")=="1"
+          print("PASS: Exact owner service, current concurrency:",spec.get("containerConcurrency"))
+          print("PASS: Existing single-instance limit retained; no new host or model.")
           PY
-      - name: Restore originally verified 900-second owner WebSocket timeout only
+      - name: Repair one-slot WebSocket starvation with bounded concurrency four
         env:
           PROJECT: ${{ vars.GCP_PROJECT_ID }}
         shell: bash
         run: |
           set -euo pipefail
           gcloud run services update plenum-browser-owner-auth0 \
-            --project="$PROJECT" --region=us-east1 --timeout=900s --quiet >/dev/null
+            --project="$PROJECT" --region=us-east1 --timeout=900s --concurrency=4 --quiet >/dev/null
       - name: Verify original timeout restored with unchanged image, owner scope and vault
         env:
           PROJECT: ${{ vars.GCP_PROJECT_ID }}
@@ -81,9 +85,16 @@ jobs:
           assert old["containers"][0]["image"]==new["containers"][0]["image"]
           assert old["containers"][0]["env"]==new["containers"][0]["env"]
           assert int(new["timeoutSeconds"])==900
+          assert int(new["containerConcurrency"])==4
+          old_ann=a["spec"]["template"].get("metadata",{}).get("annotations",{})
+          new_ann=b["spec"]["template"].get("metadata",{}).get("annotations",{})
+          assert old_ann.get("autoscaling.knative.dev/maxScale")==new_ann.get("autoscaling.knative.dev/maxScale")=="1"
+          assert a["metadata"].get("annotations",{}).get("run.googleapis.com/maxScale")==b["metadata"].get("annotations",{}).get("run.googleapis.com/maxScale")
+          assert old["containers"][0].get("resources")==new["containers"][0].get("resources")
+          print("PASS: concurrency4, max-instances1, CPU/memory unchanged.")
           for name in ("owner-before.json","owner-after.json"):
               (t/name).unlink()
-          print("PASS: Original 900-second timeout restored with identical image, identity, Auth0 and encrypted profile configuration.")
+          print("PASS: Owner stream capacity repaired with identical image, identity, Auth0, Cloudflare and encrypted profile configuration.")
           PY
           URL="https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app"
           test "$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$URL/auth0/login")" = '302'
@@ -98,7 +109,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          FILTER='resource.type="cloud_run_revision" AND resource.labels.service_name="plenum-browser-owner-auth0" AND logName="projects/plenum-computer-browser/logs/run.googleapis.com%2Frequests" AND timestamp>="2026-11-08T22:18:00Z" AND timestamp<="2026-11-08T22:33:00Z"'
+          FILTER='resource.type="cloud_run_revision" AND resource.labels.service_name="plenum-browser-owner-auth0" AND logName="projects/plenum-computer-browser/logs/run.googleapis.com%2Frequests" AND timestamp>="2026-11-13T19:20:00Z" AND timestamp<="2026-11-13T19:33:00Z"'
           if gcloud logging read "$FILTER" --project="$PROJECT" --limit=250 --format=json > "$RUNNER_TEMP/request-log-private.json" 2>/dev/null; then
             python - <<'PY'
           import json,os,collections
@@ -125,7 +136,7 @@ jobs:
         shell: bash
         run: |
           if [ "$STATUS" = 'success' ]; then
-            gh issue comment "$ISSUE" --body 'PASS: Original 15-minute Auth0 owner browser timeout restored using a configuration-only revision, no Chromium rebuild. Owner OAuth, service image, runtime identity and encrypted session vault preserved; login 302, anonymous owner routes 401. Remote iPad disconnect cause still requires a passing live session or redacted Cloud request evidence.'
+            gh issue comment "$ISSUE" --body 'PASS: Owner stream request concurrency repaired from one to four with the existing one-instance cap, original 900-second timeout, CPU/memory/image/environment unchanged. Configuration-only, no build or IAM changes; login302 and anonymous owner routes401. Next independent check: live anonymous Upgrade403 instead of capacity429; real founder session still needs acceptance.'
           else
-            gh issue comment "$ISSUE" --body 'BLOCKED: Original timeout restoration could not be independently verified. Do not claim config restored; check protected workflow stage. No IAM change or credentials were exposed.'
+            gh issue comment "$ISSUE" --body 'BLOCKED: Owner stream capacity repair could not be independently verified; inspect original protected workflow. No IAM change or credentials exposed.'
           fi
