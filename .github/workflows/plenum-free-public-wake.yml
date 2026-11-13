@@ -14,7 +14,7 @@ permissions:
   contents: read
 concurrency:
   # Same repository-wide issue lock as original public inbox workflow.
-  group: plenum-public-inbox-${{ github.event.client_payload.issue_number || github.ref }}
+  group: plenum-founder-public-issue-${{ github.event.issue.number || github.event.client_payload.issue_number || github.ref }}
   cancel-in-progress: false
 jobs:
   focused-scope-check:
