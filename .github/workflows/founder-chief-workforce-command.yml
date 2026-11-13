@@ -99,7 +99,8 @@ jobs:
               --event "$GITHUB_EVENT_PATH" --execute --out-dir reports/workforce-chief
           fi
       - name: Independent local AQuA-informed review of REAL Chief output
-        if: success()
+        if: >-
+          success() && github.event.issue.title == '[Plenum Chief] public mission'
         run: >-
           python -m plenum_ai.ambient_quality_insights
           --issue "${{ github.event.issue.number }}"
