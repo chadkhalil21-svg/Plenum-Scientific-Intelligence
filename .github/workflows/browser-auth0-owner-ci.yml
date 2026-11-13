@@ -1,5 +1,7 @@
 name: Verify Separate Auth0 Browser Owner Entrance (No Deployment)
 on:
+  issues:
+    types: [opened]
   pull_request:
     paths:
       - 'services/computer_browser/owner_auth0.py'
@@ -14,6 +16,7 @@ permissions:
   contents: read
 jobs:
   isolated-owner-auth:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -35,3 +38,66 @@ jobs:
           python -m py_compile services/computer_browser/owner_auth0.py
       - name: Prove real loopback Uvicorn WebSocket handshake and anonymous denial
         run: python scripts/check_browser_real_ws_transport.py
+
+
+  probe-saved-owner-inventory:
+    # Read-only route existence, not owner account content or a deployment.
+    if: >-
+      github.event_name == 'issues' &&
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.user.id == 251133044 &&
+      github.event.issue.title == 'Computer Browser: check deployed encrypted session inventory' &&
+      github.event.issue.body == 'CHECK_EXISTING_OWNER_INVENTORY_ROUTE:2026-11-13'
+    permissions:
+      contents: read
+      issues: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check only three anonymous HTTP statuses (do not fetch private data)
+        id: inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app'
+          status() {
+            curl --silent --show-error --proto '=https' --max-time 25 \
+              --output /dev/null --write-out '%{http_code}' "$BASE$1" || true
+          }
+          OWNER="$(status /owner)"
+          INVENTORY="$(status /owner/sessions/inventory)"
+          MISSING="$(status /_plenum_route_not_found_20261113)"
+          outcome='INCONCLUSIVE'
+          if [ "$OWNER" = 401 ] && [ "$MISSING" = 404 ]; then
+            if [ "$INVENTORY" = 401 ]; then
+              outcome='PROTECTED_INVENTORY_ROUTE_PRESENT'
+            elif [ "$INVENTORY" = 404 ]; then
+              outcome='INVENTORY_ROUTE_NOT_DEPLOYED'
+            elif [ "$INVENTORY" = 200 ]; then
+              outcome='SECURITY_WARNING_INVENTORY_PUBLIC'
+            fi
+          fi
+          echo "classification=$outcome" >> "$GITHUB_OUTPUT"
+          echo "Read-only route status: owner=$OWNER inventory=$INVENTORY unknown=$MISSING classification=$outcome"
+          echo 'No Auth0 login, private profile metadata, cookies, tokens, page body, service build, deploy or account writes used.'
+      - name: Return a sanitized outcome on original founder-owned issue
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          RESULT: ${{ steps.inventory.outputs.classification }}
+        run: |
+          set -euo pipefail
+          case "$RESULT" in
+            PROTECTED_INVENTORY_ROUTE_PRESENT)
+              BODY='LIVE ROUTE VERIFIED: Original Cloud Run Auth0 owner portal responds 401 for the owner-only encrypted session inventory and owner page, and 404 for an unknown route. This supports inventory ROUTE deployed and protected, NOT saved-site existence, login validity or three authenticated browser actions. Open the existing /owner/sessions from an authenticated owner session to check private profiles.' ;;
+            INVENTORY_ROUTE_NOT_DEPLOYED)
+              BODY='NOT DEPLOYED: Original live Auth0 owner portal returns 404 on /owner/sessions/inventory while /owner is protected (401) and unknown paths return 404. Original PR #554 source exists but current image does not serve that route. Do not request owner passwords or claim the vault is empty. A separately approved existing-image release is required, subject to cost/security review.' ;;
+            SECURITY_WARNING_INVENTORY_PUBLIC)
+              BODY='SECURITY WARNING: Private session inventory unexpectedly returned HTTP 200 to unauthenticated request. No body was fetched. Do not use this route until owner/engineering verifies access isolation.' ;;
+            *)
+              BODY='INCONCLUSIVE: Read-only original Cloud Run owner inventory route probe did not distinguish live protected inventory from missing route. Do not infer profile existence, login, or deployment; inspect only the sanitized HTTP status classes in the Actions job.' ;;
+          esac
+          gh issue comment "$ISSUE" --body "$BODY"
