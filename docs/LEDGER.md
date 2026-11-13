@@ -1,5 +1,12 @@
 # Engineering and Scientific Ledger
 
+## 2026-11-13 | Completed specialist receipts survive reporting retries (offline verified)
+
+Existing Chief recovery dropped `actual_offline_functional_test_passed` when saving/restoring the program worker checkpoint. A later retry reused both SHA-verified artifacts but incorrectly lost the bounded founder-goal verdict. Preserve the original Boolean receipt through the existing checkpoint; the independent grader still checks the actual source, manifest and artifact hash.
+
+Regression: both original workers execute once using a stub only for the external source GET, then the same mission resumes with zero new worker invocations, two verified reused workers and the original accepted goal verdict. The regression failed before repair (`founder_objective_verified=False`); all 55 Chief tests passed after repair. Full local discovery ran 986 tests (20 skipped): 31 errors and one failure remain from optional dependencies/browser availability and MCP SDK compatibility; no full-suite success is claimed. This is local recovery evidence, not a new live mission, broader planning, private browser acceptance or a 24/7 host. No paid API, provider login, production release or repeated live benchmark.
+
+
 ## 2026-11-13 | Navigation-context crash REPRODUCED, repaired and deployed; new-image recovery PASS
 
 Before: #652/run43498466956 exact deployed28384eb reproduced Error NAVIGATION_CONTEXT_LOST in original selected-field probe after one real coordinate navigation. PR653 merged62eba539c2dc167b9dbcd90f7d157cf49ffd86f8 after all4CI passed, including30 private-login tests and new real offline navigation→picture→new field/typing coverage. Original protected release654/run43499269439 SUCCEEDED: Cloud Build941f0d4e-8839-4d7c-a0c5-284f13a353a9, owner revision00052-dh8 serves100%, OAuth302/anonymous401, vault/identity/900s retained.

@@ -112,6 +112,11 @@ def verified_previous_result(root: Path, kind: str, entry: object) -> dict | Non
         "verified": True,
         "worker": entry.get("worker"),
         "verified_scope": entry.get("verified_scope"),
+        # Preserve the original functional receipt only after artifact SHA
+        # verification. The goal grader still checks the real code/manifest.
+        "actual_offline_functional_test_passed": (
+            entry.get("actual_offline_functional_test_passed") is True
+        ),
         "output_artifact": entry.get("output_artifact"),
         "_artifact_path": artifact,
         "_reused": True,

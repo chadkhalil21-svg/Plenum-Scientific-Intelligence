@@ -160,6 +160,16 @@ class RealBoundedFounderGoalVerifierTests(TestCase):
             self.assertTrue((root / "workers/public_program/issue-1001/code/main.py").is_file())
             self.assertEqual(inspect_chief_report(actual)["disposition"],
                              "VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE_NOT_GENERAL_AUTONOMY")
+            # A later reporting retry must retain acceptance without repeating
+            # either completed worker or its external source request.
+            with patch("plenum_ai.chief_team_mission.run_issue",
+                       side_effect=AssertionError("completed worker repeated")):
+                resumed = execute(event, output_dir=root)
+            self.assertEqual(resumed["new_worker_invocations"], 0)
+            self.assertEqual(resumed["reused_prior_verified_workers"], 2)
+            self.assertTrue(resumed["founder_objective_verified"])
+            self.assertEqual(inspect_chief_report(resumed)["disposition"],
+                             "VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE_NOT_GENERAL_AUTONOMY")
 
     def test_exact_goal_accepts_real_original_primary_source_and_functional_code(self):
         with tempfile.TemporaryDirectory() as td:
