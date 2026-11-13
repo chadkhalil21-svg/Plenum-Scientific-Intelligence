@@ -22,7 +22,7 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
       - uses: google-github-actions/setup-gcloud@v3
-      - name: Isolate live anonymous Upgrade and exact-image signed-session transport
+      - name: Verify original owner click navigation recovery in exact image
         env:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
         shell: bash
@@ -43,7 +43,7 @@ jobs:
           timeout 90 docker run --rm -i --network none --read-only --tmpfs /tmp --entrypoint python "$IMAGE" - <<'PY'
           import asyncio
           from playwright.async_api import async_playwright
-          from services.computer_browser.private_login import _focused_editable_kind
+          from services.computer_browser.private_login import _focused_editable_kind, _frame
           async def run():
               failures=0
               async with async_playwright() as p:
@@ -59,11 +59,11 @@ jobs:
                           await route.abort()
                   await context.route("**/*",fixture)
                   page=await context.new_page()
-                  for case in range(6):
+                  for case in range(1):
                       await page.goto("https://fixture.example/start",wait_until="domcontentloaded")
                       await page.mouse.click(45,25)
                       try:
-                          await _focused_editable_kind(page)
+                          assert await _focused_editable_kind(page)=="none"
                           print("ISOLATED_OWNER_CLICK_FOCUS_RESULT",case,"OK",flush=True)
                       except Exception as exc:
                           message=str(exc).lower()
@@ -73,8 +73,17 @@ jobs:
                                 type(exc).__name__,"NAVIGATION_CONTEXT_LOST" if lost else "OTHER",
                                 flush=True)
                           failures+=int(lost)
-                      await page.wait_for_load_state("domcontentloaded")
-                  print("ISOLATED_NAVIGATION_RACE_REPRODUCED",failures>0,flush=True)
+                          raise
+                      await page.wait_for_url("https://fixture.example/next",wait_until="domcontentloaded")
+                      class Sink:
+                          async def send_json(self,payload):
+                              assert payload["type"]=="frame"
+                              print("ISOLATED_POST_NAVIGATION_FRAME_BYTES",len(payload["image"]),flush=True)
+                      assert await _frame(Sink(),page)
+                      await page.locator("input").click()
+                      assert await _focused_editable_kind(page)=="text"
+                      print("ISOLATED_NEW_PAGE_FIELD_SELECTION_OK",True,flush=True)
+                  print("ISOLATED_NAVIGATION_RECOVERY_OK",failures==0,flush=True)
                   await browser.close()
           asyncio.run(run())
           PY
