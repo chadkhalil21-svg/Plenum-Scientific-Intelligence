@@ -1,5 +1,9 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Owner revision00043-hnm deployed and security readback PASS
+
+Original authorized release #623 / run #43475185987 SUCCEEDED: Cloud Build acccb344-59f6-4973-8ddb-28f71da65801, image60c2ceb907e4884e6d4656801d632d4da54d9f3e, original service revision00043-hnm serving100% traffic. Build dependency consistency + actual app import passed; live original identity, encrypted vault configuration and timeout900s preserved; OAuth302 and anonymous owner/internal routes401. This supersedes earlier source-only deployment status for included Browser Use/Cloudflare integration. Original owner activation workflow is minimally extended to bind founder-created PLENUM_CF_AI_TOKEN version1 and verify reference metadata only, with no IAM grants/token read or inference flags. Binding is NOT live until its real run succeeds. Account-ID/actual WorkersFree status/per-task consent and real signed-in missions remain open. Original #310 remains OPEN.
+
 ## 2026-11-13 | Exact candidate startup reproduced: incompatible Starlette upgrade
 
 Original isolated exact-image run #621 / #43474543806 pulled image10fc08ed and reproduced app import failure without credentials/egress: FastAPI0.115.12 + Starlette1.10.0 -> TypeError `Router.__init__() got an unexpected keyword argument on_startup`. Preserve original FastAPI0.115.12 as an explicit owner-layer pip requirement so resolver respects its Starlette constraints; local full dependency dry-run with original FastAPI/Uvicorn and Browser Use0.13.14/websockets15.0.1 succeeded selecting Starlette0.46.2 and sse-starlette3.0.3. Add pip-check and actual app import to original Dockerfile after source COPY, before release. No new browser or host; authorized original release may retry after checks. Token binding and real inference/account task remain unaccepted under #310.
