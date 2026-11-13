@@ -115,8 +115,10 @@ jobs:
               if item.get('mode') == 'multi':
                   lines=['team='+','.join(item.get('specialists',[])[:3])[:180]
                          +'; executed='+str(item.get('executed_workers',0))
-                         +'; independently_verified='+str(item.get('independent_verified',False))
-                         +'; scopes='+','.join(str(x.get('verified_scope',''))[:60]
+                         +'; worker_artifacts_technically_verified='+str(item.get('worker_artifacts_technically_verified',False))
+                         +'; founder_objective_verified='+str(item.get('founder_objective_verified',False))
+                         +'; named_subject_screen='+str(item.get('named_entity_evidence','NOT_EVALUATED'))[:65]
+                         +'; scopes='+','.join(str(x.get('verified_scope',''))[:48]
                                              for x in item.get('worker_results',[])[:3])]
                   options=[x['id'] for x in item.get('candidate_sources',[])[:3]
                            if x.get('activation')=='SOURCE_REFERENCE_ONLY_NOT_INSTALLED']
