@@ -1,5 +1,10 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Preserve original owner browser through ordinary timeouts (source; release pending)
+
+Exact deployed-image public diagnosis #641/run #43488157228 PASSED: original pinned Chromium loaded signed-out GitHub and sent a17,236-byte frame with nonblank aggregate health. This does NOT reproduce the founder's private-session exception; do not label its exact cause proven. Source inspection and two failing-before/passing-after injected-timeout regressions establish a separate concrete defect: any screenshot or owner action timeout previously escaped to the global handler and destroyed the session. Catch only upstream Playwright TimeoutError: passive bounded repaint can recover a delayed picture; a timed-out owner action is NEVER replayed, current fields/browser stay open, typing is marked unconfirmed and uncertain selection cleared. Permission failures still terminate; other fatal exceptions now show fixed phase/category codes without exception text, URLs, page content or credentials. No new browser, permissions, token or account setup. Original CI/protected release and new-image readback remain required; real founder account acceptance and actual Workers AI inference remain OPEN under #310.
+
+
 ## 2026-11-13 | Owner live interaction fails; exact-image first-frame diagnosis
 
 Founder screenshot reports fixed live_interaction failure and cleared canvas. Owner identity and Cloudflare configuration audit #639/run #43485158401 already accepted (ready service, bound token, valid32hex account shape, CF/Free-plan/agent flagsYES); preserve them. Reuse existing original OIDC diagnosis workflow to exercise only signed-out public GitHub through original pinned proxy/Chromium/frame methods in exact deployed image60c2ceb. No production environment, saved profiles, credentials, mounts, model inference or service changes. Emit only frame byte count, fixed statuses, aggregate health and exception class/public source locations. This is investigation, NOT a repair or real authenticated account acceptance. #310 remainsOPEN.

@@ -469,6 +469,16 @@ class PrivateLoginTests(unittest.TestCase):
                                         blocked_cross_origin:0})
                 })""")
                 self.assertIn("login is not yet verified",page.locator("#status").inner_text())
+                page.evaluate("""() => window.__owner_ws.onmessage({
+                  data: JSON.stringify({type:"status",code:"picture_timeout",
+                                        message:"Picture timed out"})
+                })""")
+                self.assertTrue(page.locator("#enter").is_disabled())
+                self.assertIn("fields remain open",page.locator("#field-status").inner_text())
+                page.evaluate("""() => window.__owner_ws.onmessage({
+                  data: JSON.stringify({type:"frame",image:""})
+                })""")
+                self.assertFalse(page.locator("#enter").is_disabled())
                 box=page.locator("#display").bounding_box()
                 self.assertIsNotNone(box)
                 page.dispatch_event("#display","pointerup",{
@@ -688,6 +698,63 @@ class AppleAuthenticationOptInPolicy(unittest.TestCase):
         self.assertIn('allow_apple_auth=apple_auth=="1"', code)
         self.assertIn("primary=origin,approved=approved_origins", code)
         self.assertIn("safe_url(page.url,origins={origin})", code)
+
+
+@unittest.skipUnless(HAS_TEST,"Owner stream recovery needs browser gateway dependencies")
+class OwnerStreamTimeoutRecovery(unittest.IsolatedAsyncioTestCase):
+    async def test_picture_timeout_reports_recoverable_without_leaking_exception(self):
+        from types import SimpleNamespace
+        from playwright.async_api import TimeoutError as PlaywrightTimeoutError
+        page=SimpleNamespace(screenshot=AsyncMock(side_effect=[
+            PlaywrightTimeoutError("PRIVATE synthetic content must never escape"),
+            b"synthetic-jpeg"]))
+        ws=SimpleNamespace(send_json=AsyncMock())
+        self.assertFalse(await private_login._frame(ws,page))
+        report=ws.send_json.await_args.args[0]
+        self.assertEqual(report["code"],"picture_timeout")
+        self.assertNotIn("failure",report)
+        self.assertNotIn("PRIVATE",str(report))
+        self.assertTrue(await private_login._frame(ws,page))
+        self.assertEqual(ws.send_json.await_args.args[0]["type"],"frame")
+
+    async def test_action_timeout_keeps_browser_for_next_command_without_replay(self):
+        from types import SimpleNamespace
+        from fastapi import FastAPI
+        from playwright.async_api import TimeoutError as PlaywrightTimeoutError
+        page=SimpleNamespace(
+            url="https://example.com/",
+            set_content=AsyncMock(),screenshot=AsyncMock(return_value=b"jpeg"),
+            evaluate=AsyncMock(return_value=True),
+            mouse=SimpleNamespace(click=AsyncMock(side_effect=PlaywrightTimeoutError("PRIVATE"))),
+            keyboard=SimpleNamespace(press=AsyncMock()))
+        context=SimpleNamespace(route=AsyncMock(),new_page=AsyncMock(return_value=page))
+        browser=SimpleNamespace(new_context=AsyncMock(return_value=context),close=AsyncMock())
+        manager=AsyncMock()
+        manager.__aenter__.return_value=SimpleNamespace(
+            chromium=SimpleNamespace(launch=AsyncMock(return_value=browser)))
+        ws=SimpleNamespace(scope={},headers={"origin":"http://owner.test"},
+            accept=AsyncMock(),close=AsyncMock(),send_json=AsyncMock(),
+            receive_json=AsyncMock(side_effect=[
+                {"type":"click","x":20,"y":20},
+                {"type":"key","key":"Tab"},{"type":"close"}]))
+        original=FastAPI()
+        private_login.mount_private_login(original)
+        endpoint=next(r.endpoint for r in original.routes if r.path=="/owner/live")
+        with patch.dict(os.environ,{"BROWSER_PUBLIC_ORIGIN":"http://owner.test",
+                                    "COMPUTER_BROWSER_CI_ONLY":"true"}), \
+             patch.object(private_login,"auth0_active",return_value=False), \
+             patch.object(private_login,"verify_owner_token",return_value={"private_owner_id":"fixture"}), \
+             patch.object(private_login,"owner_live_origin",return_value=("https://example.com",False)), \
+             patch("playwright.async_api.async_playwright",return_value=manager):
+            await endpoint(ws,site="https://example.com/",demo="1",apple_auth="0",
+                           resource_origins="",approve_resources="0",resume_saved="0")
+        reports=[call.args[0] for call in ws.send_json.await_args_list]
+        self.assertTrue(any(r.get("code")=="action_timeout" for r in reports))
+        self.assertFalse(any(r.get("failure") for r in reports))
+        self.assertNotIn("PRIVATE",str(reports))
+        self.assertEqual(page.mouse.click.await_count,1)
+        page.keyboard.press.assert_awaited_once_with("Tab")
+        self.assertEqual(ws.receive_json.await_count,3)
 
 
 if __name__=="__main__":

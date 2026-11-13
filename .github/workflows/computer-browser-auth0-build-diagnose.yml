@@ -29,7 +29,12 @@ jobs:
         run: |
           set -euo pipefail
           test "$GCP_PROJECT_ID" = 'plenum-computer-browser'
-          IMAGE="us-east1-docker.pkg.dev/$GCP_PROJECT_ID/plenum-browser/browser-auth0-owner:60c2ceb907e4884e6d4656801d632d4da54d9f3e"
+          IMAGE="$(gcloud run services describe plenum-browser-owner-auth0 --project="$GCP_PROJECT_ID" --region=us-east1 --format='value(spec.template.spec.containers[0].image)')"
+          case "$IMAGE" in
+            "us-east1-docker.pkg.dev/$GCP_PROJECT_ID/plenum-browser/browser-auth0-owner:"*) ;;
+            *) echo "Unexpected existing owner image"; exit 1 ;;
+          esac
+          echo "PUBLIC_OWNER_IMAGE_REFERENCE=$IMAGE"
           gcloud auth configure-docker us-east1-docker.pkg.dev --quiet >/dev/null
           docker pull "$IMAGE" >/dev/null
           # Original image, public signed-out GitHub ONLY. No mounts, cloud
