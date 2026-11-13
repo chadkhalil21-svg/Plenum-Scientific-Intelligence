@@ -232,3 +232,47 @@ class OwnerReadOnlyAgentContractTests(unittest.TestCase):
         with patch.dict("os.environ",{"PLENUM_OWNER_READONLY_AGENT_ENABLED":"true"}):
             with self.assertRaises(PermissionError):
                 asyncio.run(run_owner_readonly_browser_task(**kwargs))
+
+
+    def test_cloudflare_private_page_inference_fails_closed_without_token_or_free_plan(self):
+        kwargs = dict(
+            verified_owner={"private_owner_id":"founder-private-owner"},
+            website_origin=ORIGIN,
+            objective="Inspect the account-specific existing issue status",
+            owner_proxy_url="http://127.0.0.1:24517",
+            existing_chromium_executable=BINARY,
+            store=FakeStore(state()),
+            browser_factory=lambda **k: self.fail("Browser should not open"),
+            tools_factory=lambda: self.fail("Browser tools should not open"),
+            agent_factory=lambda **k: self.fail("Agent should not open"),
+            independent_verify=lambda h,b: True,
+            approval_callback=lambda *args: True,
+            approval_expires_at=time.time()+200,
+            external_inference_consent=True,
+        )
+        cfg={
+            "PLENUM_OWNER_READONLY_AGENT_ENABLED":"true",
+            "PLENUM_BROWSER_FREE_LOCAL":"",
+            "PLENUM_CF_AI_ENABLED":"true",
+            "PLENUM_CF_AI_FREE_PLAN_CONFIRMED":"true",
+            "PLENUM_CF_AI_ACCOUNT_ID":"f"*32,
+            "PLENUM_CF_AI_TOKEN":"TEST_ONLY_NO_NETWORK",
+        }
+        for field, value in (
+            ("PLENUM_CF_AI_ENABLED","false"),
+            ("PLENUM_CF_AI_FREE_PLAN_CONFIRMED","false"),
+            ("PLENUM_CF_AI_ACCOUNT_ID","invalid"),
+            ("PLENUM_CF_AI_TOKEN",""),
+        ):
+            with self.subTest(field=field), patch.dict(
+                "os.environ",{**cfg,field:value},clear=True,
+            ):
+                with self.assertRaises(PermissionError):
+                    asyncio.run(run_owner_readonly_browser_task(**kwargs))
+        # A model factory (possibly agent/page-supplied) cannot substitute
+        # a trusted Cloudflare model or its required owner privacy permission.
+        with patch.dict("os.environ",cfg,clear=True):
+            with self.assertRaises(PermissionError):
+                asyncio.run(run_owner_readonly_browser_task(
+                    **{**kwargs,"model_factory":lambda: object()}
+                ))
