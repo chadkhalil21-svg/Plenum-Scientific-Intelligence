@@ -1,5 +1,10 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | New founder evidence: Upgrade1006 before stream opens
+
+Founder14:26 screenshot reports WebSocket Upgrade not completed1006 after HTTP site preflight. Distinct from prior post-open live_interaction failure and deployed timeout recovery; do NOT claim timeout fix settles this handshake. Reuse original read-only diagnostic for ONE anonymous live production WebSocket Upgrade (expect403, no cookie), plus exact-image real Uvicorn + original Auth0 signed synthetic fixture cookie + actual offline Chromium frame in a network-disabled container. No production key/cookie/session/environment or account data, no writes/IAM/inference/new host. This distinguishes public protocol routing from original signed-session application transport before selecting another change. Existing configuration accepted; #310OPEN.
+
+
 ## 2026-11-13 | Timeout recovery DEPLOYED; exact live image frame readback PASS
 
 PR #642 merged28384ebee7b359e21715d3887ec14d3bbf5471b2 after all four CI checks passed (including28 original private-login tests with real Chromium/mobile controls and injected picture/action timeout recovery). Original protected release #643 / run #43489595198 SUCCEEDED: Cloud Build0a79cc69-f4b0-49d2-8a2e-8cf39cb1bf7e; owner revision00050-pxn serves100% traffic. Original identity/vault/timeout900s retained; OAuth302 and anonymous owner/internal routes401.

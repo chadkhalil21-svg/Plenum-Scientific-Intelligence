@@ -22,7 +22,7 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
       - uses: google-github-actions/setup-gcloud@v3
-      - name: Diagnose original public GitHub first frame in exact deployed image
+      - name: Isolate live anonymous Upgrade and exact-image signed-session transport
         env:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
         shell: bash
@@ -37,53 +37,91 @@ jobs:
           echo "PUBLIC_OWNER_IMAGE_REFERENCE=$IMAGE"
           gcloud auth configure-docker us-east1-docker.pkg.dev --quiet >/dev/null
           docker pull "$IMAGE" >/dev/null
-          # Original image, public signed-out GitHub ONLY. No mounts, cloud
-          # credentials, owner cookies, saved state, provider token or model.
-          timeout 160 docker run --rm -i --read-only --tmpfs /tmp \
-            --entrypoint python "$IMAGE" - <<'PY'
-          import asyncio,os,time,traceback
-          from types import SimpleNamespace
-          from unittest.mock import patch,AsyncMock
-          from fastapi import FastAPI
-          from services.computer_browser import private_login as live
-          from services.computer_browser.pinned_public_preview import PinnedOriginProxy
-          frames=[]
-          async def send(payload):
-              if payload.get("type")=="frame":
-                  frames.append(len(payload.get("image","")))
-                  print("PUBLIC_FIXTURE_FRAME_BYTES",frames[-1],flush=True)
-              elif payload.get("type")=="status":
-                  print("FIXED_STATUS",payload.get("message"),flush=True)
-              elif payload.get("type")=="page_health":
-                  print("PUBLIC_FIXTURE_HEALTH",payload,flush=True)
-          original=live._frame
-          async def diagnostic_frame(ws,page):
+          # ONE anonymous production protocol probe; no owner cookie, headers,
+          # target site credentials, runtime env, vault, provider token or AI.
+          timeout 30 docker run --rm -i --read-only --tmpfs /tmp --entrypoint python "$IMAGE" - <<'PY'
+          import asyncio
+          import websockets
+          from websockets.exceptions import InvalidStatus
+          async def probe():
               try:
-                  await original(ws,page)
+                  async with websockets.connect(
+                      "wss://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app/owner/live?site=https%3A%2F%2Fexample.com",
+                      origin="https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app",
+                      open_timeout=20,close_timeout=2):
+                      print("LIVE_ANONYMOUS_WEBSOCKET_UNEXPECTEDLY_ACCEPTED",flush=True)
+                      raise SystemExit(1)
+              except InvalidStatus as exc:
+                  code=exc.response.status_code
+                  print("LIVE_ANONYMOUS_UPGRADE_HTTP_STATUS",code,flush=True)
+                  if code!=403:
+                      raise SystemExit(1)
               except Exception as exc:
-                  print("FRAME_EXCEPTION_CLASS",type(exc).__name__,flush=True)
-                  for item in traceback.extract_tb(exc.__traceback__)[-6:]:
-                      print("PUBLIC_SOURCE_LOCATION",os.path.basename(item.filename),item.lineno,item.name,flush=True)
-                  raise
-          async def run():
-              app=FastAPI()
-              live.mount_private_login(app)
-              endpoint=next(r.endpoint for r in app.routes if r.path=="/owner/live")
-              ws=SimpleNamespace(scope={},headers={"origin":"https://owner.test"},
-                  accept=AsyncMock(),close=AsyncMock(),send_json=send,
-                  receive_json=AsyncMock(return_value={"type":"close"}))
-              with patch.dict(os.environ,{"BROWSER_PUBLIC_ORIGIN":"https://owner.test"}), \
-                   patch.object(live,"auth0_active",return_value=False), \
-                   patch.object(live,"verify_owner_token",return_value={"private_owner_id":"isolated-public-fixture"}), \
-                   patch.object(live,"owner_live_origin",return_value=("https://github.com",True)), \
-                   patch.object(live,"_frame",side_effect=diagnostic_frame):
-                  await endpoint(ws,site="https://github.com",demo="0",apple_auth="0",
-                      resource_origins="https://github.githubassets.com,https://avatars.githubusercontent.com",
-                      approve_resources="1",resume_saved="0")
-              print("PUBLIC_FIXTURE_FIRST_FRAME_OK",bool(frames),flush=True)
-              if not frames:
+                  print("LIVE_ANONYMOUS_TRANSPORT_EXCEPTION_CLASS",type(exc).__name__,flush=True)
                   raise SystemExit(1)
-          asyncio.run(run())
+          asyncio.run(probe())
+          PY
+          # Exact app + real Uvicorn + real signed Auth0 fixture cookie +
+          # actual Chromium frame, entirely isolated, no external networking.
+          timeout 90 docker run --rm -i --network none --read-only --tmpfs /tmp --entrypoint python "$IMAGE" - <<'PY'
+          import asyncio,base64,json,os,socket,subprocess,sys,time
+          import websockets
+          from itsdangerous import TimestampSigner
+          from urllib.request import Request,urlopen
+          origin="https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app"
+          os.environ.update({
+              "K_SERVICE":"plenum-browser-owner-auth0",
+              "COMPUTER_BROWSER_TOKEN":"synthetic-isolated-fixture-material-"+"a"*32,
+              "AUTH0_OWNER_CLIENT_ID":"SyntheticFixtureClient123",
+              "AUTH0_OWNER_PUBLIC_ORIGIN":origin,
+              "BROWSER_PUBLIC_ORIGIN":origin,
+              "BROWSER_ALLOWED_ORIGINS":"https://example.com",
+              "COMPUTER_BROWSER_CI_ONLY":"true"})
+          from services.computer_browser.owner_auth0 import _session_secret
+          now=int(time.time())
+          record={"plenum_auth0_owner_v1":{"owner":"a"*64,"iat":now-2,"exp":now+120}}
+          signed=TimestampSigner(_session_secret()).sign(base64.b64encode(json.dumps(record).encode())).decode()
+          cookie="__Host-plenum_browser_owner="+signed
+          server=subprocess.Popen([sys.executable,"-m","uvicorn","services.computer_browser.api:app",
+              "--host","127.0.0.1","--port","8099","--log-level","critical","--no-access-log"],
+              stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+          async def run():
+              for tick in range(75):
+                  try:
+                      with socket.create_connection(("127.0.0.1",8099),timeout=.2):
+                          break
+                  except OSError:
+                      if server.poll() is not None:
+                          print("ISOLATED_APP_STARTUP_FAILED",flush=True)
+                          raise SystemExit(1)
+                      await asyncio.sleep(.2)
+              with urlopen(Request("http://127.0.0.1:8099/owner",headers={"Cookie":cookie}),timeout=5) as response:
+                  print("ISOLATED_SIGNED_OWNER_HTTP_STATUS",response.status,flush=True)
+                  assert response.status==200
+              try:
+                  async with websockets.connect(
+                      "ws://127.0.0.1:8099/owner/live?site=https%3A%2F%2Fexample.com%2F&demo=1",
+                      origin=origin,additional_headers={"Cookie":cookie},
+                      open_timeout=10,close_timeout=2,max_size=2_000_000) as ws:
+                      print("ISOLATED_SIGNED_OWNER_UPGRADE_ACCEPTED",flush=True)
+                      for tick in range(4):
+                          message=json.loads(await asyncio.wait_for(ws.recv(),25))
+                          if message.get("failure"):
+                              print("ISOLATED_FIXED_FAILURE",message.get("code","not-classified"),flush=True)
+                              raise SystemExit(1)
+                          if message.get("type")=="frame":
+                              print("ISOLATED_REAL_CHROMIUM_FRAME_BYTES",len(message["image"]),flush=True)
+                              await ws.send(json.dumps({"type":"close"}))
+                              return
+                      raise SystemExit(1)
+              except Exception as exc:
+                  print("ISOLATED_SIGNED_TRANSPORT_EXCEPTION_CLASS",type(exc).__name__,flush=True)
+                  raise SystemExit(1)
+          try:
+              asyncio.run(run())
+          finally:
+              server.terminate()
+              server.wait(timeout=8)
           PY
       - name: Inspect only fixed failed build metadata and sanitized Cloud Logging records
         id: inspect
