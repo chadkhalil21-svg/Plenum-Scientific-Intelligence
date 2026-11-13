@@ -104,6 +104,44 @@ def run_issue(event: dict, *, output_dir: Path, runner=subprocess.run) -> dict:
                 "no_money_spent_by_worker": True,
                 "completed_at_utc": datetime.now(timezone.utc).isoformat()}
     output = output_dir / ("workforce-public-" + str(task["issue_number"]) + ".json")
+    from .reviewed_domain_workers import match_original_capability, official_source_records
+    capability = match_original_capability(task["objective"])
+    if capability:
+        # This exact scoped primary-source reader takes precedence over
+        # unrelated general-science feed listings. Same ORIGINAL worker output.
+        try:
+            records = official_source_records(capability)
+        except (OSError, ValueError, TypeError):
+            records = []
+        output.write_text(json.dumps({
+            "schema": "plenum-public-horizon-snapshot-v1",
+            "topic": task["objective"],
+            "records": records,
+            "independent_breakthrough_verified": False,
+            "AGI_achieved": False,
+            "source_scope": "original vetted first-party public docs, HTTP 200 metadata",
+            "publisher_document_text_verified": False,
+        }, indent=2) + "\n", encoding="utf-8")
+        checked = validate_original_report(output, task["objective"])
+        if not records or checked["source_linked_records"] != len(records):
+            return {
+                **task, **checked,
+                "status": "BLOCKED_NO_PRIMARY_SOURCE_EVIDENCE",
+                "verified": False, "output_artifact": output.name,
+                "reason": "Trusted official source GET was unavailable",
+            }
+        return {
+            **task, **checked,
+            "status": "DRAFT_READY_FOR_FOUNDER",
+            "verified": True, "output_artifact": output.name,
+            "worker": task["worker"],
+            "reused_existing_reviewed_primary_sources": True,
+            "domain_capability": capability,
+            "verified_scope": "bounded official public primary source HTTP 200 metadata only",
+            "readback": "local original report parsed; no quote or commercial rate independently audited",
+            "no_money_spent_by_worker": True,
+            "completed_at_utc": datetime.now(timezone.utc).isoformat(),
+        }
     # Reuse the ALREADY tested worker. No shell, model install, tokens, or new browser.
     command = [
         sys.executable, "-m", "plenum_ai.cli", "world-horizon",
