@@ -1,5 +1,11 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Existing OIDC owner runtime live capacity audit — no deployment
+
+The EXISTING `computer-browser-cloud-identity-preflight.yml` is extended to print only sanitized original owner Cloud Run CPU/memory/concurrency/scaling metadata, PR #600 image tag match and boolean private-local-Qwen/agent flags. Its real GitHub OIDC GCP read-only run is required before deciding inference/deployment. No billing data, zero-charge assertion, new browser, external account, secret values or private session reads. Live audit results and any cost/hosting blocker must be reported in original issue #310, not inferred from CI. Production release remains gated on verified cost/security and owner authorization.
+
+---
+
 ## 2026-11-13 | Original owner-only AI task entry — source and security gate only
 
 **Source-only:** An Auth0-verified, CSRF-protected `/owner/agent-read` form now offers only previously granted **non-demo** sites with existing encrypted GCS profiles. It invokes the **existing** PR #599 original read-only Browser Use/Qwen runner with exact owner consent, same-host loopback public-IP-pinned proxy, short-lived task authorization, independent CDP page URL/title check and redacted status. No click, write, upload, credentials, cookies or private website text leave the original protected server; no new service/MCP/browser/vault. The feature remains **disabled unless** `PLENUM_OWNER_READONLY_AGENT_ENABLED=true` AND `PLENUM_BROWSER_FREE_LOCAL=confirmed` on original Auth0 owner host; these flags are NOT presently approved or known configured, and real local Qwen inference capacity and cloud charges have NOT been verified. Existing signed GitHub chat-to-private dispatch remains narrower than this owner form; it is not connected by this change. The user still must privately authorize a real website session. No authenticated 3-step mission or production release has occurred. Keep one acceptance issue #310 OPEN.
