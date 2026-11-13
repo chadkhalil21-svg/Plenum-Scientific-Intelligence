@@ -153,8 +153,11 @@ jobs:
           set -euo pipefail
           test "$GCP_PROJECT_ID" = "plenum-computer-browser"
           # Metadata only; NEVER request a secret version or token value.
-          gcloud secrets describe PLENUM_CF_AI_TOKEN --project="$GCP_PROJECT_ID" --format="value(name)" >/dev/null
-          echo "LIVE_CF_AI_SECRET_EXISTS: YES"
+          if gcloud secrets describe PLENUM_CF_AI_TOKEN --project="$GCP_PROJECT_ID" --format="value(name)" >/dev/null 2>/dev/null; then
+            echo "LIVE_CF_AI_SECRET_METADATA_READABLE: YES"
+          else
+            echo "LIVE_CF_AI_SECRET_METADATA_READABLE: NO; inspect runtime binding independently"
+          fi
           umask 077
           FILE="$RUNNER_TEMP/plenum-cf-ai-binding.json"
           trap 'rm -f "$FILE"' EXIT

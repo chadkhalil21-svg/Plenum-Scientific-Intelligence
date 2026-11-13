@@ -1,5 +1,9 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Token binding LIVE; inspect remaining actual AI flags independently
+
+Founder-granted runtime accessor accepted: original activation #630 / run #43477859477 succeeded, revision00045-f2f serving100%, exact PLENUM_CF_AI_TOKEN version1 binding and OAuth302/anonymous401 independently checked. Reuse accepted grant/token/image, no new build. Original read-only OIDC audit must not stop before live environment-name/Boolean checks merely because its separate deployer cannot describe secret metadata; make that metadata check explicitly unavailable and continue independent service-config read. No secret values/account-ID values/private pages in output, no IAM or configuration changes, no inference. Remaining actual account/Free-plan/agent flag state must come from live audit, not source assumptions. #310 remains OPEN.
+
 ## 2026-11-13 | Founder reports exact runtime secret permission granted
 
 Founder explicitly reports completing Secret Manager Secret Accessor for existing runtime on PLENUM_CF_AI_TOKEN. Reuse this grant: remove original activation's unconditional same-secret IAM write, because the existing deployer cannot read/write that policy and must not re-grant owner-completed access. Keep exact version1 binding and live binding/protection readback unchanged. Owner report is not yet live binding acceptance; actual activation must succeed. No additional IAM privilege or token value requested; no new build. #310 remains OPEN pending configuration/inference and real account proof.
