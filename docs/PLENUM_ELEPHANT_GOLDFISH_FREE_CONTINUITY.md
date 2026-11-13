@@ -1,4 +1,25 @@
 # Plenum | Elephant–Goldfish continuity and free wakeable workforce
+
+## 12 November 2026 — cross-chat memory gap and free upstream adoption
+
+**Verified incorporation:** a PRIVATE ChatGPT skills plugin named **Plenum Continuity** v0.1.0 was created and read back in the owner's plugin account. Its procedure retrieves the pre-existing private `Plenum Industries | Master Control Ledger` (where connected), checks Conversation Register/Context Protocol, and cross-checks original provider results against older source before proposing actions. The existing Minister skill also now has a mandatory read-first continuity preflight. **This is actionable ChatGPT-side guidance, not a running background ingest, an installation across all chats, or proof of automatic plugin selection.** The founder must install/select the private plugin if needed; ChatGPT selects installed skills contextually, not on every request.
+
+**No needless new dependencies:** Plenum already pins free MIT `langgraph==1.2.20` and `langgraph-checkpoint-sqlite==3.1.3` as optional orchestration dependencies. Reuse those existing thread checkpoint facilities for agent runs, plus the founder-controlled Google Drive master as the private cross-project durable index. A SQLite checkpoint alone is not a searchable shared transcript service; an ephemeral GitHub runner loses local disk unless a supported durable store is explicitly supplied.
+
+**Free and open-source alternatives assessed, not silently installed:**
+
+| Upstream | License / constraints | Decision |
+|---|---|---|
+| [LangGraph](https://github.com/langchain-ai/langgraph) | MIT; already pinned in Plenum | **REUSE** for existing agents; no duplicate framework |
+| [MCP Knowledge Graph Memory Server](https://github.com/modelcontextprotocol/servers/blob/main/src/memory/README.md) | MIT, local JSONL on a persistent private volume, no required model fee | **OPTIONAL** for genuinely local owner-controlled MCP clients; not a ChatGPT-wide memory hook |
+| [Mem0](https://github.com/mem0ai/mem0) | Apache-2.0 library; self-host model, embedding and DB requirements vary | **DEFER** until a measured retrieval gap merits extra complexity |
+| [Graphiti](https://github.com/getzep/graphiti) | Apache-2.0 temporal graph; requires operated graph DB, embedder and model | **DEFER** unless large, conflicting temporal histories demand graph retrieval |
+| [Letta](https://github.com/letta-ai/letta-code) | Stateful full agent platform, with its own runtime/host needs | **NO DUPLICATE ENGINE** alongside Plenum Chief/LangGraph |
+| [OpenMemory](https://github.com/mem0ai/openmemory/blob/main/openmemory-archive/README.md) and [Zep Community Edition](https://www.getzep.com/blog/announcing-a-new-direction-for-zeps-open-source-strategy/) | Archived / no longer supported | **DO NOT ADOPT** as a fresh maintained host |
+
+**Access boundary:** No open-source library, custom plugin, or project `AGENTS.md` can force native ChatGPT Memory to import all account conversations or automatically read every Google Drive item. ChatGPT's [own current Memory documentation](https://help.openai.com/en/articles/8590148-memory-in-chatgpt) states retrieval is selective. Keep the master ledger private and use authorized connectors on demand. Reconcile event evidence by `DONE (founder-reported)`, `VERIFIED`, `PENDING`, `OPEN` and `BLOCKED`; preserve superseded history. Do not send personal context to public repository, CI logs or unapproved third-party embeddings.
+
+**Remaining real work:** establish and prove one authenticated read-first execution at the start of a new eligible Plenum conversation/task; do not mark universal future-chat auto-ingestion DONE. For owner-controlled external agents, a private Google Drive OAuth/MCP connection plus durable private storage would be needed before an always-on retriever could read private founder records. Do not buy hosting or promise reliability without direct runtime evidence.
 Updated 11 November 2026 — original-source architecture, live project-task evidence separated from new code.
 
 ## Founder instruction reconciled
