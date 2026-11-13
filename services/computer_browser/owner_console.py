@@ -109,7 +109,11 @@ payments, deletions, permission changes and unrestricted writes are not.</small>
 <p><a href="/owner/agent-read">Run a scoped private read-only task</a></p>"""
                 if (os.environ.get("K_SERVICE")=="plenum-browser-owner-auth0"
                     and os.environ.get("PLENUM_OWNER_READONLY_AGENT_ENABLED")=="true"
-                    and os.environ.get("PLENUM_BROWSER_FREE_LOCAL")=="confirmed")
+                    and (os.environ.get("PLENUM_BROWSER_FREE_LOCAL")=="confirmed"
+                         or (os.environ.get("PLENUM_CF_AI_ENABLED")=="true"
+                             and os.environ.get("PLENUM_CF_AI_FREE_PLAN_CONFIRMED")=="true"
+                             and bool(os.environ.get("PLENUM_CF_AI_TOKEN"))
+                             and len(os.environ.get("PLENUM_CF_AI_ACCOUNT_ID",""))==32)))
                 else ""))
 
     @app.get("/owner/public-preview",response_class=HTMLResponse)
