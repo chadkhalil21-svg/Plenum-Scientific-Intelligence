@@ -5,6 +5,7 @@ the pre-existing local Ollama runtime and receives no app/browser/tool access.
 No advisor/person is impersonated; Ford/Rockefeller/Jobs are public lenses.
 """
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -155,6 +156,41 @@ def read_elephant_public(path=ELEPHANT_PUBLIC_FILE):
     return "DATED PUBLIC ELEPHANT EVIDENCE ONLY; verify live status independently:" + chr(10) + chr(10).join(lines)
 
 
+
+# Genuine upstream Google Elephant-Goldfish Model source, Apache-2.0.
+# v0.1.1 is pinned by its EXACT source Git blob, not a mutable GitHub URL.
+# This selects ONE native fresh-context role of the original EGM plugin;
+# the full 5-stage EGM review pipeline is NOT installed or claimed active.
+EGM_PERSONA = (
+    Path(__file__).resolve().parents[2]
+    / "integrations/upstream/google-egm-v0.1.1/agents/design_critic.md"
+)
+EGM_GIT_BLOB_SHA = "7f57159d623f898a8e683a5b7f312e8f11f84321"
+
+
+def read_real_google_egm_design_critic(path=EGM_PERSONA):
+    """Read exact pinned upstream read-only Goldfish persona, never invented.
+
+    A model receives this persona in a fresh request without previous
+    council prompts, private context, credentials or account actions.
+    """
+    path = Path(path)
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > 8000:
+        raise ValueError("Missing, oversized or unsafe official EGM persona")
+    raw = path.read_bytes()
+    digest = hashlib.sha1(
+        b"blob " + str(len(raw)).encode("ascii") + b"\0" + raw
+    ).hexdigest()
+    if digest != EGM_GIT_BLOB_SHA:
+        raise ValueError("Official EGM reviewer source did not match pinned v0.1.1")
+    text = raw.decode("utf-8")
+    if ("name: egm-design" not in text
+            or "license: Apache-2.0" not in text
+            or "You are **Design Critic Goldfish**." not in text
+            or "Strict Read-Only Protocol" not in text):
+        raise ValueError("Original EGM reviewer instructions not verified")
+    return text
+
 def _ask_local(system, user):
     payload = json.dumps({
         "model": MODEL, "stream": False, "think": False,
@@ -204,11 +240,14 @@ def deliberate(event):
     )
     # Reviewer sees the decision artifacts, but none of the earlier seat prompts.
     fresh = _ask_local(
-        "You are a fresh-context Plenum Goldfish Reviewer. " + VERIFIED_CONTEXT +
-        " Critique the following four independent AI proposals without any prior chat context. "
-        "Identify conflicts, missing empirical evidence, hidden costs, "
-        "privacy risks, and one inexpensive reversible experiment. "
-        "Clearly mark unverified claims. Do not decide for the founder.",
+        "You are a fresh-context Plenum Goldfish Reviewer using the "
+        "authentic pinned Google EGM v0.1.1 Design Critic persona below. "
+        "Act strictly read-only. Apply the REVIEW mode to only the "
+        "four PUBLIC proposals that follow. You have no previous chat "
+        "history, tools or authority to approve execution. "
+        "Distinguish missing verification from concrete failures. "
+        "No private documents or credentials. "
+        + read_real_google_egm_design_critic(),
         "PUBLIC founder agenda: " + task["objective"] + "\n\n" + dossier[:9000],
     )
     # Founder Business Advisor synthesizes the five existing council
