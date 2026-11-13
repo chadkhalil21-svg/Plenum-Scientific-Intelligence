@@ -1,5 +1,23 @@
 # Plenum Public Wake — Cloudflare Workers Free
 
+## Private continuity records on this SAME Worker — founder request Nov 12
+
+Cloudflare Workers Free already supports **SQLite-backed Durable Objects** that persist between requests (without an always-running VM). To avoid duplicating hosting, this repository adds a SEPARATE *private* Durable Object class \`PrivateContinuityMemory\` to the EXISTING \`plenum-public-wake\` worker. Original \`/health\` and signed PUBLIC \`/wake\` semantics remain unchanged.
+
+This is **optional explicit factual continuity**, not running Graphiti or Mem0, not a ChatGPT account-memory hook, and not automatic ingestion of conversations. Private \`/memory\` and \`/memory/:key\` routes **fail closed with 503** until a distinct \`PLENUM_PRIVATE_MEMORY_HMAC_SECRET\` (32+ random characters) is configured privately through Cloudflare. It must NEVER reuse \`PLENUM_WEBHOOK_HMAC_SECRET\`. The separate \`PLENUM_PRIVATE_MEMORY\` binding points to the new class, isolated from public replay records. Never enable untrusted public writes.
+
+Owner clients authenticate by computing HMAC-SHA256 over \`METHOD + "\\n" + PATH + "\\n" + TIMESTAMP_MS + "\\n" + RAW_BODY\`, with headers \`x-plenum-memory-time\` (Unix milliseconds), \`x-plenum-memory-signature\` (\`sha256=<hex>\`), HTTPS, ±120-second freshness. A GET uses empty body. POST only accepts exactly the bounded object \`{key,summary,source,observed_at,level,expected_revision}\`, where level is one of \`VERIFIED\`, \`FOUNDER_REPORTED\`, \`PENDING\`, \`OPEN\`, \`BLOCKED\`. The original source is required as an HTTPS URL. \`expected_revision\` starts at 0 and protects against stale overwrite and replay. Each accepted update retains a version in the same durable object's private store.
+
+**Cautions:** This endpoint is **not an OAuth MCP server** and cannot yet be connected directly to ChatGPT as an arbitrary private plugin tool. Only trusted owner code that holds the HMAC secret outside the model can call it. It is not an invitation to upload sensitive user chats or secrets. The Google Drive Master Ledger remains the canonical source; a retrieved memory summary must be reconciled with the latest provider evidence. The worker requires external account access to prove production binding and free-plan usage. Source, CI and GitHub merge are **not proof** of actual Cloudflare rollout. There is no Cloudflare management connector available here.
+
+**Required acceptance before claiming production:** confirm the existing Git-linked Cloudflare main branch deploy succeeded with the new SQLite object namespace; privately configure dedicated secret; perform one owner-authorized signed POST/GET (no secrets in issue/CI logs), then verify retrieval in a second independent session. If credentials/endpoint are unavailable, report \`PRIVATE_RUNTIME_NOT_PROVEN\` and do not repeat prior public wake tests.
+
+**Mem0 / Graphiti:** Their optional Python adapters already exist at \`src/plenum_ai/optional_memory_engines.py\`. They can run on demand with an actual approved model and persistence service, but GitHub public runners cannot safely operate with private founder transcripts. A model is **not needed** for the Cloudflare explicit-fact store. Do not pay for permanent hosting or deploy three memory databases before a concrete and authorized recall task requires them.
+
+Official references: https://developers.cloudflare.com/durable-objects/platform/pricing/ and https://developers.cloudflare.com/durable-objects/reference/durable-objects-migrations/.
+
+---
+
 Owner: Plenum Chief → existing Engineering / Independent Verifier
 Canonical acceptance issue: https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/483
 
