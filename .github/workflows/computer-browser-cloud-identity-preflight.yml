@@ -144,3 +144,37 @@ jobs:
           print("Official Google Cloud Free Tier is monthly/account-shared; project metadata cannot prove remaining unused allowance or exclude Artifact Registry, storage and network charges.")
           print("READ_ONLY_PRIVATE_BROWSER_AUDIT: SUCCESS")
           PY
+
+      - name: Check dedicated Cloudflare Workers AI secret and live runtime binding (no secret values)
+        env:
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCP_PROJECT_ID" = "plenum-computer-browser"
+          # Metadata only; NEVER request a secret version or token value.
+          gcloud secrets describe PLENUM_CF_AI_TOKEN --project="$GCP_PROJECT_ID" --format="value(name)" >/dev/null
+          echo "LIVE_CF_AI_SECRET_EXISTS: YES"
+          umask 077
+          FILE="$RUNNER_TEMP/plenum-cf-ai-binding.json"
+          trap 'rm -f "$FILE"' EXIT
+          gcloud run services describe plenum-browser-owner-auth0 --project="$GCP_PROJECT_ID" --region=us-east1 --format=json > "$FILE"
+          python - <<'PY'
+          import json,os,re
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"plenum-cf-ai-binding.json"
+          data=json.loads(p.read_text())
+          assert data["metadata"]["name"]=="plenum-browser-owner-auth0"
+          spec=data["spec"]["template"]["spec"]
+          assert spec["serviceAccountName"]=="plenum-browser-runtime@plenum-computer-browser.iam.gserviceaccount.com"
+          env={e.get("name"):e for e in spec["containers"][0].get("env",[])}
+          ref=env.get("PLENUM_CF_AI_TOKEN",{}).get("valueFrom",{}).get("secretKeyRef",{})
+          print("LIVE_CF_AI_SECRET_BOUND:", "YES" if ref.get("name")=="PLENUM_CF_AI_TOKEN" else "NO")
+          acct=env.get("PLENUM_CF_AI_ACCOUNT_ID",{}).get("value","")
+          print("LIVE_CF_AI_ACCOUNT_ID_CONFIGURED:", "YES" if re.fullmatch(r"[a-fA-F0-9]{32}",acct or "") else "NO")
+          print("LIVE_CF_AI_ENABLED:", "YES" if env.get("PLENUM_CF_AI_ENABLED",{}).get("value")=="true" else "NO")
+          print("LIVE_CF_AI_FREE_PLAN_FLAG:", "YES" if env.get("PLENUM_CF_AI_FREE_PLAN_CONFIRMED",{}).get("value")=="true" else "NO")
+          print("LIVE_OWNER_AGENT_ENABLED:", "YES" if env.get("PLENUM_OWNER_READONLY_AGENT_ENABLED",{}).get("value")=="true" else "NO")
+          print("NO_SECRET_VALUE_ACCESSED; NO_WRITE_OR_DEPLOYMENT_PERFORMED.")
+          p.unlink()
+          PY
