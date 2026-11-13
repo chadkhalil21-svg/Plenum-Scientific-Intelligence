@@ -1,5 +1,9 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Exact token-binding denial: runtime lacks accessor on new secret
+
+Original owner activation #625 / run #43475992183 passed existing Auth0/vault preflight but Google explicitly denied original runtime `plenum-browser-runtime` access to `PLENUM_CF_AI_TOKEN` version1. This establishes the missing secret-specific accessor, unlike earlier deployer metadata denial. Add only `roles/secretmanager.secretAccessor` on this one founder-selected existing secret for this one existing runtime, through original activation. No project-wide role, new principal, credential read or inference. If existing deployer cannot change that exact policy, report precise owner secret-permissions gate rather than broaden deployment privileges. Correct image revision00043-hnm was previously live verified; CF token binding remains NOT accepted until real run/readback.
+
 ## 2026-11-13 | Owner revision00043-hnm deployed and security readback PASS
 
 Original authorized release #623 / run #43475185987 SUCCEEDED: Cloud Build acccb344-59f6-4973-8ddb-28f71da65801, image60c2ceb907e4884e6d4656801d632d4da54d9f3e, original service revision00043-hnm serving100% traffic. Build dependency consistency + actual app import passed; live original identity, encrypted vault configuration and timeout900s preserved; OAuth302 and anonymous owner/internal routes401. This supersedes earlier source-only deployment status for included Browser Use/Cloudflare integration. Original owner activation workflow is minimally extended to bind founder-created PLENUM_CF_AI_TOKEN version1 and verify reference metadata only, with no IAM grants/token read or inference flags. Binding is NOT live until its real run succeeds. Account-ID/actual WorkersFree status/per-task consent and real signed-in missions remain open. Original #310 remains OPEN.
