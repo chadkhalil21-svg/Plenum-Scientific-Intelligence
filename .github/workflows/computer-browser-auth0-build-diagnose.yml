@@ -22,29 +22,64 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
       - uses: google-github-actions/setup-gcloud@v3
-      - name: Import exact built owner application without production environment
+      - name: Diagnose original public GitHub first frame in exact deployed image
         env:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
         shell: bash
         run: |
           set -euo pipefail
           test "$GCP_PROJECT_ID" = 'plenum-computer-browser'
-          IMAGE="us-east1-docker.pkg.dev/$GCP_PROJECT_ID/plenum-browser/browser-auth0-owner:10fc08ed39b350f6b9ec8b713f05868994b640dd"
+          IMAGE="us-east1-docker.pkg.dev/$GCP_PROJECT_ID/plenum-browser/browser-auth0-owner:60c2ceb907e4884e6d4656801d632d4da54d9f3e"
           gcloud auth configure-docker us-east1-docker.pkg.dev --quiet >/dev/null
           docker pull "$IMAGE" >/dev/null
-          # No host mounts, provider credentials, owner environment, account data or egress.
-          docker run --rm --network none --read-only --tmpfs /tmp \
-            --entrypoint python "$IMAGE" -c '
-          import importlib.metadata as m
-          for package in ("fastapi","starlette","uvicorn","websockets","browser-use"):
-              print("PUBLIC_PACKAGE_VERSION",package,m.version(package))
-          try:
-              from services.computer_browser.api import app
-              print("PUBLIC_IMAGE_APP_IMPORT_OK")
-          except Exception as exc:
-              print("PUBLIC_IMAGE_APP_IMPORT_FAILURE",type(exc).__name__,str(exc)[:400])
-              raise SystemExit(1)
-          '
+          # Original image, public signed-out GitHub ONLY. No mounts, cloud
+          # credentials, owner cookies, saved state, provider token or model.
+          timeout 160 docker run --rm -i --read-only --tmpfs /tmp \
+            --entrypoint python "$IMAGE" - <<'PY'
+          import asyncio,os,time,traceback
+          from types import SimpleNamespace
+          from unittest.mock import patch,AsyncMock
+          from fastapi import FastAPI
+          from services.computer_browser import private_login as live
+          from services.computer_browser.pinned_public_preview import PinnedOriginProxy
+          frames=[]
+          async def send(payload):
+              if payload.get("type")=="frame":
+                  frames.append(len(payload.get("image","")))
+                  print("PUBLIC_FIXTURE_FRAME_BYTES",frames[-1],flush=True)
+              elif payload.get("type")=="status":
+                  print("FIXED_STATUS",payload.get("message"),flush=True)
+              elif payload.get("type")=="page_health":
+                  print("PUBLIC_FIXTURE_HEALTH",payload,flush=True)
+          original=live._frame
+          async def diagnostic_frame(ws,page):
+              try:
+                  await original(ws,page)
+              except Exception as exc:
+                  print("FRAME_EXCEPTION_CLASS",type(exc).__name__,flush=True)
+                  for item in traceback.extract_tb(exc.__traceback__)[-6:]:
+                      print("PUBLIC_SOURCE_LOCATION",os.path.basename(item.filename),item.lineno,item.name,flush=True)
+                  raise
+          async def run():
+              app=FastAPI()
+              live.mount_private_login(app)
+              endpoint=next(r.endpoint for r in app.routes if r.path=="/owner/live")
+              ws=SimpleNamespace(scope={},headers={"origin":"https://owner.test"},
+                  accept=AsyncMock(),close=AsyncMock(),send_json=send,
+                  receive_json=AsyncMock(return_value={"type":"close"}))
+              with patch.dict(os.environ,{"BROWSER_PUBLIC_ORIGIN":"https://owner.test"}), \
+                   patch.object(live,"auth0_active",return_value=False), \
+                   patch.object(live,"verify_owner_token",return_value={"private_owner_id":"isolated-public-fixture"}), \
+                   patch.object(live,"owner_live_origin",return_value=("https://github.com",True)), \
+                   patch.object(live,"_frame",side_effect=diagnostic_frame):
+                  await endpoint(ws,site="https://github.com",demo="0",apple_auth="0",
+                      resource_origins="https://github.githubassets.com,https://avatars.githubusercontent.com",
+                      approve_resources="1",resume_saved="0")
+              print("PUBLIC_FIXTURE_FIRST_FRAME_OK",bool(frames),flush=True)
+              if not frames:
+                  raise SystemExit(1)
+          asyncio.run(run())
+          PY
       - name: Inspect only fixed failed build metadata and sanitized Cloud Logging records
         id: inspect
         env:
