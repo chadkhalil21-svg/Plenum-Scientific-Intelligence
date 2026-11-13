@@ -1,5 +1,11 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Correct actual upstream 0.13.14 BrowserSession constructor mismatch
+
+Original 2GiB experiment [issue #608](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/608) returned `stage=CONSTRUCT_UPSTREAM_BROWSER;class=TypeError`, with model OOM=false and browser OOM=false. Official upstream BrowserSession 0.13.14 constructor does NOT accept direct `block_ip_addresses`; its established `BrowserProfile` DOES. Adjust both the original private GCS session Browser Use bridge and original capped model probe to pass `BrowserProfile(block_ip_addresses=True)` instead, preserving the protection instead of dropping it. Existing focused unit test checks rejected unsupported constructor option and retained explicit IP blocking. The original #310 still requires an actual owner Cloud Run release, private inference authorization, genuine saved login and verified three account actions; passing source CI or a public memory probe does not prove this.
+
+---
+
 ## 2026-11-13 | Fix erroneous resource-probe diagnostic before any repeat
 
 The diagnostic-only PR #605 accidentally concatenated a `STAGE` assignment with a Python import, making its one-run diagnosis invalid. Corrected the syntax in the **existing** probe and added a `py_compile` preflight to the **existing** Browser Use public-agent workflow. No owner sessions, cloud deployment, new browser or paid resource were involved. Only a genuinely completed cgroup/model execution, not a green workflow or Python syntax alone, may advance original issue #310.
