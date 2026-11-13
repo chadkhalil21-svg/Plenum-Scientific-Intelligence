@@ -37,91 +37,46 @@ jobs:
           echo "PUBLIC_OWNER_IMAGE_REFERENCE=$IMAGE"
           gcloud auth configure-docker us-east1-docker.pkg.dev --quiet >/dev/null
           docker pull "$IMAGE" >/dev/null
-          # ONE anonymous production protocol probe; no owner cookie, headers,
-          # target site credentials, runtime env, vault, provider token or AI.
-          timeout 30 docker run --rm -i --read-only --tmpfs /tmp --entrypoint python "$IMAGE" - <<'PY'
-          import asyncio
-          import websockets
-          from websockets.exceptions import InvalidStatus
-          async def probe():
-              try:
-                  async with websockets.connect(
-                      "wss://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app/owner/live?site=https%3A%2F%2Fexample.com",
-                      origin="https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app",
-                      open_timeout=20,close_timeout=2):
-                      print("LIVE_ANONYMOUS_WEBSOCKET_UNEXPECTEDLY_ACCEPTED",flush=True)
-                      raise SystemExit(1)
-              except InvalidStatus as exc:
-                  code=exc.response.status_code
-                  print("LIVE_ANONYMOUS_UPGRADE_HTTP_STATUS",code,flush=True)
-                  if code!=403:
-                      raise SystemExit(1)
-              except Exception as exc:
-                  print("LIVE_ANONYMOUS_TRANSPORT_EXCEPTION_CLASS",type(exc).__name__,flush=True)
-                  raise SystemExit(1)
-          asyncio.run(probe())
-          PY
-          # Exact app + real Uvicorn + real signed Auth0 fixture cookie +
-          # actual Chromium frame, entirely isolated, no external networking.
+          # No repeated production login/upgrade setup. Only ORIGINAL image,
+          # original focus/frame functions and a local synthetic navigation;
+          # no networking, host credentials, owner state, provider tokens or AI.
           timeout 90 docker run --rm -i --network none --read-only --tmpfs /tmp --entrypoint python "$IMAGE" - <<'PY'
-          import asyncio,base64,json,os,socket,subprocess,sys,time
-          import websockets
-          from itsdangerous import TimestampSigner
-          from urllib.request import Request,urlopen
-          origin="https://plenum-browser-owner-auth0-2lak3vl73q-ue.a.run.app"
-          os.environ.update({
-              "K_SERVICE":"plenum-browser-owner-auth0",
-              "COMPUTER_BROWSER_TOKEN":"synthetic-isolated-fixture-material-"+"a"*32,
-              "AUTH0_OWNER_CLIENT_ID":"SyntheticFixtureClient123",
-              "AUTH0_OWNER_PUBLIC_ORIGIN":origin,
-              "BROWSER_PUBLIC_ORIGIN":origin,
-              "BROWSER_ALLOWED_ORIGINS":"https://example.com",
-              "COMPUTER_BROWSER_CI_ONLY":"true"})
-          from services.computer_browser.owner_auth0 import _session_secret
-          now=int(time.time())
-          record={"plenum_auth0_owner_v1":{"owner":"a"*64,"iat":now-2,"exp":now+120}}
-          signed=TimestampSigner(_session_secret()).sign(base64.b64encode(json.dumps(record).encode())).decode()
-          cookie="__Host-plenum_browser_owner="+signed
-          server=subprocess.Popen([sys.executable,"-m","uvicorn","services.computer_browser.api:app",
-              "--host","127.0.0.1","--port","8099","--log-level","critical","--no-access-log"],
-              stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+          import asyncio
+          from playwright.async_api import async_playwright
+          from services.computer_browser.private_login import _focused_editable_kind
           async def run():
-              for tick in range(75):
-                  try:
-                      with socket.create_connection(("127.0.0.1",8099),timeout=.2):
-                          break
-                  except OSError:
-                      if server.poll() is not None:
-                          print("ISOLATED_APP_STARTUP_FAILED",flush=True)
-                          raise SystemExit(1)
-                      await asyncio.sleep(.2)
-              with urlopen(Request("http://127.0.0.1:8099/owner",headers={"Cookie":cookie}),timeout=5) as response:
-                  print("ISOLATED_SIGNED_OWNER_HTTP_STATUS",response.status,flush=True)
-                  assert response.status==200
-              try:
-                  async with websockets.connect(
-                      "ws://127.0.0.1:8099/owner/live?site=https%3A%2F%2Fexample.com%2F&demo=1",
-                      origin=origin,additional_headers={"Cookie":cookie},
-                      open_timeout=10,close_timeout=2,max_size=2_000_000) as ws:
-                      print("ISOLATED_SIGNED_OWNER_UPGRADE_ACCEPTED",flush=True)
-                      for tick in range(4):
-                          message=json.loads(await asyncio.wait_for(ws.recv(),25))
-                          if message.get("failure"):
-                              print("ISOLATED_FIXED_FAILURE",message.get("code","not-classified"),flush=True)
-                              raise SystemExit(1)
-                          if message.get("type")=="frame":
-                              print("ISOLATED_REAL_CHROMIUM_FRAME_BYTES",len(message["image"]),flush=True)
-                              await ws.send(json.dumps({"type":"close"}))
-                              return
-                      raise SystemExit(1)
-              except Exception as exc:
-                  print("ISOLATED_SIGNED_TRANSPORT_EXCEPTION_CLASS",type(exc).__name__,flush=True)
-                  raise SystemExit(1)
-          try:
-              asyncio.run(run())
-          finally:
-              server.terminate()
-              server.wait(timeout=8)
+              failures=0
+              async with async_playwright() as p:
+                  browser=await p.chromium.launch(headless=True)
+                  context=await browser.new_context()
+                  async def fixture(route):
+                      if route.request.url=="https://fixture.example/start":
+                          await route.fulfill(content_type="text/html",body=
+                              '<a href="/next" style="display:block;width:250px;height:70px">Open next page</a>')
+                      elif route.request.url=="https://fixture.example/next":
+                          await route.fulfill(content_type="text/html",body='<input type="email">')
+                      else:
+                          await route.abort()
+                  await context.route("**/*",fixture)
+                  page=await context.new_page()
+                  for case in range(6):
+                      await page.goto("https://fixture.example/start",wait_until="domcontentloaded")
+                      await page.mouse.click(45,25)
+                      try:
+                          await _focused_editable_kind(page)
+                          print("ISOLATED_OWNER_CLICK_FOCUS_RESULT",case,"OK",flush=True)
+                      except Exception as exc:
+                          message=str(exc).lower()
+                          lost=("execution context was destroyed" in message or
+                                "cannot find context" in message)
+                          print("ISOLATED_OWNER_CLICK_FOCUS_EXCEPTION",case,
+                                type(exc).__name__,"NAVIGATION_CONTEXT_LOST" if lost else "OTHER",
+                                flush=True)
+                          failures+=int(lost)
+                      await page.wait_for_load_state("domcontentloaded")
+                  print("ISOLATED_NAVIGATION_RACE_REPRODUCED",failures>0,flush=True)
+                  await browser.close()
+          asyncio.run(run())
           PY
       - name: Inspect only fixed failed build metadata and sanitized Cloud Logging records
         id: inspect
