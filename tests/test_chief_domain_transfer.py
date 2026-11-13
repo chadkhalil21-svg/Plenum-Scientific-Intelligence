@@ -91,6 +91,38 @@ class CrossDomainContracts(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError,"isolated"):
                 x.execute("scholarly")
 
+    def test_actual_chief_route_must_select_exactly_one_matching_specialist(self):
+        from types import SimpleNamespace
+        def m(role):
+            return SimpleNamespace(tool_calls=[
+                {"name": "task", "args": {"subagent_type": role}}
+            ])
+        seen = [{"role": "scholarly-auditor", "value": {"doi": x.DOI}}]
+        passed = x.grade_single_real_delegate(
+            [m("scholarly-auditor")], seen, "scholarly-auditor",
+        )
+        self.assertTrue(passed["one_correct_delegation"])
+        self.assertEqual(passed["task_calls"], 1)
+        self.assertEqual(passed["observed_worker_calls"], 1)
+        wrong = x.grade_single_real_delegate(
+            [m("numerical-analyst"), m("scholarly-auditor")],
+            seen, "scholarly-auditor",
+        )
+        self.assertFalse(wrong["one_correct_delegation"])
+        self.assertTrue(wrong["unexpected_or_redundant_specialists"])
+        also_wrong = x.grade_single_real_delegate(
+            [m("scholarly-auditor")],
+            seen + [{"role": "numerical-analyst", "value": {}}],
+            "scholarly-auditor",
+        )
+        self.assertFalse(also_wrong["one_correct_delegation"])
+        no_tool = x.grade_single_real_delegate(
+            [m("scholarly-auditor")], [], "scholarly-auditor"
+        )
+        self.assertFalse(no_tool["one_correct_delegation"])
+        with self.assertRaises(ValueError):
+            x.grade_single_real_delegate([], [], "unapproved-agent")
+
     def test_missions_do_not_refer_to_forced_worker_names(self):
         for case in x.CASES:
             m=x.mission(case)
