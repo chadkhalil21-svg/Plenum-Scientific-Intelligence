@@ -1,5 +1,6 @@
 """Original encrypted owner session -> pinned upstream Browser Use; no live account use."""
 import unittest
+import importlib.util
 from unittest.mock import patch
 
 from services.computer_browser.owner_browser_use_bridge import build_private_browser_use
@@ -31,6 +32,7 @@ def state():
     }
 
 
+@unittest.skipUnless(importlib.util.find_spec('fastapi') is not None,\n                     'Private browser CI installs FastAPI; science core does not')
 class OwnerBrowserUseBridgeTests(unittest.TestCase):
     def build(self, **options):
         observed = {}
