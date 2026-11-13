@@ -1,9 +1,13 @@
 """Original encrypted owner session -> pinned upstream Browser Use; no live account use."""
 import unittest
+import asyncio
+import time
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
 import importlib.util
 from unittest.mock import patch
 
-from services.computer_browser.owner_browser_use_bridge import build_private_browser_use
+from services.computer_browser.owner_browser_use_bridge import (build_private_browser_use, _owner_readonly_tools, run_owner_readonly_browser_task)
 
 ORIGIN = "https://github.com"
 BINARY = "/ms-playwright/chromium-1165/chrome-linux/chrome"
@@ -104,3 +108,126 @@ class OwnerBrowserUseBridgeTests(unittest.TestCase):
                     existing_chromium_executable=BINARY,
                     store=FakeStore(state()),
                     browser_factory=lambda **kw: kw)
+
+
+@unittest.skipUnless(importlib.util.find_spec('fastapi') is not None,
+                     'Private browser CI installs original owner FastAPI')
+class OwnerReadOnlyAgentContractTests(unittest.TestCase):
+    def test_only_read_only_upstream_actions_survive(self):
+        class FakeTools:
+            def __init__(self):
+                acts={n:object() for n in (
+                    "done","navigate","scroll","find_elements","go_back",
+                    "click","input","upload_file","evaluate","send_keys",
+                    "write_file","search","save_as_pdf","screenshot")}
+                self.registry=SimpleNamespace(registry=SimpleNamespace(actions=acts))
+            def exclude_action(self,name):
+                del self.registry.registry.actions[name]
+        t=_owner_readonly_tools(tools_factory=FakeTools)
+        actions=set(t.registry.registry.actions)
+        self.assertIn("done", actions)
+        self.assertIn("navigate", actions)
+        for name in ("click","input","upload_file","evaluate","send_keys",
+                     "write_file","search","save_as_pdf","screenshot"):
+            self.assertNotIn(name, actions)
+
+    def test_missing_upstream_done_fails_closed(self):
+        class BrokenTools:
+            def __init__(self):
+                self.registry=SimpleNamespace(
+                    registry=SimpleNamespace(actions={"click":object()}))
+            def exclude_action(self,name):
+                del self.registry.registry.actions[name]
+        with self.assertRaises(PermissionError):
+            _owner_readonly_tools(tools_factory=BrokenTools)
+
+    def test_trusted_owner_read_mission_requires_verifier_and_never_returns_secrets(self):
+        seen={}
+        class FakeTools:
+            def __init__(self):
+                self.registry=SimpleNamespace(registry=SimpleNamespace(
+                    actions={"navigate":1, "done":1, "find_elements":1, "click":1}))
+            def exclude_action(self,name):
+                del self.registry.registry.actions[name]
+        class FakeBrowser:
+            def __init__(self,**kwargs):
+                seen["browser_settings"]=kwargs
+                self.stop=AsyncMock()
+        class FakeHistory:
+            def is_done(self): return True
+            def is_successful(self): return True
+        class FakeAgent:
+            def __init__(self, **kwargs):
+                self.tools=kwargs["tools"]
+                seen["task"]=kwargs["task"]
+                seen["max_failures"]=kwargs["max_failures"]
+            async def run(self, max_steps):
+                seen["steps"]=max_steps
+                return FakeHistory()
+        async def approved(owner,origin,objective):
+            seen["owner_approval"]=(owner,origin,objective)
+            return True
+        async def verify(history,browser):
+            self.assertIsInstance(history, FakeHistory)
+            seen["independent_verifier_called"]=True
+            return True
+
+        async def execute(verify_result=True):
+            def custom_verify(history,browser):
+                return verify(history,browser) if verify_result else False
+            with patch.dict("os.environ",{
+                "PLENUM_OWNER_READONLY_AGENT_ENABLED":"true",
+                "PLENUM_BROWSER_FREE_LOCAL":"confirmed",
+                "ANONYMIZED_TELEMETRY":"false",
+                "BROWSER_USE_SETUP_LOGGING":"false",
+            }), patch("services.computer_browser.owner_browser_use_bridge.owner_live_origin",
+                      return_value=(ORIGIN,True)):
+                result=await run_owner_readonly_browser_task(
+                    verified_owner={"private_owner_id":"founder-private-owner"},
+                    website_origin=ORIGIN,
+                    objective="Inspect the account-specific existing issue status",
+                    owner_proxy_url="http://127.0.0.1:24517",
+                    existing_chromium_executable=BINARY,
+                    store=FakeStore(state()),
+                    browser_factory=FakeBrowser,
+                    tools_factory=FakeTools, model_factory=lambda: object(),
+                    agent_factory=FakeAgent,
+                    independent_verify=custom_verify,
+                    approval_callback=approved,
+                    approval_expires_at=time.time()+200,
+                )
+                return result
+        result=asyncio.run(execute())
+        self.assertEqual(result["status"],"INDEPENDENTLY_VERIFIED_BY_TRUSTED_CALLER")
+        self.assertTrue(seen["independent_verifier_called"])
+        self.assertEqual(seen["steps"],6)
+        self.assertEqual(seen["max_failures"],1)
+        self.assertEqual(seen["owner_approval"][1],ORIGIN)
+        self.assertNotIn("PRIVATE_COOKIE",str(result))
+        self.assertNotIn("PRIVATE_STATE",str(result))
+        blocked=asyncio.run(execute(False))
+        self.assertEqual(blocked["status"],"BLOCKED_NOT_INDEPENDENTLY_VERIFIED")
+
+    def test_disabled_and_expired_grants_never_open_browser(self):
+        kwargs=dict(
+            verified_owner={"private_owner_id":"founder-private-owner"},
+            website_origin=ORIGIN,
+            objective="Inspect the account-specific existing issue status",
+            owner_proxy_url="http://127.0.0.1:24517",
+            existing_chromium_executable=BINARY,
+            store=FakeStore(state()),
+            browser_factory=lambda **k: self.fail("Browser must remain closed"),
+            model_factory=lambda: self.fail("Model must remain closed"),
+            tools_factory=lambda: self.fail("Tools must remain closed"),
+            agent_factory=lambda **k: self.fail("Agent must remain closed"),
+            independent_verify=lambda h,b: True,
+            approval_callback=lambda *args: True,
+            approval_expires_at=time.time()+200,
+        )
+        with patch.dict("os.environ",{"PLENUM_OWNER_READONLY_AGENT_ENABLED":"false"}):
+            with self.assertRaises(PermissionError):
+                asyncio.run(run_owner_readonly_browser_task(**kwargs))
+        kwargs["approval_expires_at"]=time.time()-1
+        with patch.dict("os.environ",{"PLENUM_OWNER_READONLY_AGENT_ENABLED":"true"}):
+            with self.assertRaises(PermissionError):
+                asyncio.run(run_owner_readonly_browser_task(**kwargs))
