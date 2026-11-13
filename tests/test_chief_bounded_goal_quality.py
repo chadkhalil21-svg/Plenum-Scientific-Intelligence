@@ -77,6 +77,50 @@ class RealBoundedFounderGoalVerifierTests(TestCase):
                 self.assertEqual(parse_mission(event)["team"],
                                  ("public_research", "public_program"))
 
+    def test_real_existing_specialists_resume_after_one_controlled_first_run_failure(self):
+        from unittest.mock import patch
+        from plenum_ai.chief_team_mission import execute
+        from plenum_ai.reviewed_domain_workers import DOMAIN_SOURCES
+        objective = ("Survey NOAA station metadata sources and run existing "
+                     "Python coastal validator recovery")
+        event = {"action": "opened",
+                 "repository": {"full_name": "chadkhalil21-svg/Plenum-Scientific-Intelligence"},
+                 "issue": {"number": 1001, "user": {"login": "chadkhalil21-svg"},
+                           "title": "[Plenum Chief] public mission",
+                           "body": "PLENUM_CHIEF_PUBLIC_MISSION_V1\\nobjective: " + objective}}
+        title, publisher, url = DOMAIN_SOURCES["noaa_water_station_metadata"][0]
+        source_records = [{"source": publisher, "title": title, "url": url,
+                           "http_status": 200, "independently_quoted_page_text": False}]
+        env = {"GITHUB_ACTIONS": "true",
+               "GITHUB_REPOSITORY": "chadkhalil21-svg/Plenum-Scientific-Intelligence",
+               "GITHUB_EVENT_NAME": "issues",
+               "GITHUB_RUN_ATTEMPT": "1",
+               "GITHUB_RUN_ID": "54321"}
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            with patch.dict("os.environ", env, clear=True), patch(
+                "plenum_ai.reviewed_domain_workers.official_source_records",
+                return_value=source_records,
+            ):
+                first = execute(event, output_dir=root)
+            self.assertEqual(first["status"], "BLOCKED_PARTIAL_TEAM")
+            self.assertEqual(first["successfully_verified_workers"], 1)
+            self.assertEqual(first["reused_prior_verified_workers"], 0)
+            self.assertEqual(first["new_worker_invocations"], 2)
+            self.assertTrue((root / "chief-checkpoint-1001.json").is_file())
+            with patch.dict("os.environ", {**env, "GITHUB_RUN_ATTEMPT": "2"}, clear=True):
+                recovered = execute(event, output_dir=root)
+            self.assertEqual(recovered["status"], "VERIFIED_BOUNDED_TEAM")
+            self.assertEqual(recovered["reused_prior_verified_workers"], 1)
+            self.assertEqual(recovered["new_worker_invocations"], 1)
+            self.assertTrue(recovered["founder_objective_verified"])
+            self.assertEqual(recovered["bounded_founder_goal_evidence"]["status"],
+                             "VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE")
+            self.assertTrue((root /
+                "workers/public_program/retry-2/issue-1001/code/main.py").is_file())
+            self.assertEqual(inspect_chief_report(recovered)["disposition"],
+                             "VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE_NOT_GENERAL_AUTONOMY")
+
     def test_one_time_recovery_guard_is_exact_public_original_run_only(self):
         from unittest.mock import patch
         from plenum_ai.chief_team_mission import _one_time_live_public_recovery_probe
