@@ -1,5 +1,12 @@
 # Engineering and Scientific Ledger
 
+## 2026-11-13 | Live capacity refusal REPAIRED; protocol boundary and signed image test PASS
+
+Before: original #647/run43492840208 actual production anonymous WebSocket Upgrade returned429 before authentication; original live config was concurrency1/max-instances1. PR #648 merged cd15dae3103f230c576c977d7d4931f4bcf4f73d and config-only #649/run43493447769 SUCCEEDED: revision00051-pc5 serves100%; concurrency4/max-instances1; same28384eb image, all env/Cloudflare bindings, identity, vault, CPU/memory and900s timeout preserved. OAuth302/anonymous owner401 passed. No rebuild, IAM, new host, credential access or inference.
+
+Independent post-change #650/run43493614921 SUCCEEDED: actual production anonymous Upgrade now403 (expected missing-owner denial), versus previous429 capacity refusal. Exact deployed image in network-disabled isolated container with ORIGINAL app, real Uvicorn, original signed SYNTHETIC Auth0 session and actual Chromium: HTTP owner200, WebSocket accepted,8,808-byte frame. No production key/cookie/owner state/model was used. This proves public transport availability and exact-image signed-session stack, NOT founder's actual phone session or real-account mission. Existing request-log metadata access unavailable; no role expansion. Founder should reopen original signed-owner browser; #310 remainsOPEN for genuine saved-site task and Workers AI inference. Existing cloud quota/cost rules remain, one-instance cap retained.
+
+
 ## 2026-11-13 | Timeout recovery DEPLOYED; exact live image frame readback PASS
 
 PR #642 merged28384ebee7b359e21715d3887ec14d3bbf5471b2 after all four CI checks passed (including28 original private-login tests with real Chromium/mobile controls and injected picture/action timeout recovery). Original protected release #643 / run #43489595198 SUCCEEDED: Cloud Build0a79cc69-f4b0-49d2-8a2e-8cf39cb1bf7e; owner revision00050-pxn serves100% traffic. Original identity/vault/timeout900s retained; OAuth302 and anonymous owner/internal routes401.
