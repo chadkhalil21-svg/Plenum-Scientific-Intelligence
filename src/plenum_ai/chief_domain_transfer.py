@@ -142,6 +142,44 @@ def source_preflight(case: str) -> dict:
     }
 
 
+def grade_single_real_delegate(messages: list, observations: list,
+                               required_role: str) -> dict:
+    """Only one real chief task call and one matching tool result may pass.
+
+    A chief that sends an unrelated or duplicate subagent task must not be
+    declared autonomous merely because the expected tool also returned data.
+    """
+    allowed = {"scholarly-auditor", "numerical-analyst"}
+    if required_role not in allowed:
+        raise ValueError("Unknown original approved specialist")
+    calls = [
+        call for message in messages
+        for call in (getattr(message, "tool_calls", None) or [])
+        if isinstance(call, dict) and call.get("name") == "task"
+    ]
+    chosen = [
+        c.get("args", {}).get("subagent_type")
+        if isinstance(c.get("args"), dict) else None
+        for c in calls
+    ]
+    actors = [
+        obs.get("role") if isinstance(obs, dict) else None
+        for obs in observations
+    ]
+    allowed_single_route = (
+        len(chosen) == 1 and chosen[0] == required_role
+        and len(actors) == 1 and actors[0] == required_role
+    )
+    return {
+        "task_calls": len(chosen),
+        "observed_worker_calls": len(actors),
+        "selected_roles": chosen,
+        "tool_actor_roles": actors,
+        "one_correct_delegation": allowed_single_route,
+        "unexpected_or_redundant_specialists": not allowed_single_route,
+    }
+
+
 def execute(case: str) -> dict:
     report = source_preflight(case)
     if os.environ.get("PLENUM_EPHEMERAL_RUNNER") != "confirmed":
@@ -208,18 +246,13 @@ def execute(case: str) -> dict:
                 "recursion_limit": 22},
     )
     messages = output.get("messages", [])
-    task_calls = [
-        c for m in messages for c in (getattr(m, "tool_calls", None) or [])
-        if c.get("name") == "task"
-    ]
     required_role = ("scholarly-auditor" if case == "scholarly"
                      else "numerical-analyst")
-    correct = any(
-        c.get("args", {}).get("subagent_type") == required_role
-        for c in task_calls if isinstance(c.get("args"), dict)
-    )
-    evidence = next(
-        (x["value"] for x in _seen if x["role"] == required_role), None
+    routing = grade_single_real_delegate(messages, _seen, required_role)
+    correct = routing["one_correct_delegation"]
+    evidence = (
+        _seen[0]["value"] if correct
+        else None
     )
     if case == "scholarly":
         readback = read_crossref(DOI) if evidence is not None else None
@@ -228,9 +261,11 @@ def execute(case: str) -> dict:
         readback = {"independent_analytic_check": True} if evidence is not None and independent_science_readback(evidence) else None
         independently_verified = readback is not None
     report.update({
-        "status": "VERIFIED_CROSS_DOMAIN" if (task_calls and correct and independently_verified) else "NOT_VERIFIED",
+        "status": "VERIFIED_CROSS_DOMAIN" if (correct and independently_verified) else "NOT_VERIFIED",
         "model_called": True,
-        "chief_delegated": bool(task_calls),
+        "chief_delegated": routing["task_calls"] > 0,
+        "strict_single_specialist_graded": True,
+        "actual_route_evidence": routing,
         "correct_worker_selected": correct,
         "worker_tool_called": evidence is not None,
         "independent_verified": independently_verified,
