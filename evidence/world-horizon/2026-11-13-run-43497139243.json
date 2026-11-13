@@ -1,0 +1,2410 @@
+{
+  "schema": "plenum-public-world-intelligence-archive-v1",
+  "run_id": "43497139243",
+  "source_revision": "21836eaee0295ef6bb425e9d4c7332ff08dd725d",
+  "unverified_public_records": {
+    "schema": "plenum-public-horizon-snapshot-v1",
+    "topic": "science research innovation",
+    "category": "all",
+    "providers": [
+      {
+        "source": "mit_music_research",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "mit_music_research",
+            "category": "music",
+            "publisher": "MIT Music and Technology",
+            "title": "Making machines that can listen",
+            "url": "https://news.mit.edu/2026/making-machines-that-can-listen-paris-smaragdis-1028",
+            "published": "Wed, 28 Oct 2026 00:00:00 -0400",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "mit_music_research",
+            "category": "music",
+            "publisher": "MIT Music and Technology",
+            "title": "Tod Machover’s new symphony plays with AI while reflecting on democracy",
+            "url": "https://news.mit.edu/2026/tod-machover-new-symphony-plays-ai-while-reflecting-democracy-1021",
+            "published": "Wed, 21 Oct 2026 00:00:00 -0400",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "mit_music_research",
+            "category": "music",
+            "publisher": "MIT Music and Technology",
+            "title": "Inaugural Music Technology Research Showcase celebrates work of new graduate program’s initial students",
+            "url": "https://news.mit.edu/2026/inaugural-mit-music-technology-research-showcase-celebrates-work-students-0629",
+            "published": "Mon, 29 Jun 2026 15:00:00 -0400",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "mit_music_research",
+            "category": "music",
+            "publisher": "MIT Music and Technology",
+            "title": "Characterizing Earth’s damping mechanisms",
+            "url": "https://news.mit.edu/2026/characterizing-earths-damping-mechanisms-perrin-davidson-0624",
+            "published": "Wed, 24 Jun 2026 00:00:00 -0400",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "mit_visual_arts",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "mit_visual_arts",
+            "category": "art",
+            "publisher": "MIT Arts",
+            "title": "New AI “copilot” helps engineers design better structures",
+            "url": "https://news.mit.edu/2026/new-ai-copilot-helps-engineers-design-better-structures-1113",
+            "published": "Fri, 13 Nov 2026 00:00:00 -0500",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "mit_visual_arts",
+            "category": "art",
+            "publisher": "MIT Arts",
+            "title": "A single AI model simulates the behavior of many substances, from sliding sand to folding proteins",
+            "url": "https://news.mit.edu/2026/single-ai-model-simulates-many-substances-behavior-1109",
+            "published": "Mon, 09 Nov 2026 00:00:00 -0500",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "mit_visual_arts",
+            "category": "art",
+            "publisher": "MIT Arts",
+            "title": "Fabric molds could bring material-saving concrete beams within reach",
+            "url": "https://news.mit.edu/2026/fabric-molds-could-bring-material-saving-concrete-beams-within-reach-1106",
+            "published": "Fri, 06 Nov 2026 14:35:00 -0500",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "mit_visual_arts",
+            "category": "art",
+            "publisher": "MIT Arts",
+            "title": "Scene at MIT: Beautiful, intricate, creative quilts",
+            "url": "https://news.mit.edu/2026/scene-mit-beautiful-intricate-creative-quilts-1106",
+            "published": "Fri, 06 Nov 2026 10:35:00 -0500",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "mit_architecture",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "mit_architecture",
+            "category": "design",
+            "publisher": "MIT Architecture",
+            "title": "Powering up for a pivotal moment",
+            "url": "https://news.mit.edu/2026/powering-up-for-pivotal-moment-1102",
+            "published": "Mon, 02 Nov 2026 14:55:00 -0500",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "mit_architecture",
+            "category": "design",
+            "publisher": "MIT Architecture",
+            "title": "Origami-based construction method yields lightweight, load-bearing structures on architectural scales",
+            "url": "https://news.mit.edu/2026/origami-based-construction-method-yields-lightweight-load-bearing-structures-architecture-1027",
+            "published": "Tue, 27 Oct 2026 00:00:00 -0400",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "mit_architecture",
+            "category": "design",
+            "publisher": "MIT Architecture",
+            "title": "Hashim Sarkis to step down as dean of the School of Architecture and Planning",
+            "url": "https://news.mit.edu/2026/hashim-sarkis-steps-down-dean-school-architecture-planning-1026",
+            "published": "Mon, 26 Oct 2026 16:30:00 -0400",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "mit_architecture",
+            "category": "design",
+            "publisher": "MIT Architecture",
+            "title": "MIT Farm is growing",
+            "url": "https://news.mit.edu/2026/mit-farm-growing-1013",
+            "published": "Tue, 13 Oct 2026 15:30:00 -0400",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "nih_biomedical_news",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "nih_biomedical_news",
+            "category": "health",
+            "publisher": "U.S. National Institutes of Health",
+            "title": "For the first time, researchers map out the brain’s behavioral gatekeeper",
+            "url": "https://www.nih.gov/news-events/news-releases/first-time-researchers-map-out-brains-behavioral-gatekeeper",
+            "published": "Thu, 11/12/2026 - 11:00",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "nih_biomedical_news",
+            "category": "health",
+            "publisher": "U.S. National Institutes of Health",
+            "title": "Two ‘forever chemicals’ associated with higher risk of aggressive breast cancer in NIH analysis",
+            "url": "https://www.nih.gov/news-events/news-releases/two-forever-chemicals-associated-higher-risk-aggressive-breast-cancer-nih-analysis",
+            "published": "Thu, 11/05/2026 - 16:00",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "nih_biomedical_news",
+            "category": "health",
+            "publisher": "U.S. National Institutes of Health",
+            "title": "Integrated health service delivery through medical mobile units helped to reduce deaths among individuals at risk for HIV who also inject drugs",
+            "url": "https://www.nih.gov/news-events/news-releases/integrated-health-service-delivery-through-medical-mobile-units-helped-reduce-deaths-among-individuals-risk-hiv-who-also-inject-drugs",
+            "published": "Wed, 11/04/2026 - 11:00",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "nih_biomedical_news",
+            "category": "health",
+            "publisher": "U.S. National Institutes of Health",
+            "title": "An extra year of secondary school lowered dementia diagnoses later in life",
+            "url": "https://www.nih.gov/news-events/news-releases/extra-year-secondary-school-lowered-dementia-diagnoses-later-life",
+            "published": "Fri, 10/23/2026 - 13:00",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "nsf_new_discoveries",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "nsf_new_discoveries",
+            "category": "discoveries",
+            "publisher": "U.S. National Science Foundation",
+            "title": "Podcast: The laser that could break the laws of physics",
+            "url": "https://www.nsf.gov/news/podcast-laser-could-break-laws-physics",
+            "published": "Mon, 02 Nov 2026 16:07:52 -0500",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "nsf_new_discoveries",
+            "category": "discoveries",
+            "publisher": "U.S. National Science Foundation",
+            "title": "Podcast: The future of electronics goes beyond circuit boards",
+            "url": "https://www.nsf.gov/news/podcast-future-electronics-goes-beyond-circuit-boards",
+            "published": "Tue, 27 Oct 2026 16:23:58 -0400",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "nsf_new_discoveries",
+            "category": "discoveries",
+            "publisher": "U.S. National Science Foundation",
+            "title": "New dwarf planet candidate discovered by NSF–DOE Rubin Observatory",
+            "url": "https://www.nsf.gov/news/new-dwarf-planet-candidate-discovered-nsf-doe-rubin",
+            "published": "Tue, 27 Oct 2026 14:51:35 -0400",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "nsf_new_discoveries",
+            "category": "discoveries",
+            "publisher": "U.S. National Science Foundation",
+            "title": "Podcast: Can America's most powerful laser unlock the universe?",
+            "url": "https://www.nsf.gov/news/podcast-can-americas-most-powerful-laser-unlock-universe",
+            "published": "Tue, 20 Oct 2026 10:53:01 -0400",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "nsf_open_funding",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "nsf_open_funding",
+            "category": "funding",
+            "publisher": "U.S. National Science Foundation Funding",
+            "title": "Major Research Instrumentation Program (MRI)",
+            "url": "https://www.nsf.gov/funding/opportunities/mri-major-research-instrumentation-program/nsf27-500/solicitation",
+            "published": "",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "nsf_open_funding",
+            "category": "funding",
+            "publisher": "U.S. National Science Foundation Funding",
+            "title": "NSF Graduate Research Fellowship Program (GRFP)",
+            "url": "https://www.nsf.gov/funding/opportunities/grfp-nsf-graduate-research-fellowship-program/nsf26-526/solicitation",
+            "published": "",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "nsf_open_funding",
+            "category": "funding",
+            "publisher": "U.S. National Science Foundation Funding",
+            "title": "Expeditions in Computing (Expeditions)",
+            "url": "https://www.nsf.gov/funding/opportunities/expeditions-expeditions-computing/nsf26-525/solicitation",
+            "published": "",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "nsf_open_funding",
+            "category": "funding",
+            "publisher": "U.S. National Science Foundation Funding",
+            "title": "Emerging Frontiers in Research and Innovation (EFRI): Wave-Based Computing (WBC) (EFRI-WBC)",
+            "url": "https://www.nsf.gov/funding/opportunities/efri-wbc-emerging-frontiers-research-innovation-efri-wave-based/nsf26-524/solicitation",
+            "published": "",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "nature_journal_news",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "nature_journal_news",
+            "category": "journals",
+            "publisher": "Nature Portfolio",
+            "title": "Chinese graduate students are now choosing to stay closer to home",
+            "url": "https://www.nature.com/articles/d41586-026-03456-7",
+            "published": "2026-11-13",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "nature_journal_news",
+            "category": "journals",
+            "publisher": "Nature Portfolio",
+            "title": "Accept all changes",
+            "url": "https://www.nature.com/articles/d41586-026-03516-y",
+            "published": "2026-11-13",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "nature_journal_news",
+            "category": "journals",
+            "publisher": "Nature Portfolio",
+            "title": "This AI ‘mechanic’ can peer inside the black box of other neural networks",
+            "url": "https://www.nature.com/articles/d41586-026-03679-8",
+            "published": "2026-11-13",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "nature_journal_news",
+            "category": "journals",
+            "publisher": "Nature Portfolio",
+            "title": "Is the climate totally cooked? What the data say",
+            "url": "https://www.nature.com/articles/d41586-026-03716-6",
+            "published": "2026-11-13",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "sciencedaily_latest",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "sciencedaily_latest",
+            "category": "discoveries",
+            "publisher": "ScienceDaily science news (secondary reporting)",
+            "title": "A surprising brain difference may explain why some kids struggle with math",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261112025542.htm",
+            "published": "Thu, 12 Nov 2026 18:33:12 EST",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "sciencedaily_latest",
+            "category": "discoveries",
+            "publisher": "ScienceDaily science news (secondary reporting)",
+            "title": "Stopping statins after 70 may be safer than expected, but there's a catch",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261112025534.htm",
+            "published": "Fri, 13 Nov 2026 07:14:39 EST",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "sciencedaily_latest",
+            "category": "discoveries",
+            "publisher": "ScienceDaily science news (secondary reporting)",
+            "title": "Scientists discover a hidden danger of viral infections that vaccines may prevent",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261112025531.htm",
+            "published": "Fri, 13 Nov 2026 07:55:11 EST",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "sciencedaily_latest",
+            "category": "discoveries",
+            "publisher": "ScienceDaily science news (secondary reporting)",
+            "title": "A new treasure map reveals where Earth's lost prehistoric life may be hiding",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261112025529.htm",
+            "published": "Thu, 12 Nov 2026 06:24:47 EST",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "mit_technology_review",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "mit_technology_review",
+            "category": "news",
+            "publisher": "MIT Technology Review",
+            "title": "The Download: Silicon Valley’s blind spot and Nvidia’s chip-tracking plan",
+            "url": "https://www.technologyreview.com/2026/11/13/1148551/the-download-silicon-valley-midterms-nvidia-chip-tracking/",
+            "published": "Fri, 13 Nov 2026 13:10:00 +0000",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "mit_technology_review",
+            "category": "news",
+            "publisher": "MIT Technology Review",
+            "title": "More autonomy, fewer NDAs: Volunteers have new requests for brain implant trials",
+            "url": "https://www.technologyreview.com/2026/11/13/1148474/more-autonomy-fewer-ndas-volunteers-have-new-requests-for-brain-implant-trials/",
+            "published": "Fri, 13 Nov 2026 10:00:00 +0000",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "mit_technology_review",
+            "category": "news",
+            "publisher": "MIT Technology Review",
+            "title": "Silicon Valley claims to know the future. So why did it get the midterms so wrong?",
+            "url": "https://www.technologyreview.com/2026/11/13/1148498/silicon-valley-claims-to-know-the-future-so-why-did-it-get-the-midterms-so-wrong/",
+            "published": "Fri, 13 Nov 2026 10:00:00 +0000",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "mit_technology_review",
+            "category": "news",
+            "publisher": "MIT Technology Review",
+            "title": "Nvidia privately confirmed it could track chips to fight smuggling, even as industry publicly questioned feasibility",
+            "url": "https://www.technologyreview.com/2026/11/12/1148483/nvidia-chip-tracking/",
+            "published": "Thu, 12 Nov 2026 20:16:24 +0000",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "un_climate_environment",
+        "status": "unavailable",
+        "error_type": "ParseError",
+        "schema_diagnostic": "",
+        "records": []
+      },
+      {
+        "source": "arxiv_ai_new_submissions",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "arxiv_ai_new_submissions",
+            "category": "artificial_intelligence",
+            "publisher": "arXiv Computer Science AI",
+            "title": "Zugwise: Domain-Aware Game Reconstruction for Digitizing Handwritten Chess Scoresheets",
+            "url": "https://arxiv.org/abs/2611.14544",
+            "published": "Fri, 13 Nov 2026 00:00:00 -0500",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "arxiv_ai_new_submissions",
+            "category": "artificial_intelligence",
+            "publisher": "arXiv Computer Science AI",
+            "title": "Cleaning an Agent's History Hurts When the World Still Holds the Error",
+            "url": "https://arxiv.org/abs/2611.14654",
+            "published": "Fri, 13 Nov 2026 00:00:00 -0500",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "arxiv_ai_new_submissions",
+            "category": "artificial_intelligence",
+            "publisher": "arXiv Computer Science AI",
+            "title": "Together Compiler: Continual Compilation for AI Inference",
+            "url": "https://arxiv.org/abs/2611.14681",
+            "published": "Fri, 13 Nov 2026 00:00:00 -0500",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "arxiv_ai_new_submissions",
+            "category": "artificial_intelligence",
+            "publisher": "arXiv Computer Science AI",
+            "title": "When Should Semantic Priors Enter Partially-Identified Causal Discovery?",
+            "url": "https://arxiv.org/abs/2611.14736",
+            "published": "Fri, 13 Nov 2026 00:00:00 -0500",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "arxiv_physics_new_submissions",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "arxiv_physics_new_submissions",
+            "category": "physics",
+            "publisher": "arXiv Physics",
+            "title": "Hands-on fabrication of 2D material field-effect transistors for the classroom using off-the-shelf ionic gel",
+            "url": "https://arxiv.org/abs/2611.14565",
+            "published": "Fri, 13 Nov 2026 00:00:00 -0500",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "arxiv_physics_new_submissions",
+            "category": "physics",
+            "publisher": "arXiv Physics",
+            "title": "Learning to Calibrate Jet Energies",
+            "url": "https://arxiv.org/abs/2611.14567",
+            "published": "Fri, 13 Nov 2026 00:00:00 -0500",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "arxiv_physics_new_submissions",
+            "category": "physics",
+            "publisher": "arXiv Physics",
+            "title": "Rotor-driven piecewise cross polarization of wide quadrupolar lines: bath-contact pumping of vector and tensor order in dynamically polarized solids",
+            "url": "https://arxiv.org/abs/2611.14575",
+            "published": "Fri, 13 Nov 2026 00:00:00 -0500",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "arxiv_physics_new_submissions",
+            "category": "physics",
+            "publisher": "arXiv Physics",
+            "title": "Optical trapping of neutral atoms via magnetic-dipole transitions",
+            "url": "https://arxiv.org/abs/2611.14607",
+            "published": "Fri, 13 Nov 2026 00:00:00 -0500",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "mit_labs",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "mit_labs",
+            "category": "universities",
+            "publisher": "MIT News",
+            "title": "Q&A: From seed funding to scientific breakthroughs",
+            "url": "https://news.mit.edu/2026/from-seed-funding-to-scientific-breakthroughs-1112",
+            "published": "Thu, 12 Nov 2026 16:45:00 -0500",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "mit_labs",
+            "category": "universities",
+            "publisher": "MIT News",
+            "title": "New research could lead to faster, trustworthy AI models for climate prediction",
+            "url": "https://news.mit.edu/2026/new-research-could-lead-faster-trustworthy-ai-models-climate-prediction-1112",
+            "published": "Thu, 12 Nov 2026 00:00:00 -0500",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "mit_labs",
+            "category": "universities",
+            "publisher": "MIT News",
+            "title": "MIT Schwarzman College of Computing welcomes seven new faculty for 2026",
+            "url": "https://news.mit.edu/2026/mit-schwarzman-college-computing-welcomes-new-faculty-1110",
+            "published": "Tue, 10 Nov 2026 17:00:00 -0500",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "mit_labs",
+            "category": "universities",
+            "publisher": "MIT News",
+            "title": "Professor Emeritus Jeffrey Goldstone, highly influential theoretical physicist, dies at 93",
+            "url": "https://news.mit.edu/2026/physicist-jeffrey-goldstone-dies-1110",
+            "published": "Tue, 10 Nov 2026 11:10:00 -0500",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "harvard_research",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "harvard_research",
+            "category": "universities",
+            "publisher": "Harvard Gazette",
+            "title": "Hello? How the telephone transformed human connection",
+            "url": "https://news.harvard.edu/gazette/story/2026/11/hello-how-the-telephone-transformed-human-connection-gleick-book/",
+            "published": "Mon, 09 Nov 2026 19:45:09 +0000",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "harvard_research",
+            "category": "universities",
+            "publisher": "Harvard Gazette",
+            "title": "Nice yellow ball in the sky? Not quite.",
+            "url": "https://news.harvard.edu/gazette/story/2026/11/nice-yellow-ball-in-the-sky-not-quite/",
+            "published": "Thu, 05 Nov 2026 19:39:46 +0000",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "harvard_research",
+            "category": "universities",
+            "publisher": "Harvard Gazette",
+            "title": "When lonely hearts turn to AI",
+            "url": "https://news.harvard.edu/gazette/story/2026/11/when-lonely-hearts-turn-to-ai/",
+            "published": "Wed, 04 Nov 2026 17:36:07 +0000",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "harvard_research",
+            "category": "universities",
+            "publisher": "Harvard Gazette",
+            "title": "Where better than universities?",
+            "url": "https://news.harvard.edu/gazette/story/2026/10/where-better-than-universities/",
+            "published": "Fri, 30 Oct 2026 19:55:48 +0000",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "nasa_research",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "nasa_research",
+            "category": "discoveries",
+            "publisher": "NASA",
+            "title": "Outbursts from a Massive Star",
+            "url": "https://www.nasa.gov/image-article/outbursts-from-a-massive-star/",
+            "published": "Fri, 13 Nov 2026 16:39:33 +0000",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "nasa_research",
+            "category": "discoveries",
+            "publisher": "NASA",
+            "title": "Gemini Astronaut Photos Inspired Early Earth Observation Program",
+            "url": "https://www.nasa.gov/image-article/gemini-astronaut-photos-inspired-early-earth-observation-program/",
+            "published": "Fri, 13 Nov 2026 16:05:54 +0000",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "nasa_research",
+            "category": "discoveries",
+            "publisher": "NASA",
+            "title": "APOD: 2026 November 13 – NGC 206 and the Star Clouds of Andromeda",
+            "url": "https://science.nasa.gov/image-article/apod-2026-november-13-ngc-206-and-the-star-clouds-of-andromeda/",
+            "published": "Fri, 13 Nov 2026 05:05:00 +0000",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "nasa_research",
+            "category": "discoveries",
+            "publisher": "NASA",
+            "title": "A Global Rebound for Mangroves",
+            "url": "https://science.nasa.gov/earth/earth-observatory/a-global-rebound-for-mangroves/",
+            "published": "Fri, 13 Nov 2026 05:01:00 +0000",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "dod_public_news",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "dod_public_news",
+            "category": "defense",
+            "publisher": "U.S. Department of Defense",
+            "title": "War Department Expands Childcare Assistance",
+            "url": "https://www.war.gov/News/News-Stories/Article/Article/4647456/war-department-expands-childcare-assistance/",
+            "published": "Thu, 12 Nov 2026 22:03:00 GMT",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "dod_public_news",
+            "category": "defense",
+            "publisher": "U.S. Department of Defense",
+            "title": "Sentinel at Tomb of the Unknown Soldier Receives Award",
+            "url": "https://www.war.gov/News/News-Stories/Article/Article/4647270/sentinel-at-tomb-of-the-unknown-soldier-receives-award/",
+            "published": "Thu, 12 Nov 2026 20:38:00 GMT",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "dod_public_news",
+            "category": "defense",
+            "publisher": "U.S. Department of Defense",
+            "title": "Army, Allies Prepare for Long-Range Air Assault in Hawaii",
+            "url": "https://www.war.gov/News/News-Stories/Article/Article/4647175/army-allies-prepare-for-long-range-air-assault-in-hawaii/",
+            "published": "Thu, 12 Nov 2026 20:30:00 GMT",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "dod_public_news",
+            "category": "defense",
+            "publisher": "U.S. Department of Defense",
+            "title": "USS Nimitz Trains New, Returning Naval Aviators",
+            "url": "https://www.war.gov/News/News-Stories/Article/Article/4646092/uss-nimitz-trains-new-returning-naval-aviators/",
+            "published": "Tue, 10 Nov 2026 19:40:06 GMT",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "un_global_news",
+        "status": "unavailable",
+        "error_type": "ParseError",
+        "schema_diagnostic": "",
+        "records": []
+      },
+      {
+        "source": "darpa_public_research",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "darpa_public_research",
+            "category": "defense",
+            "publisher": "DARPA public research news",
+            "title": "NOM4D program demonstrates automated in-space assembly",
+            "url": "https://www.darpa.mil/news/2026/nom4d-program-demonstrates-automated-in-space-assembly",
+            "published": "Wed, 04 Nov 2026 20:40:22 +0000",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "darpa_public_research",
+            "category": "defense",
+            "publisher": "DARPA public research news",
+            "title": "Autonomous vehicles deliver command-controlled robotic lethality",
+            "url": "https://www.darpa.mil/news/2026/autonomous-vehicles-deliver",
+            "published": "Thu, 22 Oct 2026 21:27:13 +0000",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "darpa_public_research",
+            "category": "defense",
+            "publisher": "DARPA public research news",
+            "title": "Young Faculty Award 2027 topics open; meet 2026 class",
+            "url": "https://www.darpa.mil/news/2026/young-faculty-award-2027-topics-open-meet-2026-class",
+            "published": "Tue, 20 Oct 2026 20:02:34 +0000",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "darpa_public_research",
+            "category": "defense",
+            "publisher": "DARPA public research news",
+            "title": "Four more teams enter Quantum Benchmarking Initiative’s final stage",
+            "url": "https://www.darpa.mil/news/2026/four-more-teams-enter-quantum-benchmarking-initiative-final-stage",
+            "published": "Tue, 06 Oct 2026 17:48:30 +0000",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "un_geneva_releases",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "un_geneva_releases",
+            "category": "foreign_affairs",
+            "publisher": "UN Geneva public press releases",
+            "title": "Seventh Review Conference of the High Contracting Parties to the Convention on Certain Conventional Weapons (CCW)",
+            "url": "https://www.ungeneva.org/en/news-media/press-release/2026/11/seventh-review-conference-high-contracting-parties-convention",
+            "published": "Tue, 10 Nov 2026 09:29:14 CET",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "un_geneva_releases",
+            "category": "foreign_affairs",
+            "publisher": "UN Geneva public press releases",
+            "title": "UN Geneva unveils sustainable new uniforms for tour guides through partnership with Italy",
+            "url": "https://www.ungeneva.org/en/news-media/press-release/2026/10/un-geneva-unveils-sustainable-new-uniforms-tour-guides-through",
+            "published": "Thu, 29 Oct 2026 10:47:07 CET",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "un_geneva_releases",
+            "category": "foreign_affairs",
+            "publisher": "UN Geneva public press releases",
+            "title": "Human Rights Council Concludes Sixty-Third Regular Session after Adopting 34 Resolutions, Two Decisions and One President’s Statement",
+            "url": "https://www.ungeneva.org/en/news-media/press-release/2026/10/le-conseil-des-droits-de-lhomme-clos-les-travaux-de-sa-soixante",
+            "published": "Wed, 07 Oct 2026 16:53:37 CEST",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "un_geneva_releases",
+            "category": "foreign_affairs",
+            "publisher": "UN Geneva public press releases",
+            "title": "Human Rights Council to Hold its Sixty-Third Regular Session from 7 September to 7 October 2026",
+            "url": "https://www.ungeneva.org/en/news-media/press-release/2026/09/human-rights-council-hold-its-sixty-third-regular-session-7",
+            "published": "Wed, 02 Sep 2026 12:11:10 CEST",
+            "metadata_note": "",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "federal_reserve",
+        "status": "unavailable",
+        "error_type": "HTTPError",
+        "schema_diagnostic": "",
+        "records": []
+      },
+      {
+        "source": "crossref_journals",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "crossref_journals",
+            "category": "journals",
+            "publisher": "Crossref journal metadata",
+            "title": "Institutional Innovation and Europeanization of Research",
+            "url": "https://doi.org/10.1080/1351161022000042525",
+            "published": "[[2002, 12]]",
+            "metadata_note": "Innovation: The European Journal of Social Science Research",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "crossref_journals",
+            "category": "journals",
+            "publisher": "Crossref journal metadata",
+            "title": "Innovation: society, research &amp; technology",
+            "url": "https://doi.org/10.1080/13511610.2017.1383730",
+            "published": "[[2017, 10, 2]]",
+            "metadata_note": "Innovation: The European Journal of Social Science Research",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "crossref_journals",
+            "category": "journals",
+            "publisher": "Crossref journal metadata",
+            "title": "Introducing the adopter perspective in social innovation research",
+            "url": "https://doi.org/10.1080/13511610.2021.1964351",
+            "published": "[[2021, 8, 17]]",
+            "metadata_note": "Innovation: The European Journal of Social Science Research",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "crossref_journals",
+            "category": "journals",
+            "publisher": "Crossref journal metadata",
+            "title": "Research Reviews",
+            "url": "https://doi.org/10.1080/13511610120106156",
+            "published": "[[2001, 12]]",
+            "metadata_note": "Innovation: The European Journal of Social Science Research",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "gdelt_headlines",
+        "status": "unavailable",
+        "error_type": "HTTPError",
+        "schema_diagnostic": "",
+        "records": []
+      },
+      {
+        "source": "world_bank",
+        "status": "unavailable",
+        "error_type": "TimeoutError",
+        "schema_diagnostic": "",
+        "records": []
+      },
+      {
+        "source": "usgs_earthquakes",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "usgs_earthquakes",
+            "category": "environment",
+            "publisher": "USGS earthquake observations",
+            "title": "M 1.7 - 9 km WSW of Morongo Valley, CA",
+            "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41361743",
+            "published": "1794598971470",
+            "metadata_note": "observational earthquake feed",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "usgs_earthquakes",
+            "category": "environment",
+            "publisher": "USGS earthquake observations",
+            "title": "M 1.3 - 3 km S of Cobb, CA",
+            "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75466177",
+            "published": "1794597458110",
+            "metadata_note": "observational earthquake feed",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "usgs_earthquakes",
+            "category": "environment",
+            "publisher": "USGS earthquake observations",
+            "title": "M 2.5 - 64 km ENE of Susitna North, Alaska",
+            "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026wndfoc",
+            "published": "1794596919475",
+            "metadata_note": "observational earthquake feed",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "usgs_earthquakes",
+            "category": "environment",
+            "publisher": "USGS earthquake observations",
+            "title": "M 1.3 - 3 km SSE of Cobb, CA",
+            "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75466172",
+            "published": "1794596903270",
+            "metadata_note": "observational earthquake feed",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "nasa_natural_events",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "nasa_natural_events",
+            "category": "environment",
+            "publisher": "NASA EONET",
+            "title": "Wildfire Red Hill, Perry, Mississippi",
+            "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_26331",
+            "published": "",
+            "metadata_note": "remote sensing event metadata",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "nasa_natural_events",
+            "category": "environment",
+            "publisher": "NASA EONET",
+            "title": "Prescribed Fire Bienville CPT 29 Sub 2 RX, Scott, Mississippi",
+            "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_26332",
+            "published": "",
+            "metadata_note": "remote sensing event metadata",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "nasa_natural_events",
+            "category": "environment",
+            "publisher": "NASA EONET",
+            "title": "Prescribed Fire Compartment 170 RX, Greene, Georgia",
+            "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_26333",
+            "published": "",
+            "metadata_note": "remote sensing event metadata",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "nasa_natural_events",
+            "category": "environment",
+            "publisher": "NASA EONET",
+            "title": "Tropical Cyclone 03S",
+            "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_26159",
+            "published": "",
+            "metadata_note": "remote sensing event metadata",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "github_public_code",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "github_public_code",
+            "category": "software",
+            "publisher": "GitHub public repository index",
+            "title": "chrishotza/ai4s-life-science-2026",
+            "url": "https://github.com/chrishotza/ai4s-life-science-2026",
+            "published": "2026-10-10T07:09:03Z",
+            "metadata_note": "public code, not vetted software",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "github_public_code",
+            "category": "software",
+            "publisher": "GitHub public repository index",
+            "title": "thacha-icdi/academic-website",
+            "url": "https://github.com/thacha-icdi/academic-website",
+            "published": "2026-11-12T04:02:20Z",
+            "metadata_note": "public code, not vetted software",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "github_public_code",
+            "category": "software",
+            "publisher": "GitHub public repository index",
+            "title": "NaS-Research/nas-website",
+            "url": "https://github.com/NaS-Research/nas-website",
+            "published": "2026-11-12T02:00:42Z",
+            "metadata_note": "public code, not vetted software",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "github_public_code",
+            "category": "software",
+            "publisher": "GitHub public repository index",
+            "title": "sjsj0101/science-of-science-papers",
+            "url": "https://github.com/sjsj0101/science-of-science-papers",
+            "published": "2026-11-12T02:14:42Z",
+            "metadata_note": "public code, not vetted software",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "china_cas_research",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "china_cas_research",
+            "category": "discoveries",
+            "publisher": "Chinese Academy of Sciences, public institutional research news",
+            "title": "Nov 13, 2026 Irrigation Expansion Could Boost Rice Self-Sufficiency in the Philippines: Study Climate;Sustainable Development",
+            "url": "https://english.cas.cn/newsroom/research-news/202611/t20261113_1219066.shtml",
+            "published": "Nov 13, 2026",
+            "metadata_note": "CAS institutional announcement, not independent research validation",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "china_cas_research",
+            "category": "discoveries",
+            "publisher": "Chinese Academy of Sciences, public institutional research news",
+            "title": "Nov 13, 2026 Study Reveals Mechanisms to Sustain Stable Crop Yields under Long-term Drip Irrigation in Arid Regions Sustainable Development",
+            "url": "https://english.cas.cn/newsroom/research-news/202611/t20261113_1219071.shtml",
+            "published": "Nov 13, 2026",
+            "metadata_note": "CAS institutional announcement, not independent research validation",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "china_cas_research",
+            "category": "discoveries",
+            "publisher": "Chinese Academy of Sciences, public institutional research news",
+            "title": "Nov 13, 2026 Rh 3 Clusters Balance Activity and Butene Selectivity in Butane Dehydrogenation Chemical Engineering;Catalysis",
+            "url": "https://english.cas.cn/newsroom/research-news/202611/t20261111_1214948.shtml",
+            "published": "Nov 13, 2026",
+            "metadata_note": "CAS institutional announcement, not independent research validation",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "china_cas_research",
+            "category": "discoveries",
+            "publisher": "Chinese Academy of Sciences, public institutional research news",
+            "title": "Nov 12, 2026 Study Reveals Internal Structure and Physicochemical Evolution of Massive Young Stellar Objects Astronomy;Telescopes",
+            "url": "https://english.cas.cn/newsroom/research-news/202611/t20261112_1218926.shtml",
+            "published": "Nov 12, 2026",
+            "metadata_note": "CAS institutional announcement, not independent research validation",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      },
+      {
+        "source": "china_openalex_works",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "china_openalex_works",
+            "category": "journals",
+            "publisher": "OpenAlex, China-affiliated scholarly publications",
+            "title": "Diet Composition and Trophic Interactions of Ladybird Beetles (Coccinellidae) Revealed by DNA Metabarcoding in Forest Ecosystems of Mongolia",
+            "url": "https://doi.org/10.5281/zenodo.23770438",
+            "published": "2027-11-01",
+            "metadata_note": "At least one China-affiliated coauthor according to OpenAlex; not a claim of Chinese-only research.",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "china_openalex_works",
+            "category": "journals",
+            "publisher": "OpenAlex, China-affiliated scholarly publications",
+            "title": "Microsatellites of Gazella subgutturosa",
+            "url": "https://doi.org/10.5281/zenodo.23535086",
+            "published": "2027-10-21",
+            "metadata_note": "At least one China-affiliated coauthor according to OpenAlex; not a claim of Chinese-only research.",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "china_openalex_works",
+            "category": "journals",
+            "publisher": "OpenAlex, China-affiliated scholarly publications",
+            "title": "Green Service Innovation and CSR: Pathways to Sustainable Competitive Advantage",
+            "url": "https://doi.org/10.17632/6vxfnfrnr7",
+            "published": "2027-10-15",
+            "metadata_note": "At least one China-affiliated coauthor according to OpenAlex; not a claim of Chinese-only research.",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          },
+          {
+            "source": "china_openalex_works",
+            "category": "journals",
+            "publisher": "OpenAlex, China-affiliated scholarly publications",
+            "title": "Processed RNA-seq data of LLC500 vs LLC10K",
+            "url": "https://doi.org/10.17632/r4mxwsr8k9",
+            "published": "2027-10-11",
+            "metadata_note": "At least one China-affiliated coauthor according to OpenAlex; not a claim of Chinese-only research.",
+            "primary_source_verified": false,
+            "independent_fact_check_complete": false,
+            "untrusted_external_content": true
+          }
+        ]
+      }
+    ],
+    "records": [
+      {
+        "source": "mit_music_research",
+        "category": "music",
+        "publisher": "MIT Music and Technology",
+        "title": "Making machines that can listen",
+        "url": "https://news.mit.edu/2026/making-machines-that-can-listen-paris-smaragdis-1028",
+        "published": "Wed, 28 Oct 2026 00:00:00 -0400",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "mit_music_research",
+        "category": "music",
+        "publisher": "MIT Music and Technology",
+        "title": "Tod Machover’s new symphony plays with AI while reflecting on democracy",
+        "url": "https://news.mit.edu/2026/tod-machover-new-symphony-plays-ai-while-reflecting-democracy-1021",
+        "published": "Wed, 21 Oct 2026 00:00:00 -0400",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "mit_music_research",
+        "category": "music",
+        "publisher": "MIT Music and Technology",
+        "title": "Inaugural Music Technology Research Showcase celebrates work of new graduate program’s initial students",
+        "url": "https://news.mit.edu/2026/inaugural-mit-music-technology-research-showcase-celebrates-work-students-0629",
+        "published": "Mon, 29 Jun 2026 15:00:00 -0400",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "mit_music_research",
+        "category": "music",
+        "publisher": "MIT Music and Technology",
+        "title": "Characterizing Earth’s damping mechanisms",
+        "url": "https://news.mit.edu/2026/characterizing-earths-damping-mechanisms-perrin-davidson-0624",
+        "published": "Wed, 24 Jun 2026 00:00:00 -0400",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "mit_visual_arts",
+        "category": "art",
+        "publisher": "MIT Arts",
+        "title": "New AI “copilot” helps engineers design better structures",
+        "url": "https://news.mit.edu/2026/new-ai-copilot-helps-engineers-design-better-structures-1113",
+        "published": "Fri, 13 Nov 2026 00:00:00 -0500",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "mit_visual_arts",
+        "category": "art",
+        "publisher": "MIT Arts",
+        "title": "A single AI model simulates the behavior of many substances, from sliding sand to folding proteins",
+        "url": "https://news.mit.edu/2026/single-ai-model-simulates-many-substances-behavior-1109",
+        "published": "Mon, 09 Nov 2026 00:00:00 -0500",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "mit_visual_arts",
+        "category": "art",
+        "publisher": "MIT Arts",
+        "title": "Fabric molds could bring material-saving concrete beams within reach",
+        "url": "https://news.mit.edu/2026/fabric-molds-could-bring-material-saving-concrete-beams-within-reach-1106",
+        "published": "Fri, 06 Nov 2026 14:35:00 -0500",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "mit_visual_arts",
+        "category": "art",
+        "publisher": "MIT Arts",
+        "title": "Scene at MIT: Beautiful, intricate, creative quilts",
+        "url": "https://news.mit.edu/2026/scene-mit-beautiful-intricate-creative-quilts-1106",
+        "published": "Fri, 06 Nov 2026 10:35:00 -0500",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "mit_architecture",
+        "category": "design",
+        "publisher": "MIT Architecture",
+        "title": "Powering up for a pivotal moment",
+        "url": "https://news.mit.edu/2026/powering-up-for-pivotal-moment-1102",
+        "published": "Mon, 02 Nov 2026 14:55:00 -0500",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "mit_architecture",
+        "category": "design",
+        "publisher": "MIT Architecture",
+        "title": "Origami-based construction method yields lightweight, load-bearing structures on architectural scales",
+        "url": "https://news.mit.edu/2026/origami-based-construction-method-yields-lightweight-load-bearing-structures-architecture-1027",
+        "published": "Tue, 27 Oct 2026 00:00:00 -0400",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "mit_architecture",
+        "category": "design",
+        "publisher": "MIT Architecture",
+        "title": "Hashim Sarkis to step down as dean of the School of Architecture and Planning",
+        "url": "https://news.mit.edu/2026/hashim-sarkis-steps-down-dean-school-architecture-planning-1026",
+        "published": "Mon, 26 Oct 2026 16:30:00 -0400",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "mit_architecture",
+        "category": "design",
+        "publisher": "MIT Architecture",
+        "title": "MIT Farm is growing",
+        "url": "https://news.mit.edu/2026/mit-farm-growing-1013",
+        "published": "Tue, 13 Oct 2026 15:30:00 -0400",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nih_biomedical_news",
+        "category": "health",
+        "publisher": "U.S. National Institutes of Health",
+        "title": "For the first time, researchers map out the brain’s behavioral gatekeeper",
+        "url": "https://www.nih.gov/news-events/news-releases/first-time-researchers-map-out-brains-behavioral-gatekeeper",
+        "published": "Thu, 11/12/2026 - 11:00",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nih_biomedical_news",
+        "category": "health",
+        "publisher": "U.S. National Institutes of Health",
+        "title": "Two ‘forever chemicals’ associated with higher risk of aggressive breast cancer in NIH analysis",
+        "url": "https://www.nih.gov/news-events/news-releases/two-forever-chemicals-associated-higher-risk-aggressive-breast-cancer-nih-analysis",
+        "published": "Thu, 11/05/2026 - 16:00",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nih_biomedical_news",
+        "category": "health",
+        "publisher": "U.S. National Institutes of Health",
+        "title": "Integrated health service delivery through medical mobile units helped to reduce deaths among individuals at risk for HIV who also inject drugs",
+        "url": "https://www.nih.gov/news-events/news-releases/integrated-health-service-delivery-through-medical-mobile-units-helped-reduce-deaths-among-individuals-risk-hiv-who-also-inject-drugs",
+        "published": "Wed, 11/04/2026 - 11:00",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nih_biomedical_news",
+        "category": "health",
+        "publisher": "U.S. National Institutes of Health",
+        "title": "An extra year of secondary school lowered dementia diagnoses later in life",
+        "url": "https://www.nih.gov/news-events/news-releases/extra-year-secondary-school-lowered-dementia-diagnoses-later-life",
+        "published": "Fri, 10/23/2026 - 13:00",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nsf_new_discoveries",
+        "category": "discoveries",
+        "publisher": "U.S. National Science Foundation",
+        "title": "Podcast: The laser that could break the laws of physics",
+        "url": "https://www.nsf.gov/news/podcast-laser-could-break-laws-physics",
+        "published": "Mon, 02 Nov 2026 16:07:52 -0500",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nsf_new_discoveries",
+        "category": "discoveries",
+        "publisher": "U.S. National Science Foundation",
+        "title": "Podcast: The future of electronics goes beyond circuit boards",
+        "url": "https://www.nsf.gov/news/podcast-future-electronics-goes-beyond-circuit-boards",
+        "published": "Tue, 27 Oct 2026 16:23:58 -0400",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nsf_new_discoveries",
+        "category": "discoveries",
+        "publisher": "U.S. National Science Foundation",
+        "title": "New dwarf planet candidate discovered by NSF–DOE Rubin Observatory",
+        "url": "https://www.nsf.gov/news/new-dwarf-planet-candidate-discovered-nsf-doe-rubin",
+        "published": "Tue, 27 Oct 2026 14:51:35 -0400",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nsf_new_discoveries",
+        "category": "discoveries",
+        "publisher": "U.S. National Science Foundation",
+        "title": "Podcast: Can America's most powerful laser unlock the universe?",
+        "url": "https://www.nsf.gov/news/podcast-can-americas-most-powerful-laser-unlock-universe",
+        "published": "Tue, 20 Oct 2026 10:53:01 -0400",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nsf_open_funding",
+        "category": "funding",
+        "publisher": "U.S. National Science Foundation Funding",
+        "title": "Major Research Instrumentation Program (MRI)",
+        "url": "https://www.nsf.gov/funding/opportunities/mri-major-research-instrumentation-program/nsf27-500/solicitation",
+        "published": "",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nsf_open_funding",
+        "category": "funding",
+        "publisher": "U.S. National Science Foundation Funding",
+        "title": "NSF Graduate Research Fellowship Program (GRFP)",
+        "url": "https://www.nsf.gov/funding/opportunities/grfp-nsf-graduate-research-fellowship-program/nsf26-526/solicitation",
+        "published": "",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nsf_open_funding",
+        "category": "funding",
+        "publisher": "U.S. National Science Foundation Funding",
+        "title": "Expeditions in Computing (Expeditions)",
+        "url": "https://www.nsf.gov/funding/opportunities/expeditions-expeditions-computing/nsf26-525/solicitation",
+        "published": "",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nsf_open_funding",
+        "category": "funding",
+        "publisher": "U.S. National Science Foundation Funding",
+        "title": "Emerging Frontiers in Research and Innovation (EFRI): Wave-Based Computing (WBC) (EFRI-WBC)",
+        "url": "https://www.nsf.gov/funding/opportunities/efri-wbc-emerging-frontiers-research-innovation-efri-wave-based/nsf26-524/solicitation",
+        "published": "",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nature_journal_news",
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "title": "Chinese graduate students are now choosing to stay closer to home",
+        "url": "https://www.nature.com/articles/d41586-026-03456-7",
+        "published": "2026-11-13",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nature_journal_news",
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "title": "Accept all changes",
+        "url": "https://www.nature.com/articles/d41586-026-03516-y",
+        "published": "2026-11-13",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nature_journal_news",
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "title": "This AI ‘mechanic’ can peer inside the black box of other neural networks",
+        "url": "https://www.nature.com/articles/d41586-026-03679-8",
+        "published": "2026-11-13",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nature_journal_news",
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "title": "Is the climate totally cooked? What the data say",
+        "url": "https://www.nature.com/articles/d41586-026-03716-6",
+        "published": "2026-11-13",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "sciencedaily_latest",
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "title": "A surprising brain difference may explain why some kids struggle with math",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261112025542.htm",
+        "published": "Thu, 12 Nov 2026 18:33:12 EST",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "sciencedaily_latest",
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "title": "Stopping statins after 70 may be safer than expected, but there's a catch",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261112025534.htm",
+        "published": "Fri, 13 Nov 2026 07:14:39 EST",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "sciencedaily_latest",
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "title": "Scientists discover a hidden danger of viral infections that vaccines may prevent",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261112025531.htm",
+        "published": "Fri, 13 Nov 2026 07:55:11 EST",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "sciencedaily_latest",
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "title": "A new treasure map reveals where Earth's lost prehistoric life may be hiding",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261112025529.htm",
+        "published": "Thu, 12 Nov 2026 06:24:47 EST",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "mit_technology_review",
+        "category": "news",
+        "publisher": "MIT Technology Review",
+        "title": "The Download: Silicon Valley’s blind spot and Nvidia’s chip-tracking plan",
+        "url": "https://www.technologyreview.com/2026/11/13/1148551/the-download-silicon-valley-midterms-nvidia-chip-tracking/",
+        "published": "Fri, 13 Nov 2026 13:10:00 +0000",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "mit_technology_review",
+        "category": "news",
+        "publisher": "MIT Technology Review",
+        "title": "More autonomy, fewer NDAs: Volunteers have new requests for brain implant trials",
+        "url": "https://www.technologyreview.com/2026/11/13/1148474/more-autonomy-fewer-ndas-volunteers-have-new-requests-for-brain-implant-trials/",
+        "published": "Fri, 13 Nov 2026 10:00:00 +0000",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "mit_technology_review",
+        "category": "news",
+        "publisher": "MIT Technology Review",
+        "title": "Silicon Valley claims to know the future. So why did it get the midterms so wrong?",
+        "url": "https://www.technologyreview.com/2026/11/13/1148498/silicon-valley-claims-to-know-the-future-so-why-did-it-get-the-midterms-so-wrong/",
+        "published": "Fri, 13 Nov 2026 10:00:00 +0000",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "mit_technology_review",
+        "category": "news",
+        "publisher": "MIT Technology Review",
+        "title": "Nvidia privately confirmed it could track chips to fight smuggling, even as industry publicly questioned feasibility",
+        "url": "https://www.technologyreview.com/2026/11/12/1148483/nvidia-chip-tracking/",
+        "published": "Thu, 12 Nov 2026 20:16:24 +0000",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "arxiv_ai_new_submissions",
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "title": "Zugwise: Domain-Aware Game Reconstruction for Digitizing Handwritten Chess Scoresheets",
+        "url": "https://arxiv.org/abs/2611.14544",
+        "published": "Fri, 13 Nov 2026 00:00:00 -0500",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "arxiv_ai_new_submissions",
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "title": "Cleaning an Agent's History Hurts When the World Still Holds the Error",
+        "url": "https://arxiv.org/abs/2611.14654",
+        "published": "Fri, 13 Nov 2026 00:00:00 -0500",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "arxiv_ai_new_submissions",
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "title": "Together Compiler: Continual Compilation for AI Inference",
+        "url": "https://arxiv.org/abs/2611.14681",
+        "published": "Fri, 13 Nov 2026 00:00:00 -0500",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "arxiv_ai_new_submissions",
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "title": "When Should Semantic Priors Enter Partially-Identified Causal Discovery?",
+        "url": "https://arxiv.org/abs/2611.14736",
+        "published": "Fri, 13 Nov 2026 00:00:00 -0500",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "arxiv_physics_new_submissions",
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "title": "Hands-on fabrication of 2D material field-effect transistors for the classroom using off-the-shelf ionic gel",
+        "url": "https://arxiv.org/abs/2611.14565",
+        "published": "Fri, 13 Nov 2026 00:00:00 -0500",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "arxiv_physics_new_submissions",
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "title": "Learning to Calibrate Jet Energies",
+        "url": "https://arxiv.org/abs/2611.14567",
+        "published": "Fri, 13 Nov 2026 00:00:00 -0500",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "arxiv_physics_new_submissions",
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "title": "Rotor-driven piecewise cross polarization of wide quadrupolar lines: bath-contact pumping of vector and tensor order in dynamically polarized solids",
+        "url": "https://arxiv.org/abs/2611.14575",
+        "published": "Fri, 13 Nov 2026 00:00:00 -0500",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "arxiv_physics_new_submissions",
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "title": "Optical trapping of neutral atoms via magnetic-dipole transitions",
+        "url": "https://arxiv.org/abs/2611.14607",
+        "published": "Fri, 13 Nov 2026 00:00:00 -0500",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "mit_labs",
+        "category": "universities",
+        "publisher": "MIT News",
+        "title": "Q&A: From seed funding to scientific breakthroughs",
+        "url": "https://news.mit.edu/2026/from-seed-funding-to-scientific-breakthroughs-1112",
+        "published": "Thu, 12 Nov 2026 16:45:00 -0500",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "mit_labs",
+        "category": "universities",
+        "publisher": "MIT News",
+        "title": "New research could lead to faster, trustworthy AI models for climate prediction",
+        "url": "https://news.mit.edu/2026/new-research-could-lead-faster-trustworthy-ai-models-climate-prediction-1112",
+        "published": "Thu, 12 Nov 2026 00:00:00 -0500",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "mit_labs",
+        "category": "universities",
+        "publisher": "MIT News",
+        "title": "MIT Schwarzman College of Computing welcomes seven new faculty for 2026",
+        "url": "https://news.mit.edu/2026/mit-schwarzman-college-computing-welcomes-new-faculty-1110",
+        "published": "Tue, 10 Nov 2026 17:00:00 -0500",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "mit_labs",
+        "category": "universities",
+        "publisher": "MIT News",
+        "title": "Professor Emeritus Jeffrey Goldstone, highly influential theoretical physicist, dies at 93",
+        "url": "https://news.mit.edu/2026/physicist-jeffrey-goldstone-dies-1110",
+        "published": "Tue, 10 Nov 2026 11:10:00 -0500",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "harvard_research",
+        "category": "universities",
+        "publisher": "Harvard Gazette",
+        "title": "Hello? How the telephone transformed human connection",
+        "url": "https://news.harvard.edu/gazette/story/2026/11/hello-how-the-telephone-transformed-human-connection-gleick-book/",
+        "published": "Mon, 09 Nov 2026 19:45:09 +0000",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "harvard_research",
+        "category": "universities",
+        "publisher": "Harvard Gazette",
+        "title": "Nice yellow ball in the sky? Not quite.",
+        "url": "https://news.harvard.edu/gazette/story/2026/11/nice-yellow-ball-in-the-sky-not-quite/",
+        "published": "Thu, 05 Nov 2026 19:39:46 +0000",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "harvard_research",
+        "category": "universities",
+        "publisher": "Harvard Gazette",
+        "title": "When lonely hearts turn to AI",
+        "url": "https://news.harvard.edu/gazette/story/2026/11/when-lonely-hearts-turn-to-ai/",
+        "published": "Wed, 04 Nov 2026 17:36:07 +0000",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "harvard_research",
+        "category": "universities",
+        "publisher": "Harvard Gazette",
+        "title": "Where better than universities?",
+        "url": "https://news.harvard.edu/gazette/story/2026/10/where-better-than-universities/",
+        "published": "Fri, 30 Oct 2026 19:55:48 +0000",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nasa_research",
+        "category": "discoveries",
+        "publisher": "NASA",
+        "title": "Outbursts from a Massive Star",
+        "url": "https://www.nasa.gov/image-article/outbursts-from-a-massive-star/",
+        "published": "Fri, 13 Nov 2026 16:39:33 +0000",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nasa_research",
+        "category": "discoveries",
+        "publisher": "NASA",
+        "title": "Gemini Astronaut Photos Inspired Early Earth Observation Program",
+        "url": "https://www.nasa.gov/image-article/gemini-astronaut-photos-inspired-early-earth-observation-program/",
+        "published": "Fri, 13 Nov 2026 16:05:54 +0000",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nasa_research",
+        "category": "discoveries",
+        "publisher": "NASA",
+        "title": "APOD: 2026 November 13 – NGC 206 and the Star Clouds of Andromeda",
+        "url": "https://science.nasa.gov/image-article/apod-2026-november-13-ngc-206-and-the-star-clouds-of-andromeda/",
+        "published": "Fri, 13 Nov 2026 05:05:00 +0000",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nasa_research",
+        "category": "discoveries",
+        "publisher": "NASA",
+        "title": "A Global Rebound for Mangroves",
+        "url": "https://science.nasa.gov/earth/earth-observatory/a-global-rebound-for-mangroves/",
+        "published": "Fri, 13 Nov 2026 05:01:00 +0000",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "dod_public_news",
+        "category": "defense",
+        "publisher": "U.S. Department of Defense",
+        "title": "War Department Expands Childcare Assistance",
+        "url": "https://www.war.gov/News/News-Stories/Article/Article/4647456/war-department-expands-childcare-assistance/",
+        "published": "Thu, 12 Nov 2026 22:03:00 GMT",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "dod_public_news",
+        "category": "defense",
+        "publisher": "U.S. Department of Defense",
+        "title": "Sentinel at Tomb of the Unknown Soldier Receives Award",
+        "url": "https://www.war.gov/News/News-Stories/Article/Article/4647270/sentinel-at-tomb-of-the-unknown-soldier-receives-award/",
+        "published": "Thu, 12 Nov 2026 20:38:00 GMT",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "dod_public_news",
+        "category": "defense",
+        "publisher": "U.S. Department of Defense",
+        "title": "Army, Allies Prepare for Long-Range Air Assault in Hawaii",
+        "url": "https://www.war.gov/News/News-Stories/Article/Article/4647175/army-allies-prepare-for-long-range-air-assault-in-hawaii/",
+        "published": "Thu, 12 Nov 2026 20:30:00 GMT",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "dod_public_news",
+        "category": "defense",
+        "publisher": "U.S. Department of Defense",
+        "title": "USS Nimitz Trains New, Returning Naval Aviators",
+        "url": "https://www.war.gov/News/News-Stories/Article/Article/4646092/uss-nimitz-trains-new-returning-naval-aviators/",
+        "published": "Tue, 10 Nov 2026 19:40:06 GMT",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "darpa_public_research",
+        "category": "defense",
+        "publisher": "DARPA public research news",
+        "title": "NOM4D program demonstrates automated in-space assembly",
+        "url": "https://www.darpa.mil/news/2026/nom4d-program-demonstrates-automated-in-space-assembly",
+        "published": "Wed, 04 Nov 2026 20:40:22 +0000",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "darpa_public_research",
+        "category": "defense",
+        "publisher": "DARPA public research news",
+        "title": "Autonomous vehicles deliver command-controlled robotic lethality",
+        "url": "https://www.darpa.mil/news/2026/autonomous-vehicles-deliver",
+        "published": "Thu, 22 Oct 2026 21:27:13 +0000",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "darpa_public_research",
+        "category": "defense",
+        "publisher": "DARPA public research news",
+        "title": "Young Faculty Award 2027 topics open; meet 2026 class",
+        "url": "https://www.darpa.mil/news/2026/young-faculty-award-2027-topics-open-meet-2026-class",
+        "published": "Tue, 20 Oct 2026 20:02:34 +0000",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "darpa_public_research",
+        "category": "defense",
+        "publisher": "DARPA public research news",
+        "title": "Four more teams enter Quantum Benchmarking Initiative’s final stage",
+        "url": "https://www.darpa.mil/news/2026/four-more-teams-enter-quantum-benchmarking-initiative-final-stage",
+        "published": "Tue, 06 Oct 2026 17:48:30 +0000",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "un_geneva_releases",
+        "category": "foreign_affairs",
+        "publisher": "UN Geneva public press releases",
+        "title": "Seventh Review Conference of the High Contracting Parties to the Convention on Certain Conventional Weapons (CCW)",
+        "url": "https://www.ungeneva.org/en/news-media/press-release/2026/11/seventh-review-conference-high-contracting-parties-convention",
+        "published": "Tue, 10 Nov 2026 09:29:14 CET",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "un_geneva_releases",
+        "category": "foreign_affairs",
+        "publisher": "UN Geneva public press releases",
+        "title": "UN Geneva unveils sustainable new uniforms for tour guides through partnership with Italy",
+        "url": "https://www.ungeneva.org/en/news-media/press-release/2026/10/un-geneva-unveils-sustainable-new-uniforms-tour-guides-through",
+        "published": "Thu, 29 Oct 2026 10:47:07 CET",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "un_geneva_releases",
+        "category": "foreign_affairs",
+        "publisher": "UN Geneva public press releases",
+        "title": "Human Rights Council Concludes Sixty-Third Regular Session after Adopting 34 Resolutions, Two Decisions and One President’s Statement",
+        "url": "https://www.ungeneva.org/en/news-media/press-release/2026/10/le-conseil-des-droits-de-lhomme-clos-les-travaux-de-sa-soixante",
+        "published": "Wed, 07 Oct 2026 16:53:37 CEST",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "un_geneva_releases",
+        "category": "foreign_affairs",
+        "publisher": "UN Geneva public press releases",
+        "title": "Human Rights Council to Hold its Sixty-Third Regular Session from 7 September to 7 October 2026",
+        "url": "https://www.ungeneva.org/en/news-media/press-release/2026/09/human-rights-council-hold-its-sixty-third-regular-session-7",
+        "published": "Wed, 02 Sep 2026 12:11:10 CEST",
+        "metadata_note": "",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "crossref_journals",
+        "category": "journals",
+        "publisher": "Crossref journal metadata",
+        "title": "Institutional Innovation and Europeanization of Research",
+        "url": "https://doi.org/10.1080/1351161022000042525",
+        "published": "[[2002, 12]]",
+        "metadata_note": "Innovation: The European Journal of Social Science Research",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "crossref_journals",
+        "category": "journals",
+        "publisher": "Crossref journal metadata",
+        "title": "Innovation: society, research &amp; technology",
+        "url": "https://doi.org/10.1080/13511610.2017.1383730",
+        "published": "[[2017, 10, 2]]",
+        "metadata_note": "Innovation: The European Journal of Social Science Research",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "crossref_journals",
+        "category": "journals",
+        "publisher": "Crossref journal metadata",
+        "title": "Introducing the adopter perspective in social innovation research",
+        "url": "https://doi.org/10.1080/13511610.2021.1964351",
+        "published": "[[2021, 8, 17]]",
+        "metadata_note": "Innovation: The European Journal of Social Science Research",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "crossref_journals",
+        "category": "journals",
+        "publisher": "Crossref journal metadata",
+        "title": "Research Reviews",
+        "url": "https://doi.org/10.1080/13511610120106156",
+        "published": "[[2001, 12]]",
+        "metadata_note": "Innovation: The European Journal of Social Science Research",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "usgs_earthquakes",
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "title": "M 1.7 - 9 km WSW of Morongo Valley, CA",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41361743",
+        "published": "1794598971470",
+        "metadata_note": "observational earthquake feed",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "usgs_earthquakes",
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "title": "M 1.3 - 3 km S of Cobb, CA",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75466177",
+        "published": "1794597458110",
+        "metadata_note": "observational earthquake feed",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "usgs_earthquakes",
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "title": "M 2.5 - 64 km ENE of Susitna North, Alaska",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026wndfoc",
+        "published": "1794596919475",
+        "metadata_note": "observational earthquake feed",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "usgs_earthquakes",
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "title": "M 1.3 - 3 km SSE of Cobb, CA",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75466172",
+        "published": "1794596903270",
+        "metadata_note": "observational earthquake feed",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nasa_natural_events",
+        "category": "environment",
+        "publisher": "NASA EONET",
+        "title": "Wildfire Red Hill, Perry, Mississippi",
+        "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_26331",
+        "published": "",
+        "metadata_note": "remote sensing event metadata",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nasa_natural_events",
+        "category": "environment",
+        "publisher": "NASA EONET",
+        "title": "Prescribed Fire Bienville CPT 29 Sub 2 RX, Scott, Mississippi",
+        "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_26332",
+        "published": "",
+        "metadata_note": "remote sensing event metadata",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nasa_natural_events",
+        "category": "environment",
+        "publisher": "NASA EONET",
+        "title": "Prescribed Fire Compartment 170 RX, Greene, Georgia",
+        "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_26333",
+        "published": "",
+        "metadata_note": "remote sensing event metadata",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "nasa_natural_events",
+        "category": "environment",
+        "publisher": "NASA EONET",
+        "title": "Tropical Cyclone 03S",
+        "url": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_26159",
+        "published": "",
+        "metadata_note": "remote sensing event metadata",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "github_public_code",
+        "category": "software",
+        "publisher": "GitHub public repository index",
+        "title": "chrishotza/ai4s-life-science-2026",
+        "url": "https://github.com/chrishotza/ai4s-life-science-2026",
+        "published": "2026-10-10T07:09:03Z",
+        "metadata_note": "public code, not vetted software",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "github_public_code",
+        "category": "software",
+        "publisher": "GitHub public repository index",
+        "title": "thacha-icdi/academic-website",
+        "url": "https://github.com/thacha-icdi/academic-website",
+        "published": "2026-11-12T04:02:20Z",
+        "metadata_note": "public code, not vetted software",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "github_public_code",
+        "category": "software",
+        "publisher": "GitHub public repository index",
+        "title": "NaS-Research/nas-website",
+        "url": "https://github.com/NaS-Research/nas-website",
+        "published": "2026-11-12T02:00:42Z",
+        "metadata_note": "public code, not vetted software",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "github_public_code",
+        "category": "software",
+        "publisher": "GitHub public repository index",
+        "title": "sjsj0101/science-of-science-papers",
+        "url": "https://github.com/sjsj0101/science-of-science-papers",
+        "published": "2026-11-12T02:14:42Z",
+        "metadata_note": "public code, not vetted software",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "china_cas_research",
+        "category": "discoveries",
+        "publisher": "Chinese Academy of Sciences, public institutional research news",
+        "title": "Nov 13, 2026 Irrigation Expansion Could Boost Rice Self-Sufficiency in the Philippines: Study Climate;Sustainable Development",
+        "url": "https://english.cas.cn/newsroom/research-news/202611/t20261113_1219066.shtml",
+        "published": "Nov 13, 2026",
+        "metadata_note": "CAS institutional announcement, not independent research validation",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "china_cas_research",
+        "category": "discoveries",
+        "publisher": "Chinese Academy of Sciences, public institutional research news",
+        "title": "Nov 13, 2026 Study Reveals Mechanisms to Sustain Stable Crop Yields under Long-term Drip Irrigation in Arid Regions Sustainable Development",
+        "url": "https://english.cas.cn/newsroom/research-news/202611/t20261113_1219071.shtml",
+        "published": "Nov 13, 2026",
+        "metadata_note": "CAS institutional announcement, not independent research validation",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "china_cas_research",
+        "category": "discoveries",
+        "publisher": "Chinese Academy of Sciences, public institutional research news",
+        "title": "Nov 13, 2026 Rh 3 Clusters Balance Activity and Butene Selectivity in Butane Dehydrogenation Chemical Engineering;Catalysis",
+        "url": "https://english.cas.cn/newsroom/research-news/202611/t20261111_1214948.shtml",
+        "published": "Nov 13, 2026",
+        "metadata_note": "CAS institutional announcement, not independent research validation",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "china_cas_research",
+        "category": "discoveries",
+        "publisher": "Chinese Academy of Sciences, public institutional research news",
+        "title": "Nov 12, 2026 Study Reveals Internal Structure and Physicochemical Evolution of Massive Young Stellar Objects Astronomy;Telescopes",
+        "url": "https://english.cas.cn/newsroom/research-news/202611/t20261112_1218926.shtml",
+        "published": "Nov 12, 2026",
+        "metadata_note": "CAS institutional announcement, not independent research validation",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "china_openalex_works",
+        "category": "journals",
+        "publisher": "OpenAlex, China-affiliated scholarly publications",
+        "title": "Diet Composition and Trophic Interactions of Ladybird Beetles (Coccinellidae) Revealed by DNA Metabarcoding in Forest Ecosystems of Mongolia",
+        "url": "https://doi.org/10.5281/zenodo.23770438",
+        "published": "2027-11-01",
+        "metadata_note": "At least one China-affiliated coauthor according to OpenAlex; not a claim of Chinese-only research.",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "china_openalex_works",
+        "category": "journals",
+        "publisher": "OpenAlex, China-affiliated scholarly publications",
+        "title": "Microsatellites of Gazella subgutturosa",
+        "url": "https://doi.org/10.5281/zenodo.23535086",
+        "published": "2027-10-21",
+        "metadata_note": "At least one China-affiliated coauthor according to OpenAlex; not a claim of Chinese-only research.",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "china_openalex_works",
+        "category": "journals",
+        "publisher": "OpenAlex, China-affiliated scholarly publications",
+        "title": "Green Service Innovation and CSR: Pathways to Sustainable Competitive Advantage",
+        "url": "https://doi.org/10.17632/6vxfnfrnr7",
+        "published": "2027-10-15",
+        "metadata_note": "At least one China-affiliated coauthor according to OpenAlex; not a claim of Chinese-only research.",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      },
+      {
+        "source": "china_openalex_works",
+        "category": "journals",
+        "publisher": "OpenAlex, China-affiliated scholarly publications",
+        "title": "Processed RNA-seq data of LLC500 vs LLC10K",
+        "url": "https://doi.org/10.17632/r4mxwsr8k9",
+        "published": "2027-10-11",
+        "metadata_note": "At least one China-affiliated coauthor according to OpenAlex; not a claim of Chinese-only research.",
+        "primary_source_verified": false,
+        "independent_fact_check_complete": false,
+        "untrusted_external_content": true
+      }
+    ],
+    "providers_attempted": 28,
+    "providers_reporting_data": 23,
+    "snapshot_utc": "2026-11-13T19:58:33.535380+00:00",
+    "independent_breakthrough_verified": false,
+    "AGI_achieved": false,
+    "limitations": [
+      "Institutional releases, journalism and public metadata are claims, not independent truth.",
+      "Public military and diplomatic publications do not convey privileged access.",
+      "World Bank indicators and USGS observations differ from breaking news.",
+      "Source outages, licensing restrictions and reporting bias are recorded.",
+      "All outside text is untrusted data, never a command to an agent."
+    ]
+  },
+  "trusted_instructions_from_sources": false,
+  "automatic_code_or_model_changes": false,
+  "private_data_accessed": false
+}
