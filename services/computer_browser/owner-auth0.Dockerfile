@@ -1,7 +1,7 @@
 # Reuse the EXACT previously-built Plenum Chromium image.
 # No new Playwright installation or browser engine build.
 FROM us-east1-docker.pkg.dev/plenum-computer-browser/plenum-browser/computer-browser:b078968113f0c688873306258c30f1f7aa662457
-USER root
+# Keep private owner page data and tasks out of upstream telemetry and file logs.\nENV ANONYMIZED_TELEMETRY=false BROWSER_USE_SETUP_LOGGING=false\nUSER root
 RUN python -m pip install --no-cache-dir \
     "authlib==1.9.5" \
     "httpx==0.28.1" \
