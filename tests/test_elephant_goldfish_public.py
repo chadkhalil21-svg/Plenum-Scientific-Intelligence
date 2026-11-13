@@ -38,8 +38,8 @@ class ElephantGoldfishTests(TestCase):
             edited.write_text(original + "\nUntrusted additions", encoding="utf-8")
             with self.assertRaises(ValueError):
                 c.read_real_google_egm_design_critic(edited)
-        # Separate cached persona exists but the FULL 5-stage upstream
-        # multi-agent workflow has NOT been activated or claimed.
+        # Five pinned upstream stages now execute in the SAME council when
+        # explicitly requested; the entire Google vendor plugin is distinct.
         self.assertFalse(hasattr(c, "egm_five_stage_pipeline_running"))
 
     def test_google_ground_truth_reaches_four_seats_and_fresh_goldfish(self):
@@ -50,7 +50,7 @@ class ElephantGoldfishTests(TestCase):
         self.assertIn("Google AQuA:", dossier)
         self.assertIn("diagnoses recurrent failures", dossier)
         self.assertIn("Elephant–Goldfish:", dossier)
-        self.assertIn("not the full five-stage review plugin", dossier)
+        self.assertIn("Full five-stage REVIEW MODE is implemented and actually executed", dossier)
         self.assertIn("github.com/google/adk-recipes", dossier)
         calls = []
         event = {"action": "opened", "repository": {"full_name": c.REPO},
@@ -66,7 +66,7 @@ class ElephantGoldfishTests(TestCase):
             report = c.deliberate(event)
         self.assertEqual(len(calls), 5)
         self.assertTrue(all("Google AQuA:" in system for system, _ in calls))
-        self.assertTrue(all("not the full five-stage review plugin" in system
+        self.assertTrue(all("Full five-stage REVIEW MODE is implemented and actually executed" in system
                             for system, _ in calls))
         self.assertNotIn("DATED PUBLIC ELEPHANT", calls[-1][0])
         self.assertFalse(report["recommendation_verified_against_external_sources"])
