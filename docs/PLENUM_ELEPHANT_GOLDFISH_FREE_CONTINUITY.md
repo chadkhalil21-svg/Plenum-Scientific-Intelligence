@@ -1,5 +1,17 @@
 # Plenum | Elephant–Goldfish continuity and free wakeable workforce
 
+## 12 November 2026 — ALL THREE upstream free memory engines now SOURCE-INTEGRATED
+
+**Founder explicitly overrode earlier optional/defer decisions and ordered adoption of all three.** Original Plenum PR [#568](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/568) **MERGED** on main (`adaf4d4280a1dc6ef8f17b4d883bb9199ee7dcc5`). Under `integrations/continuity-memory/` and `src/plenum_ai/optional_memory_engines.py`, original agents now have owner-private optional adapters and installation registry for official MIT **MCP Memory Server 2.1.1** (Node 24), Apache-2.0 **Mem0 2.2.1**, Apache-2.0 **Graphiti 0.31.2** with FalkorDB + `httpx` (GitHub Actions first exposed upstream missing `httpx`, corrected). Existing Minister skill directs selective private usage, retains LangGraph checkpoints and private Google Drive master as canonical; no new Chief.
+
+**Actual installation verification:** [focused GitHub workflow #43350945392](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43350945392) SUCCESS in all three independent pip/npm install + import/version jobs. **That is an ephemeral runner, not a private persistent resident installation or successful cross-chat retrieval.** Private ChatGPT Plenum Continuity plugin version **0.1.1** was updated with exact integration location and source readback. No paid inference, API key, founder record, or memory-data transfer executed.
+
+**Outstanding private runtime:** A genuinely approved private persistent volume/server, local Ollama LLM + embeddings and Graphiti FalkorDB must exist before founder-specific agent memory can run after restart. No GitHub CI public runner, vanilla ChatGPT message, or skills-only plugin gains native ChatGPT Memory hooks or ChatGPT transcript feed. If original existing authorized protected Cloud Run/GCS storage is used later, verify access/cost/identity and integrate only after scoped owner authorization. Avoid activating all three redundant databases for the same fact; choose by retrieval type.
+
+**Historical comparisons below are retained as prior decision records and superseded wherever they say 'do not install' or 'DEFER'.**
+
+---
+
 ## 12 November 2026 — cross-chat memory gap and free upstream adoption
 
 **Verified incorporation:** a PRIVATE ChatGPT skills plugin named **Plenum Continuity** v0.1.0 was created and read back in the owner's plugin account. Its procedure retrieves the pre-existing private `Plenum Industries | Master Control Ledger` (where connected), checks Conversation Register/Context Protocol, and cross-checks original provider results against older source before proposing actions. The existing Minister skill also now has a mandatory read-first continuity preflight. **This is actionable ChatGPT-side guidance, not a running background ingest, an installation across all chats, or proof of automatic plugin selection.** The founder must install/select the private plugin if needed; ChatGPT selects installed skills contextually, not on every request.
