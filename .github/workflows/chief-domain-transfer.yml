@@ -88,6 +88,10 @@ jobs:
               assert x['status']=='VERIFIED_CROSS_DOMAIN'
               assert x['model_called'] and x['chief_delegated']
               assert x['correct_worker_selected'] and x['worker_tool_called']
+              assert x['strict_single_specialist_graded']
+              assert x['actual_route_evidence']['task_calls']==1
+              assert x['actual_route_evidence']['observed_worker_calls']==1
+              assert not x['actual_route_evidence']['unexpected_or_redundant_specialists']
               assert x['independent_verified'] and not x['paid_api_used']
               assert not x['business_account_write'] and not x['private_data_used']
               print('PASS: Chief selected, delegated and independently verified', case)
