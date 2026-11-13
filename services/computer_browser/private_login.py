@@ -435,7 +435,9 @@ def login_html(nonce, register_token=""):
             fieldStatus.textContent="Text entered into the selected website field.";
           }else{
             selected="none";
-            fieldStatus.textContent="Text was NOT entered. Tap a website input first; your text is preserved.";
+            fieldStatus.textContent=m.uncertain===true
+              ?"Typing was not confirmed. Inspect the website before retrying; your text is preserved."
+              :"Text was NOT entered. Tap a website input first; your text is preserved.";
           }
           pendingText=null;updateTypingEnabled();
         }
@@ -943,7 +945,7 @@ def mount_private_login(app):
                         await show_picture()
                     except PlaywrightTimeoutError:
                         if kind=="type":
-                            await ws.send_json({"type":"ack","action":"type","ok":False})
+                            await ws.send_json({"type":"ack","action":"type","ok":False,"uncertain":True})
                         elif kind=="click":
                             await ws.send_json({"type":"ack","action":"click","field":"none"})
                         # The website may have partially acted: do not replay.
