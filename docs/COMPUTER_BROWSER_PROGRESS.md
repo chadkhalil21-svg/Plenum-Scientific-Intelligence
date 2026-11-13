@@ -1,5 +1,10 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Founder post-connection owner_action failure; isolate navigation race
+
+Founder15:03 screenshot shows owner_action:operation_failed, proving the stream passed initial connection and reached a command. Preserve accepted request-capacity/Cloudflare setup. Original click handler calls coordinate mouse.click then immediately evaluates document.activeElement; a navigation can destroy that execution context. This is a hypothesis, not yet the proven founder exception. Reuse existing exact-image, network-disabled diagnosis to run this ORIGINAL helper after real coordinate navigation on local synthetic pages only. Emit fixed exception class/navigation-loss Boolean, never private page/input/state. No production calls, rebuild, service/IAM changes or inference until result; #310 remainsOPEN.
+
+
 ## 2026-11-13 | Live capacity refusal REPAIRED; protocol boundary and signed image test PASS
 
 Before: original #647/run43492840208 actual production anonymous WebSocket Upgrade returned429 before authentication; original live config was concurrency1/max-instances1. PR #648 merged cd15dae3103f230c576c977d7d4931f4bcf4f73d and config-only #649/run43493447769 SUCCEEDED: revision00051-pc5 serves100%; concurrency4/max-instances1; same28384eb image, all env/Cloudflare bindings, identity, vault, CPU/memory and900s timeout preserved. OAuth302/anonymous owner401 passed. No rebuild, IAM, new host, credential access or inference.
