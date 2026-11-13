@@ -1,0 +1,96 @@
+{
+  "schema": "plenum-public-frontier-signals-v1",
+  "run_id": "43482516330",
+  "source_revision": "1a05d33da236e5229551a852a522f1f8670fe5f3",
+  "results": {
+    "schema": "plenum-research-frontiers-v1",
+    "query": "photonic sensing",
+    "providers": [
+      {
+        "name": "nsf",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "NSF Awards",
+            "tier": "funded_research_project_metadata",
+            "title": "EPSCoR Research Fellows: NSF: The role of vegetation phenology in grassland sensitivity to extreme drought",
+            "url": "https://www.nsf.gov/awardsearch/showAward?AWD_ID=2624343",
+            "award_id": "2624343",
+            "organization": "Montana State University",
+            "award_date": "08/13/2026",
+            "research_conducted_or_succeeded": false,
+            "experiment_results_verified": false
+          },
+          {
+            "source": "NSF Awards",
+            "tier": "funded_research_project_metadata",
+            "title": "Supporting the Success of Physical and Quantitative Sciences Scholars in Rural Appalachia",
+            "url": "https://www.nsf.gov/awardsearch/showAward?AWD_ID=2619971",
+            "award_id": "2619971",
+            "organization": "Marshall University Research Corporation",
+            "award_date": "07/31/2026",
+            "research_conducted_or_succeeded": false,
+            "experiment_results_verified": false
+          },
+          {
+            "source": "NSF Awards",
+            "tier": "funded_research_project_metadata",
+            "title": "Collaborative Research: CCSS: Semantic-Aware Collaborative Perception and Networking for Autonomous Urban Mobility",
+            "url": "https://www.nsf.gov/awardsearch/showAward?AWD_ID=2625501",
+            "award_id": "2625501",
+            "organization": "Lehigh University",
+            "award_date": "08/14/2026",
+            "research_conducted_or_succeeded": false,
+            "experiment_results_verified": false
+          }
+        ]
+      },
+      {
+        "name": "clinicaltrials",
+        "status": "retrieved_metadata",
+        "records": []
+      }
+    ],
+    "records": [
+      {
+        "source": "NSF Awards",
+        "tier": "funded_research_project_metadata",
+        "title": "EPSCoR Research Fellows: NSF: The role of vegetation phenology in grassland sensitivity to extreme drought",
+        "url": "https://www.nsf.gov/awardsearch/showAward?AWD_ID=2624343",
+        "award_id": "2624343",
+        "organization": "Montana State University",
+        "award_date": "08/13/2026",
+        "research_conducted_or_succeeded": false,
+        "experiment_results_verified": false
+      },
+      {
+        "source": "NSF Awards",
+        "tier": "funded_research_project_metadata",
+        "title": "Supporting the Success of Physical and Quantitative Sciences Scholars in Rural Appalachia",
+        "url": "https://www.nsf.gov/awardsearch/showAward?AWD_ID=2619971",
+        "award_id": "2619971",
+        "organization": "Marshall University Research Corporation",
+        "award_date": "07/31/2026",
+        "research_conducted_or_succeeded": false,
+        "experiment_results_verified": false
+      },
+      {
+        "source": "NSF Awards",
+        "tier": "funded_research_project_metadata",
+        "title": "Collaborative Research: CCSS: Semantic-Aware Collaborative Perception and Networking for Autonomous Urban Mobility",
+        "url": "https://www.nsf.gov/awardsearch/showAward?AWD_ID=2625501",
+        "award_id": "2625501",
+        "organization": "Lehigh University",
+        "award_date": "08/14/2026",
+        "research_conducted_or_succeeded": false,
+        "experiment_results_verified": false
+      }
+    ],
+    "all_sources_healthy": true,
+    "laboratory_breakthrough_confirmed": false,
+    "clinical_efficacy_established": false,
+    "grant_means_experiment_succeeded": false,
+    "next_action": "Inspect protocols, publications, funding records and independent replication"
+  },
+  "independently_verified_laboratory_results": false
+}
