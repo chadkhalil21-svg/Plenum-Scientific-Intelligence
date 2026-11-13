@@ -12,7 +12,6 @@ from urllib.parse import urlsplit
 from .engine import safe_url
 from .owner_live_access import owner_live_origin
 from .private_profiles import BrowserProfileStore
-from .private_login import filter_site_storage
 
 _PROXY_PORT = re.compile(r"^http://127[.]0[.]0[.]1:([0-9]{2,5})$")
 
@@ -82,6 +81,7 @@ def build_private_browser_use(
         raise PermissionError("Invalid saved session metadata")
     # Strip other login providers' cookies/IndexedDB even when storage was
     # imported by earlier generations of the owner's vault.
+    from .private_login import filter_site_storage
     state = filter_site_storage(saved_state, origin)
     if not state["cookies"] and not state["origins"]:
         raise PermissionError("No website session state to restore")
