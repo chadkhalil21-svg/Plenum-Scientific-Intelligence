@@ -52,7 +52,7 @@ jobs:
           assert current in (600,900), "Unexpected config drift; no changes authorized"
           assert int(spec.get("containerConcurrency",0)) in (1,4), "Unexpected concurrency drift"
           ann=d["spec"]["template"].get("metadata",{}).get("annotations",{})
-          assert ann.get("autoscaling.knative.dev/maxScale")=="1"
+          assert ann.get("autoscaling.knative.dev/maxScale",d["metadata"].get("annotations",{}).get("run.googleapis.com/maxScale"))=="1"
           print("PASS: Exact owner service, current concurrency:",spec.get("containerConcurrency"))
           print("PASS: Existing single-instance limit retained; no new host or model.")
           PY
@@ -88,7 +88,8 @@ jobs:
           assert int(new["containerConcurrency"])==4
           old_ann=a["spec"]["template"].get("metadata",{}).get("annotations",{})
           new_ann=b["spec"]["template"].get("metadata",{}).get("annotations",{})
-          assert old_ann.get("autoscaling.knative.dev/maxScale")==new_ann.get("autoscaling.knative.dev/maxScale")=="1"
+          assert old_ann.get("autoscaling.knative.dev/maxScale")==new_ann.get("autoscaling.knative.dev/maxScale")
+          assert new_ann.get("autoscaling.knative.dev/maxScale",b["metadata"].get("annotations",{}).get("run.googleapis.com/maxScale"))=="1"
           assert a["metadata"].get("annotations",{}).get("run.googleapis.com/maxScale")==b["metadata"].get("annotations",{}).get("run.googleapis.com/maxScale")
           assert old["containers"][0].get("resources")==new["containers"][0].get("resources")
           print("PASS: concurrency4, max-instances1, CPU/memory unchanged.")
