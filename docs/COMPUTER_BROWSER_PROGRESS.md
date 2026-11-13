@@ -1,5 +1,13 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Original free agent: genuine 2 GiB combined memory/structured-action viability gate
+
+The actual original protected Auth0 browser Cloud Run was **read-only audited** in issue #602 / GitHub run #43400551588: 2 vCPU, 2 GiB RAM, concurrency 1; PR #600 not deployed, local Ollama absent, and zero incremental cloud cost not provable. One **bounded** novel compatibility probe now reuses original `.github/workflows/browser-use-public-agent.yml` and pinned upstream Playwright 1.64.1, Browser Use 0.13.14, Ollama/Qwen3 0.6B. On disposable **public** GitHub CI only, cap Ollama at 1024MiB and Chromium/Python at 768MiB, leaving 256MiB theoretical server/proxy headroom, and require actual model-directed navigation plus independent title check. Job records only model/browser cgroup OOM state and sanitized model outcome, not private DOM, cookies or tokens. Trigger by exact founder-owned issue to measure memory once; no paid model, deployment, third-party private data transfer, new browser, new vault or another NASA public-task demonstration.
+
+**Not yet proved:** original Cloud Run image fit, acceptable model capability, provider-account login, live release or $0 total charges. If the small model fails the strict combined cap or tool calling, do not retry larger variants under the same 2 GiB or claim free inference is resolved; evaluate owner-authorized, properly scoped free Workers AI inference using existing Cloudflare facilities as an alternative, with explicit private-page data protection. Keep original acceptance issue #310 OPEN.
+
+---
+
 ## 2026-11-13 | Existing OIDC owner runtime live capacity audit — no deployment
 
 The EXISTING `computer-browser-cloud-identity-preflight.yml` is extended to print only sanitized original owner Cloud Run CPU/memory/concurrency/scaling metadata, PR #600 image tag match and boolean private-local-Qwen/agent flags. Its real GitHub OIDC GCP read-only run is required before deciding inference/deployment. No billing data, zero-charge assertion, new browser, external account, secret values or private session reads. Live audit results and any cost/hosting blocker must be reported in original issue #310, not inferred from CI. Production release remains gated on verified cost/security and owner authorization.

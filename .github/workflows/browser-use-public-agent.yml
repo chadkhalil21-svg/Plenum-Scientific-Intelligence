@@ -189,3 +189,146 @@ jobs:
       - name: Destroy temporary model container
         if: always()
         run: docker rm -f plenum-browser-use-local-ollama 2>/dev/null || true
+
+
+  owner-inference-fit-2g:
+    # Novel resource-fit verification, NOT another public research demonstration.
+    # Both cgroup memory caps SUM TO 1792 MiB, leaving 256 MiB for the owner
+    # server and HTTPS pinned proxy within the existing Cloud Run 2048 MiB.
+    if: >-
+      github.event_name == 'issues' &&
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == 'Computer Browser: verify 2GiB private inference fit' &&
+      github.event.issue.body == 'CHECK_OWNER_2GI_QWEN3_0_6B_FIT:2026-11-13'
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Build disposable exact-upstream Chromium + Browser Use in public GitHub runner
+        timeout-minutes: 9
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/plenum-2g-fit" "$RUNNER_TEMP/plenum-2g-result"
+          cat > "$RUNNER_TEMP/plenum-2g-fit/Dockerfile" <<'DOCKER'
+          FROM mcr.microsoft.com/playwright/python:v1.64.1-noble
+          ENV ANONYMIZED_TELEMETRY=false BROWSER_USE_SETUP_LOGGING=false HF_HUB_DISABLE_TELEMETRY=1
+          RUN python -m pip install --disable-pip-version-check --no-cache-dir \
+              'browser-use==0.13.14' 'playwright==1.64.1'
+          DOCKER
+          docker build -q -t plenum-public-fit-browser:20261113 \
+            -f "$RUNNER_TEMP/plenum-2g-fit/Dockerfile" \
+            "$RUNNER_TEMP/plenum-2g-fit" > "$RUNNER_TEMP/plenum-2g-build.log" 2>&1
+          echo "Disposable upstream browser image built; no GCP artifact, cookies or account data."
+      - name: Load original free Ollama with small Qwen under strict 1GiB model cap
+        timeout-minutes: 8
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull ollama/ollama:latest > /dev/null
+          docker run -d --name plenum-2g-local-model \
+            --memory=1024m --memory-swap=1024m --cpus=1 \
+            -p 127.0.0.1:11434:11434 \
+            -e OLLAMA_CONTEXT_LENGTH=4096 -e OLLAMA_NUM_PARALLEL=1 \
+            -e OLLAMA_KEEP_ALIVE=30s \
+            ollama/ollama:latest > /dev/null
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:11434/api/tags > /dev/null; then break; fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:11434/api/tags > /dev/null
+          docker exec plenum-2g-local-model ollama pull qwen3:0.6b \
+            > "$RUNNER_TEMP/plenum-2g-pull.log" 2>&1
+          echo "Small open-source model pulled in strictly capped local container."
+      - name: Prove combined Chromium, Browser Use and local Qwen action under 2GiB
+        timeout-minutes: 5
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Keep the browser/Browser Use Python process strictly below 768 MiB.
+          # No GitHub API key, cloud secret, Google account, encrypted session
+          # or other private data is passed into either model or browser.
+          docker run --name plenum-2g-public-browser \
+            --memory=768m --memory-swap=768m --cpus=1 \
+            --network=host --shm-size=96m \
+            -e ANONYMIZED_TELEMETRY=false -e BROWSER_USE_SETUP_LOGGING=false \
+            -e OPENAI_API_KEY= -e ANTHROPIC_API_KEY= -e GOOGLE_API_KEY= \
+            -v "$GITHUB_WORKSPACE/tools/browser-use/owner_2g_fit_probe.py:/work/fit_probe.py:ro" \
+            -v "$RUNNER_TEMP/plenum-2g-result:/out" \
+            plenum-public-fit-browser:20261113 \
+            python /work/fit_probe.py \
+            > "$RUNNER_TEMP/plenum-2g-raw-hidden.log" 2>&1 || true
+          test -f "$RUNNER_TEMP/plenum-2g-result/result.json" || \
+            echo '{"status":"FAIL_BROWSER_OOM_OR_DID_NOT_START"}' \
+              > "$RUNNER_TEMP/plenum-2g-result/result.json"
+          echo "Cgroup-limited private-data-free joint trial completed. Raw traces not published."
+      - name: Report independently bounded fit status (no raw model or page output)
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          FILE="$RUNNER_TEMP/plenum-2g-result/result.json"
+          if [ -s "$FILE" ]; then
+            STATUS="$(python - "$FILE" <<'PY'
+          import json,sys
+          try:
+              obj=json.load(open(sys.argv[1]))
+              s=obj.get("status","UNKNOWN")
+              assert s in {
+                  "PASS_JOINT_RUNTIME_AND_3_STEP_MODEL",
+                  "FAIL_SMALL_MODEL_ACTION_OR_READBACK",
+                  "FAIL_BROWSER_OR_MODEL_RUNTIME",
+                  "FAIL_BROWSER_OOM_OR_DID_NOT_START",
+                  "FAIL_UPSTREAM_TOOL_CONTRACT","FAIL_READ_ONLY_TOOL_POLICY",
+                  "FAIL_ACTION_ESCALATION"
+              }
+          except Exception:
+              s="INVALID_SANITIZED_REPORT"
+          print(s)
+          PY
+            )"
+          else
+            STATUS="MODEL_PULL_OR_IMAGE_BUILD_BLOCKED"
+          fi
+          MODEL_OOM="$(docker inspect --format '{{.State.OOMKilled}}' \
+            plenum-2g-local-model 2>/dev/null || echo UNKNOWN)"
+          BROWSER_OOM="$(docker inspect --format '{{.State.OOMKilled}}' \
+            plenum-2g-public-browser 2>/dev/null || echo UNKNOWN)"
+          MODEL_PEAK="$(docker exec plenum-2g-local-model \
+            sh -c 'cat /sys/fs/cgroup/memory.peak' 2>/dev/null || echo 0)"
+          if [[ ! "$MODEL_PEAK" =~ ^[0-9]+$ ]]; then MODEL_PEAK=0; fi
+          MODEL_PEAK_MIB="$((MODEL_PEAK / 1048576))"
+          BROWSER_PEAK_MIB="$(python - "$FILE" <<'PY'
+          import json,sys
+          try:
+              x=json.load(open(sys.argv[1])).get("browser_peak_mib","unavailable")
+              print(x if isinstance(x,(float,int)) else "unavailable")
+          except Exception:
+              print("unavailable")
+          PY
+          )"
+          if [ "$STATUS" = "PASS_JOINT_RUNTIME_AND_3_STEP_MODEL" ] &&
+             [ "$MODEL_OOM" = "false" ] && [ "$BROWSER_OOM" = "false" ]; then
+            LABEL="CONDITIONAL RESOURCE FIT ONLY"
+          else
+            LABEL="NOT FIT VERIFIED"
+          fi
+          gh issue comment "$ISSUE" --body \
+            "$LABEL — original Playwright 1.64.1 / Browser Use 0.13.14 / Qwen3 0.6B, Qwen container max 1024MiB, browser+Python max 768MiB, 256MiB held back for original owner host. Result=$STATUS; model OOM=$MODEL_OOM; browser OOM=$BROWSER_OOM; model cgroup peak MiB=$MODEL_PEAK_MIB; browser cgroup peak MiB=$BROWSER_PEAK_MIB. No private account, model API charge, or new GCP deployment. Even a PASS does NOT prove owner Cloud Run fit, general task quality, or zero cloud billing. Original acceptance remains issue #310."
+      - name: Destroy both disposable inference/browser containers
+        if: always()
+        shell: bash
+        run: |
+          docker rm -f plenum-2g-local-model plenum-2g-public-browser >/dev/null 2>&1 || true
+          rm -f "$RUNNER_TEMP/plenum-2g-raw-hidden.log" \
+            "$RUNNER_TEMP/plenum-2g-pull.log" \
+            "$RUNNER_TEMP/plenum-2g-build.log"
