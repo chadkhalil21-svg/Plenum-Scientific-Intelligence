@@ -1,5 +1,9 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Exact build metadata read; Cloud Logging unavailable
+
+Original fixed-build diagnostic #616 / run #43471667546 read Cloud Build `a6ef98ff-62ea-44ec-9965-887087494380`: status FAILURE, step 0 FAILURE. Existing deployer could not retrieve Cloud Logging records; exact dependency/build cause is UNKNOWN. New diagnostic error handler accidentally compared a literal escaped newline and reached an undefined `chunks`; corrected to use the existing failure category, with local fixtures exercising unavailable logs and a public dependency line. Existing no-checkout issue reporter also needed explicit GH_REPO. No new build or deployment performed. Do not guess a dependency fix or broaden IAM silently; owner can provide the first error from the exact existing Cloud Build log. Original completion #310 remains open.
+
 ## 2026-11-13 | Authorized owner release failed before deployment
 
 Founder explicitly authorized this existing build/release despite possible Google build/storage/runtime charges. Original release issue #614 / run #43471155543 passed OIDC and existing owner/vault checks but Cloud Build `a6ef98ff-62ea-44ec-9965-887087494380` failed step 0. Cloud Run image update was SKIPPED; prior running revision remains unchanged. Founder staged, but has not deployed, the original `PLENUM_CF_AI_TOKEN` secret reference version 1. Reuse the existing fixed-build read-only diagnostic workflow for this exact failed build and bounded public dependency/exception messages; do not rerun a build before establishing cause. Browser #310 remains OPEN; source merge is not live inference or account-task acceptance.
