@@ -59,7 +59,7 @@ class RealBoundedFounderGoalVerifierTests(TestCase):
                          "number": 1001,
                          "user": {"login": "chadkhalil21-svg"},
                          "title": "[Plenum Chief] public mission",
-                         "body": "PLENUM_CHIEF_PUBLIC_MISSION_V1\\nobjective: " + objective,
+                         "body": "PLENUM_CHIEF_PUBLIC_MISSION_V1\nobjective: " + objective,
                      }}
             with self.subTest(objective=objective):
                 self.assertEqual(parse_mission(event)["team"],
