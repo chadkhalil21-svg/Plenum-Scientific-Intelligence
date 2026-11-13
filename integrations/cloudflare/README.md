@@ -2,6 +2,10 @@
 
 ## Private continuity records on this SAME Worker — founder request Nov 12
 
+**Existing founder-agent Python client:** \`src/plenum_ai/owner_private_memory_client.py\` signs each GET or POST with the same protocol and uses the already-original Workers URL. It does not introduce a new host. Only instantiate \`PrivateMemoryClient()\` from an owner-approved PRIVATE execution context with the secret injected via the environment (never a public GitHub Actions job or ChatGPT message). Use \`get("american-rider:app-review")\` to read an exact key; for an authorized correction, use \`put(key=..., summary=..., source=..., observed_at=..., level=..., expected_revision=...)\` and then independently read it back. Do not infer success from source creation, avoid duplicating the source-ledger row, and do not send private data to an unconnected agent.
+
+
+
 Cloudflare Workers Free already supports **SQLite-backed Durable Objects** that persist between requests (without an always-running VM). To avoid duplicating hosting, this repository adds a SEPARATE *private* Durable Object class \`PrivateContinuityMemory\` to the EXISTING \`plenum-public-wake\` worker. Original \`/health\` and signed PUBLIC \`/wake\` semantics remain unchanged.
 
 This is **optional explicit factual continuity**, not running Graphiti or Mem0, not a ChatGPT account-memory hook, and not automatic ingestion of conversations. Private \`/memory\` and \`/memory/:key\` routes **fail closed with 503** until a distinct \`PLENUM_PRIVATE_MEMORY_HMAC_SECRET\` (32+ random characters) is configured privately through Cloudflare. It must NEVER reuse \`PLENUM_WEBHOOK_HMAC_SECRET\`. The separate \`PLENUM_PRIVATE_MEMORY\` binding points to the new class, isolated from public replay records. Never enable untrusted public writes.

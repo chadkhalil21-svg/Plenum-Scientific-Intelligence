@@ -5,6 +5,8 @@ on:
   pull_request:
     paths:
       - 'integrations/cloudflare/**'
+      - 'src/plenum_ai/owner_private_memory_client.py'
+      - 'tests/test_owner_private_memory_client.py'
       - 'src/plenum_ai/public_issue_wake.py'
       - 'src/plenum_ai/role_skill_router.py'
       - 'tests/test_public_issue_wake.py'
@@ -30,6 +32,7 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -e .
       - run: python -m unittest discover -s tests -p 'test_public_issue_wake.py' -v
+      - run: python -m unittest discover -s tests -p 'test_owner_private_memory_client.py' -v
       - run: python -m unittest discover -s tests -p 'test_role_skill_router.py' -v
       - uses: actions/setup-node@v4
         with:
