@@ -94,13 +94,17 @@ def build_private_browser_use(
     if browser_factory is None:
         # Existing official pinned browser-use==0.13.14 package, not an
         # invented agent, new browser provider, or paid cloud account.
-        from browser_use import Browser
+        from browser_use import Browser, BrowserProfile
         from browser_use.browser.profile import ProxySettings
         browser_factory = Browser
         proxy = ProxySettings(server=proxy_url)
+        # BrowserSession 0.13.14 does NOT accept block_ip_addresses as a
+        # direct kwarg; upstream stores it on BrowserProfile instead.
+        security_profile = BrowserProfile(block_ip_addresses=True)
     else:
         # Injected factory for no-network security/contract tests.
         proxy = {"server": proxy_url}
+        security_profile = {"block_ip_addresses": True}
 
     return browser_factory(
         headless=True, use_cloud=False, is_local=True, keep_alive=False,
@@ -110,7 +114,7 @@ def build_private_browser_use(
         user_data_dir=None,
         proxy=proxy,
         allowed_domains=[origin],
-        block_ip_addresses=True,
+        browser_profile=security_profile,
         # Do not try CAPTCHA bypasses, fetch PDFs, or allow downloaded files.
         captcha_solver=False, auto_download_pdfs=False,
         accept_downloads=False, permissions=[],
