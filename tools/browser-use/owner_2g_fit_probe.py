@@ -1,7 +1,7 @@
 """One-off no-credential 2GiB joint Browser Use/Chromium/Qwen fit audit.
 
 Triggered ONLY from the existing founder GitHub action. Docker cgroup quotas
-are enforced externally (1152MiB Qwen and 896MiB Chromium + Python). Not a
+are enforced externally (1024MiB Qwen and 768MiB Chromium + Python). Not a
 private browser action, production release, billing test or new browser.
 """
 from __future__ import annotations
@@ -21,7 +21,8 @@ STAGE = "NOT_STARTED"
 
 async def measure() -> dict:
     global STAGE
-    STAGE = "IMPORT_UPSTREAM"    from browser_use import Agent, Browser, ChatOllama, Tools
+    STAGE = "IMPORT_UPSTREAM"
+    from browser_use import Agent, Browser, ChatOllama, Tools
     from playwright.async_api import async_playwright
 
     STAGE = "INITIALIZE_READ_ONLY_TOOLS"
