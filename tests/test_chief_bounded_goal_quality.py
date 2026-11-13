@@ -57,7 +57,7 @@ class RealBoundedFounderGoalVerifierTests(TestCase):
         return {
             "public_research": {"_artifact_path": public.relative_to(root).as_posix()},
             "public_program": {
-                "_artifact_path": program.relative_to(root).as_posix(),
+                "_artifact_path": program.parent.relative_to(root).as_posix(),
                 "actual_offline_functional_test_passed": True,
             },
         }, public, program
@@ -76,6 +76,38 @@ class RealBoundedFounderGoalVerifierTests(TestCase):
             with self.subTest(objective=objective):
                 self.assertEqual(parse_mission(event)["team"],
                                  ("public_research", "public_program"))
+
+    def test_actual_original_chief_executes_both_workers_and_rejects_no_evidence(self):
+        # Unlike synthetic manifests, this uses both real original workers,
+        # the REAL output_artifact shapes, SHA checkpoint, and functional test.
+        # The only stub is the outbound source GET, to avoid external network
+        # and to isolate the precise original end-to-end artifact contract.
+        from unittest.mock import patch
+        from plenum_ai.chief_team_mission import execute
+        objective = ("Survey official NOAA station metadata sources and "
+                     "run existing Python station validator")
+        event = {"action": "opened",
+                 "repository": {"full_name": "chadkhalil21-svg/Plenum-Scientific-Intelligence"},
+                 "issue": {"number": 1001,
+                           "user": {"login": "chadkhalil21-svg"},
+                           "title": "[Plenum Chief] public mission",
+                           "body": "PLENUM_CHIEF_PUBLIC_MISSION_V1\\nobjective: " + objective}}
+        source = DOMAIN_SOURCES["noaa_water_station_metadata"][0]
+        records = [{"title": source[0], "source": source[1], "url": source[2],
+                    "http_status": 200, "independently_quoted_page_text": False}]
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            with patch("plenum_ai.reviewed_domain_workers.official_source_records",
+                       return_value=records):
+                actual = execute(event, output_dir=root)
+            self.assertEqual(actual["executed_workers"], 2)
+            self.assertTrue(actual["worker_artifacts_technically_verified"])
+            self.assertTrue(actual["founder_objective_verified"])
+            self.assertEqual(actual["bounded_founder_goal_evidence"]["status"],
+                             "VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE")
+            self.assertTrue((root / "workers/public_program/issue-1001/code/main.py").is_file())
+            self.assertEqual(inspect_chief_report(actual)["disposition"],
+                             "VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE_NOT_GENERAL_AUTONOMY")
 
     def test_exact_goal_accepts_real_original_primary_source_and_functional_code(self):
         with tempfile.TemporaryDirectory() as td:
