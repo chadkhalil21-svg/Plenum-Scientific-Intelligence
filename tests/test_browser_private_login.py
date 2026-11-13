@@ -16,6 +16,11 @@ if HAS_TEST:
 
 @unittest.skipUnless(HAS_TEST,"Dedicated browser CI installs optional Playwright and IAP SDK")
 class PrivateLoginTests(unittest.TestCase):
+    def test_github_quick_open_does_not_require_manual_url_entry(self):
+        html = private_login.login_html("ci-nonce", "ci-register-token")
+        self.assertIn('document.getElementById("url").value="https://github.com";', html)
+        self.assertIn("https://github.githubassets.com,https://avatars.githubusercontent.com", html)
+
     def test_trusted_owner_saved_login_reused_without_cross_site_secrets(self):
         from unittest.mock import MagicMock
         site="https://github.com"
