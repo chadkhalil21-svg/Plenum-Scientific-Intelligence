@@ -757,5 +757,48 @@ class OwnerStreamTimeoutRecovery(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(ws.receive_json.await_count,3)
 
 
+@unittest.skipUnless(HAS_TEST,"Owner navigation focus recovery needs browser gateway")
+class OwnerNavigationFocusRecovery(unittest.IsolatedAsyncioTestCase):
+    async def test_unavailable_focus_refuses_typing_without_exposing_error(self):
+        from types import SimpleNamespace
+        from playwright.async_api import Error as PlaywrightError
+        page=SimpleNamespace(evaluate=AsyncMock(side_effect=PlaywrightError(
+            "PRIVATE execution context destroyed during navigation")))
+        self.assertEqual(await private_login._focused_editable_kind(page),"none")
+        page.evaluate=AsyncMock(return_value="password")
+        self.assertEqual(await private_login._focused_editable_kind(page),"password")
+
+    async def test_real_navigation_keeps_picture_and_new_field_usable(self):
+        from types import SimpleNamespace
+        from playwright.async_api import async_playwright
+        async with async_playwright() as p:
+            browser=await p.chromium.launch(headless=True)
+            try:
+                context=await browser.new_context()
+                async def fixture(route):
+                    if route.request.url=="https://fixture.example/start":
+                        await route.fulfill(content_type="text/html",body=
+                            '<a href="/next" style="display:block;width:250px;height:70px">Next</a>')
+                    elif route.request.url=="https://fixture.example/next":
+                        await route.fulfill(content_type="text/html",body='<input type="email">')
+                    else:
+                        await route.abort()
+                await context.route("**/*",fixture)
+                page=await context.new_page()
+                await page.goto("https://fixture.example/start",wait_until="domcontentloaded")
+                await page.mouse.click(45,25)
+                self.assertEqual(await private_login._focused_editable_kind(page),"none")
+                await page.wait_for_url("https://fixture.example/next",wait_until="domcontentloaded")
+                ws=SimpleNamespace(send_json=AsyncMock())
+                self.assertTrue(await private_login._frame(ws,page))
+                self.assertEqual(ws.send_json.await_args.args[0]["type"],"frame")
+                await page.locator("input").click()
+                self.assertEqual(await private_login._focused_editable_kind(page),"text")
+                await page.keyboard.insert_text("synthetic-no-secret")
+                self.assertEqual(await page.locator("input").input_value(),"synthetic-no-secret")
+            finally:
+                await browser.close()
+
+
 if __name__=="__main__":
     unittest.main()

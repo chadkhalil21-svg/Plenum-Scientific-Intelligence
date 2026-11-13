@@ -1,5 +1,12 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Exact deployed image REPRODUCES post-click execution-context loss
+
+Original #652/run43498466956 actual image28384eb reproduced case0 Error NAVIGATION_CONTEXT_LOST immediately after real coordinate navigation, at original _focused_editable_kind. The diagnostic then failed on a fixture's overlapping next navigation; do not claim six cases passed. This establishes a real original code defect matching owner_action failure, but the founder's private exception text was not collected.
+
+Small repair: catch only upstream Playwright Error in the read-only selected-field metadata helper and return none. Unknown focus refuses typing; do not replay the click, navigate elsewhere, expose exception/DOM or destroy original Chromium. Ready field behavior retained. Local failure-before/pass-after guard plus real offline Chromium navigation→picture→new field test added. Existing exact-image diagnostic now requires one click, correct destination, a post-navigation frame and new editable-field selection. All origin/owner/profile/Cloudflare gates and concurrency4/cap1 remain. CI, authorized original release, new-image recovery and genuine founder acceptance remain required; #310OPEN.
+
+
 ## 2026-11-13 | Founder post-connection owner_action failure; isolate navigation race
 
 Founder15:03 screenshot shows owner_action:operation_failed, proving the stream passed initial connection and reached a command. Preserve accepted request-capacity/Cloudflare setup. Original click handler calls coordinate mouse.click then immediately evaluates document.activeElement; a navigation can destroy that execution context. This is a hypothesis, not yet the proven founder exception. Reuse existing exact-image, network-disabled diagnosis to run this ORIGINAL helper after real coordinate navigation on local synthetic pages only. Emit fixed exception class/navigation-loss Boolean, never private page/input/state. No production calls, rebuild, service/IAM changes or inference until result; #310 remainsOPEN.

@@ -110,15 +110,22 @@ def filter_site_storage(state,site_origin):
 
 async def _focused_editable_kind(page):
     """Return only an editable field class; never expose DOM text or typed secrets."""
-    return await page.evaluate("""() => {
-      const el = document.activeElement;
-      if (!el || el.disabled || el.readOnly) return "none";
-      if (el.isContentEditable || el.tagName === "TEXTAREA") return "text";
-      if (el.tagName !== "INPUT") return "none";
-      if (el.type === "password") return "password";
-      return ["text", "email", "search", "url", "tel", "number"].includes(el.type)
-          ? "text" : "none";
-    }""")
+    from playwright.async_api import Error as PlaywrightError
+    try:
+        return await page.evaluate("""() => {
+          const el = document.activeElement;
+          if (!el || el.disabled || el.readOnly) return "none";
+          if (el.isContentEditable || el.tagName === "TEXTAREA") return "text";
+          if (el.tagName !== "INPUT") return "none";
+          if (el.type === "password") return "password";
+          return ["text", "email", "search", "url", "tel", "number"].includes(el.type)
+              ? "text" : "none";
+        }""")
+    except PlaywrightError:
+        # Navigation can destroy the context after a coordinate click.
+        # Unknown focus MUST refuse typing, not destroy the owner browser.
+        # Never replay the click or disclose the private exception/DOM.
+        return "none"
 
 
 def _persist_encrypted_site_profile(*, owner_id, origin, state):
