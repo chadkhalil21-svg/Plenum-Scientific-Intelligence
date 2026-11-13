@@ -99,6 +99,12 @@ def main():
         result = asyncio.run(measure())
     except Exception:
         result = {"status": "FAIL_BROWSER_OR_MODEL_RUNTIME"}
+    try:
+        result["browser_peak_mib"] = round(
+            int(Path("/sys/fs/cgroup/memory.peak").read_text()) / 1048576, 1
+        )
+    except (OSError, ValueError):
+        result["browser_peak_mib"] = "unavailable"
     REPORT.parent.mkdir(exist_ok=True, parents=True)
     REPORT.write_text(json.dumps(result, sort_keys=True))
 
