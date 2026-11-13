@@ -1,5 +1,9 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Account-ID readback remains invalid after founder correction report
+
+Original #636 / run #43484120011 independently reads ready service, token/CF/Free-plan/agentYES but account-ID shapeNO. Preserve all completed state. Extend only existing read-only audit with fixed non-value format categories: missing, valid32hex, surrounding whitespace, URL instead of ID, wrong-length count, nonhex. Do not print, trim, rewrite or return raw identifier; no model call, private site, IAM change or redeployment. Use actual classified cause to avoid another generic founder credential request. Browser #310 remainsOPEN.
+
 ## 2026-11-13 | Actual remaining config read; enable only authorized gated switches
 
 Original read-only audit #632 / run #43478476299 SUCCEEDED: ready owner revision, token boundYES, Cloudflare account-ID configuredNO, CF enabledNO, Free-plan flagNO, agent enabledNO. Independent service metadata read succeeded despite secret metadata unavailable; no raw values disclosed. Original activation now sets only authorized PLENUM_CF_AI_ENABLED and PLENUM_OWNER_READONLY_AGENT_ENABLED to true and reads them back. Existing account-ID shape + explicit Free-plan + per-task consent gates remain mandatory; do not set Free-plan-confirmed without actual provider evidence or send observations/model calls. No rebuild, new service, IAM or secret read. Owner private console must supply account ID and verified plan; #310 remains OPEN.

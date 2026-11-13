@@ -175,6 +175,19 @@ jobs:
           print("LIVE_CF_AI_SECRET_BOUND:", "YES" if ref.get("name")=="PLENUM_CF_AI_TOKEN" else "NO")
           acct=env.get("PLENUM_CF_AI_ACCOUNT_ID",{}).get("value","")
           print("LIVE_CF_AI_ACCOUNT_ID_CONFIGURED:", "YES" if re.fullmatch(r"[a-fA-F0-9]{32}",acct or "") else "NO")
+          if not acct:
+              shape="MISSING"
+          elif re.fullmatch(r"[a-fA-F0-9]{32}",acct):
+              shape="VALID_32_HEX"
+          elif re.fullmatch(r"[a-fA-F0-9]{32}",acct.strip()):
+              shape="SURROUNDING_WHITESPACE"
+          elif "://" in acct or "dash.cloudflare.com" in acct:
+              shape="URL_INSTEAD_OF_ACCOUNT_ID"
+          elif len(acct)!=32:
+              shape="WRONG_LENGTH_"+str(len(acct))
+          else:
+              shape="NON_HEXADECIMAL_CHARACTERS"
+          print("LIVE_CF_AI_ACCOUNT_ID_FORMAT:",shape)
           print("LIVE_CF_AI_ENABLED:", "YES" if env.get("PLENUM_CF_AI_ENABLED",{}).get("value")=="true" else "NO")
           print("LIVE_CF_AI_FREE_PLAN_FLAG:", "YES" if env.get("PLENUM_CF_AI_FREE_PLAN_CONFIRMED",{}).get("value")=="true" else "NO")
           print("LIVE_OWNER_AGENT_ENABLED:", "YES" if env.get("PLENUM_OWNER_READONLY_AGENT_ENABLED",{}).get("value")=="true" else "NO")
