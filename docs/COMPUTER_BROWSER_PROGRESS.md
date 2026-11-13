@@ -1,5 +1,12 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Cloudflare Workers AI secret binding audit (READ ONLY; not deployed)
+
+Founder screenshot shows `PLENUM_CF_AI_TOKEN` newly created in EXISTING GCP Secret Manager; Cloudflare account ID provided privately. The original `computer-browser-cloud-identity-preflight.yml` OIDC job is extended to check only live secret **metadata**, the original Auth0 owner's environment **binding names**, and consent/Free-plan flag Boolean state. It does not read token values, transmit an account ID, call an AI model, invoke Cloud Build, change IAM, or deploy Cloud Run. Until a real OIDC run reports results, this is **source-only**, and the private agent remains **not accepted**. Original issue #310 is the only browser completion tracker. No new spending authorized.
+
+---
+
+
 ## 2026-11-13 | Existing Browser Use: optional founder-opt-in Cloudflare Free inference fallback (SOURCE ONLY)
 
 **Verified blocker:** original 2-GiB inference test [issue #610](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/610) / run #43408308668 reached actual agent execution but Ollama Qwen3:0.6B hit its 1024-MiB container cap (OOM=true); protected Cloud Run has only 2 vCPU / 2 GiB, and PR #600 was not deployed as of the live OIDC audit. Stop re-running that unchanged local configuration.
