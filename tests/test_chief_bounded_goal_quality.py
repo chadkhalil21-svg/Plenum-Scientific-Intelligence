@@ -13,7 +13,19 @@ from plenum_ai.ambient_quality_insights import inspect_chief_report
 
 
 class RealBoundedFounderGoalVerifierTests(TestCase):
-    OBJECTIVE = "Verify Cloudflare Workers AI source URLs and run existing Python neuron budget validator"
+    OBJECTIVE = "Survey official Cloudflare Workers AI sources and run existing Python neuron budget validator"
+
+    def test_every_declared_goal_routes_to_existing_two_specialists(self):
+        from plenum_ai.chief_team_mission import independent_expected_team
+        from plenum_ai.reviewed_domain_workers import match_original_capability
+        self.assertEqual(len(EXACT_PUBLIC_ACCEPTANCE_GOALS), 2)
+        for task, capability in EXACT_PUBLIC_ACCEPTANCE_GOALS.items():
+            with self.subTest(task=task):
+                self.assertEqual(
+                    independent_expected_team(task),
+                    ("public_research", "public_program"),
+                )
+                self.assertEqual(match_original_capability(task), capability)
 
     def original_artifacts(self, root):
         domain = EXACT_PUBLIC_ACCEPTANCE_GOALS[self.OBJECTIVE]
@@ -45,7 +57,7 @@ class RealBoundedFounderGoalVerifierTests(TestCase):
         return {
             "public_research": {"_artifact_path": public.relative_to(root).as_posix()},
             "public_program": {
-                "_artifact_path": program.parent.relative_to(root).as_posix(),
+                "_artifact_path": program.relative_to(root).as_posix(),
                 "actual_offline_functional_test_passed": True,
             },
         }, public, program
