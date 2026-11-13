@@ -104,7 +104,7 @@ def named_entity_evidence_gate(objective: str, kinds: tuple[str, ...],
     """
     named = tuple(
         word for word in ("cloudflare", "noaa", "nasa", "stripe", "github")
-        if re.search(r"\\b" + word + r"\\b", objective, re.IGNORECASE)
+        if re.search(r"\b" + word + r"\b", objective, re.IGNORECASE)
     )
     if not named:
         return {"status": "NOT_APPLICABLE", "irrelevant_kinds": []}
@@ -145,7 +145,7 @@ def named_entity_evidence_gate(objective: str, kinds: tuple[str, ...],
         except (OSError, ValueError, TypeError, UnicodeError):
             failures.append(kind)
             continue
-        if not all(re.search(r"\\b" + word + r"\\b", text, re.IGNORECASE)
+        if not all(re.search(r"\b" + word + r"\b", text, re.IGNORECASE)
                    for word in named):
             failures.append(kind)
     return {"status": "BLOCKED_NAMED_SOURCE_MISMATCH" if failures
