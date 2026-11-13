@@ -161,8 +161,9 @@ async def run_owner_readonly_browser_task(
     approval_expires_at: float, max_steps: int = 6,
     store=None, browser_factory=None, model_factory=None,
     tools_factory=None, agent_factory=None,
+    external_inference_consent: bool = False,
 ):
-    """Use ORIGINAL saved session + upstream Browser Use + local Qwen, not an API.
+    """Use ORIGINAL saved session + upstream Browser Use + an approved model.
 
     Only the trusted private owner service may call this after validating an
     actual owner request. Explicit callbacks MUST independently check consent
@@ -192,8 +193,24 @@ async def run_owner_readonly_browser_task(
     if time.time() >= approval_expires_at:
         raise PermissionError("Owner read approval expired")
 
-    # Pin task text, inference and results to this trusted process.
-    if os.environ.get("PLENUM_BROWSER_FREE_LOCAL") != "confirmed" and model_factory is None:
+    # Provider choice is STRICTLY trusted-service-controlled. No website,
+    # model, issue, agent or ChatGPT text may set it. Cloudflare sends page
+    # observations to an external model: separately informed owner opt-in
+    # and verified account Free plan are required; the free allowance is
+    # quota-limited, not guaranteed unlimited or zero GCP compute cost.
+    if type(external_inference_consent) is not bool:
+        raise PermissionError("Boolean owner external-inference consent required")
+    use_cloudflare = external_inference_consent is True
+    if use_cloudflare:
+        if (os.environ.get("PLENUM_CF_AI_ENABLED") != "true"
+                or os.environ.get("PLENUM_CF_AI_FREE_PLAN_CONFIRMED") != "true"
+                or model_factory is not None):
+            raise PermissionError("Owner's free Cloudflare inference is not authorized")
+        acct = os.environ.get("PLENUM_CF_AI_ACCOUNT_ID", "")
+        token = os.environ.get("PLENUM_CF_AI_TOKEN", "")
+        if not re.fullmatch(r"[A-Fa-f0-9]{32}", acct) or not token or len(token) > 2048:
+            raise PermissionError("Protected Cloudflare AI account authorization unavailable")
+    elif os.environ.get("PLENUM_BROWSER_FREE_LOCAL") != "confirmed" and model_factory is None:
         raise PermissionError("Original free local Qwen inference unavailable")
     os.environ["ANONYMIZED_TELEMETRY"] = "false"
     os.environ["BROWSER_USE_SETUP_LOGGING"] = "false"
@@ -209,7 +226,19 @@ async def run_owner_readonly_browser_task(
     )
     try:
         tools = _owner_readonly_tools(tools_factory=tools_factory)
-        if model_factory is None:
+        if use_cloudflare:
+            # Reuse the official Browser Use ChatOpenAI adapter against
+            # Cloudflare Workers AI's documented OpenAI-compatible API.
+            # Token is retained in the original private Cloud Run process,
+            # NEVER put into chat, GitHub, logs or a website's DOM.
+            from browser_use import ChatOpenAI
+            model = ChatOpenAI(
+                model="@cf/openai/gpt-oss-20b",
+                base_url=("https://api.cloudflare.com/client/v4/accounts/"
+                          + acct + "/ai/v1"),
+                api_key=token,
+            )
+        elif model_factory is None:
             from browser_use import ChatOllama
             model = ChatOllama(
                 model="qwen3:1.7b", host="http://127.0.0.1:11434",
