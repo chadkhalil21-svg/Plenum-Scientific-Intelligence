@@ -1,5 +1,9 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Exact candidate startup reproduced: incompatible Starlette upgrade
+
+Original isolated exact-image run #621 / #43474543806 pulled image10fc08ed and reproduced app import failure without credentials/egress: FastAPI0.115.12 + Starlette1.10.0 -> TypeError `Router.__init__() got an unexpected keyword argument on_startup`. Preserve original FastAPI0.115.12 as an explicit owner-layer pip requirement so resolver respects its Starlette constraints; local full dependency dry-run with original FastAPI/Uvicorn and Browser Use0.13.14/websockets15.0.1 succeeded selecting Starlette0.46.2 and sse-starlette3.0.3. Add pip-check and actual app import to original Dockerfile after source COPY, before release. No new browser or host; authorized original release may retry after checks. Token binding and real inference/account task remain unaccepted under #310.
+
 ## 2026-11-13 | Corrected image BUILT; Cloud Run startup FAILED
 
 PR #618 aligned WebSocket 15.0.1; dependency dry-run and real local Uvicorn upgrade/echo/denial passed, all three PR CI passed. Authorized original release #619 / run #43473807480 successfully built Cloud Build `4abcfe1d-e6cb-4a36-a0ff-d355f7511157`, image tag `10fc08ed39b350f6b9ec8b713f05868994b640dd`. Cloud Run candidate `00042-c4p` failed startup/PORT8080 readiness; protected final readback was SKIPPED, so release NOT accepted. Do not change port/timeout blindly. Reuse existing OIDC diagnostic to pull only this exact original image and import the actual app in a read-only, no-network, no-host-mount container, without production environment, owner sessions or credentials. Print only public package versions and import exception. No new build or release until exact cause established. #310 remains OPEN.
