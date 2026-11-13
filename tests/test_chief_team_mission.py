@@ -193,6 +193,69 @@ class ChiefTeamMissionTests(TestCase):
             self.assertIsNone(artifact_digest(root, "../secret.txt"))
             self.assertIsNone(artifact_digest(root, "/tmp/secret.txt"))
 
+
+    def test_real_cloudflare_subject_mismatch_rejects_green_starter(self):
+        objective = ("Survey public Cloudflare Workers AI free tier sources "
+                     "and create a Python inference usage validator")
+        event = mission(objective)
+        def worker(original, *, output_dir):
+            kind = parse_public_issue(original)["kind"]
+            if kind == "public_research":
+                path = output_dir / "workforce-public-1001.json"
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text('{"topic":"Cloudflare","records":[{"title":"Ocean waves",'
+                                '"source":"Research University","url":"https://example.org/ocean"}]}')
+                artifact = path.name
+            else:
+                path = output_dir / "issue-1001/code"
+                path.mkdir(parents=True, exist_ok=True)
+                (path / "main.py").write_text("def validate(row): return row.get('value') > 0")
+                (path / "README.md").write_text("Cloudflare Workers AI copied objective")
+                artifact = "issue-1001/code"
+            return {"status":"DRAFT_READY_FOR_FOUNDER", "verified":True,
+                    "worker":"original_"+kind, "verified_scope":"syntax only",
+                    "output_artifact":artifact}
+        with tempfile.TemporaryDirectory() as folder, patch(
+            "plenum_ai.chief_team_mission.run_issue", side_effect=worker
+        ):
+            result = execute(event, output_dir=Path(folder))
+        self.assertEqual(result["status"], "BLOCKED_OBJECTIVE_RELEVANCE")
+        self.assertFalse(result["independent_verified"])
+        self.assertTrue(result["worker_artifacts_technically_verified"])
+        self.assertFalse(result["founder_objective_verified"])
+        self.assertEqual(set(result["irrelevant_worker_kinds"]),
+                         {"public_research", "public_program"})
+
+    def test_named_subject_mentions_never_prove_complete_objective(self):
+        objective = ("Survey public Cloudflare Workers AI free tier sources "
+                     "and create a Python inference usage validator")
+        event = mission(objective)
+        def worker(original, *, output_dir):
+            kind = parse_public_issue(original)["kind"]
+            if kind == "public_research":
+                path = output_dir / "workforce-public-1001.json"
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text('{"records":[{"title":"Cloudflare Workers AI reference",'
+                                '"url":"https://developers.cloudflare.com/workers-ai/",'
+                                '"source":"Cloudflare"}]}')
+                artifact = path.name
+            else:
+                path = output_dir / "issue-1001/code"
+                path.mkdir(parents=True, exist_ok=True)
+                (path / "main.py").write_text('CLOUDFLARE = "Cloudflare"  # not a validator')
+                artifact = "issue-1001/code"
+            return {"status":"DRAFT_READY_FOR_FOUNDER", "verified":True,
+                    "worker":"original_"+kind, "verified_scope":"syntax only",
+                    "output_artifact":artifact}
+        with tempfile.TemporaryDirectory() as folder, patch(
+            "plenum_ai.chief_team_mission.run_issue", side_effect=worker
+        ):
+            result = execute(event, output_dir=Path(folder))
+        self.assertEqual(result["status"], "VERIFIED_BOUNDED_TEAM")
+        self.assertFalse(result["founder_objective_verified"])
+        self.assertEqual(result["named_entity_evidence"],
+                         "NAME_MENTION_ONLY_NOT_FULL_OBJECTIVE_PROOF")
+
     def test_verifier_rejects_missing_workers_or_unverified_artifacts(self):
         expected = ("public_program","public_creative")
         ok = {
