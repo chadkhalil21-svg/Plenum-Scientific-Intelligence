@@ -1,5 +1,9 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Founder build logs identify exact WebSocket dependency conflict
+
+Founder original Cloud Build screenshots expose the actual failed `a6ef98ff` pip resolver error: owner Dockerfile requests `websockets==13.1`, while Browser Use 0.13.14 pulls browser-harness 0.1.13 requiring `websockets==15.0.1`. This supersedes UNKNOWN build cause; not a token, IAM or login defect. Align ONLY the original owner image pin and its build-time version assertion to 15.0.1; retain pinned Chromium, Browser Use, Uvicorn and original security boundaries. Verify dependency resolution and actual local Uvicorn WebSocket upgrade before the already-authorized original build/release retry. Source change alone is not a deployment or browser acceptance. #310 remains OPEN.
+
 ## 2026-11-13 | Exact build metadata read; Cloud Logging unavailable
 
 Original fixed-build diagnostic #616 / run #43471667546 read Cloud Build `a6ef98ff-62ea-44ec-9965-887087494380`: status FAILURE, step 0 FAILURE. Existing deployer could not retrieve Cloud Logging records; exact dependency/build cause is UNKNOWN. New diagnostic error handler accidentally compared a literal escaped newline and reached an undefined `chunks`; corrected to use the existing failure category, with local fixtures exercising unavailable logs and a public dependency line. Existing no-checkout issue reporter also needed explicit GH_REPO. No new build or deployment performed. Do not guess a dependency fix or broaden IAM silently; owner can provide the first error from the exact existing Cloud Build log. Original completion #310 remains open.
