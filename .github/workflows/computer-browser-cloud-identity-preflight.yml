@@ -119,6 +119,27 @@ jobs:
           print("LIVE_OWNER_REVISION_READY:",bool(obj.get("status",{}).get("latestReadyRevisionName")))
           ann=template.get("metadata",{}).get("annotations",{})
           print("SERVICE_MIN_INSTANCES:",obj["metadata"].get("annotations",{}).get("run.googleapis.com/minScale",ann.get("autoscaling.knative.dev/minScale","NOT_REPORTED")))
+          # Inspect ONLY public service configuration fields (never print secret values).
+          container=spec["containers"][0]
+          resources=container.get("resources",{}).get("limits",{})
+          env_names={e.get("name"):e for e in container.get("env",[])}
+          flags=("PLENUM_OWNER_READONLY_AGENT_ENABLED","PLENUM_BROWSER_FREE_LOCAL")
+          print("LIVE_OWNER_BROWSER_PR600_SOURCE_DEPLOYED:",
+                "YES" if img.endswith(":c7d69f1111b04818a850e0626a7473c355ab121e")
+                else "NO")
+          print("LIVE_OWNER_CPU_LIMIT:",resources.get("cpu","NOT_REPORTED"))
+          print("LIVE_OWNER_MEMORY_LIMIT:",resources.get("memory","NOT_REPORTED"))
+          print("LIVE_OWNER_CONTAINER_CONCURRENCY:",spec.get("containerConcurrency","NOT_REPORTED"))
+          print("LIVE_OWNER_MAX_SCALE:",ann.get("autoscaling.knative.dev/maxScale",
+                obj["metadata"].get("annotations",{}).get("run.googleapis.com/maxScale","NOT_REPORTED")))
+          print("LIVE_OWNER_PRIVATE_QWEN_FLAG:",
+                "CONFIRMED" if env_names.get("PLENUM_BROWSER_FREE_LOCAL",{}).get("value")=="confirmed"
+                else "NOT_CONFIRMED")
+          print("LIVE_OWNER_AGENT_FLAG:",
+                "ENABLED" if env_names.get("PLENUM_OWNER_READONLY_AGENT_ENABLED",{}).get("value")=="true"
+                else "NOT_ENABLED")
+          print("LIVE_OWNER_OLLAMA_ENDPOINT_PROVED: NO")
+          print("REAL_OWNER_WEBSITE_LOGIN_PROVED: NO")
           print("OWNER_BROWSER_COST_PROVEN_ZERO: NO")
           print("Official Google Cloud Free Tier is monthly/account-shared; project metadata cannot prove remaining unused allowance or exclude Artifact Registry, storage and network charges.")
           print("READ_ONLY_PRIVATE_BROWSER_AUDIT: SUCCESS")
