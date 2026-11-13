@@ -22,6 +22,12 @@ Descriptions and page tags were accessible, NOT full spoken transcripts. Do not 
 3. [I Finally Solved a Claude AI Agent Workforce](https://youtu.be/3olRsWOgoLg) — Mansel Scheffel. Names from accessible metadata: **Claude, AIOS, VS Code**. AIOS is a concept/reference; description links companion videos about AIOS Cowork and AIOS VS Code.
 4. [10 AI Tools That Feel Almost Too Powerful To Be Free](https://youtu.be/Fyv5CHAzq_A) — This Guy Knows Stuff. Names from accessible metadata: **NotebookLM, Ollama, LM Studio, Whisper, Google AI Studio, Perplexity AI, Hugging Face, Napkin AI**. List reflects metadata tags; not verified as exact complete list of ten featured tools.
 
+## 12 November 2026 | Genuine Google EGM upstream reviewer integrated in existing Plenum council
+
+Google's [Elephant-Goldfish Model v0.1.1](https://github.com/google/elephant-goldfish-model/tree/v0.1.1) is Apache-2.0. Plenum's earlier Elephant/Goldfish used similar concepts but was **not the actual upstream plugin**. Now the **original** `src/plenum_ai/agent_council.py` reads Google release v0.1.1's exact `agents/design_critic.md`, verified by Git blob SHA `7f57159d623f898a8e683a5b7f312e8f11f84321`, bundled with Apache licence. The independent fifth reviewer receives that source through the **existing free local Qwen fresh-context call**. No second supervisor, runner, inference account or paid service is added. The full upstream five-stage EGM plugin, its separate reviewers and user approval stages have **not** been installed or executed. An authentic public council run remains the live-activation acceptance.
+
+AQuA's official Google source is confirmed; unlike EGM's one lightweight persona, **full AQuA production operation would require Google Cloud telemetry/BigQuery/Cloud Run/IAP and agent evaluation model calls**. Its published local demo uses synthetic records. No cloud deployment, actual Plenum insight aggregation or free hosting has been demonstrated. **Do not falsely mark AQuA live or pay for its infrastructure.**
+
 ## The five milestones from the founder's screenshot
 
 1. **Cloudflare Free owner gateway — SOURCE_READY_NOT_DEPLOYED.** Account and secret binding.
@@ -31,7 +37,7 @@ Descriptions and page tags were accessible, NOT full spoken transcripts. Do not 
 5. **One genuinely complete independently verified cross-platform task — NOT_YET_VERIFIED.** Owner-approved real account operation.
 
 ## Corrections affecting our free-first policy
-- **Google AQuA:** no authoritative Google confirmation of the previously claimed product. The real Google Agent Development Kit and its official agent-evaluation tools are verifiable: https://docs.cloud.google.com/gemini-enterprise-agent-platform/build/adk . Do not invent a Google AQuA installation.
+- **Google AQuA — OFFICIAL PROJECT CONFIRMED:** Google open-sourced its [Ambient Quality Agent](https://github.com/google/adk-recipes/tree/ambient-quality-agent/v0.3.0/core/python/ambient-quality-agent) (Apache-2.0) for production trace triage and source-anchored failure diagnosis. Its BigQuery/Cloud Trace/Cloud Run/IAP deployment and model evaluations are NOT established as $0 or installed in Plenum; the local synthetic demo is not live Plenum monitoring. Retain existing Critique Board and independent verification until account-eligible cost-free deployment is explicitly proven. Official description: https://developers.googleblog.com/en/the-outer-loop-insights-first-an-ambient-quality-agent-that-diagnoses-your-production-agent/ .
 - **Airia:** published professional tier starts at $25/month; defer while no-new-charge is required: https://legal.airia.com/pricing/ .
 - **Freebuff:** ad-supported free coding with daily usage allowances; not unlimited continuous agent compute: https://freebuff.com/blog/is-freebuff-legit .
 - **Remotion:** free use for qualifying individuals and organizations of up to three people; other usages may need paid company/automation license: https://www.remotion.dev/docs/license/pricing .
@@ -136,7 +142,7 @@ The following inventory records the intended result, current status, accountable
 
 | Platform | What / why | Status | Role | How / next |
 |---|---|---|---|---|
-| Google AQuA (source to verify) | Claimed agent quality tool in earlier video summary | IDENTITY_UNVERIFIED | verification | Do not install as Google official; instead consider verified Google ADK agent evaluation |
+| [Google AQuA (official Apache-2.0 source)](https://github.com/google/adk-recipes/tree/ambient-quality-agent/v0.3.0/core/python/ambient-quality-agent) | Real production agent quality diagnosis; GCP/BigQuery dependencies | OFFICIAL_APACHE2_SOURCE_CLOUD_COST_GATED | verification | Do not deploy potentially billable Google Cloud services; reuse Plenum's existing logs and Critique Board until genuine no-charge account access is proven |
 | [Google Agent Development Kit](https://github.com/google/adk-python) | Open-source agent framework and evaluation | FREE_SOURCE_OVERLAP | verification | Reuse current council and Goldfish checks; borrow official evaluation rubrics without adding new Chief |
 | [Airia](https://airia.com/pricing/) | Commercial hosted no-code agent platform | PAID_DEFER | operations | Published paid individual tier; use original n8n workflows instead |
 | [Freebuff](https://github.com/CodebuffAI/freebuff) | Ad-supported coding agent, desktop/web/cloud | FREE_QUOTA_ACCOUNT_REQUIRED | coding | Potential zero-subscription coding alternative; daily hour limits and account terms need review |
