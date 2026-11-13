@@ -1,3 +1,27 @@
+## 2026-11-13 | Agent Army completion directive — current evidence matrix
+
+This section supersedes older status prose where it conflicts. Existing Minister, five divisions, browser, vault, wake, memory and original #432/#310 retained.
+
+| Capability | Verified status | Evidence | Remaining blocker | Responsible role |
+|---|---|---|---|---|
+| Three unfamiliar useful multi-step objectives | PARTIAL | #580/#584 exact public missions; #588/#589 Crossref/SciPy; #591 NASA | Known fixtures and scoped public research do not prove unfamiliar autonomous decomposition; ordinary source rejects unfamiliar scopes and full acceptance admits only two exact goals | Existing Minister / Engineering |
+| Multiple specialist delegation | COMPLETE — bounded | Original run43364928755/artifact14009728186; two distinct correct original specialists | General tool-domain expansion unproven | Minister / Research / Numerical |
+| Checkpoint recovery without duplicate workers | COMPLETE — bounded | Original controlled #586/run43361877811/artifact14008328393; NEW merged #659 at05ebe7281a3ed4903bc19a5d23fa3fddc73334db | All real-world failures not covered | Engineering / Independent Verifier |
+| Real saved-site signed-in browser mission | BLOCKED | Original #310; protected release #654, exact-image #655/#656, public login run43501891079 | Current connector has no genuine owner Auth0 task grant/site readback; do not infer vault empty or fabricate sessions | Browser / Identity |
+| Cloudflare Workers AI inference | PARTIAL | Existing image/config/token reference accepted in #656 | Actual consented successful inference and account usage receipt absent | Browser / Operations |
+| Persistent history and reporting | PARTIAL | Existing private Drive rows read and updated; accepted #483 memory; issue receipts/checkpoints | Full task artifacts have bounded retention; universal unattended retrieval not proved | Minister / Memory |
+| Account/tool integrations | PARTIAL | Connected native GitHub and Drive used successfully in this session | ChatGPT connector credentials are not external workforce grants; no private external runtime access claimed | Integration / Identity |
+| Scheduled/on-demand operation | COMPLETE — scheduled scope only | Existing Minister automation updated IN PLACE; enabled six-hour schedule preserved and exact prompt readback confirmed | No continuous private host or24/7 inference proof | Minister / Operations |
+| Verified zero-new-charge execution | PARTIAL | Repair uses existing public project CI; no paid API, production change or TinyFish run; wallet read only | Actual Cloud Run/Workers account-wide usage and billing unavailable through current connector | Operations / Finance |
+
+**Actual new repair:** Original completed program-worker checkpoint omitted its functional-test receipt, so a later reporting retry lost correct goal acceptance despite intact SHA-verified outputs. #659 preserves the Boolean across original checkpoint save/restore; independent grader still checks original code/manifest. Regression forbids any new worker call, restores two workers and retains acceptance. All55 focused Chief tests passed; root independently ran7 bounded-goal tests. Exact-head Chief43508724672, browser guard43508724744 and foundation43508725150 all SUCCESS before squash merge. Local full986 discovery had20 skips,31 errors and1 failure from optional dependencies/browser/MCP; this is not claimed as a full local pass. No accepted live mission was repeated.
+
+**Operational reconciliation:** Existing Minister's conflicting historical appendices replaced with one current charter, same enabled schedule; original #432/#310 bodies and private roadmap reconciled/read back. This is an instruction/configuration correction, not proof a future scheduled mission completed. Current TinyFish permission is supplementary only when needed within existing credits, correct site permission and no new charges; no new browser run was launched.
+
+**Owner boundary:** Reuse the ORIGINAL protected owner console and existing site session/task authorization. Only ask for actual first login/MFA if absent/expired after authorized inspection. Exact-site consent is required before private observations enter hosted inference. No request for existing Cloudflare token/account setup, new vault, new host, paid service or another continuation prompt.
+
+---
+
 ## 2026-11-13 | NASA FarmFlux: real new founder-authorized free AI browser research accepted after independent first-party check
 
 ## 2026-11-13 | Completed specialist receipts survive reporting retries (offline verified)
