@@ -12,7 +12,8 @@ complete the founder's goal or claim that source HTTP 200 means research.
 from __future__ import annotations
 
 import argparse
-from hashlib import sha256
+from hashlib import sha256, sha1
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 import re
@@ -27,6 +28,52 @@ AQUA_ORIGINAL = (
     "https://github.com/google/adk-recipes/tree/"
     "ambient-quality-agent/v0.3.0/core/python/ambient-quality-agent"
 )
+
+
+# This is the ACTUAL upstream Google AQuA BigQuery event schema, pinned at
+# v0.3.0; using it as a local format does NOT install Google's GCP/ADK engine.
+ORIGINAL_AQUA_EVENT_SCHEMA = (
+    Path(__file__).resolve().parents[2]
+    / "integrations/upstream/google-aqua-v0.3.0/schemas/agent_events.schema.json"
+)
+AQUA_EVENTS_GIT_BLOB_SHA = "78b6fbe3319a0932cd2fcdf3f55ecca3ee5822e1"
+AQUA_FIELDS = (
+    "timestamp", "event_type", "agent", "session_id",
+    "invocation_id", "content", "attributes", "error_message",
+)
+
+
+def read_official_aqua_event_schema():
+    """Original Google v0.3.0 telemetry format and byte-identical Git blob."""
+    path = ORIGINAL_AQUA_EVENT_SCHEMA
+    if not path.is_file() or path.is_symlink() or path.stat().st_size > 2000:
+        raise ValueError("Missing or unsafe official Google AQuA telemetry source")
+    raw = path.read_bytes()
+    digest = sha1(b"blob " + str(len(raw)).encode() + bytes([0]) + raw).hexdigest()
+    if digest != AQUA_EVENTS_GIT_BLOB_SHA:
+        raise ValueError("Google AQuA source checksum mismatch")
+    fields = json.loads(raw)
+    if not isinstance(fields, list) or tuple(x.get("name") for x in fields) != AQUA_FIELDS:
+        raise ValueError("Unexpected official Google AQuA schema")
+    return fields
+
+
+def make_offline_aqua_event(issue, status, disposition, findings):
+    """No private data: map ORIGINAL public mission flags to original schema."""
+    read_official_aqua_event_schema()
+    event = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "event_type": "PLENUM_PUBLIC_CHIEF_QUALITY_INSIGHT",
+        "agent": "plenum-original-chief",
+        "session_id": "public-issue-" + str(issue),
+        "invocation_id": "same-run-original-" + str(issue),
+        "content": {"finding_codes": [x["code"] for x in findings]},
+        "attributes": {"original_status": status, "disposition": disposition},
+        "error_message": None,
+    }
+    if tuple(event) != AQUA_FIELDS:
+        raise ValueError("Original event schema mapping drifted")
+    return event
 
 
 def inspect_chief_report(report: dict) -> dict:
@@ -98,6 +145,11 @@ def inspect_chief_report(report: dict) -> dict:
         "private_accounts_touched": False,
         "method": "local trace diagnostic following Google AQuA insight discipline",
         "method_source": AQUA_ORIGINAL,
+        "actual_google_aqua_event_schema_used": True,
+        "event_schema_git_blob_sha": AQUA_EVENTS_GIT_BLOB_SHA,
+        "offline_aqua_compatible_event": make_offline_aqua_event(
+            report["issue_number"], status, disposition, findings
+        ),
         "official_google_aqua_engine_installed": False,
         "google_cloud_telemetry_queried": False,
         "longitudinal_recurring_insights_claimed": False,
