@@ -22,7 +22,7 @@ jobs:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_BROWSER_DEPLOY_SA }}
       - uses: google-github-actions/setup-gcloud@v3
-      - name: Verify original owner click navigation recovery in exact image
+      - name: Inspect signed-out GitHub rendering with original exact request policy
         env:
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
         shell: bash
@@ -37,56 +37,95 @@ jobs:
           echo "PUBLIC_OWNER_IMAGE_REFERENCE=$IMAGE"
           gcloud auth configure-docker us-east1-docker.pkg.dev --quiet >/dev/null
           docker pull "$IMAGE" >/dev/null
-          # No repeated production login/upgrade setup. Only ORIGINAL image,
-          # original focus/frame functions and a local synthetic navigation;
-          # no networking, host credentials, owner state, provider tokens or AI.
-          timeout 90 docker run --rm -i --network none --read-only --tmpfs /tmp --entrypoint python "$IMAGE" - <<'PY'
-          import asyncio
-          from playwright.async_api import async_playwright
-          from services.computer_browser.private_login import _focused_editable_kind, _frame
+          # Only signed-out PUBLIC GitHub, ORIGINAL proxy/policy/Chromium.
+          # Never forward host credentials, runtime env, vault or owner state.
+          mkdir -p "$RUNNER_TEMP/public-render"
+          timeout 160 docker run --rm -i --read-only --tmpfs /tmp --entrypoint python "$IMAGE" - > "$RUNNER_TEMP/public-render-raw.json" <<'PY'
+          import asyncio,base64,json,collections,re
+          from urllib.parse import urlsplit
+          from playwright.async_api import async_playwright,TimeoutError
+          from services.computer_browser.private_login import _allow_live_request
+          from services.computer_browser.pinned_public_preview import PinnedOriginProxy
+          primary="https://github.com"
+          approved={primary,"https://github.githubassets.com","https://avatars.githubusercontent.com"}
           async def run():
-              failures=0
-              async with async_playwright() as p:
-                  browser=await p.chromium.launch(headless=True)
-                  context=await browser.new_context()
-                  async def fixture(route):
-                      if route.request.url=="https://fixture.example/start":
-                          await route.fulfill(content_type="text/html",body=
-                              '<a href="/next" style="display:block;width:250px;height:70px">Open next page</a>')
-                      elif route.request.url=="https://fixture.example/next":
-                          await route.fulfill(content_type="text/html",body='<input type="email">')
-                      else:
-                          await route.abort()
-                  await context.route("**/*",fixture)
-                  page=await context.new_page()
-                  for case in range(1):
-                      await page.goto("https://fixture.example/start",wait_until="domcontentloaded")
-                      await page.mouse.click(45,25)
-                      try:
-                          assert await _focused_editable_kind(page)=="none"
-                          print("ISOLATED_OWNER_CLICK_FOCUS_RESULT",case,"OK",flush=True)
-                      except Exception as exc:
-                          message=str(exc).lower()
-                          lost=("execution context was destroyed" in message or
-                                "cannot find context" in message)
-                          print("ISOLATED_OWNER_CLICK_FOCUS_EXCEPTION",case,
-                                type(exc).__name__,"NAVIGATION_CONTEXT_LOST" if lost else "OTHER",
-                                flush=True)
-                          failures+=int(lost)
-                          raise
-                      await page.wait_for_url("https://fixture.example/next",wait_until="domcontentloaded")
-                      class Sink:
-                          async def send_json(self,payload):
-                              assert payload["type"]=="frame"
-                              print("ISOLATED_POST_NAVIGATION_FRAME_BYTES",len(payload["image"]),flush=True)
-                      assert await _frame(Sink(),page)
-                      await page.locator("input").click()
-                      assert await _focused_editable_kind(page)=="text"
-                      print("ISOLATED_NEW_PAGE_FIELD_SELECTION_OK",True,flush=True)
-                  print("ISOLATED_NAVIGATION_RECOVERY_OK",failures==0,flush=True)
-                  await browser.close()
+              report={"public_only":True,"pages":[]}
+              async with PinnedOriginProxy(primary,additional_origins=approved-{primary},
+                      max_tunnels=16,max_tunnel_bytes=30_000_000,max_lifetime=180) as broker:
+                  async with async_playwright() as p:
+                      browser=await p.chromium.launch(headless=True,proxy={"server":f"http://127.0.0.1:{broker.port}"},
+                          args=["--disable-background-networking","--disable-quic",
+                                "--force-webrtc-ip-handling-policy=disable_non_proxied_udp"])
+                      for label,url in (("home",primary),("login",primary+"/login")):
+                          context=await browser.new_context(viewport={"width":1024,"height":720},
+                              accept_downloads=False,service_workers="block",ignore_https_errors=False,permissions=[])
+                          blocked=collections.Counter()
+                          failed=collections.Counter()
+                          errors=[]
+                          async def route_request(route):
+                              req=route.request
+                              if _allow_live_request(url=req.url,method=req.method,resource_type=req.resource_type,
+                                  primary=primary,approved=frozenset(approved)):
+                                  await route.continue_()
+                              else:
+                                  parts=urlsplit(req.url)
+                                  blocked[(parts.scheme+"://"+str(parts.hostname),req.method,req.resource_type)]+=1
+                                  await route.abort()
+                          await context.route("**/*",route_request)
+                          await context.route_web_socket("**/*",lambda route:route.close())
+                          page=await context.new_page()
+                          page.on("pageerror",lambda error:errors.append(type(error).__name__))
+                          page.on("requestfailed",lambda request:failed.update([
+                              (urlsplit(request.url).hostname,request.resource_type,request.failure)]))
+                          response=await page.goto(url,wait_until="domcontentloaded",timeout=25000)
+                          try:
+                              await page.wait_for_function(
+                                  "() => Boolean(document.body && (document.body.innerText.trim().length || document.querySelector('input,button,a')))",
+                                  timeout=8000)
+                          except TimeoutError:
+                              pass
+                          state=await page.evaluate("""() => ({
+                              title:document.title,
+                              text:(document.body?.innerText||"").slice(0,600),
+                              bodyCharacters:(document.body?.innerText||"").trim().length,
+                              controls:document.querySelectorAll("input,button,textarea,select,a").length,
+                              readyState:document.readyState
+                          })""")
+                          image=await page.screenshot(type="jpeg",quality=60,timeout=12000)
+                          text=state["text"].lower()
+                          challenge=any(term in text for term in (
+                              "verify you are human","checking your browser",
+                              "automated traffic","robot check","performing security verification"))
+                          report["pages"].append({"label":label,"http_status":response.status if response else None,
+                              "final_public_url":page.url,"state":state,"site_challenge":challenge,
+                              "blocked_public_origins":[{"origin":k[0],"method":k[1],"type":k[2],"count":v} for k,v in sorted(blocked.items())],
+                              "failed_requests":[{"host":k[0],"type":k[1],"reason":k[2],"count":v} for k,v in sorted(failed.items())],
+                              "page_error_count":len(errors),"jpeg_base64":base64.b64encode(image).decode()})
+                          await context.close()
+                          if challenge:
+                              break
+                      await browser.close()
+              print(json.dumps(report))
           asyncio.run(run())
           PY
+          python - <<'PY'
+          import os,json,base64
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])
+          raw=root/"public-render-raw.json"
+          report=json.loads(raw.read_text().splitlines()[-1])
+          for page in report["pages"]:
+              (root/"public-render"/(page["label"]+".jpg")).write_bytes(base64.b64decode(page.pop("jpeg_base64")))
+          (root/"public-render"/"public-render-report.json").write_text(json.dumps(report,indent=2))
+          raw.unlink()
+          print("PUBLIC_SIGNED_OUT_RENDER_REPORT",json.dumps(report))
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: original-public-github-rendering
+          path: ${{ runner.temp }}/public-render/
+          retention-days: 1
+          if-no-files-found: error
       - name: Inspect only fixed failed build metadata and sanitized Cloud Logging records
         id: inspect
         env:
