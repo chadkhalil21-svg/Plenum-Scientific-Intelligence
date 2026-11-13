@@ -28,7 +28,7 @@ KIND_TO_AGENT = {
 }
 HINTS = {
     "public_research": {"research", "survey", "literature", "papers",
-                        "sources", "references", "bibliography"},
+                        "source", "sources", "references", "bibliography"},
     "public_program": {"validator", "software", "program", "script",
                        "python", "coding", "code", "application"},
     "public_science": {"thermal", "cooling", "numerical", "physics",
