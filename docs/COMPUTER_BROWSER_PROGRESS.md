@@ -1,5 +1,10 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Founder now connected; page blank with blocked-resource aggregate
+
+Founder15:24 screenshot says browser connected but website blank, with blocked cross-origin resources; connection no longer terminates. Do not assume blocked resources caused the blank or expand permissions blindly. Preserve deployed62eba539 navigation repair and concurrency4/cap1/Cloudflare configuration. Reuse original diagnostic and exact live image with original pinned public-IP proxy and _allow_live_request for signed-out PUBLIC GitHub only; inspect homepage and normal login page, fixed public title/text/render state, aggregated blocked origins/types/failures and public screenshots. Stop if a site human-verification challenge appears; no bypass or alternate-host permission. Artifact is signed-out public content, no owner environment/state/credentials/model. No runtime changes until actual evidence; #310OPEN.
+
+
 ## 2026-11-13 | Navigation-context crash REPRODUCED, repaired and deployed; new-image recovery PASS
 
 Before: #652/run43498466956 exact deployed28384eb reproduced Error NAVIGATION_CONTEXT_LOST in original selected-field probe after one real coordinate navigation. PR653 merged62eba539c2dc167b9dbcd90f7d157cf49ffd86f8 after all4CI passed, including30 private-login tests and new real offline navigation→picture→new field/typing coverage. Original protected release654/run43499269439 SUCCEEDED: Cloud Build941f0d4e-8839-4d7c-a0c5-284f13a353a9, owner revision00052-dh8 serves100%, OAuth302/anonymous401, vault/identity/900s retained.
