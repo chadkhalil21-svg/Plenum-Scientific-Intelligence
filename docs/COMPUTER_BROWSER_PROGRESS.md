@@ -1,5 +1,9 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Owner live interaction fails; exact-image first-frame diagnosis
+
+Founder screenshot reports fixed live_interaction failure and cleared canvas. Owner identity and Cloudflare configuration audit #639/run #43485158401 already accepted (ready service, bound token, valid32hex account shape, CF/Free-plan/agent flagsYES); preserve them. Reuse existing original OIDC diagnosis workflow to exercise only signed-out public GitHub through original pinned proxy/Chromium/frame methods in exact deployed image60c2ceb. No production environment, saved profiles, credentials, mounts, model inference or service changes. Emit only frame byte count, fixed statuses, aggregate health and exception class/public source locations. This is investigation, NOT a repair or real authenticated account acceptance. #310 remainsOPEN.
+
 ## 2026-11-13 | Account-ID readback remains invalid after founder correction report
 
 Original #636 / run #43484120011 independently reads ready service, token/CF/Free-plan/agentYES but account-ID shapeNO. Preserve all completed state. Extend only existing read-only audit with fixed non-value format categories: missing, valid32hex, surrounding whitespace, URL instead of ID, wrong-length count, nonhex. Do not print, trim, rewrite or return raw identifier; no model call, private site, IAM change or redeployment. Use actual classified cause to avoid another generic founder credential request. Browser #310 remainsOPEN.
