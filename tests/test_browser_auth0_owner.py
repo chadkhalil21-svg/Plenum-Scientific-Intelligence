@@ -195,6 +195,7 @@ class Auth0OwnerTests(unittest.TestCase):
                 # rather than downloading Chromium just for an auth-boundary test.
                 stub = types.ModuleType("playwright.async_api")
                 stub.async_playwright = lambda: None
+                stub.TimeoutError = type("SyntheticPlaywrightTimeout", (Exception,), {})
                 with patch.dict(sys.modules, {
                     "playwright": types.ModuleType("playwright"),
                     "playwright.async_api": stub,
