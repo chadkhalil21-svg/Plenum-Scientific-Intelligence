@@ -1,5 +1,12 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Live capacity refusal REPAIRED; protocol boundary and signed image test PASS
+
+Before: original #647/run43492840208 actual production anonymous WebSocket Upgrade returned429 before authentication; original live config was concurrency1/max-instances1. PR #648 merged cd15dae3103f230c576c977d7d4931f4bcf4f73d and config-only #649/run43493447769 SUCCEEDED: revision00051-pc5 serves100%; concurrency4/max-instances1; same28384eb image, all env/Cloudflare bindings, identity, vault, CPU/memory and900s timeout preserved. OAuth302/anonymous owner401 passed. No rebuild, IAM, new host, credential access or inference.
+
+Independent post-change #650/run43493614921 SUCCEEDED: actual production anonymous Upgrade now403 (expected missing-owner denial), versus previous429 capacity refusal. Exact deployed image in network-disabled isolated container with ORIGINAL app, real Uvicorn, original signed SYNTHETIC Auth0 session and actual Chromium: HTTP owner200, WebSocket accepted,8,808-byte frame. No production key/cookie/owner state/model was used. This proves public transport availability and exact-image signed-session stack, NOT founder's actual phone session or real-account mission. Existing request-log metadata access unavailable; no role expansion. Founder should reopen original signed-owner browser; #310 remainsOPEN for genuine saved-site task and Workers AI inference. Existing cloud quota/cost rules remain, one-instance cap retained.
+
+
 ## 2026-11-13 | Live protocol probe identifies capacity429; repair original request-slot configuration
 
 Original #647/run #43492840208 read actual image28384eb and its ONE anonymous production WebSocket Upgrade received HTTP429 before owner authentication. The subsequent isolated signed-cookie fixture was SKIPPED by the failed step; do not claim it passed. Existing live audit records containerConcurrency1 and maxScale1. Google documents WebSockets as long-running HTTP requests occupying concurrency, and429 when no instance capacity is available (https://docs.cloud.google.com/run/docs/triggering/websockets ; https://docs.cloud.google.com/run/docs/troubleshooting). This establishes a real capacity refusal, distinct from token/login failures; exact existing socket occupancy was not read.
