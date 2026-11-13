@@ -3,7 +3,7 @@
   "kind": "read_only_public_record_inventory",
   "source": "research-memory/evidence",
   "mission_reference": "research-memory/state/AGI_PROGRAM.json",
-  "record_count": 69,
+  "record_count": 74,
   "records": [
     {
       "track": "agent-experiments",
@@ -102,6 +102,12 @@
       "size_bytes": 84549
     },
     {
+      "track": "discovery",
+      "path": "evidence/discovery/2026-11-12-run-43280961255.json",
+      "sha256": "f911d8120164c6ac191ec0f6b0cf027eaa2fcf03082fa20e1c782d58a485ed52",
+      "size_bytes": 87583
+    },
+    {
       "track": "frontiers",
       "path": "evidence/frontiers/run-42170871194.json",
       "sha256": "c6b9faf684a785cf62a157a1ffd912a6312a8167d32d3fa0288542f7d5ae7422",
@@ -141,6 +147,12 @@
       "track": "frontiers",
       "path": "evidence/frontiers/run-43077683186.json",
       "sha256": "7b3a360b78d4726cb9ca99c6affd855eac1894e8fea9bf933fae9673df147243",
+      "size_bytes": 4072
+    },
+    {
+      "track": "frontiers",
+      "path": "evidence/frontiers/run-43282940062.json",
+      "sha256": "3b36e09d0ccc3f32f538d0d29268d93c8afd2e92e2931b994242c4f9e07ff634",
       "size_bytes": 4072
     },
     {
@@ -265,9 +277,15 @@
     },
     {
       "track": "lab-radar",
+      "path": "evidence/lab-radar/run-43299482820.json",
+      "sha256": "a0d03438df80856b6f083862ab4a6b92034432841f2a6de7566e22cda112884e",
+      "size_bytes": 9004
+    },
+    {
+      "track": "lab-radar",
       "path": "evidence/lab-radar/seen-links.json",
-      "sha256": "10ab6a8d97878a00dcc9b0ab55649613ac45dad993a13fed2dbb6247c5eeee15",
-      "size_bytes": 11779
+      "sha256": "ed03521e2d3adbe5fedc30e59ecfa721cea0e5e784b53aa727037fe66f32ae98",
+      "size_bytes": 13617
     },
     {
       "track": "noaa-independent-critic",
@@ -348,6 +366,12 @@
       "size_bytes": 144703
     },
     {
+      "track": "universal-brief",
+      "path": "evidence/universal-brief/run-43304240678.json",
+      "sha256": "dc1fe9f5b6760d24795e87845ac590646d7d8d90edc9be85fec77f80534c557a",
+      "size_bytes": 132958
+    },
+    {
       "track": "world-horizon",
       "path": "evidence/world-horizon/2026-11-06-run-42173285138.json",
       "sha256": "62e253fe8da76eba4de971560fdc09c18146d83aab56c90e8a27cd4bfcfaf4ae",
@@ -418,6 +442,12 @@
       "path": "evidence/world-horizon/2026-11-11-run-43090780866.json",
       "sha256": "58aec043e3c02d3f449c4981fbc05ec9e62dc94a51582231123c5743ebd8de03",
       "size_bytes": 115659
+    },
+    {
+      "track": "world-horizon",
+      "path": "evidence/world-horizon/2026-11-12-run-43299482820.json",
+      "sha256": "900f5004375b1b54a6e285a90198bcfd3b41a8ac51676bb169a8e2c183aabdb6",
+      "size_bytes": 111585
     }
   ],
   "groups": [
@@ -446,7 +476,7 @@
     },
     {
       "track": "discovery",
-      "records": 11,
+      "records": 12,
       "paths": [
         "evidence/discovery/2026-11-06-run-42168813339.json",
         "evidence/discovery/2026-11-06-run-42169260144.json",
@@ -458,12 +488,13 @@
         "evidence/discovery/2026-11-08-run-42501551474.json",
         "evidence/discovery/2026-11-09-run-42698265506.json",
         "evidence/discovery/2026-11-10-run-42872202846.json",
-        "evidence/discovery/2026-11-11-run-43073581577.json"
+        "evidence/discovery/2026-11-11-run-43073581577.json",
+        "evidence/discovery/2026-11-12-run-43280961255.json"
       ]
     },
     {
       "track": "frontiers",
-      "records": 7,
+      "records": 8,
       "paths": [
         "evidence/frontiers/run-42170871194.json",
         "evidence/frontiers/run-42265129530.json",
@@ -471,7 +502,8 @@
         "evidence/frontiers/run-42502361309.json",
         "evidence/frontiers/run-42701388982.json",
         "evidence/frontiers/run-42875783736.json",
-        "evidence/frontiers/run-43077683186.json"
+        "evidence/frontiers/run-43077683186.json",
+        "evidence/frontiers/run-43282940062.json"
       ]
     },
     {
@@ -548,7 +580,7 @@
     },
     {
       "track": "lab-radar",
-      "records": 9,
+      "records": 10,
       "paths": [
         "evidence/lab-radar/run-42405802931.json",
         "evidence/lab-radar/run-42406132860.json",
@@ -558,6 +590,7 @@
         "evidence/lab-radar/run-42713770685.json",
         "evidence/lab-radar/run-42890460698.json",
         "evidence/lab-radar/run-43090780866.json",
+        "evidence/lab-radar/run-43299482820.json",
         "evidence/lab-radar/seen-links.json"
       ]
     },
@@ -628,15 +661,16 @@
     },
     {
       "track": "universal-brief",
-      "records": 2,
+      "records": 3,
       "paths": [
         "evidence/universal-brief/run-42174318660.json",
-        "evidence/universal-brief/run-42716691921.json"
+        "evidence/universal-brief/run-42716691921.json",
+        "evidence/universal-brief/run-43304240678.json"
       ]
     },
     {
       "track": "world-horizon",
-      "records": 12,
+      "records": 13,
       "paths": [
         "evidence/world-horizon/2026-11-06-run-42173285138.json",
         "evidence/world-horizon/2026-11-06-run-42174424616.json",
@@ -649,13 +683,14 @@
         "evidence/world-horizon/2026-11-09-run-42673765169.json",
         "evidence/world-horizon/2026-11-09-run-42713770685.json",
         "evidence/world-horizon/2026-11-10-run-42890460698.json",
-        "evidence/world-horizon/2026-11-11-run-43090780866.json"
+        "evidence/world-horizon/2026-11-11-run-43090780866.json",
+        "evidence/world-horizon/2026-11-12-run-43299482820.json"
       ]
     }
   ],
   "unindexed_records": [],
   "inventory_complete": true,
-  "digest_sha256": "7dd70e2d77217905af28b9420b96809fcb91a487fe650c064da375b08cc1d496",
+  "digest_sha256": "c6d802d4887a11ab5448092757809ba12527c546bba1e3c177491b85614a8872",
   "scientific_claims_verified_by_index": false,
   "AGI_demonstrated": false,
   "automatic_model_promotion": false,
