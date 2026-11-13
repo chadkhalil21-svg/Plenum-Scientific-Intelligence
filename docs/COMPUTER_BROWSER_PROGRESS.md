@@ -1,3 +1,13 @@
+## 2026-11-13 | Completion directive reconciliation — release accepted, account mission open
+
+Latest accepted original production is revision00052-dh8/image62eba539 (#654). Original #655/#656 independently verified exact-image navigation recovery and current Cloudflare binding/account-shape/Free-confirmation/agent switches. Public signed-out diagnosis run43501891079 rendered github.com/login (HTTP200, complete form, no page errors) while homepage hero remained blank. These supersede older undeployed/unconfigured statements, but do NOT prove a real saved third-party session, account assignment or successful Workers AI call.
+
+Original #310 remains OPEN: current GitHub connector has no actual owner Auth0 task grant, valid site-session readback or consented private inference result. Reuse original protected owner console/GCS session and exact-origin task authorization; never infer the vault is empty, repeat token setup, fabricate an owner cookie or substitute a synthetic fixture for account acceptance. Real signed-in3+ meaningful steps, saved-session restoration, independent account verification and actual free-usage evidence remain required. No new production change, model call or accepted diagnostic rerun occurred in this reconciliation.
+
+Existing Minister schedule consolidated in place and original #432/#310/private roadmap reconciled. Full capability matrix is in the ORIGINAL PLENUM_WORKFORCE_MASTER_LEDGER.md. Supplementary TinyFish is permitted by current founder directive only when necessary within existing credits/permissions/no new charges; it does not demonstrate original Plenum session restoration.
+
+---
+
 # Plenum Computer Browser: progress and acceptance ledger
 
 ## 2026-11-13 | Founder now connected; page blank with blocked-resource aggregate
