@@ -1,3 +1,5 @@
+import {handlePrivateMemory, PrivateContinuityMemory} from "./plenum-private-continuity.mjs";
+export {PrivateContinuityMemory};
 /*
  * Plenum no-new-charge *event-driven wake* (SOURCE TEMPLATE ONLY).
  * Cloudflare Worker holds no private task content or personal credentials.
@@ -77,6 +79,8 @@ export class PublicWakeReplayGuard {
 export default {
   async fetch(request, env) {
     const pathname = new URL(request.url).pathname;
+    if (pathname === "/memory" || pathname.startsWith("/memory/"))
+      return handlePrivateMemory(request, env);
     if (pathname === "/health" && request.method === "GET")
       return response(200, {state:"REACHABLE_NOT_A_RUNNING_AGENT", no_model:true});
     if (pathname !== "/wake" || request.method !== "POST")
