@@ -469,6 +469,16 @@ class PrivateLoginTests(unittest.TestCase):
                                         blocked_cross_origin:0})
                 })""")
                 self.assertIn("login is not yet verified",page.locator("#status").inner_text())
+                page.evaluate("""() => window.__owner_ws.onmessage({
+                  data: JSON.stringify({type:"status",code:"picture_timeout",
+                                        message:"Picture timed out"})
+                })""")
+                self.assertTrue(page.locator("#enter").is_disabled())
+                self.assertIn("fields remain open",page.locator("#field-status").inner_text())
+                page.evaluate("""() => window.__owner_ws.onmessage({
+                  data: JSON.stringify({type:"frame",image:""})
+                })""")
+                self.assertFalse(page.locator("#enter").is_disabled())
                 box=page.locator("#display").bounding_box()
                 self.assertIsNotNone(box)
                 page.dispatch_event("#display","pointerup",{
