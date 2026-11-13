@@ -9,7 +9,7 @@ HAS_BROWSER = all(importlib.util.find_spec(x) is not None
 if HAS_BROWSER:
     from fastapi import HTTPException
     from services.computer_browser.owner_agent_read import (
-        _require_owner_agent_enabled, _validate_owner_task,
+        _require_owner_agent_enabled, _cloudflare_free_ready, _validate_owner_task,
     )
 
 
@@ -52,3 +52,34 @@ class OwnerAgentReadTests(unittest.TestCase):
             "Inspect the existing approved account status",
             "Existing account dashboard",
         ))
+
+
+    def test_cloudflare_free_requires_verified_owner_and_all_actual_secrets(self):
+        cfg={
+            "K_SERVICE": "plenum-browser-owner-auth0",
+            "PLENUM_OWNER_READONLY_AGENT_ENABLED": "true",
+            "PLENUM_BROWSER_FREE_LOCAL": "",
+            "PLENUM_CF_AI_ENABLED": "true",
+            "PLENUM_CF_AI_FREE_PLAN_CONFIRMED": "true",
+            "PLENUM_CF_AI_ACCOUNT_ID": "f" * 32,
+            "PLENUM_CF_AI_TOKEN": "TEST_FAKE_TOKEN_NEVER_USED",
+        }
+        with patch.dict(os.environ, cfg, clear=True):
+            self.assertTrue(_cloudflare_free_ready())
+            self.assertIsNone(_require_owner_agent_enabled())
+        for field, value in (
+            ("K_SERVICE","public-machine"),
+            ("PLENUM_OWNER_READONLY_AGENT_ENABLED","false"),
+            ("PLENUM_CF_AI_ENABLED","false"),
+            ("PLENUM_CF_AI_FREE_PLAN_CONFIRMED","false"),
+            ("PLENUM_CF_AI_ACCOUNT_ID","bad"),
+            ("PLENUM_CF_AI_TOKEN",""),
+        ):
+            with self.subTest(field=field), patch.dict(
+                os.environ, {**cfg,field:value}, clear=True,
+            ):
+                if field in ("PLENUM_CF_AI_ENABLED","PLENUM_CF_AI_FREE_PLAN_CONFIRMED",
+                             "PLENUM_CF_AI_ACCOUNT_ID","PLENUM_CF_AI_TOKEN"):
+                    self.assertFalse(_cloudflare_free_ready())
+                with self.assertRaises(HTTPException):
+                    _require_owner_agent_enabled()
