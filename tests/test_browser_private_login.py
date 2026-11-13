@@ -21,6 +21,64 @@ class PrivateLoginTests(unittest.TestCase):
         self.assertIn('document.getElementById("url").value="https://github.com";', html)
         self.assertIn("https://github.githubassets.com,https://avatars.githubusercontent.com", html)
 
+    def test_owner_navigation_is_explicit_bounded_and_origin_scoped(self):
+        # Tests the ORIGINAL owner-only Chromium handler without an actual
+        # login, live website, secret, new browser or external account call.
+        import asyncio
+        from types import SimpleNamespace
+        from unittest.mock import AsyncMock
+        page=SimpleNamespace(
+            url="https://github.com/settings",
+            mouse=SimpleNamespace(wheel=AsyncMock()),
+            go_back=AsyncMock(),
+            go_forward=AsyncMock(),
+        )
+        async def verify():
+            await private_login._owner_safe_navigation(
+                page,kind="scroll",direction="down",
+                approved_origins={"https://github.com"})
+            page.mouse.wheel.assert_awaited_once_with(0,640)
+            await private_login._owner_safe_navigation(
+                page,kind="scroll",direction="up",
+                approved_origins={"https://github.com"})
+            page.mouse.wheel.assert_awaited_with(0,-640)
+            await private_login._owner_safe_navigation(
+                page,kind="back",
+                approved_origins={"https://github.com"})
+            page.go_back.assert_awaited_once()
+            await private_login._owner_safe_navigation(
+                page,kind="forward",
+                approved_origins={"https://github.com"})
+            page.go_forward.assert_awaited_once()
+            before=page.mouse.wheel.await_count
+            for bad in ("sideways","../../private",""):
+                with self.assertRaises(PermissionError):
+                    await private_login._owner_safe_navigation(
+                        page,kind="scroll",direction=bad,
+                        approved_origins={"https://github.com"})
+            self.assertEqual(page.mouse.wheel.await_count,before)
+            page.url="https://untrusted.example/"
+            with self.assertRaises(PermissionError):
+                await private_login._owner_safe_navigation(
+                    page,kind="back",approved_origins={"https://github.com"})
+            self.assertEqual(page.go_back.await_count,1)
+            page.url="https://github.com/"
+            async def redirect_off_site(**kwargs):
+                page.url="https://untrusted.example/"
+            page.go_back.side_effect=redirect_off_site
+            with self.assertRaises(PermissionError):
+                await private_login._owner_safe_navigation(
+                    page,kind="back",approved_origins={"https://github.com"})
+        asyncio.run(verify())
+
+    def test_owner_chromium_controls_only_use_websocket_with_session(self):
+        html=private_login.login_html("ci-nonce","ci-register-token")
+        for label in ("back","forward","scroll-up","scroll-down"):
+            self.assertIn('id="'+label+'" disabled',html)
+        self.assertIn('send({type:"scroll",direction:"down"})',html)
+        self.assertIn('send({type:"back"})',html)
+        self.assertNotIn('new EventSource(',html)
+
     def test_trusted_owner_saved_login_reused_without_cross_site_secrets(self):
         from unittest.mock import MagicMock
         site="https://github.com"
