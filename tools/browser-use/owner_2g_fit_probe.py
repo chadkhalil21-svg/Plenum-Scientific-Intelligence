@@ -16,12 +16,15 @@ APPROVED_ACTIONS = frozenset(
      "find_elements", "search_page", "dropdown_options"}
 )
 REPORT = Path("/out/result.json")
+STAGE = "NOT_STARTED"
 
 
 async def measure() -> dict:
-    from browser_use import Agent, Browser, ChatOllama, Tools
+    global STAGE
+    STAGE = "IMPORT_UPSTREAM"    from browser_use import Agent, Browser, ChatOllama, Tools
     from playwright.async_api import async_playwright
 
+    STAGE = "INITIALIZE_READ_ONLY_TOOLS"
     tools = Tools()
     available = set(tools.registry.registry.actions)
     if not {"done", "navigate", "find_elements"}.issubset(available):
@@ -31,12 +34,15 @@ async def measure() -> dict:
     if not set(tools.registry.registry.actions).issubset(APPROVED_ACTIONS):
         return {"status": "FAIL_READ_ONLY_TOOL_POLICY"}
 
+    STAGE = "CONSTRUCT_LOCAL_MODEL_CLIENT"
     llm = ChatOllama(
         model="qwen3:0.6b",
         host="http://127.0.0.1:11434",
         ollama_options={"num_ctx": 4096, "num_predict": 120, "think": False},
     )
+    STAGE = "LAUNCH_ORIGINAL_PLAYWRIGHT"
     async with async_playwright() as pw:
+        STAGE = "CONSTRUCT_UPSTREAM_BROWSER"
         browser = Browser(
             headless=True, use_cloud=False, is_local=True, keep_alive=False,
             cdp_url=None, executable_path=pw.chromium.executable_path,
@@ -48,6 +54,7 @@ async def measure() -> dict:
                   "--disable-background-networking", "--disable-quic"],
         )
         try:
+            STAGE = "CONSTRUCT_BROWSER_USE_AGENT"
             agent = Agent(
                 task=(
                     "Use navigate to open https://example.com/ and report the "
@@ -63,7 +70,9 @@ async def measure() -> dict:
                 APPROVED_ACTIONS
             ):
                 return {"status": "FAIL_ACTION_ESCALATION"}
+            STAGE = "EXECUTE_REAL_MODEL_ACTION"
             history = await asyncio.wait_for(agent.run(max_steps=3), timeout=165)
+            STAGE = "INDEPENDENT_PUBLIC_READBACK"
             page = await browser.get_current_page()
             target_url = await page.get_url() if page else ""
             actual_title = await page.get_title() if page else ""
@@ -97,8 +106,11 @@ def main():
     os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
     try:
         result = asyncio.run(measure())
-    except Exception:
-        result = {"status": "FAIL_BROWSER_OR_MODEL_RUNTIME"}
+    except Exception as exc:
+        # Only stage and Python exception CLASS, never message/stack/page text.
+        result = {"status": "FAIL_BROWSER_OR_MODEL_RUNTIME",
+                  "failure_stage": STAGE,
+                  "exception_class": type(exc).__name__}
     try:
         result["browser_peak_mib"] = round(
             int(Path("/sys/fs/cgroup/memory.peak").read_text()) / 1048576, 1
