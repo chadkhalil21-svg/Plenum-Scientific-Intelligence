@@ -86,6 +86,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: chadkhalil21-svg/Plenum-Scientific-Intelligence
           ISSUE: ${{ github.event.issue.number }}
           RESULT: ${{ steps.inventory.outputs.classification }}
         run: |
