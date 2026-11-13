@@ -3,6 +3,8 @@ on:
   schedule:
     # 14:00 UTC Mondays = 09:00 EST / 10:00 EDT; avoids claiming exact local delivery.
     - cron: '0 14 * * 1'
+    # Original Minister catches up on only NEW missed PUBLIC owner missions.
+    - cron: '21 0,6,12,18 * * *'
   workflow_dispatch:
   issues:
     types: [opened]
@@ -11,6 +13,8 @@ on:
       - 'src/plenum_ai/weekly_founder_brief.py'
       - 'tests/test_weekly_founder_brief.py'
       - 'src/plenum_ai/founder_instruction_audit.py'
+      - 'src/plenum_ai/minister_missed_public_wake.py'
+      - 'tests/test_minister_missed_public_wake.py'
       - 'tests/test_founder_instruction_audit.py'
       - 'src/plenum_ai/free_local_tool_adapter.py'
       - 'tests/test_free_local_tool_adapter.py'
@@ -39,8 +43,11 @@ jobs:
       - run: python -m unittest discover -s tests -p 'test_weekly_founder_brief.py' -v
       - run: python -m unittest discover -s tests -p 'test_founder_instruction_audit.py' -v
       - run: python -m unittest discover -s tests -p 'test_free_local_tool_adapter.py' -v
+      - run: python -m unittest discover -s tests -p 'test_minister_missed_public_wake.py' -v
   actual-public-status:
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'schedule' && github.event.schedule == '0 14 * * 1')
     runs-on: ubuntu-latest
     timeout-minutes: 6
     permissions:
@@ -70,6 +77,42 @@ jobs:
             reports/minister-weekly-brief.json
             reports/minister-founder-instruction-audit.json
           retention-days: 7
+          if-no-files-found: ignore
+
+
+  recover-missed-owner-public-missions:
+    # Unlike the existing weekly status brief, this actually dispatches
+    # original, still-unattempted owner-approved repository task issues.
+    # It is NOT a continuous resident model, paid host, or general agent.
+    if: >-
+      github.event_name == 'schedule' &&
+      github.event.schedule == '21 0,6,12,18 * * *' &&
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence'
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    permissions:
+      contents: write  # required only for native same-repo repository_dispatch
+      issues: write    # durable wake-attempt marker on exact original issue
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Reuse original Chief/inbox parsers without a new model or queue
+        run: python -m pip install -e .
+      - name: Wake at most two genuinely missed owner PUBLIC missions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m plenum_ai.minister_missed_public_wake
+      - name: Preserve only nonsecret original issue IDs and truthful receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: minister-original-missed-public-wake
+          path: reports/minister-missed-public-wake.json
+          retention-days: 3
           if-no-files-found: ignore
 
   founder-instruction-audit:
