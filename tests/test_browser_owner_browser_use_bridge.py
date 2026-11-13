@@ -32,7 +32,8 @@ def state():
     }
 
 
-@unittest.skipUnless(importlib.util.find_spec('fastapi') is not None,\n                     'Private browser CI installs FastAPI; science core does not')
+@unittest.skipUnless(importlib.util.find_spec('fastapi') is not None,
+                     'Private browser CI installs FastAPI; science core does not')
 class OwnerBrowserUseBridgeTests(unittest.TestCase):
     def build(self, **options):
         observed = {}
