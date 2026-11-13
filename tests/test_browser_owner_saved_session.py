@@ -68,6 +68,20 @@ class SavedWebsiteSessionRoutes(unittest.TestCase):
             owner=owner["private_owner_id"], origin="https://example.com")
 
 
+    def test_absent_profile_exposes_no_fake_preview_or_revoke(self):
+        # A real owner screenshot exposed these misleading controls even
+        # though the listed real account websites have no stored profile.
+        store = self._store(exists=False)
+        with patch.object(owner_saved_session.BrowserProfileStore,
+                          "from_environment", return_value=store):
+            response = client.get("/owner/sessions")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("No saved profile", response.text)
+        self.assertIn("href='/owner/sign-in'", response.text)
+        self.assertNotIn("action='/owner/sessions/preview'", response.text)
+        self.assertNotIn("action='/owner/sessions/revoke'", response.text)
+        self.assertNotIn("Read saved-session page", response.text)
+
     def test_owner_only_machine_readable_inventory_reuses_original_vault(self):
         store = self._store(exists=True)
         with patch.object(owner_saved_session.BrowserProfileStore,

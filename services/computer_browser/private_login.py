@@ -276,9 +276,10 @@ def login_html(nonce, register_token=""):
       return false;
     }
     document.getElementById("github-quick-open").onclick=()=>{
-      let site;
-      try{site=new URL(document.getElementById("url").value.trim());}
-      catch(_){status.textContent="Enter the exact https://github.com website first.";return;}
+      // Explicit owner click on the GitHub shortcut selects GitHub directly.
+      // Avoid asking the owner to enter the same website address twice.
+      document.getElementById("url").value="https://github.com";
+      const site=new URL("https://github.com");
       if(site.origin!=="https://github.com" || site.username || site.password){
         status.textContent="This predefined resource approval works for GitHub only.";
         return;

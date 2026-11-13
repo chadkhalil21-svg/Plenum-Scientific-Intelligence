@@ -542,11 +542,15 @@ def mount_owner_saved_session(app):
                 if site==PUBLIC_DEMO_ORIGIN else "")
             rows.append(
                 base+
-                "<form method='post' action='/owner/sessions/preview'>"
-                "<input type='hidden' name='site' value='" + escape(site, quote=True) + "'>"
-                "<input type='hidden' name='csrf_token' value='" + preview_token + "'>"
-                "<button type='submit'>Preview saved session (read only)</button>"
-                "</form>" +
+                ("<form method='post' action='/owner/sessions/preview'>"
+                 "<input type='hidden' name='site' value='" + escape(site, quote=True) + "'>"
+                 "<input type='hidden' name='csrf_token' value='" + preview_token + "'>"
+                 "<button type='submit'>Preview saved session (read only)</button>"
+                 "</form>"
+                 if exists is True else
+                 "<p>No login is stored for this website. "
+                 "Use a connected app when available; for a necessary private "
+                 "website task, <a href='/owner/sign-in'>sign in securely</a>.</p>") +
                 ("<form method='post' action='/owner/sessions/browse'>"
                  "<input type='hidden' name='site' value='" + escape(site, quote=True) + "'>"
                  "<input type='hidden' name='csrf_token' value='" + browse_token + "'>"
@@ -563,12 +567,14 @@ def mount_owner_saved_session(app):
                  "<input name='labels' placeholder='Help &gt; Security' maxlength='220' required></label>"
                  "<p><button type='submit'>Navigate approved links (read only)</button></p></form>"
                  if exists is True and os.environ.get("K_SERVICE")=="plenum-browser-owner-auth0" else "") +
-                "<form method='post' action='/owner/sessions/revoke'>"
-                "<input type='hidden' name='site' value='" + escape(site, quote=True) + "'>"
-                "<input type='hidden' name='csrf_token' value='" + revoke_token + "'>"
-                "<label>Type REVOKE to delete saved session "
-                "<input name='confirmation' autocomplete='off' maxlength='6'></label>"
-                "<button type='submit'>Revoke session</button></form>"
+                ("<details><summary>Advanced: manage saved login</summary>"
+                 "<form method='post' action='/owner/sessions/revoke'>"
+                 "<input type='hidden' name='site' value='" + escape(site, quote=True) + "'>"
+                 "<input type='hidden' name='csrf_token' value='" + revoke_token + "'>"
+                 "<label>Type REVOKE to delete saved session "
+                 "<input name='confirmation' autocomplete='off' maxlength='6'></label>"
+                 "<button type='submit'>Revoke session</button></form></details>"
+                 if exists is True else "")
                 + demo_refresh_form + "</article>"
             )
         return _page("Saved website sessions", "".join(rows))
