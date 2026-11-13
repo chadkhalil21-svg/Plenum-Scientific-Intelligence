@@ -22,8 +22,10 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
-      - name: Validate public founder task boundary without installing model dependencies
-        run: python -m unittest discover -s tests -p test_browser_use_public_agent.py -v
+      - name: Validate public founder task boundary and 2GiB probe syntax without installing model dependencies
+        run: |
+          python -m unittest discover -s tests -p test_browser_use_public_agent.py -v
+          python -m py_compile tools/browser-use/owner_2g_fit_probe.py
   owner-public-agent:
     if: >-
       github.event_name == 'issues' &&
