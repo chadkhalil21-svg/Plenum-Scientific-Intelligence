@@ -12,7 +12,7 @@ from urllib.parse import urlsplit
 from .engine import safe_url
 from .owner_live_access import owner_live_origin
 from .private_profiles import BrowserProfileStore
-from .session_crypto import filter_site_storage
+from .private_login import filter_site_storage
 
 _PROXY_PORT = re.compile(r"^http://127[.]0[.]0[.]1:([0-9]{2,5})$")
 
