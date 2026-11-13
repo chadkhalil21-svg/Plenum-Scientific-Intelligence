@@ -531,8 +531,17 @@ def login_html(nonce, register_token=""):
 
 
 async def _frame(ws,page):
-    jpeg=await page.screenshot(type="jpeg",quality=55,timeout=12000)
+    from playwright.async_api import TimeoutError as PlaywrightTimeoutError
+    try:
+        jpeg=await page.screenshot(type="jpeg",quality=55,timeout=12000)
+    except PlaywrightTimeoutError:
+        # A delayed picture must not destroy the owner's Chromium or fields.
+        # Only the bounded passive repaint retries; never replay an action.
+        await ws.send_json({"type":"status","code":"picture_timeout",
+            "message":"Browser picture timed out. Session remains open; the next repaint will try again."})
+        return False
     await ws.send_json({"type":"frame","image":base64.b64encode(jpeg).decode("ascii")})
+    return True
 
 
 async def _unsupported_cloudflare_challenge(page) -> bool:
@@ -728,7 +737,7 @@ def mount_private_login(app):
         broker=None
         refresh_task=None
         phase="destination_check"
-        from playwright.async_api import async_playwright
+        from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
         try:
             await ws.send_json({"type":"status","message":"Opening private browser"})
             if demo=="0":
@@ -801,17 +810,18 @@ def mount_private_login(app):
                         <p id="out">None</p></body></html>""")
                 else:
                     await page.goto(site,wait_until="domcontentloaded",timeout=25000)
-                phase="live_interaction"
+                phase="first_picture"
                 # The first screenshot can precede JavaScript's first paint.
                 # Repaint the SAME owner-only Chromium without needing a click.
                 # Cap the stream, and serialize it with action screenshots.
                 frame_lock=asyncio.Lock()
                 async def show_picture():
                     async with frame_lock:
-                        await _frame(ws,page)
-                        await _page_render_health(ws,page,blocked)
+                        if await _frame(ws,page):
+                            await _page_render_health(ws,page,blocked)
 
                 await show_picture()
+                phase="live_interaction"
 
                 if demo=="0":
                     async def refresh_picture():
@@ -852,100 +862,120 @@ def mount_private_login(app):
                     if not isinstance(command,dict) or len(str(command))>5000:
                         raise PermissionError("Oversized browser command")
                     kind=command.get("type")
-                    if kind=="click":
-                        x,y=command.get("x"),command.get("y")
-                        if (not isinstance(x,int) or not isinstance(y,int) or
-                                not 0<=x<1024 or not 0<=y<720):
-                            raise PermissionError("Click coordinates outside visible browser")
-                        await page.mouse.click(x,y)
-                        await ws.send_json({"type":"ack","action":"click",
-                                            "field":await _focused_editable_kind(page)})
-                    elif kind=="type":
-                        text=command.get("value","")
-                        if not isinstance(text,str) or len(text)>2000:
-                            raise PermissionError("Invalid typed input")
-                        field=await _focused_editable_kind(page)
-                        if field=="none":
-                            await ws.send_json({"type":"ack","action":"type","ok":False})
-                            continue
-                        await page.keyboard.insert_text(text)
-                        await ws.send_json({"type":"ack","action":"type","ok":True})
-                    elif kind=="key":
-                        if command.get("key") not in {"Enter","Tab","Backspace"}:
-                            raise PermissionError("Unsupported key combination")
-                        await page.keyboard.press(command["key"])
-                    elif kind in {"back", "forward", "scroll"}:
-                        await _owner_safe_navigation(
-                            page, kind=kind, approved_origins=approved_origins,
-                            direction=command.get("direction", ""))
-                    elif kind=="reload":
-                        if demo=="0":
-                            await page.reload(wait_until="domcontentloaded",timeout=25000)
-                    elif kind=="save":
-                        if demo=="0" and await _unsupported_cloudflare_challenge(page):
-                            await ws.send_json({"type":"save_result","ok":False,
-                                "message":"Cloudflare security verification is unsupported here. "
-                                          "No authenticated login state was saved."})
-                            continue
-                        if demo=="1":
-                            await ws.send_json({"type":"save_result","ok":False,
-                                "message":"Offline test does not save login state"})
-                            continue
-                        if not safe_url(page.url,origins={origin}):
-                            await ws.send_json({"type":"save_result","ok":False,
-                                "message":"Return to the original website before saving its session."})
-                            continue
-                        try:
-                            origin="https://"+urlsplit(site).hostname
-                            # Official Playwright supports IndexedDB auth state
-                            # (e.g. Firebase); default storage_state() omits it.
-                            # The origin filter below keeps only THIS website.
-                            # We intentionally exclude virtual WebAuthn private keys
-                            # and OPFS data by not requesting those options.
-                            storage=filter_site_storage(
-                                await context.storage_state(indexed_db=True), origin
-                            )
-                            if not storage["cookies"] and not storage["origins"]:
-                                await ws.send_json({"type":"save_result","ok":False,
-                                    "message":"No website session data to save. Browser remains open."})
+                    phase="owner_action"
+                    try:
+                        if kind=="click":
+                            x,y=command.get("x"),command.get("y")
+                            if (not isinstance(x,int) or not isinstance(y,int) or
+                                    not 0<=x<1024 or not 0<=y<720):
+                                raise PermissionError("Click coordinates outside visible browser")
+                            await page.mouse.click(x,y)
+                            await ws.send_json({"type":"ack","action":"click",
+                                                "field":await _focused_editable_kind(page)})
+                        elif kind=="type":
+                            text=command.get("value","")
+                            if not isinstance(text,str) or len(text)>2000:
+                                raise PermissionError("Invalid typed input")
+                            field=await _focused_editable_kind(page)
+                            if field=="none":
+                                await ws.send_json({"type":"ack","action":"type","ok":False})
                                 continue
-                            await asyncio.to_thread(_persist_encrypted_site_profile,
-                                owner_id=owner["private_owner_id"],
-                                origin=origin,state=storage)
-                        except Exception:
-                            # Storage errors are not browser failures: never
-                            # reveal GCS metadata, tokens, cookies or key values.
-                            # Keep the original authenticated Chromium live.
-                            await ws.send_json({"type":"save_result","ok":False,
-                                "message":"Encrypted session storage unavailable. Browser remains open; saving was not confirmed."})
+                            await page.keyboard.insert_text(text)
+                            await ws.send_json({"type":"ack","action":"type","ok":True})
+                        elif kind=="key":
+                            if command.get("key") not in {"Enter","Tab","Backspace"}:
+                                raise PermissionError("Unsupported key combination")
+                            await page.keyboard.press(command["key"])
+                        elif kind in {"back", "forward", "scroll"}:
+                            await _owner_safe_navigation(
+                                page, kind=kind, approved_origins=approved_origins,
+                                direction=command.get("direction", ""))
+                        elif kind=="reload":
+                            if demo=="0":
+                                await page.reload(wait_until="domcontentloaded",timeout=25000)
+                        elif kind=="save":
+                            if demo=="0" and await _unsupported_cloudflare_challenge(page):
+                                await ws.send_json({"type":"save_result","ok":False,
+                                    "message":"Cloudflare security verification is unsupported here. "
+                                              "No authenticated login state was saved."})
+                                continue
+                            if demo=="1":
+                                await ws.send_json({"type":"save_result","ok":False,
+                                    "message":"Offline test does not save login state"})
+                                continue
+                            if not safe_url(page.url,origins={origin}):
+                                await ws.send_json({"type":"save_result","ok":False,
+                                    "message":"Return to the original website before saving its session."})
+                                continue
+                            try:
+                                origin="https://"+urlsplit(site).hostname
+                                # Official Playwright supports IndexedDB auth state
+                                # (e.g. Firebase); default storage_state() omits it.
+                                # The origin filter below keeps only THIS website.
+                                # We intentionally exclude virtual WebAuthn private keys
+                                # and OPFS data by not requesting those options.
+                                storage=filter_site_storage(
+                                    await context.storage_state(indexed_db=True), origin
+                                )
+                                if not storage["cookies"] and not storage["origins"]:
+                                    await ws.send_json({"type":"save_result","ok":False,
+                                        "message":"No website session data to save. Browser remains open."})
+                                    continue
+                                await asyncio.to_thread(_persist_encrypted_site_profile,
+                                    owner_id=owner["private_owner_id"],
+                                    origin=origin,state=storage)
+                            except Exception:
+                                # Storage errors are not browser failures: never
+                                # reveal GCS metadata, tokens, cookies or key values.
+                                # Keep the original authenticated Chromium live.
+                                await ws.send_json({"type":"save_result","ok":False,
+                                    "message":"Encrypted session storage unavailable. Browser remains open; saving was not confirmed."})
+                                continue
+                            await ws.send_json({"type":"save_result","ok":True,
+                                "message":"Website state stored encrypted; website login restoration not yet verified"})
                             continue
-                        await ws.send_json({"type":"save_result","ok":True,
-                            "message":"Website state stored encrypted; website login restoration not yet verified"})
-                        continue
-                    elif kind=="close":
-                        break
-                    else:
-                        raise PermissionError("Unknown browser operation")
-                    if demo=="0" and not safe_url(page.url,origins=approved_origins):
-                        raise PermissionError("Website redirected off authorized origins")
-                    await show_picture()
+                        elif kind=="close":
+                            break
+                        else:
+                            raise PermissionError("Unknown browser operation")
+                        if demo=="0" and not safe_url(page.url,origins=approved_origins):
+                            raise PermissionError("Website redirected off authorized origins")
+                        await show_picture()
+                    except PlaywrightTimeoutError:
+                        if kind=="type":
+                            await ws.send_json({"type":"ack","action":"type","ok":False})
+                        elif kind=="click":
+                            await ws.send_json({"type":"ack","action":"click","field":"none"})
+                        # The website may have partially acted: do not replay.
+                        # Preserve fields and let the owner inspect the picture.
+                        await ws.send_json({"type":"status","code":"action_timeout",
+                            "message":"Website action timed out and was not retried. Browser remains open; inspect the page before continuing."})
+                        await show_picture()
+                    phase="live_interaction"
                 else:
                     await ws.send_json({"type":"status","failure":True,
                                         "message":"Browser action limit reached; reopen a fresh browser."})
         except WebSocketDisconnect:
             pass
-        except Exception:
+        except Exception as exc:
             # Only fixed, non-sensitive phases are shown. Never expose website
             # URLs, remote page content, cookies, Cloud Run internals or tokens.
             failures={
                 "destination_check":"Website destination could not pass DNS safety checks.",
                 "chromium_start":"Private Chromium could not start on the browser server.",
                 "website_load":"Approved website did not load in private Chromium.",
+                "first_picture":"Private browser picture could not be sent.",
+                "owner_action":"Private browser action could not complete.",
                 "live_interaction":"Private browser interaction ended unexpectedly.",
             }
             try:
+                category=("permission_denied" if isinstance(exc,PermissionError)
+                          else "connection_closed" if isinstance(exc,(RuntimeError,ConnectionError))
+                          else "operation_failed")
                 await ws.send_json({"type":"status","failure":True,
-                    "message":failures.get(phase,"Private browser operation failed.")})
+                    "code":phase+":"+category,
+                    "message":failures.get(phase,"Private browser operation failed.")+
+                              " Diagnostic: "+phase+":"+category+"."})
             except Exception:
                 pass
         finally:
