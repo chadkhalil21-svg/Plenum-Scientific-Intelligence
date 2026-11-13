@@ -65,6 +65,22 @@ class GoogleAQuAOfflineOriginalTraceTests(TestCase):
             "external_account_changes": False, "paid_api_used": False,
         }
 
+    def test_official_original_aqua_telemetry_schema_is_read_and_used(self):
+        from plenum_ai.ambient_quality_insights import (
+            read_official_aqua_event_schema, AQUA_EVENTS_GIT_BLOB_SHA
+        )
+        fields = read_official_aqua_event_schema()
+        self.assertEqual(AQUA_EVENTS_GIT_BLOB_SHA,
+                         "78b6fbe3319a0932cd2fcdf3f55ecca3ee5822e1")
+        self.assertEqual([x["name"] for x in fields],
+                         ["timestamp", "event_type", "agent", "session_id",
+                          "invocation_id", "content", "attributes", "error_message"])
+        output = inspect_chief_report(self.original())
+        self.assertTrue(output["actual_google_aqua_event_schema_used"])
+        self.assertEqual(output["offline_aqua_compatible_event"]["agent"],
+                         "plenum-original-chief")
+        self.assertFalse(output["official_google_aqua_engine_installed"])
+
     def test_real_chief_metadata_does_not_get_promoted_to_achieved_goal(self):
         output = inspect_chief_report(self.original())
         self.assertEqual(output["disposition"], "BOUNDED_DELIVERY_FOUNDER_OBJECTIVE_OPEN")
