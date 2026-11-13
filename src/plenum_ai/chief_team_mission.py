@@ -158,9 +158,9 @@ def named_entity_evidence_gate(objective: str, kinds: tuple[str, ...],
 # provider content claim or provider account access is certified by this rule.
 # This is not a synthetic "completed all agent work" success switch.
 EXACT_PUBLIC_ACCEPTANCE_GOALS = {
-    "Verify Cloudflare Workers AI source URLs and run existing Python neuron budget validator":
+    "Survey official Cloudflare Workers AI sources and run existing Python neuron budget validator":
         "cloudflare_workers_ai_free",
-    "Verify NOAA station metadata source URLs and run existing Python station validator":
+    "Survey official NOAA station metadata sources and run existing Python station validator":
         "noaa_water_station_metadata",
 }
 
@@ -191,7 +191,7 @@ def grade_complete_bounded_public_goal(objective: str, team: tuple[str, ...],
     if not (isinstance(research_name, str) and isinstance(program_name, str)):
         return rejected
     research_path = root / research_name
-    program_dir = root / program_name / "code"
+    program_dir = root / program_name
     try:
         if (research_path.is_symlink() or not research_path.is_file()
                 or research_path.stat().st_size > 50000
