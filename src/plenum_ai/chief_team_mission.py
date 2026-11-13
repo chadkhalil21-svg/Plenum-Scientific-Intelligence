@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import os
 import re
 
 from .chief_workforce_command import (
@@ -162,6 +163,8 @@ EXACT_PUBLIC_ACCEPTANCE_GOALS = {
         "cloudflare_workers_ai_free",
     "Survey official NOAA station metadata sources and run existing Python station validator":
         "noaa_water_station_metadata",
+    "Survey NOAA station metadata sources and run existing Python coastal validator recovery":
+        "noaa_water_station_metadata",
 }
 
 
@@ -250,6 +253,25 @@ def grade_complete_bounded_public_goal(objective: str, team: tuple[str, ...],
     }
 
 
+
+def _one_time_live_public_recovery_probe(task: dict, kind: str) -> bool:
+    """One founder-authorized PUBLIC error-recovery acceptance; no account writes.
+
+    Only the exact one-time public issue objective and genuine original GitHub
+    initial attempt. GitHub's native retry (attempt=2) runs the REAL specialist.
+    This does not affect real missions, private pages, or existing old issues.
+    """
+    return (
+        task["objective"] == "Survey NOAA station metadata sources and run existing Python coastal validator recovery"
+        and kind == "public_program"
+        and os.environ.get("GITHUB_ACTIONS") == "true"
+        and os.environ.get("GITHUB_REPOSITORY") == "chadkhalil21-svg/Plenum-Scientific-Intelligence"
+        and os.environ.get("GITHUB_EVENT_NAME") == "issues"
+        and os.environ.get("GITHUB_RUN_ATTEMPT") == "1"
+        and str(os.environ.get("GITHUB_RUN_ID", "")).isdigit()
+    )
+
+
 def execute(event: dict, *, output_dir: Path) -> dict:
     report = preflight(event)
     task = parse_mission(event)
@@ -282,6 +304,11 @@ def execute(event: dict, *, output_dir: Path) -> dict:
         worker_dir = base if attempt == 1 else base / "retry-2"
         executed += 1
         try:
+            if _one_time_live_public_recovery_probe(task, kind):
+                # A controlled, traceable interruption of only ONE worker;
+                # the already-completed real Research artifact is retained.
+                # On GitHub's single native rerun this clause is false.
+                raise RuntimeError("ONE_TIME_PUBLIC_RECOVERY_PROBE")
             result = run_issue(original_event, output_dir=worker_dir)
             if not isinstance(result, dict):
                 raise ValueError("Original worker returned a non-object")
