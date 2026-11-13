@@ -45,8 +45,7 @@ class OriginalMinisterMissedWakeTests(unittest.TestCase):
             self.assertFalse(m.missing_original_attempt([
                 {"user": {"login": "github-actions[bot]"}, "body": body},
             ], 789))
-        self.assertFalse(m.missing_original_attempt([{}], 789) is False
-                         and False)  # Parsing does not trust missing bot as execution
+        self.assertTrue(m.missing_original_attempt([{}], 789))  # no trusted bot attempt
         self.assertFalse(m.missing_original_attempt([{"body": "x"}]*100, 789))
 
     def test_dispatches_only_original_once_then_records_attempt(self):
