@@ -20,7 +20,7 @@ class FounderCatalogContract(unittest.TestCase):
         self.assertTrue(d["summary"]["no_new_spend_authorized"])
         self.assertTrue(all(not x["private_account_rights_granted"] for x in d["items"]))
         names={x["name"]:x for x in d["items"]}
-        self.assertIn("UNVERIFIED",names["Google AQuA"]["adoption_status"])
+        self.assertEqual(names["Google AQuA"]["adoption_status"], "OFFICIAL_APACHE2_SOURCE_CLOUD_COST_GATED")
         self.assertIn("PAID",names["Airia"]["adoption_status"])
         self.assertIn("QUOTA",names["Freebuff"]["adoption_status"])
         self.assertIn("SOURCE_READY",names["Cloudflare Workers Free"]["adoption_status"])
@@ -57,7 +57,7 @@ class FounderCatalogContract(unittest.TestCase):
         decisions=agent_council.read_public_tool_adoption_context(
             "Evaluate free specialist software tools")
         self.assertIn("not 84 installations",decisions)
-        self.assertIn("Google AQuA=IDENTITY_UNVERIFIED",decisions)
+        self.assertIn("Google AQuA=OFFICIAL_APACHE2_SOURCE_CLOUD_COST_GATED",decisions)
         self.assertIn("Airia=PAID_DEFER",decisions)
         self.assertEqual(agent_council.read_public_tool_adoption_context(
             "Assess independent scientific predictions"),"")
