@@ -244,6 +244,10 @@ def login_html(nonce, register_token=""):
     <button id="type" disabled>Type</button>
     <button id="enter" disabled>Enter</button>
     <button id="tab" disabled>Tab</button>
+    <button id="back" disabled>Back</button>
+    <button id="forward" disabled>Forward</button>
+    <button id="scroll-up" disabled>Scroll up</button>
+    <button id="scroll-down" disabled>Scroll down</button>
     <button id="reload" disabled>Reload</button>
     <button id="save" disabled>Save this website login</button>
     <button id="close">Close</button></p>
@@ -259,7 +263,7 @@ def login_html(nonce, register_token=""):
       typeButton=document.getElementById("type");
     function updateTypingEnabled(){
       typeButton.disabled=!ready||selected==="none"||pendingText!==null;
-      for(const id of ["enter","tab","reload"]){
+      for(const id of ["enter","tab","back","forward","scroll-up","scroll-down","reload"]){
         document.getElementById(id).disabled=!ready;
       }
       document.getElementById("save").disabled=!ready||saveInFlight||pageBlank||challengeBlocked;
@@ -510,6 +514,10 @@ def login_html(nonce, register_token=""):
     };
     document.getElementById("enter").onclick=()=>send({type:"key",key:"Enter"});
     document.getElementById("tab").onclick=()=>send({type:"key",key:"Tab"});
+    document.getElementById("back").onclick=()=>send({type:"back"});
+    document.getElementById("forward").onclick=()=>send({type:"forward"});
+    document.getElementById("scroll-up").onclick=()=>send({type:"scroll",direction:"up"});
+    document.getElementById("scroll-down").onclick=()=>send({type:"scroll",direction:"down"});
     document.getElementById("reload").onclick=()=>send({type:"reload"});
     document.getElementById("save").onclick=()=>{
       if(saveInFlight||!ready||pageBlank||challengeBlocked)return;
@@ -575,6 +583,33 @@ async def _page_render_health(ws, page, blocked):
                         "blocked_cross_origin":min(99,blocked["cross_origin"]),
                         "unsupported_cloudflare_challenge":
                             await _unsupported_cloudflare_challenge(page)})
+
+
+async def _owner_safe_navigation(page, *, kind, approved_origins, direction=""):
+    """Permit only bounded owner gestures within previously approved HTTPS origins.
+
+    The verified-owner WebSocket supplies approved_origins after existing
+    Auth0/IAP identity and website-grant checks. No model-facing command
+    channel, credentials, arbitrary URL, or script API is introduced.
+    """
+    if not safe_url(page.url, origins=approved_origins):
+        raise PermissionError("Browser left the approved website")
+    if kind == "scroll":
+        if direction not in {"up", "down"}:
+            raise PermissionError("Unsupported scroll direction")
+        await page.mouse.wheel(0, -640 if direction == "up" else 640)
+    elif kind == "back":
+        if direction:
+            raise PermissionError("Unexpected navigation parameter")
+        await page.go_back(wait_until="domcontentloaded", timeout=25000)
+    elif kind == "forward":
+        if direction:
+            raise PermissionError("Unexpected navigation parameter")
+        await page.go_forward(wait_until="domcontentloaded", timeout=25000)
+    else:
+        raise PermissionError("Unsupported browser navigation")
+    if not safe_url(page.url, origins=approved_origins):
+        raise PermissionError("Browser navigation left the approved website")
 
 
 def mount_private_login(app):
@@ -839,6 +874,10 @@ def mount_private_login(app):
                         if command.get("key") not in {"Enter","Tab","Backspace"}:
                             raise PermissionError("Unsupported key combination")
                         await page.keyboard.press(command["key"])
+                    elif kind in {"back", "forward", "scroll"}:
+                        await _owner_safe_navigation(
+                            page, kind=kind, approved_origins=approved_origins,
+                            direction=command.get("direction", ""))
                     elif kind=="reload":
                         if demo=="0":
                             await page.reload(wait_until="domcontentloaded",timeout=25000)
