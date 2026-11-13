@@ -8,6 +8,7 @@ on:
       - 'tests/test_chief_workforce_command.py'
       - 'src/plenum_ai/chief_team_mission.py'
       - 'tests/test_chief_team_mission.py'
+      - 'tests/test_chief_bounded_goal_quality.py'
       - 'src/plenum_ai/mission_checkpoint.py'
       - 'src/plenum_ai/ambient_quality_insights.py'
       - 'tests/test_google_egm_aqua_quality.py'
@@ -34,6 +35,7 @@ jobs:
           python -m pip install -e .
           python -m unittest discover -s tests -p 'test_chief_workforce_command.py' -v
           python -m unittest discover -s tests -p 'test_chief_team_mission.py' -v
+          python -m unittest discover -s tests -p 'test_chief_bounded_goal_quality.py' -v
           python -m unittest discover -s tests -p 'test_google_egm_aqua_quality.py' -v
   founder-command:
     if: >-
