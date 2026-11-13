@@ -1,4 +1,4 @@
-name: Diagnose Failed OAuth MCP Cloud Build (Read Only)
+name: Diagnose Failed Owner Browser Cloud Build (Read Only)
 on:
   issues:
     types: [opened]
@@ -12,7 +12,7 @@ jobs:
       github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
       github.event.issue.user.login == 'chadkhalil21-svg' &&
       github.event.issue.title == 'Computer Browser: diagnose failed Auth0 MCP build' &&
-      github.event.issue.body == 'DIAGNOSE_AUTH0_MCP_BUILD_38fd4d79:2026-11-08'
+      github.event.issue.body == 'DIAGNOSE_AUTH0_MCP_BUILD_a6ef98ff:2026-11-08'
     environment: computer-browser-production
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -32,11 +32,11 @@ jobs:
           test "$GCP_PROJECT_ID" = 'plenum-computer-browser'
           umask 077
           trap 'rm -f "$RUNNER_TEMP/mcp-build.json" "$RUNNER_TEMP/mcp-build-logs.json" "$RUNNER_TEMP/mcp-build-log-errors"' EXIT
-          gcloud builds describe 38fd4d79-ceca-489d-aabb-bd71f3d3fe49 \
+          gcloud builds describe a6ef98ff-62ea-44ec-9965-887087494380 \
             --project="$GCP_PROJECT_ID" --region=us-east1 \
             --format=json > "$RUNNER_TEMP/mcp-build.json"
           if ! gcloud logging read \
-            'resource.type="build" AND resource.labels.build_id="38fd4d79-ceca-489d-aabb-bd71f3d3fe49"' \
+            'resource.type="build" AND resource.labels.build_id="a6ef98ff-62ea-44ec-9965-887087494380"' \
             --project="$GCP_PROJECT_ID" --limit=200 --format=json \
             > "$RUNNER_TEMP/mcp-build-logs.json" 2> "$RUNNER_TEMP/mcp-build-log-errors"; then
             echo 'Unable to retrieve Cloud Logging details with existing deployer permissions.'
@@ -46,7 +46,7 @@ jobs:
           import json,os,re
           root=os.environ["RUNNER_TEMP"]
           build=json.load(open(root+"/mcp-build.json"))
-          assert build.get("id")=="38fd4d79-ceca-489d-aabb-bd71f3d3fe49"
+          assert build.get("id")=="a6ef98ff-62ea-44ec-9965-887087494380"
           assert build.get("status")=="FAILURE"
           print("Build status: FAILURE; step 0: "+str(build.get("steps",[{}])[0].get("status","unknown")))
           raw=open(root+"/mcp-build-logs.json").read()
@@ -77,6 +77,21 @@ jobs:
               else:
                   label="OTHER_BUILD_STEP_ERROR"
           print("SANITIZED_FAILURE_CATEGORY="+label)
+          # Emit only fixed dependency/exception diagnostics from public source builds.
+          if raw!="LOG_READ_UNAVAILABLE\\n":
+              safe=[]
+              for chunk in chunks:
+                  for line in chunk.splitlines():
+                      if any(marker in line for marker in (
+                          "ResolutionImpossible", "The conflict is caused by:",
+                          " depends on ", "No matching distribution found",
+                          "Could not find a version that satisfies",
+                          "AssertionError", "ModuleNotFoundError", "ImportError"
+                      )):
+                          if not re.search(r"https?://|token|password|credential|secret|bearer|authorization",line,re.I):
+                              safe.append(re.sub(r"[^A-Za-z0-9 .,:;_=/()<>!+\\[\\]'-]","?",line)[:240])
+              for line in safe[:16]:
+                  print("PUBLIC_BUILD_DIAGNOSTIC="+line)
           with open(os.environ["GITHUB_OUTPUT"],"a") as f:
               f.write("category="+label+"\n")
           PY
@@ -94,4 +109,4 @@ jobs:
             DOCKERFILE_PARSER_OR_HEREDOC|DOCKERFILE_BUILD_CONTEXT_OR_COPY|PYTHON_DEPENDENCY_RESOLUTION|BUILD_PERMISSION|BUILD_NETWORK|CLOUD_LOGS_EMPTY|CLOUD_LOGS_UNAVAILABLE|OTHER_BUILD_STEP_ERROR) ;;
             *) CATEGORY="DIAGNOSTIC_UNAVAILABLE" ;;
           esac
-          gh issue comment "$ISSUE_NUMBER" --body "OAuth MCP Cloud Build 38fd4d79 read-only failure classification: $CATEGORY. No public service, browser action, IAM grants, or Cloud Run changes performed."
+          gh issue comment "$ISSUE_NUMBER" --body "Owner Browser Cloud Build a6ef98ff read-only failure classification: $CATEGORY. No public service, browser action, IAM grants, or Cloud Run changes performed."

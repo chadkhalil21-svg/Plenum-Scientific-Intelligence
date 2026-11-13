@@ -1,5 +1,9 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Authorized owner release failed before deployment
+
+Founder explicitly authorized this existing build/release despite possible Google build/storage/runtime charges. Original release issue #614 / run #43471155543 passed OIDC and existing owner/vault checks but Cloud Build `a6ef98ff-62ea-44ec-9965-887087494380` failed step 0. Cloud Run image update was SKIPPED; prior running revision remains unchanged. Founder staged, but has not deployed, the original `PLENUM_CF_AI_TOKEN` secret reference version 1. Reuse the existing fixed-build read-only diagnostic workflow for this exact failed build and bounded public dependency/exception messages; do not rerun a build before establishing cause. Browser #310 remains OPEN; source merge is not live inference or account-task acceptance.
+
 ## 2026-11-13 | Cloudflare Workers AI secret binding audit (READ ONLY; not deployed)
 
 Founder screenshot shows `PLENUM_CF_AI_TOKEN` newly created in EXISTING GCP Secret Manager; Cloudflare account ID provided privately. The original `computer-browser-cloud-identity-preflight.yml` OIDC job is extended to check only live secret **metadata**, the original Auth0 owner's environment **binding names**, and consent/Free-plan flag Boolean state. It does not read token values, transmit an account ID, call an AI model, invoke Cloud Build, change IAM, or deploy Cloud Run. Until a real OIDC run reports results, this is **source-only**, and the private agent remains **not accepted**. Original issue #310 is the only browser completion tracker. No new spending authorized.
