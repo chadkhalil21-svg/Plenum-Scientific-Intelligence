@@ -34,7 +34,7 @@ async def measure() -> dict:
     llm = ChatOllama(
         model="qwen3:0.6b",
         host="http://127.0.0.1:11434",
-        ollama_options={"num_ctx": 2048, "num_predict": 120, "think": False},
+        ollama_options={"num_ctx": 4096, "num_predict": 120, "think": False},
     )
     async with async_playwright() as pw:
         browser = Browser(
