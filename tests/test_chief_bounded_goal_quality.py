@@ -87,7 +87,7 @@ class RealBoundedFounderGoalVerifierTests(TestCase):
                  "repository": {"full_name": "chadkhalil21-svg/Plenum-Scientific-Intelligence"},
                  "issue": {"number": 1001, "user": {"login": "chadkhalil21-svg"},
                            "title": "[Plenum Chief] public mission",
-                           "body": "PLENUM_CHIEF_PUBLIC_MISSION_V1\\nobjective: " + objective}}
+                           "body": "PLENUM_CHIEF_PUBLIC_MISSION_V1\nobjective: " + objective}}
         title, publisher, url = DOMAIN_SOURCES["noaa_water_station_metadata"][0]
         source_records = [{"source": publisher, "title": title, "url": url,
                            "http_status": 200, "independently_quoted_page_text": False}]
