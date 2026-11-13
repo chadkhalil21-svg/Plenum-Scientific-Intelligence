@@ -42,6 +42,36 @@ class ElephantGoldfishTests(TestCase):
         # multi-agent workflow has NOT been activated or claimed.
         self.assertFalse(hasattr(c, "egm_five_stage_pipeline_running"))
 
+    def test_google_ground_truth_reaches_four_seats_and_fresh_goldfish(self):
+        # Real #566 exposed that green Actions + EGM persona can still repeat
+        # wrong claims about Google AQuA and whether EGM was imported.
+        objective = "Review Google Elephant Goldfish and AQuA free software reuse for Plenum agent quality"
+        dossier = c.read_public_tool_adoption_context(objective)
+        self.assertIn("Google AQuA:", dossier)
+        self.assertIn("diagnoses recurrent failures", dossier)
+        self.assertIn("Elephant–Goldfish:", dossier)
+        self.assertIn("not the full five-stage review plugin", dossier)
+        self.assertIn("github.com/google/adk-recipes", dossier)
+        calls = []
+        event = {"action": "opened", "repository": {"full_name": c.REPO},
+                 "issue": {"number": 566, "title": c.TITLE,
+                           "user": {"login": c.FOUNDER},
+                           "body": c.MARKER + "\nobjective: " + objective}}
+        with patch.dict("os.environ", {
+            "PLENUM_EPHEMERAL_RUNNER": "confirmed",
+            "PLENUM_COUNCIL_MODEL_URL": c.MODEL_URL,
+        }), patch.object(c, "_ask_local", side_effect=lambda system, user:
+                         calls.append((system, user)) or
+                         "Untrusted review only, requires independent source-backed verification."):
+            report = c.deliberate(event)
+        self.assertEqual(len(calls), 5)
+        self.assertTrue(all("Google AQuA:" in system for system, _ in calls))
+        self.assertTrue(all("not the full five-stage review plugin" in system
+                            for system, _ in calls))
+        self.assertNotIn("DATED PUBLIC ELEPHANT", calls[-1][0])
+        self.assertFalse(report["recommendation_verified_against_external_sources"])
+        self.assertFalse(report["tasks_executed"])
+
     def test_goldfish_does_not_inherit_elephant_as_prior_authority(self):
         event={"action":"opened","repository":{"full_name":c.REPO},"issue":{
             "number":988,"title":c.TITLE,"user":{"login":c.FOUNDER},

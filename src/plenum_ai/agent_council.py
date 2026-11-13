@@ -130,9 +130,33 @@ def read_public_tool_adoption_context(objective: str, path=PLATFORM_PUBLIC_REGIS
     if len(selected) != len(wanted):
         raise ValueError("Missing core founder adoption evidence")
     decisions = "; ".join(name + "=" + selected[name]["adoption_status"] for name in wanted)
+    # Actual founder council #566 revealed that a small model invented AQuA
+    # inference capabilities and called an already-imported Google reviewer
+    # unverified. Include the existing SOURCE registry's narrow description,
+    # status and original upstream link for both tools, not a fabricated
+    # general-purpose inference provider or a second history-bearing critic.
+    source_dossier = ""
+    if any(name in text for name in ("elephant", "goldfish", "aqua")):
+        by_key = {row.get("key"): row for row in items}
+        facts = []
+        for key in ("elephant-goldfish", "google-aqua"):
+            row = by_key.get(key)
+            if (not isinstance(row, dict)
+                    or not isinstance(row.get("purpose"), str)
+                    or not 25 <= len(row["purpose"]) <= 450
+                    or not isinstance(row.get("adoption_status"), str)
+                    or not row.get("source_url", "").startswith("https://github.com/google/")):
+                raise ValueError("Missing original source-grounded Google tool status")
+            facts.append(row["name"] + ": " + row["purpose"] +
+                         " [status: " + row["adoption_status"] +
+                         "; original: " + row["source_url"] + "]")
+        source_dossier = (" ORIGINAL GOOGLE SOURCE FACTS; distinguish source"
+                          " licensing, actual usage, trustworthy advice,"
+                          " and cloud costs: " + "; ".join(facts))
     return ("Founder no-new-spend policy. Verified PUBLIC 84-platform registry,"
             " not 84 installations; role-specific skills only. " + decisions +
-            ". Full vendor apps and owner accounts NOT auto-installed. ")
+            ". Full vendor apps and owner accounts NOT auto-installed. " +
+            source_dossier)
 
 
 
@@ -247,7 +271,8 @@ def deliberate(event):
         "history, tools or authority to approve execution. "
         "Distinguish missing verification from concrete failures. "
         "No private documents or credentials. "
-        + VERIFIED_CONTEXT + " " + read_real_google_egm_design_critic(),
+        + VERIFIED_CONTEXT + " " + tool_decisions + " " +
+        read_real_google_egm_design_critic(),
         "PUBLIC founder agenda: " + task["objective"] + "\n\n" + dossier[:9000],
     )
     # Founder Business Advisor synthesizes the five existing council
