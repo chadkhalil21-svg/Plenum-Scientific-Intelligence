@@ -1,5 +1,14 @@
 # Engineering and Scientific Ledger
 
+## 2026-11-13 | Navigation-context crash REPRODUCED, repaired and deployed; new-image recovery PASS
+
+Before: #652/run43498466956 exact deployed28384eb reproduced Error NAVIGATION_CONTEXT_LOST in original selected-field probe after one real coordinate navigation. PR653 merged62eba539c2dc167b9dbcd90f7d157cf49ffd86f8 after all4CI passed, including30 private-login tests and new real offline navigation→picture→new field/typing coverage. Original protected release654/run43499269439 SUCCEEDED: Cloud Build941f0d4e-8839-4d7c-a0c5-284f13a353a9, owner revision00052-dh8 serves100%, OAuth302/anonymous401, vault/identity/900s retained.
+
+Independent #655/run43499779011 read actual image62eba539 and, in network-disabled original container, verified one coordinate click, safe unknown focus, destination picture8,816bytes, new-page field selectionTrue, navigation recoveryTrue. Original #656/run43499780993 readback PASSED concurrency4/maxScale1 and all accepted CF token-reference/account-shape/CF/owner-Free-confirmation/agent flags. No owner session/credentials/private pages/model calls used. This is original code/image recovery proof, not genuine founder account or AI-inference acceptance.
+
+Original focus metadata failure now returns none (typing denied) instead of killing Chromium; no action replay, private exception leakage, changed origin/owner gates or alternate engine. Prior capacity/timeout repairs retained. Founder should refresh and use original explicit GitHub quick-open (which repopulates the URL/resources), then personally sign in/save. His precise private exception text was not collected; real-account task and Workers AI inference remainOPEN under310. Existing authorized Google build/runtime quota/cost applies, no IAM/new host/new token.
+
+
 ## 2026-11-13 | Live capacity refusal REPAIRED; protocol boundary and signed image test PASS
 
 Before: original #647/run43492840208 actual production anonymous WebSocket Upgrade returned429 before authentication; original live config was concurrency1/max-instances1. PR #648 merged cd15dae3103f230c576c977d7d4931f4bcf4f73d and config-only #649/run43493447769 SUCCEEDED: revision00051-pc5 serves100%; concurrency4/max-instances1; same28384eb image, all env/Cloudflare bindings, identity, vault, CPU/memory and900s timeout preserved. OAuth302/anonymous owner401 passed. No rebuild, IAM, new host, credential access or inference.
