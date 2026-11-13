@@ -1,0 +1,11 @@
+# Only for a private owner-controlled Docker host; never deploy in public CI.
+services:
+  falkordb:
+    image: falkordb/falkordb:latest
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - plenum-falkordb-private:/var/lib/falkordb/data
+    restart: unless-stopped
+volumes:
+  plenum-falkordb-private:
