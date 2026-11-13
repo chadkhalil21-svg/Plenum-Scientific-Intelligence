@@ -1,5 +1,9 @@
 # Plenum Computer Browser: progress and acceptance ledger
 
+## 2026-11-13 | Actual remaining config read; enable only authorized gated switches
+
+Original read-only audit #632 / run #43478476299 SUCCEEDED: ready owner revision, token boundYES, Cloudflare account-ID configuredNO, CF enabledNO, Free-plan flagNO, agent enabledNO. Independent service metadata read succeeded despite secret metadata unavailable; no raw values disclosed. Original activation now sets only authorized PLENUM_CF_AI_ENABLED and PLENUM_OWNER_READONLY_AGENT_ENABLED to true and reads them back. Existing account-ID shape + explicit Free-plan + per-task consent gates remain mandatory; do not set Free-plan-confirmed without actual provider evidence or send observations/model calls. No rebuild, new service, IAM or secret read. Owner private console must supply account ID and verified plan; #310 remains OPEN.
+
 ## 2026-11-13 | Token binding LIVE; inspect remaining actual AI flags independently
 
 Founder-granted runtime accessor accepted: original activation #630 / run #43477859477 succeeded, revision00045-f2f serving100%, exact PLENUM_CF_AI_TOKEN version1 binding and OAuth302/anonymous401 independently checked. Reuse accepted grant/token/image, no new build. Original read-only OIDC audit must not stop before live environment-name/Boolean checks merely because its separate deployer cannot describe secret metadata; make that metadata check explicitly unavailable and continue independent service-config read. No secret values/account-ID values/private pages in output, no IAM or configuration changes, no inference. Remaining actual account/Free-plan/agent flag state must come from live audit, not source assumptions. #310 remains OPEN.

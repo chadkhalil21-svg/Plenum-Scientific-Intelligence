@@ -67,7 +67,7 @@ jobs:
           set -euo pipefail
           gcloud run services update plenum-browser-owner-auth0 \
             --project="$PROJECT" --region=us-east1 \
-            --update-env-vars "AUTH0_OWNER_CLIENT_ID=$AUTH0_CLIENT,BROWSER_PROFILE_BUCKET=$BUCKET" \
+            --update-env-vars "AUTH0_OWNER_CLIENT_ID=$AUTH0_CLIENT,BROWSER_PROFILE_BUCKET=$BUCKET,PLENUM_CF_AI_ENABLED=true,PLENUM_OWNER_READONLY_AGENT_ENABLED=true" \
             --update-secrets "BROWSER_SESSION_KEY=computer-browser-session-key:latest,PLENUM_CF_AI_TOKEN=PLENUM_CF_AI_TOKEN:1" \
             --quiet >/dev/null
           URL="$(gcloud run services describe plenum-browser-owner-auth0 --project="$PROJECT" --region=us-east1 --format='value(status.url)')"
@@ -87,8 +87,10 @@ jobs:
           env={e["name"]:e for e in spec["containers"][0]["env"]}
           ref=env["PLENUM_CF_AI_TOKEN"]["valueFrom"]["secretKeyRef"]
           assert ref["name"]=="PLENUM_CF_AI_TOKEN" and str(ref["key"])=="1"
+          assert env["PLENUM_CF_AI_ENABLED"].get("value")=="true"
+          assert env["PLENUM_OWNER_READONLY_AGENT_ENABLED"].get("value")=="true"
           p.unlink()
-          print("PASS: Existing owner runtime references Cloudflare token version 1; no secret value read.")
+          print("PASS: Existing owner token bound and agent switches enabled; account/Free-plan/task gates still required.")
           PY
           echo "url=$URL" >> "$GITHUB_OUTPUT"
       - name: Verify Auth0 login initiates and owner pages remain denied to anonymous users
