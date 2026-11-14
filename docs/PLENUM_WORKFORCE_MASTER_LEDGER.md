@@ -1,3 +1,11 @@
+## 2026-11-14 | Preserve original coding-worker failure evidence (source only)
+
+Original OpenHands #664/run43553227196 downloaded the exact Qwen3.5-9B candidate but encountered a 300-second Ollama timeout and produced no proposal; its artifact retained only preflight status. The original worker now uses pinned official SDK1.60.1 `Conversation(persistence_dir=..., callbacks=...)`, retains raw SDK events only in a separate disposable directory, and exports at most64 allowlisted event-type/source records plus counters. No prompt, thought, tool body, error detail or raw SDK store enters public artifacts. Atomic failure receipts distinguish requested execution, completed conversation runs, observed model responses, tool observations and accepted source; finally preserves failures instead of stale PREFLIGHT_ONLY. Existing model, timeouts, bounded two-pass repair and account restrictions are unchanged. Focused timeout/redaction regression failed before the repair and passes after it; no model rerun, cloud deployment or account action occurred. This is diagnostic source work, not successful autonomous code production or signed-in browser acceptance.
+
+Separately, original upload symlink repair PR #665 is SOURCE MERGED as3a11dbe1e22eb9d8ceafe8793ec4447bde0cb584 with independent helper behavior and three GitHub CI passes; NOT DEPLOYED. Its external Cloudflare preview failed without accessible diagnosis; no all-checks-green claim. Original #310 remains open for real authorized saved-site mission and live Workers AI acceptance.
+
+---
+
 ## 2026-11-13 | Original coding specialist: distinct candidate for a reproduced upload defect
 
 Root reproduced that browser_actions._approved_upload accepts a symlink ID pointing to another file within the approved directory: resolving first makes the subsequent is_symlink check ineffective. The regression fails before any repair. This is a public source defect, not a live website action or credential incident.

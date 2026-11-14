@@ -125,6 +125,55 @@ def _out_dir(issue_number: int) -> Path:
     return Path("reports") / "browser-agent" / ("issue-" + str(issue_number))
 
 
+
+class PublicEventTrace:
+    """Bounded metadata-only projection of pinned SDK callbacks.
+
+    Never serialize an event, prompt, thought, tool arguments, response body,
+    error detail, filename or URL into public artifacts. Raw official SDK
+    persistence lives only in a separate disposable directory.
+    """
+    def __init__(self):
+        self.events = []
+        self.total = 0
+        self.responses = 0
+        self.observations = 0
+        self.timeout_observed = False
+
+    def __call__(self, event):
+        kind = type(event).__name__
+        allowed = {"ActionEvent", "MessageEvent", "ObservationEvent",
+                   "AgentErrorEvent", "ConversationErrorEvent"}
+        kind = kind if kind in allowed else "OTHER"
+        source = getattr(event, "source", None)
+        source = source if source in {"agent", "user", "environment"} else "unknown"
+        self.total += 1
+        if kind == "ConversationErrorEvent":
+            self.timeout_observed |= "timeout" in str(getattr(event, "code", "")).lower()
+        if source == "agent" and kind in {"ActionEvent", "MessageEvent"}:
+            self.responses += 1
+        if kind == "ObservationEvent":
+            self.observations += 1
+        if len(self.events) < 64:
+            self.events.append({"event_type": kind, "source": source})
+
+    def snapshot(self):
+        return {"schema": "plenum-public-coder-redacted-events-v1",
+                "events": self.events, "events_seen": self.total,
+                "truncated": self.total > len(self.events),
+                "model_response_observed": self.responses > 0,
+                "agent_response_events_seen": self.responses,
+                "tool_observations_seen": self.observations,
+                "timeout_error_event_observed": self.timeout_observed,
+                "raw_event_content_retained": False}
+
+
+def _write_receipt(output, receipt):
+    temporary = output / "result.json.tmp"
+    temporary.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+    temporary.replace(output / "result.json")
+
+
 def run(event: dict, *, execute: bool = False) -> dict:
     task = parse_issue(event)
     output = _out_dir(task["issue"])
@@ -132,6 +181,12 @@ def run(event: dict, *, execute: bool = False) -> dict:
     receipt = {
         **task,
         "model_executed": False,
+        "model_response_observed": False,
+        "model_inference_requested": False,
+        "conversation_runs_attempted": 0,
+        "conversation_runs_completed": 0,
+        "tool_observations_seen": 0,
+        "failure_category": None,
         "source_candidate_syntax_verified": False,
         "production_written": False,
         "external_account_actions": False,
@@ -140,97 +195,127 @@ def run(event: dict, *, execute: bool = False) -> dict:
         "status": "PREFLIGHT_ONLY",
     }
     if not execute:
-        (output / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
+        _write_receipt(output, receipt)
         return receipt
-    if (
-        os.getenv("PLENUM_EPHEMERAL_RUNNER") != "confirmed"
-        or os.getenv("PLENUM_OPENHANDS_MODEL") != "ollama/qwen3.5:9b-q4_K_M"
-        or os.getenv("PLENUM_OPENHANDS_BASE_URL") != "http://127.0.0.1:11434"
-        or importlib.metadata.version("openhands-sdk") != PINNED_VERSION
-    ):
-        raise PermissionError("Pinned local model and ephemeral OpenHands required")
-    from openhands.sdk import Agent, Conversation, LLM, Tool
-    from openhands.tools.file_editor import FileEditorTool
+    trace = PublicEventTrace()
+    receipt["status"] = "EXECUTION_STARTED"
+    _write_receipt(output, receipt)
+    try:
+        if (
+            os.getenv("PLENUM_EPHEMERAL_RUNNER") != "confirmed"
+            or os.getenv("PLENUM_OPENHANDS_MODEL") != "ollama/qwen3.5:9b-q4_K_M"
+            or os.getenv("PLENUM_OPENHANDS_BASE_URL") != "http://127.0.0.1:11434"
+            or importlib.metadata.version("openhands-sdk") != PINNED_VERSION
+        ):
+            raise PermissionError("Pinned local model and ephemeral OpenHands required")
+        from openhands.sdk import Agent, Conversation, LLM, Tool
+        from openhands.tools.file_editor import FileEditorTool
 
-    with tempfile.TemporaryDirectory(prefix="plenum-browser-code-") as temp:
-        root = Path(temp)
-        trusted = {}
-        for name in SOURCES:
-            src = Path(name)
-            if not src.is_file() or src.stat().st_size > 50_000:
-                raise FileNotFoundError("Original browser source missing or oversized")
-            original = src.read_bytes()
-            dest = root / src.name
-            dest.write_bytes(original)
-            trusted[dest.name] = hashlib.sha256(original).hexdigest()
-        agent = Agent(
-            llm=LLM(**local_coder_llm_options()),
-            tools=[Tool(name=FileEditorTool.name)],
-        )
-        conversation = Conversation(
-            agent=agent, workspace=temp, max_iteration_per_run=4,
-            max_budget_per_run=0.20, visualizer=None,
-        )
-        instructions = (
-            "A founder asked for this PUBLIC browser code improvement: "
-            + task["objective"]
-            + "\nInspect the existing owner_navigation.py, owner_task_loop.py "
-              "and browser_actions.py from this isolated workspace with "
-              "FileEditorTool. These are READ-ONLY references. Create ONLY "
-              "proposal.py, a standalone Python draft helper compatible with "
-              "the existing engine. Do not create or modify any other file. "
-              "Do not use terminal, shell, network, browser, system secrets "
-              "or any production website. Never claim the code ran, was "
-              "integrated, or passed a live login. No unapproved writes. "
-              "Implement genuine functions with meaningful return values, NOT "
-              "pass, ellipsis, TODO or NotImplementedError placeholders. "
-              "Include at least two short expected-input and expected-output "
-              "examples in comments for independent review. "
-              "Finish after writing proposal.py."
-        )
-        conversation.send_message(instructions)
-        candidate = root / "proposal.py"
-        for attempt in range(2):
-            conversation.run()
-            if candidate.is_symlink():
-                raise PermissionError("Symlink output forbidden")
-            if candidate.is_file():
-                raw = candidate.read_bytes()
-                if not 80 <= len(raw) <= LIMIT:
-                    raise ValueError("Candidate must be bounded nonempty Python")
-                try:
-                    _require_implemented_candidate(raw)
-                    break
-                except (UnicodeDecodeError, SyntaxError, ValueError):
-                    if attempt:
-                        raise RuntimeError("Agent could not repair syntax")
+        with (tempfile.TemporaryDirectory(prefix="plenum-browser-code-") as temp,
+              tempfile.TemporaryDirectory(prefix="plenum-coder-sdk-events-") as sdk_events):
+            root = Path(temp)
+            trusted = {}
+            for name in SOURCES:
+                src = Path(name)
+                if not src.is_file() or src.stat().st_size > 50_000:
+                    raise FileNotFoundError("Original browser source missing or oversized")
+                original = src.read_bytes()
+                dest = root / src.name
+                dest.write_bytes(original)
+                trusted[dest.name] = hashlib.sha256(original).hexdigest()
+            agent = Agent(
+                llm=LLM(**local_coder_llm_options()),
+                tools=[Tool(name=FileEditorTool.name)],
+            )
+            conversation = Conversation(
+                agent=agent, workspace=temp, max_iteration_per_run=4,
+                max_budget_per_run=0.20, visualizer=None,
+                persistence_dir=sdk_events, callbacks=[trace],
+            )
+            instructions = (
+                "A founder asked for this PUBLIC browser code improvement: "
+                + task["objective"]
+                + "\nInspect the existing owner_navigation.py, owner_task_loop.py "
+                  "and browser_actions.py from this isolated workspace with "
+                  "FileEditorTool. These are READ-ONLY references. Create ONLY "
+                  "proposal.py, a standalone Python draft helper compatible with "
+                  "the existing engine. Do not create or modify any other file. "
+                  "Do not use terminal, shell, network, browser, system secrets "
+                  "or any production website. Never claim the code ran, was "
+                  "integrated, or passed a live login. No unapproved writes. "
+                  "Implement genuine functions with meaningful return values, NOT "
+                  "pass, ellipsis, TODO or NotImplementedError placeholders. "
+                  "Include at least two short expected-input and expected-output "
+                  "examples in comments for independent review. "
+                  "Finish after writing proposal.py."
+            )
+            conversation.send_message(instructions)
+            candidate = root / "proposal.py"
+            for attempt in range(2):
+                receipt["model_inference_requested"] = True
+                receipt["conversation_runs_attempted"] += 1
+                _write_receipt(output, receipt)
+                conversation.run()
+                receipt["conversation_runs_completed"] += 1
+                if candidate.is_symlink():
+                    raise PermissionError("Symlink output forbidden")
+                if candidate.is_file():
+                    raw = candidate.read_bytes()
+                    if not 80 <= len(raw) <= LIMIT:
+                        raise ValueError("Candidate must be bounded nonempty Python")
+                    try:
+                        _require_implemented_candidate(raw)
+                        break
+                    except (UnicodeDecodeError, SyntaxError, ValueError):
+                        if attempt:
+                            raise RuntimeError("Agent could not repair syntax")
+                        conversation.send_message(
+                            "Independent review found invalid syntax or no-op placeholder functions. "
+                            "Repair proposal.py only, without executing code."
+                        )
+                elif attempt:
+                    raise RuntimeError("Agent failed to produce source candidate")
+                else:
                     conversation.send_message(
-                        "Independent review found invalid syntax or no-op placeholder functions. "
-                        "Repair proposal.py only, without executing code."
+                        "The requested proposal.py is missing. Create it now "
+                        "with FileEditorTool; no other edits or actions."
                     )
-            elif attempt:
-                raise RuntimeError("Agent failed to produce source candidate")
-            else:
-                conversation.send_message(
-                    "The requested proposal.py is missing. Create it now "
-                    "with FileEditorTool; no other edits or actions."
-                )
-        for name, digest in trusted.items():
-            if hashlib.sha256((root / name).read_bytes()).hexdigest() != digest:
-                raise PermissionError("Reference browser source was modified")
-        if any(p.name not in set(trusted) | {"proposal.py"} for p in root.iterdir()):
-            raise PermissionError("Unexpected model-written workspace files")
-        (output / "proposal.py").write_bytes(raw)
-        receipt.update({
-            "status": "SOURCE_PROPOSAL_AWAITING_REVIEW",
-            "model_executed": True,
-            "source_candidate_syntax_verified": True,
-            "candidate_sha256": hashlib.sha256(raw).hexdigest(),
-            "candidate_bytes": len(raw),
-            "repair_rounds": attempt,
-            "note": "Actual FileEditor model code candidate, not a deployed feature.",
-        })
-    (output / "result.json").write_text(json.dumps(receipt, indent=2) + "\n")
+            for name, digest in trusted.items():
+                if hashlib.sha256((root / name).read_bytes()).hexdigest() != digest:
+                    raise PermissionError("Reference browser source was modified")
+            if any(p.name not in set(trusted) | {"proposal.py"} for p in root.iterdir()):
+                raise PermissionError("Unexpected model-written workspace files")
+            (output / "proposal.py").write_bytes(raw)
+            receipt.update({
+                "status": "SOURCE_PROPOSAL_AWAITING_REVIEW",
+                "model_executed": True,
+                "source_candidate_syntax_verified": True,
+                "candidate_sha256": hashlib.sha256(raw).hexdigest(),
+                "candidate_bytes": len(raw),
+                "repair_rounds": attempt,
+                "note": "Actual FileEditor model code candidate, not a deployed feature.",
+            })
+    except Exception as exc:
+        receipt["status"] = "BLOCKED_EXECUTION_FAILED"
+        receipt["failure_category"] = (
+            "TIMEOUT" if isinstance(exc, TimeoutError) else
+            "AUTHORIZATION" if isinstance(exc, PermissionError) else
+            "CANDIDATE_OR_RUNTIME_FAILURE"
+        )
+        # Preserve traceback in local process logs, never exception content in
+        # public receipts or model event artifacts.
+        raise
+    finally:
+        summary = trace.snapshot()
+        receipt["model_response_observed"] = summary["model_response_observed"]
+        receipt["model_executed"] = summary["model_response_observed"]
+        receipt["tool_observations_seen"] = summary["tool_observations_seen"]
+        if receipt["status"] == "BLOCKED_EXECUTION_FAILED" and summary["timeout_error_event_observed"]:
+            receipt["failure_category"] = "TIMEOUT"
+        receipt["sdk_event_persistence"] = "DISPOSABLE_PRIVATE_RAW_METADATA_ONLY_EXPORT"
+        (output / "events-redacted.json").write_text(
+            json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+        _write_receipt(output, receipt)
     return receipt
 
 

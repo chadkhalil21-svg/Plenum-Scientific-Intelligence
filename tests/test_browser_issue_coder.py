@@ -1,5 +1,8 @@
 """Founder browser coding-agent public scope; never calls inference in tests."""
 import tempfile
+import json
+import sys
+import types
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -95,6 +98,63 @@ class FounderPublicCoderContract(unittest.TestCase):
                 self.assertFalse(result["model_executed"])
                 self.assertFalse(result["independent_behavior_verified"])
                 self.assertTrue((Path(root) / "browser/result.json").is_file())
+
+
+    def test_failed_inference_preserves_redacted_failure_receipt(self):
+        sdk = types.ModuleType("openhands.sdk")
+        editor = types.ModuleType("openhands.tools.file_editor")
+        editor.FileEditorTool = types.SimpleNamespace(name="file_editor")
+        sdk.Agent = lambda **kw: object()
+        sdk.LLM = lambda **kw: object()
+        sdk.Tool = lambda **kw: object()
+        captured = {}
+        class FailedConversation:
+            def __init__(self, **kw):
+                captured.update(kw)
+            def send_message(self, text):
+                pass
+            def run(self):
+                raise TimeoutError("DO_NOT_PUBLISH private token or raw model text")
+        sdk.Conversation = FailedConversation
+        modules = {"openhands": types.ModuleType("openhands"),
+                   "openhands.sdk": sdk,
+                   "openhands.tools": types.ModuleType("openhands.tools"),
+                   "openhands.tools.file_editor": editor}
+        with tempfile.TemporaryDirectory() as root:
+            output = Path(root) / "receipt"
+            with patch.dict(sys.modules, modules), patch.dict("os.environ", {
+                "PLENUM_EPHEMERAL_RUNNER": "confirmed",
+                "PLENUM_OPENHANDS_MODEL": "ollama/qwen3.5:9b-q4_K_M",
+                "PLENUM_OPENHANDS_BASE_URL": "http://127.0.0.1:11434",
+            }), patch("plenum_ai.browser_issue_coder.importlib.metadata.version", return_value="1.60.1"), patch("plenum_ai.browser_issue_coder._out_dir", return_value=output):
+                with self.assertRaises(TimeoutError):
+                    run(fixture(), execute=True)
+            receipt = json.loads((output / "result.json").read_text())
+            self.assertEqual(receipt["status"], "BLOCKED_EXECUTION_FAILED")
+            self.assertEqual(receipt["conversation_runs_attempted"], 1)
+            self.assertEqual(receipt["conversation_runs_completed"], 0)
+            self.assertFalse(receipt["model_response_observed"])
+            self.assertFalse(receipt["source_candidate_syntax_verified"])
+            self.assertEqual(receipt["failure_category"], "TIMEOUT")
+            self.assertIn("persistence_dir", captured)
+            self.assertFalse(Path(captured["persistence_dir"]).exists())
+            self.assertNotIn("DO_NOT_PUBLISH", (output / "result.json").read_text())
+            self.assertEqual(sorted(x.name for x in output.iterdir()), ["events-redacted.json", "result.json"])
+
+    def test_redacted_callback_records_response_and_tool_without_contents(self):
+        from plenum_ai.browser_issue_coder import PublicEventTrace
+        trace = PublicEventTrace()
+        action = type("ActionEvent", (), {"source": "agent", "thought": "DO_NOT_PUBLISH"})()
+        observation = type("ObservationEvent", (), {"source": "environment", "observation": "DO_NOT_PUBLISH"})()
+        for _ in range(100):
+            trace(action)
+            trace(observation)
+        data = trace.snapshot()
+        self.assertTrue(data["model_response_observed"])
+        self.assertEqual(data["tool_observations_seen"], 100)
+        self.assertEqual(len(data["events"]), 64)
+        self.assertTrue(data["truncated"])
+        self.assertNotIn("DO_NOT_PUBLISH", json.dumps(data))
 
 
 if __name__ == "__main__":
