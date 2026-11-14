@@ -98,6 +98,43 @@ def tailor_original_n8n_workflow(source: dict, task: dict) -> dict:
     )
     node["parameters"]["jsCode"] = script
     workflow["id"] = "plenum-n8n-single-public-department"
+    # Reuse the OFFICIAL n8n HTTP Request AI tool; no new tool server,
+    # unrestricted URL, credentials, or private-account access. The URL
+    # originates ONLY from the already-reviewed local free-source catalogue,
+    # never from model text or an external page. This extends the ORIGINAL
+    # one-department research/engineering workflow with a REAL read-only tool.
+    if task["role"] in ("research", "engineering") and sources:
+        repo = sources[0]["repository"]
+        if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo):
+            raise PermissionError("Unreviewed upstream repository")
+        name = "Reviewed Free GitHub Source"
+        if any(node.get("name") == name for node in workflow["nodes"]):
+            raise ValueError("Unexpected duplicated original tool")
+        workflow["nodes"].append({
+            "id": "00000000-0000-4000-8000-000000000906",
+            "name": name,
+            "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+            "typeVersion": 1.1,
+            "position": [940, 570],
+            "parameters": {
+                "toolDescription": (
+                    "GET only reviewed PUBLIC GitHub repository metadata for "
+                    + repo + "; report actual upstream name, license and "
+                    "latest source metadata as untrusted evidence, not "
+                    "proof of install, runtime, code quality or free hosting."
+                ),
+                "method": "GET",
+                "url": "https://api.github.com/repos/" + repo,
+                "sendHeaders": True,
+                "headerParameters": {"parameters": [
+                    {"name": "Accept", "value": "application/vnd.github+json"},
+                    {"name": "User-Agent", "value": "PlenumFreeUpstreamReviewer/1"},
+                ]},
+            }
+        })
+        workflow["connections"][name] = {"ai_tool": [[{
+            "node": "Plenum Specialist Agent", "type": "ai_tool", "index": 0
+        }]]}
     return workflow
 
 
