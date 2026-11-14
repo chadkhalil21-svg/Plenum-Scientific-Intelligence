@@ -1,21 +1,12 @@
-## 2026-11-13 | Original coding specialist: distinct candidate for a reproduced upload defect
-
 ## 2026-11-14 | Original Chief composes explicit public contracts (source and offline only)
 
 The original mission intake now accepts a contract-planning envelope with arbitrary objective wording and explicit public identifiers/physical inputs. Existing local Qwen/ChatOllama structured output selects and orders applicable NOAA metadata/structural-validation, Crossref metadata/separate same-provider readback, and parameterized SciPy cooling/analytic-check contracts. Model plans cannot supply URLs, code, identifiers or private tools. The original issue workflow, SHA checkpoints, once-only native retry gate and per-contract independent checks are reused. Saved planning provenance identifies the original local model; retries preserve the immutable plan and completed artifacts.
 
 Offline tests cover real NOAA validator input, a new numerical input with independent analytic value, composed dependencies, failed readback recovery, zero-invocation resume, native retry eligibility and tamper/scope rejection. Actual model planning and useful new live missions remain unverified until original Actions artifacts are independently inspected. Contract success does not certify an unrestricted freeform objective, full scholarly paper, second bibliographic provider, scientific discovery, private account, continuous host or zero production bill. No Cloudflare/browser change, new supervisor or framework.
 
-
-Root reproduced that browser_actions._approved_upload accepts a symlink ID pointing to another file within the approved directory: resolving first makes the subsequent is_symlink check ineffective. The regression fails before any repair. This is a public source defect, not a live website action or credential incident.
-
-Reuse the ORIGINAL OpenHands SDK1.60.1/FileEditor worker and issue workflow with a distinct Apache-2.0 Qwen3.5-9B Q4_K_M candidate (`qwen3.5:9b-q4_K_M`, official Ollama listing6.6GB). The prior failed7B coding attempt is not repeated; Chief/scientific baselines remain unchanged. Original founder/public-only preflight, read-only references, isolated proposal admission and independent review gates remain. CPU3/RAM10g, existing32-minute job/20-minute agent ceiling,1024 output tokens/response, no hosted API fees, public project-development job only. Record exact downloaded model digest and Ollama version before inference. Official sources: https://huggingface.co/Qwen/Qwen3.5-9B and https://ollama.com/library/qwen3.5:9b-q4_K_M .
-
-Pinned SDK and compatible LiteLLM source inspection established that reasoning_effort=none MUST be forwarded with supports_reasoning_effort=True to map to native Ollama think=False. Omitting the parameter is insufficient for this reasoning model. Six coder contract tests and workflow/receipt parsing passed; independent review found no blocking issue. LIVE model execution, useful repair, behavior verification and integration remain pending. No new framework, host, paid inference, production browser deployment or authentication scope.
-
 ---
 
-
+## 2026-11-13 | Original coding specialist: distinct candidate for a reproduced upload defect
 
 Root reproduced that browser_actions._approved_upload accepts a symlink ID pointing to another file within the approved directory: resolving first makes the subsequent is_symlink check ineffective. The regression fails before any repair. This is a public source defect, not a live website action or credential incident.
 
