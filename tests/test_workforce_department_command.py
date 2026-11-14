@@ -98,6 +98,67 @@ class DirectNineDepartmentTests(TestCase):
         self.assertEqual(len(support["nodes"]),6)
         self.assertNotIn("Reviewed Free GitHub Source",support["connections"])
 
+    def test_real_american_rider_marketing_gets_original_public_product_source(self):
+        from plenum_ai.workforce_department_command import (
+            AMERICAN_RIDER_README_URL, AMERICAN_RIDER_SOURCE_NODE,
+        )
+        task=parse_founder_department(event(
+            role="marketing",objective="Draft three recruiting messages for American Rider in South Florida",
+        ))
+        compiled=tailor_original_n8n_workflow(SOURCE,task)
+        self.assertEqual(len(SOURCE["nodes"]),6)
+        self.assertEqual(len(compiled["nodes"]),7)
+        tools=[n for n in compiled["nodes"] if n["name"]==AMERICAN_RIDER_SOURCE_NODE]
+        self.assertEqual(len(tools),1)
+        node=tools[0]
+        self.assertEqual(node["type"],"n8n-nodes-base.httpRequest")
+        self.assertEqual(node["typeVersion"],4.2)
+        self.assertEqual(node["parameters"]["url"],AMERICAN_RIDER_README_URL)
+        self.assertEqual(node["parameters"]["authentication"],"none")
+        self.assertEqual(node["parameters"]["method"],"GET")
+        self.assertEqual(node["parameters"]["options"]["response"]["response"],
+                         {"responseFormat":"text","outputPropertyName":"data","neverError":False})
+        self.assertNotIn("credentials",node)
+        self.assertEqual(
+            compiled["connections"]["Assign Nine Roles"]["main"],
+            [[{"node":AMERICAN_RIDER_SOURCE_NODE,"type":"main","index":0}]],
+        )
+        agent=next(n for n in compiled["nodes"] if n["name"]=="Plenum Specialist Agent")
+        self.assertIn("TRANSPORTATION platform",agent["parameters"]["text"])
+        self.assertIn("String($json.data || '')",agent["parameters"]["text"])
+        self.assertIn("NOT a cycling company",agent["parameters"]["text"])
+        reviewer=next(n for n in compiled["nodes"] if n["name"]=="Founder Review Queue")
+        self.assertIn("upstream_tool_observed",reviewer["parameters"]["jsCode"])
+        self.assertIn("National transportation platform",reviewer["parameters"]["jsCode"])
+        self.assertEqual(SOURCE["active"],False)
+
+    def test_actual_bad_marketing_agent_695_would_be_rejected_automatically(self):
+        from plenum_ai.workforce_department_command import audit_american_rider_marketing_copy
+        actual_bad=("American Rider is a team that redefines cycling. "
+                    "Our cycling experience will improve communities. "
+                    "Expected 10% increase in sign-ups within 30 days.")
+        self.assertEqual(
+            audit_american_rider_marketing_copy(actual_bad)["status"],
+            "BLOCKED_PRODUCT_CATEGORY_MISMATCH",
+        )
+        unsupported=("American Rider Operator and Traveler transport network. "
+                     "Expected 10% increase in sign-ups within 30 days.")
+        self.assertEqual(
+            audit_american_rider_marketing_copy(unsupported)["status"],
+            "BLOCKED_UNSUPPORTED_MARKETING_FORECAST",
+        )
+        launch=("American Rider is a transportation service officially launched in Miami.")
+        self.assertEqual(
+            audit_american_rider_marketing_copy(launch)["status"],
+            "BLOCKED_UNVERIFIED_MARKET_LIVE_CLAIM",
+        )
+        corrected=("American Rider is a proposed transportation network for Operators "
+                   "and Travelers. Sign up to learn about future opportunities in South Florida.")
+        result=audit_american_rider_marketing_copy(corrected)
+        self.assertEqual(result["status"],"DRAFT_REQUIRES_FOUNDER_REVIEW")
+        self.assertFalse(result["independent_full_factual_verification"])
+        self.assertFalse(result["public_campaign_launched"])
+
     def test_source_use_cannot_be_inferred_from_generic_draft(self):
         from plenum_ai.workforce_department_command import native_reviewed_source_observed
         self.assertTrue(native_reviewed_source_observed(
