@@ -56,7 +56,11 @@ jobs:
             docker exec plenum-ollama-trial ollama list >/dev/null 2>&1 && break
             sleep 2
           done
-          docker exec plenum-ollama-trial ollama pull qwen3:0.6b
+          if [ "$GITHUB_EVENT_NAME" = 'issues' ]; then
+            docker exec plenum-ollama-trial ollama pull qwen3:1.7b
+          else
+            docker exec plenum-ollama-trial ollama pull qwen3:0.6b
+          fi
       - name: Build PUBLIC and disposable Ollama credential / workflow
         run: |
           mkdir -p runtime-trial
@@ -98,12 +102,12 @@ jobs:
               assert os.environ.get('GITHUB_EVENT_NAME')=='issues'
 
           model=next(n for n in workflow['nodes'] if n['name']=='Local Ollama (Configure Credential)')
-          model['parameters']['model']='qwen3:0.6b'
+          model['parameters']['model']=('qwen3:1.7b' if os.environ.get('GITHUB_EVENT_NAME')=='issues' else 'qwen3:0.6b')
           model['credentials']={'ollamaApi':{'id':cred_id,'name':'Plenum Ephemeral Ollama'}}
           workflow['id']='plenum-n8n-public-nine-agents'
           Path('runtime-trial/credentials.json').write_text(json.dumps(credentials)+'\n')
           Path('runtime-trial/workflow.json').write_text(json.dumps(workflow)+'\n')
-          print('Trial model is Qwen3 0.6B; credentials contain local host URL only, no secrets.')
+          print('Original on-demand Qwen selected by founder task scope; no paid credentials.')
           PY
       - name: Import exact native n8n credentials and nine-agent workflow
         run: |
@@ -148,7 +152,7 @@ jobs:
           text=Path('runtime-trial/run.log').read_text(errors='replace')
           assert 'Error executing workflow' not in text
           if os.environ.get('GITHUB_EVENT_NAME') == 'issues':
-              from plenum_ai.workforce_department_command import (extract_untrusted_public_department_reply, audit_public_draft_repositories)
+              from plenum_ai.workforce_department_command import (extract_untrusted_public_department_reply, audit_public_draft_repositories, native_reviewed_source_observed)
               meta=json.loads(Path('runtime-trial/department-metadata.json').read_text())
               role=meta['role']
               assert text.count('DRAFT_AWAITING_FOUNDER_REVIEW')>=1
@@ -159,8 +163,11 @@ jobs:
                       assert '"role": "'+other+'"' not in text, 'Unapproved role executed'
               draft=extract_untrusted_public_department_reply(text)
               audit=audit_public_draft_repositories(draft)
-              status=('DRAFT_REQUIRES_SOURCE_REVIEW'
-                      if audit['unreviewed_github_repository_count']
+              source_tool_observed=native_reviewed_source_observed(text) if meta.get('source_tool_required') else False
+              placeholder=any(word in draft.lower() for word in ('feature x', '[repository name]', '[browser automation repositories]'))
+              status=('BLOCKED_SOURCE_TOOL_NOT_OBSERVED' if meta.get('source_tool_required') and not source_tool_observed
+                      else 'BLOCKED_GENERIC_PLACEHOLDER_DRAFT' if placeholder
+                      else 'DRAFT_REQUIRES_SOURCE_REVIEW' if audit['unreviewed_github_repository_count']
                       else 'DRAFT_AWAITING_FOUNDER_REVIEW')
               Path('runtime-trial/public-department-reply.json').write_text(json.dumps({
                   'schema':'plenum-one-public-department-response-v1',
@@ -168,12 +175,14 @@ jobs:
                   'draft_untrusted':draft,
                   'source_identity_audit':audit,
                   'independent_fact_verification':False,
+                  'source_tool_observed':source_tool_observed,
                   'owner_review_required':True,
                   'external_actions_executed':False,
               },indent=2)+'\n')
               Path('runtime-trial/verified-department.json').write_text(json.dumps({
                   'role':role,'status':status,
                   'model_executed':True,
+                  'source_tool_observed':source_tool_observed,
                   'unreviewed_github_repository_count':audit['unreviewed_github_repository_count'],
                   'independent_fact_verification':False,
                   'external_account_actions':False,
@@ -225,7 +234,7 @@ jobs:
           if task.get('approval')!='public-draft-only':
               raise PermissionError('Cannot publish private or privileged department')
           state={'status':'BLOCKED_NO_VERIFIED_AGENT_DRAFT',
-                 'model_executed':False,
+                 'model_executed':False, 'source_tool_observed':False,
                  'unreviewed_github_repository_count':0,
                  'independent_fact_verification':False,
                  'external_account_actions':False}
@@ -239,6 +248,7 @@ jobs:
           body=(marker+'\n**Plenum department: '+task['role']+'**\n'
                 '**Status: '+str(state['status'])+'**\n'
                 'Model executed: '+str(state['model_executed'])+
+                '; reviewed source tool observed: '+str(state['source_tool_observed'])+
                 '; independently fact-verified: '+str(state['independent_fact_verification'])+
                 '; unreviewed GitHub repository citations: '+str(state['unreviewed_github_repository_count'])+
                 '; external account actions: '+str(state['external_account_actions'])+
