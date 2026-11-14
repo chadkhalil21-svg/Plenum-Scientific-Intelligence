@@ -42,6 +42,23 @@ class BrowserActionContractTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 _approved_upload(root,"big.bin")
 
+    def test_upload_rejects_symlink_before_resolution(self):
+        with tempfile.TemporaryDirectory() as root:
+            base=Path(root)
+            (base/"approved.txt").write_text("approved")
+            (base/"link.txt").symlink_to(base/"approved.txt")
+            with self.assertRaises(PermissionError):
+                _approved_upload(root,"link.txt")
+            self.assertEqual(_approved_upload(root,"approved.txt"),str(base/"approved.txt"))
+            with tempfile.TemporaryDirectory() as outside:
+                (Path(outside)/"outside.txt").write_text("outside")
+                (base/"escape.txt").symlink_to(Path(outside)/"outside.txt")
+                with self.assertRaises(PermissionError):
+                    _approved_upload(root,"escape.txt")
+            (base/"oversize.bin").write_bytes(b"x"*(8*1024*1024+1))
+            with self.assertRaises(ValueError):
+                _approved_upload(root,"oversize.bin")
+
     def test_unscoped_external_page_never_runs(self):
         class StubPage:
             url="https://example.com/"
