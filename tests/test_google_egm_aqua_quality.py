@@ -114,6 +114,32 @@ class GoogleAQuAOfflineOriginalTraceTests(TestCase):
         self.assertEqual(inspect_chief_report(d)["disposition"],
                          "BLOCKED_OR_UNVERIFIED_DO_NOT_PROMOTE")
 
+    def test_original_public_contract_receipts_are_reviewed_without_goal_promotion(self):
+        d = self.original()
+        d.update(status="VERIFIED_BOUNDED_CONTRACT_MISSION",
+                 bounded_contracts_verified=True, independent_verified=True,
+                 named_entity_evidence="NOT_EVALUATED")
+        output = inspect_chief_report(d)
+        self.assertEqual(output["disposition"], "BOUNDED_DELIVERY_FOUNDER_OBJECTIVE_OPEN")
+        self.assertEqual({x["code"] for x in output["findings"]},
+                         {"FOUNDER_OBJECTIVE_NOT_PROVEN"})
+        self.assertFalse(output["full_general_autonomy_claimed"])
+
+        d["bounded_contracts_verified"] = False
+        self.assertEqual(inspect_chief_report(d)["disposition"],
+                         "BLOCKED_OR_UNVERIFIED_DO_NOT_PROMOTE")
+        d["bounded_contracts_verified"] = True
+        d["independent_verified"] = False
+        self.assertEqual(inspect_chief_report(d)["disposition"],
+                         "BLOCKED_OR_UNVERIFIED_DO_NOT_PROMOTE")
+
+        for status in ("BLOCKED_CONTRACT_INTEGRITY", "BLOCKED_CONTRACT_EXECUTION"):
+            d["status"] = status
+            d["independent_verified"] = False
+            d["worker_artifacts_technically_verified"] = False
+            self.assertEqual(inspect_chief_report(d)["disposition"],
+                             "BLOCKED_OR_UNVERIFIED_DO_NOT_PROMOTE")
+
     def test_unrecognized_report_rejected(self):
         d = self.original()
         d["schema"] = "injected-agent-output"
