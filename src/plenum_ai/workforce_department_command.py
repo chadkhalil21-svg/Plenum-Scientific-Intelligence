@@ -98,11 +98,11 @@ def tailor_original_n8n_workflow(source: dict, task: dict) -> dict:
     )
     node["parameters"]["jsCode"] = script
     workflow["id"] = "plenum-n8n-single-public-department"
-    # Reuse the OFFICIAL n8n HTTP Request AI tool; no new tool server,
-    # unrestricted URL, credentials, or private-account access. The URL
-    # originates ONLY from the already-reviewed local free-source catalogue,
-    # never from model text or an external page. This extends the ORIGINAL
-    # one-department research/engineering workflow with a REAL read-only tool.
+    # The original n8n 0.6B draft omitted its optional AI tool (#683).
+    # The retry on 1.7B failed in the actual n8n tool-input parser (#685).
+    # Use n8n's already-built native HTTP Request node as a REQUIRED step,
+    # before the existing model. No new framework, arbitrary tool parameters,
+    # dynamic URL, credentials, account mutation or persistent service.
     if task["role"] in ("research", "engineering") and sources:
         repo = sources[0]["repository"]
         if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo):
@@ -110,58 +110,70 @@ def tailor_original_n8n_workflow(source: dict, task: dict) -> dict:
         name = "Reviewed Free GitHub Source"
         if any(node.get("name") == name for node in workflow["nodes"]):
             raise ValueError("Unexpected duplicated original tool")
+        assignment = workflow["connections"].get("Assign Nine Roles", {}).get("main")
+        if assignment != [[{"node":"Plenum Specialist Agent","type":"main","index":0}]]:
+            raise ValueError("Original n8n workflow route changed")
         workflow["nodes"].append({
             "id": "00000000-0000-4000-8000-000000000906",
             "name": name,
-            "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
-            "typeVersion": 1.1,
-            "position": [940, 570],
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [620, 300],
             "parameters": {
-                "toolDescription": (
-                    "GET only reviewed PUBLIC GitHub repository metadata for "
-                    + repo + "; report actual upstream name, license and "
-                    "latest source metadata as untrusted evidence, not "
-                    "proof of install, runtime, code quality or free hosting."
-                ),
                 "method": "GET",
                 "url": "https://api.github.com/repos/" + repo,
+                "authentication": "none",
                 "sendHeaders": True,
+                "specifyHeaders": "keypair",
                 "headerParameters": {"parameters": [
                     {"name": "Accept", "value": "application/vnd.github+json"},
                     {"name": "User-Agent", "value": "PlenumFreeUpstreamReviewer/1"},
                 ]},
+                "options": {"response": {"response": {
+                    "responseFormat": "json", "neverError": False
+                }}},
             }
         })
-        workflow["connections"][name] = {"ai_tool": [[{
-            "node": "Plenum Specialist Agent", "type": "ai_tool", "index": 0
+        workflow["connections"]["Assign Nine Roles"]["main"] = [[{
+            "node": name, "type": "main", "index": 0
+        }]]
+        workflow["connections"][name] = {"main": [[{
+            "node": "Plenum Specialist Agent", "type": "main", "index": 0
         }]]}
         agent = next(x for x in workflow["nodes"] if x["name"] == "Plenum Specialist Agent")
-        agent["parameters"]["options"]["returnIntermediateSteps"] = True
-        agent["parameters"]["options"]["systemMessage"] += (
-            "\nFor this PUBLIC source task call the existing Reviewed Free GitHub "
-            "Source tool once before proposing any integration. The URL is "
-            "already restricted to " + repo + ". Report the actual repository "
-            "identity and license from its response; if the tool fails, "
-            "report SOURCE_UNVERIFIED. Never use placeholder names such as "
-            "Feature X or Repository Name, and never claim installation."
+        # The HTTP Request output is the live public GitHub JSON object.
+        # Preserve the founder's ORIGINAL task from the prior assignment node.
+        agent["parameters"]["text"] = (
+            "={{ 'ROLE: ' + $('Assign Nine Roles').first().json.role + "
+            "'\\nMISSION: ' + $('Assign Nine Roles').first().json.mission + "
+            "'\\nTASK: ' + $('Assign Nine Roles').first().json.instruction + "
+            "'\\nRUBRIC: ' + $('Assign Nine Roles').first().json.rubric + "
+            "'\\nPUBLIC GITHUB RESPONSE: repository=' + String($json.full_name || '') + "
+            "'; license=' + String($json.license?.spdx_id || 'UNKNOWN') + "
+            "'; url=' + String($json.html_url || '') + "
+            "'; pushed_at=' + String($json.pushed_at || '') + "
+            "'\\nWrite a concrete source-grounded public-only draft. "
+            "Never claim an installation or external write.' }}"
         )
-        # Only a genuine native agent tool observation can mark source seen.
-        # Never copy the returned third-party payload to the founder issue.
+        # Original founder review node computes the proof from the completed
+        # native HTTP node's actual output, never from the LLM's own claims.
         review = next(x for x in workflow["nodes"] if x["name"] == "Founder Review Queue")
         old = 'draft_untrusted: String(item.json.output || "").slice(0,12000),'
         if review["parameters"]["jsCode"].count(old) != 1:
             raise ValueError("Original n8n review handler changed")
         observed = (
-            "upstream_tool_observed: Array.isArray(item.json.intermediateSteps) "
-            "&& item.json.intermediateSteps.some((step) => { "
-            "const tool = String(step.action?.tool || '').replace(/[^a-z0-9]/gi, '').toLowerCase(); "
-            "const output = JSON.stringify(step.observation ?? ''); "
-            "return tool === 'reviewedfreegithubsource' && "
-            "output.includes('full_name') && output.includes(" + json.dumps(repo) + "); "
-            "}),"
+            "upstream_tool_observed: $('Reviewed Free GitHub Source').all().length === 1 "
+            "&& $('Reviewed Free GitHub Source').first().json.full_name === " + json.dumps(repo)
+            + " && $('Reviewed Free GitHub Source').first().json.html_url === "
+            + json.dumps("https://github.com/" + repo) + ","
+        )
+        receipt = (
+            "upstream_public_repo: String($('Reviewed Free GitHub Source').first().json.full_name || ''),"
+            "\n    upstream_public_license: String($('Reviewed Free GitHub Source').first().json.license?.spdx_id || 'UNKNOWN'),"
+            "\n    upstream_public_url: String($('Reviewed Free GitHub Source').first().json.html_url || ''),"
         )
         review["parameters"]["jsCode"] = review["parameters"]["jsCode"].replace(
-            old, old + "\n    " + observed
+            old, old + "\n    " + observed + "\n    " + receipt
         )
     return workflow
 
