@@ -24,10 +24,11 @@ class FounderPublicCoderContract(unittest.TestCase):
     def test_pinned_local_non_thinking_model_uses_official_sdk_flags(self):
         from plenum_ai.browser_issue_coder import local_coder_llm_options
         cfg = local_coder_llm_options()
-        self.assertEqual(cfg["model"], "ollama/qwen2.5-coder:7b")
-        self.assertIsNone(cfg["reasoning_effort"])
+        self.assertEqual(cfg["model"], "ollama/qwen3.5:9b-q4_K_M")
+        self.assertEqual(cfg["reasoning_effort"], "none")
+        self.assertEqual(cfg["max_output_tokens"], 1024)
         self.assertEqual(cfg["capability_overrides"]["thinking_mode"], "none")
-        self.assertIs(cfg["capability_overrides"]["supports_reasoning_effort"], False)
+        self.assertIs(cfg["capability_overrides"]["supports_reasoning_effort"], True)
         self.assertFalse(cfg["enable_encrypted_reasoning"])
         self.assertEqual(cfg["base_url"], "http://127.0.0.1:11434")
 

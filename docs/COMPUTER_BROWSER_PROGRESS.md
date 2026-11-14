@@ -1,3 +1,13 @@
+## 2026-11-13 | Original coding specialist: distinct candidate for a reproduced upload defect
+
+Root reproduced that browser_actions._approved_upload accepts a symlink ID pointing to another file within the approved directory: resolving first makes the subsequent is_symlink check ineffective. The regression fails before any repair. This is a public source defect, not a live website action or credential incident.
+
+Reuse the ORIGINAL OpenHands SDK1.60.1/FileEditor worker and issue workflow with a distinct Apache-2.0 Qwen3.5-9B Q4_K_M candidate (`qwen3.5:9b-q4_K_M`, official Ollama listing6.6GB). The prior failed7B coding attempt is not repeated; Chief/scientific baselines remain unchanged. Original founder/public-only preflight, read-only references, isolated proposal admission and independent review gates remain. CPU3/RAM10g, existing32-minute job/20-minute agent ceiling,1024 output tokens/response, no hosted API fees, public project-development job only. Record exact downloaded model digest and Ollama version before inference. Official sources: https://huggingface.co/Qwen/Qwen3.5-9B and https://ollama.com/library/qwen3.5:9b-q4_K_M .
+
+Pinned SDK and compatible LiteLLM source inspection established that reasoning_effort=none MUST be forwarded with supports_reasoning_effort=True to map to native Ollama think=False. Omitting the parameter is insufficient for this reasoning model. Six coder contract tests and workflow/receipt parsing passed; independent review found no blocking issue. LIVE model execution, useful repair, behavior verification and integration remain pending. No new framework, host, paid inference, production browser deployment or authentication scope.
+
+---
+
 ## 2026-11-13 | Completion directive reconciliation — release accepted, account mission open
 
 Latest accepted original production is revision00052-dh8/image62eba539 (#654). Original #655/#656 independently verified exact-image navigation recovery and current Cloudflare binding/account-shape/Free-confirmation/agent switches. Public signed-out diagnosis run43501891079 rendered github.com/login (HTTP200, complete form, no page errors) while homepage hero remained blank. These supersede older undeployed/unconfigured statements, but do NOT prove a real saved third-party session, account assignment or successful Workers AI call.
