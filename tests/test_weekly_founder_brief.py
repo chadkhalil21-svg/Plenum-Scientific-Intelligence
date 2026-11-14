@@ -23,7 +23,7 @@ class WeeklyPublicEvidenceTests(unittest.TestCase):
                 return [{"body": marker + " accepted"}]
             raise AssertionError("No duplicate POST may be made")
         with patch.object(b, "github_json", side_effect=fake_github_json):
-            self.assertEqual(b.publish_once("safe-test-token", marker + "\\nReport"),
+            self.assertEqual(b.publish_once("safe-test-token", marker + "\nReport"),
                              "ALREADY_PUBLISHED")
         self.assertEqual(len(calls), 2)
 
@@ -42,7 +42,7 @@ class WeeklyPublicEvidenceTests(unittest.TestCase):
                 return {"html_url": "https://github.com/" + b.REPO + "/issues/432#new"}
             raise AssertionError("Unexpected GitHub operation")
         with patch.object(b, "github_json", side_effect=fake_github_json):
-            self.assertTrue(b.publish_once("safe-test-token", marker + "\\nReport").endswith("#new"))
+            self.assertTrue(b.publish_once("safe-test-token", marker + "\nReport").endswith("#new"))
         self.assertEqual(len(calls), 3)
 
     def test_unbounded_history_fails_closed_without_post(self):
