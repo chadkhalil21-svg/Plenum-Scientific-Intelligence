@@ -41,6 +41,18 @@ class FounderInstructionAuditTests(unittest.TestCase):
         self.assertEqual(report["status"],"OPEN_LIVE_ACCEPTANCE_MISSING")
         self.assertFalse(report["live_account_operation_verified"])
 
+    def test_founder_retired_custom_browser_is_not_open_work_or_accepted_execution(self):
+        retired = objective("external_live", issue=310)
+        retired["id"] = "browser-full"
+        report = a.evidence_for(retired, pulls={}, comments={310: []})
+        self.assertEqual(report["status"], "RETIRED_BY_FOUNDER_NOT_PLANNED")
+        self.assertFalse(report["live_account_operation_verified"])
+        self.assertIn("No custom Plenum browser work", report["next"])
+        # Unrelated live evidence still needs actual provider verification.
+        other = objective("external_live", issue=384)
+        self.assertEqual(a.evidence_for(other, pulls={}, comments={384: []})["status"],
+                         "OPEN_LIVE_ACCEPTANCE_MISSING")
+
     def test_only_real_merged_source_is_accepted_as_source(self):
         t=objective("source_only",pr=459)
         self.assertEqual(a.evidence_for(t,pulls={459:{"merged":False}},comments={})["status"],
@@ -74,6 +86,8 @@ class FounderInstructionAuditTests(unittest.TestCase):
         self.assertIn("partial reconstruction",report)
         self.assertIn("plenum-founder-instruction-audit:2026-11-11",report)
         self.assertIn("OPEN_LIVE_ACCEPTANCE_MISSING",report)
+        self.assertIn("Founder-retired original browser #310 is NOT PLANNED", report)
+        self.assertNotIn("Original browser verified partial; genuine multi-step", report)
         self.assertIn("prompts",report.lower())
         self.assertNotIn("all tasks completed",report.lower())
         changed = [dict(x) for x in rows]
