@@ -1,3 +1,9 @@
+## 2026-11-14 | Approved-upload symlink pre-resolution repair — PR #665 (SOURCE ONLY)
+
+Original #664 OpenHands model run43553227196 produced no accepted candidate. Independent source inspection confirmed `browser_actions._approved_upload` resolved an entry before testing `is_symlink`, incorrectly allowing an in-root symlink to a regular file. PR #665 checks the direct entry for symlink identity before strict resolution, preserving existing parent confinement, regular-file and 8 MiB limits. Focused regression covers in-root link, escaping link, ordinary approved file and oversized file. **Not merged, deployed, or independently behavior-accepted at authorship**; exact-head CI and independent review required before any merge. No owner account, credentials, production browser, hosted model or cloud spend touched. Original #310 private authenticated mission remains open.
+
+---
+
 ## 2026-11-13 | Original coding specialist: distinct candidate for a reproduced upload defect
 
 Root reproduced that browser_actions._approved_upload accepts a symlink ID pointing to another file within the approved directory: resolving first makes the subsequent is_symlink check ineffective. The regression fails before any repair. This is a public source defect, not a live website action or credential incident.
