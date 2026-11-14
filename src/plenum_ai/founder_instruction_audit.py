@@ -79,7 +79,14 @@ def evidence_for(task, *, pulls, comments):
                    and "provider-retrieval metadata/schema only" in x for x in bodies)
     # No event, public issue, CI green, or source merge is proof of a live
     # account connection or an independently verified private business task.
-    if scope == "external_live":
+    # The founder discontinued this particular ORIGINAL custom-browser
+    # objective on 14 Nov; #310 is closed NOT PLANNED, not accepted as passed.
+    # New external website tasks may still use the already connected browser
+    # capability or TinyFish under owner-specific permissions.
+    founder_retired_browser = task.get("id") == "browser-full" and issue == 310
+    if founder_retired_browser:
+        status = "RETIRED_BY_FOUNDER_NOT_PLANNED"
+    elif scope == "external_live":
         status = "OPEN_LIVE_ACCEPTANCE_MISSING"
     elif scope == "video_incomplete":
         status = "OPEN_FULL_VIDEO_CONTENT_MISSING"
@@ -99,7 +106,8 @@ def evidence_for(task, *, pulls, comments):
         "id": task["id"], "owner": task["owner_role"],
         "status": status, "priority": task["priority"],
         "summary": task["public_objective_summary"],
-        "next": task["remaining_action"],
+        "next": ("No custom Plenum browser work. Use existing authorized browser tools or metered TinyFish only for genuine owner tasks."
+                 if founder_retired_browser else task["remaining_action"]),
         "merged_source_pr": num if merged else None,
         "public_issue": issue,
         "actual_chief_public_worker_reported": real_chief,
@@ -148,8 +156,9 @@ def render(rows, *, as_of_date: str, doc):
         "",
         "### Highest priority unfulfilled or limited assignments"
     ]
+    lines.append("Founder-retired original browser #310 is NOT PLANNED, not an incomplete acceptance gate. Do not build or retest it; use existing browsers for real tasks only.")
     for x in ordered:
-        if x["status"] == "ACCEPTED_SOURCE_MERGE_ONLY":
+        if x["status"] in ("ACCEPTED_SOURCE_MERGE_ONLY", "RETIRED_BY_FOUNDER_NOT_PLANNED"):
             continue
         lines.append(
             f"- **{x['id']}** / {x['owner']}: **{x['status']}**. "
