@@ -79,6 +79,12 @@ class DirectNineDepartmentTests(TestCase):
                          __import__("plenum_ai.agent_library",
                                     fromlist=["suggest_sources"]).suggest_sources(task["objective"],limit=3)[0]["repository"])
         self.assertNotIn("$fromAI",json.dumps(tool))
+        agent=next(x for x in compiled["nodes"] if x["name"]=="Plenum Specialist Agent")
+        self.assertTrue(agent["parameters"]["options"]["returnIntermediateSteps"])
+        self.assertIn("call the existing Reviewed Free GitHub Source tool once",
+                      agent["parameters"]["options"]["systemMessage"])
+        reviewer=next(x for x in compiled["nodes"] if x["name"]=="Founder Review Queue")
+        self.assertIn("upstream_tool_observed:",reviewer["parameters"]["jsCode"])
         self.assertNotIn("credentials",tool)
         self.assertEqual(compiled["connections"][tool["name"]]["ai_tool"],
                          [[{"node":"Plenum Specialist Agent","type":"ai_tool","index":0}]])
@@ -87,6 +93,15 @@ class DirectNineDepartmentTests(TestCase):
             SOURCE,parse_founder_department(event(role="support")))
         self.assertEqual(len(support["nodes"]),6)
         self.assertNotIn("Reviewed Free GitHub Source",support["connections"])
+
+    def test_source_use_cannot_be_inferred_from_generic_draft(self):
+        from plenum_ai.workforce_department_command import native_reviewed_source_observed
+        self.assertTrue(native_reviewed_source_observed(
+            '{"draft_untrusted":"Use the upstream library", "upstream_tool_observed": true}'))
+        self.assertFalse(native_reviewed_source_observed(
+            '{"draft_untrusted":"Feature X", "upstream_tool_observed": false}'))
+        self.assertFalse(native_reviewed_source_observed(
+            '{"draft_untrusted":"I called a source tool but no proof exists"}'))
 
     def test_no_source_match_keeps_only_founder_objective(self):
         task=parse_founder_department(event(
