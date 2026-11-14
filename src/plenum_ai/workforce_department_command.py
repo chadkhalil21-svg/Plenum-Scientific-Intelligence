@@ -98,71 +98,6 @@ def tailor_original_n8n_workflow(source: dict, task: dict) -> dict:
     )
     node["parameters"]["jsCode"] = script
     workflow["id"] = "plenum-n8n-single-public-department"
-    # Reuse the OFFICIAL n8n HTTP Request AI tool; no new tool server,
-    # unrestricted URL, credentials, or private-account access. The URL
-    # originates ONLY from the already-reviewed local free-source catalogue,
-    # never from model text or an external page. This extends the ORIGINAL
-    # one-department research/engineering workflow with a REAL read-only tool.
-    if task["role"] in ("research", "engineering") and sources:
-        repo = sources[0]["repository"]
-        if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo):
-            raise PermissionError("Unreviewed upstream repository")
-        name = "Reviewed Free GitHub Source"
-        if any(node.get("name") == name for node in workflow["nodes"]):
-            raise ValueError("Unexpected duplicated original tool")
-        workflow["nodes"].append({
-            "id": "00000000-0000-4000-8000-000000000906",
-            "name": name,
-            "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
-            "typeVersion": 1.1,
-            "position": [940, 570],
-            "parameters": {
-                "toolDescription": (
-                    "GET only reviewed PUBLIC GitHub repository metadata for "
-                    + repo + "; report actual upstream name, license and "
-                    "latest source metadata as untrusted evidence, not "
-                    "proof of install, runtime, code quality or free hosting."
-                ),
-                "method": "GET",
-                "url": "https://api.github.com/repos/" + repo,
-                "sendHeaders": True,
-                "headerParameters": {"parameters": [
-                    {"name": "Accept", "value": "application/vnd.github+json"},
-                    {"name": "User-Agent", "value": "PlenumFreeUpstreamReviewer/1"},
-                ]},
-            }
-        })
-        workflow["connections"][name] = {"ai_tool": [[{
-            "node": "Plenum Specialist Agent", "type": "ai_tool", "index": 0
-        }]]}
-        agent = next(x for x in workflow["nodes"] if x["name"] == "Plenum Specialist Agent")
-        agent["parameters"]["options"]["returnIntermediateSteps"] = True
-        agent["parameters"]["options"]["systemMessage"] += (
-            "\nFor this PUBLIC source task call the existing Reviewed Free GitHub "
-            "Source tool once before proposing any integration. The URL is "
-            "already restricted to " + repo + ". Report the actual repository "
-            "identity and license from its response; if the tool fails, "
-            "report SOURCE_UNVERIFIED. Never use placeholder names such as "
-            "Feature X or Repository Name, and never claim installation."
-        )
-        # Only a genuine native agent tool observation can mark source seen.
-        # Never copy the returned third-party payload to the founder issue.
-        review = next(x for x in workflow["nodes"] if x["name"] == "Founder Review Queue")
-        old = 'draft_untrusted: String(item.json.output || "").slice(0,12000),'
-        if review["parameters"]["jsCode"].count(old) != 1:
-            raise ValueError("Original n8n review handler changed")
-        observed = (
-            "upstream_tool_observed: Array.isArray(item.json.intermediateSteps) "
-            "&& item.json.intermediateSteps.some((step) => { "
-            "const tool = String(step.action?.tool || '').replace(/[^a-z0-9]/gi, '').toLowerCase(); "
-            "const output = JSON.stringify(step.observation ?? ''); "
-            "return tool === 'reviewedfreegithubsource' && "
-            "output.includes('full_name') && output.includes(" + json.dumps(repo) + "); "
-            "}),"
-        )
-        review["parameters"]["jsCode"] = review["parameters"]["jsCode"].replace(
-            old, old + "\n    " + observed
-        )
     return workflow
 
 
@@ -214,14 +149,6 @@ def audit_public_draft_repositories(draft: str, *, catalogue=None) -> dict:
     }
 
 
-def native_reviewed_source_observed(log: str) -> bool:
-    """Read the ORIGINAL n8n Code-node boolean, never model-generated claims."""
-    if not isinstance(log, str) or len(log) > 2_000_000:
-        raise ValueError("Invalid original department log")
-    found = list(re.finditer(r'"upstream_tool_observed"\s*:\s*(true|false)', log))
-    return len(found) == 1 and found[0].group(1) == "true"
-
-
 def extract_untrusted_public_department_reply(log: str) -> str:
     """Extract one actual native n8n draft, never use it as instructions.
 
@@ -257,9 +184,7 @@ def main():
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(tailored) + "\n")
     (out.parent / "department-metadata.json").write_text(
-        json.dumps({**{k:task[k] for k in ("schema","issue_number","role","approval")},
-                    "source_tool_required": any(n.get("name") == "Reviewed Free GitHub Source"
-                                                for n in tailored["nodes"])})+"\n")
+        json.dumps({k:task[k] for k in ("schema","issue_number","role","approval")})+"\n")
     print("APPROVED_PUBLIC_DEPARTMENT role=" + task["role"]
           + " issue=" + str(task["issue_number"]) + " no_customer_accounts")
 
