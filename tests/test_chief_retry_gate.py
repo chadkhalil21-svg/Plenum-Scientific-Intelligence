@@ -207,3 +207,50 @@ class NativeChiefRetryGateTests(TestCase):
 if __name__ == "__main__":
     import unittest
     unittest.main()
+
+class DataMissionRetryGateTests(TestCase):
+    def stage_data(self, root):
+        from hashlib import sha256
+        from plenum_ai.chief_team_mission import DATA_MAGIC
+        objective='Check NOAA locations 8724580 and 9414290 for malformed coordinate records'
+        original=issue(objective=objective)
+        original['body']=DATA_MAGIC+'\nobjective: '+objective
+        plan={'steps':[{'tool':'noaa_metadata','station_ids':['8724580','9414290']},{'tool':'station_validation','input_from':'noaa_metadata'}]}
+        receipt={'issue':1001,'objective_sha256':objective_digest(objective),'plan':plan}
+        (root/'chief-data-plan-1001.json').write_text(json.dumps(receipt,sort_keys=True))
+        plan_hash=sha256(json.dumps(receipt,sort_keys=True).encode()).hexdigest()
+        relative='workers/public_research/noaa.json'
+        artifact=root/relative
+        artifact.parent.mkdir(parents=True)
+        artifact.write_text('{"payload":"original public data"}')
+        results={'public_research':{'attempt':1,'status':'DRAFT_READY_FOR_FOUNDER','verified':True,'worker':'research-specialist','artifact_path':relative,'output_artifact':relative,'sha256':artifact_digest(root,relative),'plan_sha256':plan_hash},'public_program':{'attempt':1,'status':'RUNNING','verified':False,'plan_sha256':plan_hash}}
+        save_checkpoint(root,issue=1001,objective=objective,team=('public_research','public_program'),results=results)
+        (root/'chief-result-1001.json').write_text(json.dumps({'issue_number':1001,'mode':'multi','expected_team':['public_research','public_program'],'status':'SOURCE_READY_NOT_EXECUTED','independent_verified':False}))
+        return original
+
+    def test_original_data_research_saved_validation_interrupted_retries(self):
+        with TemporaryDirectory() as d:
+            root=Path(d)
+            original=self.stage_data(root)
+            self.assertEqual(inspect_retry(event(),root,original)['status'],'ELIGIBLE_NATIVE_RETRY_ONCE')
+
+    def test_data_retry_rejects_plan_and_checkpoint_tampering(self):
+        for mutation in ('plan','crossmission','extra','hash','path','artifact','first_worker_only','complete'):
+            with self.subTest(mutation=mutation), TemporaryDirectory() as d:
+                root=Path(d)
+                original=self.stage_data(root)
+                cp_path=root/'chief-checkpoint-1001.json'
+                cp=json.loads(cp_path.read_text())
+                pp=root/'chief-data-plan-1001.json'
+                receipt=json.loads(pp.read_text())
+                if mutation=='plan': receipt['plan']['steps'][0]['station_ids']=['1234567']
+                if mutation=='crossmission': receipt['issue']=1002
+                if mutation=='extra': cp['results']['public_program']['untrusted']=True
+                if mutation=='hash': cp['results']['public_program']['plan_sha256']='0'*64
+                if mutation=='path': cp['results']['public_research']['output_artifact']='workers/public_research/decoy.json'
+                if mutation=='artifact': (root/'workers/public_research/noaa.json').write_text('tampered')
+                if mutation=='first_worker_only': cp['results']={'public_research':{'attempt':1,'status':'RUNNING','verified':False,'plan_sha256':cp['results']['public_research']['plan_sha256']}}
+                if mutation=='complete':
+                    p=root/'chief-result-1001.json'; report=json.loads(p.read_text());report['status']='VERIFIED_BOUNDED_DATA_MISSION';p.write_text(json.dumps(report))
+                pp.write_text(json.dumps(receipt,sort_keys=True));cp_path.write_text(json.dumps(cp))
+                self.assertNotEqual(inspect_retry(event(),root,original)['status'],'ELIGIBLE_NATIVE_RETRY_ONCE')

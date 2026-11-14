@@ -1,3 +1,15 @@
+## 2026-11-13 | Actual public source-to-validator dependency in the original Chief (live acceptance pending)
+
+The original Chief now accepts an explicitly public data-mission envelope under its existing team issue/workflow. One existing local Qwen structured-output call supplies a strictly validated two-step plan for founder-specified NOAA station IDs. Original Research retrieves bounded JSON from NOAA's fixed HTTPS metadata endpoint; Engineering runs the existing reviewed station validator on those actual rows. Exact source/input hashes, provider station identity and coordinates, complete deterministic findings, immutable plan and original checkpoint are independently checked. No generic starter or URL reachability is presented as data review.
+
+The same original native retry gate now recognizes only a plan-bound interrupted validation after SHA-verified research; first-worker failures still require a later authorized execution because no completed sibling exists. The original single-retry budget and all prior mission acceptance gates remain. Plan files are preserved in the existing artifact. Broad founder-objective completion stays FALSE: this is a two-tool metadata capability, not general planning, forecasts, instrument certification, AGI or owner-private account control.
+
+Verification: root71 Chief tests and9 quality tests passed; separate reviewer42 relevant tests passed with no blocking findings. Source includes original workflow integration, pinned existing LangChain/Ollama dependency, CPU/RAM/runtime limits and cleanup. Live model/provider execution remains pending. No new framework/model/host or paid dependency. Official upstream interfaces: https://api.tidesandcurrents.noaa.gov/mdapi/prod/ and https://reference.langchain.com/python/langchain-ollama/chat_models/ChatOllama/with_structured_output .
+
+Authenticated supplementary browser audit used the existing TinyFish Google profile and existing wallet credit; it reached the original Cloud Run service and billing without a new login. This is supplementary-provider execution, not original Plenum Auth0/GCS restoration. Billing project-filter attribution is being checked privately; no private account identifiers or billing amounts are copied here. Original #432/#310 remain open.
+
+---
+
 ## 2026-11-13 | Interrupted specialist attempts reserved; original native retry gate repaired (offline verified)
 
 The existing Chief saved an attempt only after a specialist returned. A process interruption therefore left no durable count for that invocation. The original loop now atomically records an unverified RUNNING attempt before execution, preserving its existing two-attempt ceiling on restored checkpoints.

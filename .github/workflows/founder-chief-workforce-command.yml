@@ -8,6 +8,7 @@ on:
       - 'tests/test_chief_workforce_command.py'
       - 'src/plenum_ai/chief_team_mission.py'
       - 'tests/test_chief_team_mission.py'
+      - 'tests/test_chief_data_mission.py'
       - 'tests/test_chief_bounded_goal_quality.py'
       - 'src/plenum_ai/mission_checkpoint.py'
       - 'src/plenum_ai/ambient_quality_insights.py'
@@ -35,6 +36,7 @@ jobs:
           python -m pip install -e .
           python -m unittest discover -s tests -p 'test_chief_workforce_command.py' -v
           python -m unittest discover -s tests -p 'test_chief_team_mission.py' -v
+          python -m unittest discover -s tests -p 'test_chief_data_mission.py' -v
           python -m unittest discover -s tests -p 'test_chief_bounded_goal_quality.py' -v
           python -m unittest discover -s tests -p 'test_google_egm_aqua_quality.py' -v
   founder-command:
@@ -69,14 +71,20 @@ jobs:
           else
             python -m plenum_ai.chief_workforce_command --event "$GITHUB_EVENT_PATH"
           fi
-      - name: Install original numerical extras only for science scope
+      - name: Install existing dependencies only for validated task scope
+        id: scope
         run: |
           python - <<'PY'
-          import glob,json,subprocess,sys
+          import glob,json,os,subprocess,sys
           paths=glob.glob('reports/workforce-chief/chief-result-*.json')
           assert len(paths)==1, 'Missing preflight founder scope record'
           data=json.load(open(paths[0],encoding='utf-8'))
           assert data['status']=='SOURCE_READY_NOT_EXECUTED'
+          planned=data.get('planned_data_mission') is True
+          with open(os.environ['GITHUB_OUTPUT'],'a') as out:
+              out.write('planned_data_mission='+str(planned).lower()+'\n')
+          if planned:
+              subprocess.check_call([sys.executable,'-m','pip','install','-e','.[chief_of_staff]'])
           if ('public_science' in data.get('expected_team',[])
                   or data.get('expected_independent_kind') == 'public_science'):
               subprocess.check_call([sys.executable,'-m','pip','install','-e','.[numerical,orchestration]'])
@@ -91,7 +99,27 @@ jobs:
           run-id: ${{ github.run_id }}
           github-token: ${{ github.token }}
           path: reports/workforce-chief
-      - name: Dispatch original specialists deterministically for known public task scopes
+      - name: Start existing bounded Qwen only for a new data plan
+        id: data_model
+        if: steps.scope.outputs.planned_data_mission == 'true'
+        run: |
+          if find reports/workforce-chief -maxdepth 1 -name 'chief-data-plan-*.json' -print -quit | read -r saved; then
+            echo 'Saved immutable plan will be validated and reused; no model started'
+            exit 0
+          fi
+          docker pull ollama/ollama:latest
+          docker run -d --rm --name plenum-chief-data-qwen \
+            -p 127.0.0.1:11434:11434 -e OLLAMA_CONTEXT_LENGTH=2048 \
+            -e OLLAMA_NUM_PARALLEL=1 --memory=5g --cpus=3 ollama/ollama:latest
+          for i in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
+            sleep 2
+          done
+          docker exec plenum-chief-data-qwen ollama pull qwen3:1.7b
+      - name: Dispatch original specialists within validated task scope
+        env:
+          PLENUM_EPHEMERAL_RUNNER: confirmed
+          PLENUM_CHIEF_MODEL_URL: http://127.0.0.1:11434
         run: |
           if [ "$PLENUM_TASK_KIND" = '[Plenum Chief] public mission' ]; then
             timeout 600 python -m plenum_ai.chief_team_mission \
@@ -185,8 +213,12 @@ jobs:
           path: |
             reports/workforce-chief/chief-result-*.json
             reports/workforce-chief/chief-checkpoint-*.json
+            reports/workforce-chief/chief-data-plan-*.json
             reports/workforce-chief/ambient-quality-*.json
             reports/workforce-chief/workers/**
           overwrite: true
           if-no-files-found: ignore
           retention-days: 7
+      - name: Destroy temporary data-planning model
+        if: always() && steps.scope.outputs.planned_data_mission == 'true'
+        run: docker rm -f plenum-chief-data-qwen 2>/dev/null || true

@@ -26,6 +26,7 @@ from .mission_checkpoint import (
 
 MISSION_TITLE = "[Plenum Chief] public mission"
 MISSION_MAGIC = "PLENUM_CHIEF_PUBLIC_MISSION_V1"
+DATA_MAGIC = "PLENUM_CHIEF_PUBLIC_DATA_MISSION_V1"
 
 
 def independent_expected_team(objective: str) -> tuple[str, ...]:
@@ -42,12 +43,18 @@ def parse_mission(event: dict) -> dict:
     if issue.get("title") != MISSION_TITLE or not isinstance(issue.get("body"), str):
         raise PermissionError("Not a founder-issued Plenum team mission")
     lines = issue["body"].splitlines()
-    if len(lines) != 2 or lines[0] != MISSION_MAGIC or not lines[1].startswith("objective: "):
+    if len(lines) != 2 or lines[0] not in (MISSION_MAGIC, DATA_MAGIC) or not lines[1].startswith("objective: "):
         raise ValueError("Exact two-line founder mission envelope required")
     # Preserve all existing founder, issue, public-input and scope guards.
     original = {**event, "issue": {**issue, "title": CHIEF_TITLE,
                                    "body": CHIEF_MAGIC + "\n" + lines[1]}}
     checked = parse_founder_chief(original)
+    if lines[0] == DATA_MAGIC:
+        ids = tuple(dict.fromkeys(re.findall(r"(?<![A-Za-z0-9])([0-9]{7})(?![A-Za-z0-9])", checked["objective"])))
+        if not 20 <= len(checked["objective"]) <= 120 or not 1 <= len(ids) <= 3:
+            raise ValueError("Data mission requires one to three explicit seven-digit NOAA station IDs")
+        return {**checked, "team": ("public_research", "public_program"),
+                "original": original, "data_mission": True, "station_ids": ids}
     return {**checked, "team": independent_expected_team(checked["objective"]),
             "original": original}
 
@@ -59,6 +66,8 @@ def preflight(event: dict) -> dict:
         "issue_number": task["issue_number"],
         "status": "SOURCE_READY_NOT_EXECUTED",
         "mode": "multi",
+        "planned_data_mission": task.get("data_mission", False),
+        "station_ids": list(task.get("station_ids", ())),
         "dispatcher": "deterministic_existing_chief_scope_gate",
         "expected_team": list(task["team"]),
         # Read-only source suggestions; never import third-party source into the
@@ -252,8 +261,10 @@ def grade_complete_bounded_public_goal(objective: str, team: tuple[str, ...],
 
 
 def execute(event: dict, *, output_dir: Path) -> dict:
-    report = preflight(event)
     task = parse_mission(event)
+    if task.get("data_mission"):
+        return execute_data_mission(event, output_dir=output_dir)
+    report = preflight(event)
     # The SAME founder issue and bounded public artifacts are the only mission
     # identity. When a failed GitHub job is retried, its original artifact
     # restores the checkpoint first; do not re-execute completed specialists.
@@ -387,6 +398,218 @@ def execute(event: dict, *, output_dir: Path) -> dict:
         "external_account_changes": False,
         "paid_api_used": False,
     })
+    return report
+
+
+
+def validate_data_plan(plan: object, station_ids: tuple[str, ...]) -> dict:
+    """Only a two-tool data dependency; never an arbitrary general planner."""
+    if (not isinstance(plan, dict) or set(plan) != {"steps"}
+            or not isinstance(plan["steps"], list) or len(plan["steps"]) != 2):
+        raise ValueError("Exactly two approved data steps required")
+    first, second = plan["steps"]
+    if (not isinstance(first, dict) or set(first) != {"tool", "station_ids"}
+            or first["tool"] != "noaa_metadata"
+            or not isinstance(first["station_ids"], list)
+            or any(not isinstance(x, str) for x in first["station_ids"])
+            or len(first["station_ids"]) != len(station_ids)
+            or set(first["station_ids"]) != set(station_ids)
+            or second != {"tool": "station_validation", "input_from": "noaa_metadata"}):
+        raise ValueError("Plan expands scope, omits stations or changes dependency")
+    return plan
+
+
+def plan_data_mission(objective: str, station_ids: tuple[str, ...]) -> dict:
+    import os
+    from .chief_workforce_command import MODEL, MODEL_URL
+    if (os.environ.get("PLENUM_EPHEMERAL_RUNNER") != "confirmed"
+            or os.environ.get("PLENUM_CHIEF_MODEL_URL") != MODEL_URL):
+        raise PermissionError("Data planning requires the original isolated loopback model")
+    from langchain_ollama import ChatOllama
+    schema = {"type":"object", "additionalProperties":False, "required":["steps"],
+              "properties":{"steps":{"type":"array", "minItems":2, "maxItems":2,
+              "prefixItems":[
+                  {"type":"object","additionalProperties":False,"required":["tool","station_ids"],
+                   "properties":{"tool":{"const":"noaa_metadata"},"station_ids":{"type":"array","minItems":1,"maxItems":3,"items":{"type":"string","enum":list(station_ids)}}}},
+                  {"type":"object","additionalProperties":False,"required":["tool","input_from"],
+                   "properties":{"tool":{"const":"station_validation"},"input_from":{"const":"noaa_metadata"}}}]}}}
+    model = ChatOllama(model=MODEL, base_url=MODEL_URL, temperature=0,
+                       reasoning=False, format=schema, num_ctx=2048, num_predict=300)
+    response = model.invoke([
+        ("system", "Plan this bounded public NOAA metadata check. Use noaa_metadata to fetch every explicitly requested station, then station_validation with input_from noaa_metadata. Return only the JSON schema. No other tools or goals are supported."),
+        ("human", objective),
+    ])
+    raw = response.content
+    if not isinstance(raw, str) or len(raw) > 4000:
+        raise ValueError("Invalid bounded model plan")
+    return validate_data_plan(json.loads(raw), station_ids)
+
+
+def fetch_noaa_metadata(station_id: str) -> bytes:
+    """Fixed first-party JSON endpoint, no redirects, arbitrary URLs or secrets."""
+    from urllib.request import Request, build_opener
+    from .chief_of_staff_pilot import NoRedirects
+    if not isinstance(station_id, str) or not re.fullmatch(r"[0-9]{7}", station_id):
+        raise ValueError("Invalid station identifier")
+    url = "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/" + station_id + ".json"
+    for attempt in range(2):
+        try:
+            with build_opener(NoRedirects).open(Request(url, headers={"User-Agent":"PlenumPublicMetadata/1"}), timeout=15) as response:
+                raw = response.read(500001)
+                if response.status != 200 or response.geturl() != url or len(raw) > 500000:
+                    raise ValueError("Unexpected NOAA response")
+                return raw
+        except (OSError, TimeoutError):
+            if attempt:
+                raise
+    raise RuntimeError("NOAA fetch unavailable")
+
+
+def _station_rows(payload: dict, station_ids: tuple[str, ...]) -> list[dict]:
+    """Independent provider identity/coordinate gate before trusted validation."""
+    import math
+    if not isinstance(payload, dict) or set(payload) != set(station_ids):
+        raise ValueError("Missing or additional provider records")
+    rows = []
+    for station in station_ids:
+        raw = payload[station]
+        if not isinstance(raw, str) or len(raw.encode("utf-8")) > 500000:
+            raise ValueError("Unsafe source receipt")
+        doc = json.loads(raw)
+        records = doc.get("stations") if isinstance(doc, dict) else None
+        if not isinstance(records, list) or len(records) != 1 or not isinstance(records[0], dict):
+            raise ValueError("Expected exactly one provider station")
+        row = records[0]
+        if row.get("id") != station:
+            raise ValueError("Provider station identity mismatch")
+        for field, low, high in (("lat", -90, 90), ("lng", -180, 180)):
+            value = row.get(field)
+            if (isinstance(value, bool) or not isinstance(value, (int, float))
+                    or not math.isfinite(value) or not low <= value <= high):
+                raise ValueError("Provider coordinates not valid")
+        rows.append(row)
+    return rows
+
+
+def execute_data_mission(event: dict, *, output_dir: Path, planner=None) -> dict:
+    """Original Research -> Engineering tools; narrow data pipeline, not general autonomy."""
+    from hashlib import sha256
+    import importlib.util
+    from .mission_checkpoint import objective_digest
+    task = parse_mission(event)
+    if not task.get("data_mission"):
+        raise ValueError("Explicit public data mission required")
+    ids = task["station_ids"]
+    report = preflight(event)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    progress = load_checkpoint(output_dir, issue=task["issue_number"], objective=task["objective"], team=task["team"])
+    plan_path = output_dir / ("chief-data-plan-" + str(task["issue_number"]) + ".json")
+    if plan_path.exists():
+        if plan_path.is_symlink() or plan_path.stat().st_size > 8000:
+            raise ValueError("Unsafe saved plan")
+        receipt = json.loads(plan_path.read_text("utf-8"))
+        if (not isinstance(receipt, dict) or set(receipt) != {"issue", "objective_sha256", "plan"}
+                or receipt["issue"] != task["issue_number"]
+                or receipt["objective_sha256"] != objective_digest(task["objective"])):
+            raise ValueError("Saved plan belongs to another mission")
+        plan = validate_data_plan(receipt["plan"], ids)
+        model_called = False
+    else:
+        if progress:
+            raise ValueError("Cannot replan an existing checkpoint")
+        plan = validate_data_plan(planner(ids) if planner else plan_data_mission(task["objective"], ids), ids)
+        receipt = {"issue":task["issue_number"], "objective_sha256":objective_digest(task["objective"]), "plan":plan}
+        temporary_plan = plan_path.with_suffix(".json.tmp")
+        if temporary_plan.is_symlink():
+            raise ValueError("Unsafe temporary plan")
+        temporary_plan.write_text(json.dumps(receipt, sort_keys=True), encoding="utf-8")
+        temporary_plan.replace(plan_path)
+        model_called = planner is None
+    plan_hash = sha256(json.dumps(receipt, sort_keys=True).encode()).hexdigest()
+    invoked = 0
+    for kind in task["team"]:
+        saved = progress.get(kind)
+        expected_relative = "workers/" + kind + ("/noaa.json" if kind == "public_research" else "/validation.json")
+        if (isinstance(saved, dict) and saved.get("verified")
+                and (saved.get("artifact_path") != expected_relative
+                     or saved.get("output_artifact") != expected_relative)):
+            raise ValueError("Checkpoint does not bind the exact consumed artifact")
+        if saved is not None and (not isinstance(saved, dict) or saved.get("plan_sha256") != plan_hash):
+            raise ValueError("Checkpoint plan binding changed")
+        if saved and saved.get("verified"):
+            if verified_previous_result(output_dir, kind, saved) is None:
+                raise ValueError("Completed data artifact changed")
+            continue
+        attempt = int(saved.get("attempt", 0)) + 1 if isinstance(saved, dict) else 1
+        if attempt > 2:
+            raise ValueError("Original two-attempt ceiling reached")
+        progress[kind] = {"attempt":attempt,"status":"RUNNING","verified":False,"plan_sha256":plan_hash}
+        save_checkpoint(output_dir, issue=task["issue_number"], objective=task["objective"], team=task["team"], results=progress)
+        relative = "workers/" + kind + ("/noaa.json" if kind == "public_research" else "/validation.json")
+        path = output_dir / relative
+        if path.is_symlink() or not path.resolve().is_relative_to(output_dir.resolve()):
+            raise ValueError("Unsafe artifact path")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        invoked += 1
+        if kind == "public_research":
+            payload = {station:fetch_noaa_metadata(station).decode("utf-8") for station in plan["steps"][0]["station_ids"]}
+            _station_rows(payload, ids)
+            evidence = {"payload":payload,"plan_sha256":plan_hash}
+        else:
+            source = output_dir / "workers/public_research/noaa.json"
+            payload = json.loads(source.read_text("utf-8"))["payload"]
+            rows = _station_rows(payload, ids)
+            validator_path = Path(__file__).resolve().parents[2] / "tools/water_level_metadata.py"
+            spec = importlib.util.spec_from_file_location("plenum_original_station_validator", validator_path)
+            validator = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(validator)
+            evidence = {"input":rows,"source_sha256":sha256(source.read_bytes()).hexdigest(),
+                        "input_sha256":sha256(json.dumps(rows, sort_keys=True).encode()).hexdigest(),
+                        "validation":validator.validate_station_metadata(rows),"plan_sha256":plan_hash}
+        path.write_text(json.dumps(evidence, sort_keys=True), encoding="utf-8")
+        progress[kind] = {"attempt":attempt,"status":"DRAFT_READY_FOR_FOUNDER","verified":True,
+                          "worker":KIND_TO_AGENT[kind],"artifact_path":relative,"output_artifact":relative,
+                          "sha256":artifact_digest(output_dir, relative),"plan_sha256":plan_hash}
+        save_checkpoint(output_dir, issue=task["issue_number"], objective=task["objective"], team=task["team"], results=progress)
+    source = output_dir / "workers/public_research/noaa.json"
+    data = json.loads(source.read_text("utf-8"))
+    result = json.loads((output_dir / "workers/public_program/validation.json").read_text("utf-8"))
+    rows = _station_rows(data["payload"], ids)
+    validator_path = Path(__file__).resolve().parents[2] / "tools/water_level_metadata.py"
+    spec = importlib.util.spec_from_file_location("plenum_original_station_validator_readback", validator_path)
+    validator = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(validator)
+    validation_readback = validator.validate_station_metadata(rows)
+    valid = (result.get("validation") == validation_readback
+             and data.get("plan_sha256") == plan_hash == result.get("plan_sha256")
+             and result.get("source_sha256") == sha256(source.read_bytes()).hexdigest()
+             and result.get("input") == rows
+             and result.get("input_sha256") == sha256(json.dumps(rows, sort_keys=True).encode()).hexdigest()
+             and result.get("validation", {}).get("total_rows") == len(ids)
+             and result["validation"].get("invalid_rows") == sum(
+                 not isinstance(row.get("name"), str) or not row["name"].strip() or len(row["name"]) > 200
+                 or any(field in row and not isinstance(row[field], bool) for field in ("tidal","greatlakes"))
+                 for row in rows))
+    report.update({"status":"VERIFIED_BOUNDED_DATA_MISSION" if valid else "BLOCKED_DATA_INTEGRITY",
+                   "dispatcher":"original_chief_bounded_model_data_plan","model_called":model_called,
+                   "chief_model_delegated":model_called,"founder_objective_verified":False,"independent_verified":valid,
+                   "bounded_metadata_contract_verified":valid,
+                   "objective_review_required":True,
+                   "verified_scope":"NOAA station identity/coordinates and exact source-to-validator structural review only; broader founder objective remains unverified",
+                   "worker_artifacts_technically_verified":valid,"tool_outputs_verified":valid,
+                   "executed_workers":2,"new_worker_invocations":invoked,"reused_prior_verified_workers":2-invoked,
+                   "specialists":[KIND_TO_AGENT[k] for k in task["team"]],"station_ids":list(ids),
+                   "plan_sha256":plan_hash,"plan_artifact":plan_path.name,
+                   "metadata_review":{"total_rows":validation_readback["total_rows"],
+                                      "structurally_valid_rows":validation_readback["structurally_valid_rows"],
+                                      "invalid_rows":validation_readback["invalid_rows"],
+                                      "errors":validation_readback["errors"],
+                                      "all_metadata_structurally_valid":validation_readback["invalid_rows"] == 0,
+                                      "warnings":["Datum references and instrument accuracy are not validated"]
+                                                 + (["Malformed station metadata found; review completed, metadata not certified valid"] if validation_readback["invalid_rows"] else [])},
+                   "worker_results":[{"kind":k,"worker":KIND_TO_AGENT[k],"status":progress[k]["status"],"output_artifact":progress[k]["artifact_path"],"verified_scope":"public NOAA identity and coordinates plus original structural validation"} for k in task["team"]],
+                   "bounded_founder_goal_evidence":{"status":"VERIFIED_PUBLIC_METADATA_STRUCTURE" if valid else "NOT_VERIFIED", "datum_reference_validated":False,"instrument_accuracy_verified":False},
+                   "new_general_agent_capability_claimed":False,"founder_review_required":True})
     return report
 
 
