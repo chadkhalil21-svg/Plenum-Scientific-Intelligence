@@ -22,6 +22,8 @@ class WeeklyPublicEvidenceTests(unittest.TestCase):
         self.assertIn("FOUNDER OVERRIDE (14 Nov 2026)", report)
         self.assertIn("custom Plenum browser #310 is RETIRED", report)
         self.assertIn("original scientific evidence reconciliation #482", report.lower())
+        self.assertIn("FOUNDER HOST DECISION (14 Nov 2026)", report)
+        self.assertNotIn("Persistent host #384 is still UNVERIFIED", report)
         self.assertNotIn("Verify a real owner-approved signed-in website task", report)
         self.assertNotIn("Route specific research-memory continuity schema fault", report)
         self.assertIn("not established as live private persistent services", report)
