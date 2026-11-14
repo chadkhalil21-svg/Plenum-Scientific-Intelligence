@@ -123,12 +123,18 @@ jobs:
           assert not report['independent_behavior_verified']
           print('Actual local OpenHands candidate: AST and nonplaceholder code verified, behavior NOT verified')
           PY
-      - name: Preserve review-only evidence with no private browser content
+      # SDK raw events remain in an unrelated temporary directory and are
+      # deleted after execution; never recursively upload an event store.
+      - name: Preserve bounded review-only receipt and redacted event metadata
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: browser-agent-public-source-${{ github.event.issue.number }}
-          path: reports/browser-agent/issue-${{ github.event.issue.number }}/
+          path: |
+            reports/browser-agent/issue-${{ github.event.issue.number }}/result.json
+            reports/browser-agent/issue-${{ github.event.issue.number }}/model-runtime.json
+            reports/browser-agent/issue-${{ github.event.issue.number }}/events-redacted.json
+            reports/browser-agent/issue-${{ github.event.issue.number }}/proposal.py
           retention-days: 7
           if-no-files-found: ignore
       - name: Report bounded execution status on original founder issue
