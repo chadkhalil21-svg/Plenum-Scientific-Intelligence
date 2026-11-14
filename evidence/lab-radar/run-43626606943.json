@@ -1,0 +1,123 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "43626606943",
+  "source_revision": "036160cc705efe56e124851e43617c0c871021ee",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-14T18:26:50.433467+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 28,
+    "sources_returning_records": 25,
+    "source_outages": [
+      "un_climate_environment"
+    ],
+    "new_public_links_before_limit": 9,
+    "signals": [
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261113231624.htm",
+        "title_untrusted": "Scientists find a simple daily routine linked to less pain and depression",
+        "claimed_publication_date": "Sat, 14 Nov 2026 07:48:01 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03668-x",
+        "title_untrusted": "Number of international students arriving in US plunges — worrying scientists",
+        "claimed_publication_date": "2026-11-13",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75466442",
+        "title_untrusted": "M 0.8 - 12 km WNW of The Geysers, CA",
+        "claimed_publication_date": "1794680010920",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261112230452.htm",
+        "title_untrusted": "Yale scientists reveal what really slows aging and what doesn't",
+        "claimed_publication_date": "Fri, 13 Nov 2026 23:26:12 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000ty9z",
+        "title_untrusted": "M 4.7 - 24 km S of Yacuiba, Bolivia",
+        "claimed_publication_date": "1794679441078",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261112230450.htm",
+        "title_untrusted": "A new fiber supplement could help millions suffering from irritable bowel syndrome",
+        "claimed_publication_date": "Sat, 14 Nov 2026 07:35:36 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41362151",
+        "title_untrusted": "M 1.5 - 10 km NNE of Ocotillo Wells, CA",
+        "claimed_publication_date": "1794678210430",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261112230447.htm",
+        "title_untrusted": "A giant icy world hiding beyond Pluto could be our sixth dwarf planet",
+        "claimed_publication_date": "Sat, 14 Nov 2026 06:58:42 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41362143",
+        "title_untrusted": "M 0.8 - 4 km WSW of Anza, CA",
+        "claimed_publication_date": "1794678128330",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
