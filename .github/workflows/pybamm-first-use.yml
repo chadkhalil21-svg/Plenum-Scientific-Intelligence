@@ -47,6 +47,7 @@ jobs:
           assert d['status']=='PYBAMM_REAL_PHYSICS_CHECK_PASS'
           assert d['solver_ran'] is True
           assert d['library']=='PyBaMM' and d['upstream_repository']=='pybamm-team/PyBaMM'
+          assert d['upstream_version']=='26.10.1.1', 'Installed PyBaMM must match pre-approved pinned version'
           assert len(d['cases'])==2
           assert [x['applied_current_A'] for x in d['cases']]==[1.5,3.0]
           assert d['changed_input_check_passed'] is True
