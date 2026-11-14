@@ -219,8 +219,12 @@ def tailor_original_n8n_workflow(source: dict, task: dict) -> dict:
         }]]}
         agent = next(n for n in workflow["nodes"]
                      if n["name"] == "Plenum Specialist Agent")
+        # Official upstream Qwen3 /no_think soft switch for compact drafting.
+        # Original live #698 returned no readable final model output, but this
+        # source change alone does NOT establish that the cause was thinking.
+        # Upstream: https://github.com/QwenLM/Qwen3
         agent["parameters"]["text"] = (
-            "={{ 'ROLE: ' + $('Assign Nine Roles').first().json.role + "
+            "={{ '/no_think\\nROLE: ' + $('Assign Nine Roles').first().json.role + "
             "'\\nMISSION: ' + $('Assign Nine Roles').first().json.mission + "
             "'\\nTASK: ' + $('Assign Nine Roles').first().json.instruction + "
             "'\\nPUBLIC PRIMARY SOURCE: ' + " + json.dumps(AMERICAN_RIDER_README_URL) + " + "
