@@ -54,8 +54,12 @@ def _approved_upload(root, file_id):
     if not root:
         raise PermissionError("Private uploads not provisioned")
     base=Path(root).resolve(strict=True)
-    path=(base/file_id).resolve(strict=True)
-    if path.parent!=base or not path.is_file() or path.is_symlink():
+    # Reject links before resolution: resolving first erases symlink identity.
+    entry=base/file_id
+    if entry.is_symlink():
+        raise PermissionError("Upload must not be a symbolic link")
+    path=entry.resolve(strict=True)
+    if path.parent!=base or not path.is_file():
         raise PermissionError("Upload must be a preapproved sandbox file")
     if path.stat().st_size>MAX_FILE_BYTES:
         raise ValueError("Upload exceeds 8 MiB")
