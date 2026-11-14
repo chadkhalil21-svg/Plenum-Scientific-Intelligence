@@ -22,6 +22,36 @@ class PlannerFailureDiagnostics(TestCase):
         module.ChatOllama=StubModel
         return module
 
+    def test_live_model_schema_allows_only_explicitly_requested_contracts(self):
+        # Original #679 returned six tools including unrequested cooling;
+        # the structured schema itself must not offer those extras.
+        captured=[]
+        class FakeModel:
+            def __init__(self,**kw):
+                captured.append(kw)
+            def invoke(self,messages):
+                return types.SimpleNamespace(content=json.dumps({'steps':[
+                    {'tool':'noaa_metadata'},
+                    {'tool':'station_validation','input_from':'noaa_metadata'},
+                    {'tool':'crossref_metadata'},
+                    {'tool':'bibliography_readback','input_from':'crossref_metadata'}]}),
+                    response_metadata={'done_reason':'stop'})
+        module=types.ModuleType('langchain_ollama')
+        module.ChatOllama=FakeModel
+        scope={'station_ids':['8723214'],'dois':['10.1029/2022jc018496'],'cooling':None}
+        with patch.dict(sys.modules,{'langchain_ollama':module}),patch.dict('os.environ',ENV):
+            plan=m.model_plan('Inspect NOAA 8723214 and DOI 10.1029/2022JC018496 metadata',scope)
+        self.assertEqual(len(plan['steps']),4)
+        fmt=captured[0]['format']['properties']['steps']
+        self.assertEqual((fmt['minItems'],fmt['maxItems']),(4,4))
+        allowed=set()
+        for option in fmt['items']['anyOf']:
+            allowed.update(option['properties']['tool']['enum'])
+        self.assertEqual(allowed,{'noaa_metadata','station_validation',
+                                  'crossref_metadata','bibliography_readback'})
+        self.assertNotIn('cooling_solution',json.dumps(fmt))
+        self.assertNotIn('cooling_readback',json.dumps(fmt))
+
     def test_invalid_json_reports_stage_and_length_without_raw_output(self):
         with patch.dict(sys.modules,{'langchain_ollama':self.stub('DO_NOT_EXPORT invalid JSON')}),patch.dict('os.environ',ENV):
             with self.assertRaises(ValueError) as caught:
