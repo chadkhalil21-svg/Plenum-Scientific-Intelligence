@@ -127,6 +127,9 @@ class DirectNineDepartmentTests(TestCase):
         self.assertIn("TRANSPORTATION platform",agent["parameters"]["text"])
         self.assertIn("String($json.data || '')",agent["parameters"]["text"])
         self.assertIn("NOT a cycling company",agent["parameters"]["text"])
+        # Qwen3's built-in upstream non-thinking mode keeps short n8n drafts
+        # from using the full response allowance before final usable text.
+        self.assertIn("/no_think",agent["parameters"]["text"])
         reviewer=next(n for n in compiled["nodes"] if n["name"]=="Founder Review Queue")
         self.assertIn("upstream_tool_observed",reviewer["parameters"]["jsCode"])
         self.assertIn("National transportation platform",reviewer["parameters"]["jsCode"])
