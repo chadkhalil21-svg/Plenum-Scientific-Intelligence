@@ -95,10 +95,14 @@ jobs:
           if len(workflow['nodes'])==7:
               import re
               tool=next(x for x in workflow['nodes'] if x['name']=='Reviewed Free GitHub Source')
-              assert tool['type']=='@n8n/n8n-nodes-langchain.toolHttpRequest'
+              assert tool['type']=='n8n-nodes-base.httpRequest'
+              assert tool['typeVersion']==4.2
               assert tool['parameters']['method']=='GET'
+              assert tool['parameters']['authentication']=='none'
               assert re.fullmatch(r'https://api.github.com/repos/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+',tool['parameters']['url'])
               assert 'credentials' not in tool
+              assert workflow['connections']['Assign Nine Roles']['main']==[[{'node':'Reviewed Free GitHub Source','type':'main','index':0}]]
+              assert workflow['connections'][tool['name']]['main']==[[{'node':'Plenum Specialist Agent','type':'main','index':0}]]
               assert os.environ.get('GITHUB_EVENT_NAME')=='issues'
 
           model=next(n for n in workflow['nodes'] if n['name']=='Local Ollama (Configure Credential)')

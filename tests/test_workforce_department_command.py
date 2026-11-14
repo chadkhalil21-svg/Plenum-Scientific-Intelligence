@@ -71,8 +71,8 @@ class DirectNineDepartmentTests(TestCase):
                if node["name"]=="Reviewed Free GitHub Source"]
         self.assertEqual(len(tools),1)
         tool=tools[0]
-        self.assertEqual(tool["type"],"@n8n/n8n-nodes-langchain.toolHttpRequest")
-        self.assertEqual(tool["typeVersion"],1.1)
+        self.assertEqual(tool["type"],"n8n-nodes-base.httpRequest")
+        self.assertEqual(tool["typeVersion"],4.2)
         self.assertEqual(tool["parameters"]["method"],"GET")
         self.assertEqual(tool["parameters"]["url"],
                          "https://api.github.com/repos/"+
@@ -80,14 +80,18 @@ class DirectNineDepartmentTests(TestCase):
                                     fromlist=["suggest_sources"]).suggest_sources(task["objective"],limit=3)[0]["repository"])
         self.assertNotIn("$fromAI",json.dumps(tool))
         agent=next(x for x in compiled["nodes"] if x["name"]=="Plenum Specialist Agent")
-        self.assertTrue(agent["parameters"]["options"]["returnIntermediateSteps"])
-        self.assertIn("call the existing Reviewed Free GitHub Source tool once",
-                      agent["parameters"]["options"]["systemMessage"])
+        self.assertIn("PUBLIC GITHUB RESPONSE",agent["parameters"]["text"])
+        self.assertIn("$('Assign Nine Roles').first().json.mission",
+                      agent["parameters"]["text"])
         reviewer=next(x for x in compiled["nodes"] if x["name"]=="Founder Review Queue")
         self.assertIn("upstream_tool_observed:",reviewer["parameters"]["jsCode"])
+        self.assertIn("upstream_public_license:",reviewer["parameters"]["jsCode"])
         self.assertNotIn("credentials",tool)
-        self.assertEqual(compiled["connections"][tool["name"]]["ai_tool"],
-                         [[{"node":"Plenum Specialist Agent","type":"ai_tool","index":0}]])
+        self.assertEqual(compiled["connections"]["Assign Nine Roles"]["main"],
+                         [[{"node":"Reviewed Free GitHub Source","type":"main","index":0}]])
+        self.assertEqual(compiled["connections"][tool["name"]]["main"],
+                         [[{"node":"Plenum Specialist Agent","type":"main","index":0}]])
+        self.assertNotIn("ai_tool",compiled["connections"][tool["name"]])
         self.assertEqual(len(SOURCE["nodes"]),6)  # no duplicate base system
         support=tailor_original_n8n_workflow(
             SOURCE,parse_founder_department(event(role="support")))
