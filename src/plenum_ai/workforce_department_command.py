@@ -390,8 +390,13 @@ def main():
     out.write_text(json.dumps(tailored) + "\n")
     (out.parent / "department-metadata.json").write_text(
         json.dumps({**{k:task[k] for k in ("schema","issue_number","role","approval")},
-                    "source_tool_required": any(n.get("name") == "Reviewed Free GitHub Source"
-                                                for n in tailored["nodes"])})+"\n")
+                    "source_tool_required": any(
+                        n.get("name") in ("Reviewed Free GitHub Source", AMERICAN_RIDER_SOURCE_NODE)
+                        for n in tailored["nodes"]),
+                    "american_rider_marketing": (
+                        task["role"] == "marketing"
+                        and "american rider" in task["objective"].casefold()),
+                    })+"\n")
     print("APPROVED_PUBLIC_DEPARTMENT role=" + task["role"]
           + " issue=" + str(task["issue_number"]) + " no_customer_accounts")
 
