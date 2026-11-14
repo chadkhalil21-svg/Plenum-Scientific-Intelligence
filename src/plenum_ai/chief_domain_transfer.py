@@ -29,9 +29,13 @@ ALLOWED_DOIS = frozenset({DOI.lower()})
 _seen: list[dict[str, Any]] = []
 
 
-def read_crossref(doi: str, *, opener=None, sleep_fn=time.sleep) -> dict:
+def read_crossref(doi: str, *, opener=None, sleep_fn=time.sleep, approved_dois=None) -> dict:
     """Only known public scholarly identifiers. Never browse arbitrary URLs."""
-    if not isinstance(doi, str) or doi.lower() not in ALLOWED_DOIS:
+    import re
+    allowed = ALLOWED_DOIS if approved_dois is None else approved_dois
+    if (not isinstance(allowed, frozenset) or not 1 <= len(allowed) <= 2
+            or any(not isinstance(x, str) or not re.fullmatch(r"10\.[0-9]{4,9}/[A-Za-z0-9][A-Za-z0-9.()/_+-]{0,100}", x) for x in allowed)
+            or not isinstance(doi, str) or doi.lower() not in allowed):
         raise ValueError("DOI not permitted in first public cross-domain trial")
     url = "https://api.crossref.org/works/" + quote(doi, safe="")
     req = Request(

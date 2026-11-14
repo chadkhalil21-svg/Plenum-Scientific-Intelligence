@@ -1,3 +1,11 @@
+## 2026-11-14 | Original Chief composes explicit public contracts (source and offline only)
+
+The original mission intake now accepts a contract-planning envelope with arbitrary objective wording and explicit public identifiers/physical inputs. Existing local Qwen/ChatOllama structured output selects and orders applicable NOAA metadata/structural-validation, Crossref metadata/separate same-provider readback, and parameterized SciPy cooling/analytic-check contracts. Model plans cannot supply URLs, code, identifiers or private tools. The original issue workflow, SHA checkpoints, once-only native retry gate and per-contract independent checks are reused. Saved planning provenance identifies the original local model; retries preserve the immutable plan and completed artifacts.
+
+Offline tests cover real NOAA validator input, a new numerical input with independent analytic value, composed dependencies, failed readback recovery, zero-invocation resume, native retry eligibility and tamper/scope rejection. Actual model planning and useful new live missions remain unverified until original Actions artifacts are independently inspected. Contract success does not certify an unrestricted freeform objective, full scholarly paper, second bibliographic provider, scientific discovery, private account, continuous host or zero production bill. No Cloudflare/browser change, new supervisor or framework.
+
+---
+
 ## 2026-11-13 | Original coding specialist: distinct candidate for a reproduced upload defect
 
 Root reproduced that browser_actions._approved_upload accepts a symlink ID pointing to another file within the approved directory: resolving first makes the subsequent is_symlink check ineffective. The regression fails before any repair. This is a public source defect, not a live website action or credential incident.

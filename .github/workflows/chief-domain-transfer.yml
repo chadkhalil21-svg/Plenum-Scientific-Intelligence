@@ -39,6 +39,7 @@ jobs:
           print('PASS: two source-only safe preflights')
           PY
   actual-domain-transfer:
+    if: github.event_name == 'workflow_dispatch'
     needs: no-model-contracts
     runs-on: ubuntu-latest
     timeout-minutes: 28
