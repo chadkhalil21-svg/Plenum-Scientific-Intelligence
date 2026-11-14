@@ -25,6 +25,21 @@ class PublicPaperQAPilotTests(unittest.TestCase):
         with patch("importlib.metadata.version",return_value="bad"):
             with self.assertRaisesRegex(RuntimeError,"Unreviewed"):
                 p.run()
+    def test_real_public_document_is_one_fixed_authorized_usda_pdf(self):
+        self.assertEqual(p.GREENFEED_TITLE,
+                         "Recommended Protocol for Using the GreenFeed System")
+        self.assertEqual(p.SOURCE_TERMS, ("calibration", "recovery", "airflow", "visits"))
+        self.assertTrue(p.GREENFEED_PDF_URL.startswith("https://www.ars.usda.gov/ARSUserFiles/"))
+        self.assertTrue(p.GREENFEED_PDF_URL.endswith(".pdf"))
+        self.assertLessEqual(p.MAX_PDF_BYTES, 8_000_000)
+
+    def test_live_source_retrieval_rejects_unreviewed_paperqa_without_network(self):
+        with patch("importlib.metadata.version", return_value="unexpected-version"), \
+                patch.object(p, "_acquire_approved_greenfeed",
+                             side_effect=AssertionError("No network allowed before pin check")):
+            with self.assertRaisesRegex(RuntimeError, "Unreviewed"):
+                p.run_greenfeed_public()
+
     def test_network_is_prohibited(self):
         with self.assertRaisesRegex(RuntimeError,"Network access forbidden"):
             p._blocked_connect()
