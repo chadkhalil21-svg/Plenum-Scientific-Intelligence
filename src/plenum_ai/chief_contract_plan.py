@@ -82,6 +82,42 @@ def validate_plan(plan,scope):
     return plan
 
 
+
+class PlanningFailure(ValueError):
+    """Fixed stage/code plus sanitized metadata; never retain provider text."""
+    def __init__(self, stage, code, response=None):
+        super().__init__(code)
+        self.diagnostic={'stage':stage,'code':code,'response':response or {}}
+
+
+def _response_info(response, parsed=None):
+    raw=getattr(response,'content',None)
+    info={'content_type':'string' if isinstance(raw,str) else 'list' if isinstance(raw,list) else 'other',
+          'characters':len(raw) if isinstance(raw,str) else None}
+    meta=getattr(response,'response_metadata',None)
+    meta=meta if isinstance(meta,dict) else {}
+    usage=getattr(response,'usage_metadata',None)
+    usage=usage if isinstance(usage,dict) else {}
+    reason=meta.get('done_reason')
+    info['done_reason']=reason if reason in ('stop','length','load') else 'unknown'
+    for name,value in (('input_tokens',usage.get('input_tokens',meta.get('prompt_eval_count'))),
+                       ('output_tokens',usage.get('output_tokens',meta.get('eval_count')))):
+        if type(value) is int and 0<=value<=10_000_000:info[name]=value
+    if isinstance(parsed,dict) and isinstance(parsed.get('steps'),list):
+        steps=parsed['steps'];info['step_count']=len(steps)
+        info['tool_names']=[step.get('tool') if isinstance(step,dict) and isinstance(step.get('tool'),str) and step.get('tool') in TOOLS else 'UNKNOWN' for step in steps[:6]]
+    return info
+
+
+def _contract_error_code(exc):
+    return {'Exact bounded tool plan required':'INVALID_PLAN_SHAPE',
+            'Omitted or repeated contract':'CONTRACT_COUNT_MISMATCH',
+            'Tool name must be a string':'INVALID_TOOL_TYPE',
+            'Unknown, omitted or duplicate contract':'CONTRACT_SET_MISMATCH',
+            'Missing or reversed actual-data dependency':'CONTRACT_DEPENDENCY_MISMATCH',
+            'Model cannot supply URLs, identifiers or executable code':'EXTRA_CONTRACT_INPUT'}.get(str(exc),'INVALID_CONTRACT_PLAN')
+
+
 def model_plan(objective,scope):
     if os.environ.get('PLENUM_EPHEMERAL_RUNNER')!='confirmed' or os.environ.get('PLENUM_CHIEF_MODEL_URL')!=MODEL_URL:
         raise PermissionError('Original isolated loopback model required')
@@ -93,19 +129,34 @@ def model_plan(objective,scope):
                             'input_from':{'enum':['noaa_metadata','crossref_metadata','cooling_solution']}}}]
     schema={'type':'object','additionalProperties':False,'required':['steps'],
             'properties':{'steps':{'type':'array','minItems':2,'maxItems':6,'items':{'anyOf':choices}}}}
-    model=ChatOllama(model=MODEL,base_url=MODEL_URL,temperature=0,reasoning=False,format=schema,num_ctx=2048,num_predict=600)
-    response=model.invoke([('system',
-        'You are the existing Plenum Chief. Compose only the public contracts needed for this explicit scope. '
-        'For NOAA stations use noaa_metadata then station_validation input_from noaa_metadata. '
-        'For DOI identifiers use crossref_metadata then bibliography_readback input_from crossref_metadata. '
-        'For cooling parameters use cooling_solution then cooling_readback input_from cooling_solution. '
-        'Combine requested domains; independent branches may be ordered either way. '
-        'No absent domain, duplicate, private action, arbitrary URL, code or invented input. Return JSON only.'),
-        ('human',json.dumps({'objective':objective,'authorized_identifiers':scope}))])
-    raw=response.content
+    try:
+        model=ChatOllama(model=MODEL,base_url=MODEL_URL,temperature=0,reasoning=False,format=schema,num_ctx=2048,num_predict=600)
+    except Exception:
+        raise PlanningFailure('MODEL_CONFIGURATION','MODEL_CONFIGURATION_ERROR') from None
+    try:
+        response=model.invoke([('system',
+            'You are the existing Plenum Chief. Compose only the public contracts needed for this explicit scope. '
+            'For NOAA stations use noaa_metadata then station_validation input_from noaa_metadata. '
+            'For DOI identifiers use crossref_metadata then bibliography_readback input_from crossref_metadata. '
+            'For cooling parameters use cooling_solution then cooling_readback input_from cooling_solution. '
+            'Combine requested domains; independent branches may be ordered either way. '
+            'No absent domain, duplicate, private action, arbitrary URL, code or invented input. Return JSON only.'),
+            ('human',json.dumps({'objective':objective,'authorized_identifiers':scope}))])
+    except Exception:
+        raise PlanningFailure('MODEL_INVOCATION','MODEL_PROVIDER_ERROR') from None
+    info=_response_info(response)
+    raw=getattr(response,'content',None)
     if not isinstance(raw,str) or len(raw)>4000:
-        raise ValueError('Invalid structured model plan')
-    return validate_plan(json.loads(raw),scope)
+        raise PlanningFailure('MODEL_RESPONSE_SHAPE','INVALID_RESPONSE_CONTENT',info)
+    try:
+        parsed=json.loads(raw)
+    except (ValueError,TypeError):
+        raise PlanningFailure('MODEL_JSON','INVALID_JSON',info) from None
+    info=_response_info(response,parsed)
+    try:
+        return validate_plan(parsed,scope)
+    except (ValueError,TypeError,KeyError) as exc:
+        raise PlanningFailure('MODEL_CONTRACT_VALIDATION',_contract_error_code(exc),info) from None
 
 
 def _validator(rows):
@@ -176,7 +227,7 @@ def validate_inference_receipt(receipt):
             or receipt['provider'] not in ('local_ollama','offline_test_planner')
             or receipt['model'] != (MODEL if receipt['provider']=='local_ollama' else None)
             or receipt['endpoint']!='loopback_only' or receipt['structured_output'] is not True):
-        raise ValueError('Invalid original planning provenance')
+        raise PlanningFailure('PLAN_PROVENANCE','INVALID_INFERENCE_RECEIPT')
 
 
 def execute_contract_mission(event,*,output_dir,planner=None):
@@ -188,7 +239,7 @@ def execute_contract_mission(event,*,output_dir,planner=None):
         if path.is_symlink() or path.stat().st_size>8000: raise ValueError('Unsafe plan')
         receipt=json.loads(path.read_text('utf-8'))
         if set(receipt)!={'issue','objective_sha256','scope','plan','inference'} or receipt['issue']!=task['issue_number'] or receipt['objective_sha256']!=objective_digest(task['objective']) or receipt['scope']!=scope:
-            raise ValueError('Saved plan belongs to a different scope')
+            raise PlanningFailure('SAVED_PLAN_BINDING','SAVED_PLAN_SCOPE_MISMATCH')
         plan=validate_plan(receipt['plan'],scope)
         validate_inference_receipt(receipt['inference'])
         called=False
@@ -238,3 +289,4 @@ def execute_contract_mission(event,*,output_dir,planner=None):
             'bounded_founder_goal_evidence':{'status':'VERIFIED_PUBLIC_CONTRACTS_NOT_FREEFORM_OBJECTIVE' if valid else 'NOT_VERIFIED'},
             'founder_review_required':True,'new_general_agent_capability_claimed':False,
             'limitations':['Freeform objective requires independent review','Crossref uses same-provider metadata readback, not full paper review','NOAA datum and instrument accuracy not checked']}
+

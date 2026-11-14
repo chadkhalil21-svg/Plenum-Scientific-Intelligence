@@ -280,6 +280,12 @@ def execute(event: dict, *, output_dir: Path) -> dict:
                           failure_type=type(exc).__name__,
                           model_execution_state="UNCONFIRMED_SEE_IMMUTABLE_PLAN_RECEIPT",
                           objective_review_required=True)
+            from .chief_contract_plan import PlanningFailure
+            if isinstance(exc,PlanningFailure):
+                report['planning_failure']=exc.diagnostic
+                if exc.diagnostic['stage'] in ('MODEL_RESPONSE_SHAPE','MODEL_JSON','MODEL_CONTRACT_VALIDATION'):
+                    report['model_called']=True
+                    report['model_execution_state']='RESPONSE_RECEIVED_PLAN_REJECTED'
             return report
     if task.get("data_mission"):
         return execute_data_mission(event, output_dir=output_dir)
@@ -654,3 +660,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
