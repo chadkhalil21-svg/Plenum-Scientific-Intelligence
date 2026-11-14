@@ -16,10 +16,13 @@ on:
       - 'tests/test_paperqa_public_retrieval.py'
       - '.github/workflows/paperqa-public-retrieval.yml'
   workflow_dispatch:
+  issues:
+    types: [opened]
 permissions:
   contents: read
 jobs:
   independent-public-retrieval:
+    if: github.event_name != 'issues' && github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -80,4 +83,72 @@ jobs:
             reports/paperqa-public-plan.json
             reports/paperqa-real-retrieval.json
             reports/paperqa-dimensional-study.json
+          retention-days: 30
+
+  real-usda-public-document:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' &&
+       github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+       github.event.issue.user.login == 'chadkhalil21-svg' &&
+       github.event.issue.title == '[Plenum Research] USDA GreenFeed public PDF intake' &&
+       github.event.issue.body == 'PLENUM_RESEARCH_GREENFEED_PUBLIC_V1')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      issues: write
+    env:
+      OPENAI_API_KEY: ''
+      ANTHROPIC_API_KEY: ''
+      GOOGLE_API_KEY: ''
+      HF_HUB_DISABLE_TELEMETRY: '1'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install pinned existing PaperQA2 and free BSD-licensed pypdf
+        run: |
+          python -m pip install -e '.[paperqa]'
+          python -m pip install pypdf==7.1.0
+          python -m pip check
+      - name: Existing Research Director ingests actual official USDA PDF, no paid model
+        run: >-
+          python -m plenum_ai.paperqa_public_retrieval
+          --usda-greenfeed --execute --out reports/greenfeed-original-public-document.json
+      - name: Independently inspect real source extraction and existing PaperQA retrieval
+        run: |
+          python - <<'PY'
+          import json,re
+          from pathlib import Path
+          p=Path('reports/greenfeed-original-public-document.json')
+          x=json.loads(p.read_text(encoding='utf-8'))
+          assert x['schema']=='plenum-greenfeed-real-public-source-v1'
+          assert x['status']=='REAL_PUBLIC_DOCUMENT_INDEXED_AND_SOURCE_READ'
+          assert x['source_url'].startswith('https://www.ars.usda.gov/ARSUserFiles/')
+          assert re.fullmatch('[0-9a-f]{64}',x['source_sha256'])
+          assert 20 <= x['source_pages_extracted'] <= 50
+          assert x['source_text_characters']>=12000
+          assert x['source_sections_observed']==4
+          assert len({v['topic'] for v in x['source_linked_excerpts']})==4
+          assert all(1<=v['pdf_page']<=x['source_pages_extracted'] and
+                     v['topic'] in v['source_text_excerpt'].casefold()
+                     for v in x['source_linked_excerpts'])
+          assert x['paperqa_actual_index_and_retrieval'] is True
+          assert x['model_calls']==0 and x['paid_api_calls']==0
+          assert x['private_accounts_accessed'] is False
+          assert x['terra_efficacy_verified'] is False
+          assert x['general_autonomous_agent_verified'] is False
+          print('ONE REAL USDA PUBLIC PDF INDEXED AND INDEPENDENTLY READ BACK')
+          PY
+      - name: Save truthful actual-source evidence for independent founder acceptance
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: greenfeed-authentic-usda-paperqa-${{ github.run_id }}
+          path: reports/greenfeed-original-public-document.json
+          if-no-files-found: ignore
           retention-days: 30
