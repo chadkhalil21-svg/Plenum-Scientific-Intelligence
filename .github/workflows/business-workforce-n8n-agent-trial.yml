@@ -94,16 +94,28 @@ jobs:
           assert workflow['active'] is False and len(workflow['nodes']) in (6,7)
           if len(workflow['nodes'])==7:
               import re
-              tool=next(x for x in workflow['nodes'] if x['name']=='Reviewed Free GitHub Source')
+              allowed_tools=('Reviewed Free GitHub Source','Official American Rider README')
+              tools=[x for x in workflow['nodes'] if x['name'] in allowed_tools]
+              assert len(tools)==1, 'One reviewed source retrieval per founder department'
+              tool=tools[0]
               assert tool['type']=='n8n-nodes-base.httpRequest'
               assert tool['typeVersion']==4.2
               assert tool['parameters']['method']=='GET'
               assert tool['parameters']['authentication']=='none'
-              assert re.fullmatch(r'https://api.github.com/repos/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+',tool['parameters']['url'])
               assert 'credentials' not in tool
-              assert workflow['connections']['Assign Nine Roles']['main']==[[{'node':'Reviewed Free GitHub Source','type':'main','index':0}]]
-              assert workflow['connections'][tool['name']]['main']==[[{'node':'Plenum Specialist Agent','type':'main','index':0}]]
               assert os.environ.get('GITHUB_EVENT_NAME')=='issues'
+              if tool['name']=='Reviewed Free GitHub Source':
+                  assert re.fullmatch(r'https://api.github.com/repos/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+',tool['parameters']['url'])
+              else:
+                  assert tool['parameters']['url']==(
+                      'https://raw.githubusercontent.com/chadkhalil21-svg/'
+                      'American-Rider-Commercial/release/current/README.md')
+                  assert tool['parameters']['options']['response']['response']=={
+                      'responseFormat':'text','outputPropertyName':'data','neverError':False}
+                  meta=json.loads(Path('runtime-trial/department-metadata.json').read_text())
+                  assert meta['role']=='marketing' and meta['american_rider_marketing'] is True
+              assert workflow['connections']['Assign Nine Roles']['main']==[[{'node':tool['name'],'type':'main','index':0}]]
+              assert workflow['connections'][tool['name']]['main']==[[{'node':'Plenum Specialist Agent','type':'main','index':0}]]
 
           model=next(n for n in workflow['nodes'] if n['name']=='Local Ollama (Configure Credential)')
           model['parameters']['model']=('qwen3:1.7b' if os.environ.get('GITHUB_EVENT_NAME')=='issues' else 'qwen3:0.6b')
@@ -156,7 +168,7 @@ jobs:
           text=Path('runtime-trial/run.log').read_text(errors='replace')
           assert 'Error executing workflow' not in text
           if os.environ.get('GITHUB_EVENT_NAME') == 'issues':
-              from plenum_ai.workforce_department_command import (extract_untrusted_public_department_reply, audit_public_draft_repositories, native_reviewed_source_observed)
+              from plenum_ai.workforce_department_command import (extract_untrusted_public_department_reply, audit_public_draft_repositories, native_reviewed_source_observed, audit_american_rider_marketing_copy)
               meta=json.loads(Path('runtime-trial/department-metadata.json').read_text())
               role=meta['role']
               assert text.count('DRAFT_AWAITING_FOUNDER_REVIEW')>=1
@@ -169,9 +181,12 @@ jobs:
               audit=audit_public_draft_repositories(draft)
               source_tool_observed=native_reviewed_source_observed(text) if meta.get('source_tool_required') else False
               placeholder=any(word in draft.lower() for word in ('feature x', '[repository name]', '[browser automation repositories]'))
+              marketing_check=(audit_american_rider_marketing_copy(draft)
+                               if meta.get('american_rider_marketing') else None)
               status=('BLOCKED_SOURCE_TOOL_NOT_OBSERVED' if meta.get('source_tool_required') and not source_tool_observed
                       else 'BLOCKED_GENERIC_PLACEHOLDER_DRAFT' if placeholder
                       else 'DRAFT_REQUIRES_SOURCE_REVIEW' if audit['unreviewed_github_repository_count']
+                      else marketing_check['status'] if marketing_check and marketing_check['status'].startswith('BLOCKED_')
                       else 'DRAFT_AWAITING_FOUNDER_REVIEW')
               Path('runtime-trial/public-department-reply.json').write_text(json.dumps({
                   'schema':'plenum-one-public-department-response-v1',
@@ -180,6 +195,7 @@ jobs:
                   'source_identity_audit':audit,
                   'independent_fact_verification':False,
                   'source_tool_observed':source_tool_observed,
+                  'american_rider_marketing_independent_gate':marketing_check,
                   'owner_review_required':True,
                   'external_actions_executed':False,
               },indent=2)+'\n')
