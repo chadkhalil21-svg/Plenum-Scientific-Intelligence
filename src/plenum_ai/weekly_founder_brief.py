@@ -128,12 +128,33 @@ def collect_public_evidence(token: str):
     return rows
 
 
+def founder_public_comments(token: str, uri: str) -> list[dict]:
+    """Exact original GitHub issue; bounded pagination avoids duplicate reports.
+
+    Original #432 is already close to 100 comments. Reading only page 1
+    silently loses newer daily markers when it crosses that limit.
+    Existing GitHub REST pagination suffices; no new agent or queue.
+    """
+    if uri != f"https://api.github.com/repos/{REPO}/issues/{CHIEF_QUEUE}/comments":
+        raise PermissionError("Only original Chief issue publication is allowed")
+    comments = []
+    for page in range(1, 6):
+        batch = github_json(uri + f"?per_page=100&page={page}", token)
+        if (not isinstance(batch, list) or len(batch) > 100
+                or any(not isinstance(entry, dict) for entry in batch)):
+            raise ValueError("Untrusted original Chief comment page")
+        comments.extend(batch)
+        if len(batch) < 100:
+            return comments
+    # Refuse to post if comments exceeded a bounded 500; cannot verify
+    # duplicate markers and may create effects without full original read.
+    raise ValueError("Original Chief comments exceed safe bounded pagination")
+
+
 def publish_once(token: str, report: str) -> str:
     uri = f"https://api.github.com/repos/{REPO}/issues/{CHIEF_QUEUE}/comments"
     marker = report.splitlines()[0]
-    comments = github_json(uri + "?per_page=100", token)
-    if not isinstance(comments, list):
-        raise ValueError("Cannot independently inspect past Chief reports")
+    comments = founder_public_comments(token, uri)
     if any(marker in str(comment.get("body", "")) for comment in comments):
         return "ALREADY_PUBLISHED"
     outcome = github_json(uri, token, method="POST", body={"body": report})
