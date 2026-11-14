@@ -122,13 +122,25 @@ def model_plan(objective,scope):
     if os.environ.get('PLENUM_EPHEMERAL_RUNNER')!='confirmed' or os.environ.get('PLENUM_CHIEF_MODEL_URL')!=MODEL_URL:
         raise PermissionError('Original isolated loopback model required')
     from langchain_ollama import ChatOllama
-    choices=[{'type':'object','additionalProperties':False,'required':['tool'],
-              'properties':{'tool':{'enum':['noaa_metadata','crossref_metadata','cooling_solution']}}},
-             {'type':'object','additionalProperties':False,'required':['tool','input_from'],
-              'properties':{'tool':{'enum':['station_validation','bibliography_readback','cooling_readback']},
-                            'input_from':{'enum':['noaa_metadata','crossref_metadata','cooling_solution']}}}]
+    # Use the ORIGINAL validated scope to prevent an on-run model from
+    # proposing unrelated specialist tools (e.g. cooling with only NOAA+DOI).
+    # Strict validate_plan below still rejects duplicates and bad dependencies.
+    expected=required_tools(scope)
+    allowed=set(expected)
+    choices=[]
+    for source,check in (('noaa_metadata','station_validation'),
+                         ('crossref_metadata','bibliography_readback'),
+                         ('cooling_solution','cooling_readback')):
+        if source in allowed:
+            choices.extend([
+                {'type':'object','additionalProperties':False,'required':['tool'],
+                 'properties':{'tool':{'enum':[source]}}},
+                {'type':'object','additionalProperties':False,'required':['tool','input_from'],
+                 'properties':{'tool':{'enum':[check]},'input_from':{'enum':[source]}}}
+            ])
     schema={'type':'object','additionalProperties':False,'required':['steps'],
-            'properties':{'steps':{'type':'array','minItems':2,'maxItems':6,'items':{'anyOf':choices}}}}
+            'properties':{'steps':{'type':'array','minItems':len(expected),
+                                   'maxItems':len(expected),'items':{'anyOf':choices}}}}
     try:
         model=ChatOllama(model=MODEL,base_url=MODEL_URL,temperature=0,reasoning=False,format=schema,num_ctx=2048,num_predict=600)
     except Exception:
