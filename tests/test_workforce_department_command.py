@@ -32,7 +32,11 @@ class DirectNineDepartmentTests(TestCase):
                 compiled=tailor_original_n8n_workflow(SOURCE,task)
                 original=next(x for x in SOURCE["nodes"] if x["name"]=="Assign Nine Roles")
                 change=next(x for x in compiled["nodes"] if x["name"]=="Assign Nine Roles")
-                self.assertEqual(len(compiled["nodes"]),len(SOURCE["nodes"]))
+                self.assertIn(len(compiled["nodes"]),(len(SOURCE["nodes"]),len(SOURCE["nodes"])+1))
+                if role in ("research", "engineering"):
+                    self.assertEqual(len(compiled["nodes"]),7)
+                else:
+                    self.assertEqual(len(compiled["nodes"]),6)
                 self.assertNotEqual(original["parameters"]["jsCode"],change["parameters"]["jsCode"])
                 self.assertIn('return roles.filter(([role]) => role === "'+role+'")',change["parameters"]["jsCode"])
                 self.assertIn(json.dumps(task["objective"]),change["parameters"]["jsCode"])
@@ -48,9 +52,36 @@ class DirectNineDepartmentTests(TestCase):
         self.assertIn("pybamm [pybamm-team/PyBaMM]",script)
         self.assertIn("not installed",script)
         self.assertIn("never claim code or a solver ran",script)
-        self.assertEqual(len(compiled["nodes"]),6)
+        self.assertEqual(len(compiled["nodes"]),7)
         self.assertEqual(compiled["active"],False)
         self.assertEqual(len([x for x in compiled["nodes"] if "credentials" in x]),0)
+
+    def test_original_upstream_tool_is_exact_reviewed_get_not_model_supplied_url(self):
+        task=parse_founder_department(event(
+            role="engineering",
+            objective="Review open source browser code tools and upstream repositories",
+        ))
+        compiled=tailor_original_n8n_workflow(SOURCE,task)
+        tools=[node for node in compiled["nodes"]
+               if node["name"]=="Reviewed Free GitHub Source"]
+        self.assertEqual(len(tools),1)
+        tool=tools[0]
+        self.assertEqual(tool["type"],"@n8n/n8n-nodes-langchain.toolHttpRequest")
+        self.assertEqual(tool["typeVersion"],1.1)
+        self.assertEqual(tool["parameters"]["method"],"GET")
+        self.assertEqual(tool["parameters"]["url"],
+                         "https://api.github.com/repos/"+
+                         __import__("plenum_ai.agent_library",
+                                    fromlist=["suggest_sources"]).suggest_sources(task["objective"],limit=3)[0]["repository"])
+        self.assertNotIn("$fromAI",json.dumps(tool))
+        self.assertNotIn("credentials",tool)
+        self.assertEqual(compiled["connections"][tool["name"]]["ai_tool"],
+                         [[{"node":"Plenum Specialist Agent","type":"ai_tool","index":0}]])
+        self.assertEqual(len(SOURCE["nodes"]),6)  # no duplicate base system
+        support=tailor_original_n8n_workflow(
+            SOURCE,parse_founder_department(event(role="support")))
+        self.assertEqual(len(support["nodes"]),6)
+        self.assertNotIn("Reviewed Free GitHub Source",support["connections"])
 
     def test_no_source_match_keeps_only_founder_objective(self):
         task=parse_founder_department(event(
