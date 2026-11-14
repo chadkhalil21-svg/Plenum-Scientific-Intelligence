@@ -24,6 +24,7 @@ ALLOWED_STATUSES = frozenset({
     "BLOCKED_OBJECTIVE_RELEVANCE",
     "BLOCKED_WORKER_OR_VERIFICATION", "BLOCKED_NO_PRIMARY_SOURCE_EVIDENCE",
     "SOURCE_READY_NOT_EXECUTED",
+    "VERIFIED_BOUNDED_DATA_MISSION", "BLOCKED_DATA_INTEGRITY",
 })
 AQUA_ORIGINAL = (
     "https://github.com/google/adk-recipes/tree/"
@@ -105,7 +106,11 @@ def inspect_chief_report(report: dict) -> dict:
     ):
         record("COST_OR_PRIVATE_SCOPE_UNVERIFIED",
                "Public run cost/account scope not independently safe")
-    if status != "VERIFIED_BOUNDED_TEAM":
+    bounded_delivery = status == "VERIFIED_BOUNDED_TEAM" or (
+        status == "VERIFIED_BOUNDED_DATA_MISSION"
+        and report.get("bounded_metadata_contract_verified") is True
+    )
+    if not bounded_delivery:
         record("ORIGINAL_WORKFORCE_NOT_COMPLETED",
                "The original specialist team did not finish with bounded verification")
     if report.get("worker_artifacts_technically_verified") is not True:
@@ -133,7 +138,7 @@ def inspect_chief_report(report: dict) -> dict:
             "VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE_NOT_GENERAL_AUTONOMY"
             if full_goal else "PUBLIC_TASK_FLAGS_VERIFIED_NOT_GENERAL_AUTONOMY"
         )
-    elif status == "VERIFIED_BOUNDED_TEAM" and all(
+    elif bounded_delivery and all(
         x["code"] in {
             "FOUNDER_OBJECTIVE_NOT_PROVEN",
             "NAME_MENTION_NOT_TASK_COMPLETION",

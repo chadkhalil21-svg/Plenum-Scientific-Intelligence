@@ -102,6 +102,18 @@ class GoogleAQuAOfflineOriginalTraceTests(TestCase):
             "BLOCKED_OR_UNVERIFIED_DO_NOT_PROMOTE",
         )
 
+    def test_data_contract_never_promotes_broader_founder_goal(self):
+        d = self.original()
+        d.update(status="VERIFIED_BOUNDED_DATA_MISSION",
+                 bounded_metadata_contract_verified=True,
+                 named_entity_evidence="NOT_APPLICABLE")
+        output = inspect_chief_report(d)
+        self.assertEqual(output["disposition"], "BOUNDED_DELIVERY_FOUNDER_OBJECTIVE_OPEN")
+        self.assertEqual({x["code"] for x in output["findings"]}, {"FOUNDER_OBJECTIVE_NOT_PROVEN"})
+        d["bounded_metadata_contract_verified"] = False
+        self.assertEqual(inspect_chief_report(d)["disposition"],
+                         "BLOCKED_OR_UNVERIFIED_DO_NOT_PROMOTE")
+
     def test_unrecognized_report_rejected(self):
         d = self.original()
         d["schema"] = "injected-agent-output"

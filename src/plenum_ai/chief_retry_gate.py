@@ -13,7 +13,7 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 
 from .mission_checkpoint import artifact_digest, objective_digest, verified_previous_result
-from .chief_team_mission import parse_mission
+from .chief_team_mission import DATA_MAGIC, MISSION_MAGIC, parse_mission, validate_data_plan
 
 REPO = "chadkhalil21-svg/Plenum-Scientific-Intelligence"
 OWNER = "chadkhalil21-svg"
@@ -49,7 +49,7 @@ def inspect_retry(event: object, root: Path, issue: object) -> dict:
             or (issue.get("user") or {}).get("login") != OWNER
             or issue.get("title") != "[Plenum Chief] public mission"
             or not isinstance(body, str)
-            or not body.startswith("PLENUM_CHIEF_PUBLIC_MISSION_V1\nobjective: ")
+            or not any(body.startswith(magic + "\nobjective: ") for magic in (MISSION_MAGIC, DATA_MAGIC))
             or len(body.splitlines()) != 2):
         return {"status": "BLOCKED_NOT_FOUNDER_PUBLIC_MISSION"}
     try:
@@ -89,6 +89,8 @@ def inspect_retry(event: object, root: Path, issue: object) -> dict:
             or report.get("status") not in {"BLOCKED_PARTIAL_TEAM", "SOURCE_READY_NOT_EXECUTED"}
             or report.get("independent_verified") is not False):
         return {"status": "BLOCKED_UNRELATED_OR_COMPLETED_WORK"}
+    if original_task.get("data_mission"):
+        return inspect_data_retry(root, original_task, results, report, run_id)
     if report["status"] == "SOURCE_READY_NOT_EXECUTED":
         # A terminated first run leaves the ORIGINAL preflight report and a
         # sequential checkpoint prefix. No speculative/unstarted work is proof.
@@ -129,6 +131,54 @@ def inspect_retry(event: object, root: Path, issue: object) -> dict:
         return {"status": "BLOCKED_NOT_ONE_REPAIRABLE_WORKER"}
     return {"status": "ELIGIBLE_NATIVE_RETRY_ONCE", "run_id": run_id,
             "issue_number": number, "saved_verified_workers": done}
+
+
+
+def inspect_data_retry(root: Path, task: dict, results: dict, report: dict,
+                       run_id: int) -> dict:
+    """Only exact original data-plan-bound interrupted validation can resume."""
+    from hashlib import sha256
+    rejected = {"status": "BLOCKED_UNSAFE_RETRY_HISTORY"}
+    # No retry of a completed data review, first-worker-only failure or another
+    # history shape. Preserve the original requirement for a verified sibling.
+    team = task["team"]
+    if (report.get("status") != "SOURCE_READY_NOT_EXECUTED"
+            or set(results) != set(team)):
+        return rejected
+    path = root / ("chief-data-plan-" + str(task["issue_number"]) + ".json")
+    if not path.is_file() or path.is_symlink() or path.stat().st_size > 8000:
+        return rejected
+    try:
+        receipt = json.loads(path.read_text("utf-8"))
+        if (not isinstance(receipt, dict)
+                or set(receipt) != {"issue", "objective_sha256", "plan"}
+                or type(receipt["issue"]) is not int
+                or receipt["issue"] != task["issue_number"]
+                or receipt["objective_sha256"] != objective_digest(task["objective"])):
+            return rejected
+        validate_data_plan(receipt["plan"], task["station_ids"])
+    except (OSError, ValueError, TypeError, UnicodeError):
+        return rejected
+    plan_hash = sha256(json.dumps(receipt, sort_keys=True).encode()).hexdigest()
+    completed = results["public_research"]
+    interrupted = results["public_program"]
+    completed_keys = {"attempt", "status", "verified", "worker", "artifact_path",
+                      "output_artifact", "sha256", "plan_sha256"}
+    if (not isinstance(completed, dict) or set(completed) != completed_keys
+            or type(completed.get("attempt")) is not int or completed["attempt"] != 1
+            or completed.get("plan_sha256") != plan_hash
+            or completed.get("artifact_path") != "workers/public_research/noaa.json"
+            or completed.get("output_artifact") != "workers/public_research/noaa.json"
+            or verified_previous_result(root, "public_research", completed) is None
+            or not isinstance(interrupted, dict)
+            or set(interrupted) != {"attempt", "status", "verified", "plan_sha256"}
+            or type(interrupted.get("attempt")) is not int or interrupted["attempt"] != 1
+            or interrupted.get("status") != "RUNNING"
+            or interrupted.get("verified") is not False
+            or interrupted.get("plan_sha256") != plan_hash):
+        return rejected
+    return {"status": "ELIGIBLE_NATIVE_RETRY_ONCE", "run_id": run_id,
+            "issue_number": task["issue_number"], "saved_verified_workers": 1}
 
 
 def github_json(url: str, token: str) -> dict:
