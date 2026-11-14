@@ -1,3 +1,13 @@
+## 2026-11-13 | LIVE original two-specialist data mission independently accepted
+
+Original mission [#662](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/662), run [43547266622](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43547266622), succeeded on merged #661/0077d7f. Original Qwen was actually called; Research retrieved real NOAA JSON for previously untested founder-specified gauges8723214 and9439040, and Engineering consumed those exact rows through the original station validator. Result:2 structurally valid rows,0 invalid rows. Independent second provider retrieval matched Virginia Key25.7314/-80.1618 and Astoria46.207306/-123.7683. Root and a separate reviewer verified objective/plan/source/input/checkpoint hashes and complete original validator output without rerunning the mission.
+
+The ORIGINAL six JSON artifacts and a separate independent acceptance receipt are permanently archived under `evidence/chief-data/2026-11-13-662/`; original ZIP digest0039d1534f7c11d5ca5e7164005e9d61560b142deb42b847cdaa02e2a161e74a. Automatic founder_objective_verified=false and the original AQuA open-objective disposition are preserved. Independent acceptance applies only to the exact requested station metadata check. This supersedes the pending live acceptance below, not general autonomy, prediction, private browser operation or live interruption recovery.
+
+All5 source CI workflows passed; root80 focused tests and independent review accepted source. No new framework/model/host, paid inference or forced failure. Supplementary signed-in Cloud Run/billing navigation reused saved Google authentication, but billing project-scope attribution remained unresolved and was rejected. Original #432/#310 stay open for broader goal completion and private browser acceptance.
+
+---
+
 ## 2026-11-13 | Actual public source-to-validator dependency in the original Chief (live acceptance pending)
 
 The original Chief now accepts an explicitly public data-mission envelope under its existing team issue/workflow. One existing local Qwen structured-output call supplies a strictly validated two-step plan for founder-specified NOAA station IDs. Original Research retrieves bounded JSON from NOAA's fixed HTTPS metadata endpoint; Engineering runs the existing reviewed station validator on those actual rows. Exact source/input hashes, provider station identity and coordinates, complete deterministic findings, immutable plan and original checkpoint are independently checked. No generic starter or URL reachability is presented as data review.

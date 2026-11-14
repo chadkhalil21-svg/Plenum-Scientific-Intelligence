@@ -1,0 +1,1 @@
+{"issue": 662, "objective_sha256": "d56038ffaaaf46c3e1f3ad6900e5c1a8d2ed63382585083a3facb4fa4ff778fe", "plan": {"steps": [{"station_ids": ["8723214", "9439040"], "tool": "noaa_metadata"}, {"input_from": "noaa_metadata", "tool": "station_validation"}]}}

@@ -1,0 +1,73 @@
+{
+  "schema": "plenum-chief-founder-team-v2",
+  "issue_number": 662,
+  "status": "VERIFIED_BOUNDED_DATA_MISSION",
+  "mode": "multi",
+  "planned_data_mission": true,
+  "station_ids": [
+    "8723214",
+    "9439040"
+  ],
+  "dispatcher": "original_chief_bounded_model_data_plan",
+  "expected_team": [
+    "public_research",
+    "public_program"
+  ],
+  "candidate_sources": [],
+  "upstream_sources_installed": 0,
+  "new_external_models_started": 0,
+  "source_selection_inference_calls": 0,
+  "model_called": true,
+  "chief_model_delegated": true,
+  "executed_workers": 2,
+  "tool_outputs_verified": true,
+  "independent_verified": true,
+  "external_account_changes": false,
+  "paid_api_used": false,
+  "founder_objective_verified": false,
+  "bounded_metadata_contract_verified": true,
+  "objective_review_required": true,
+  "verified_scope": "NOAA station identity/coordinates and exact source-to-validator structural review only; broader founder objective remains unverified",
+  "worker_artifacts_technically_verified": true,
+  "new_worker_invocations": 2,
+  "reused_prior_verified_workers": 0,
+  "specialists": [
+    "research-specialist",
+    "coding-specialist"
+  ],
+  "plan_sha256": "56b6696c9ba207c62d76e570125b04bc3e2809f4c9d546657d5e96d22904536c",
+  "plan_artifact": "chief-data-plan-662.json",
+  "metadata_review": {
+    "total_rows": 2,
+    "structurally_valid_rows": 2,
+    "invalid_rows": 0,
+    "errors": [],
+    "all_metadata_structurally_valid": true,
+    "warnings": [
+      "Datum references and instrument accuracy are not validated"
+    ]
+  },
+  "worker_results": [
+    {
+      "kind": "public_research",
+      "worker": "research-specialist",
+      "status": "DRAFT_READY_FOR_FOUNDER",
+      "output_artifact": "workers/public_research/noaa.json",
+      "verified_scope": "public NOAA identity and coordinates plus original structural validation"
+    },
+    {
+      "kind": "public_program",
+      "worker": "coding-specialist",
+      "status": "DRAFT_READY_FOR_FOUNDER",
+      "output_artifact": "workers/public_program/validation.json",
+      "verified_scope": "public NOAA identity and coordinates plus original structural validation"
+    }
+  ],
+  "bounded_founder_goal_evidence": {
+    "status": "VERIFIED_PUBLIC_METADATA_STRUCTURE",
+    "datum_reference_validated": false,
+    "instrument_accuracy_verified": false
+  },
+  "new_general_agent_capability_claimed": false,
+  "founder_review_required": true
+}

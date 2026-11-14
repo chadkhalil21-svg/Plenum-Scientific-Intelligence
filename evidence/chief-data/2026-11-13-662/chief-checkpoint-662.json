@@ -1,0 +1,33 @@
+{
+  "issue_number": 662,
+  "objective_sha256": "d56038ffaaaf46c3e1f3ad6900e5c1a8d2ed63382585083a3facb4fa4ff778fe",
+  "only_original_public_workers": true,
+  "owner_private_accounts_used": false,
+  "results": {
+    "public_program": {
+      "artifact_path": "workers/public_program/validation.json",
+      "attempt": 1,
+      "output_artifact": "workers/public_program/validation.json",
+      "plan_sha256": "56b6696c9ba207c62d76e570125b04bc3e2809f4c9d546657d5e96d22904536c",
+      "sha256": "ed33d00e985831cf8d54907d244cbab0d577d7097aff92c1da20e554b344cc21",
+      "status": "DRAFT_READY_FOR_FOUNDER",
+      "verified": true,
+      "worker": "coding-specialist"
+    },
+    "public_research": {
+      "artifact_path": "workers/public_research/noaa.json",
+      "attempt": 1,
+      "output_artifact": "workers/public_research/noaa.json",
+      "plan_sha256": "56b6696c9ba207c62d76e570125b04bc3e2809f4c9d546657d5e96d22904536c",
+      "sha256": "c4a8362d77e7b6b8290281365ba9ee16f7d94221d0ad90515ea34b2d7ec96382",
+      "status": "DRAFT_READY_FOR_FOUNDER",
+      "verified": true,
+      "worker": "research-specialist"
+    }
+  },
+  "schema": "plenum-chief-restart-v1",
+  "team": [
+    "public_research",
+    "public_program"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schema": "plenum-chief-data-independent-acceptance-v1",
+  "accepted_at": "2026-11-14T02:42:00Z",
+  "issue": 662,
+  "run": 43547266622,
+  "source_commit": "0077d7fef544226a548b3d0d324fa419e5dd6a0f",
+  "artifact_id": 14094715775,
+  "artifact_zip_sha256": "0039d1534f7c11d5ca5e7164005e9d61560b142deb42b847cdaa02e2a161e74a",
+  "objective": "Inspect NOAA station metadata for gauges 8723214 and 9439040 and check their identifiers and coordinates",
+  "disposition": "ACCEPTED_EXACT_BOUNDED_METADATA_TASK_NOT_GENERAL_AUTONOMY",
+  "original_automatic_founder_objective_verified": false,
+  "original_outputs_preserved": true,
+  "independent_research_and_code_review": true,
+  "checks": {
+    "plan_checkpoint_and_source_input_hashes": true,
+    "actual_qwen_called": true,
+    "two_actual_specialist_tools": true,
+    "full_validator_output_recomputed": true,
+    "second_noaa_provider_retrieval_fields_equal": true,
+    "total_rows": 2,
+    "invalid_rows": 0
+  },
+  "stations": [
+    {
+      "id": "8723214",
+      "name": "Virginia Key",
+      "lat": 25.7314,
+      "lng": -80.1618
+    },
+    {
+      "id": "9439040",
+      "name": "Astoria",
+      "lat": 46.207306,
+      "lng": -123.7683
+    }
+  ],
+  "limitations": [
+    "Fixed two-tool metadata pipeline, not broad task planning",
+    "No datum or instrument accuracy certification",
+    "No actual interrupted live mission performed",
+    "No original Plenum authenticated private browser mission"
+  ]
+}
