@@ -150,13 +150,13 @@
     },
     {
       "id": "browser-full",
-      "public_objective_summary": "Real signed-in cross-site browser navigation and recovery",
+      "public_objective_summary": "Founder-retired custom browser — historical signed-in acceptance incomplete, no longer required",
       "owner_role": "browser",
       "acceptance_scope": "external_live",
       "pr": null,
       "issue": 310,
       "priority": 5,
-      "remaining_action": "Original browser verified partial; genuine multi-step authenticated acceptance incomplete",
+      "remaining_action": "FOUNDER RETIRED original custom browser on 14 Nov 2026. Preserve historical work but do not develop, test or deploy custom browser. Existing authorized ChatGPT Work browser or metered TinyFish is a task-level tool when needed; original #310 closed NOT PLANNED, not accepted.",
       "private_chat_transcript_read": false,
       "secret_included": false,
       "founder_acceptance_recorded": false

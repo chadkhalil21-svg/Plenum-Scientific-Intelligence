@@ -17,16 +17,16 @@ from urllib.request import Request, urlopen
 REPO = "chadkhalil21-svg/Plenum-Scientific-Intelligence"
 CHIEF_QUEUE = 432
 ISSUES = (
-    (310, "Owner-approved signed-in browser"),
+    (310, "Founder-retired custom browser"),
     (384, "Persistent free workforce hosting"),
-    (428, "Methane funding research"),
-    (429, "Methane advisory analysis"),
+    (428, "Methane funding research (public diligence complete)"),
+    (429, "Methane advisory analysis (public review complete)"),
     (433, "Workforce public research"),
     (435, "Two-specialist Chief mission"),
     (437, "Business Advisory Council"),
     (478, "Six-video Research Engineering Verification receipt"),
-    (482, "Scientific evidence reconciliation engineering repair"),
-    (483, "Cloudflare Free ingress and quota-capped inference commissioning"),
+    (482, "Scientific evidence reconciliation (original repair accepted)"),
+    (483, "Cloudflare signed wake and private memory (bounded accepted)"),
     (484, "Founder workforce priorities council"),
 )
 STATUS_RE = re.compile(r"(?:Chief status: |Plenum council status: |Status: \*\*|Overall: )([A-Z_]+)")
@@ -61,25 +61,26 @@ def render_brief(rows: list[dict], *, as_of_date: str) -> str:
         item = by_id[n]
         status = item.get("status", "NO_VERIFIED_RESULT_IN_COMMENTS")
         state = item.get("state", "unknown")
+        reason = item.get("state_reason")
+        closure = f" ({reason})" if state == "closed" and reason in ("completed", "not_planned") else ""
         lines.append(
-            f"- [{name}](https://github.com/{REPO}/issues/{n}): issue **{state}**; "
+            f"- [{name}](https://github.com/{REPO}/issues/{n}): issue **{state}{closure}**; "
             f"last reported status **{status}**."
         )
     lines.extend([
         "",
         "### Founder decisions and remaining dependencies",
-        "- Verify a real owner-approved signed-in website task and independent readback under #310; source/CI alone cannot close it.",
-        "- Confirm an actual no-new-charge persistent host with resource/capacity evidence under #384 before Paperclip, Hermes and OpenClaw can run continuously.",
-        "- Review the Business Advisory Council's *actual* public artifact under #437, compare with qualified human guidance, then authorize only specific next actions.",
-        "- Check grant diligence #428/#429 for confirmed facts, partner requirements and decision deadlines; do not assume a budget or award.",
-        "- Review accepted specialist artifacts #433/#435; metadata and output structure are not equivalent to independently fact-checked recommendations.",
-    "- Review original #478 honestly as 0/6 retrieved captions until new verified source evidence exists; do not count passing CI as transcript completion.",
-    "- Route specific research-memory continuity schema fault #482 to Engineering and distinct verification; do not overwrite historical science or whitelabel unknown evidence statuses.",
-    "- Cloudflare Free #483 requires genuine owner account and a live original dispatch; eligible hosted inference is capped and not verified connected.",
-    "- Use latest original council #484 as advisory only; a model discussion never establishes a running workforce or supplier pricing.",
+        "- FOUNDER OVERRIDE (14 Nov 2026): the custom Plenum browser #310 is RETIRED as NOT PLANNED. Never resume custom browser builds, owner session setup, deployments, acceptance checks or related login work. Existing authorized ChatGPT Work/connected provider tools and, if needed, metered TinyFish with existing credits are the web-task route.",
+        "- Complete ACTUAL new founder-authorized work using existing Research, Engineering, Commercial, Global Intelligence and Verification specialists; independent provider readback and retrievable outcomes are mandatory. Do not count source catalogs, stale drafts or recurring reports as work.",
+        "- Persistent host #384 is still UNVERIFIED for a no-new-charge private workforce; keep the original bounded event-driven GitHub/Cloudflare system and defer Paperclip/Hermes service installation without eligible host and privacy permissions.",
+        "- Funding source diligence #428 and advisory review #429 are already delivered; do not rerun their public research. Separate founder-approved application work from a research brief and consult private correspondence privately when authorized.",
+        "- Original scientific evidence reconciliation #482 was independently accepted (PR #486 / real original reconciliation run); do not reclassify it as unstarted or repeat its old test.",
+        "- Cloudflare signed memory under #483 was accepted for the narrow actual owner read/write and fresh-session readback; it is NOT a guarantee of automatic recall in every ChatGPT conversation.",
+        "- Preserve the original #478 six-video caption failures; do not replay the same blocked YouTube/Jina paths. Work only from new lawfully accessible original audio/document inputs.",
+        "- Source-only agent frameworks are not independent live employees. The existing five divisions need useful verified results, interruption recovery without duplicate effects, and accurate free-tier accounting.",
         "",
         "### Deployment claim boundary",
-        "Existing GitHub public worker routes are bounded and verified on actual jobs. Paperclip, Hermes WhatsApp and OpenClaw are not independently established as live services; source-only integrations are not running agents.",
+        "Existing GitHub public workers have proven bounded actual tasks. Paperclip, Hermes WhatsApp and OpenClaw are not established as live private persistent services. The custom browser is founder-retired, not independently passed.",
         "",
         "This automation makes no purchases, external messages, private account reads, legal approvals or software deployments.",
     ])
@@ -121,6 +122,7 @@ def collect_public_evidence(token: str):
         rows.append({
             "number": n, "label": label,
             "state": issue.get("state", "unknown"),
+            "state_reason": issue.get("state_reason"),
             "status": verified_comment_status(comments),
         })
     return rows
