@@ -11,6 +11,7 @@ on:
       - 'tests/test_chief_data_mission.py'
       - 'src/plenum_ai/chief_contract_plan.py'
       - 'tests/test_chief_contract_plan.py'
+      - 'tests/test_chief_contract_efficiency.py'
       - 'tests/test_chief_plan_diagnostics.py'
       - 'src/plenum_ai/chief_domain_transfer.py'
       - 'tests/test_chief_bounded_goal_quality.py'
@@ -43,6 +44,7 @@ jobs:
           python -m pip install -e '.[numerical]'
           python -m unittest discover -s tests -p 'test_chief_data_mission.py' -v
           python -m unittest discover -s tests -p 'test_chief_contract_plan.py' -v
+          python -m unittest discover -s tests -p 'test_chief_contract_efficiency.py' -v
           python -m unittest discover -s tests -p 'test_chief_plan_diagnostics.py' -v
           python -m unittest discover -s tests -p 'test_chief_domain_transfer.py' -v
           python -m unittest discover -s tests -p 'test_chief_bounded_goal_quality.py' -v

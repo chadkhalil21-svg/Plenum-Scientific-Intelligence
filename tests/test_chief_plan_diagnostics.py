@@ -45,7 +45,7 @@ class PlannerFailureDiagnostics(TestCase):
 
     def test_original_failure_report_keeps_only_safe_diagnostic(self):
         from plenum_ai.chief_team_mission import execute
-        event={'action':'opened','repository':{'full_name':'chadkhalil21-svg/Plenum-Scientific-Intelligence'},'issue':{'number':668,'title':'[Plenum Chief] public mission','user':{'login':'chadkhalil21-svg'},'body':m.MAGIC+'\nobjective: Review NOAA 8724580 station metadata for public quality'}}
+        event={'action':'opened','repository':{'full_name':'chadkhalil21-svg/Plenum-Scientific-Intelligence'},'issue':{'number':668,'title':'[Plenum Chief] public mission','user':{'login':'chadkhalil21-svg'},'body':m.MAGIC+'\nobjective: Review NOAA 8724580 and DOI 10.1038/nature14539 metadata quality'}}
         with tempfile.TemporaryDirectory() as d,patch.dict(sys.modules,{'langchain_ollama':self.stub('DO_NOT_EXPORT bad')}),patch.dict('os.environ',ENV):
             result=execute(event,output_dir=Path(d))
         self.assertEqual(result['planning_failure']['stage'],'MODEL_JSON')

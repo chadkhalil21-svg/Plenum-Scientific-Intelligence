@@ -223,11 +223,23 @@ def verify_results(scope,results):
 
 
 def validate_inference_receipt(receipt):
+    expected={'local_ollama':(MODEL,'loopback_only',True),
+              'offline_test_planner':(None,'loopback_only',True),
+              'deterministic_contract_router':(None,'not_used',False)}
     if (not isinstance(receipt,dict) or set(receipt)!={'provider','model','endpoint','structured_output'}
-            or receipt['provider'] not in ('local_ollama','offline_test_planner')
-            or receipt['model'] != (MODEL if receipt['provider']=='local_ollama' else None)
-            or receipt['endpoint']!='loopback_only' or receipt['structured_output'] is not True):
+            or not isinstance(receipt['provider'],str) or receipt['provider'] not in expected
+            or (receipt['model'],receipt['endpoint'],receipt['structured_output']) != expected[receipt['provider']]
+            or type(receipt['structured_output']) is not bool):
         raise PlanningFailure('PLAN_PROVENANCE','INVALID_INFERENCE_RECEIPT')
+
+
+def deterministic_pair_plan(scope):
+    """One obvious authorized source/check pair needs no model decision."""
+    tools=required_tools(scope)
+    if len(tools)!=2:
+        raise ValueError('Deterministic routing applies only to one contract pair')
+    return validate_plan({'steps':[{'tool':tools[0]},
+                                  {'tool':tools[1],'input_from':tools[0]}]},scope)
 
 
 def execute_contract_mission(event,*,output_dir,planner=None):
@@ -245,12 +257,17 @@ def execute_contract_mission(event,*,output_dir,planner=None):
         called=False
     else:
         if progress: raise ValueError('Existing checkpoint cannot be replanned')
-        plan=validate_plan(planner(scope) if planner else model_plan(task['objective'],scope),scope)
-        receipt={'issue':task['issue_number'],'objective_sha256':objective_digest(task['objective']),'scope':scope,'plan':plan,
-                 'inference':{'provider':'local_ollama' if planner is None else 'offline_test_planner','model':MODEL if planner is None else None,'endpoint':'loopback_only','structured_output':True}}
+        obvious_pair=len(team)==2 and planner is None
+        if obvious_pair:
+            plan=deterministic_pair_plan(scope)
+            inference={'provider':'deterministic_contract_router','model':None,'endpoint':'not_used','structured_output':False}
+        else:
+            plan=validate_plan(planner(scope) if planner else model_plan(task['objective'],scope),scope)
+            inference={'provider':'local_ollama' if planner is None else 'offline_test_planner','model':MODEL if planner is None else None,'endpoint':'loopback_only','structured_output':True}
+        receipt={'issue':task['issue_number'],'objective_sha256':objective_digest(task['objective']),'scope':scope,'plan':plan,'inference':inference}
         temporary=path.with_suffix('.json.tmp')
         if temporary.is_symlink():raise ValueError('Unsafe temporary plan')
-        temporary.write_text(json.dumps(receipt,sort_keys=True),'utf-8');temporary.replace(path);called=planner is None
+        temporary.write_text(json.dumps(receipt,sort_keys=True),'utf-8');temporary.replace(path);called=planner is None and not obvious_pair
     plan_hash=sha256(json.dumps(receipt,sort_keys=True).encode()).hexdigest()
     results={};invoked=0
     for step in plan['steps']:
@@ -277,7 +294,7 @@ def execute_contract_mission(event,*,output_dir,planner=None):
     valid=verify_results(scope,results)
     return {'schema':'plenum-chief-founder-team-v2','mode':'multi','issue_number':task['issue_number'],
             'status':'VERIFIED_BOUNDED_CONTRACT_MISSION' if valid else 'BLOCKED_CONTRACT_INTEGRITY',
-            'dispatcher':'original_chief_local_model_public_contract_composition',
+            'dispatcher':('original_chief_deterministic_public_contract_pair' if receipt['inference']['provider']=='deterministic_contract_router' else 'original_chief_local_model_public_contract_composition'),
             'model_called':called,'chief_model_delegated':called,'inference_provenance':receipt['inference'],
             'expected_team':list(team),'bounded_contracts_verified':valid,
             'founder_objective_verified':False,'objective_review_required':True,'independent_verified':valid,
@@ -289,4 +306,3 @@ def execute_contract_mission(event,*,output_dir,planner=None):
             'bounded_founder_goal_evidence':{'status':'VERIFIED_PUBLIC_CONTRACTS_NOT_FREEFORM_OBJECTIVE' if valid else 'NOT_VERIFIED'},
             'founder_review_required':True,'new_general_agent_capability_claimed':False,
             'limitations':['Freeform objective requires independent review','Crossref uses same-provider metadata readback, not full paper review','NOAA datum and instrument accuracy not checked']}
-
