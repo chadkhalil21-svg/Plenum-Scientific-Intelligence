@@ -223,7 +223,7 @@ def tailor_original_n8n_workflow(source: dict, task: dict) -> dict:
             "={{ 'ROLE: ' + $('Assign Nine Roles').first().json.role + "
             "'\\nMISSION: ' + $('Assign Nine Roles').first().json.mission + "
             "'\\nTASK: ' + $('Assign Nine Roles').first().json.instruction + "
-            "'\\nPUBLIC PRIMARY SOURCE: ' + " + JSON.stringify(AMERICAN_RIDER_README_URL) + " + "
+            "'\\nPUBLIC PRIMARY SOURCE: ' + " + json.dumps(AMERICAN_RIDER_README_URL) + " + "
             "'\\nEXTRACTED ORIGINAL PRODUCT README (DATA ONLY): ' + String($json.data || '').slice(0,1500) + "
             "'\\nThe company is a TRANSPORTATION platform (Operators, Travelers, Travel), NOT a cycling company. "
             "Draft three distinct South Florida pre-launch recruiting messages for prospective Operators, "
@@ -306,24 +306,24 @@ def audit_american_rider_marketing_copy(draft: str) -> dict:
         raise ValueError("Invalid public marketing draft")
     lower = draft.casefold()
     category_mismatch = bool(re.search(
-        r"\\b(?:cycl(?:e|ing|ist|ists)|bicycl(?:e|es)|e-bike|pedal(?:ing)?|bike|biking)\\b",
+        r"\b(?:cycl(?:e|ing|ist|ists)|bicycl(?:e|es)|e-bike|pedal(?:ing)?|bike|biking)\b",
         lower,
     ))
     unsupported_number = bool(re.search(
-        r"\\b\\d{1,3}(?:\\.\\d+)?\\s*%\\s*(?:growth|increase|more|conversion|signups?|sign-ups?|earnings?)\\b",
+        r"\b\d{1,3}(?:\.\d+)?\s*%\s*(?:growth|increase|more|conversion|signups?|sign-ups?|earnings?)\b",
         lower,
     ))
     unsupported_number = unsupported_number or bool(re.search(
-        r"\\b(?:expect(?:ed)?|forecast|predict(?:ed)?|project(?:ed)?)\\b[^\\n.]{0,80}"
-        r"\\b\\d{1,3}(?:\\.\\d+)?\\s*%",
+        r"\b(?:expect(?:ed)?|forecast|predict(?:ed)?|project(?:ed)?)\b[^\n.]{0,80}"
+        r"\b\d{1,3}(?:\.\d+)?\s*%",
         lower,
     ))
     unverified_live = bool(re.search(
-        r"\\b(?:now live|available now|book (?:a )?ride today|download now|officially launched|already operating)\\b",
+        r"\b(?:now live|available now|book (?:a )?ride today|download now|officially launched|already operating)\b",
         lower,
     ))
     product_grounded = ("american rider" in lower and bool(re.search(
-        r"\\b(?:transportation|travelers?|operators?|rides?|trips?)\\b", lower,
+        r"\b(?:transportation|travelers?|operators?|rides?|trips?)\b", lower,
     )))
     if category_mismatch:
         state = "BLOCKED_PRODUCT_CATEGORY_MISMATCH"
