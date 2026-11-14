@@ -1,3 +1,9 @@
+## 2026-11-14 | Scholarly publisher noun no longer trips publish-action denial (offline verified)
+
+Original scholarly mission #669/run43639013800 failed before inference because the existing forbidden substring `publish` also matched the bibliographic noun `publisher`. Exclude only the whole-word noun from the existing deny-screen text; retain all other checks and the same bounded identifier/tool contracts. The exact original two-DOI objective now parses. Publish, publishes, published, publishing and republish commands remain refused. The regression reproduced the failure before repair; all79 Chief tests pass after repair. This is a source/offline repair, not completed mission #669, a model call, external publishing permission or broader account access. Resume must use corrected source under the same original mission; an unchanged native rerun would use its old source.
+
+---
+
 ## 2026-11-14 | Original Chief composes explicit public contracts (source and offline only)
 
 The original mission intake now accepts a contract-planning envelope with arbitrary objective wording and explicit public identifiers/physical inputs. Existing local Qwen/ChatOllama structured output selects and orders applicable NOAA metadata/structural-validation, Crossref metadata/separate same-provider readback, and parameterized SciPy cooling/analytic-check contracts. Model plans cannot supply URLs, code, identifiers or private tools. The original issue workflow, SHA checkpoints, once-only native retry gate and per-contract independent checks are reused. Saved planning provenance identifies the original local model; retries preserve the immutable plan and completed artifacts.

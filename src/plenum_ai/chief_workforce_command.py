@@ -57,10 +57,13 @@ def parse_founder_chief(event: dict) -> dict:
     if len(lines) != 2 or lines[0] != CHIEF_MAGIC or not lines[1].startswith("objective: "):
         raise ValueError("Exact public Chief issue envelope required")
     objective = lines[1][11:]
+    # Bibliographic publisher is a read-only metadata noun. Keep every other
+    # deny substring, including publish/publishes/published/publishing, intact.
+    screened_objective = re.sub(r"\bpublisher\b", "", objective.lower())
     if (
         not TOPIC.fullmatch(objective)
         or objective != objective.strip()
-        or any(word in objective.lower() for word in FORBIDDEN)
+        or any(word in screened_objective for word in FORBIDDEN)
     ):
         raise PermissionError("Private, ambiguous or privileged Chief task refused")
     return {"issue_number": issue["number"], "objective": objective, "public_only": True}

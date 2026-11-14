@@ -108,6 +108,14 @@ class ContractPlanTests(TestCase):
             self.assertLess(r['contract_results']['cooling_readback']['absolute_error_kelvin'],1e-6)
             self.assertFalse(r['founder_objective_verified'])
 
+    def test_scholarly_publisher_noun_allowed_without_authorizing_publish_actions(self):
+        objective='Review DOI 10.1038/nature14539 and 10.1126/science.1102896 deposited title year and publisher'
+        scope=m.parse_contract_mission(event(objective))['scope']
+        self.assertEqual(scope['dois'],['10.1038/nature14539','10.1126/science.1102896'])
+        for verb in ('publish','publishes','published','publishing','republish'):
+            with self.subTest(verb=verb), self.assertRaises(PermissionError):
+                m.parse_contract_mission(event(verb+' DOI 10.1038/nature14539 publisher metadata'))
+
     def test_no_identifier_invention_or_model_endpoint_expansion(self):
         for objective in ('Inspect public records with no identifier', 'Inspect DOI 10.1/bad for metadata quality', 'Inspect NOAA 8724580 and http internal metadata'):
             with self.subTest(objective=objective), self.assertRaises((ValueError,PermissionError)):
