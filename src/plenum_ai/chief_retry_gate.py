@@ -14,6 +14,7 @@ from urllib.request import Request, urlopen
 
 from .mission_checkpoint import artifact_digest, objective_digest, verified_previous_result
 from .chief_team_mission import DATA_MAGIC, MISSION_MAGIC, parse_mission, validate_data_plan
+from .chief_contract_plan import MAGIC as CONTRACT_MAGIC
 
 REPO = "chadkhalil21-svg/Plenum-Scientific-Intelligence"
 OWNER = "chadkhalil21-svg"
@@ -49,7 +50,7 @@ def inspect_retry(event: object, root: Path, issue: object) -> dict:
             or (issue.get("user") or {}).get("login") != OWNER
             or issue.get("title") != "[Plenum Chief] public mission"
             or not isinstance(body, str)
-            or not any(body.startswith(magic + "\nobjective: ") for magic in (MISSION_MAGIC, DATA_MAGIC))
+            or not any(body.startswith(magic + "\nobjective: ") for magic in (MISSION_MAGIC, DATA_MAGIC, CONTRACT_MAGIC))
             or len(body.splitlines()) != 2):
         return {"status": "BLOCKED_NOT_FOUNDER_PUBLIC_MISSION"}
     try:
@@ -70,6 +71,8 @@ def inspect_retry(event: object, root: Path, issue: object) -> dict:
         return {"status": "BLOCKED_INVALID_JSON"}
     if not isinstance(cp, dict) or not isinstance(report, dict):
         return {"status": "BLOCKED_INVALID_JSON"}
+    if original_task.get("contract_mission"):
+        return inspect_contract_retry(root, original_task, cp, report, run_id)
     team = cp.get("team")
     results = cp.get("results")
     if (not isinstance(team, list) or team != list(original_task["team"])
@@ -132,6 +135,55 @@ def inspect_retry(event: object, root: Path, issue: object) -> dict:
     return {"status": "ELIGIBLE_NATIVE_RETRY_ONCE", "run_id": run_id,
             "issue_number": number, "saved_verified_workers": done}
 
+
+
+def inspect_contract_retry(root, task, cp, report, run_id):
+    """Same original once-only gate, bound to exact validated public contracts."""
+    from hashlib import sha256
+    from .chief_contract_plan import validate_plan, validate_inference_receipt, TOOLS
+    rejected={"status":"BLOCKED_UNSAFE_RETRY_HISTORY"}
+    team=list(task['team']);results=cp.get('results')
+    if (cp.get('schema')!='plenum-chief-restart-v1' or cp.get('team')!=team
+            or cp.get('issue_number')!=task['issue_number']
+            or cp.get('objective_sha256')!=objective_digest(task['objective'])
+            or cp.get('only_original_public_workers') is not True
+            or cp.get('owner_private_accounts_used') is not False
+            or not isinstance(results,dict) or set(results)-set(team)
+            or report.get('issue_number')!=task['issue_number'] or report.get('mode')!='multi'
+            or report.get('expected_team')!=team or report.get('planned_contract_mission') is not True
+            or report.get('status') not in ('SOURCE_READY_NOT_EXECUTED','BLOCKED_CONTRACT_EXECUTION')
+            or report.get('independent_verified') is not False):
+        return rejected
+    path=root/f"chief-contract-plan-{task['issue_number']}.json"
+    if not path.is_file() or path.is_symlink() or path.stat().st_size>8000:return rejected
+    try:
+        receipt=json.loads(path.read_text('utf-8'))
+        if (not isinstance(receipt,dict) or set(receipt)!={'issue','objective_sha256','scope','plan','inference'}
+                or type(receipt['issue']) is not int or receipt['issue']!=task['issue_number']
+                or receipt['objective_sha256']!=objective_digest(task['objective']) or receipt['scope']!=task['scope']):return rejected
+        validate_plan(receipt['plan'],task['scope']);validate_inference_receipt(receipt['inference'])
+        plan_hash=sha256(json.dumps(receipt,sort_keys=True).encode()).hexdigest()
+        order=[step['tool'] for step in receipt['plan']['steps']]
+        count=len(results)
+        if count<2 or set(results)!=set(order[:count]):return rejected
+        completed_keys={'attempt','status','verified','worker','artifact_path','output_artifact','sha256','plan_sha256'}
+        for tool in order[:count-1]:
+            entry=results[tool];relative=f'workers/{tool}/result.json'
+            if (not isinstance(entry,dict) or set(entry)!=completed_keys
+                    or type(entry['attempt']) is not int or entry['attempt']!=1
+                    or entry.get('worker')!=TOOLS[tool] or entry.get('plan_sha256')!=plan_hash
+                    or entry.get('artifact_path')!=relative or entry.get('output_artifact')!=relative
+                    or verified_previous_result(root,tool,entry) is None):return rejected
+            artifact=root/relative
+            if artifact.stat().st_size>2_000_000 or json.loads(artifact.read_text('utf-8')).get('plan_sha256')!=plan_hash:return rejected
+        last=results[order[count-1]]
+        if (not isinstance(last,dict) or set(last)!={'attempt','status','verified','plan_sha256'}
+                or type(last['attempt']) is not int or last['attempt']!=1
+                or last['status']!='RUNNING' or last['verified'] is not False
+                or last['plan_sha256']!=plan_hash):return rejected
+    except (OSError,ValueError,TypeError,KeyError,UnicodeError):
+        return rejected
+    return {'status':'ELIGIBLE_NATIVE_RETRY_ONCE','run_id':run_id,'issue_number':task['issue_number'],'saved_verified_workers':count-1}
 
 
 def inspect_data_retry(root: Path, task: dict, results: dict, report: dict,

@@ -43,6 +43,9 @@ def parse_mission(event: dict) -> dict:
     if issue.get("title") != MISSION_TITLE or not isinstance(issue.get("body"), str):
         raise PermissionError("Not a founder-issued Plenum team mission")
     lines = issue["body"].splitlines()
+    from .chief_contract_plan import MAGIC as CONTRACT_MAGIC, parse_contract_mission
+    if lines and lines[0] == CONTRACT_MAGIC:
+        return parse_contract_mission(event)
     if len(lines) != 2 or lines[0] not in (MISSION_MAGIC, DATA_MAGIC) or not lines[1].startswith("objective: "):
         raise ValueError("Exact two-line founder mission envelope required")
     # Preserve all existing founder, issue, public-input and scope guards.
@@ -66,7 +69,9 @@ def preflight(event: dict) -> dict:
         "issue_number": task["issue_number"],
         "status": "SOURCE_READY_NOT_EXECUTED",
         "mode": "multi",
-        "planned_data_mission": task.get("data_mission", False),
+        "planned_data_mission": task.get("data_mission", False) or task.get("contract_mission", False),
+        "planned_contract_mission": task.get("contract_mission", False),
+        "requires_numerical": bool(task.get("scope", {}).get("cooling")),
         "station_ids": list(task.get("station_ids", ())),
         "dispatcher": "deterministic_existing_chief_scope_gate",
         "expected_team": list(task["team"]),
@@ -262,6 +267,20 @@ def grade_complete_bounded_public_goal(objective: str, team: tuple[str, ...],
 
 def execute(event: dict, *, output_dir: Path) -> dict:
     task = parse_mission(event)
+    if task.get("contract_mission"):
+        from .chief_contract_plan import execute_contract_mission
+        try:
+            return execute_contract_mission(event, output_dir=output_dir)
+        except (OSError, ValueError, RuntimeError, TypeError, KeyError, ImportError) as exc:
+            # Preserve a real terminal receipt for the original native retry
+            # gate; never leave a source-only preflight masquerading as work.
+            report=preflight(event)
+            report.update(status="BLOCKED_CONTRACT_EXECUTION", independent_verified=False,
+                          founder_objective_verified=False, model_called=None,
+                          failure_type=type(exc).__name__,
+                          model_execution_state="UNCONFIRMED_SEE_IMMUTABLE_PLAN_RECEIPT",
+                          objective_review_required=True)
+            return report
     if task.get("data_mission"):
         return execute_data_mission(event, output_dir=output_dir)
     report = preflight(event)

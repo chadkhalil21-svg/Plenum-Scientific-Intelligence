@@ -9,6 +9,9 @@ on:
       - 'src/plenum_ai/chief_team_mission.py'
       - 'tests/test_chief_team_mission.py'
       - 'tests/test_chief_data_mission.py'
+      - 'src/plenum_ai/chief_contract_plan.py'
+      - 'tests/test_chief_contract_plan.py'
+      - 'src/plenum_ai/chief_domain_transfer.py'
       - 'tests/test_chief_bounded_goal_quality.py'
       - 'src/plenum_ai/mission_checkpoint.py'
       - 'src/plenum_ai/ambient_quality_insights.py'
@@ -36,7 +39,10 @@ jobs:
           python -m pip install -e .
           python -m unittest discover -s tests -p 'test_chief_workforce_command.py' -v
           python -m unittest discover -s tests -p 'test_chief_team_mission.py' -v
+          python -m pip install -e '.[numerical]'
           python -m unittest discover -s tests -p 'test_chief_data_mission.py' -v
+          python -m unittest discover -s tests -p 'test_chief_contract_plan.py' -v
+          python -m unittest discover -s tests -p 'test_chief_domain_transfer.py' -v
           python -m unittest discover -s tests -p 'test_chief_bounded_goal_quality.py' -v
           python -m unittest discover -s tests -p 'test_google_egm_aqua_quality.py' -v
   founder-command:
@@ -88,6 +94,8 @@ jobs:
           if ('public_science' in data.get('expected_team',[])
                   or data.get('expected_independent_kind') == 'public_science'):
               subprocess.check_call([sys.executable,'-m','pip','install','-e','.[numerical,orchestration]'])
+          elif data.get('requires_numerical') is True:
+              subprocess.check_call([sys.executable,'-m','pip','install','-e','.[numerical]'])
           else:
               print('Existing standard-library workers only; no extra model/dependencies installed')
           PY
@@ -103,7 +111,7 @@ jobs:
         id: data_model
         if: steps.scope.outputs.planned_data_mission == 'true'
         run: |
-          if find reports/workforce-chief -maxdepth 1 -name 'chief-data-plan-*.json' -print -quit | read -r saved; then
+          if find reports/workforce-chief -maxdepth 1 \( -name 'chief-data-plan-*.json' -o -name 'chief-contract-plan-*.json' \) -print -quit | read -r saved; then
             echo 'Saved immutable plan will be validated and reused; no model started'
             exit 0
           fi
@@ -214,6 +222,7 @@ jobs:
             reports/workforce-chief/chief-result-*.json
             reports/workforce-chief/chief-checkpoint-*.json
             reports/workforce-chief/chief-data-plan-*.json
+            reports/workforce-chief/chief-contract-plan-*.json
             reports/workforce-chief/ambient-quality-*.json
             reports/workforce-chief/workers/**
           overwrite: true
