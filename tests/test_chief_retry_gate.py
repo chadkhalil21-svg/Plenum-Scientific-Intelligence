@@ -7,7 +7,7 @@ from tempfile import TemporaryDirectory
 from unittest import TestCase
 
 from plenum_ai.chief_retry_gate import eligible_run, inspect_retry
-from plenum_ai.mission_checkpoint import artifact_digest, save_checkpoint
+from plenum_ai.mission_checkpoint import artifact_digest, save_checkpoint, objective_digest
 
 REPO = "chadkhalil21-svg/Plenum-Scientific-Intelligence"
 OBJECTIVE = "Create a public data validator program and an original SVG illustration"
@@ -126,6 +126,75 @@ class NativeChiefRetryGateTests(TestCase):
                 inspect_retry(event(), root, issue())["status"],
                 "BLOCKED_UNSAFE_RETRY_HISTORY",
             )
+
+    def test_interrupted_prefix_with_saved_sibling_allows_one_native_retry(self):
+        with TemporaryDirectory() as folder:
+            root = Path(folder)
+            stage(root)
+            cp_path = root / "chief-checkpoint-1001.json"
+            cp = json.loads(cp_path.read_text())
+            objective = OBJECTIVE + " and thermal simulation"
+            original_issue = issue(objective=objective)
+            cp["objective_sha256"] = objective_digest(objective)
+            cp["team"] = ["public_program", "public_science", "public_creative"]
+            cp["results"].pop("public_creative")
+            cp["results"]["public_science"] = {
+                "attempt": 1, "status": "RUNNING", "verified": False,
+            }
+            cp_path.write_text(json.dumps(cp))
+            report_path = root / "chief-result-1001.json"
+            report = json.loads(report_path.read_text())
+            report.update(status="SOURCE_READY_NOT_EXECUTED", expected_team=cp["team"])
+            report_path.write_text(json.dumps(report))
+            self.assertEqual(inspect_retry(event(), root, original_issue)["status"],
+                             "ELIGIBLE_NATIVE_RETRY_ONCE")
+            original = json.loads(cp_path.read_text())
+            for mutate in (
+                lambda c: c["results"]["public_science"].update(attempt=2),
+                lambda c: c["results"]["public_science"].update(attempt=True),
+                lambda c: c["results"]["public_science"].update(artifact_path="untrusted"),
+                lambda c: c["results"]["public_science"].update(status="UNKNOWN"),
+                lambda c: c["results"]["public_science"].update(verified=True),
+                lambda c: c["results"]["public_science"].update(status="BLOCKED_WORKER_OR_VERIFICATION"),
+                lambda c: c["results"]["public_program"].update(attempt=2),
+                lambda c: c["results"].update(public_creative={"attempt": 1, "status": "RUNNING", "verified": False}),
+                lambda c: c["results"].pop("public_program"),
+                lambda c: c["team"].reverse(),
+            ):
+                candidate = json.loads(json.dumps(original))
+                mutate(candidate)
+                cp_path.write_text(json.dumps(candidate))
+                self.assertNotEqual(inspect_retry(event(), root, original_issue)["status"],
+                                    "ELIGIBLE_NATIVE_RETRY_ONCE")
+            cp_path.write_text(json.dumps(original))
+            for status in ("VERIFIED_BOUNDED_TEAM", "BLOCKED_PARTIAL_TEAM"):
+                report["status"] = status
+                report_path.write_text(json.dumps(report))
+                self.assertNotEqual(inspect_retry(event(), root, original_issue)["status"],
+                                    "ELIGIBLE_NATIVE_RETRY_ONCE")
+            report["status"] = "SOURCE_READY_NOT_EXECUTED"
+            report_path.write_text(json.dumps(report))
+            (root / "workers/public_program/issue-1001/code/public-starter.py").write_text("tampered")
+            self.assertNotEqual(inspect_retry(event(), root, original_issue)["status"],
+                                "ELIGIBLE_NATIVE_RETRY_ONCE")
+
+    def test_checkpoint_cannot_expand_original_objective_team(self):
+        with TemporaryDirectory() as folder:
+            root = Path(folder)
+            stage(root)
+            cp_path = root / "chief-checkpoint-1001.json"
+            cp = json.loads(cp_path.read_text())
+            cp["team"].append("public_science")
+            cp["results"]["public_creative"] = {
+                "attempt": 1, "status": "RUNNING", "verified": False,
+            }
+            cp_path.write_text(json.dumps(cp))
+            report_path = root / "chief-result-1001.json"
+            report = json.loads(report_path.read_text())
+            report.update(status="SOURCE_READY_NOT_EXECUTED", expected_team=cp["team"])
+            report_path.write_text(json.dumps(report))
+            self.assertEqual(inspect_retry(event(), root, issue())["status"],
+                             "BLOCKED_UNRELATED_OR_COMPLETED_WORK")
 
     def test_missing_original_checkpoint_fails_closed(self):
         with TemporaryDirectory() as folder:

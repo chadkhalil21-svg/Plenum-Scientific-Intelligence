@@ -13,6 +13,7 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 
 from .mission_checkpoint import artifact_digest, objective_digest, verified_previous_result
+from .chief_team_mission import parse_mission
 
 REPO = "chadkhalil21-svg/Plenum-Scientific-Intelligence"
 OWNER = "chadkhalil21-svg"
@@ -37,7 +38,7 @@ def eligible_run(event: object) -> int | None:
 
 
 def inspect_retry(event: object, root: Path, issue: object) -> dict:
-    """Retain completed sibling; permit exactly one failed first-attempt sibling."""
+    """Retain verified siblings; allow one failed or interrupted first attempt."""
     run_id = eligible_run(event)
     if run_id is None or not root.is_dir() or not isinstance(issue, dict):
         return {"status": "BLOCKED_INELIGIBLE_RUN"}
@@ -51,6 +52,12 @@ def inspect_retry(event: object, root: Path, issue: object) -> dict:
             or not body.startswith("PLENUM_CHIEF_PUBLIC_MISSION_V1\nobjective: ")
             or len(body.splitlines()) != 2):
         return {"status": "BLOCKED_NOT_FOUNDER_PUBLIC_MISSION"}
+    try:
+        original_task = parse_mission({
+            "action": "opened", "repository": {"full_name": REPO}, "issue": issue,
+        })
+    except (ValueError, PermissionError):
+        return {"status": "BLOCKED_UNRELATED_OR_COMPLETED_WORK"}
     checkpoint_file = root / f"chief-checkpoint-{number}.json"
     result_file = root / f"chief-result-{number}.json"
     for f in (checkpoint_file, result_file):
@@ -61,12 +68,16 @@ def inspect_retry(event: object, root: Path, issue: object) -> dict:
         report = json.loads(result_file.read_text("utf-8"))
     except (ValueError, OSError, UnicodeError):
         return {"status": "BLOCKED_INVALID_JSON"}
+    if not isinstance(cp, dict) or not isinstance(report, dict):
+        return {"status": "BLOCKED_INVALID_JSON"}
     team = cp.get("team")
     results = cp.get("results")
-    if (not isinstance(team, list) or len(team) not in (2, 3)
+    if (not isinstance(team, list) or team != list(original_task["team"])
+            or len(team) not in (2, 3)
+            or any(not isinstance(kind, str) for kind in team)
             or len(set(team)) != len(team)
             or any(kind not in KINDS for kind in team)
-            or not isinstance(results, dict) or set(results) != set(team)
+            or not isinstance(results, dict) or set(results) - set(team)
             or cp.get("schema") != "plenum-chief-restart-v1"
             or cp.get("issue_number") != number
             or cp.get("objective_sha256") != objective_digest(body.splitlines()[1][11:])
@@ -75,8 +86,32 @@ def inspect_retry(event: object, root: Path, issue: object) -> dict:
             or report.get("issue_number") != number
             or report.get("mode") != "multi"
             or report.get("expected_team") != team
-            or report.get("status") != "BLOCKED_PARTIAL_TEAM"
+            or report.get("status") not in {"BLOCKED_PARTIAL_TEAM", "SOURCE_READY_NOT_EXECUTED"}
             or report.get("independent_verified") is not False):
+        return {"status": "BLOCKED_UNRELATED_OR_COMPLETED_WORK"}
+    if report["status"] == "SOURCE_READY_NOT_EXECUTED":
+        # A terminated first run leaves the ORIGINAL preflight report and a
+        # sequential checkpoint prefix. No speculative/unstarted work is proof.
+        count = len(results)
+        if count < 2 or set(results) != set(team[:count]):
+            return {"status": "BLOCKED_UNSAFE_RETRY_HISTORY"}
+        for kind in team[:count - 1]:
+            entry = results[kind]
+            if (not isinstance(entry, dict) or type(entry.get("attempt")) is not int
+                    or entry["attempt"] != 1
+                    or verified_previous_result(root, kind, entry) is None):
+                return {"status": "BLOCKED_UNSAFE_RETRY_HISTORY"}
+        interrupted = results[team[count - 1]]
+        if (not isinstance(interrupted, dict)
+                or set(interrupted) != {"attempt", "status", "verified"}
+                or type(interrupted.get("attempt")) is not int
+                or interrupted["attempt"] != 1
+                or interrupted.get("status") != "RUNNING"
+                or interrupted.get("verified") is not False):
+            return {"status": "BLOCKED_UNSAFE_RETRY_HISTORY"}
+        return {"status": "ELIGIBLE_NATIVE_RETRY_ONCE", "run_id": run_id,
+                "issue_number": number, "saved_verified_workers": count - 1}
+    if set(results) != set(team):
         return {"status": "BLOCKED_UNRELATED_OR_COMPLETED_WORK"}
     done, unfinished = 0, 0
     for kind in team:
