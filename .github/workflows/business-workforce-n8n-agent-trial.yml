@@ -87,7 +87,15 @@ jobs:
               assert original in node['parameters']['jsCode']
               node['parameters']['jsCode']=node['parameters']['jsCode'].replace(
                   original,'const mission = '+json.dumps(mission)+';')
-          assert workflow['active'] is False and len(workflow['nodes'])==6
+          assert workflow['active'] is False and len(workflow['nodes']) in (6,7)
+          if len(workflow['nodes'])==7:
+              import re
+              tool=next(x for x in workflow['nodes'] if x['name']=='Reviewed Free GitHub Source')
+              assert tool['type']=='@n8n/n8n-nodes-langchain.toolHttpRequest'
+              assert tool['parameters']['method']=='GET'
+              assert re.fullmatch(r'https://api.github.com/repos/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+',tool['parameters']['url'])
+              assert 'credentials' not in tool
+              assert os.environ.get('GITHUB_EVENT_NAME')=='issues'
 
           model=next(n for n in workflow['nodes'] if n['name']=='Local Ollama (Configure Credential)')
           model['parameters']['model']='qwen3:0.6b'
