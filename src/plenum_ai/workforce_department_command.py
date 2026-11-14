@@ -138,7 +138,7 @@ def tailor_original_n8n_workflow(source: dict, task: dict) -> dict:
         agent = next(x for x in workflow["nodes"] if x["name"] == "Plenum Specialist Agent")
         agent["parameters"]["options"]["returnIntermediateSteps"] = True
         agent["parameters"]["options"]["systemMessage"] += (
-            "\\nFor this PUBLIC source task call the existing Reviewed Free GitHub "
+            "\nFor this PUBLIC source task call the existing Reviewed Free GitHub "
             "Source tool once before proposing any integration. The URL is "
             "already restricted to " + repo + ". Report the actual repository "
             "identity and license from its response; if the tool fails, "
@@ -161,7 +161,7 @@ def tailor_original_n8n_workflow(source: dict, task: dict) -> dict:
             "}),"
         )
         review["parameters"]["jsCode"] = review["parameters"]["jsCode"].replace(
-            old, old + "\\n    " + observed
+            old, old + "\n    " + observed
         )
     return workflow
 
@@ -218,7 +218,7 @@ def native_reviewed_source_observed(log: str) -> bool:
     """Read the ORIGINAL n8n Code-node boolean, never model-generated claims."""
     if not isinstance(log, str) or len(log) > 2_000_000:
         raise ValueError("Invalid original department log")
-    found = list(re.finditer(r'"upstream_tool_observed"\\s*:\\s*(true|false)', log))
+    found = list(re.finditer(r'"upstream_tool_observed"\s*:\s*(true|false)', log))
     return len(found) == 1 and found[0].group(1) == "true"
 
 
