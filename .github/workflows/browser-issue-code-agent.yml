@@ -38,8 +38,9 @@ jobs:
       contents: read
       issues: write
     env:
+      GH_ISSUE: ${{ github.event.issue.number }}
       PLENUM_EPHEMERAL_RUNNER: confirmed
-      PLENUM_OPENHANDS_MODEL: ollama/qwen2.5-coder:7b
+      PLENUM_OPENHANDS_MODEL: ollama/qwen3.5:9b-q4_K_M
       PLENUM_OPENHANDS_BASE_URL: http://127.0.0.1:11434
       PLENUM_OPENHANDS_API_KEY: ''
       HF_HUB_DISABLE_TELEMETRY: '1'
@@ -59,14 +60,43 @@ jobs:
       - name: Start existing disposable zero-provider-fee local Qwen
         run: |
           docker pull ollama/ollama:latest
-          docker run -d --rm --name plenum-browser-code-qwen --memory=6g --cpus=3 \
+          docker run -d --rm --name plenum-browser-code-qwen --memory=10g --cpus=3 \
             -e OLLAMA_CONTEXT_LENGTH=8192 -e OLLAMA_NUM_PARALLEL=1 \
             -p 127.0.0.1:11434:11434 ollama/ollama:latest
           for i in $(seq 1 45); do
             if curl -fsS http://127.0.0.1:11434/api/tags > /dev/null; then break; fi
             sleep 2
           done
-          docker exec plenum-browser-code-qwen ollama pull qwen2.5-coder:7b
+          docker exec plenum-browser-code-qwen ollama pull qwen3.5:9b-q4_K_M
+          python - <<'PYRUNTIME'
+          import json,os,pathlib,re,urllib.request
+          tag='qwen3.5:9b-q4_K_M'
+          # Local metadata only: no model inference, hosted endpoint or secrets.
+          opener=urllib.request.build_opener(urllib.request.ProxyHandler({}))
+          def read(path):
+              with opener.open('http://127.0.0.1:11434/api/'+path,timeout=15) as response:
+                  return json.loads(response.read(1_000_000))
+          matches=[m for m in read('tags')['models'] if m.get('name')==tag]
+          assert len(matches)==1, 'Exact candidate tag missing after pull'
+          model=matches[0]
+          assert re.fullmatch(r'(?:sha256:)?[0-9a-f]{64}',model['digest'])
+          issue=os.environ['GH_ISSUE']
+          assert re.fullmatch(r'[1-9][0-9]{0,8}',issue)
+          receipt={
+              'schema':'plenum-browser-coder-model-runtime-v1',
+              'model_tag':tag,'model_digest':model['digest'],
+              'model_size_bytes':model['size'],
+              'ollama_version':read('version')['version'],
+              'container_memory_limit':'10g','container_cpus':3,
+              'context_length':8192,'max_output_tokens':1024,
+              'requested_reasoning_effort':'none',
+              'model_inference_executed_at_capture':False,
+          }
+          base=pathlib.Path('reports/browser-agent')/('issue-'+issue)
+          base.mkdir(parents=True,exist_ok=True)
+          (base/'model-runtime.json').write_text(json.dumps(receipt,indent=2)+'\n')
+          print('Exact local candidate tag, digest and Ollama version recorded')
+          PYRUNTIME
       - name: Use existing reviewed OpenHands SDK and file editor only
         run: |
           python -m pip install -e '.[openhands_tools]'

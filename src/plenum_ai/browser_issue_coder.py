@@ -70,19 +70,22 @@ def _require_implemented_candidate(raw: bytes) -> None:
 
 
 def local_coder_llm_options() -> dict:
-    """Pinned official SDK model config for non-thinking Ollama coder weights.
+    """Pinned official SDK config for the scoped Qwen3.5 coding candidate.
 
-    SDK 1.60.1 defaults reasoning_effort='high', which LiteLLM translated
-    into Ollama's unsupported think=true on qwen2.5-coder:7b. Use the SDK's
-    existing documented capability overrides, not a proxy rewrite.
+    Forward reasoning_effort='none' through SDK 1.60.1 so the native
+    LiteLLM Ollama adapter explicitly sends think=false. Merely omitting
+    reasoning_effort leaves this candidate's default thinking enabled.
+    SDK 1.60.1 supports max_output_tokens directly; bound each response
+    while retaining the existing file editor, iteration and review gates.
     """
     return {
-        "model": "ollama/qwen2.5-coder:7b",
+        "model": "ollama/qwen3.5:9b-q4_K_M",
         "api_key": "local-no-secret",
         "base_url": "http://127.0.0.1:11434",
-        "reasoning_effort": None,
+        "reasoning_effort": "none",
+        "max_output_tokens": 1024,
         "capability_overrides": {
-            "supports_reasoning_effort": False,
+            "supports_reasoning_effort": True,
             "thinking_mode": "none",
         },
         "enable_encrypted_reasoning": False,
@@ -141,7 +144,7 @@ def run(event: dict, *, execute: bool = False) -> dict:
         return receipt
     if (
         os.getenv("PLENUM_EPHEMERAL_RUNNER") != "confirmed"
-        or os.getenv("PLENUM_OPENHANDS_MODEL") != "ollama/qwen2.5-coder:7b"
+        or os.getenv("PLENUM_OPENHANDS_MODEL") != "ollama/qwen3.5:9b-q4_K_M"
         or os.getenv("PLENUM_OPENHANDS_BASE_URL") != "http://127.0.0.1:11434"
         or importlib.metadata.version("openhands-sdk") != PINNED_VERSION
     ):
