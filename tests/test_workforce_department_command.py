@@ -33,10 +33,15 @@ class DirectNineDepartmentTests(TestCase):
                 original=next(x for x in SOURCE["nodes"] if x["name"]=="Assign Nine Roles")
                 change=next(x for x in compiled["nodes"] if x["name"]=="Assign Nine Roles")
                 self.assertIn(len(compiled["nodes"]),(len(SOURCE["nodes"]),len(SOURCE["nodes"])+1))
-                if role in ("research", "engineering"):
-                    self.assertEqual(len(compiled["nodes"]),7)
-                else:
-                    self.assertEqual(len(compiled["nodes"]),6)
+                actual_upstream_tool = any(
+                    node.get("name") == "Reviewed Free GitHub Source"
+                    for node in compiled["nodes"]
+                )
+                self.assertEqual(
+                    len(compiled["nodes"]), 6 + int(actual_upstream_tool)
+                )
+                if actual_upstream_tool:
+                    self.assertIn(role, ("research", "engineering"))
                 self.assertNotEqual(original["parameters"]["jsCode"],change["parameters"]["jsCode"])
                 self.assertIn('return roles.filter(([role]) => role === "'+role+'")',change["parameters"]["jsCode"])
                 self.assertIn(json.dumps(task["objective"]),change["parameters"]["jsCode"])
