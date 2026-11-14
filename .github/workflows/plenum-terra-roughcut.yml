@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - 'src/plenum_ai/terra_preview.py'
+      - 'src/plenum_ai/film_factory.py'
       - '.github/workflows/plenum-terra-roughcut.yml'
   workflow_dispatch:
 permissions:
@@ -58,6 +59,14 @@ jobs:
           assert receipt['status']=='TECHNICAL_RENDER_COMPLETE'
           assert receipt['voice_included'] is True
           assert receipt['scenes']==3
+          assert receipt['subtitle_cues']==3
+          assert receipt['caption_timing_scope']=='scene_boundaries_only_not_narration_word_aligned'
+          sidecar=base/'film.srt'
+          cues=sidecar.read_text(encoding='utf-8')
+          assert cues.count(' --> ')==3
+          assert '00:00:10,000 --> 00:00:15,000' in cues
+          assert 'Plenum Terra explores a potential research pathway.' in cues
+          print('NEW ACCESSIBILITY: separate reusable 3-scene SRT file read and accepted')
           assert receipt['source_ledger'][0]['license']=='cc0'
           assert receipt['source_ledger'][0]['concept_visualization'] is False
           assert receipt['source_ledger'][1]['concept_visualization'] is True
@@ -80,6 +89,7 @@ jobs:
           name: terra-free-cattle-narrated-concept-draft
           path: |
             reports/terra-roughcut/final/film.mp4
+            reports/terra-roughcut/final/film.srt
             reports/terra-roughcut/final/render_receipt.json
             reports/terra-roughcut/storyboard.json
           retention-days: 7

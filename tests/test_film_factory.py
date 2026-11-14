@@ -5,7 +5,7 @@ import shutil
 import tempfile
 import unittest
 
-from plenum_ai.film_factory import render, validate
+from plenum_ai.film_factory import render, validate, write_scene_caption_sidecar
 
 FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "terra_technical_demo.json"
 
@@ -44,6 +44,21 @@ class FilmFactoryTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 validate(data, root)
 
+
+    def test_accessible_caption_sidecar_uses_exact_scene_timing_without_voice_claims(self):
+        data = json.loads(FIXTURE.read_text())
+        for scene in data["scenes"]:
+            scene["_frames"] = 60
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "film.srt"
+            self.assertEqual(write_scene_caption_sidecar(data["scenes"], path), 4)
+            content = path.read_text(encoding="utf-8")
+            self.assertIn("00:00:00,000 --> 00:00:02,500", content)
+            self.assertIn("00:00:07,500 --> 00:00:10,000", content)
+            self.assertIn("An experimental concept, not proven results", content)
+            self.assertEqual(content.count(" --> "), 4)
+            self.assertNotIn("<script", content)
+
     @unittest.skipUnless(shutil.which("ffmpeg") and shutil.which("ffprobe"), "System FFmpeg absent")
     def test_original_movie_has_real_audio_and_video(self):
         # One small integrated render, not every scene permutation.
@@ -61,6 +76,10 @@ class FilmFactoryTest(unittest.TestCase):
             self.assertFalse(report["public_distribution_approved"])
             self.assertTrue({"audio", "video"}.issubset({s["codec_type"] for s in report["ffprobe_streams"]}))
             self.assertGreater(Path(report["film"]).stat().st_size, 7000)
+            self.assertEqual(report["subtitle_cues"], 4)
+            self.assertEqual(report["caption_timing_scope"], "scene_boundaries_only_not_narration_word_aligned")
+            self.assertTrue(Path(report["separate_subtitle_sidecar"]).is_file())
+            self.assertEqual(Path(report["separate_subtitle_sidecar"]).read_text().count(" --> "), 4)
 
 
 if __name__ == "__main__":
