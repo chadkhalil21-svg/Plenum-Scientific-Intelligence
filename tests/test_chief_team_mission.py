@@ -179,6 +179,35 @@ class ChiefTeamMissionTests(TestCase):
             )
             self.assertEqual(checkpoint["public_program"]["attempt"], 2)
 
+    def test_interrupted_worker_consumes_attempt_before_restart(self):
+        objective = "Create a public data validator program and an original SVG illustration"
+        event = mission(objective)
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            for attempt in (1, 2):
+                with patch("plenum_ai.chief_team_mission.run_issue",
+                           side_effect=KeyboardInterrupt("runner terminated")):
+                    with self.assertRaises(KeyboardInterrupt):
+                        execute(event, output_dir=root)
+                saved = load_checkpoint(
+                    root, issue=1001, objective=objective,
+                    team=("public_program", "public_creative"),
+                )
+                self.assertEqual(saved.get("public_program", {}).get("attempt"), attempt)
+                self.assertEqual(saved["public_program"]["status"], "RUNNING")
+                self.assertFalse(saved["public_program"]["verified"])
+            invoked = []
+            def remaining_worker(original, *, output_dir):
+                kind = parse_public_issue(original)["kind"]
+                invoked.append(kind)
+                return {"status": "BLOCKED_WORKER_OR_VERIFICATION", "verified": False}
+            with patch("plenum_ai.chief_team_mission.run_issue", side_effect=remaining_worker):
+                result = execute(event, output_dir=root)
+            self.assertEqual(invoked, ["public_creative"])
+            self.assertEqual(result["worker_results"][0]["status"], "BLOCKED_RETRY_LIMIT")
+            self.assertEqual(result["new_worker_invocations"], 1)
+            self.assertFalse(result["independent_verified"])
+
     def test_tampered_previous_artifact_is_not_accepted_as_resume_proof(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)

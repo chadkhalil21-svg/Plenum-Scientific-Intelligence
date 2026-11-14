@@ -281,6 +281,13 @@ def execute(event: dict, *, output_dir: Path) -> dict:
         original_event = worker_event(task["original"], kind)
         base = output_dir / "workers" / kind
         worker_dir = base if attempt == 1 else base / "retry-2"
+        # Reserve this attempt atomically BEFORE a worker can be interrupted.
+        # A restored RUNNING entry is unverified and consumes the same budget.
+        progress[kind] = {"attempt": attempt, "status": "RUNNING", "verified": False}
+        save_checkpoint(
+            output_dir, issue=task["issue_number"],
+            objective=task["objective"], team=task["team"], results=progress,
+        )
         executed += 1
         try:
             result = run_issue(original_event, output_dir=worker_dir)

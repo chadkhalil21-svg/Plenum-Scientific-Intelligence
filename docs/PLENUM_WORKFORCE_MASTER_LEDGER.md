@@ -1,3 +1,15 @@
+## 2026-11-13 | Interrupted specialist attempts reserved; original native retry gate repaired (offline verified)
+
+The existing Chief saved an attempt only after a specialist returned. A process interruption therefore left no durable count for that invocation. The original loop now atomically records an unverified RUNNING attempt before execution, preserving its existing two-attempt ceiling on restored checkpoints.
+
+The original native retry gate now recognizes the corresponding interrupted first-run checkpoint: at least one first-attempt SHA-verified completed specialist, exactly one final RUNNING first attempt, an absent unstarted suffix, and the unchanged preflight report. It reparses the original founder mission and requires the checkpoint team to match the authorized objective exactly. Existing one-native-retry, owner/public scope and independent outcome gates remain. Modified/mixed histories, expanded teams, altered artifacts and repeated attempts are refused.
+
+Verification: interruption and team-expansion regressions failed before their repairs. Root independently ran all 58 Chief tests and eight AQuA-quality tests successfully; a separate reviewer found no blocking issues. This is offline controller/gate evidence. No new live interruption was fabricated, no existing accepted mission rerun, no new dependency, model call, production browser release or paid service. Hard runner loss before artifact upload still cannot be recovered from a missing artifact.
+
+Full Agent Army completion remains OPEN under #432. Unfamiliar objective planning still needs engineering beyond the deterministic issue router; the existing model-directed cross-domain pilot is separate. Original #310 still needs a genuine owner-authenticated task grant and provider-specific signed-in outcome evidence; its current exact-title verifier alone proves neither login nor a useful account mission. Production usage/billing and continuous private workforce operation remain unverified. Preserve all prior accepted #586/#659 evidence and the original five workforces.
+
+---
+
 ## 2026-11-13 | Agent Army completion directive — current evidence matrix
 
 This section supersedes older status prose where it conflicts. Existing Minister, five divisions, browser, vault, wake, memory and original #432/#310 retained.
