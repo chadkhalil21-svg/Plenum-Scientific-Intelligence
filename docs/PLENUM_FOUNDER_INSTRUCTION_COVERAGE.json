@@ -111,13 +111,13 @@
     },
     {
       "id": "free-hosting",
-      "public_objective_summary": "Provide continuous no-new-charge access beyond expiring GitHub jobs",
+      "public_objective_summary": "Founder-retired always-on Oracle VM requirement; operate existing free event-driven GitHub/Cloudflare workforces",
       "owner_role": "operations",
       "acceptance_scope": "external_live",
       "pr": null,
       "issue": 384,
       "priority": 4,
-      "remaining_action": "Public GitHub event-driven work functions; private persistent always-on host unavailable",
+      "remaining_action": "Founder 14 Nov 2026 CLOSED original Oracle Always Free A1 host #384 NOT PLANNED; no VM procurement, subscriptions, new server or resident Paperclip/Hermes required. Actual mission delivery and recovery remain independent acceptance requirements.",
       "private_chat_transcript_read": false,
       "secret_included": false,
       "founder_acceptance_recorded": false
@@ -126,11 +126,11 @@
       "id": "cloudflare",
       "public_objective_summary": "Connect authenticated Cloudflare Workers Free endpoint to GitHub worker",
       "owner_role": "operations",
-      "acceptance_scope": "external_live",
+      "acceptance_scope": "partial",
       "pr": 454,
-      "issue": 384,
+      "issue": 483,
       "priority": 8,
-      "remaining_action": "Cloudflare source ready; owner account, secret setup and signed real request not verified",
+      "remaining_action": "Signed Cloudflare public wake -> real GitHub worker and owner private-memory revision 1 accepted under original #483. No new setup or repeated proof; automatic global ChatGPT memory injection not established.",
       "private_chat_transcript_read": false,
       "secret_included": false,
       "founder_acceptance_recorded": false
@@ -143,7 +143,7 @@
       "pr": null,
       "issue": 384,
       "priority": 7,
-      "remaining_action": "Requires real no-charge private host and authorized messaging pairing",
+      "remaining_action": "OPTIONAL future named-agent messaging, not a prerequisite for five-workforce completion. No new private host/Paperclip/Hermes installation until a distinct owner-authorized channel and necessary scope are established.",
       "private_chat_transcript_read": false,
       "secret_included": false,
       "founder_acceptance_recorded": false
@@ -273,7 +273,7 @@
       "pr": null,
       "issue": 384,
       "priority": 20,
-      "remaining_action": "Founder prefers WhatsApp; no owner-paired live Hermes gateway",
+      "remaining_action": "Existing ChatGPT Minister and original GitHub issue receipts are the working communication route; literal WhatsApp group agent remains optional, requires separately authorized account/channel without speculative hosting.",
       "private_chat_transcript_read": false,
       "secret_included": false,
       "founder_acceptance_recorded": false

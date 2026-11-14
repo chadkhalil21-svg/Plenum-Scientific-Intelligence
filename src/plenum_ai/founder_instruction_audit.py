@@ -84,7 +84,8 @@ def evidence_for(task, *, pulls, comments):
     # New external website tasks may still use the already connected browser
     # capability or TinyFish under owner-specific permissions.
     founder_retired_browser = task.get("id") == "browser-full" and issue == 310
-    if founder_retired_browser:
+    founder_retired_oracle = task.get("id") == "free-hosting" and issue == 384
+    if founder_retired_browser or founder_retired_oracle:
         status = "RETIRED_BY_FOUNDER_NOT_PLANNED"
     elif scope == "external_live":
         status = "OPEN_LIVE_ACCEPTANCE_MISSING"
@@ -107,7 +108,9 @@ def evidence_for(task, *, pulls, comments):
         "status": status, "priority": task["priority"],
         "summary": task["public_objective_summary"],
         "next": ("No custom Plenum browser work. Use existing authorized browser tools or metered TinyFish only for genuine owner tasks."
-                 if founder_retired_browser else task["remaining_action"]),
+                 if founder_retired_browser else
+                 "No Oracle VM work. Use original GitHub Actions and Cloudflare Workers/DO; no new private host required."
+                 if founder_retired_oracle else task["remaining_action"]),
         "merged_source_pr": num if merged else None,
         "public_issue": issue,
         "actual_chief_public_worker_reported": real_chief,
@@ -156,7 +159,7 @@ def render(rows, *, as_of_date: str, doc):
         "",
         "### Highest priority unfulfilled or limited assignments"
     ]
-    lines.append("Founder-retired original browser #310 is NOT PLANNED, not an incomplete acceptance gate. Do not build or retest it; use existing browsers for real tasks only.")
+    lines.append("Founder-retired original browser #310 and Oracle A1 host #384 are NOT PLANNED, not incomplete acceptance gates. Use existing authorized browsers and the GitHub/Cloudflare event-driven Army; do not build or retest either.")
     for x in ordered:
         if x["status"] in ("ACCEPTED_SOURCE_MERGE_ONLY", "RETIRED_BY_FOUNDER_NOT_PLANNED"):
             continue

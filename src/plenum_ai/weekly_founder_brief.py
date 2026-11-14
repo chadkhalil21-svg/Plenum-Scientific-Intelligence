@@ -18,7 +18,7 @@ REPO = "chadkhalil21-svg/Plenum-Scientific-Intelligence"
 CHIEF_QUEUE = 432
 ISSUES = (
     (310, "Founder-retired custom browser"),
-    (384, "Persistent free workforce hosting"),
+    (384, "Founder-retired Oracle A1 host (GitHub/Cloudflare route accepted)"),
     (428, "Methane funding research (public diligence complete)"),
     (429, "Methane advisory analysis (public review complete)"),
     (433, "Workforce public research"),
@@ -72,7 +72,7 @@ def render_brief(rows: list[dict], *, as_of_date: str) -> str:
         "### Founder decisions and remaining dependencies",
         "- FOUNDER OVERRIDE (14 Nov 2026): the custom Plenum browser #310 is RETIRED as NOT PLANNED. Never resume custom browser builds, owner session setup, deployments, acceptance checks or related login work. Existing authorized ChatGPT Work/connected provider tools and, if needed, metered TinyFish with existing credits are the web-task route.",
         "- Complete ACTUAL new founder-authorized work using existing Research, Engineering, Commercial, Global Intelligence and Verification specialists; independent provider readback and retrievable outcomes are mandatory. Do not count source catalogs, stale drafts or recurring reports as work.",
-        "- Persistent host #384 is still UNVERIFIED for a no-new-charge private workforce; keep the original bounded event-driven GitHub/Cloudflare system and defer Paperclip/Hermes service installation without eligible host and privacy permissions.",
+        "- FOUNDER HOST DECISION (14 Nov 2026): Oracle A1 host #384 CLOSED NOT PLANNED after unavailable capacity. Operate the existing free GitHub Actions and signed Cloudflare Workers/DO event-driven Army. Do not procure another host or require Paperclip/Hermes daemon for completion; no claim of a continuously running private model.",
         "- Funding source diligence #428 and advisory review #429 are already delivered; do not rerun their public research. Separate founder-approved application work from a research brief and consult private correspondence privately when authorized.",
         "- Original scientific evidence reconciliation #482 was independently accepted (PR #486 / real original reconciliation run); do not reclassify it as unstarted or repeat its old test.",
         "- Cloudflare signed memory under #483 was accepted for the narrow actual owner read/write and fresh-session readback; it is NOT a guarantee of automatic recall in every ChatGPT conversation.",

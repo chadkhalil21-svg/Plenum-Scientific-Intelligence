@@ -53,6 +53,18 @@ class FounderInstructionAuditTests(unittest.TestCase):
         self.assertEqual(a.evidence_for(other, pulls={}, comments={384: []})["status"],
                          "OPEN_LIVE_ACCEPTANCE_MISSING")
 
+    def test_founder_retired_host_does_not_require_a_second_server(self):
+        retired = objective("external_live", issue=384)
+        retired["id"] = "free-hosting"
+        result = a.evidence_for(retired,pulls={},comments={384: []})
+        self.assertEqual(result["status"],"RETIRED_BY_FOUNDER_NOT_PLANNED")
+        self.assertFalse(result["live_account_operation_verified"])
+        self.assertIn("GitHub Actions and Cloudflare",result["next"])
+        optional = objective("external_live",issue=384)
+        optional["id"] = "wa-hermes"
+        self.assertEqual(a.evidence_for(optional,pulls={},comments={384: []})["status"],
+                         "OPEN_LIVE_ACCEPTANCE_MISSING")
+
     def test_only_real_merged_source_is_accepted_as_source(self):
         t=objective("source_only",pr=459)
         self.assertEqual(a.evidence_for(t,pulls={459:{"merged":False}},comments={})["status"],
@@ -86,7 +98,7 @@ class FounderInstructionAuditTests(unittest.TestCase):
         self.assertIn("partial reconstruction",report)
         self.assertIn("plenum-founder-instruction-audit:2026-11-11",report)
         self.assertIn("OPEN_LIVE_ACCEPTANCE_MISSING",report)
-        self.assertIn("Founder-retired original browser #310 is NOT PLANNED", report)
+        self.assertIn("Founder-retired original browser #310 and Oracle A1 host #384 are NOT PLANNED", report)
         self.assertNotIn("Original browser verified partial; genuine multi-step", report)
         self.assertIn("prompts",report.lower())
         self.assertNotIn("all tasks completed",report.lower())
