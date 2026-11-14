@@ -25,6 +25,8 @@ ALLOWED_STATUSES = frozenset({
     "BLOCKED_WORKER_OR_VERIFICATION", "BLOCKED_NO_PRIMARY_SOURCE_EVIDENCE",
     "SOURCE_READY_NOT_EXECUTED",
     "VERIFIED_BOUNDED_DATA_MISSION", "BLOCKED_DATA_INTEGRITY",
+    "VERIFIED_BOUNDED_CONTRACT_MISSION", "BLOCKED_CONTRACT_INTEGRITY",
+    "BLOCKED_CONTRACT_EXECUTION",
 })
 AQUA_ORIGINAL = (
     "https://github.com/google/adk-recipes/tree/"
@@ -109,6 +111,10 @@ def inspect_chief_report(report: dict) -> dict:
     bounded_delivery = status == "VERIFIED_BOUNDED_TEAM" or (
         status == "VERIFIED_BOUNDED_DATA_MISSION"
         and report.get("bounded_metadata_contract_verified") is True
+    ) or (
+        status == "VERIFIED_BOUNDED_CONTRACT_MISSION"
+        and report.get("bounded_contracts_verified") is True
+        and report.get("independent_verified") is True
     )
     if not bounded_delivery:
         record("ORIGINAL_WORKFORCE_NOT_COMPLETED",
