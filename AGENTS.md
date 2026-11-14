@@ -1,3 +1,13 @@
+# 14 NOVEMBER 2026 FOUNDER OVERRIDE — STOP IN-HOUSE BROWSER WORK
+
+The Founder has **discontinued** further engineering of the Plenum Computer Browser. GitHub original custom-browser issue [#310](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/310) is closed as **not planned**, not accepted or passed. Any historical browser completion mandates anywhere below are superseded. Do **not** build, patch, deploy, debug, retest, reactivate, or commission the Plenum browser, Auth0/GCS owner-browser transport, browser vault, Cloudflare browser AI, or bespoke website bridge. Preserve existing historical source and state without changes.
+
+For real authorized website work, first use **available browser capabilities in ChatGPT Work and connected provider actions**; use already-connected **TinyFish** only where needed, within explicitly authorized scope and existing **metered** wallet credits. No top-up, new paid subscription, circumvented login, credentials in public CI, or promise of unlimited free browser usage.
+
+Keep one existing Minister and five workforce divisions; original Army [#432](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/432) and the existing private Master Control Ledger remain canonical. Reuse free, licensed upstream and installed APIs instead of engineering another framework/host/agent. Only **actual unfamiliar, useful, independently verified founder tasks**, safe recovery without duplicate effects and retrievable continuity advance the Army. Existing accepted bounded Qwen #681, native n8n source #688, real PyBaMM #392 and Cloudflare signed wake/memory MUST NOT be rerun as demos. Do not let custom-browser work displace substantive agent outcomes.
+
+---
+
 # Project working instructions
 
 ## 2026-11-13 | FOUNDER'S STANDING NON-NEGOTIABLE: IMPORT BEFORE BUILD — ALL PLENUM WORK
