@@ -69,7 +69,7 @@ def preflight(event: dict) -> dict:
         "issue_number": task["issue_number"],
         "status": "SOURCE_READY_NOT_EXECUTED",
         "mode": "multi",
-        "planned_data_mission": task.get("data_mission", False) or task.get("contract_mission", False),
+        "planned_data_mission": task.get("data_mission", False) or (task.get("contract_mission", False) and len(task["team"]) > 2),
         "planned_contract_mission": task.get("contract_mission", False),
         "requires_numerical": bool(task.get("scope", {}).get("cooling")),
         "station_ids": list(task.get("station_ids", ())),
