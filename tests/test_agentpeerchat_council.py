@@ -1,4 +1,6 @@
 import unittest
+import json
+from io import BytesIO
 from unittest.mock import patch
 from plenum_ai import agentpeerchat_council as c
 
@@ -42,6 +44,42 @@ class FakeAPI:
 
 
 class CouncilBridgeTests(unittest.TestCase):
+    def test_wrong_self_identity_is_not_published_or_acknowledged(self):
+        msg = {"id":"msg_123", "thread_id":THREAD, "sender_id":OWNER,
+               "type":"text", "content":"Qwen and Gemini, introduce yourselves."}
+        api = FakeAPI([msg], own=GEMINI)
+        with patch.object(c, "PeerAPI", return_value=api):
+            with self.assertRaisesRegex(RuntimeError, "incorrect_self_identity"):
+                c.run("gemini", {"PLENUM_APC_GEMINI_KEY":"x"*32},
+                      lambda *_: "I am an AI model developed by Alibaba Cloud, specialized in multilingual reasoning.")
+        self.assertEqual(api.sent, [])
+        self.assertEqual(api.acked, [])
+
+    def test_gemini_requires_provider_returned_model_and_correct_identity_context(self):
+        captured = []
+        def provider(req, **kwargs):
+            captured.append(json.loads(req.data))
+            return BytesIO(json.dumps({"modelVersion":"gemini-3.5-flash-lite",
+                "candidates":[{"content":{"parts":[{"text":"I am Gemini, developed by Google."}]}}]}).encode())
+        with patch.object(c, "urlopen", side_effect=provider):
+            self.assertEqual(c.gemini_answer("initial", "Introduce yourselves", {"PLENUM_GEMINI_API_KEY":"test", "PLENUM_GEMINI_MODEL":"gemini-3.5-flash-lite"}), "I am Gemini, developed by Google.")
+        self.assertIn("Gemini", captured[0]["systemInstruction"]["parts"][0]["text"])
+        self.assertIn("Google", captured[0]["systemInstruction"]["parts"][0]["text"])
+
+    def test_gemini_fails_closed_on_wrong_model_metadata(self):
+        with patch.object(c, "urlopen", return_value=BytesIO(json.dumps({"modelVersion":"qwen3:1.7b", "candidates":[{"content":{"parts":[{"text":"Answer"}]}}]}).encode())):
+            with self.assertRaisesRegex(RuntimeError, "provider_model_mismatch"):
+                c.gemini_answer("initial", "Question", {"PLENUM_GEMINI_API_KEY":"test", "PLENUM_GEMINI_MODEL":"gemini-3.5-flash-lite"})
+
+    def test_ollama_fails_closed_on_wrong_model_metadata(self):
+        with patch.object(c, "urlopen", return_value=BytesIO(b'{"model":"llama3.2:1b","message":{"content":"Answer"}}')):
+            with self.assertRaisesRegex(RuntimeError, "provider_model_mismatch"):
+                c.qwen_answer("initial", "Question", {})
+
+    def test_puter_rejects_wrong_model_metadata_if_returned(self):
+        with patch.object(c.subprocess, "run", return_value=c.subprocess.CompletedProcess(["node"], 0, stdout='{"answer":"Answer","model":"openai/gpt-5.4-nano"}', stderr='')):
+            with self.assertRaisesRegex(RuntimeError, "provider_model_mismatch"):
+                c.claude_answer("initial", "Question", {"PLENUM_PUTER_TOKEN":"test"})
     def test_only_approved_instance(self):
         with self.assertRaises(ValueError):
             c.config("qwen", {"PLENUM_APC_QWEN_KEY": "x" * 32,
