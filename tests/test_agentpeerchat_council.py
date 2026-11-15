@@ -229,6 +229,15 @@ class ClaudeBridgeTests(unittest.TestCase):
     def test_claude_requires_provider_credential(self):
         with self.assertRaisesRegex(RuntimeError,"missing_puter_token"):
             c.claude_answer("initial","Hello",{})
+    def test_claude_short_reply_budget_not_consumed_by_default_thinking(self):
+        native_run = c.subprocess.run
+        def simulate_provider(args, **kwargs):
+            # Haiku 5.5 defaults to thinking, which counts toward max_tokens.
+            script = args[2].replace("const { init } = require('@heyputer/puter.js/src/init.cjs');",
+                "const init = () => ({ai:{chat:async (_messages, opts) => opts.thinking?.type === 'disabled' ? {message:{content:'Independent answer'},finish_reason:'stop'} : {message:{content:'',reasoning:'thinking'},finish_reason:'length'}}});")
+            return native_run([args[0], args[1], script], **kwargs)
+        with patch.object(c.subprocess, 'run', side_effect=simulate_provider):
+            self.assertEqual(c.claude_answer('initial', 'Question', {'PLENUM_PUTER_TOKEN':'test'}), 'Independent answer')
     def test_claude_sdk_call_is_bounded_and_isolates_credentials(self):
         with patch.object(c.subprocess, "run", return_value=c.subprocess.CompletedProcess(
                 ["node"], 0, stdout='{"answer":"Independent answer"}', stderr='')) as call:
