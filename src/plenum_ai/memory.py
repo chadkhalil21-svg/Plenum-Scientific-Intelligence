@@ -56,7 +56,14 @@ def verify(record):
     digest = hashlib.sha256(canonical(payload).encode("utf-8")).hexdigest()
     if record.get("schema") != "plenum-memory-v1" or record.get("sha256") != digest or record.get("id") != digest[:24]:
         raise ValueError("Checksum or schema mismatch")
-    if not 0 < len(str(record.get("question") or "")) <= 600 or not isinstance(record.get("sources"), list) or len(record["sources"]) > 10:
+    question = record.get("question")
+    sources = record.get("sources")
+    if (not isinstance(question, str) or not 0 < len(question) <= 600
+            or not isinstance(record.get("recorded_utc"), str) or not record["recorded_utc"]
+            or not isinstance(sources, list) or len(sources) > 10
+            or any(not isinstance(source, dict) or not isinstance(source.get("title"), str)
+                   or not isinstance(source.get("id"), str) or not source["id"]
+                   for source in sources)):
         raise ValueError("Invalid public metadata")
     if record.get("scientific_discovery_verified") is not False or record.get("candidate_deployed") is not False:
         raise ValueError("Unreviewed results cannot be promoted or deployed")
@@ -95,3 +102,4 @@ def recall(directory, query, limit=3):
             ranked.append((overlap, record["recorded_utc"], record))
     ranked.sort(key=lambda x: (x[0], x[1]), reverse=True)
     return [item[2] for item in ranked[:max(0, min(limit, 5))]]
+
