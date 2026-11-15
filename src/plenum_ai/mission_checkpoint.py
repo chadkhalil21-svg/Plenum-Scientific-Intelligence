@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path, PurePosixPath
 
 MAX_FILES = 60
@@ -17,6 +18,24 @@ MAX_BYTES = 20_000_000
 
 def objective_digest(objective: str) -> str:
     return hashlib.sha256(objective.encode("utf-8")).hexdigest()
+
+
+def _bounded_artifact_entries(path: Path) -> list[Path] | None:
+    if path.is_file():
+        return [path] if MAX_FILES >= 1 else None
+    entries = []
+    pending = [path]
+    while pending:
+        # Do not let pathlib's recursive glob materialize an unbounded tree.
+        with os.scandir(pending.pop()) as children:
+            for child in children:
+                if len(entries) >= MAX_FILES or child.is_symlink():
+                    return None
+                child_path = Path(child.path)
+                entries.append(child_path)
+                if child.is_dir(follow_symlinks=False):
+                    pending.append(child_path)
+    return sorted(entries)
 
 
 def artifact_digest(root: Path, name: str) -> str | None:
@@ -29,29 +48,39 @@ def artifact_digest(root: Path, name: str) -> str | None:
     if not str(rel).startswith("workers/"):
         return None
     path = root / Path(*rel.parts)
-    if not path.exists() or path.is_symlink() or not path.resolve().is_relative_to(root.resolve()):
+    try:
+        resolved_root = root.resolve()
+        if not path.exists() or path.is_symlink() or not path.resolve().is_relative_to(resolved_root):
+            return None
+        files = _bounded_artifact_entries(path)
+        if not files:
+            return None
+        h = hashlib.sha256()
+        size = 0
+        useful = False
+        for item in files:
+            if item.is_symlink():
+                return None
+            if not item.is_file():
+                continue
+            if not item.resolve().is_relative_to(resolved_root):
+                return None
+            remaining = MAX_BYTES - size
+            if item.stat().st_size > remaining:
+                return None
+            # Bound the actual read as well: the file can grow after stat().
+            with item.open("rb") as stream:
+                content = stream.read(remaining + 1)
+            size += len(content)
+            if size > MAX_BYTES:
+                return None
+            useful = True
+            h.update(item.relative_to(root).as_posix().encode("utf-8") + b"\0")
+            h.update(hashlib.sha256(content).digest())
+        return h.hexdigest() if useful else None
+    except OSError:
+        # Failed artifact I/O is invalid resume proof, not a Chief-wide crash.
         return None
-    files = [path] if path.is_file() else sorted(path.rglob("*"))
-    if not files or len(files) > MAX_FILES:
-        return None
-    h = hashlib.sha256()
-    size = 0
-    useful = False
-    for item in files:
-        if item.is_symlink():
-            return None
-        if not item.is_file():
-            continue
-        if not item.resolve().is_relative_to(root.resolve()):
-            return None
-        content = item.read_bytes()
-        size += len(content)
-        if size > MAX_BYTES:
-            return None
-        useful = True
-        h.update(item.relative_to(root).as_posix().encode("utf-8") + b"\0")
-        h.update(hashlib.sha256(content).digest())
-    return h.hexdigest() if useful else None
 
 
 def checkpoint_path(root: Path, issue: int) -> Path:
