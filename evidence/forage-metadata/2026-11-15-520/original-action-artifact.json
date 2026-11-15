@@ -1,0 +1,32 @@
+{
+  "schema": "plenum-original-provider-artifact-receipt-v1",
+  "issue": 520,
+  "pr": 783,
+  "reviewed_head": "893d9984821240e9939e4c7295f375eb3b56ca71",
+  "merged_commit": "f36b02e94903b7a5b0f7d09b7b581e85a5c4d0e4",
+  "run_id": 43762199397,
+  "artifact_id": 14180632866,
+  "artifact_sha256": "d79e3ac470b1a72b89f916c9b830fc028af2b4dd4c2f2ddcc9f48c78e58c8a1b",
+  "artifact_bytes": 2537,
+  "report_sha256": "51f4688d89f2ed0ac0bf2d7fc7bbfd5aa9ce7cd08a5c70d0ae1358224dd2ba9c",
+  "artifact_encoding": "base64 (original provider ZIP, byte-for-byte)",
+  "artifact_base64": "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",
+  "independent_acceptance": {
+    "status": "VERIFIED_SOURCE_SPECIFIC_VALIDATOR_AND_ACTUAL_OUTPUT",
+    "method": "Independent raw CSV read, source catalogue/license readback, dimensional recomputation, exact provider ZIP + manifest hash, and equality of all output fields except dynamic outer source ZIP hash.",
+    "doi": "10.5285/361f0587-4cc6-48df-9f7e-8ade331cf8d5",
+    "source_csv_sha256": "f24489340f2ec398ec8c5f1e8394271c580d0f406b88dea1e080dcfdc2f170f7",
+    "records": 125,
+    "fields": 38,
+    "structural_errors": 0,
+    "missing_blanks": 1066,
+    "explicit_na": 3,
+    "diagnostics": 130,
+    "phosphorus_labels": 125,
+    "concentration_fields": 2,
+    "metadata_findings": 3,
+    "scope": "Source-data review only; no biological, feed safety or experimental-validity certification. Manually initiated task-scoped specialist plus independent Computer review; not unattended generalized agent autonomy.",
+    "producer_repeated": false,
+    "no_new_paid_provider": true
+  }
+}
