@@ -1,4 +1,4 @@
-name: Plenum Council | AgentPeerChat Qwen and Gemini
+name: Plenum Council | AgentPeerChat Qwen Gemini and Llama
 on:
   workflow_dispatch:
   push:
@@ -44,8 +44,10 @@ jobs:
       PLENUM_APC_URL: https://agentpeerchat.chadkhalil21.workers.dev
       PLENUM_APC_QWEN_KEY: ${{ secrets.PLENUM_APC_QWEN_KEY }}
       PLENUM_APC_GEMINI_KEY: ${{ secrets.PLENUM_APC_GEMINI_KEY }}
+      PLENUM_APC_LLAMA_KEY: ${{ secrets.PLENUM_APC_LLAMA_KEY }}
       PLENUM_APC_QWEN_INVITE: ${{ secrets.PLENUM_APC_QWEN_INVITE }}
       PLENUM_APC_GEMINI_INVITE: ${{ secrets.PLENUM_APC_GEMINI_INVITE }}
+      PLENUM_APC_LLAMA_INVITE: ${{ secrets.PLENUM_APC_LLAMA_INVITE }}
       PLENUM_GEMINI_API_KEY: ${{ secrets.PLENUM_GEMINI_API_KEY }}
       PLENUM_GEMINI_MODEL: ${{ vars.PLENUM_GEMINI_MODEL || 'gemini-2.5-flash' }}
     steps:
@@ -60,21 +62,23 @@ jobs:
         run: |
           python -m plenum_ai.agentpeerchat_pair --model qwen
           python -m plenum_ai.agentpeerchat_pair --model gemini
+          python -m plenum_ai.agentpeerchat_pair --model llama
       - name: Inspect genuine unread group messages before model startup
         id: mail
         run: |
-          if [ -z "$PLENUM_APC_QWEN_KEY" ] && [ -z "$PLENUM_APC_GEMINI_KEY" ]; then
+          if [ -z "$PLENUM_APC_QWEN_KEY" ] && [ -z "$PLENUM_APC_GEMINI_KEY" ] && [ -z "$PLENUM_APC_LLAMA_KEY" ]; then
             echo 'qwen=false' >> "$GITHUB_OUTPUT"
             echo 'gemini=false' >> "$GITHUB_OUTPUT"
+            echo 'llama=false' >> "$GITHUB_OUTPUT"
             echo 'No private agent keys provisioned; model startup skipped'
             exit 0
           fi
-          for model in qwen gemini; do
+          for model in qwen gemini llama; do
             pending=$(python -m plenum_ai.agentpeerchat_council --model "$model" --mode inspect)
             echo "$model=${pending#actionable=}" >> "$GITHUB_OUTPUT"
           done
-      - name: Reuse local Qwen only if meaningful work awaits
-        if: steps.mail.outputs.qwen == 'true'
+      - name: Reuse local Ollama only if Qwen or Llama has actionable messages
+        if: steps.mail.outputs.qwen == 'true' || steps.mail.outputs.llama == 'true'
         run: |
           docker pull ollama/ollama:latest
           docker run -d --rm --name plenum-peerchat-qwen \
@@ -84,13 +88,21 @@ jobs:
             if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
             sleep 2
           done
-          docker exec plenum-peerchat-qwen ollama pull qwen3:1.7b
+          if [ "${{ steps.mail.outputs.qwen }}" = "true" ]; then
+            docker exec plenum-peerchat-qwen ollama pull qwen3:1.7b
+          fi
+          if [ "${{ steps.mail.outputs.llama }}" = "true" ]; then
+            docker exec plenum-peerchat-qwen ollama pull llama3.2:1b
+          fi
       - name: Qwen — independently respond and critique
         if: steps.mail.outputs.qwen == 'true'
         run: python -m plenum_ai.agentpeerchat_council --model qwen --mode run
       - name: Gemini — independently respond and critique
         if: steps.mail.outputs.gemini == 'true'
         run: python -m plenum_ai.agentpeerchat_council --model gemini --mode run
+      - name: Llama — independently respond and critique
+        if: steps.mail.outputs.llama == 'true'
+        run: python -m plenum_ai.agentpeerchat_council --model llama --mode run
       - name: Shut down the temporary model container
         if: always()
         run: docker rm -f plenum-peerchat-qwen 2>/dev/null || true

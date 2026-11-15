@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch
 from plenum_ai import agentpeerchat_council as c
 
-OWNER, QWEN, GEMINI, THREAD = "hum_owner", "agt_qwen", "agt_gemini", "thr_1234567890"
+OWNER, QWEN, GEMINI, LLAMA, THREAD = "hum_owner", "agt_qwen", "agt_gemini", "agt_llama", "thr_1234567890"
 
 
 class FakeAPI:
@@ -14,6 +14,7 @@ class FakeAPI:
             {"id": OWNER, "kind": "owner", "active": 1, "name": "Founder"},
             {"id": QWEN, "kind": "agent", "active": 1, "name": c.AGENTS["qwen"]},
             {"id": GEMINI, "kind": "agent", "active": 1, "name": c.AGENTS["gemini"]},
+            {"id": LLAMA, "kind": "agent", "active": 1, "name": c.AGENTS["llama"]},
         ]
 
     def ack(self, message_id):
@@ -65,6 +66,31 @@ class CouncilBridgeTests(unittest.TestCase):
         self.assertEqual(c.classify(m, "qwen", peer, QWEN), ("critique", "Idea"))
         m["content"] = c.CRITIQUE["gemini"] + "\nCritique"
         self.assertIsNone(c.classify(m, "qwen", peer, QWEN))
+
+    def test_llama_supported_in_public_council(self):
+        self.assertEqual(c.AGENTS["llama"], "Plenum Prometheus — Llama")
+        self.assertEqual(c.config("llama", {"PLENUM_APC_LLAMA_KEY": "x" * 32})[1],
+                         "x" * 32)
+        msg = {"type": "text", "sender_id": OWNER, "content": "Compare materials"}
+        self.assertEqual(c.classify(msg, "llama", {OWNER: {"kind": "owner"}}, LLAMA),
+                         ("initial", "Compare materials"))
+
+    def test_three_agent_peers_are_bounded_to_initial_messages(self):
+        peer = {
+            GEMINI: {"kind": "agent", "name": c.AGENTS["gemini"]},
+            LLAMA: {"kind": "agent", "name": c.AGENTS["llama"]},
+            QWEN: {"kind": "agent", "name": c.AGENTS["qwen"]},
+        }
+        for source_model, sender in (("gemini", GEMINI), ("llama", LLAMA)):
+            m = {"type": "text", "sender_id": sender,
+                 "content": c.MARKERS[source_model] + "\nProposed approach"}
+            self.assertEqual(c.classify(m, "qwen", peer, QWEN),
+                             ("critique", "Proposed approach"))
+            m["content"] = c.CRITIQUE[source_model] + "\nAssessment"
+            self.assertIsNone(c.classify(m, "qwen", peer, QWEN))
+        own = {"type": "text", "sender_id": LLAMA,
+               "content": c.MARKERS["llama"] + "\nMy answer"}
+        self.assertIsNone(c.classify(own, "llama", peer, LLAMA))
 
     def test_owner_member_required(self):
         api = FakeAPI([])
