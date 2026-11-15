@@ -1,0 +1,134 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "43750244515",
+  "source_revision": "f6ee9612213d2f24ac62c4d91c6d3b3ba4292a06",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-15T19:04:07.607789+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 28,
+    "sources_returning_records": 25,
+    "source_outages": [
+      "un_climate_environment"
+    ],
+    "new_public_links_before_limit": 10,
+    "signals": [
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261114202236.htm",
+        "title_untrusted": "Vitamin C could help block cancer-linked chemicals in your stomach, study finds",
+        "claimed_publication_date": "Sun, 15 Nov 2026 09:13:18 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "software",
+        "publisher": "GitHub public repository index",
+        "source": "github_public_code",
+        "url": "https://github.com/ORION-NEXUS2026/LIFECORE",
+        "title_untrusted": "ORION-NEXUS2026/LIFECORE",
+        "claimed_publication_date": "2026-11-15T06:50:02Z",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/uw714139501",
+        "title_untrusted": "M 1.6 - 14 km SSW of Alder, Washington",
+        "claimed_publication_date": "1794768763290",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261114202227.htm",
+        "title_untrusted": "NASA warns this year's Monster El Niño could be even bigger than legendary 1997 event",
+        "claimed_publication_date": "Sun, 15 Nov 2026 08:53:25 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "software",
+        "publisher": "GitHub public repository index",
+        "source": "github_public_code",
+        "url": "https://github.com/Keshav-cmd/Knowlegify",
+        "title_untrusted": "Keshav-cmd/Knowlegify",
+        "claimed_publication_date": "2026-11-15T13:40:36Z",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nn00927021",
+        "title_untrusted": "M 2.4 - 35 km SE of Mina, Nevada",
+        "claimed_publication_date": "1794768299638",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261114202204.htm",
+        "title_untrusted": "Uranus and Neptune’s bizarre magnetic fields may finally be explained",
+        "claimed_publication_date": "Sun, 15 Nov 2026 08:43:22 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/hv75070747",
+        "title_untrusted": "M 1.9 - 23 km W of Volcano, Hawaii",
+        "claimed_publication_date": "1794767865700",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261114202136.htm",
+        "title_untrusted": "Astronomers discover a dead star spinning every 8 minutes and sending mysterious radio pulses",
+        "claimed_publication_date": "Sun, 15 Nov 2026 08:04:09 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026wqtvhn",
+        "title_untrusted": "M 2.6 - 155 km SE of Chignik, Alaska",
+        "claimed_publication_date": "1794767132230",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
