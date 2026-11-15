@@ -3,7 +3,8 @@ main = "plenum-github-wake-worker.mjs"
 compatibility_date = "2026-11-01"
 workers_dev = true
 # Uses a Free-plan SQLite Durable Object for atomic replay rejection only.
-# No paid Workers AI model, R2 bucket, resident agent or overage.
+# Native Workers AI model is enabled only for GitHub OIDC-signed, bounded PUBLIC coding;
+# Workers Free daily limit and local DO pre-reservation prevent uncontrolled usage.
 # This is NOT a server for Hermes, Paperclip or private WhatsApp sessions.
 # Set PLENUM_WEBHOOK_HMAC_SECRET and PLENUM_GITHUB_DISPATCH_TOKEN
 # using Cloudflare secrets on the owner's account, never in git.
@@ -28,3 +29,12 @@ class_name = "PrivateContinuityMemory"
 [exports.PrivateContinuityMemory]
 type = "durable-object"
 storage = "sqlite"
+
+# Reuse native Cloudflare Workers AI: no vendor token, host or additional model server.
+[ai]
+binding = "AI"
+
+# Only signed original founder issue workflow can reach this route.
+# Historical provider UI recorded Workers Free; no paid inference fallback.
+[vars]
+PLENUM_FREE_AI_ENABLED = "true"
