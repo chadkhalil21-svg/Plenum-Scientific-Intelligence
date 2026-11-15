@@ -4,6 +4,7 @@ We mock ONLY the expensive upstream model and file-editor transport; the
 production Plenum execute() loop, syntax checks and fail-closed outcome run.
 """
 import os
+from contextlib import contextmanager
 from pathlib import Path
 import sys
 import types
@@ -37,6 +38,7 @@ class _FakeConversation:
 
 
 class OpenHandsFeedbackContract(unittest.TestCase):
+    @contextmanager
     def _sdk_patches(self):
         sdk = types.ModuleType('openhands.sdk')
         sdk.LLM = lambda **kwargs: kwargs
@@ -45,12 +47,15 @@ class OpenHandsFeedbackContract(unittest.TestCase):
         sdk.Conversation = _FakeConversation
         tool = types.ModuleType('openhands.tools.file_editor')
         tool.FileEditorTool = type('FakeFileEditor', (), {'name': 'FileEditorTool'})
-        return patch.dict(sys.modules, {
+        # This legacy controller test mocks the upstream transport; the
+        # exact guarded editor registration/delegation is tested separately.
+        with patch.dict(sys.modules, {
             'openhands': types.ModuleType('openhands'),
             'openhands.sdk': sdk,
             'openhands.tools': types.ModuleType('openhands.tools'),
             'openhands.tools.file_editor': tool,
-        })
+        }), patch.object(coder, '_register_proposal_editor', return_value='proposal_only_file_editor'):
+            yield
 
     def test_actual_adapter_asks_for_one_repair_and_revalidates(self):
         _FakeConversation.ever_valid = True
@@ -161,3 +166,4 @@ class OpenHandsFeedbackContract(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+

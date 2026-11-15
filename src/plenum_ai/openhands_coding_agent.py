@@ -45,10 +45,16 @@ LOCAL_ENGINE = "aider_local_ollama"
 AIDER_IMAGE = "paulgauthier/aider@sha256:cfdc43ebd4ff163f7ef5f1803b069fa80abbd95e981d165495d459d3edcc356c"
 LOCAL_MODEL = "qwen2.5-coder:7b"
 LOCAL_MAX_SOURCE_BYTES = 12_000  # Whole-file output on 4 CPU free runner.
+GEMINI_ENGINE = "gemini_free_openhands"
+GEMINI_MODEL = "gemini/gemini-3.5-flash-lite"
+# Owner verified the sole existing Default Gemini Project's Free tier and no
+# enabled billing in authenticated AI Studio on 15 Nov 2026. Never infer this
+# from key presence; any later tier/key change requires re-verification.
+GEMINI_FREE_APPROVAL = "owner-verified-default-gemini-project-free-2026-11-15"
 REVIEW_REPORT = Path("reports/openhands-agent-review.json")
 CLOUD_FAILURE_REPORT = Path("reports/openhands-cloud-failure.json")
-LOCAL_RESERVATION = Path("reports/openhands-local-fallback-reservation.json")
-LOCAL_EXECUTION = Path("reports/openhands-local-fallback-execution.json")
+GEMINI_RESERVATION = Path("reports/openhands-gemini-fallback-reservation.json")
+GEMINI_EXECUTION = Path("reports/openhands-gemini-fallback-execution.json")
 CLOUD_FAILURES = {
     "BLOCKED_ORIGINAL_DAILY_FREE_AI_CAP": "LOCAL_DURABLE_OBJECT_DAILY_BUDGET",
     "BLOCKED_ORIGINAL_CLOUD_NO_REVIEWABLE_PATCH": "ORIGINAL_ENGINE_NO_REVIEWABLE_PATCH",
@@ -157,45 +163,49 @@ def _fallback_binding(event: dict, receipt_path: Path, *, run_id: str,
                 "production_written", "external_accounts_changed", "retry_same_day_authorized"))
             or receipt.get("no_paid_fallback") is not True
             or receipt.get("candidate_artifact") is not None):
-        raise PermissionError("Original cloud receipt does not authorize local fallback")
+        raise PermissionError("Original cloud receipt does not authorize Gemini fallback")
     # Do not start another agent if any original candidate exists, even if
     # report claims otherwise; do not weaken the original review path.
     _review_output_path(f"reports/openhands-review/issue-{owner['issue_number']}.patch",
                         source_file=owner["source_file"])
-    if len(_public_source(owner["source_file"])[0]) > LOCAL_MAX_SOURCE_BYTES:
-        raise PermissionError("Source too large for bounded CPU whole-file local fallback")
-    return {"schema": "plenum-original-local-fallback-v1",
+    return {"schema": "plenum-original-gemini-fallback-v1",
             "origin_issue_number": owner["issue_number"], "origin_run_id": run_id,
             "origin_run_attempt": run_attempt, "source_sha256": owner["source_sha256"],
             "cloud_receipt_sha256": hashlib.sha256(raw).hexdigest(),
-            "cloud_attempt_status": receipt["status"], "local_fallback_attempted": True}
+            "cloud_attempt_status": receipt["status"], "gemini_fallback_attempted": True,
+            "fallback_engine": GEMINI_ENGINE, "fallback_model": GEMINI_MODEL,
+            "free_project_approval": GEMINI_FREE_APPROVAL}
 
 
-def reserve_local_fallback(event: dict, *, run_id: str, run_attempt: str) -> bool:
-    """Reserve the same-job local route before model or network preparation."""
+def reserve_gemini_fallback(event: dict, *, run_id: str, run_attempt: str) -> bool:
+    """Reserve the single approved same-job Gemini route before key access."""
     try:
+        if os.getenv("PLENUM_GEMINI_FREE_PROJECT_APPROVAL") != GEMINI_FREE_APPROVAL:
+            return False
         if any(p.exists() or p.is_symlink() for p in
-               (CLOUD_FAILURE_REPORT, LOCAL_RESERVATION, LOCAL_EXECUTION)):
+               (CLOUD_FAILURE_REPORT, GEMINI_RESERVATION, GEMINI_EXECUTION)):
             return False
         bound = _fallback_binding(event, REVIEW_REPORT, run_id=run_id, run_attempt=run_attempt)
         with CLOUD_FAILURE_REPORT.open("xb") as dst:
             dst.write(REVIEW_REPORT.read_bytes())
-        with LOCAL_RESERVATION.open("x", encoding="utf-8") as dst:
+        with GEMINI_RESERVATION.open("x", encoding="utf-8") as dst:
             json.dump(bound, dst, indent=2)
         return True
     except (OSError, ValueError, PermissionError, TypeError, KeyError):
         return False
 
 
-def consume_local_fallback(event: dict, *, run_id: str, run_attempt: str) -> dict:
-    """A reservation authorizes one isolated local call; never retry an ambiguous call."""
+def consume_gemini_fallback(event: dict, *, run_id: str, run_attempt: str) -> dict:
+    """A reservation authorizes one Gemini engineering attempt; never retry it."""
+    if os.getenv("PLENUM_GEMINI_FREE_PROJECT_APPROVAL") != GEMINI_FREE_APPROVAL:
+        raise PermissionError("Gemini Free project approval unavailable")
     bound = _fallback_binding(event, CLOUD_FAILURE_REPORT, run_id=run_id, run_attempt=run_attempt)
-    if (LOCAL_RESERVATION.is_symlink() or not LOCAL_RESERVATION.is_file()
-            or LOCAL_RESERVATION.stat().st_size > 16_000
-            or json.loads(LOCAL_RESERVATION.read_text()) != bound
-            or LOCAL_EXECUTION.exists() or LOCAL_EXECUTION.is_symlink()):
-        raise PermissionError("No unused exact original local fallback reservation")
-    with LOCAL_EXECUTION.open("x", encoding="utf-8") as dst:
+    if (GEMINI_RESERVATION.is_symlink() or not GEMINI_RESERVATION.is_file()
+            or GEMINI_RESERVATION.stat().st_size > 16_000
+            or json.loads(GEMINI_RESERVATION.read_text()) != bound
+            or GEMINI_EXECUTION.exists() or GEMINI_EXECUTION.is_symlink()):
+        raise PermissionError("No unused exact original Gemini fallback reservation")
+    with GEMINI_EXECUTION.open("x", encoding="utf-8") as dst:
         json.dump(bound, dst, indent=2)
     return bound
 
@@ -294,6 +304,53 @@ def local_plan(task: str, *, source_file: str) -> dict:
             "cloud_inference_used": False, "paid_api_authorized": False}
 
 
+def gemini_plan(task: str, *, source_file: str) -> dict:
+    return {**plan(task, source_file=source_file), "engine": GEMINI_ENGINE,
+            "model": GEMINI_MODEL, "provider": "Google AI Studio Gemini Developer API",
+            "free_project_approval": GEMINI_FREE_APPROVAL, "paid_api_authorized": False,
+            "max_model_iterations": 4, "max_output_tokens_per_completion": 4096,
+            "provider_retries": 0}
+
+
+def _register_proposal_editor() -> str:
+    """Reuse the pinned upstream editor but enforce one private temporary file.
+
+    Upstream FileEditor workspace_root is a cwd hint, not a read boundary.
+    Its allowed_edits_files also permits arbitrary views, so every command
+    must pass our lexical path and regular-file check before delegation.
+    """
+    from openhands.sdk.tool import register_tool
+    from openhands.tools.file_editor import FileEditorTool
+    from openhands.tools.file_editor.definition import FileEditorObservation
+    from openhands.tools.file_editor.impl import FileEditorExecutor
+
+    class ProposalOnlyExecutor(FileEditorExecutor):
+        def __init__(self, *, workspace_root):
+            super().__init__(workspace_root=workspace_root)
+            self._proposal = Path(workspace_root).resolve(strict=True) / "proposal.py"
+
+        def __call__(self, action, conversation=None):
+            supplied = Path(action.path)
+            if (not supplied.is_absolute() or ".." in supplied.parts
+                    or supplied != self._proposal or self._proposal.is_symlink()
+                    or self._proposal.parent.resolve() != self._proposal.parent
+                    or (self._proposal.exists() and not self._proposal.is_file())):
+                return FileEditorObservation.from_text(
+                    command=action.command, is_error=True,
+                    text="Only the disposable public proposal.py file is permitted.")
+            return super().__call__(action, conversation)
+
+    class ProposalOnlyFileEditorTool(FileEditorTool):
+        @classmethod
+        def create(cls, conv_state):
+            return [tool.set_executor(ProposalOnlyExecutor(
+                workspace_root=conv_state.workspace.working_dir))
+                for tool in super().create(conv_state)]
+
+    register_tool(ProposalOnlyFileEditorTool.name, ProposalOnlyFileEditorTool)
+    return ProposalOnlyFileEditorTool.name
+
+
 def execute_local(task: str, *, source_file: str, candidate_out: str) -> dict:
     """Run official Aider noninteractively, with only a public source copy mounted.
 
@@ -341,33 +398,54 @@ def execute_local(task: str, *, source_file: str, candidate_out: str) -> dict:
 
 
 def execute(task: str = DEFAULT_TASK, *, source_file: str | None = None,
-            candidate_out: str | None = None) -> dict:
-    result = plan(task, source_file=source_file)
+            candidate_out: str | None = None, gemini_recovery: bool = False) -> dict:
+    if gemini_recovery and (source_file is None or candidate_out is None
+            or os.getenv("PLENUM_GEMINI_FREE_PROJECT_APPROVAL") != GEMINI_FREE_APPROVAL):
+        raise PermissionError("Unverified existing Gemini Free project or unbound public source")
+    result = (gemini_plan(task, source_file=source_file) if gemini_recovery
+              else plan(task, source_file=source_file))
     artifact = (_review_output_path(candidate_out, source_file=source_file)
                 if candidate_out is not None else None)
     if os.getenv("PLENUM_EPHEMERAL_RUNNER") != "confirmed":
         raise RuntimeError("Run only in a separately isolated ephemeral runner")
-    model = os.getenv("PLENUM_OPENHANDS_MODEL", "").strip()
-    api_key = os.getenv("PLENUM_OPENHANDS_API_KEY", "").strip()
-    base_url = os.getenv("PLENUM_OPENHANDS_BASE_URL", "").strip()
+    if gemini_recovery:
+        model = GEMINI_MODEL
+        api_key = os.getenv("PLENUM_GEMINI_API_KEY", "").strip()
+        base_url = ""  # Gemini API-key provider's official route; no custom base/Vertex.
+        if not api_key:
+            raise PermissionError("Existing Gemini Free project key unavailable")
+    else:
+        model = os.getenv("PLENUM_OPENHANDS_MODEL", "").strip()
+        api_key = os.getenv("PLENUM_OPENHANDS_API_KEY", "").strip()
+        base_url = os.getenv("PLENUM_OPENHANDS_BASE_URL", "").strip()
     if not model or not (api_key or base_url):
         raise RuntimeError("Explicit model plus model endpoint or key required")
     if importlib.metadata.version("openhands-sdk") != PINNED_VERSION:
         raise RuntimeError("Pinned OpenHands SDK version mismatch")
 
     from openhands.sdk import Agent, Conversation, LLM, Tool
-    from openhands.tools.file_editor import FileEditorTool
+    editor_tool = _register_proposal_editor()
 
     original_bytes = _public_source(source_file)[0] if source_file else None
     with tempfile.TemporaryDirectory(prefix="plenum-public-coder-") as tmp:
         kwargs = {"model": model, "api_key": api_key or "local-no-secret"}
         if base_url:
             kwargs["base_url"] = base_url
-        kwargs.update(original_free_retry_options(model, base_url))
-        agent = Agent(llm=LLM(**kwargs), tools=[Tool(name=FileEditorTool.name)])
+        if gemini_recovery:
+            # All SDK fields below are supported by the existing v1.60.1
+            # OpenHands/LiteLLM provider. No search grounding or paid caching.
+            kwargs.update(num_retries=0, timeout=45, max_output_tokens=4096,
+                          caching_prompt=False, log_completions=False,
+                          prompt_cache_retention=None, inline_image_urls=False,
+                          drop_params=True, api_mode="chat", reasoning_effort="low",
+                          capability_overrides={"supports_sampling_params": False,
+                                                "supports_prompt_cache": False})
+        else:
+            kwargs.update(original_free_retry_options(model, base_url))
+        agent = Agent(llm=LLM(**kwargs), tools=[Tool(name=editor_tool)])
         conversation = Conversation(
-            agent=agent, workspace=tmp, max_iteration_per_run=6,
-            max_budget_per_run=0.20, visualizer=None,
+            agent=agent, workspace=tmp, max_iteration_per_run=4 if gemini_recovery else 6,
+            max_budget_per_run=0.10 if gemini_recovery else 0.20, visualizer=None,
         )
         candidate = Path(tmp) / "proposal.py"
         if original_bytes is not None:
@@ -377,18 +455,23 @@ def execute(task: str = DEFAULT_TASK, *, source_file: str | None = None,
             + task.strip()
             + ("\nproposal.py is a COPY of public " + source_file
                + "; edit this copy only, preserving unrelated behavior." if source_file else "")
-            + "\nCreate or edit ONLY proposal.py within the current disposable "
-              "workspace. Do not use terminal, shell, browser, network, other "
+            + "\nUse the exact absolute path " + str(candidate.resolve())
+            + " for every file action. View, create, or edit ONLY that file; "
+              "the editor denies directory listing and all other paths. "
+              "Do not use terminal, shell, browser, network, other "
               "paths, environment variables, credentials, or proprietary data. "
               "Do not execute generated code. Finish with a summary."
         )
         # A real, independently computed SyntaxError is given back to the model
         # ONCE. This validates adaptive repair without running untrusted code.
         # No shell/browser tool, credentials, production path or auto-merge.
-        for attempt in range(2):
+        # Gemini is one native recovery attempt, one conversation, no follow-up
+        # syntax repair cycle. The pinned SDK caps each completion as above.
+        passes = 1 if gemini_recovery else 2
+        for attempt in range(passes):
             conversation.run()
             if not candidate.is_file() or candidate.is_symlink():
-                if attempt == 0:
+                if attempt + 1 < passes:
                     conversation.send_message(
                         "Independent review found that proposal.py was NOT created. "
                         "Use FileEditorTool to create only proposal.py now; do not "
@@ -404,7 +487,7 @@ def execute(task: str = DEFAULT_TASK, *, source_file: str | None = None,
             try:
                 ast.parse(raw.decode("utf-8"), filename="proposal.py")
             except (SyntaxError, UnicodeDecodeError) as exc:
-                if attempt == 0:
+                if attempt + 1 < passes:
                     if isinstance(exc, SyntaxError):
                         feedback = (
                             f"Python AST verifier found SyntaxError on line "
@@ -454,9 +537,9 @@ def main() -> None:
     parser.add_argument("--execute", action="store_true",
                         help="Explicitly invoke selected model in isolated ephemeral runner")
     parser.add_argument("--event", help="Original owner public repair issue event")
-    parser.add_argument("--reserve-local-fallback", action="store_true",
+    parser.add_argument("--reserve-gemini-fallback", action="store_true",
                         help="Reserve once from exact original cloud failure in this job")
-    parser.add_argument("--local-fallback", action="store_true",
+    parser.add_argument("--gemini-fallback", action="store_true",
                         help="Consume one exact reserved original cloud fallback")
     parser.add_argument("--candidate-out", help="Review-only artifact file")
     parser.add_argument("--task", default=DEFAULT_TASK,
@@ -467,10 +550,10 @@ def main() -> None:
     event = json.loads(Path(args.event).read_text()) if args.event else None
     owner_issue = parse_owner_repair_event(event) if event else None
     run_id, run_attempt = os.getenv("GITHUB_RUN_ID", ""), os.getenv("GITHUB_RUN_ATTEMPT", "")
-    if args.reserve_local_fallback:
-        if not owner_issue or args.execute or args.local_fallback or path != REVIEW_REPORT:
-            raise PermissionError("Only the original issue job can reserve local fallback")
-        eligible = reserve_local_fallback(event, run_id=run_id, run_attempt=run_attempt)
+    if args.reserve_gemini_fallback:
+        if not owner_issue or args.execute or args.gemini_fallback or path != REVIEW_REPORT:
+            raise PermissionError("Only the original issue job can reserve Gemini fallback")
+        eligible = reserve_gemini_fallback(event, run_id=run_id, run_attempt=run_attempt)
         print("eligible=" + str(eligible).lower())
         return
     task = owner_issue["task"] if owner_issue else args.task
@@ -479,19 +562,30 @@ def main() -> None:
                 if owner_issue else args.candidate_out)
     use_local = owner_issue is not None and owner_issue.get("engine") == LOCAL_ENGINE
     fallback = {}
-    if args.local_fallback:
+    use_gemini = args.gemini_fallback
+    if use_gemini:
         if not owner_issue or use_local or not args.execute or path != REVIEW_REPORT:
-            raise PermissionError("Only a reserved original cloud job may consume local fallback")
-        fallback = consume_local_fallback(event, run_id=run_id, run_attempt=run_attempt)
-        use_local = True
+            raise PermissionError("Only a reserved original cloud job may consume Gemini fallback")
+        fallback = consume_gemini_fallback(event, run_id=run_id, run_attempt=run_attempt)
     try:
-        if use_local:
+        if use_gemini:
+            report = execute(task, source_file=source_file, candidate_out=artifact, gemini_recovery=True)
+        elif use_local:
             report = (execute_local(task, source_file=source_file, candidate_out=artifact)
                       if args.execute else local_plan(task, source_file=source_file))
         else:
             report = (execute(task, source_file=source_file, candidate_out=artifact)
                       if args.execute else plan(task, source_file=source_file))
     except Exception as exc:
+        if use_gemini:
+            report = {**gemini_plan(task, source_file=source_file),
+                      **{key: value for key, value in fallback.items() if key != "schema"},
+                      "status": "BLOCKED_GEMINI_CODER_NO_REVIEWABLE_PATCH",
+                      "failure_category": type(exc).__name__, "no_paid_fallback": True}
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+            print("Gemini coding status:", report["status"], report["failure_category"])
+            raise SystemExit(2) from None
         if use_local and args.execute:
             report = {**local_plan(task, source_file=source_file),
                       **{key: value for key, value in fallback.items() if key != "schema"},
@@ -541,5 +635,6 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 
 
