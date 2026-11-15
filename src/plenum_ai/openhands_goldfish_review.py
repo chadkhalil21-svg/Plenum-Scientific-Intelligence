@@ -34,6 +34,7 @@ def review(event: dict, coding: dict, *, opener=urlopen) -> dict:
         "review_only": True, "production_written": False,
         "independent_semantic_verified": False,
         "human_or_minister_review_required": True,
+        "auto_merge_authorized": False,
         "source_code_executed": False,
     }
     blocked = lambda reason: {**common, "status": "BLOCKED_" + reason,
