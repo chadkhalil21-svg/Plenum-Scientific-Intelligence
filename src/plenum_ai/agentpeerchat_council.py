@@ -147,7 +147,7 @@ def ollama_answer(model, kind, source, env=os.environ):
         raise ValueError("unapproved_ollama_endpoint")
     payload = {"model": model_name, "stream": False, "think": False,
                "messages": [{"role": "system", "content": SYSTEM},
-                            {"role": "user", "content": "TASK: " + kind + "\\nMESSAGE:\\n" + source}],
+                            {"role": "user", "content": "TASK: " + kind + "\nMESSAGE:\n" + source}],
                "options": {"num_predict": 400, "temperature": 0.5}}
     req = Request(model_url, json.dumps(payload).encode(),
                   {"Content-Type": "application/json"}, method="POST")
