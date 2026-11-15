@@ -231,7 +231,9 @@ def execute_local(task: str, *, source_file: str, candidate_out: str) -> dict:
             "-e", "HOME=/app", "-e", "OLLAMA_API_BASE=http://plenum-temporary-ollama:11434",
             AIDER_IMAGE, "--model", "ollama_chat/" + LOCAL_MODEL,
             "--weak-model", "ollama_chat/" + LOCAL_MODEL,
-            "--edit-format", "diff", "--no-git", "--no-auto-commits",
+            # #755's 1.5B model emitted an unterminated SEARCH block; use
+            # Aider's documented whole-file format for the single copied file.
+            "--edit-format", "whole", "--no-git", "--no-auto-commits",
             "--no-auto-lint", "--no-auto-test", "--no-suggest-shell-commands",
             "--no-detect-urls", "--no-analytics", "--no-check-update",
             "--no-show-release-notes", "--no-fancy-input", "--no-stream", "--yes-always", "--map-tokens", "0",
