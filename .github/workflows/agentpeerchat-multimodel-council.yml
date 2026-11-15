@@ -1,6 +1,10 @@
 name: Plenum Council | AgentPeerChat Qwen and Gemini
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/agentpeerchat-multimodel-council.yml'
   schedule:
     - cron: '*/30 * * * *'
   pull_request:
