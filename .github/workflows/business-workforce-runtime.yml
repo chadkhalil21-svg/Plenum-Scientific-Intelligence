@@ -70,11 +70,12 @@ jobs:
     permissions:
       contents: read
       issues: write
+      id-token: write
     timeout-minutes: 32
     env:
       PLENUM_EPHEMERAL_RUNNER: confirmed
-      PLENUM_OPENHANDS_MODEL: ollama/qwen3:1.7b
-      PLENUM_OPENHANDS_BASE_URL: http://127.0.0.1:11434
+      PLENUM_OPENHANDS_MODEL: ${{ github.event_name == 'issues' && 'openai/glm-4.7-flash' || 'ollama/qwen3:1.7b' }}
+      PLENUM_OPENHANDS_BASE_URL: ${{ github.event_name == 'issues' && 'https://plenum-public-wake.chadkhalil21.workers.dev/ai/v1' || 'http://127.0.0.1:11434' }}
       PLENUM_OPENHANDS_API_KEY: ''
       HF_HUB_DISABLE_TELEMETRY: '1'
       OLLAMA_KEEP_ALIVE: '2m'
@@ -91,7 +92,18 @@ jobs:
           PYTHONPATH=src python -m plenum_ai.openhands_coding_agent
           --event "$GITHUB_EVENT_PATH"
           --out reports/openhands-agent-preflight.json
+      - name: Use only GitHub-issued ephemeral OIDC for original Free Worker AI
+        if: github.event_name == 'issues'
+        shell: bash
+        run: |
+          set -euo pipefail
+          json=$(curl -fsS --max-time 15 -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=plenum-original-public-coder")
+          jwt=$(printf '%s' "$json" | python -c 'import json,sys;print(json.load(sys.stdin)["value"])')
+          test "${#jwt}" -gt 300
+          echo "::add-mask::$jwt"
+          printf 'PLENUM_OPENHANDS_API_KEY=%s\n' "$jwt" >> "$GITHUB_ENV"
       - name: Start Ollama locally, never expose model server on public interface
+        if: github.event_name != 'issues'
         run: |
           docker pull ollama/ollama:latest
           docker image inspect ollama/ollama:latest --format 'Ollama image digest {{index .RepoDigests 0}}'
@@ -108,6 +120,7 @@ jobs:
           docker logs plenum-temporary-ollama
           exit 1
       - name: Download open-weight Qwen to disposable local model server
+        if: github.event_name != 'issues'
         run: |
           docker exec plenum-temporary-ollama ollama pull qwen3:1.7b
           docker exec plenum-temporary-ollama ollama list
@@ -118,7 +131,7 @@ jobs:
       - name: Run original OpenHands isolated file editor, retain REVIEW-ONLY artifact
         run: |
           if [ "$GITHUB_EVENT_NAME" = "issues" ]; then
-            timeout 600 python -m plenum_ai.openhands_coding_agent --execute \
+            timeout 240 python -m plenum_ai.openhands_coding_agent --execute \
               --event "$GITHUB_EVENT_PATH" --out reports/openhands-agent-review.json
           else
             timeout 600 python -m plenum_ai.openhands_coding_agent --execute \
