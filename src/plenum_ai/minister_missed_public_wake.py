@@ -37,6 +37,8 @@ CODER_WORKFLOW = ".github/workflows/business-workforce-runtime.yml"
 CODER_WORKFLOW_ID = 412824880  # Original live #733 authenticated run.
 CODER_STATUS = "BLOCKED_LOCAL_FREE_AI_DAILY_CAP_NO_SAME_DAY_RETRY"
 CODER_RESERVATION = "<!-- plenum-minister-nextday-free-coder:"
+CODER_EXECUTION = "<!-- plenum-openhands-execution-reserved:"
+CODER_TERMINAL = "<!-- plenum-openhands-review:"
 CODER_RECEIPT = re.compile(
     r"^<!-- plenum-openhands-review:([1-9][0-9]{0,12}):attempt:([1-9][0-9]?) -->\n"
     r"\*\*(OpenHands original public repair|Aider local original public repair): ([A-Z0-9_]+)\*\*",
@@ -52,6 +54,114 @@ def _utc_datetime(value: object):
     except ValueError:
         return None
     return date.astimezone(timezone.utc) if date.tzinfo else None
+
+
+
+def _coder_bot_bodies(comments: object) -> list[str]:
+    """Only bounded, authenticated bot comment history authorizes a coding action."""
+    if not isinstance(comments, list) or len(comments) >= 100:
+        raise ValueError("Unbounded original coding comment history")
+    bodies = []
+    for item in comments:
+        if not isinstance(item, dict) or not isinstance(item.get("body", ""), str):
+            raise ValueError("Malformed original coding comment history")
+        if (item.get("user") or {}).get("login") == "github-actions[bot]":
+            bodies.append(item.get("body", ""))
+    return bodies
+
+
+def _coder_execution_marker(run_id: int, attempt: int) -> str:
+    return f"{CODER_EXECUTION}{run_id}:attempt:{attempt} -->"
+
+
+def has_original_coder_terminal_receipt(comments: object, run_id: int, attempt: int) -> bool:
+    """An untrusted public comment cannot suppress the authentic terminal receipt."""
+    marker = f"{CODER_TERMINAL}{run_id}:attempt:{attempt} -->"
+    legacy = f"{CODER_TERMINAL}{run_id} -->"
+    return any(body.splitlines()[:1] == [marker]
+               or (attempt == 1 and body.splitlines()[:1] == [legacy])
+               for body in _coder_bot_bodies(comments))
+
+
+def _original_coder_run_matches(run: object, run_id: int, now: datetime) -> bool:
+    return (isinstance(run, dict)
+            and run.get("id") == run_id
+            and run.get("event") == "issues"
+            and run.get("workflow_id") == CODER_WORKFLOW_ID
+            and run.get("path") == CODER_WORKFLOW
+            and run.get("display_title") == CODER_TITLE
+            and run.get("head_branch") == "main"
+            and run.get("status") == "completed"
+            and run.get("conclusion") == "failure"
+            and run.get("run_attempt") == 1
+            and (run.get("repository") or {}).get("full_name") == REPO
+            and (run.get("repository") or {}).get("id") == 1447724141
+            and (run.get("actor") or {}).get("login") == OWNER
+            and (run.get("actor") or {}).get("id") == 251133044
+            and _utc_datetime(run.get("created_at")) is not None
+            and _utc_datetime(run["created_at"]).date() < now.astimezone(timezone.utc).date())
+
+
+def reserve_native_coder(event: dict, token: str, *, run_id: int, attempt: int,
+                         now: datetime) -> bool:
+    """Reserve the original coding execution before any model/provider access.
+
+    The ORIGINAL coding job already holds the per-issue concurrency group.
+    Missing terminal evidence is never permission to invoke the model again.
+    A native attempt 2 needs the exact existing Minister next-day reservation,
+    first attempt terminal quota receipt and authenticated prior run metadata.
+    """
+    from .openhands_coding_agent import parse_owner_repair_event
+    if (not token or type(run_id) is not int or not 0 < run_id < 10**13
+            or type(attempt) is not int or attempt not in (1, 2)
+            or now.tzinfo is None):
+        return False
+    if (not isinstance(event, dict) or (event.get("sender") or {}).get("login") != OWNER):
+        raise PermissionError("Only original signed owner coding issues")
+    contract = parse_owner_repair_event(event)
+    issue = event["issue"]
+    number = contract["issue_number"]
+    url = API + f"/issues/{number}"
+    original = request_json(url, token)
+    if (not isinstance(original, dict) or original.get("number") != number
+            or original.get("state") != "open" or "pull_request" in original
+            or (original.get("user") or {}).get("login") != OWNER
+            or original.get("title") != issue.get("title")
+            or original.get("body") != issue.get("body")):
+        raise PermissionError("Original coding issue closed, changed, or mismatched")
+    comments = request_json(url + "/comments?per_page=100", token)
+    bodies = _coder_bot_bodies(comments)
+    if original.get("comments") not in (None, len(comments)):
+        raise ValueError("Original coding comment history changed during reservation")
+    relevant = [body for body in bodies
+                if any(magic in body for magic in
+                       (CODER_EXECUTION, CODER_TERMINAL, CODER_RESERVATION))]
+    if attempt == 1:
+        if relevant:
+            return False
+    else:
+        nextday = f"{CODER_RESERVATION}{number}:{run_id} -->"
+        reservations = [body for body in relevant if CODER_RESERVATION in body]
+        if len(reservations) != 1 or reservations[0].splitlines()[:1] != [nextday]:
+            return False
+        prior_comments = [item for item in comments
+                          if not ((item.get("user") or {}).get("login") == "github-actions[bot]"
+                                  and item.get("body", "").splitlines()[:1] == [nextday])]
+        if free_coder_nextday_candidate(original, prior_comments, now) != run_id:
+            return False
+        prior_run = request_json(API + f"/actions/runs/{run_id}/attempts/1", token)
+        if not _original_coder_run_matches(prior_run, run_id, now):
+            return False
+    marker = _coder_execution_marker(run_id, attempt)
+    result = request_json(url + "/comments", token, method="POST", payload={"body": (
+        marker + "\nOriginal owner coding execution reserved before any model access. "
+        "No completion claimed; never retry an unknown or unreceipted execution."
+    )})
+    if (not isinstance(result, dict) or not result.get("html_url")
+            or (result.get("user") or {}).get("login") != "github-actions[bot]"
+            or result.get("body", "").splitlines()[:1] != [marker]):
+        raise RuntimeError("Original coding execution reservation acknowledgment missing")
+    return True
 
 
 def free_coder_nextday_candidate(issue: object, comments: object, now: datetime):
@@ -75,27 +185,34 @@ def free_coder_nextday_candidate(issue: object, comments: object, now: datetime)
     except (PermissionError, ValueError, TypeError, OSError):
         return None
     receipts = []
+    executions = []
+    try:
+        _coder_bot_bodies(comments)
+    except ValueError:
+        return None
     for item in comments:
-        if not isinstance(item, dict):
-            return None
         body = item.get("body", "")
-        if not isinstance(body, str):
-            return None
+        # Even an untrusted next-day reservation blocks rather than replays.
         if CODER_RESERVATION in body:
-            return None  # A reservation is consumed even if the dispatch failed.
+            return None
         if (item.get("user") or {}).get("login") != "github-actions[bot]":
             continue
-        if "Local fallback attempted: true" in body:
-            return None  # Same-job alternate engineering already consumed the task.
-        matches = list(CODER_RECEIPT.finditer(body))
-        if "<!-- plenum-openhands-review:" in body and not matches:
+        if ("Local fallback attempted: true" in body
+                or "Gemini fallback attempted: true" in body):
+            return None  # Same-job alternate engineering consumed the task.
+        if CODER_EXECUTION in body:
+            executions.append(body.splitlines()[0])
+        match = CODER_RECEIPT.match(body)
+        if CODER_TERMINAL in body and match is None:
             return None  # Unknown/legacy coding receipts never authorize a rerun.
-        for match in matches:
+        if match:
             receipts.append((int(match[1]), int(match[2]), match[3], match[4],
                              _utc_datetime(item.get("created_at"))))
     if len(receipts) != 1:
         return None
     run_id, attempt, engine_headline, status, recorded = receipts[0]
+    if executions not in ([], [_coder_execution_marker(run_id, 1)]):
+        return None
     if (attempt != 1 or engine_headline != "OpenHands original public repair"
             or status != CODER_STATUS or recorded is None
             or now.tzinfo is None or recorded.date() >= now.astimezone(timezone.utc).date()
@@ -105,11 +222,12 @@ def free_coder_nextday_candidate(issue: object, comments: object, now: datetime)
 
 
 def recover_one_post_reset_original_coder(*, items: list, token: str,
-                                          now: datetime):
+                                          now: datetime, awaiting_receipt=None):
     """One local-budget retry after UTC reset; runs original signed issue context."""
     for issue in items:
         if (not isinstance(issue, dict) or issue.get("state") != "open"
-                or issue.get("title") != CODER_TITLE):
+                or issue.get("title") != CODER_TITLE
+                or (issue.get("user") or {}).get("login") != OWNER):
             continue
         number = issue.get("number")
         if type(number) is not int or not 1 <= number < 10**9:
@@ -118,25 +236,18 @@ def recover_one_post_reset_original_coder(*, items: list, token: str,
                                 token)
         run_id = free_coder_nextday_candidate(issue, comments, now)
         if run_id is None:
+            if awaiting_receipt is not None:
+                created = _utc_datetime(issue.get("created_at"))
+                try:
+                    bodies = _coder_bot_bodies(comments)
+                except ValueError:
+                    bodies = []
+                if (created is not None and created + MIN_ISSUE_AGE <= now
+                        and not any(CODER_TERMINAL in body for body in bodies)):
+                    awaiting_receipt.append(number)
             continue
         run = request_json(API + f"/actions/runs/{run_id}", token)
-        if (not isinstance(run, dict)
-                or run.get("id") != run_id
-                or run.get("event") != "issues"
-                or run.get("workflow_id") != CODER_WORKFLOW_ID
-                or run.get("path") != CODER_WORKFLOW
-                or run.get("display_title") != CODER_TITLE
-                or run.get("head_branch") != "main"
-                or run.get("status") != "completed"
-                or run.get("conclusion") != "failure"
-                or run.get("run_attempt") != 1
-                or (run.get("repository") or {}).get("full_name") != REPO
-                or (run.get("repository") or {}).get("id") != 1447724141
-                or (run.get("actor") or {}).get("login") != OWNER
-                or (run.get("actor") or {}).get("id") != 251133044
-                or _utc_datetime(run.get("created_at")) is None
-                or _utc_datetime(run["created_at"]).date()
-                    >= now.astimezone(timezone.utc).date()):
+        if not _original_coder_run_matches(run, run_id, now):
             continue
         # Reserve on the SAME original issue BEFORE a potentially ambiguous
         # dispatch response. Fail closed rather than create duplicate inference.
@@ -342,16 +453,19 @@ def resume_missed_public_issues(*, token: str, now: datetime) -> dict:
             ambiguous.append(number)
             continue
         dispatched.append(number)
+    awaiting_receipt = []
     coder_recovery = recover_one_post_reset_original_coder(
-        items=items, token=token, now=now)
+        items=items, token=token, now=now, awaiting_receipt=awaiting_receipt)
     return {
         "schema": "plenum-original-minister-missed-public-issue-recovery-v1",
         "original_coder_recovery": coder_recovery,
+        "original_coder_awaiting_authentic_terminal_receipt_no_replay": awaiting_receipt,
         "status": ("PARTIAL_AMBIGUOUS_DISPATCH_RESERVED_NO_RETRY" if ambiguous
                    else "AMBIGUOUS_ORIGINAL_CODER_RERUN_RESERVED_NO_RETRY"
                    if coder_recovery and not coder_recovery["requested"]
                    else "REQUESTED_EXISTING_PUBLIC_WORKER_WAKES" if dispatched
                    else "REQUESTED_EXISTING_ORIGINAL_CODER_RERUN" if coder_recovery
+                   else "CODER_TERMINAL_RECEIPT_PENDING_NO_REPLAY" if awaiting_receipt
                    else "NO_NEW_MISSED_PUBLIC_MISSION"),
         "original_issues_woken": dispatched,
         "ambiguous_dispatch_issues": ambiguous,
