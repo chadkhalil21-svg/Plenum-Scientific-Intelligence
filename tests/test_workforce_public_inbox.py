@@ -62,6 +62,45 @@ class IntakeTests(unittest.TestCase):
             self.assertEqual(calls[0][0][3],"world-horizon")
             self.assertNotIn("shell",calls[0][1])
 
+    def test_actual_grant_request_reuses_original_funding_feed_and_blocks_unrelated_88_lead_result(self):
+        objective = "Find current NSF funding leads for photonic concrete infrastructure sensing research"
+        owner_event = event(body=w.MAGIC + "\nobjective: " + objective)
+        self.assertEqual(w.original_source_category(objective), "funding")
+        self.assertEqual(w.original_source_category(OBJECTIVE), "all")
+        seen = []
+        with tempfile.TemporaryDirectory() as folder:
+            def old_broad_result(cmd, **kwargs):
+                seen.append(cmd)
+                Path(cmd[-1]).write_text(json.dumps({
+                    "schema": "plenum-public-horizon-snapshot-v1", "topic": objective,
+                    "category": "all", "independent_breakthrough_verified": False,
+                    "AGI_achieved": False,
+                    "records": [{"url": "https://news.example.org/music",
+                                 "category": "music", "source": "institution",
+                                 "title": "Unrelated music research"}]
+                }), encoding="utf-8")
+                return FakeRun()
+            wrong = w.run_issue(owner_event, output_dir=Path(folder), runner=old_broad_result)
+            self.assertEqual(wrong["status"], "BLOCKED_VERIFICATION")
+            self.assertFalse(wrong["verified"])
+        self.assertEqual(seen[0][seen[0].index("--category") + 1], "funding")
+        with tempfile.TemporaryDirectory() as folder:
+            def original_funding_result(cmd, **kwargs):
+                Path(cmd[-1]).write_text(json.dumps({
+                    "schema": "plenum-public-horizon-snapshot-v1", "topic": objective,
+                    "category": "funding", "independent_breakthrough_verified": False,
+                    "AGI_achieved": False,
+                    "records": [{"url": "https://www.nsf.gov/funding/opportunities/mri-major-research-instrumentation-program/nsf27-500/solicitation",
+                                 "category": "funding", "source": "nsf_open_funding",
+                                 "title": "Major Research Instrumentation Program"}]
+                }), encoding="utf-8")
+                return FakeRun()
+            actual = w.run_issue(owner_event, output_dir=Path(folder), runner=original_funding_result)
+            self.assertEqual(actual["status"], "DRAFT_READY_FOR_FOUNDER")
+            self.assertEqual(actual["source_linked_records"], 1)
+            self.assertFalse(actual["individual_papers_independently_validated"])
+            self.assertFalse(actual["scientific_discovery_verified"])
+
     def test_fails_closed_if_worker_output_missing_or_wrong(self):
         with tempfile.TemporaryDirectory() as folder:
             result=w.run_issue(event(),output_dir=Path(folder),
