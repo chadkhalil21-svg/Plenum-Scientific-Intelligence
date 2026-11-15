@@ -1,0 +1,892 @@
+{
+  "column_count": 38,
+  "comparisons_performed": {
+    "ADF_gkg->ADF_percent": 54,
+    "ADF_percent->ADF_offtake_gm2": 54,
+    "CP_gkg->CP_percent": 54,
+    "CP_percent->CP_offtake_gm2": 54,
+    "ME_Mjkg->ME_offtake_Mjm2": 54,
+    "NDF_gkg->NDF_percent": 54,
+    "NDF_percent->NDF_offtake_gm2": 54,
+    "P_mgkg->P_offtake_mgm2 (yield multiplier, divisor=1000)": 125,
+    "P_mgkg->P_offtake_mgm2 (yield multiplier, divisor=1000000)": 125,
+    "P_mgkg->P_percent": 125
+  },
+  "core_nutrient_nonmissing_by_year": {
+    "ADF_gkg": {
+      "2021": 54
+    },
+    "CP_gkg": {
+      "2021": 54
+    },
+    "ME_Mjkg": {
+      "2021": 54
+    },
+    "NDF_gkg": {
+      "2021": 54
+    }
+  },
+  "finding_counts": {
+    "concentration_above_total_mass": 2,
+    "energy_percentage_dimensional_meaning_unspecified": 1,
+    "phosphorus_offtake_label_mgm2_inconsistent": 125,
+    "readme_site_count_inconsistent": 1,
+    "sampling_group_count_differs_from_readme_design": 1
+  },
+  "findings": [
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 1
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 2
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 3
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 4
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 5
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 6
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 7
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 8
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 9
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 10
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 11
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 12
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 13
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 14
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 15
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 16
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 17
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 18
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 19
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 20
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 21
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 22
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 23
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 24
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 25
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 26
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 27
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 28
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 29
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 30
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 31
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 32
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 33
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 34
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 35
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 36
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 37
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 38
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 39
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 40
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 41
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 42
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 43
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 44
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 45
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 46
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 47
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 48
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 49
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 50
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 51
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 52
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 53
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 54
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 55
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 56
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 57
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 58
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 59
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 60
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 61
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 62
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 63
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 64
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 65
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 66
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 67
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 68
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 69
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 70
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 71
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 72
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 73
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 74
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 75
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 76
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 77
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 78
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 79
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 80
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 81
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 82
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 83
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 84
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 85
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 86
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 87
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 88
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 89
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 90
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 91
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 92
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 93
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 94
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 95
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 96
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 97
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 98
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 99
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 100
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 101
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 102
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 103
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 104
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 105
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 106
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 107
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 108
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 109
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 110
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 111
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 112
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 113
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 114
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 115
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 116
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 117
+    },
+    {
+      "code": "concentration_above_total_mass",
+      "field": "NDF_gkg",
+      "kind": "source_review",
+      "record": 118
+    },
+    {
+      "code": "concentration_above_total_mass",
+      "field": "NDF_percent",
+      "kind": "source_review",
+      "record": 118
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 118
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 119
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 120
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 121
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 122
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 123
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 124
+    },
+    {
+      "code": "phosphorus_offtake_label_mgm2_inconsistent",
+      "field": "P_offtake_mgm2",
+      "kind": "source_review",
+      "record": 125
+    },
+    {
+      "code": "readme_site_count_inconsistent",
+      "field": "supporting-documents/read_me.txt",
+      "kind": "source_review",
+      "record": null
+    },
+    {
+      "code": "energy_percentage_dimensional_meaning_unspecified",
+      "field": "ME_percent",
+      "kind": "source_review",
+      "record": null
+    },
+    {
+      "code": "sampling_group_count_differs_from_readme_design",
+      "field": "sampling_metadata",
+      "kind": "source_review",
+      "record": null
+    }
+  ],
+  "missing_blank_by_field": {
+    "ADF_gkg": 71,
+    "ADF_offtake_gm2": 71,
+    "ADF_percent": 71,
+    "B_mgkg": 71,
+    "CP_gkg": 71,
+    "CP_offtake_gm2": 71,
+    "CP_percent": 71,
+    "Co_mgkg": 1,
+    "I_mgkg": 71,
+    "ME_Mjkg": 71,
+    "ME_offtake_Mjm2": 71,
+    "ME_percent": 71,
+    "NDF_gkg": 71,
+    "NDF_offtake_gm2": 71,
+    "NDF_percent": 71,
+    "Se_mgkg": 71
+  },
+  "missing_blank_total": 1066,
+  "missing_na_by_field": {
+    "B_mgkg": 1,
+    "Mo_mgkg": 1,
+    "Zn_mgkg": 1
+  },
+  "missing_na_total": 3,
+  "notes": [
+    "Missing cells remain missing; no imputation",
+    "RO-Crate and observed site counts show three sites; README also says four",
+    "P_mgkg * Yield_gm2 / 1000 yields mg/m2; all values matching division by 1e6 instead warrant checking the P_offtake_mgm2 label (not silently converting)",
+    "ME concentration uses MJ/kg; a percentage has no documented energy meaning",
+    "NIRS-related bounds flag observations for review, not certified assay errors",
+    "Observed sampling groups only; not an assertion that the study design required an unobserved group",
+    "No experimental or biological validity certification"
+  ],
+  "sampling_groups_to_review": [
+    {
+      "harvest": "4",
+      "observed": 5,
+      "site": "Meadow Farm",
+      "year": "2020"
+    }
+  ],
+  "schema": "plenum-eidc-forage-metadata-audit-v1",
+  "site_counts": {
+    "Meadow Farm": 41,
+    "Oxley": 42,
+    "Yarnton": 42
+  },
+  "source": {
+    "catalogue": "https://catalogue.ceh.ac.uk/documents/361f0587-4cc6-48df-9f7e-8ade331cf8d5",
+    "citation": "Bowskill, V. (2024). Nutritive and mineral content of hay from three species-rich floodplain meadows, England, 2020-21. NERC EDS Environmental Information Data Centre. https://doi.org/10.5285/361f0587-4cc6-48df-9f7e-8ade331cf8d5",
+    "dataset_metadata_matched": true,
+    "doi": "https://doi.org/10.5285/361f0587-4cc6-48df-9f7e-8ade331cf8d5",
+    "download": "https://data-package.ceh.ac.uk/data/361f0587-4cc6-48df-9f7e-8ade331cf8d5.zip",
+    "licence": "https://spdx.org/licenses/OGL-UK-3.0",
+    "member_sha256": {
+      "data/minerals_and_nutritive_data_floodplain-meadows.csv": "f24489340f2ec398ec8c5f1e8394271c580d0f406b88dea1e080dcfdc2f170f7",
+      "ro-crate-metadata.json": "1a01183584c2c7982e9b9d36df3f8a6b713b5f7575c7cc2ac3450cf5c1b16584",
+      "supporting-documents/read_me.txt": "9e0ce6ae46d4dc6668bcea189beea959f0e43eb9e9311d339635b7685b695f36"
+    },
+    "published_csv_and_readme_bytes_match": true,
+    "temporal_coverage": [
+      "2020-05-01/2021-09-30"
+    ],
+    "zip_sha256": "30352eb1dc49217fa86a69b57b3044b3430c6abea4114cb816c960703da1de7b"
+  },
+  "source_review_records": 125,
+  "status": "REVIEW_REQUIRED_SOURCE_FINDINGS",
+  "structurally_invalid_records": 0,
+  "total_records": 125,
+  "year_counts": {
+    "2020": 71,
+    "2021": 54
+  }
+}
