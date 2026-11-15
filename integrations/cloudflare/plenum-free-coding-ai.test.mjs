@@ -73,6 +73,45 @@ test("existing free model binding accepts only original signed public issue work
   assert.equal(untrusted.status,400);assert.equal(calls,2);
 });
 
+test("real OpenHands OpenAI-compatible conversation shape is admitted without weakening bounds",async()=>{
+  const seen=[];
+  const env={
+    PLENUM_FREE_AI_ENABLED:"true",
+    AI:{async run(model,payload){
+      seen.push(payload);
+      assert.equal(model,"@cf/zai-org/glm-4.7-flash");
+      return {response:"Review-only repair proposal"};
+    }},
+    PLENUM_REPLAY_GUARD:{getByName:()=>({fetch:async()=>new Response(null,{status:204})})},
+  };
+  const signed={verifier:async()=>true};
+  function request(body) {
+    return new Request("https://plenum-public-wake.example/ai/v1/chat/completions",{
+      method:"POST",
+      headers:{"Authorization":"Bearer "+"z".repeat(450),"Content-Type":"application/json"},
+      body:JSON.stringify(body)});
+  }
+  const messages=[{role:"developer",content:"Public source only."},{role:"user",content:"Make a safe patch."}];
+  for(let i=0;i<9;i++){
+    messages.push({role:"assistant",tool_calls:[{
+      id:"call_"+i,type:"function",function:{name:"file_editor",arguments:"{}"}}]});
+    messages.push({role:"tool",tool_call_id:"call_"+i,content:"Only a public scratch file."});
+  }
+  const tools=[{type:"function",function:{name:"file_editor",parameters:{type:"object"}}}];
+  const body={model:"glm-4.7-flash",messages,tools,n:null,max_tokens:512};
+  const accepted=await handleFreeCodingAI(request(body),env,signed);
+  assert.equal(accepted.status,200);
+  assert.equal(seen.length,1);
+  assert.equal(seen[0].messages.length,20);
+  const huge=await handleFreeCodingAI(request({...body,messages:[...messages,...messages,...messages,...messages]}),env,signed);
+  assert.equal(huge.status,400);
+  assert.match((await huge.json()).error.message,/message_count/);
+  assert.equal(seen.length,1);
+  const untrusted=await handleFreeCodingAI(request({...body,model:"openai/paid-model"}),env,signed);
+  assert.equal(untrusted.status,400);
+  assert.equal(seen.length,1);
+});
+
 test("existing replay guard atomically bounds native AI budget per UTC day",async()=>{
   const storage=new Map();
   const guard=new PublicWakeReplayGuard({storage:{transaction:async fn=>fn({
