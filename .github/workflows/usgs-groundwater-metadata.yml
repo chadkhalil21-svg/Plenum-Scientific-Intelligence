@@ -1,0 +1,34 @@
+name: USGS groundwater catalogue metadata evidence
+on:
+  pull_request:
+    paths:
+      - 'tools/usgs_groundwater_metadata.py'
+      - '.github/workflows/usgs-groundwater-metadata.yml'
+      - 'evidence/engineering/usgs-groundwater-514/**'
+permissions:
+  contents: read
+jobs:
+  actual-public-metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install maintained open schema validator
+        run: python -m pip install 'jsonschema==4.26.0'
+      - name: Retrieve bounded official public metadata and schema only
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/usgs-source" "$RUNNER_TEMP/usgs-evidence"
+          curl --fail --silent --show-error --max-time 50 --max-filesize 2000000 'https://api.waterdata.usgs.gov/ogcapi/v1/collections/monitoring-locations/items?agency_code=USGS&state_code=12&county_code=086&site_type_code=GW&bbox=-80.4,25.65,-80.3,25.75&limit=500&f=json' -o "$RUNNER_TEMP/usgs-source/wells.json"
+          curl --fail --silent --show-error --max-time 50 --max-filesize 2000000 'https://api.waterdata.usgs.gov/ogcapi/v1/collections/monitoring-locations/schema?f=json' -o "$RUNNER_TEMP/usgs-source/schema.json"
+          python tools/usgs_groundwater_metadata.py "$RUNNER_TEMP/usgs-source/wells.json" "$RUNNER_TEMP/usgs-source/schema.json" "$RUNNER_TEMP/usgs-evidence/report.json" "$RUNNER_TEMP/usgs-evidence/diagram.svg"
+          (cd "$RUNNER_TEMP/usgs-evidence" && sha256sum report.json diagram.svg > SHA256SUMS)
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: usgs-groundwater-metadata-evidence
+          path: ${{ runner.temp }}/usgs-evidence/
+          if-no-files-found: error
