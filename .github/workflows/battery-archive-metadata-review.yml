@@ -1,0 +1,40 @@
+name: Battery Archive public metadata review #387
+on:
+  pull_request:
+    paths:
+      - 'tools/battery_archive_metadata_validator.py'
+      - '.github/workflows/battery-archive-metadata-review.yml'
+permissions:
+  contents: read
+jobs:
+  validate-public-metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Download exactly one bounded public upstream CSV and verify immutable Git blob
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib, pathlib, urllib.request
+          url = 'https://raw.githubusercontent.com/BikingJesus/batteryarchive/main/metadata.csv'
+          with urllib.request.urlopen(url, timeout=20) as response:
+              data = response.read(2_000_001)
+          if len(data) > 2_000_000:
+              raise SystemExit('input too large')
+          blob = hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\\0' + data).hexdigest()
+          expected = '79210cafa412a5c3da915305c8f74a23f7add32b'
+          if blob != expected:
+              raise SystemExit('upstream blob changed: fail closed, no substituted data')
+          pathlib.Path('/tmp/battery_archive_metadata.csv').write_bytes(data)
+          print('verified_git_blob_sha1=' + blob)
+          print('input_sha256=' + hashlib.sha256(data).hexdigest())
+          PY
+      - name: Execute actual metadata validation and expose report
+        shell: bash
+        run: |
+          python tools/battery_archive_metadata_validator.py /tmp/battery_archive_metadata.csv --output /tmp/battery_metadata_report.json
+          cat /tmp/battery_metadata_report.json
+          echo 'Metadata only: this is NOT a cycling-measurement validation or issue closure.'
