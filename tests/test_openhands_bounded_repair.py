@@ -81,6 +81,12 @@ class OpenHandsFeedbackContract(unittest.TestCase):
         self.assertEqual(_FakeConversation.runs, 2)
 
 
+    def test_source_repair_byte_limit_preserves_existing_reviewed_module(self):
+        self.assertEqual(coder._candidate_byte_limit(None), 20_000)
+        self.assertEqual(coder._candidate_byte_limit(b"x" * 20_498), 25_498)
+        self.assertEqual(coder._candidate_byte_limit(b"x" * 40_000), 45_000)
+        self.assertLessEqual(coder._candidate_byte_limit(b"x" * 90_000), 45_000)
+
     def test_owner_issue_scopes_exact_public_source_and_review_only(self):
         import tempfile
         from pathlib import Path
