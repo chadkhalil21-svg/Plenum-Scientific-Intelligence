@@ -2,6 +2,10 @@ name: Plenum Public Workforce | Free Event Wake
 on:
   repository_dispatch:
     types: [plenum_public_issue_wakeup]
+  # Reuse the ORIGINAL owner-approved public issue itself as immediate
+  # event-driven wake; no competing scheduler, agent or second host.
+  issue_comment:
+    types: [created, edited]
   pull_request:
     paths:
       - 'integrations/cloudflare/**'
@@ -45,15 +49,19 @@ jobs:
         run: npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/plenum-worker-bundle
   resume-original-task:
     if: >-
-      github.event_name == 'repository_dispatch' &&
-      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence'
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      (github.event_name == 'repository_dispatch' ||
+       (github.event_name == 'issue_comment' &&
+        github.event.issue.user.login == 'chadkhalil21-svg' &&
+        github.event.comment.user.login == 'chadkhalil21-svg' &&
+        startsWith(github.event.comment.body, '<!-- plenum-minister-legacy-public-backlog-v1 -->')))
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
       issues: write
     env:
-      PLENUM_PUBLIC_ISSUE: ${{ github.event.client_payload.issue_number }}
+      PLENUM_PUBLIC_ISSUE: ${{ github.event.client_payload.issue_number || github.event.issue.number }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4

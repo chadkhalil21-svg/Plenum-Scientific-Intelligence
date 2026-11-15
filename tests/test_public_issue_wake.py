@@ -186,6 +186,65 @@ class PublicWakeAcceptance(unittest.TestCase):
                 {"status": "VERIFIED_BOUNDED_TEAM", "independent_verified": True},
             ))
 
+    def test_immediate_wake_is_exact_authenticated_original_founder_approval(self):
+        from plenum_ai.public_issue_wake import founder_approved_comment_event
+        from plenum_ai.minister_missed_public_wake import LEGACY_OWNER_APPROVAL
+        owner={"login":"chadkhalil21-svg"}
+        payload={
+            "action":"edited",
+            "issue":{"number":498,"state":"open","user":owner},
+            "comment":{"user":owner,"body":LEGACY_OWNER_APPROVAL+"\nExisting original mission only"},
+            "sender":owner,
+        }
+        self.assertTrue(founder_approved_comment_event(payload,498))
+        for invalid in (
+            {**payload, "sender":{"login":"outsider"}},
+            {**payload, "comment":{**payload["comment"],"user":{"login":"outsider"}}},
+            {**payload, "action":"deleted"},
+            {**payload, "issue":{**payload["issue"],"state":"closed"}},
+            {**payload, "comment":{**payload["comment"],"body":"not an approval"}},
+        ):
+            with self.subTest(invalid=invalid):
+                self.assertFalse(founder_approved_comment_event(invalid,498))
+        self.assertFalse(founder_approved_comment_event(payload,999))
+
+    def test_same_unexecuted_original_legacy_mission_is_woken_without_a_new_agent(self):
+        from plenum_ai import public_issue_wake as wake
+        from plenum_ai.minister_missed_public_wake import LEGACY_OWNER_APPROVAL
+        from unittest.mock import patch
+        from pathlib import Path
+        import tempfile
+        prior = issue(
+            number=498, comments=1, created_at="2026-11-11T20:38:55Z",
+            title="[Plenum Chief] public mission",
+            body=("PLENUM_CHIEF_PUBLIC_MISSION_V1\n"
+                  "objective: Research free documentary sources and original SVG music illustration for Plenum Terra"),
+        )
+        approved={"user":{"login":"chadkhalil21-svg"},
+                  "body":LEGACY_OWNER_APPROVAL+"\nOriginal previously missed public mission"}
+        bot = {"status":"VERIFIED_BOUNDED_TEAM", "executed_workers":2,
+               "independent_verified":True}
+        def api(url,token,*,body=None):
+            if url.endswith("/498"):return prior
+            if "/comments?per_page" in url:return [approved]
+            if url.endswith("/comments"):return {"html_url":"https://github.com/example/receipt"}
+            raise AssertionError("unexpected GitHub resource")
+        with tempfile.TemporaryDirectory() as folder, \
+            patch.object(wake,"gh_json",side_effect=api), \
+            patch.object(wake,"execute_original_team",return_value=bot) as execute, \
+            patch.dict("os.environ",{"GITHUB_RUN_ID":"321"}):
+            result=wake.process(498,"original_ephemeral",Path(folder),
+                                require_founder_approval=True)
+        self.assertEqual(result["status"],"VERIFIED_BOUNDED_TEAM")
+        self.assertTrue(result["original_multi_specialist"])
+        execute.assert_called_once()
+        with tempfile.TemporaryDirectory() as folder, \
+            patch.object(wake,"gh_json",side_effect=lambda url,*args,**kwargs:
+                prior if url.endswith("/498") else []):
+            with self.assertRaises(PermissionError):
+                wake.process(498,"original_ephemeral",Path(folder),
+                             require_founder_approval=True)
+
     def test_closed_untrusted_or_unbounded_issues_rejected(self):
         for bad in (issue(state="closed"),issue(user={"login":"attacker"}),
                     issue(title="misc"),issue(body="free text"),
