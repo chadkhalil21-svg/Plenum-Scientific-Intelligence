@@ -64,7 +64,7 @@ class IntakeTests(unittest.TestCase):
 
     def test_actual_grant_request_reuses_original_funding_feed_and_blocks_unrelated_88_lead_result(self):
         objective = "Find current NSF funding leads for photonic concrete infrastructure sensing research"
-        owner_event = event(body=w.MAGIC + "\\nobjective: " + objective)
+        owner_event = event(body=w.MAGIC + "\nobjective: " + objective)
         self.assertEqual(w.original_source_category(objective), "funding")
         self.assertEqual(w.original_source_category(OBJECTIVE), "all")
         seen = []
