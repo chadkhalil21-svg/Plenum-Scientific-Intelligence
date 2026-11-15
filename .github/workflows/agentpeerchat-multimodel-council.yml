@@ -50,7 +50,7 @@ jobs:
       PLENUM_APC_GEMINI_INVITE: ${{ secrets.PLENUM_APC_GEMINI_INVITE }}
       PLENUM_APC_LLAMA_INVITE: ${{ secrets.PLENUM_APC_LLAMA_INVITE }}
       PLENUM_GEMINI_API_KEY: ${{ secrets.PLENUM_GEMINI_API_KEY }}
-      PLENUM_GEMINI_MODEL: ${{ vars.PLENUM_GEMINI_MODEL || 'gemini-2.5-flash' }}
+      PLENUM_GEMINI_MODEL: ${{ vars.PLENUM_GEMINI_MODEL || 'gemini-3.8-flash' }}
     steps:
       - uses: actions/checkout@v4
         with:
