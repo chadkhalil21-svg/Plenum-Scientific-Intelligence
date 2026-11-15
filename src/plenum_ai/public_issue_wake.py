@@ -220,31 +220,43 @@ def original_chief_worker_extras(scope: dict) -> str | None:
     return None
 
 
+def _read_original_wake_issue(path: str, number: int, token: str):
+    original = gh_json(path, token)
+    if (not isinstance(original, dict) or original.get("number") != number
+            or original.get("state") != "open" or "pull_request" in original
+            or (original.get("user") or {}).get("login") != OWNER):
+        raise PermissionError("Original wake issue closed, changed, or mismatched")
+    comments = gh_json(path + "/comments?per_page=100", token)
+    if not isinstance(comments, list) or original.get("comments") not in (None, len(comments)):
+        raise PermissionError("Original wake comment history changed during reservation")
+    return original, comments
+
+
+def _direct_owner_marker(original, comments, number):
+    from .minister_missed_public_wake import approved_legacy_public_backlog, RECOVERY_MAGIC
+    if not approved_legacy_public_backlog(original, comments, now=datetime.now(timezone.utc)):
+        raise PermissionError("Original founder legacy public approval missing")
+    marker = RECOVERY_MAGIC + str(number) + " -->"
+    if any(isinstance(comment, dict)
+           and (comment.get("user") or {}).get("login") == "github-actions[bot]"
+           and isinstance(comment.get("body"), str)
+           and marker in comment["body"] for comment in comments):
+        return None
+    return marker
+
+
 def process(number: int, token: str, output_dir: Path, *,
             require_founder_approval: bool = False):
     number = checked_issue_number(number)
     path = BASE + str(number)
-    original = gh_json(path, token)
-    comments = gh_json(path + "/comments?per_page=100", token)
+    original, comments = _read_original_wake_issue(path, number, token)
     if require_founder_approval:
         # Use the SAME original scheduled Minister reservation marker.
         # GitHub issue_comment can be edited repeatedly, so an ambiguous
         # prior invocation without a completed bot receipt must NOT repeat
         # the original worker or any external source operation.
-        from .minister_missed_public_wake import (
-            approved_legacy_public_backlog, RECOVERY_MAGIC,
-        )
-        if not approved_legacy_public_backlog(
-                original, comments, now=datetime.now(timezone.utc)):
-            raise PermissionError("Original founder legacy public approval missing")
-        marker = RECOVERY_MAGIC + str(number) + " -->"
-        if any(
-            isinstance(comment, dict)
-            and (comment.get("user") or {}).get("login") == "github-actions[bot]"
-            and isinstance(comment.get("body"), str)
-            and marker in comment["body"]
-            for comment in comments
-        ):
+        marker = _direct_owner_marker(original, comments, number)
+        if marker is None:
             return {"status": "ALREADY_RECORDED", "issue_number": number,
                     "worker_reexecuted": False}
     event = build_original_event(original, comments)
@@ -269,6 +281,15 @@ def process(number: int, token: str, output_dir: Path, *,
         # Only the original validated public scope selects these fixed extras.
         # Match the native Chief: dependencies are prepared before reservation.
         subprocess.check_call([sys.executable, "-m", "pip", "install", "-e", extras])
+        # Installation may take time. Rebind the exact owner-approved issue
+        # and current receipts before consuming the execution reservation.
+        current, current_comments = _read_original_wake_issue(path, number, token)
+        if current.get("title") != original.get("title") or current.get("body") != original.get("body"):
+            raise PermissionError("Original wake issue changed during dependency preparation")
+        if build_original_event(current, current_comments) is None:
+            return {"status":"ALREADY_RECORDED", "issue_number":number, "worker_reexecuted":False}
+        if require_founder_approval and _direct_owner_marker(current, current_comments, number) is None:
+            return {"status":"ALREADY_RECORDED", "issue_number":number, "worker_reexecuted":False}
     # Both routes share the workflow's per-issue concurrency group. Record
     # an execution (not dispatch) reservation before invoking either worker.
     # The existing run-marker prefix stops scheduled recovery and later wakes

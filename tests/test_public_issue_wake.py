@@ -66,6 +66,36 @@ class PublicWakeAcceptance(unittest.TestCase):
             finally:
                 os.chdir(prior_directory)
 
+    def test_scoped_install_rechecks_original_owner_issue_before_reservation(self):
+        import subprocess
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from plenum_ai import public_issue_wake as wake
+        original = issue(title="[Plenum Chief] public mission", body=(
+            "PLENUM_CHIEF_PUBLIC_CONTRACT_MISSION_V1\n"
+            "objective: Solve cooling initial 350 K ambient 290 K rate 0.1 time 10"))
+        comments = []
+        def api(url, token, *, body=None):
+            if url.endswith("/789"):
+                return {**original, "comments": len(comments)}
+            if url.endswith("comments?per_page=100"):
+                return list(comments)
+            if url.endswith("/comments"):
+                comments.append(body)
+                return {"html_url": "https://github.com/example/receipt"}
+            raise AssertionError(url)
+        def install(argv):
+            original["body"] = original["body"].replace("350 K", "360 K")
+        with tempfile.TemporaryDirectory() as folder, patch.object(wake, "gh_json", side_effect=api), \
+                patch.object(subprocess, "check_call", side_effect=install), \
+                patch.object(wake, "execute_original_team", return_value={
+                    "status": "VERIFIED_BOUNDED_CONTRACT_MISSION", "independent_verified": True}), \
+                patch.dict("os.environ", {"GITHUB_RUN_ID": "123"}):
+            with self.assertRaisesRegex(PermissionError, "changed"):
+                wake.process(789, "scoped", Path(folder))
+        self.assertEqual(comments, [])
+
     def test_legacy_model_data_wake_does_not_reserve_or_execute(self):
         import tempfile
         from pathlib import Path
