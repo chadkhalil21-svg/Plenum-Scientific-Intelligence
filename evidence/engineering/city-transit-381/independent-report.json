@@ -1,0 +1,104 @@
+{
+  "source": "https://www.manteca.gov/DocumentCenter/View/2279",
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "terms": "https://www.manteca.gov/384/GTFS-Data",
+  "input_sha256": "31bf6a9d37f9d8606c47d03be14022255b458308abd0f893c9a53ba2cc91e329",
+  "input_bytes": 94140,
+  "upstream_version": "8.0.1",
+  "upstream_jar_sha256": "19293ddd9b6f954f216d4f12054bd8a3232921751c4484339e339764a91000e2",
+  "upstream_report_sha256": "83f0aa6c60edb3a90d927b609ed4d5edb870bec1b0154ecd435971be8d225a9b",
+  "upstream_system_errors_sha256": "823b06dada6cf539dde01b9451b5d2b6817ee7930f1ebeba4dc79d7688e79287",
+  "status": "DATA_QUALITY_ERRORS_FOUND",
+  "independent_reference_integrity": "PASS",
+  "counts": {
+    "Agencies": 1,
+    "Routes": 7,
+    "Trips": 282,
+    "Stops": 131,
+    "Shapes": 8
+  },
+  "route_rows": [
+    {
+      "route_id": "10",
+      "route_short_name": "1",
+      "route_long_name": "Main/Union CW",
+      "trips": 42,
+      "shape_ids": [
+        "10-A-SB"
+      ]
+    },
+    {
+      "route_id": "11",
+      "route_short_name": "2",
+      "route_long_name": "Main/Union CCW",
+      "trips": 54,
+      "shape_ids": [
+        "11-A-NB"
+      ]
+    },
+    {
+      "route_id": "6",
+      "route_short_name": "4",
+      "route_long_name": "Yosemite/Louise CCW",
+      "trips": 54,
+      "shape_ids": [
+        "6-A-EB"
+      ]
+    },
+    {
+      "route_id": "7",
+      "route_short_name": "3",
+      "route_long_name": "Yosemite/Louise CW",
+      "trips": 42,
+      "shape_ids": [
+        "7-A-WB"
+      ]
+    },
+    {
+      "route_id": "74396",
+      "route_short_name": "ST",
+      "route_long_name": "Sierra Direct",
+      "trips": 3,
+      "shape_ids": [
+        "74396-A-IB"
+      ]
+    },
+    {
+      "route_id": "74397",
+      "route_short_name": "ACE",
+      "route_long_name": "Shuttle",
+      "trips": 33,
+      "shape_ids": [
+        "74397-A-IB",
+        "74397-A-OB"
+      ]
+    },
+    {
+      "route_id": "8",
+      "route_short_name": "5",
+      "route_long_name": "Woodward/Sierra HS",
+      "trips": 54,
+      "shape_ids": [
+        "8-A-IB"
+      ]
+    }
+  ],
+  "actual_shape_points": 3644,
+  "svg_sha256": "d0bea8c993efeb91bb53ceabe5e6ed6a743d351892de1e41b80890e0a2a40b94",
+  "upstream_notice_counts": {
+    "ERROR": 57,
+    "INFO": 287,
+    "WARNING": 81
+  },
+  "feed_info": {
+    "publisherName": "ETA Transit Systems",
+    "publisherUrl": "https://etatransit.com",
+    "feedLanguage": "English",
+    "feedStartDate": "2026-10-01",
+    "feedEndDate": "2027-08-31",
+    "feedEmail": "",
+    "feedServiceWindowStart": "2026-10-01",
+    "feedServiceWindowEnd": "2027-12-31"
+  },
+  "scope": "Original immutable schedule archive; finite coordinate and join check, not full GTFS reimplementation, live routing or ridership."
+}
