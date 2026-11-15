@@ -85,7 +85,7 @@ export class PublicWakeReplayGuard {
   }
 
   async claimAi(day, reserve, maximum) {
-    if (typeof day !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(day)
+    if (typeof day !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(day)
         || !Number.isInteger(reserve) || reserve !== 200
         || !Number.isInteger(maximum) || maximum !== 4000
         || day !== new Date().toISOString().slice(0,10)) return false;
