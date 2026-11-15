@@ -16,8 +16,10 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: workforce-runtime-${{ github.ref }}
-  cancel-in-progress: true
+  # Actual #717 original model job was cancelled by unrelated NEW issue run.
+  # Preserve each owner task independently and never cancel review artifacts.
+  group: workforce-runtime-${{ github.event_name == 'issues' && github.event.issue.number || github.ref }}
+  cancel-in-progress: false
 
 jobs:
   native-n8n-import:
