@@ -24,6 +24,44 @@ class PlenumRoleRoutingTests(unittest.TestCase):
         self.assertIn("plenum-research-youtube",d["selected_skills"])
         self.assertNotIn("plenum-coding-delivery",d["selected_skills"])
 
+    def test_original_model_patch_review_preserves_multiword_and_rejects_substrings(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as folder:
+            roster = Path(folder) / "roster.json"
+            def pick(skills, objective):
+                roster.write_text(json.dumps({
+                    "schema": "plenum-hermes-profile-roster-v1",
+                    "roles": [{"name": "bounded", "skill_ids": skills}],
+                }), encoding="utf-8")
+                return route("bounded", objective, roster_path=roster)
+
+            # Real OpenHands #724 proposed text.split(), which would FAIL
+            # these genuine pre-existing multiword skill triggers.
+            self.assertEqual(
+                pick(["plenum-finance-operations", "plenum-free-local-tools"],
+                     "Inspect free local inference options")["selected_skills"][0],
+                "plenum-free-local-tools")
+            # A substring may not appoint an unrelated specialist.
+            self.assertEqual(
+                pick(["plenum-finance-operations", "plenum-growth-sales"],
+                     "Investigate presales opportunities")["selected_skills"][0],
+                "plenum-finance-operations")
+            self.assertEqual(
+                pick(["plenum-finance-operations", "plenum-growth-sales"],
+                     "Investigate sales opportunities")["selected_skills"][0],
+                "plenum-growth-sales")
+            # Writing/editorial permissions must also use exact words.
+            self.assertNotIn(
+                "plenum-editorial-quality",
+                pick(["plenum-business-advisor", "plenum-editorial-quality"],
+                     "Investigate writeups for reporting")["selected_skills"])
+            self.assertIn(
+                "plenum-editorial-quality",
+                pick(["plenum-business-advisor", "plenum-editorial-quality"],
+                     "Write a public proposal")["selected_skills"])
+
     def test_unauthorized_role_and_unbounded_objective_rejected(self):
         with self.assertRaises(PermissionError):
             route("unlisted_executor","Research professional sources")
