@@ -81,5 +81,77 @@ class OpenHandsFeedbackContract(unittest.TestCase):
         self.assertEqual(_FakeConversation.runs, 2)
 
 
+    def test_owner_issue_scopes_exact_public_source_and_review_only(self):
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as directory:
+            original = Path.cwd()
+            try:
+                os.chdir(directory)
+                p = Path("src/plenum_ai/public_module.py")
+                p.parent.mkdir(parents=True)
+                p.write_text("def value():\n    return 1\n")
+                evt = {"action": "opened",
+                       "repository": {"full_name": coder.REPO},
+                       "issue": {"user": {"login": coder.OWNER}, "number": 703,
+                                 "title": coder.REPAIR_TITLE,
+                                 "body": (coder.REPAIR_MARKER
+                                          + "\nfile: src/plenum_ai/public_module.py"
+                                          + "\nobjective: Improve a public helper while retaining its return contract")}}
+                result = coder.parse_owner_repair_event(evt)
+                self.assertEqual(result["source_file"], p.as_posix())
+                self.assertFalse(result["auto_merge"])
+                self.assertFalse(result["paid_api_authorized"])
+                evt["issue"]["user"]["login"] = "untrusted-author"
+                with self.assertRaises(PermissionError):
+                    coder.parse_owner_repair_event(evt)
+                evt["issue"]["user"]["login"] = coder.OWNER
+                evt["issue"]["body"] = evt["issue"]["body"].replace(
+                    "src/plenum_ai/public_module.py", "../secret.py")
+                with self.assertRaises(PermissionError):
+                    coder.parse_owner_repair_event(evt)
+            finally:
+                os.chdir(original)
+
+    def test_real_repair_loop_exports_one_reviewable_diff_not_source_write(self):
+        import hashlib
+        import tempfile
+        _FakeConversation.ever_valid = True
+        with tempfile.TemporaryDirectory() as directory:
+            original = Path.cwd()
+            try:
+                os.chdir(directory)
+                p = Path("src/plenum_ai/public_module.py")
+                p.parent.mkdir(parents=True)
+                before = "def original_value():\n    return 42\n"
+                p.write_text(before)
+                with (self._sdk_patches(),
+                      patch.object(coder.importlib.metadata, 'version', return_value='1.60.1'),
+                      patch.dict(os.environ, {'PLENUM_EPHEMERAL_RUNNER': 'confirmed',
+                                              'PLENUM_OPENHANDS_MODEL': 'fake/local',
+                                              'PLENUM_OPENHANDS_BASE_URL': 'http://127.0.0.1:11434'})):
+                    result = coder.execute(
+                        "Improve a public helper with a clear documented return type",
+                        source_file=p.as_posix(),
+                        candidate_out="reports/openhands-review/issue-703.patch")
+                self.assertEqual(p.read_text(), before)
+                self.assertEqual(result["status"], "PROPOSAL_AWAITING_REVIEW")
+                self.assertEqual(result["repair_passes"], 1)
+                self.assertTrue(result["candidate_persisted"])
+                self.assertFalse(result["production_written"])
+                artifact = Path(result["candidate_artifact"])
+                self.assertTrue(artifact.is_file())
+                diff = artifact.read_text()
+                self.assertIn("--- a/src/plenum_ai/public_module.py", diff)
+                self.assertIn("+++ b/src/plenum_ai/public_module.py", diff)
+                self.assertEqual(result["candidate_artifact_sha256"],
+                                 hashlib.sha256(artifact.read_bytes()).hexdigest())
+                with self.assertRaises(PermissionError):
+                    coder._review_output_path(artifact.as_posix(), source_file=p.as_posix())
+            finally:
+                os.chdir(original)
+
+
+
 if __name__ == '__main__':
     unittest.main()
