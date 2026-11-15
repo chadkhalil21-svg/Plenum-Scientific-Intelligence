@@ -153,6 +153,43 @@ class OriginalMinisterMissedWakeTests(unittest.TestCase):
         self.assertEqual(result["status"], "NO_NEW_MISSED_PUBLIC_MISSION")
         self.assertEqual(result["original_issues_woken"], [])
 
+    def test_lost_dispatch_response_preserves_reservation_and_other_work(self):
+        # GitHub may accept the first POST even when its response is lost.
+        # A second issue can proceed, but the first must never be retried.
+        candidates = [issue(num=n) for n in (789, 790, 791)]
+        reserved = {}
+        sent = []
+
+        def api(url, token, *, method="GET", payload=None):
+            if "/issues?" in url:
+                return candidates
+            if "/comments?per_page" in url:
+                number = int(url.split("/issues/")[1].split("/")[0])
+                return reserved.get(number, [])
+            if url.endswith("/comments"):
+                number = int(url.split("/issues/")[1].split("/")[0])
+                reserved[number] = [{"user": {"login": "github-actions[bot]"},
+                                     "body": payload["body"]}]
+                return {"id": number}
+            if url.endswith("/dispatches"):
+                number = payload["client_payload"]["issue_number"]
+                self.assertIn(number, reserved)
+                sent.append(number)
+                if number == 789:
+                    raise TimeoutError("response lost")
+                return None
+            raise AssertionError(url)
+
+        with patch.object(m, "request_json", side_effect=api):
+            first = m.resume_missed_public_issues(token="ephemeral", now=NOW)
+            self.assertEqual(first["original_issues_woken"], [790])
+            self.assertEqual(first["ambiguous_dispatch_issues"], [789])
+            self.assertFalse(first["mission_completion_claimed"])
+            self.assertEqual(sent, [789, 790])  # reservation counts against cap
+            second = m.resume_missed_public_issues(token="ephemeral", now=NOW)
+        self.assertEqual(second["original_issues_woken"], [791])
+        self.assertEqual(sent, [789, 790, 791])
+
     def test_untrusted_or_oversized_comment_lists_never_authorize(self):
         self.assertFalse(m.missing_original_attempt(None, 1))
         self.assertFalse(m.missing_original_attempt([{"body": 10}], 1))
@@ -161,3 +198,4 @@ class OriginalMinisterMissedWakeTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
