@@ -113,13 +113,23 @@ export async function handleFreeCodingAI(request, env, {verifier=verifyOriginalG
   if (encoder.encode(bodyText).length > MAX_BYTES) return fail(413,"request_exceeds_free_budget_limit");
   let body;
   try { body=JSON.parse(bodyText); } catch { return fail(400,"invalid_json"); }
-  if (!body || typeof body!=="object" || Array.isArray(body)
-      || !["glm-4.7-flash","openai/glm-4.7-flash",MODEL].includes(body.model)
-      || !Array.isArray(body.messages) || !body.messages.length || body.messages.length>16
-      || body.messages.some(x=>!x || !["system","user","assistant","tool"].includes(x.role)
-        || !(typeof x.content==="string" || x.content===null || Array.isArray(x.content)))
-      || (body.tools!==undefined && (!Array.isArray(body.tools) || body.tools.length>8))
-      || (body.n!==undefined && body.n!==1)) return fail(400,"unsupported_public_coding_request");
+  if (!body || typeof body!=="object" || Array.isArray(body))
+    return fail(400,"invalid_chat_object");
+  if (!["glm-4.7-flash","openai/glm-4.7-flash",MODEL].includes(body.model))
+    return fail(400,"model_not_free_allowlisted");
+  // The genuine pinned OpenHands SDK sends ordinary OpenAI defaults, including
+  // n:null, developer messages, and tool-call assistant messages with no content.
+  // Bound total payload separately, do not drop tool results or permit paid models.
+  if (!Array.isArray(body.messages) || !body.messages.length || body.messages.length>64
+      || body.messages.some(x=>!x || !["developer","system","user","assistant","tool"].includes(x.role)
+        || !(typeof x.content==="string" || x.content===null || Array.isArray(x.content)
+             || (x.role==="assistant" && x.content===undefined && Array.isArray(x.tool_calls)))))
+    return fail(400,"unsupported_message_shapes");
+  if (body.tools!==undefined && body.tools!==null
+      && (!Array.isArray(body.tools) || body.tools.length>24))
+    return fail(400,"unsupported_tool_shapes");
+  if (body.n!==undefined && body.n!==null && body.n!==1)
+    return fail(400,"multiple_completions_not_allowed");
   let budget;
   try {
     const guard=env.PLENUM_REPLAY_GUARD.getByName("plenum-public-wake");
