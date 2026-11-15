@@ -67,10 +67,24 @@ test("existing free model binding accepts only original signed public issue work
   const stream=await handleFreeCodingAI(request({...task,stream:true}),env,{verifier:async()=>true});
   assert.equal(stream.status,200);assert.match(await stream.text(),/data: \[DONE\]/);
   assert.equal(calls,2);
+  // The live OpenHands/LiteLLM request can send n:null, developer content
+  // and assistant tool-call messages without a content property.
+  const sdkDefaults={...task,n:null,tools:null,messages:[
+    {role:"developer",content:"PUBLIC reviewed code only"},
+    {role:"assistant",tool_calls:[{id:"call_1",type:"function",function:{name:"file_editor",arguments:"{}"}}]},
+    {role:"tool",content:"File contents inspected",tool_call_id:"call_1"}
+  ]};
+  const compatible=await handleFreeCodingAI(request(sdkDefaults),env,{verifier:async()=>true});
+  assert.equal(compatible.status,200);
+  assert.equal(calls,3);
+  const multi=await handleFreeCodingAI(request({...task,n:2}),env,{verifier:async()=>true});
+  assert.equal(multi.status,400);assert.equal(calls,3);
+  const oversizeMessages=await handleFreeCodingAI(request({...task,messages:Array(65).fill({role:"user",content:"a"})}),env,{verifier:async()=>true});
+  assert.equal(oversizeMessages.status,400);assert.equal(calls,3);
   const unbound=await handleFreeCodingAI(request(task),{...env,AI:undefined},{verifier:async()=>true});
-  assert.equal(unbound.status,503);assert.equal(calls,2);
+  assert.equal(unbound.status,503);assert.equal(calls,3);
   const untrusted=await handleFreeCodingAI(request({...task,model:"openai/gpt-paid"}),env,{verifier:async()=>true});
-  assert.equal(untrusted.status,400);assert.equal(calls,2);
+  assert.equal(untrusted.status,400);assert.equal(calls,3);
 });
 
 test("existing replay guard atomically bounds native AI budget per UTC day",async()=>{
