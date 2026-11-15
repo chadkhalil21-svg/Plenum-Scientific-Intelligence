@@ -104,6 +104,59 @@ class OriginalFreeCoderNextDayRecovery(unittest.TestCase):
                 items=[ISSUE], token="ephemeral", now=NOW))
         self.assertEqual(posts, [])
 
+    def test_explicit_missing_remote_archive_cannot_authorize_nextday_model_retry(self):
+        unavailable = {**RECEIPT, "body": RECEIPT["body"] + "\n"
+                       "Original review archive state: BLOCKED_REMOTE_REVIEW_ARCHIVE_UNAVAILABLE"}
+        with patch("plenum_ai.openhands_coding_agent.parse_owner_repair_event",
+                   return_value={"source_file": "src/plenum_ai/agent_library.py"}):
+            self.assertIsNone(m.free_coder_nextday_candidate(ISSUE, [unavailable], NOW))
+
+    def test_distinct_archives_from_historical_same_name_run_have_exact_attempt_receipts(self):
+        # Actual provider IDs and ZIP digests from run 43666361853. The
+        # attempt numbers below exercise the new naming/receipt contract;
+        # they do not attribute the historical archive to an unknown attempt.
+        first = m.coding_archive_receipt_lines(issue=719, run="43666361853", attempt="1",
+            outcome="success", artifact_id="14143135036",
+            digest="2b4fbcf32ad9a63bd4d6e8e00b551486ddf9d1e801e98726fe05ad76ffb3eb41")
+        second = m.coding_archive_receipt_lines(issue=719, run="43666361853", attempt="2",
+            outcome="success", artifact_id="14141574963",
+            digest="4a5bb342ed58476964414ebb05e601bd68baf59d55297a3071da92dc51cf7a0a")
+        self.assertEqual(first, [
+            "Original review archive state: UPLOADED_ID_DIGEST",
+            "Original review archive name: openhands-original-review-719-run-43666361853-attempt-1",
+            "Original review archive ID: 14143135036",
+            "Original review archive ZIP SHA256: 2b4fbcf32ad9a63bd4d6e8e00b551486ddf9d1e801e98726fe05ad76ffb3eb41",
+            "Original review archive URL: https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43666361853/artifacts/14143135036",
+        ])
+        self.assertEqual(second, [
+            "Original review archive state: UPLOADED_ID_DIGEST",
+            "Original review archive name: openhands-original-review-719-run-43666361853-attempt-2",
+            "Original review archive ID: 14141574963",
+            "Original review archive ZIP SHA256: 4a5bb342ed58476964414ebb05e601bd68baf59d55297a3071da92dc51cf7a0a",
+            "Original review archive URL: https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43666361853/artifacts/14141574963",
+        ])
+
+    def test_remote_archive_handoff_rejects_invalid_outputs_or_inconsistent_receipt(self):
+        good = {"issue":812, "run":"43668940080", "attempt":"1", "outcome":"success",
+                "artifact_id":"14143362588", "digest":"a" * 64}
+        for field,value in (("outcome","failure"), ("outcome","skipped"),
+                            ("artifact_id",""), ("artifact_id","0"),
+                            ("artifact_id","not-a-provider-id"), ("digest",""),
+                            ("digest","A" * 64), ("digest","invalid-output")):
+            with self.subTest(field=field, value=value):
+                self.assertEqual(m.coding_archive_receipt_lines(**{**good,field:value}),
+                    ["Original review archive state: BLOCKED_REMOTE_REVIEW_ARCHIVE_UNAVAILABLE"])
+        lines = m.coding_archive_receipt_lines(**good)
+        with patch("plenum_ai.openhands_coding_agent.parse_owner_repair_event",
+                   return_value={"source_file": "src/plenum_ai/agent_library.py"}):
+            with_archive = lambda xs: {**RECEIPT, "body": RECEIPT["body"] + "\n" + "\n".join(xs)}
+            self.assertEqual(m.free_coder_nextday_candidate(ISSUE, [with_archive(lines)], NOW), RUN_ID)
+            for broken in (lines[:-1], lines + lines[:1],
+                           [line.replace("-attempt-1", "-attempt-2") for line in lines],
+                           [line.replace("/artifacts/14143362588", "/artifacts/1") for line in lines],
+                           [line.replace("ZIP SHA256: " + "a" * 64, "ZIP SHA256: invalid") for line in lines]):
+                self.assertIsNone(m.free_coder_nextday_candidate(ISSUE, [with_archive(broken)], NOW))
+
 
 if __name__ == "__main__":
     unittest.main()

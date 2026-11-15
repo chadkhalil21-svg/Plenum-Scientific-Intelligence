@@ -290,10 +290,11 @@ jobs:
           --event "$GITHUB_EVENT_PATH"
           --coding-report reports/openhands-agent-review.json
       - name: Preserve only public proof, no generated code or credentials
+        id: original_review_archive
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: openhands-original-review-${{ github.event.issue.number || github.run_id }}
+          name: openhands-original-review-${{ github.event.issue.number || github.run_id }}-run-${{ github.run_id }}-attempt-${{ github.run_attempt }}
           path: |
             reports/openhands-agent-review.json
             reports/openhands-agent-preflight.json
@@ -310,6 +311,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PYTHONPATH: src
+          PLENUM_REVIEW_ARCHIVE_OUTCOME: ${{ steps.original_review_archive.outcome }}
+          PLENUM_REVIEW_ARCHIVE_ID: ${{ steps.original_review_archive.outputs.artifact-id }}
+          PLENUM_REVIEW_ARCHIVE_DIGEST: ${{ steps.original_review_archive.outputs.artifact-digest }}
         run: |
           python - <<'PY'
           import hashlib,json,os
@@ -403,8 +407,13 @@ jobs:
                    "User-Agent":"PlenumOriginalOpenHandsReview/1"}
           with urlopen(Request(root+"?per_page=100",headers=headers),timeout=15) as response:
               comments=json.loads(response.read(250000))
-          from plenum_ai.minister_missed_public_wake import has_original_coder_terminal_receipt
+          from plenum_ai.minister_missed_public_wake import (
+              has_original_coder_terminal_receipt, coding_archive_receipt_lines)
           if not has_original_coder_terminal_receipt(comments, int(run), int(attempt)):
+              archive_lines=coding_archive_receipt_lines(issue=issue, run=run, attempt=attempt,
+                  outcome=os.getenv('PLENUM_REVIEW_ARCHIVE_OUTCOME',''),
+                  artifact_id=os.getenv('PLENUM_REVIEW_ARCHIVE_ID',''),
+                  digest=os.getenv('PLENUM_REVIEW_ARCHIVE_DIGEST',''))
               headline={"openhands":"OpenHands original public repair","aider_local_ollama":"Aider local original public repair","gemini_free_openhands":"Gemini free original public repair"}[engine]
               msg=(marker+"\n**"+headline+": "+status+"**\n"
                    "Coding engine: "+engine+"\n"
@@ -414,6 +423,7 @@ jobs:
                    "Untrusted candidate only, no source code merged, no accounts written. "
                    "Independent semantic review and original CI remain REQUIRED.\n"
                    "Artifact SHA256: "+digest+"\n"
+                   +"\n".join(archive_lines)+"\n"
                    "Original offline sandbox: "+sandbox_state+"\n"
                    "Original Goldfish read-only advisory: "+str(reviewer_state)+"\n"
                    "Goldfish explicit blockers: "+str(reviewer_blocker_count)+"\n"

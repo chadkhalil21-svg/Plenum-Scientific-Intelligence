@@ -44,6 +44,41 @@ CODER_RECEIPT = re.compile(
     r"\*\*(OpenHands original public repair|Aider local original public repair): ([A-Z0-9_]+)\*\*",
     re.MULTILINE,
 )
+ARCHIVE_PREFIX = "Original review archive "
+ARCHIVE_UNAVAILABLE = "BLOCKED_REMOTE_REVIEW_ARCHIVE_UNAVAILABLE"
+
+
+def coding_archive_receipt_lines(*, issue: int, run: str, attempt: str,
+                                 outcome: str, artifact_id: str, digest: str) -> list[str]:
+    """Bind the original upload-artifact action's immutable archive outputs.
+
+    This is a separate remote handoff receipt, never model/semantic acceptance.
+    Invalid or missing outputs are not logged and cannot authorize a replay.
+    """
+    if (type(issue) is not int or not 0 < issue < 10**9
+            or not isinstance(run, str) or not re.fullmatch(r"[1-9][0-9]{0,12}", run)
+            or attempt not in ("1", "2") or outcome != "success"
+            or not isinstance(artifact_id, str) or not re.fullmatch(r"[1-9][0-9]{0,18}", artifact_id)
+            or not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest)):
+        return [ARCHIVE_PREFIX + "state: " + ARCHIVE_UNAVAILABLE]
+    name = f"openhands-original-review-{issue}-run-{run}-attempt-{attempt}"
+    return [ARCHIVE_PREFIX + "state: UPLOADED_ID_DIGEST",
+            ARCHIVE_PREFIX + "name: " + name,
+            ARCHIVE_PREFIX + "ID: " + artifact_id,
+            ARCHIVE_PREFIX + "ZIP SHA256: " + digest,
+            ARCHIVE_PREFIX + f"URL: https://github.com/{REPO}/actions/runs/{run}/artifacts/{artifact_id}"]
+
+
+def _archive_handoff_allows_retry(body: str, issue: int, run: str, attempt: str) -> bool:
+    lines = [line for line in body.splitlines() if line.startswith(ARCHIVE_PREFIX)]
+    if not lines:
+        return True  # Historical pre-archive-binding receipts retain their original policy.
+    if (len(lines) != 5 or not lines[2].startswith(ARCHIVE_PREFIX + "ID: ")
+            or not lines[3].startswith(ARCHIVE_PREFIX + "ZIP SHA256: ")):
+        return False
+    return lines == coding_archive_receipt_lines(issue=issue, run=run, attempt=attempt,
+        outcome="success", artifact_id=lines[2][len(ARCHIVE_PREFIX + "ID: "):],
+        digest=lines[3][len(ARCHIVE_PREFIX + "ZIP SHA256: "):])
 
 
 def _utc_datetime(value: object):
@@ -206,6 +241,8 @@ def free_coder_nextday_candidate(issue: object, comments: object, now: datetime)
         if CODER_TERMINAL in body and match is None:
             return None  # Unknown/legacy coding receipts never authorize a rerun.
         if match:
+            if not _archive_handoff_allows_retry(body, number, match[1], match[2]):
+                return None  # A missing or ambiguous original remote archive is not retry authorization.
             receipts.append((int(match[1]), int(match[2]), match[3], match[4],
                              _utc_datetime(item.get("created_at"))))
     if len(receipts) != 1:
