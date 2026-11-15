@@ -22,6 +22,10 @@ from .workforce_public_inbox import REPO, OWNER, TITLE, parse_public_issue
 API = "https://api.github.com/repos/" + REPO
 RECOVERY_MAGIC = "<!-- plenum-minister-missed-dispatch:"
 FIRST_ELIGIBLE_UTC = datetime(2026, 11, 13, tzinfo=timezone.utc)
+# Historic founder issues must be separately opted in on the SAME issue.
+# We never sweep the entire old backlog just because it has no bot comment.
+LEGACY_EARLIEST_UTC = datetime(2026, 11, 10, tzinfo=timezone.utc)
+LEGACY_OWNER_APPROVAL = "<!-- plenum-minister-legacy-public-backlog-v1 -->"
 MIN_ISSUE_AGE = timedelta(minutes=65)
 MAX_ISSUES_PER_RUN = 2
 MAX_RESPONSE = 1_000_000
@@ -144,7 +148,8 @@ def recover_one_post_reset_original_coder(*, items: list, token: str,
 
 
 
-def original_issue_eligible(issue: object, *, now: datetime) -> bool:
+def original_issue_eligible(issue: object, *, now: datetime,
+                            legacy_approved: bool = False) -> bool:
     if not isinstance(issue, dict) or "pull_request" in issue:
         return False
     num = issue.get("number")
@@ -160,8 +165,8 @@ def original_issue_eligible(issue: object, *, now: datetime) -> bool:
         created = datetime.fromisoformat(raw_date.replace("Z", "+00:00"))
     except ValueError:
         return False
-    if (created.tzinfo is None or created < FIRST_ELIGIBLE_UTC
-            or created + MIN_ISSUE_AGE > now):
+    if (created.tzinfo is None or created + MIN_ISSUE_AGE > now
+            or created < (LEGACY_EARLIEST_UTC if legacy_approved else FIRST_ELIGIBLE_UTC)):
         return False
     event = {"action": "opened", "repository": {"full_name": REPO},
              "issue": issue}
@@ -173,6 +178,30 @@ def original_issue_eligible(issue: object, *, now: datetime) -> bool:
     except (ValueError, PermissionError, KeyError, TypeError):
         return False
     return True
+
+
+def approved_legacy_public_backlog(issue: object, comments: object,
+                                   *, now: datetime) -> bool:
+    """One founder-authored approval on the original legacy issue, no blanket sweep.
+
+    This is an OLD, already requested, explicitly PUBLIC task that has never
+    left a bot receipt. Owner approval is a comment from the ORIGINAL GitHub
+    owner, not untrusted issue body text, task title, or external webpage.
+    """
+    if not isinstance(issue, dict) or not isinstance(comments, list):
+        return False
+    created = _utc_datetime(issue.get("created_at"))
+    if (created is None or created >= FIRST_ELIGIBLE_UTC
+            or issue.get("comments") not in (None, len(comments))
+            or not original_issue_eligible(issue, now=now, legacy_approved=True)):
+        return False
+    approvals = [
+        comment for comment in comments if isinstance(comment, dict)
+        and (comment.get("user") or {}).get("login") == OWNER
+        and isinstance(comment.get("body"), str)
+        and comment["body"].splitlines()[0:1] == [LEGACY_OWNER_APPROVAL]
+    ]
+    return len(approvals) == 1
 
 
 def missing_original_attempt(comments: object, issue_number: int) -> bool:
@@ -243,29 +272,39 @@ def resume_missed_public_issues(*, token: str, now: datetime) -> dict:
     for issue in items:
         if len(dispatched) >= MAX_ISSUES_PER_RUN:
             break
-        if not original_issue_eligible(issue, now=now):
+        fresh = original_issue_eligible(issue, now=now)
+        legacy = (not fresh and isinstance(issue, dict)
+                  and issue.get("comments", 0) in (0, 1, 2)
+                  and original_issue_eligible(issue, now=now,
+                                              legacy_approved=True))
+        if not fresh and not legacy:
             continue
         number = issue["number"]
         comments = request_json(
             API + f"/issues/{number}/comments?per_page=100", token)
+        if (legacy and not approved_legacy_public_backlog(
+                issue, comments, now=now)):
+            continue
         if not missing_original_attempt(comments, number):
             continue
+        # Reserve FIRST: GitHub may accept a dispatch even if the runner
+        # crashes or the network response is lost. A second Minister sweep
+        # must never duplicate the original action in that ambiguous state.
+        # The original dispatch receiver independently verifies owner,
+        # exact public scope and absence of completed bot receipts.
+        request_json(API + f"/issues/{number}/comments", token, method="POST",
+                     payload={"body": (
+                         RECOVERY_MAGIC + str(number) + " -->\n"
+                         "Original Minister reserved ONE existing public "
+                         "specialist wake for this original owner issue. "
+                         "A failed dispatch remains reserved for manual review, "
+                         "never silently repeated or claimed completed."
+                     )})
         request_json(API + "/dispatches", token, method="POST",
                      payload={
                          "event_type": "plenum_public_issue_wakeup",
                          "client_payload": {"issue_number": number},
                      })
-        # The original source dispatcher will still independently check
-        # founder identity, exact public envelope, and completed bot receipts.
-        # Record one durable wake-attempt marker on the SAME original issue.
-        request_json(API + f"/issues/{number}/comments", token, method="POST",
-                     payload={"body": (
-                         RECOVERY_MAGIC + str(number) + " -->\n"
-                         "Original Minister found no recorded original public "
-                         "execution 65+ minutes after issue creation. Requested "
-                         "ONE existing GitHub public specialist wake. "
-                         "This is dispatch only, NOT completed work or private access."
-                     )})
         dispatched.append(number)
     coder_recovery = recover_one_post_reset_original_coder(
         items=items, token=token, now=now)

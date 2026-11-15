@@ -74,6 +74,78 @@ class OriginalMinisterMissedWakeTests(unittest.TestCase):
         self.assertFalse(report["mission_completion_claimed"])
         self.assertFalse(report["private_accounts_used"])
 
+    def test_legacy_backlog_needs_exact_founder_approval_on_same_issue(self):
+        historical = issue(num=498, age=timedelta(days=4))
+        historical["created_at"] = "2026-11-11T20:38:55Z"
+        historical["body"] = ("PLENUM_CHIEF_PUBLIC_MISSION_V1\n"
+                             "objective: Research free documentary sources and original SVG music illustration for Plenum Terra")
+        historical["comments"] = 1
+        self.assertFalse(m.original_issue_eligible(historical, now=NOW))
+        self.assertTrue(m.original_issue_eligible(
+            historical, now=NOW, legacy_approved=True))
+        founder = {"user": {"login": m.OWNER},
+                   "body": m.LEGACY_OWNER_APPROVAL + "\nScope: existing public mission only"}
+        outsider = {**founder, "user": {"login": "untrusted"}}
+        self.assertTrue(m.approved_legacy_public_backlog(
+            historical, [founder], now=NOW))
+        self.assertFalse(m.approved_legacy_public_backlog(
+            historical, [outsider], now=NOW))
+        self.assertFalse(m.approved_legacy_public_backlog(
+            historical, [founder, founder], now=NOW))
+        closed = {**historical, "state": "closed"}
+        self.assertFalse(m.approved_legacy_public_backlog(
+            closed, [founder], now=NOW))
+
+    def test_owner_approved_old_task_is_self_selected_once_and_reserved_before_wake(self):
+        historical = issue(num=498, age=timedelta(days=4))
+        historical["created_at"] = "2026-11-11T20:38:55Z"
+        historical["body"] = ("PLENUM_CHIEF_PUBLIC_MISSION_V1\n"
+                             "objective: Research free documentary sources and original SVG music illustration for Plenum Terra")
+        historical["comments"] = 1
+        approval = {"user": {"login": m.OWNER},
+                    "body": m.LEGACY_OWNER_APPROVAL + "\nNo private data"}
+        calls = []
+        def api(url, token, *, method="GET", payload=None):
+            calls.append((url, method, payload))
+            if "/issues?" in url:
+                return [historical]
+            if "/comments?per_page" in url:
+                return [approval]
+            if url.endswith("/comments"):
+                return {"id": 999}
+            if url.endswith("/dispatches"):
+                return None
+            raise AssertionError(url)
+        with patch.object(m, "request_json", side_effect=api):
+            result = m.resume_missed_public_issues(token="ephemeral", now=NOW)
+        self.assertEqual(result["original_issues_woken"], [498])
+        posted = [x for x in calls if x[1] == "POST"]
+        self.assertEqual(len(posted), 2)
+        self.assertTrue(posted[0][0].endswith("/issues/498/comments"))
+        self.assertIn("plenum-minister-missed-dispatch:498",
+                      posted[0][2]["body"])
+        self.assertTrue(posted[1][0].endswith("/dispatches"))
+
+    def test_unknown_dispatch_result_never_happens_before_reservation(self):
+        task = issue()
+        calls = []
+        def api(url, token, *, method="GET", payload=None):
+            calls.append((url, method))
+            if "/issues?" in url:
+                return [task]
+            if "/comments?per_page" in url:
+                return []
+            if url.endswith("/comments"):
+                return {"id": 999}
+            if url.endswith("/dispatches"):
+                raise RuntimeError("ambiguous GitHub dispatch")
+            raise AssertionError(url)
+        with patch.object(m, "request_json", side_effect=api):
+            with self.assertRaisesRegex(RuntimeError, "ambiguous"):
+                m.resume_missed_public_issues(token="ephemeral", now=NOW)
+        self.assertEqual([u for u, method in calls if method == "POST"],
+                         [m.API + "/issues/789/comments", m.API + "/dispatches"])
+
     def test_no_work_is_a_real_no_op_not_a_new_project(self):
         with patch.object(m, "request_json", return_value=[issue(
             age=timedelta(minutes=5))]):
