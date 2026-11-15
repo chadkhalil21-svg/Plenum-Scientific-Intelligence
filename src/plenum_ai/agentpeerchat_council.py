@@ -8,16 +8,17 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 AGENTS = {"qwen": "Plenum Prometheus — Qwen", "gemini": "Plenum Prometheus — Gemini",
-          "llama": "Plenum Prometheus — Llama"}
+          "llama": "Plenum Prometheus — Llama", "claude": "Plenum Prometheus — Claude"}
 TITLE = "Plenum AI Council — Public"
-MARKERS = {"qwen": "[Qwen | initial]", "gemini": "[Gemini | initial]", "llama": "[Llama | initial]"}
-CRITIQUE = {"qwen": "[Qwen | critique]", "gemini": "[Gemini | critique]", "llama": "[Llama | critique]"}
+MARKERS = {"qwen": "[Qwen | initial]", "gemini": "[Gemini | initial]", "llama": "[Llama | initial]", "claude": "[Claude | initial]"}
+CRITIQUE = {"qwen": "[Qwen | critique]", "gemini": "[Gemini | critique]", "llama": "[Llama | critique]", "claude": "[Claude | critique]"}
 SYSTEM = (
     "You are a participant in a public AI group discussion. Answer the founder's"
     " question with independent, concise, useful reasoning. On critique, identify"
@@ -190,6 +191,43 @@ def gemini_answer(kind, source, env=os.environ):
                     if isinstance(part, dict))
 
 
+def claude_answer(kind, source, env=os.environ):
+    """Use the official Puter SDK, never the paid Anthropic-compatible endpoint."""
+    token = env.get("PLENUM_PUTER_TOKEN", "")
+    if not token:
+        raise RuntimeError("missing_puter_token")
+    script = r"""
+const { init } = require('@heyputer/puter.js/src/init.cjs');
+const fs = require('node:fs');
+(async () => {
+  const puter = init(process.env.PLENUM_PUTER_TOKEN);
+  const messages = JSON.parse(fs.readFileSync(0, 'utf8'));
+  const result = await puter.ai.chat(messages, {
+    model: 'anthropic/claude-haiku-5-5', max_tokens: 400, normalize: true,
+    refusalFallback: false
+  });
+  const content = result.message?.content;
+  const answer = typeof content === 'string' ? content :
+    Array.isArray(content) ? content.filter(p => p.type === 'text').map(p => p.text).join(' ') : '';
+  process.stdout.write(JSON.stringify({answer}));
+})().catch(() => { process.exitCode = 1; });
+"""
+    messages = [{"role": "system", "content": SYSTEM},
+                {"role": "user", "content": "TASK: " + kind + "\nMESSAGE:\n" + source}]
+    child_env = {"PATH": os.environ.get("PATH", ""), "PLENUM_PUTER_TOKEN": token}
+    try:
+        result = subprocess.run(["node", "-e", script], input=json.dumps(messages),
+                                text=True, capture_output=True, timeout=85, env=child_env)
+        if result.returncode:
+            raise RuntimeError("puter_request_failed")
+        answer = json.loads(result.stdout).get("answer", "")
+    except (OSError, subprocess.TimeoutExpired, ValueError):
+        raise RuntimeError("puter_request_failed") from None
+    if not isinstance(answer, str) or not answer.strip():
+        raise RuntimeError("empty_model_answer")
+    return answer
+
+
 # Existing AgentPeerChat /inbox is ASCENDING by delivery seq, cursor-paged;
 # the first 20 results are NOT the complete mailbox (official upstream protocol).
 # Keep one ephemeral receive job bounded so free model quotas cannot be drained
@@ -271,6 +309,8 @@ def run(model, env=os.environ, backend=None):
         return {"status": "BLOCKED_MISSING_AGENT_KEY", "processed": 0}
     api = PeerAPI(*setting)
     own, actions = pending_actions(api, model)
+    if model == "claude":
+        actions = actions[:2]  # Preserve the finite free monthly allowance.
     completed = 0
     for message, (kind, source) in actions:
         message_id = message["id"]
@@ -279,7 +319,8 @@ def run(model, env=os.environ, backend=None):
             api.ack(message_id)
             completed += 1
             continue
-        answer = (backend or {"qwen": qwen_answer, "gemini": gemini_answer, "llama": llama_answer}[model])(
+        answer = (backend or {"qwen": qwen_answer, "gemini": gemini_answer, "llama": llama_answer,
+                              "claude": claude_answer}[model])(
             kind, source, env)
         if not isinstance(answer, str) or not answer.strip():
             raise RuntimeError("empty_model_answer")
@@ -306,7 +347,7 @@ def main():
             print(json.dumps(run(args.model)))
     except Exception as exc:
         detail = str(exc)
-        if not re.fullmatch(r"(?:gemini_http|peer_http)_[45][0-9]{2}|empty_model_answer", detail):
+        if not re.fullmatch(r"(?:gemini_http|peer_http)_[45][0-9]{2}|empty_model_answer|puter_request_failed|missing_puter_token", detail):
             detail = type(exc).__name__
         print("bridge_error=" + detail, file=sys.stderr)
         sys.exit(1)
