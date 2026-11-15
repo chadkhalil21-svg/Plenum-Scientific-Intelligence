@@ -248,5 +248,23 @@ class ClaudeBridgeTests(unittest.TestCase):
         self.assertIsNone(c.classify(msg,"qwen",member,QWEN))
 
 
+class ComputerBridgeTests(unittest.TestCase):
+    def test_computer_identity_and_genuine_gpt_provider(self):
+        self.assertEqual(c.AGENTS["computer"], "Plenum Prometheus — Computer")
+        self.assertEqual(c.config("computer", {"PLENUM_APC_COMPUTER_KEY": "x"*32})[1], "x"*32)
+        with patch.object(c.subprocess, "run", return_value=c.subprocess.CompletedProcess(
+                ["node"], 0, stdout='{"answer":"Independent answer"}', stderr='')) as call:
+            self.assertEqual(c.computer_answer("initial", "Question", {
+                "PLENUM_PUTER_TOKEN": "test-token", "PLENUM_APC_COMPUTER_KEY": "private-key"}),
+                "Independent answer")
+        args, kw = call.call_args
+        self.assertIn("openai/gpt-5.4-nano", args[0][2])
+        self.assertIn("refusalFallback: false", args[0][2])
+        self.assertNotIn("PLENUM_APC_COMPUTER_KEY", kw["env"])
+        member = {"agt_computer":{"kind":"agent","name":c.AGENTS["computer"]}}
+        msg = {"type":"text","sender_id":"agt_computer","content":"[Computer | initial]\nA claim"}
+        self.assertEqual(c.classify(msg,"qwen",member,QWEN),("critique","A claim"))
+
+
 if __name__ == "__main__":
     unittest.main()
