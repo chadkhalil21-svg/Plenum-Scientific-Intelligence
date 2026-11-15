@@ -44,6 +44,33 @@ class FakeAPI:
 
 
 class CouncilBridgeTests(unittest.TestCase):
+    def test_founder_question_takes_priority_over_peer_backlog(self):
+        api = FakeAPI([
+            {"id":"msg_1", "thread_id":THREAD, "sender_id":GEMINI, "type":"text", "content":"[Gemini | initial]\nPeer idea"},
+            {"id":"msg_2", "thread_id":THREAD, "sender_id":GEMINI, "type":"text", "content":"[Gemini | initial]\nAnother idea"},
+            {"id":"msg_3", "thread_id":THREAD, "sender_id":OWNER, "type":"text", "content":"What is your own impression?"},
+        ])
+        api.own = "agt_computer"
+        api.principals.append({"id":api.own,"kind":"agent","active":1,"name":c.AGENTS["computer"]})
+        with patch.object(c, "PeerAPI", return_value=api):
+            c.run("computer", {"PLENUM_APC_COMPUTER_KEY":"x"*32}, lambda *_: "Independent answer")
+        self.assertEqual(api.sent[0][0]["reply_to"], "msg_3")
+
+    def test_owner_targeted_followup_is_only_for_named_member(self):
+        msg = {"type":"text","sender_id":OWNER,"content":"Llama only: What is your honest impression?"}
+        members = {OWNER:{"kind":"owner"}}
+        self.assertEqual(c.classify(msg,"llama",members,LLAMA),("initial","Llama only: What is your honest impression?"))
+        self.assertIsNone(c.classify(msg,"qwen",members,QWEN))
+
+    def test_initial_prompt_does_not_assign_peer_critique(self):
+        captured = []
+        def provider(req, **kwargs):
+            captured.append(json.loads(req.data))
+            return BytesIO(b'{"model":"llama3.2:1b","message":{"content":"Independent answer"}}')
+        with patch.object(c, "urlopen", side_effect=provider):
+            c.llama_answer("initial", "What is your honest impression?", {})
+        self.assertNotIn("On critique", captured[0]["messages"][0]["content"])
+        self.assertIn("What is your honest impression?", captured[0]["messages"][1]["content"])
     def test_wrong_self_identity_is_not_published_or_acknowledged(self):
         msg = {"id":"msg_123", "thread_id":THREAD, "sender_id":OWNER,
                "type":"text", "content":"Qwen and Gemini, introduce yourselves."}
@@ -209,8 +236,7 @@ class CouncilBridgeTests(unittest.TestCase):
         class ManyAPI(FakeAPI):
             def request(self, path, payload=None, idempotency=None, method=None):
                 if path.startswith("/inbox?"):
-                    return {"items": self.incoming[:20], "next_cursor": "20",
-                            "has_more": True}
+                    return {"items": self.incoming[:20], "has_more": False}
                 return super().request(path, payload, idempotency, method)
         items = [{"id": "msg_" + str(i), "thread_id": THREAD,
                   "sender_id": OWNER, "type": "text",
@@ -324,6 +350,25 @@ class ComputerBridgeTests(unittest.TestCase):
 
 
 class PerplexityBridgeTests(unittest.TestCase):
+    def test_perplexity_reports_allowance_failure_without_disclosing_provider_error(self):
+        native_run = c.subprocess.run
+        def simulate_provider(args, **kwargs):
+            script = args[2].replace("const { init } = require('@heyputer/puter.js/src/init.cjs');",
+                "const init = () => ({auth:{getMonthlyUsage:async () => {throw {code:'network_error',message:'PRIVATE'}}},ai:{chat:async () => {throw Error('must not call')}}});")
+            return native_run([args[0], args[1], script], **kwargs)
+        with patch.object(c.subprocess, 'run', side_effect=simulate_provider):
+            with self.assertRaisesRegex(RuntimeError, '^puter_usage_network_error$'):
+                c.perplexity_answer('initial', 'Question', {'PLENUM_PUTER_TOKEN':'test'})
+
+    def test_perplexity_reports_chat_failure_after_valid_allowance(self):
+        native_run = c.subprocess.run
+        def simulate_provider(args, **kwargs):
+            script = args[2].replace("const { init } = require('@heyputer/puter.js/src/init.cjs');",
+                "const init = () => ({auth:{getMonthlyUsage:async () => ({allowanceInfo:{remaining:50000000}})},ai:{chat:async () => {throw {code:'insufficient_funds',message:'PRIVATE'}}}});")
+            return native_run([args[0], args[1], script], **kwargs)
+        with patch.object(c.subprocess, 'run', side_effect=simulate_provider):
+            with self.assertRaisesRegex(RuntimeError, '^puter_chat_insufficient_funds$'):
+                c.perplexity_answer('initial', 'Question', {'PLENUM_PUTER_TOKEN':'test'})
     def test_perplexity_uses_separate_identity_and_sonar(self):
         self.assertEqual(c.config("perplexity", {"PLENUM_APC_PERPLEXITY_KEY": "x"*32})[1], "x"*32)
         with patch.object(c.subprocess, "run", return_value=c.subprocess.CompletedProcess(
