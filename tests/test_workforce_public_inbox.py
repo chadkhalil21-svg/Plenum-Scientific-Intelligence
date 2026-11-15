@@ -96,10 +96,34 @@ class IntakeTests(unittest.TestCase):
                 }), encoding="utf-8")
                 return FakeRun()
             actual = w.run_issue(owner_event, output_dir=Path(folder), runner=original_funding_result)
-            self.assertEqual(actual["status"], "DRAFT_READY_FOR_FOUNDER")
+            # A generic NSF funding title does not establish suitability for
+            # the specific photonic concrete infrastructure sensing request.
+            self.assertEqual(actual["status"], "BLOCKED_FUNDING_TOPIC_UNVERIFIED")
+            self.assertFalse(actual["verified"])
             self.assertEqual(actual["source_linked_records"], 1)
-            self.assertFalse(actual["individual_papers_independently_validated"])
-            self.assertFalse(actual["scientific_discovery_verified"])
+            self.assertEqual(actual["funding_subject_title_matches"], 0)
+            self.assertFalse(actual["funding_topic_fit_independently_verified"])
+
+        with tempfile.TemporaryDirectory() as folder:
+            def subject_funding_result(cmd, **kwargs):
+                Path(cmd[-1]).write_text(json.dumps({
+                    "schema": "plenum-public-horizon-snapshot-v1", "topic": objective,
+                    "category": "funding", "independent_breakthrough_verified": False,
+                    "AGI_achieved": False,
+                    "records": [{
+                        "url": "https://www.nsf.gov/funding/opportunities/example",
+                        "category": "funding", "source": "nsf_open_funding",
+                        "title": "Concrete Infrastructure Photonic Sensing Research Program",
+                    }]
+                }), encoding="utf-8")
+                return FakeRun()
+            relevant = w.run_issue(owner_event, output_dir=Path(folder),
+                                   runner=subject_funding_result)
+            self.assertEqual(relevant["status"], "DRAFT_READY_FOR_FOUNDER")
+            self.assertEqual(relevant["funding_subject_title_matches"], 1)
+            self.assertFalse(relevant["funding_topic_fit_independently_verified"])
+            self.assertFalse(relevant["individual_papers_independently_validated"])
+            self.assertFalse(relevant["scientific_discovery_verified"])
 
     def test_fails_closed_if_worker_output_missing_or_wrong(self):
         with tempfile.TemporaryDirectory() as folder:
