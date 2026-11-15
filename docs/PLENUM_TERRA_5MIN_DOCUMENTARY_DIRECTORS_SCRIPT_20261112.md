@@ -42,11 +42,11 @@ Premium restrained scientific naturalism. Use genuine cattle/pasture footage onl
 ### Scene 04 — 01:30–02:00 | A documented precedent (58 words)
 **Picture:** Illustration of seaweed, not unlicensed real microscopy; original reaction-path diagram with general labels.
 
-**Narration:** “One line of investigation has focused on compounds associated with the red seaweed Asparagopsis. Peer-reviewed cattle feeding studies have reported substantial reductions in enteric methane under specific experimental conditions. These are genuine published findings. They describe tested feed supplements, however, not a pasture grass engineered by Plenum. The distinction matters, and it shall remain visible throughout this film.”
+**Narration:** “One line of investigation has focused on compounds associated with the red seaweed Asparagopsis. Peer-reviewed cattle feeding studies report methane reductions under particular diets, doses, and trial conditions. These published results concern administered seaweed-based feed supplements, not Plenum-engineered pasture forage. The distinction matters, and it shall remain visible throughout this film.”
 
-**On-screen identification:** Published Asparagopsis feed-supplement research — not Plenum Terra results
+**On-screen identification:** Published Asparagopsis feed-supplement trials (Roque et al., 2021; Cowley et al., 2024) — NOT Plenum Terra results
 
-**Source/rights gate:** Roque 2021; Cowley 2024
+**Source/rights gate:** Roque 2021; Cowley 2024. Before final voice recording, check each study's animal population, dose, diet, comparator, duration, measured endpoint and safety findings against its full text; no cross-study percentage or engineered-forage inference.
 
 ### Scene 05 — 02:00–02:30 | What remains uncertain (61 words)
 **Picture:** Visual transition from paper pages to unlabeled original scientific chart; no invented plot data.
@@ -119,6 +119,10 @@ Premium restrained scientific naturalism. Use genuine cattle/pasture footage onl
 - [ ] **Engineering:** adapt existing FFmpeg/MoviePy pipeline to real ~5min H.264/AAC MP4, use already approved offline narration and low-cost CPU assets where feasible, align embedded/caption track. Do not start billed GPU/hosted video API; do not misuse GitHub Actions as persistent commercial compute.
 - [ ] **Independent Verifier:** decode **actual MP4**, inspect first/middle/end video frames, listen to all narration, check voice and music levels, inspect subtitle sync, confirm rights and accurate labeling, check 5:00 target / resolution / codec, and record ACCEPTED or REJECTED with precise defects.
 - [ ] **Minister:** update original #494 with verified artifacts, remaining blockers and exact owner. No release or distribution without separate founder instruction.
+
+## Scientific release correction — 15 November 2026
+
+Scene 04 now explicitly limits the literature to *administered seaweed-based feed supplements under study-specific conditions*. It must never be edited into evidence that Plenum Terra engineered forage works. The on-screen attribution must remain visible long enough to read. This is a **script-level editorial correction only**: full-text source-by-source scientific adjudication, voice recording, footage synchronization, actual five-minute MP4, and independent release review remain **NOT TESTED**. Do not treat the citations as a completed full-text evidence audit.
 
 ## Completion boundary
 **Implemented now:** professional script and source-labeled edit blueprint. **Not implemented:** rights-cleared additional footage download, final narration, final composite, complete five-minute MP4, artist approval, independent release acceptance. Avoid status inflation and spend $0 more.
