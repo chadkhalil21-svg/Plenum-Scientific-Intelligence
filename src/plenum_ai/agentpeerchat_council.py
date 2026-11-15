@@ -15,10 +15,11 @@ from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 AGENTS = {"qwen": "Plenum Prometheus — Qwen", "gemini": "Plenum Prometheus — Gemini",
-          "llama": "Plenum Prometheus — Llama", "claude": "Plenum Prometheus — Claude"}
+          "llama": "Plenum Prometheus — Llama", "claude": "Plenum Prometheus — Claude",
+          "computer": "Plenum Prometheus — Computer"}
 TITLE = "Plenum AI Council — Public"
-MARKERS = {"qwen": "[Qwen | initial]", "gemini": "[Gemini | initial]", "llama": "[Llama | initial]", "claude": "[Claude | initial]"}
-CRITIQUE = {"qwen": "[Qwen | critique]", "gemini": "[Gemini | critique]", "llama": "[Llama | critique]", "claude": "[Claude | critique]"}
+MARKERS = {"qwen": "[Qwen | initial]", "gemini": "[Gemini | initial]", "llama": "[Llama | initial]", "claude": "[Claude | initial]", "computer": "[Computer | initial]"}
+CRITIQUE = {"qwen": "[Qwen | critique]", "gemini": "[Gemini | critique]", "llama": "[Llama | critique]", "claude": "[Claude | critique]", "computer": "[Computer | critique]"}
 SYSTEM = (
     "You are a participant in a public AI group discussion. Answer the founder's"
     " question with independent, concise, useful reasoning. On critique, identify"
@@ -191,8 +192,10 @@ def gemini_answer(kind, source, env=os.environ):
                     if isinstance(part, dict))
 
 
-def claude_answer(kind, source, env=os.environ):
-    """Use the official Puter SDK, never the paid Anthropic-compatible endpoint."""
+def puter_answer(model, kind, source, env=os.environ):
+    """Reuse the owner-authorized Puter SDK with a fixed model and no fallback."""
+    if model not in ("anthropic/claude-haiku-5-5", "openai/gpt-5.4-nano"):
+        raise ValueError("unsupported_puter_model")
     token = env.get("PLENUM_PUTER_TOKEN", "")
     if not token:
         raise RuntimeError("missing_puter_token")
@@ -203,7 +206,7 @@ const fs = require('node:fs');
   const puter = init(process.env.PLENUM_PUTER_TOKEN);
   const messages = JSON.parse(fs.readFileSync(0, 'utf8'));
   const result = await puter.ai.chat(messages, {
-    model: 'anthropic/claude-haiku-5-5', max_tokens: 400, normalize: true,
+    model: MODEL_ID, max_tokens: 400, normalize: true,
     refusalFallback: false
   });
   const content = result.message?.content;
@@ -211,7 +214,7 @@ const fs = require('node:fs');
     Array.isArray(content) ? content.filter(p => p.type === 'text').map(p => p.text).join(' ') : '';
   process.stdout.write(JSON.stringify({answer}));
 })().catch(() => { process.exitCode = 1; });
-"""
+""".replace("MODEL_ID", json.dumps(model))
     messages = [{"role": "system", "content": SYSTEM},
                 {"role": "user", "content": "TASK: " + kind + "\nMESSAGE:\n" + source}]
     child_env = {"PATH": os.environ.get("PATH", ""), "PLENUM_PUTER_TOKEN": token}
@@ -226,6 +229,14 @@ const fs = require('node:fs');
     if not isinstance(answer, str) or not answer.strip():
         raise RuntimeError("empty_model_answer")
     return answer
+
+
+def claude_answer(kind, source, env=os.environ):
+    return puter_answer("anthropic/claude-haiku-5-5", kind, source, env)
+
+
+def computer_answer(kind, source, env=os.environ):
+    return puter_answer("openai/gpt-5.4-nano", kind, source, env)
 
 
 # Existing AgentPeerChat /inbox is ASCENDING by delivery seq, cursor-paged;
@@ -309,7 +320,7 @@ def run(model, env=os.environ, backend=None):
         return {"status": "BLOCKED_MISSING_AGENT_KEY", "processed": 0}
     api = PeerAPI(*setting)
     own, actions = pending_actions(api, model)
-    if model == "claude":
+    if model in ("claude", "computer"):
         actions = actions[:2]  # Preserve the finite free monthly allowance.
     completed = 0
     for message, (kind, source) in actions:
@@ -320,7 +331,7 @@ def run(model, env=os.environ, backend=None):
             completed += 1
             continue
         answer = (backend or {"qwen": qwen_answer, "gemini": gemini_answer, "llama": llama_answer,
-                              "claude": claude_answer}[model])(
+                              "claude": claude_answer, "computer": computer_answer}[model])(
             kind, source, env)
         if not isinstance(answer, str) or not answer.strip():
             raise RuntimeError("empty_model_answer")
