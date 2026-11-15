@@ -77,14 +77,14 @@ class OriginalMinisterMissedWakeTests(unittest.TestCase):
     def test_legacy_backlog_needs_exact_founder_approval_on_same_issue(self):
         historical = issue(num=498, age=timedelta(days=4))
         historical["created_at"] = "2026-11-11T20:38:55Z"
-        historical["body"] = ("PLENUM_CHIEF_PUBLIC_MISSION_V1\\n"
+        historical["body"] = ("PLENUM_CHIEF_PUBLIC_MISSION_V1\n"
                              "objective: Research free documentary sources and original SVG music illustration for Plenum Terra")
         historical["comments"] = 1
         self.assertFalse(m.original_issue_eligible(historical, now=NOW))
         self.assertTrue(m.original_issue_eligible(
             historical, now=NOW, legacy_approved=True))
         founder = {"user": {"login": m.OWNER},
-                   "body": m.LEGACY_OWNER_APPROVAL + "\\nScope: existing public mission only"}
+                   "body": m.LEGACY_OWNER_APPROVAL + "\nScope: existing public mission only"}
         outsider = {**founder, "user": {"login": "untrusted"}}
         self.assertTrue(m.approved_legacy_public_backlog(
             historical, [founder], now=NOW))
@@ -99,11 +99,11 @@ class OriginalMinisterMissedWakeTests(unittest.TestCase):
     def test_owner_approved_old_task_is_self_selected_once_and_reserved_before_wake(self):
         historical = issue(num=498, age=timedelta(days=4))
         historical["created_at"] = "2026-11-11T20:38:55Z"
-        historical["body"] = ("PLENUM_CHIEF_PUBLIC_MISSION_V1\\n"
+        historical["body"] = ("PLENUM_CHIEF_PUBLIC_MISSION_V1\n"
                              "objective: Research free documentary sources and original SVG music illustration for Plenum Terra")
         historical["comments"] = 1
         approval = {"user": {"login": m.OWNER},
-                    "body": m.LEGACY_OWNER_APPROVAL + "\\nNo private data"}
+                    "body": m.LEGACY_OWNER_APPROVAL + "\nNo private data"}
         calls = []
         def api(url, token, *, method="GET", payload=None):
             calls.append((url, method, payload))
