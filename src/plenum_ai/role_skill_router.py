@@ -50,7 +50,7 @@ def _whole_term(text: str, term: str) -> bool:
     Preserve compound terms such as "free local" and "last 30" and handle
     adjacent punctuation; splitting text loses these authored skill signals.
     """
-    return re.search(r"(?<!\\w)" + re.escape(term) + r"(?!\\w)", text) is not None
+    return re.search(r"(?<!\w)" + re.escape(term) + r"(?!\w)", text) is not None
 
 
 def route(role: str, objective: str, *, roster_path: Path = ROSTER, max_skills: int = 3) -> dict:
