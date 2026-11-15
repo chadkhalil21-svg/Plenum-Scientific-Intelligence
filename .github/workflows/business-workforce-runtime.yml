@@ -16,8 +16,10 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: workforce-runtime-${{ github.ref }}
-  cancel-in-progress: true
+  # Distinct owner-authorized repair issues must not cancel one another.
+  # The original ref-wide concurrency group cancelled valid #717 when #719 opened.
+  group: workforce-runtime-${{ github.event_name == 'issues' && github.event.issue.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'issues' }}
 
 jobs:
   native-n8n-import:
