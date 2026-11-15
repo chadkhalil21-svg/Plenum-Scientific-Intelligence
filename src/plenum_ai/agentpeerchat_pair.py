@@ -15,7 +15,9 @@ from .agentpeerchat_council import AGENTS, config
 
 
 def verified_me(base, key):
-    request = Request(base + "/me", headers={"Authorization": "Bearer " + key})
+    request = Request(base + "/me", headers={"Authorization": "Bearer " + key,
+                                            "Accept": "application/json",
+                                            "User-Agent": "PlenumPrometheus-AgentPeerChat/1.0"})
     try:
         with urlopen(request, timeout=20) as response:
             return json.loads(response.read(8000)).get("principal")
@@ -27,7 +29,17 @@ def verified_me(base, key):
             kind = (exc.headers.get("Content-Type", "").lower()
                     if exc.headers else "")
             detail = "app_json" if "json" in kind else "edge_html"
-            raise RuntimeError("peer_me_http_403_" + detail) from None
+            try:
+                probe = Request(base + "/status", headers={
+                    "Accept": "application/json",
+                    "User-Agent": "PlenumPrometheus-AgentPeerChat/1.0"})
+                with urlopen(probe, timeout=12) as response:
+                    probe_result = "public_" + str(response.status)
+            except HTTPError as check:
+                probe_result = "public_" + str(check.code)
+            except Exception:
+                probe_result = "public_network_error"
+            raise RuntimeError("peer_me_http_403_" + detail + "_" + probe_result) from None
         raise RuntimeError("peer_me_http_" + str(exc.code)) from None
 
 
@@ -75,7 +87,7 @@ def main():
         print("pairing_status=" + pair(args.model))
     except Exception as exc:
         detail = str(exc)
-        if not (re.fullmatch(r"(?:pairing_http_|peer_me_http_)[45][0-9]{2}(?:_(?:app_json|edge_html))?", detail)
+        if not (re.fullmatch(r"(?:pairing_http_|peer_me_http_)[45][0-9]{2}(?:_(?:app_json|edge_html)(?:_public_(?:[45]?[0-9]{2}|network_error))?)?", detail)
                 or detail in ("pairing_not_authenticated", "pairing_not_accepted",
                               "agent_access_key_format", "agent_identity_mismatch",
                               "invitation_identity_mismatch")):
