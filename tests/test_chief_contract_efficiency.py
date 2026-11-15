@@ -45,8 +45,36 @@ class ObviousContractEfficiencyTests(TestCase):
             self.assertEqual(result['new_worker_invocations'],0)
             self.assertEqual(len(calls),2)
 
-    def test_composite_still_requires_existing_model_and_retains_failure(self):
-        task=event('Review NOAA 8724580 and DOI 10.1038/nature14539 metadata quality')
-        with tempfile.TemporaryDirectory() as d, patch.object(m,'model_plan',side_effect=RuntimeError('model unavailable')):
-            with self.assertRaises(RuntimeError):m.execute_contract_mission(task,output_dir=Path(d))
-            self.assertFalse((Path(d)/'chief-contract-plan-102.json').exists())
+    def test_actual_failed_noaa_doi_mission_recovers_without_model_or_repeated_tools(self):
+        # Original #679's real local Qwen planner invented TWO cooling tools
+        # when only NOAA and a DOI were authorized (run 43642394223).
+        # Source/readback pairs are fully fixed by the original contract.
+        objective='Inspect NOAA 8723214 and DOI 10.1029/2022JC018496 for Miami coastal station and bibliography metadata'
+        task=event(objective)
+        calls=[]
+        def noaa(station):
+            calls.append(('noaa',station))
+            return json.dumps({'stations':[{'id':station,'name':'Miami gauge',
+                                           'lat':25.8,'lng':-80.2}]}).encode()
+        def crossref(doi,**kwargs):
+            calls.append(('crossref',doi))
+            return {'doi':doi,'title':'Public bibliography metadata',
+                    'year':2022,'publisher':'Public Crossref member'}
+        with (tempfile.TemporaryDirectory() as d,
+              patch.object(m,'model_plan',side_effect=AssertionError('No model planner for fixed contracts')),
+              patch.object(m,'fetch_noaa_metadata',side_effect=noaa),
+              patch.object(m,'read_crossref',side_effect=crossref)):
+            root=Path(d)
+            first=m.execute_contract_mission(task,output_dir=root)
+            self.assertTrue(first['bounded_contracts_verified'])
+            self.assertFalse(first['model_called'])
+            self.assertEqual(first['new_worker_invocations'],4)
+            self.assertEqual(first['dispatcher'],'original_chief_deterministic_public_scope_contracts')
+            self.assertEqual(first['inference_provenance']['provider'],'deterministic_contract_router')
+            self.assertEqual(first['contract_results']['bibliography_readback']['records'],1)
+            self.assertFalse(first['founder_objective_verified'])
+            self.assertEqual(len(calls),3)
+            second=m.execute_contract_mission(task,output_dir=root)
+            self.assertEqual(second['new_worker_invocations'],0)
+            self.assertEqual(second['reused_prior_verified_workers'],4)
+            self.assertEqual(len(calls),3)

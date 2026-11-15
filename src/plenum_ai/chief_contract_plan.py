@@ -245,13 +245,26 @@ def validate_inference_receipt(receipt):
         raise PlanningFailure('PLAN_PROVENANCE','INVALID_INFERENCE_RECEIPT')
 
 
+def deterministic_scope_plan(scope):
+    """Use original source/check tools for every explicit, bounded public scope.
+
+    The original local planner invented cooling tools for NOAA+DOI issue #679
+    (run 43642394223), resulting in zero work. Tool dependencies are already
+    fixed and validated: a model cannot improve this exact scope decision.
+    This ONLY handles founder-whitelisted identifiers and source/readback pairs.
+    """
+    dependencies={'station_validation':'noaa_metadata',
+                  'bibliography_readback':'crossref_metadata',
+                  'cooling_readback':'cooling_solution'}
+    steps=[({'tool':tool,'input_from':dependencies[tool]}
+            if tool in dependencies else {'tool':tool})
+           for tool in required_tools(scope)]
+    return validate_plan({'steps':steps},scope)
+
+
 def deterministic_pair_plan(scope):
-    """One obvious authorized source/check pair needs no model decision."""
-    tools=required_tools(scope)
-    if len(tools)!=2:
-        raise ValueError('Deterministic routing applies only to one contract pair')
-    return validate_plan({'steps':[{'tool':tools[0]},
-                                  {'tool':tools[1],'input_from':tools[0]}]},scope)
+    """Legacy public scope helper preserved for existing call sites."""
+    return deterministic_scope_plan(scope)
 
 
 def execute_contract_mission(event,*,output_dir,planner=None):
@@ -269,17 +282,21 @@ def execute_contract_mission(event,*,output_dir,planner=None):
         called=False
     else:
         if progress: raise ValueError('Existing checkpoint cannot be replanned')
-        obvious_pair=len(team)==2 and planner is None
-        if obvious_pair:
-            plan=deterministic_pair_plan(scope)
+        # For ALL exact founder-authorized NOAA / DOI / cooling combinations,
+        # the original pair dependencies are already fully specified. No
+        # Qwen/Ollama invocation or free runner model startup is necessary.
+        # An explicitly injected offline planner remains for regression
+        # compatibility, but cannot bypass the original validate_plan gate.
+        if planner is None:
+            plan=deterministic_scope_plan(scope)
             inference={'provider':'deterministic_contract_router','model':None,'endpoint':'not_used','structured_output':False}
         else:
-            plan=validate_plan(planner(scope) if planner else model_plan(task['objective'],scope),scope)
-            inference={'provider':'local_ollama' if planner is None else 'offline_test_planner','model':MODEL if planner is None else None,'endpoint':'loopback_only','structured_output':True}
+            plan=validate_plan(planner(scope),scope)
+            inference={'provider':'offline_test_planner','model':None,'endpoint':'loopback_only','structured_output':True}
         receipt={'issue':task['issue_number'],'objective_sha256':objective_digest(task['objective']),'scope':scope,'plan':plan,'inference':inference}
         temporary=path.with_suffix('.json.tmp')
         if temporary.is_symlink():raise ValueError('Unsafe temporary plan')
-        temporary.write_text(json.dumps(receipt,sort_keys=True),'utf-8');temporary.replace(path);called=planner is None and not obvious_pair
+        temporary.write_text(json.dumps(receipt,sort_keys=True),'utf-8');temporary.replace(path);called=False
     plan_hash=sha256(json.dumps(receipt,sort_keys=True).encode()).hexdigest()
     results={};invoked=0
     for step in plan['steps']:
@@ -306,7 +323,10 @@ def execute_contract_mission(event,*,output_dir,planner=None):
     valid=verify_results(scope,results)
     return {'schema':'plenum-chief-founder-team-v2','mode':'multi','issue_number':task['issue_number'],
             'status':'VERIFIED_BOUNDED_CONTRACT_MISSION' if valid else 'BLOCKED_CONTRACT_INTEGRITY',
-            'dispatcher':('original_chief_deterministic_public_contract_pair' if receipt['inference']['provider']=='deterministic_contract_router' else 'original_chief_local_model_public_contract_composition'),
+            'dispatcher':(('original_chief_deterministic_public_contract_pair' if len(team)==2
+                           else 'original_chief_deterministic_public_scope_contracts')
+                          if receipt['inference']['provider']=='deterministic_contract_router'
+                          else 'original_chief_local_model_public_contract_composition'),
             'model_called':called,'chief_model_delegated':called,'inference_provenance':receipt['inference'],
             'expected_team':list(team),'bounded_contracts_verified':valid,
             'founder_objective_verified':False,'objective_review_required':True,'independent_verified':valid,

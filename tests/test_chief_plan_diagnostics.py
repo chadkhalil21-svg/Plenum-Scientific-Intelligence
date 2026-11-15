@@ -73,14 +73,27 @@ class PlannerFailureDiagnostics(TestCase):
         self.assertEqual(d['response']['tool_names'],['UNKNOWN','station_validation'])
         self.assertNotIn('DO_NOT_EXPORT',json.dumps(d))
 
-    def test_original_failure_report_keeps_only_safe_diagnostic(self):
+    def test_original_planner_failure_is_eliminated_without_leaking_model_content(self):
+        # Old #668/#679 could fail on a model's invalid or surplus tools.
+        # The existing exact public identifier contracts no longer need this
+        # model at all, even if an offline model would return invalid JSON.
         from plenum_ai.chief_team_mission import execute
         event={'action':'opened','repository':{'full_name':'chadkhalil21-svg/Plenum-Scientific-Intelligence'},'issue':{'number':668,'title':'[Plenum Chief] public mission','user':{'login':'chadkhalil21-svg'},'body':m.MAGIC+'\nobjective: Review NOAA 8724580 and DOI 10.1038/nature14539 metadata quality'}}
-        with tempfile.TemporaryDirectory() as d,patch.dict(sys.modules,{'langchain_ollama':self.stub('DO_NOT_EXPORT bad')}),patch.dict('os.environ',ENV):
+        def noaa(station):
+            return json.dumps({'stations':[{'id':station,'name':'Gauge','lat':25,'lng':-80}]}).encode()
+        def crossref(doi,**kwargs):
+            return {'doi':doi,'title':'Bibliography metadata','year':2015,'publisher':'Publisher'}
+        with (tempfile.TemporaryDirectory() as d,
+              patch.dict(sys.modules,{'langchain_ollama':self.stub('DO_NOT_EXPORT bad')}),
+              patch.dict('os.environ',ENV),
+              patch.object(m,'fetch_noaa_metadata',side_effect=noaa),
+              patch.object(m,'read_crossref',side_effect=crossref)):
             result=execute(event,output_dir=Path(d))
-        self.assertEqual(result['planning_failure']['stage'],'MODEL_JSON')
-        self.assertFalse(result['independent_verified'])
+        self.assertEqual(result['status'],'VERIFIED_BOUNDED_CONTRACT_MISSION')
+        self.assertFalse(result['model_called'])
+        self.assertEqual(result['executed_workers'],4)
         self.assertNotIn('DO_NOT_EXPORT',json.dumps(result))
+        self.assertFalse(result['founder_objective_verified'])
 
     def test_provider_exception_and_bad_provenance_have_fixed_codes(self):
         module=self.stub('{}')
