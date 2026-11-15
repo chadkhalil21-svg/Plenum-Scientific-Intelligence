@@ -9,6 +9,7 @@ class FakeAPI:
     def __init__(self, incoming, own=QWEN, replied=False):
         self.incoming, self.own, self.replied = incoming, own, replied
         self.sent, self.acked = [], []
+        self.thread_members = None
         self.principals = [
             {"id": OWNER, "kind": "owner", "active": 1, "name": "Founder"},
             {"id": QWEN, "kind": "agent", "active": 1, "name": c.AGENTS["qwen"]},
@@ -26,7 +27,8 @@ class FakeAPI:
         if path == "/principals":
             return {"items": self.principals}
         if path.startswith("/threads/"):
-            return {"thread": {"title": c.TITLE, "members": self.principals},
+            return {"thread": {"title": c.TITLE, "members": (
+                self.principals if self.thread_members is None else self.thread_members)},
                     "items": ([{"sender_id": self.own, "reply_to": self.incoming[0]["id"]}]
                               if self.replied else []), "has_more": False}
         if path == "/messages":
@@ -69,6 +71,40 @@ class CouncilBridgeTests(unittest.TestCase):
         self.assertIn(OWNER, c.members_for(api, THREAD))
         api.principals = api.principals[1:]
         self.assertIsNone(c.members_for(api, THREAD))
+
+    def test_only_real_active_group_members_can_issue_model_tasks(self):
+        outsider = {"id": "agt_other", "kind": "agent", "active": 1,
+                    "name": c.AGENTS["gemini"]}
+        api = FakeAPI([])
+        api.principals.append(outsider)
+        api.thread_members = api.principals[:3]
+        members = c.members_for(api, THREAD)
+        self.assertIn(OWNER, members)
+        self.assertIn(QWEN, members)
+        self.assertNotIn("agt_other", members)
+        self.assertIsNone(c.classify(
+            {"type": "text", "sender_id": "agt_other",
+             "content": c.MARKERS["gemini"] + " unsolicited idea"},
+            "qwen", members, QWEN,
+        ))
+
+    def test_nonmember_agent_must_not_model_or_ack_owner_messages(self):
+        msg = {"id": "msg_123", "thread_id": THREAD, "sender_id": OWNER,
+               "type": "text", "content": "Public idea"}
+        api = FakeAPI([msg])
+        api.thread_members = [api.principals[0], api.principals[2]]
+        with patch.object(c, "PeerAPI", return_value=api):
+            result = c.run("qwen", {"PLENUM_APC_QWEN_KEY": "x" * 32},
+                           lambda *args: self.fail("nonmember model invoked"))
+        self.assertEqual(result["processed"], 0)
+        self.assertEqual(api.sent, [])
+        self.assertEqual(api.acked, [])
+
+    def test_malformed_thread_member_ids_are_ignored(self):
+        api = FakeAPI([])
+        api.thread_members = [api.principals[0], {"id": ["invalid"]}, None]
+        members = c.members_for(api, THREAD)
+        self.assertEqual(set(members), {OWNER})
 
     def test_send_then_ack(self):
         m = {"id": "msg_123", "thread_id": THREAD,
