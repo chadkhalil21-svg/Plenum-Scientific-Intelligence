@@ -1,5 +1,8 @@
 import unittest
+from pathlib import Path
+import tempfile
 from plenum_ai.mission import run_mission
+from plenum_ai.memory import make_record, save
 from plenum_ai.science import diffuse_heat
 from plenum_ai.hf_model import APPROVED_MODEL, _load_model
 
@@ -20,6 +23,19 @@ class MissionTests(unittest.TestCase):
         self.assertFalse(report["verified_new_scientific_discovery"])
         self.assertTrue(report["numeric_benchmark_verified"])
         self.assertFalse(report["model_inference_executed"])
+
+    def test_offline_missions_do_not_share_recalled_sources(self):
+        with tempfile.TemporaryDirectory() as directory:
+            retrieved = {"question": "orbital research", "source_status": "retrieved_metadata",
+                         "literature_and_hypotheses": {"papers": [{"id": "public-orbit-source",
+                         "title": "Orbital research", "year": 2024, "doi": "", "url": ""}]}}
+            save(make_record(retrieved, {}), Path(directory))
+            first = run_mission("orbital research", offline=True, memory_dir=directory, simulation="none")
+            second = run_mission("unrelated materials", offline=True, simulation="none")
+        self.assertEqual([p["id"] for p in first["literature_and_hypotheses"]["papers"]],
+                         ["OFFLINE-DEMO", "public-orbit-source"])
+        self.assertEqual([p["id"] for p in second["literature_and_hypotheses"]["papers"]],
+                         ["OFFLINE-DEMO"])
 
     def test_agent_roles_call_model_twice(self):
         called = []

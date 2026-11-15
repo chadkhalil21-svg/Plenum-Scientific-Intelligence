@@ -24,7 +24,7 @@ def run_mission(question, simulation="heat", model=None, generator=None,
                "status": "complete"}]
     issues = []
     if offline:
-        papers = OFFLINE_SOURCES
+        papers = [source.copy() for source in OFFLINE_SOURCES]
         source_status = "offline_fixture_no_research_retrieval"
     else:
         try:
