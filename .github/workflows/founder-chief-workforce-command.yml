@@ -87,6 +87,7 @@ jobs:
         run: |
           python - <<'PY'
           import glob,json,os,subprocess,sys
+          from plenum_ai.public_issue_wake import original_chief_worker_extras
           paths=glob.glob('reports/workforce-chief/chief-result-*.json')
           assert len(paths)==1, 'Missing preflight founder scope record'
           data=json.load(open(paths[0],encoding='utf-8'))
@@ -100,11 +101,9 @@ jobs:
               out.write('needs_local_model='+str(needs_model).lower()+'\n')
           if needs_model:
               subprocess.check_call([sys.executable,'-m','pip','install','-e','.[chief_of_staff]'])
-          if ('public_science' in data.get('expected_team',[])
-                  or data.get('expected_independent_kind') == 'public_science'):
-              subprocess.check_call([sys.executable,'-m','pip','install','-e','.[numerical,orchestration]'])
-          elif data.get('requires_numerical') is True:
-              subprocess.check_call([sys.executable,'-m','pip','install','-e','.[numerical]'])
+          extras=original_chief_worker_extras(data)
+          if extras:
+              subprocess.check_call([sys.executable,'-m','pip','install','-e',extras])
           else:
               print('Existing standard-library workers only; no extra model/dependencies installed')
           PY

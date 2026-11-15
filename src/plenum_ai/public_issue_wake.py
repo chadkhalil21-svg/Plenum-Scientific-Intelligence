@@ -11,10 +11,12 @@ from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
+import subprocess
+import sys
 from urllib.request import Request, urlopen
 
 from .workforce_public_inbox import REPO, OWNER, parse_public_issue, run_issue
-from .chief_team_mission import MISSION_TITLE, parse_mission, execute as execute_original_team
+from .chief_team_mission import MISSION_TITLE, parse_mission, preflight, execute as execute_original_team
 from .mission_checkpoint import load_checkpoint, verified_previous_result
 
 MAX_ISSUE = 10 ** 9
@@ -208,36 +210,86 @@ def founder_approved_comment_event(payload: object, number: int) -> bool:
             and comment["body"].splitlines()[:1] == [LEGACY_OWNER_APPROVAL])
 
 
+def original_chief_worker_extras(scope: dict) -> str | None:
+    """The original native Chief and wake share the same dependency selection."""
+    if ("public_science" in scope.get("expected_team", [])
+            or scope.get("expected_independent_kind") == "public_science"):
+        return ".[numerical,orchestration]"
+    if scope.get("requires_numerical") is True:
+        return ".[numerical]"
+    return None
+
+
+def _read_original_wake_issue(path: str, number: int, token: str):
+    original = gh_json(path, token)
+    if (not isinstance(original, dict) or original.get("number") != number
+            or original.get("state") != "open" or "pull_request" in original
+            or (original.get("user") or {}).get("login") != OWNER):
+        raise PermissionError("Original wake issue closed, changed, or mismatched")
+    comments = gh_json(path + "/comments?per_page=100", token)
+    if not isinstance(comments, list) or original.get("comments") not in (None, len(comments)):
+        raise PermissionError("Original wake comment history changed during reservation")
+    return original, comments
+
+
+def _direct_owner_marker(original, comments, number):
+    from .minister_missed_public_wake import approved_legacy_public_backlog, RECOVERY_MAGIC
+    if not approved_legacy_public_backlog(original, comments, now=datetime.now(timezone.utc)):
+        raise PermissionError("Original founder legacy public approval missing")
+    marker = RECOVERY_MAGIC + str(number) + " -->"
+    if any(isinstance(comment, dict)
+           and (comment.get("user") or {}).get("login") == "github-actions[bot]"
+           and isinstance(comment.get("body"), str)
+           and marker in comment["body"] for comment in comments):
+        return None
+    return marker
+
+
 def process(number: int, token: str, output_dir: Path, *,
             require_founder_approval: bool = False):
     number = checked_issue_number(number)
     path = BASE + str(number)
-    original = gh_json(path, token)
-    comments = gh_json(path + "/comments?per_page=100", token)
+    original, comments = _read_original_wake_issue(path, number, token)
     if require_founder_approval:
         # Use the SAME original scheduled Minister reservation marker.
         # GitHub issue_comment can be edited repeatedly, so an ambiguous
         # prior invocation without a completed bot receipt must NOT repeat
         # the original worker or any external source operation.
-        from .minister_missed_public_wake import (
-            approved_legacy_public_backlog, RECOVERY_MAGIC,
-        )
-        if not approved_legacy_public_backlog(
-                original, comments, now=datetime.now(timezone.utc)):
-            raise PermissionError("Original founder legacy public approval missing")
-        marker = RECOVERY_MAGIC + str(number) + " -->"
-        if any(
-            isinstance(comment, dict)
-            and (comment.get("user") or {}).get("login") == "github-actions[bot]"
-            and isinstance(comment.get("body"), str)
-            and marker in comment["body"]
-            for comment in comments
-        ):
+        marker = _direct_owner_marker(original, comments, number)
+        if marker is None:
             return {"status": "ALREADY_RECORDED", "issue_number": number,
                     "worker_reexecuted": False}
     event = build_original_event(original, comments)
     if event is None:
         return {"status":"ALREADY_RECORDED", "issue_number":number, "worker_reexecuted":False}
+    mission = original.get("title") == MISSION_TITLE
+    expected_team_status = None
+    if mission:
+        scope = preflight(event)
+        if scope.get("planned_data_mission") and not scope.get("planned_contract_mission"):
+            # Legacy DATA needs the native isolated model setup. The wake
+            # has no authorized model host; don't consume execution reservation.
+            raise PermissionError("BLOCKED_LEGACY_DATA_REQUIRES_ORIGINAL_NATIVE_MODEL_ROUTE")
+        extras = original_chief_worker_extras(scope)
+        expected_team_status = ("VERIFIED_BOUNDED_CONTRACT_MISSION"
+                                if scope.get("planned_contract_mission")
+                                else "VERIFIED_BOUNDED_TEAM")
+    else:
+        extras = (".[numerical,orchestration]"
+                  if parse_public_issue(event)["kind"] == "public_science" else None)
+    if extras:
+        # Only the original validated public scope selects these fixed extras.
+        # Match the native Chief: dependencies are prepared before reservation.
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "-e", extras])
+        # Installation may take time. Rebind the exact owner-approved issue
+        # and current receipts before consuming the execution reservation.
+        current, current_comments = _read_original_wake_issue(path, number, token)
+        if current.get("title") != original.get("title") or current.get("body") != original.get("body"):
+            raise PermissionError("Original wake issue changed during dependency preparation")
+        if build_original_event(current, current_comments) is None:
+            return {"status":"ALREADY_RECORDED", "issue_number":number, "worker_reexecuted":False}
+        if require_founder_approval and _direct_owner_marker(current, current_comments, number) is None:
+            return {"status":"ALREADY_RECORDED", "issue_number":number, "worker_reexecuted":False}
     # Both routes share the workflow's per-issue concurrency group. Record
     # an execution (not dispatch) reservation before invoking either worker.
     # The existing run-marker prefix stops scheduled recovery and later wakes
@@ -253,7 +305,6 @@ def process(number: int, token: str, output_dir: Path, *,
     )})
     if not reservation.get("html_url"):
         raise RuntimeError("Original wake reservation acknowledgment missing")
-    mission = original.get("title") == MISSION_TITLE
     if mission:
         # Reuse the SAME Chief/team engine and original hashed public artifacts.
         # A wake is only for an original issue whose prior execution is missing.
@@ -292,6 +343,7 @@ def process(number: int, token: str, output_dir: Path, *,
     return {"status":status, "issue_number":number, "worker_reexecuted":True,
             "comment_url":reply["html_url"],"public_only":True,
             "original_multi_specialist":mission,
+            "expected_team_status":expected_team_status,
             "independent_verified":outcome.get("independent_verified", False) if mission else outcome.get("verified", False)}
 
 
@@ -352,7 +404,9 @@ def main(argv=None):
     print(json.dumps(out))
     if out.get("worker_reexecuted") and (
         (out.get("original_multi_specialist")
-         and (out.get("status") != "VERIFIED_BOUNDED_TEAM"
+         and (out.get("status") != out.get("expected_team_status")
+              or out.get("expected_team_status") not in (
+                  "VERIFIED_BOUNDED_TEAM", "VERIFIED_BOUNDED_CONTRACT_MISSION")
               or out.get("independent_verified") is not True))
         or (not out.get("original_multi_specialist")
             and out.get("status") != "DRAFT_READY_FOR_FOUNDER")

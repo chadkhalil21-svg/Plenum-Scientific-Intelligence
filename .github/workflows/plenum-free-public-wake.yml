@@ -9,6 +9,7 @@ on:
   pull_request:
     paths:
       - 'integrations/cloudflare/**'
+      - 'wrangler.toml'
       - 'src/plenum_ai/owner_private_memory_client.py'
       - 'tests/test_owner_private_memory_client.py'
       - 'src/plenum_ai/public_issue_wake.py'
@@ -34,7 +35,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python -m pip install -e .
+      - run: python -m pip install -e '.[numerical]'
       - run: python -m unittest discover -s tests -p 'test_public_issue_wake.py' -v
       - run: python -m unittest discover -s tests -p 'test_owner_private_memory_client.py' -v
       - run: python -m unittest discover -s tests -p 'test_role_skill_router.py' -v
@@ -44,9 +45,26 @@ jobs:
       - run: node --test integrations/cloudflare/plenum-github-wake-worker.test.mjs integrations/cloudflare/plenum-private-continuity.test.mjs integrations/cloudflare/plenum-private-memory-check.test.mjs integrations/cloudflare/plenum-free-coding-ai.test.mjs
       # The real Cloudflare preview build failed after source-only CI passed.
       # Check the real upstream Wrangler bundler/config, no token or deployment.
-      - name: Verify existing Worker bundles with official Wrangler without deployment
-        working-directory: integrations/cloudflare
-        run: npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/plenum-worker-bundle
+      - name: Verify root and historical Wrangler configurations match exactly
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import tomllib
+
+          def effective(path):
+              config = tomllib.loads(path.read_text())
+              config["main"] = str((path.parent / config["main"]).resolve(strict=True))
+              return config
+
+          canonical = effective(Path("wrangler.toml"))
+          compatibility = effective(Path("integrations/cloudflare/wrangler.toml"))
+          assert canonical == compatibility, "Wrangler compatibility config drift"
+          print("Identical effective configuration and entrypoint:", canonical["main"])
+          PY
+      - name: Verify both existing Worker entrypoints bundle with official Wrangler without deployment
+        run: |
+          npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/plenum-worker-bundle
+          npx --yes wrangler@4 deploy --config integrations/cloudflare/wrangler.toml --dry-run --outdir=/tmp/plenum-worker-compat-bundle
   resume-original-task:
     if: >-
       github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
