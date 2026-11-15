@@ -205,8 +205,11 @@ const fs = require('node:fs');
 (async () => {
   const puter = init(process.env.PLENUM_PUTER_TOKEN);
   const messages = JSON.parse(fs.readFileSync(0, 'utf8'));
+  const model = MODEL_ID;
   const result = await puter.ai.chat(messages, {
-    model: MODEL_ID, max_tokens: 400, normalize: true,
+    model, max_tokens: 400, normalize: true,
+    // Haiku 5.5 defaults to thinking, which can exhaust a concise reply's budget.
+    ...(model === 'anthropic/claude-haiku-5-5' ? { thinking: { type: 'disabled' } } : {}),
     refusalFallback: false
   });
   const content = result.message?.content;
