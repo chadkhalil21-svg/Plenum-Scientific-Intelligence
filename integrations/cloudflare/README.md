@@ -48,7 +48,9 @@ This directory contains the **existing** public-issue wake adapter, not a persis
 
 ## Git-linked deployment (owner's Free account)
 
-Use the **existing** Cloudflare Workers & Pages project named `plenum-public-wake`, linked to `chadkhalil21-svg/Plenum-Scientific-Intelligence`. Configure **production branch `main`** and **root directory `integrations/cloudflare`** (relative to repository root). Build command: none. Deploy command: `npx wrangler deploy`. The Worker project must load this directory's `wrangler.toml` and `plenum-github-wake-worker.mjs`; **not** the separate Plenum Command Center/dashboard in `dashboard/`.
+Use the **existing** Cloudflare Workers & Pages project named `plenum-public-wake`, linked to `chadkhalil21-svg/Plenum-Scientific-Intelligence`. Configure **production branch `main`** and **root directory `/`** (repository root). Build command: none. Deploy command: `npx wrangler deploy`. The root `wrangler.toml` points to this directory's `plenum-github-wake-worker.mjs`; **not** the separate Plenum Command Center/dashboard in `dashboard/`.
+
+Branch builds use `npx wrangler preview` and the root `[previews.vars]` block. Their public routes are deliberately health-only; do not add private secrets, Durable Objects, AI or production bindings to Preview Base. See https://developers.cloudflare.com/workers/previews/configuration/.
 
 A legitimate source commit on `main` should trigger a new Cloudflare build through the existing Git integration. A source commit alone is **NOT** proof that Cloudflare actually built or deployed the right Worker. Read the actual Cloudflare build log, deployed revision and public endpoint.
 
@@ -63,3 +65,4 @@ A legitimate source commit on `main` should trigger a new Cloudflare build throu
 If any external access, billing/plan, correct code or credential requirement is missing, mark **BLOCKED_EXTERNAL** with exact observed evidence, rather than retrying irrelevant tests or moving to a paid account.
 
 References: https://developers.cloudflare.com/workers/ci-cd/ ; https://developers.cloudflare.com/workers/wrangler/configuration/ ; https://developers.cloudflare.com/workers/configuration/routing/workers-dev/
+

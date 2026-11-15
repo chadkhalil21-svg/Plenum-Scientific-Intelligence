@@ -102,6 +102,13 @@ export class PublicWakeReplayGuard {
 export default {
   async fetch(request, env) {
     const pathname = new URL(request.url).pathname;
+    // Public branch previews must never reach owner memory, AI or dispatch,
+    // even if the provider's Preview Base accidentally supplies bindings.
+    if (env?.PLENUM_PREVIEW_ONLY === "true") {
+      if (pathname === "/health" && request.method === "GET")
+        return response(200, {state:"ISOLATED_PREVIEW_HEALTH_ONLY", no_model:true});
+      return response(404, {error:"preview_route_disabled"});
+    }
     if (pathname === "/ai/v1/chat/completions") return handleFreeCodingAI(request, env);
     if (pathname === "/memory-check" && request.method === "GET")
       return ownerMemoryCheckPage();
@@ -159,3 +166,4 @@ export default {
     }
   }
 };
+

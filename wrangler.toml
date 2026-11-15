@@ -1,5 +1,5 @@
 name = "plenum-public-wake"
-main = "plenum-github-wake-worker.mjs"
+main = "integrations/cloudflare/plenum-github-wake-worker.mjs"
 compatibility_date = "2026-11-01"
 workers_dev = true
 # Uses a Free-plan SQLite Durable Object for atomic replay rejection only.
@@ -38,3 +38,11 @@ binding = "AI"
 # Historical provider UI recorded Workers Free; no paid inference fallback.
 [vars]
 PLENUM_FREE_AI_ENABLED = "true"
+
+# Cloudflare Workers Builds uses `wrangler preview` from the repository root.
+# Preview bindings and vars do not inherit production settings. Deliberately
+# configure NO preview DO, AI, service or secret bindings; keep routes isolated.
+[previews.vars]
+PLENUM_PREVIEW_ONLY = "true"
+PLENUM_FREE_AI_ENABLED = "false"
+
