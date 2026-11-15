@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/agentpeerchat-multimodel-council.yml'
+      - 'src/plenum_ai/agentpeerchat_pair.py'
   schedule:
     - cron: '*/30 * * * *'
   pull_request:
