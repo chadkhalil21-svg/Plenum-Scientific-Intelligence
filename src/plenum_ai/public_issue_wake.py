@@ -7,6 +7,7 @@ GitHub Actions' per-job and acceptable-use limits. Dispatch only when needed.
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
@@ -113,11 +114,36 @@ def one_original_local_repair_warranted(event: dict, output_dir: Path,
     return completed >= 1 and incomplete == 1
 
 
-def process(number: int, token: str, output_dir: Path):
+def founder_approved_comment_event(payload: object, number: int) -> bool:
+    """Verify original GitHub-signed issue_comment envelope, never its prose."""
+    from .minister_missed_public_wake import LEGACY_OWNER_APPROVAL
+    if not isinstance(payload, dict) or payload.get("action") not in ("created", "edited"):
+        return False
+    issue, comment = payload.get("issue"), payload.get("comment")
+    if not isinstance(issue, dict) or not isinstance(comment, dict):
+        return False
+    return (issue.get("number") == checked_issue_number(number)
+            and issue.get("state") == "open"
+            and (issue.get("user") or {}).get("login") == OWNER
+            and (comment.get("user") or {}).get("login") == OWNER
+            and (payload.get("sender") or {}).get("login") == OWNER
+            and isinstance(comment.get("body"), str)
+            and comment["body"].splitlines()[:1] == [LEGACY_OWNER_APPROVAL])
+
+
+def process(number: int, token: str, output_dir: Path, *,
+            require_founder_approval: bool = False):
     number = checked_issue_number(number)
     path = BASE + str(number)
     original = gh_json(path, token)
     comments = gh_json(path + "/comments?per_page=100", token)
+    if require_founder_approval:
+        # Same original Minister's approval/checkpoint criteria, not a new
+        # arbitrary text-command router. Previously attempted tasks stay inert.
+        from .minister_missed_public_wake import approved_legacy_public_backlog
+        if not approved_legacy_public_backlog(
+                original, comments, now=datetime.now(timezone.utc)):
+            raise PermissionError("Original founder legacy public approval missing")
     event = build_original_event(original, comments)
     if event is None:
         return {"status":"ALREADY_RECORDED", "issue_number":number, "worker_reexecuted":False}
@@ -176,14 +202,28 @@ def main(argv=None):
         print(json.dumps({"status":"DRY_RUN","issue_number":number,
                           "github_issues_modified":False}))
         return
+    event_name = os.environ.get("GITHUB_EVENT_NAME")
     if (os.environ.get("GITHUB_ACTIONS") != "true"
-        or os.environ.get("GITHUB_EVENT_NAME") != "repository_dispatch"
+        or event_name not in ("repository_dispatch", "issue_comment")
         or os.environ.get("GITHUB_REPOSITORY") != REPO):
-        raise PermissionError("Actual run requires the original GitHub repo dispatch")
+        raise PermissionError("Actual run requires original GitHub event")
+    founder_comment = event_name == "issue_comment"
+    if founder_comment:
+        path = Path(os.environ.get("GITHUB_EVENT_PATH", ""))
+        if (not path.is_file() or path.is_symlink()
+                or path.stat().st_size > 150_000):
+            raise PermissionError("Original GitHub event payload unavailable")
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (ValueError, UnicodeError, OSError):
+            raise PermissionError("Invalid signed Github issue event") from None
+        if not founder_approved_comment_event(payload, number):
+            raise PermissionError("No founder-authorized original issue approval")
     token = os.environ.get("GH_TOKEN")
     if not token:
         raise PermissionError("Scoped GitHub token missing")
-    out = process(number, token, Path("reports/public-wake"))
+    out = process(number, token, Path("reports/public-wake"),
+                  require_founder_approval=founder_comment)
     print(json.dumps(out))
     if out.get("worker_reexecuted") and (
         (out.get("original_multi_specialist")
