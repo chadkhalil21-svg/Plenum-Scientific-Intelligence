@@ -1,0 +1,145 @@
+name: Plenum Engineering | Original SU2 #390 QuickStart evidence
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - '.github/workflows/su2-original-390-quickstart.yml'
+permissions:
+  contents: read
+concurrency:
+  group: su2-original-390-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+jobs:
+  one-original-naca0012-solver:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'evidence/su2-original-390-quickstart'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      OMP_NUM_THREADS: '2'
+      SU2_TAG: v8.6.0
+      SU2_COMMIT: 7048fd35f56d4bf52e586429d6746a36a10255f8
+      SU2_SOURCE: https://github.com/su2code/SU2
+      HF_HUB_DISABLE_TELEMETRY: '1'
+    steps:
+      - name: Fetch only official immutable matching binary and untouched QuickStart inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/su2-390" reports/su2-390
+          curl -fsSL --proto =https --max-time 120 --retry 0 "$SU2_SOURCE/releases/download/$SU2_TAG/SU2_v8.6.0_linux64-omp.zip" -o "$RUNNER_TEMP/su2-390.zip"
+          echo 'b306dcb7e76caec54e376542916aae14a32abd6c2f6fa8b871ec10ffe80b41ac  SU2_v8.6.0_linux64-omp.zip' > reports/su2-390/release-asset.sha256
+          echo "b306dcb7e76caec54e376542916aae14a32abd6c2f6fa8b871ec10ffe80b41ac  $RUNNER_TEMP/su2-390.zip" | sha256sum --check --strict
+          unzip -q "$RUNNER_TEMP/su2-390.zip" bin/SU2_CFD -d "$RUNNER_TEMP/su2-390"
+          test -x "$RUNNER_TEMP/su2-390/bin/SU2_CFD"
+          printf '%s\n%s\n' '4622a9c53537f781935044c204a5a68e00d90f0a4ececa090a691663f280eefc  inv_NACA0012.cfg' '9094b51c2628d3bb4c865d774b2308dbb59a213ad19c007cfcd7d57e7aaeebeb  mesh_NACA0012_inv.su2' > reports/su2-390/inputs.sha256
+          cd reports/su2-390
+          for input in inv_NACA0012.cfg mesh_NACA0012_inv.su2; do
+            curl -fsSL --proto =https --max-time 45 --retry 0 "https://raw.githubusercontent.com/su2code/SU2/$SU2_COMMIT/QuickStart/$input" -o "$input"
+          done
+          sha256sum --check --strict inputs.sha256
+          sha256sum "$RUNNER_TEMP/su2-390/bin/SU2_CFD" | sed 's|  .*|  SU2_CFD|' > executable.sha256
+          printf 'Upstream: %s\nTag: %s\nCommit: %s\nOfficial release: %s/releases/tag/%s\nCase source: %s/tree/%s/QuickStart\n' "$SU2_SOURCE" "$SU2_TAG" "$SU2_COMMIT" "$SU2_SOURCE" "$SU2_TAG" "$SU2_SOURCE" "$SU2_COMMIT" > provenance.txt
+          grep -E '^(SOLVER|MATH_PROBLEM|MACH_NUMBER|AOA|FREESTREAM_PRESSURE|FREESTREAM_TEMPERATURE|REF_AREA|MARKER_EULER|MARKER_FAR|ITER|CONV_FIELD|CONV_RESIDUAL_MINVAL|CONV_NUM_METHOD_FLOW)=' inv_NACA0012.cfg >> provenance.txt
+          grep -E '^(NDIME|NELEM|NPOIN|NMARK|MARKER_TAG)=' mesh_NACA0012_inv.su2 >> provenance.txt
+      - name: Actually run original upstream SU2_CFD once, unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd reports/su2-390
+          export SU2_RUN="$RUNNER_TEMP/su2-390/bin"
+          # One bounded public development job; no model API or external account.
+          set +e
+          /usr/bin/time -p -o runtime.txt timeout 480 "$SU2_RUN/SU2_CFD" inv_NACA0012.cfg > solver.log 2>&1
+          status=$?
+          set -e
+          echo "$status" > solver_exit.txt
+          tail -n 35 solver.log
+          test "$status" -eq 0
+          sha256sum --check --strict inputs.sha256
+      - name: Read real history and Cp, distinguish residual criterion from iteration cap
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd reports/su2-390
+          python - <<'PY'
+          import csv, json, math, os
+          from pathlib import Path
+          def read_table(name):
+              with open(name, newline='', encoding='utf-8') as f:
+                  data=list(csv.reader(f, skipinitialspace=True))
+              columns=[x.strip().strip('"') for x in data[0]]
+              rows=[dict(zip(columns, row)) for row in data[1:] if row]
+              if not rows or any(len(row)!=len(columns) for row in data[1:] if row):
+                  raise ValueError(f"Missing or ragged measured table: {name}")
+              return columns, rows
+          def finite(rows, name):
+              values=[float(row[name].strip().strip('"')) for row in rows]
+              if not all(math.isfinite(v) for v in values):
+                  raise ValueError(f"Nonfinite reported {name}")
+              return values
+          header, history=read_table("history.csv")
+          iterations=finite(history, "Inner_Iter")
+          density=finite(history, "rms[Rho]")
+          lift=finite(history, "CL")
+          drag=finite(history, "CD")
+          if len(history)>250 or any(b<=a for a,b in zip(iterations, iterations[1:])):
+              raise ValueError("Unexpected iteration count or order")
+          surface_header, surface=read_table("surface_flow.csv")
+          cp=finite(surface,"Pressure_Coefficient")
+          if len(cp)!=200:
+              raise ValueError("Expected 200 original airfoil boundary points")
+          log=Path("solver.log").read_text(errors="replace")
+          if "8.6.0" not in log:
+              raise ValueError("Actual SU2 version absent from solver log")
+          cap=len(history)==250 or iterations[-1]>=249
+          residual_met=density[-1]<=-8
+          reason=("PINNED_RESIDUAL_MET_AT_ITERATION_CAP" if residual_met and cap
+                  else "PINNED_RESIDUAL_THRESHOLD_MET" if residual_met
+                  else "ITERATION_CAP_REACHED_RESIDUAL_NOT_MET" if cap
+                  else "STOP_OTHER_THAN_PINNED_RESIDUAL_OR_CAP_REVIEW_REQUIRED")
+          tail_count=min(20,len(history))
+          result={
+              "schema":"plenum-original-su2-390-quickstart-v1",
+              "issue":390,"upstream":"su2code/SU2","tag":os.environ["SU2_TAG"],
+              "commit":os.environ["SU2_COMMIT"],"solver_ran":True,
+              "solver_exit_code":int(Path("solver_exit.txt").read_text()),
+              "version_reported_in_original_stdout":"8.6.0",
+              "scope":"2-D steady compressible inviscid Euler NACA0012, one unchanged official transonic case",
+              "mach":0.8,"aoa_deg":1.25,"mesh_triangles":10216,"mesh_points":5233,
+              "history_columns":header,"history_rows":len(history),"first_iteration":iterations[0],
+              "last_iteration":iterations[-1],"iter_config_cap":250,
+              "density_log10_rms_initial":density[0],"density_log10_rms_final":density[-1],
+              "density_log10_rms_config_threshold":-8,"residual_threshold_met":residual_met,
+              "iteration_cap_reached":cap,"stop_assessment":reason,
+              "CL_final":lift[-1],"CD_final":drag[-1],
+              "force_tail_sample_count":tail_count,
+              "CL_tail_span":max(lift[-tail_count:])-min(lift[-tail_count:]),
+              "CD_tail_span":max(drag[-tail_count:])-min(drag[-tail_count:]),
+              "force_stabilization_claimed":False,
+              "surface_columns":surface_header,"Cp_surface_points":len(cp),"Cp_min":min(cp),"Cp_max":max(cp),
+              "runtime":Path("runtime.txt").read_text().strip(),
+              "mesh_independence_demonstrated":False,"viscous_drag_validated":False,
+              "three_dimensional_wing_validated":False,"experimental_validation":False,
+              "agent_model_calls":0,"paid_api_calls":0,"private_account_actions":False}
+          Path("summary.json").write_text(json.dumps(result,indent=2)+"\n", encoding="utf-8")
+          print(json.dumps(result,indent=2))
+          PY
+          sha256sum inv_NACA0012.cfg mesh_NACA0012_inv.su2 provenance.txt runtime.txt solver_exit.txt solver.log history.csv surface_flow.csv summary.json release-asset.sha256 executable.sha256 inputs.sha256 > output.sha256
+      - name: Preserve raw public original solver evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: plenum-original-390-su2-quickstart-v8.6.0
+          path: |
+            reports/su2-390/inv_NACA0012.cfg
+            reports/su2-390/mesh_NACA0012_inv.su2
+            reports/su2-390/*.sha256
+            reports/su2-390/provenance.txt
+            reports/su2-390/runtime.txt
+            reports/su2-390/solver_exit.txt
+            reports/su2-390/solver.log
+            reports/su2-390/history.csv
+            reports/su2-390/surface_flow.csv
+            reports/su2-390/summary.json
+          if-no-files-found: warn
+          retention-days: 14
