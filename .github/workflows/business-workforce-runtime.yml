@@ -219,6 +219,11 @@ jobs:
           digest=""
           if report.is_file():
               d=json.loads(report.read_text())
+              if (d.get("status")=="BLOCKED_ORIGINAL_DAILY_FREE_AI_CAP"
+                  and d.get("failure_category")=="LOCAL_DURABLE_OBJECT_DAILY_BUDGET"
+                  and not d.get("model_run_completed")
+                  and not d.get("candidate_persisted")):
+                  status="BLOCKED_LOCAL_FREE_AI_DAILY_CAP_NO_SAME_DAY_RETRY"
               if (d.get("candidate_persisted") and d.get("status")=="PROPOSAL_AWAITING_REVIEW"
                   and d.get("candidate_artifact", "").endswith(".patch")
                   and not d.get("production_written") and not d.get("external_accounts_changed")):
