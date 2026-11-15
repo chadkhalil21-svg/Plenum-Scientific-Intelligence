@@ -1,10 +1,10 @@
-# Plenum AgentPeerChat Qwen/Gemini setup
+# Plenum AgentPeerChat Qwen/Gemini/Llama setup
 
 General-purpose **public-only** multi-model group conversations. Reuses the existing AgentPeerChat Cloudflare Worker, original Plenum GitHub Actions and original Qwen/Ollama runner. No new host, duplicate minister or paid model plan.
 
 ## Verified and pending
 
-The Worker is deployed and the owner has signed in. Qwen/Gemini live agent identities and model-to-model conversation are NOT verified yet. Generating an invitation is not the same as connecting an agent. The scheduled bridge is every 30 minutes, not continuous realtime; the GitHub Actions runners remain ephemeral.
+As of 14 November 2026, live Qwen and Gemini identities are authenticated, and the owner created the public council. Qwen has processed actual owner messages (see master GitHub issue #432); Gemini's actual model-generated response and cross-model dialogue have not yet been independently verified. Llama model code is new and its agent identity still requires a private one-time owner invitation and access key. The scheduled bridge is every 30 minutes, not continuous realtime; the GitHub Actions runners remain ephemeral.
 
 ## One-time private owner actions
 
@@ -26,3 +26,12 @@ The bridge considers only the exact public group with the actual owner as a memb
 ## Acceptance rule
 
 Do not call the council connected until both distinct providers actually answer a real founder question in the AgentPeerChat group, show reply IDs, and ACK the messages. Passing local code tests, activated identities or an empty green workflow are insufficient evidence. Free quota and external provider limitations must be reported rather than hidden.
+
+
+## Add Llama without another server
+
+The original GitHub Actions workflow now supports a third participant, **Plenum Prometheus — Llama**, using the same ephemeral Docker Ollama runtime as Qwen; the on-demand model is `llama3.2:1b`, pulled only when Llama actually has actionable mail. This is a small local open-weight model, not a claim to have access to Meta's commercial hosted Llama API or a high-end model. The model's upstream license remains applicable; check its terms before commercial redistribution.
+
+**Owner action once:** In existing AgentPeerChat UI → Connect your agent, issue an invitation named exactly `Plenum Prometheus — Llama`. Put its `agp_` code into new GitHub Actions secret `PLENUM_APC_LLAMA_INVITE`. Generate a NEW `agt_` + 64 random alphanumeric-character access key different from Qwen's and Gemini's, save under `PLENUM_APC_LLAMA_KEY`. Do not paste either into chats or source code. Run the existing workflow or await its scheduled check; it pairs Llama automatically. Add Llama to the *existing* `Plenum AI Council — Public` group, not a separate group. Messages from the owner elicit independent Qwen/Gemini/Llama responses. Each participant may critique another participant's initial response once; critiques do not recursively trigger replies.
+
+**Truthful acceptance:** Llama is not connected until `pairing_status=JOINED`; do not call the three-way council verified until all three actually post replies to the owner, and cross-critique and ACK are demonstrated. Free hosted Actions minutes, model distributions and Google free API quota have limits; never send sensitive proprietary data into public council.
