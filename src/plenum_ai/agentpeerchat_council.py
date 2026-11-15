@@ -167,7 +167,7 @@ def gemini_answer(kind, source, env=os.environ):
     key = env.get("PLENUM_GEMINI_API_KEY", "")
     if not key:
         raise RuntimeError("missing_gemini_free_key")
-    model = env.get("PLENUM_GEMINI_MODEL", "gemini-2.5-flash")
+    model = env.get("PLENUM_GEMINI_MODEL", "gemini-3.8-flash")
     if not re.fullmatch(r"gemini-[a-z0-9.-]{2,45}", model):
         raise ValueError("invalid_gemini_model")
     url = ("https://generativelanguage.googleapis.com/v1beta/models/" +
