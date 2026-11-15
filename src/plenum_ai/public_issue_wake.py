@@ -203,8 +203,12 @@ ACCEPTED_ORIGINAL_CHIEF = frozenset({
 
 
 def accepted_original_wake(outcome: dict) -> bool:
+    if not isinstance(outcome, dict):
+        return False
+    if outcome.get("worker_reexecuted") is False:
+        return outcome.get("status") == "ALREADY_RECORDED"
     if outcome.get("worker_reexecuted") is not True:
-        return True  # Existing issue was already recorded; no worker executed.
+        return False
     if outcome.get("independent_verified") is not True:
         return False
     if outcome.get("original_multi_specialist") is True:
