@@ -249,6 +249,16 @@ class ClaudeBridgeTests(unittest.TestCase):
 
 
 class ComputerBridgeTests(unittest.TestCase):
+    def test_puter_worker_exits_after_answer_despite_open_sdk_handles(self):
+        native_run = c.subprocess.run
+        def run_with_open_handle(args, **kwargs):
+            script = args[2].replace("const { init } = require('@heyputer/puter.js/src/init.cjs');",
+                "const init = () => { setInterval(() => {}, 100); return {ai:{chat:async () => ({message:{content:'Answer'}})}}; };")
+            kwargs['timeout'] = 2
+            return native_run([args[0], args[1], script], **kwargs)
+        with patch.object(c.subprocess, 'run', side_effect=run_with_open_handle):
+            self.assertEqual(c.computer_answer('initial', 'Question', {'PLENUM_PUTER_TOKEN':'test'}), 'Answer')
+
     def test_computer_identity_and_genuine_gpt_provider(self):
         self.assertEqual(c.AGENTS["computer"], "Plenum Prometheus — Computer")
         self.assertEqual(c.config("computer", {"PLENUM_APC_COMPUTER_KEY": "x"*32})[1], "x"*32)
