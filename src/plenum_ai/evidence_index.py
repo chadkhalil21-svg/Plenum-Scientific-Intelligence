@@ -28,12 +28,16 @@ def build_index(root):
     entries, incomplete = [], []
     for path in files:
         relative = path.relative_to(root)
-        if path.is_symlink() or any(part in (".", "..") for part in relative.parts):
-            raise ValueError("Unsupported evidence path")
-        if path.stat().st_size > MAX_JSON_BYTES:
-            incomplete.append({"path":relative.as_posix(),"reason":"oversized"})
+        try:
+            if path.is_symlink() or any(part in (".", "..") for part in relative.parts):
+                raise ValueError("Unsupported evidence path")
+            if path.stat().st_size > MAX_JSON_BYTES:
+                incomplete.append({"path":relative.as_posix(),"reason":"oversized"})
+                continue
+            raw = path.read_bytes()
+        except OSError:
+            incomplete.append({"path":relative.as_posix(),"reason":"unreadable_file"})
             continue
-        raw = path.read_bytes()
         try:
             document = json.loads(raw)
         except (ValueError,UnicodeDecodeError):
