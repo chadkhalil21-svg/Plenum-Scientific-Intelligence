@@ -265,6 +265,97 @@ class OriginalMinisterMissedWakeTests(unittest.TestCase):
                 self.assertFalse(first["mission_completion_claimed"])
                 self.assertIsNone(second["original_coder_recovery"])
 
+    def test_unreceipted_coding_run_reserves_once_and_spoofed_receipt_cannot_hide_terminal(self):
+        task = original_coder_issue()
+        event = {"action": "opened", "repository": {"full_name": m.REPO},
+                 "sender": {"login": m.OWNER}, "issue": task}
+        spoof = {**original_coder_receipt(), "user": {"login": "visitor"}}
+        comments = [spoof]
+        posts = []
+
+        def api(url, token, *, method="GET", payload=None):
+            if url.endswith("/issues/750"):
+                return {**task, "comments": len(comments)}
+            if url.endswith("/comments?per_page=100"):
+                return comments
+            if url.endswith("/comments") and method == "POST":
+                posts.append(payload["body"])
+                reply = {"user": {"login": "github-actions[bot]"},
+                         "body": payload["body"], "html_url": "https://github.com/example"}
+                comments.append(reply)
+                return reply
+            if "/issues?" in url:
+                return [task]
+            raise AssertionError(url)
+
+        with patch.object(m, "request_json", side_effect=api):
+            self.assertTrue(m.reserve_native_coder(event, "ephemeral",
+                                                  run_id=123456, attempt=1, now=NOW))
+            self.assertFalse(m.reserve_native_coder(event, "ephemeral",
+                                                   run_id=987654, attempt=1, now=NOW))
+            self.assertFalse(m.reserve_native_coder(event, "ephemeral",
+                                                   run_id=123456, attempt=2, now=NOW))
+            sweep = m.resume_missed_public_issues(token="ephemeral", now=NOW)
+        self.assertEqual(len(posts), 1)
+        self.assertEqual(posts[0].splitlines()[0], m._coder_execution_marker(123456, 1))
+        self.assertFalse(m.has_original_coder_terminal_receipt(comments, 123456, 1))
+        self.assertEqual(sweep["status"], "CODER_TERMINAL_RECEIPT_PENDING_NO_REPLAY")
+        self.assertEqual(sweep["original_coder_awaiting_authentic_terminal_receipt_no_replay"], [750])
+        self.assertIsNone(sweep["original_coder_recovery"])
+        self.assertTrue(m.has_original_coder_terminal_receipt(
+            comments + [original_coder_receipt()], 123456, 1))
+        legacy = {"user": {"login": "github-actions[bot]"},
+                  "body": "<!-- plenum-openhands-review:123456 -->"}
+        self.assertTrue(m.has_original_coder_terminal_receipt([legacy], 123456, 1))
+        self.assertFalse(m.has_original_coder_terminal_receipt([legacy], 123456, 2))
+
+    def test_native_coder_attempt_two_needs_exact_post_reset_reservation_and_prior_run(self):
+        task = original_coder_issue()
+        event = {"action": "opened", "repository": {"full_name": m.REPO},
+                 "sender": {"login": m.OWNER}, "issue": task}
+        terminal = original_coder_receipt()
+        first = {"user": {"login": "github-actions[bot]"},
+                 "body": m._coder_execution_marker(123456, 1)}
+        nextday = {"user": {"login": "github-actions[bot]"},
+                   "body": f"{m.CODER_RESERVATION}750:123456 -->"}
+        comments = [first, terminal]
+        provider = original_coder_run()
+        posts = []
+
+        def api(url, token, *, method="GET", payload=None):
+            if url.endswith("/issues/750"):
+                return {**task, "comments": len(comments)}
+            if url.endswith("/comments?per_page=100"):
+                return comments
+            if url.endswith("/actions/runs/123456/attempts/1"):
+                return provider
+            if url.endswith("/comments") and method == "POST":
+                posts.append(payload["body"])
+                reply = {"user": {"login": "github-actions[bot]"},
+                         "body": payload["body"], "html_url": "https://github.com/example"}
+                comments.append(reply)
+                return reply
+            raise AssertionError(url)
+
+        with patch.object(m, "request_json", side_effect=api):
+            self.assertFalse(m.reserve_native_coder(event, "ephemeral",
+                                                   run_id=123456, attempt=2, now=NOW))
+            comments.append(nextday)
+            provider["run_attempt"] = 2
+            self.assertFalse(m.reserve_native_coder(event, "ephemeral",
+                                                   run_id=123456, attempt=2, now=NOW))
+            provider["run_attempt"] = 1
+            terminal["body"] += "Gemini fallback attempted: true\n"
+            self.assertFalse(m.reserve_native_coder(event, "ephemeral",
+                                                   run_id=123456, attempt=2, now=NOW))
+            terminal["body"] = original_coder_receipt()["body"]
+            self.assertTrue(m.reserve_native_coder(event, "ephemeral",
+                                                  run_id=123456, attempt=2, now=NOW))
+            self.assertFalse(m.reserve_native_coder(event, "ephemeral",
+                                                   run_id=123456, attempt=2, now=NOW))
+        self.assertEqual(len(posts), 1)
+        self.assertEqual(posts[0].splitlines()[0], m._coder_execution_marker(123456, 2))
+
 
 if __name__ == "__main__":
     unittest.main()
