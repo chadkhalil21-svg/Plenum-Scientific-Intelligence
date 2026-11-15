@@ -43,6 +43,30 @@ test("health reports reachable not a running model", async () => {
   assert.equal((await reply.json()).state,"REACHABLE_NOT_A_RUNNING_AGENT");
 });
 
+test("isolated preview is health-only even with accidentally configured production-like bindings", async () => {
+  const blocked=()=>{throw new Error("preview must not touch a provider or storage");};
+  const preview={...env,PLENUM_PREVIEW_ONLY:"true",PLENUM_FREE_AI_ENABLED:"true",
+    PLENUM_PRIVATE_MEMORY_HMAC_SECRET:secret,
+    PLENUM_REPLAY_GUARD:{getByName:blocked},
+    PLENUM_PRIVATE_MEMORY:{getByName:blocked},AI:{run:blocked}};
+  const old=globalThis.fetch;
+  globalThis.fetch=blocked;
+  try {
+    for (const request of [
+      new Request("https://preview.example/memory-check"),
+      new Request("https://preview.example/memory-check.js"),
+      new Request("https://preview.example/memory"),
+      new Request("https://preview.example/memory/example",{method:"PUT"}),
+      new Request("https://preview.example/ai/v1/chat/completions",{method:"POST"}),
+      await signed(789),
+      new Request("https://preview.example/health",{method:"POST"})
+    ]) assert.equal((await worker.fetch(request,preview)).status,404);
+    const reply=await worker.fetch(new Request("https://preview.example/health"),preview);
+    assert.equal(reply.status,200);
+    assert.deepEqual(await reply.json(),{state:"ISOLATED_PREVIEW_HEALTH_ONLY",no_model:true});
+  } finally {globalThis.fetch=old;}
+});
+
 test("valid signed public issue ID wakes original repo without sending message content",async () => {
   const old=globalThis.fetch, calls=[];
   globalThis.fetch=async (url,init)=>{
@@ -105,3 +129,4 @@ test("non-numeric and extra payload fields blocked",() => {
 test("no configured owner account cannot pretend success",async () => {
   assert.equal((await worker.fetch(await signed(789),{})).status,503);
 });
+

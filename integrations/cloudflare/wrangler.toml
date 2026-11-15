@@ -1,15 +1,11 @@
+# Compatibility for historical `--config integrations/cloudflare/wrangler.toml`
+# and nested working-directory deploys. Root wrangler.toml is canonical.
+# The native scoped CI enforces equal effective configurations/entrypoints.
 name = "plenum-public-wake"
 main = "plenum-github-wake-worker.mjs"
 compatibility_date = "2026-11-01"
 workers_dev = true
-# Uses a Free-plan SQLite Durable Object for atomic replay rejection only.
-# Native Workers AI model is enabled only for GitHub OIDC-signed, bounded PUBLIC coding;
-# Workers Free daily limit and local DO pre-reservation prevent uncontrolled usage.
-# This is NOT a server for Hermes, Paperclip or private WhatsApp sessions.
-# Set PLENUM_WEBHOOK_HMAC_SECRET and PLENUM_GITHUB_DISPATCH_TOKEN
-# using Cloudflare secrets on the owner's account, never in git.
 
-# Replay protection is mandatory: missing binding makes /wake return 503.
 [[durable_objects.bindings]]
 name = "PLENUM_REPLAY_GUARD"
 class_name = "PublicWakeReplayGuard"
@@ -18,10 +14,6 @@ class_name = "PublicWakeReplayGuard"
 type = "durable-object"
 storage = "sqlite"
 
-
-# Separate owner-private continuity records. NOT enabled without the distinct
-# PLENUM_PRIVATE_MEMORY_HMAC_SECRET, configured privately in Cloudflare.
-# No new host, third-party provider or paid inference account.
 [[durable_objects.bindings]]
 name = "PLENUM_PRIVATE_MEMORY"
 class_name = "PrivateContinuityMemory"
@@ -30,11 +22,12 @@ class_name = "PrivateContinuityMemory"
 type = "durable-object"
 storage = "sqlite"
 
-# Reuse native Cloudflare Workers AI: no vendor token, host or additional model server.
 [ai]
 binding = "AI"
 
-# Only signed original founder issue workflow can reach this route.
-# Historical provider UI recorded Workers Free; no paid inference fallback.
 [vars]
 PLENUM_FREE_AI_ENABLED = "true"
+
+[previews.vars]
+PLENUM_PREVIEW_ONLY = "true"
+PLENUM_FREE_AI_ENABLED = "false"
