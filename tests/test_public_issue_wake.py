@@ -12,6 +12,77 @@ def issue(**kwargs):
     return data
 
 class PublicWakeAcceptance(unittest.TestCase):
+    def test_scheduled_wake_completes_original_deterministic_cooling_contract_once(self):
+        import json
+        import math
+        import os
+        import subprocess
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from plenum_ai import chief_contract_plan, public_issue_wake as wake
+        original = issue(title="[Plenum Chief] public mission", body=(
+            "PLENUM_CHIEF_PUBLIC_CONTRACT_MISSION_V1\n"
+            "objective: Solve cooling initial 350 K ambient 290 K rate 0.1 time 10"))
+        comments = [{"user": {"login": "github-actions[bot]"}, "body":
+                     "<!-- plenum-minister-missed-dispatch:789 -->\nScheduled dispatch only"}]
+        installs = []
+        def api(url, token, *, body=None):
+            if url.endswith("/789"):
+                return {**original, "comments": len(comments)}
+            if url.endswith("comments?per_page=100"):
+                return list(comments)
+            if url.endswith("/comments"):
+                comments.append({"user": {"login": "github-actions[bot]"}, "body": body["body"]})
+                return {"html_url": "https://github.com/example/receipt"}
+            raise AssertionError(url)
+        def install(argv):
+            # CI has the real SciPy package installed; substitute only the
+            # networked pip operation, not the numerical worker or verifier.
+            self.assertEqual(len(comments), 1)
+            self.assertEqual(argv[-1], ".[numerical]")
+            installs.append(argv[-1])
+        prior_directory = Path.cwd()
+        with tempfile.TemporaryDirectory() as folder, patch.object(wake, "gh_json", side_effect=api), \
+                patch.object(subprocess, "check_call", side_effect=install), \
+                patch.object(chief_contract_plan, "model_plan", side_effect=AssertionError("No model needed")), \
+                patch.dict(os.environ, {"GITHUB_ACTIONS": "true", "GITHUB_EVENT_NAME": "repository_dispatch",
+                                        "GITHUB_REPOSITORY": wake.REPO, "GITHUB_RUN_ID": "123", "GH_TOKEN": "scoped"}):
+            try:
+                os.chdir(folder)
+                wake.main(["--issue-number", "789", "--execute"])
+                result = json.loads(Path("reports/public-wake/chief-result-789.json").read_text())
+                self.assertEqual(result["status"], "VERIFIED_BOUNDED_CONTRACT_MISSION")
+                self.assertTrue(result["independent_verified"])
+                self.assertFalse(result["founder_objective_verified"])
+                self.assertFalse(result["model_called"])
+                self.assertAlmostEqual(result["contract_results"]["cooling_solution"]["observed_kelvin"],
+                                       290 + 60 * math.exp(-1), places=6)
+                self.assertEqual(len(comments), 3)
+                self.assertEqual(installs, [".[numerical]"])
+                wake.main(["--issue-number", "789", "--execute"])
+                self.assertEqual(len(comments), 3)
+                self.assertEqual(installs, [".[numerical]"])
+            finally:
+                os.chdir(prior_directory)
+
+    def test_legacy_model_data_wake_does_not_reserve_or_execute(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from plenum_ai import public_issue_wake as wake
+        original = issue(title="[Plenum Chief] public mission", body=(
+            "PLENUM_CHIEF_PUBLIC_DATA_MISSION_V1\n"
+            "objective: Review NOAA station metadata 8723214 and run existing validator"))
+        def api(url, token, *, body=None):
+            self.assertIsNone(body, "Legacy DATA must not consume the execution reservation")
+            return original if url.endswith("/789") else []
+        with tempfile.TemporaryDirectory() as folder, patch.object(wake, "gh_json", side_effect=api), \
+                patch.object(wake, "execute_original_team") as execute:
+            with self.assertRaisesRegex(PermissionError, "REQUIRES_ORIGINAL_NATIVE_MODEL_ROUTE"):
+                wake.process(789, "scoped", Path(folder))
+            execute.assert_not_called()
+
     def test_existing_public_founder_issue_allowed(self):
         e=build_original_event(issue(),[])
         self.assertEqual(e["issue"]["number"],789)
