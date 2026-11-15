@@ -159,5 +159,16 @@ class OpenHandsFeedbackContract(unittest.TestCase):
 
 
 
+
+class OriginalIssueConcurrencyRegression(unittest.TestCase):
+    def test_original_coder_issue_runs_cannot_cancel_other_founder_issues(self):
+        workflow = (Path(__file__).resolve().parents[1] /
+                    ".github/workflows/business-workforce-runtime.yml").read_text()
+        self.assertIn(
+            "group: workforce-runtime-\u0024{{ github.event_name == 'issues' && github.event.issue.number || github.ref }}",
+            workflow)
+        self.assertIn("cancel-in-progress: false", workflow)
+
+
 if __name__ == '__main__':
     unittest.main()
