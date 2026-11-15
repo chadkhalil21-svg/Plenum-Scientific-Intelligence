@@ -103,7 +103,9 @@ def load_sources(path=SOURCES):
                 or entry.get("plenum_reuse_state") not in states
                 or entry.get("default_execution") != "never_install_automatically"
                 or not isinstance(entry.get("license"), str)
-                or not isinstance(entry.get("free_cost_class"), str)):
+                or not entry.get("license").strip()
+                or not isinstance(entry.get("free_cost_class"), str)
+                or not entry.get("free_cost_class").strip()):
             raise PermissionError("Unreviewed external source or activation permission")
         seen.add(rid)
     return d

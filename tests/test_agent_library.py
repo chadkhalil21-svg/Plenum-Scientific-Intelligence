@@ -76,6 +76,10 @@ class AgentCatalogContract(TestCase):
             {"repository":"../../arbitrary/path"},
             {"default_execution":"auto_install_and_execute"},
             {"license":123},
+            {"license":""},
+            {"license":"   \t"},
+            {"free_cost_class":""},
+            {"free_cost_class":"\t  "},
             {"tags":["wrong//path"]},
         ):
             d=copy.deepcopy(original)
