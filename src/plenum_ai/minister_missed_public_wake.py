@@ -14,6 +14,7 @@ import json
 import os
 import re
 from pathlib import Path
+from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 from .chief_team_mission import MISSION_TITLE, parse_mission
@@ -269,8 +270,9 @@ def resume_missed_public_issues(*, token: str, now: datetime) -> dict:
     # If pagination might hide older issues, do not widen or invent work.
     # Descending creation order prioritizes the youngest eligible tasks.
     dispatched = []
+    ambiguous = []
     for issue in items:
-        if len(dispatched) >= MAX_ISSUES_PER_RUN:
+        if len(dispatched) + len(ambiguous) >= MAX_ISSUES_PER_RUN:
             break
         fresh = original_issue_eligible(issue, now=now)
         legacy = (not fresh and isinstance(issue, dict)
@@ -300,20 +302,35 @@ def resume_missed_public_issues(*, token: str, now: datetime) -> dict:
                          "A failed dispatch remains reserved for manual review, "
                          "never silently repeated or claimed completed."
                      )})
-        request_json(API + "/dispatches", token, method="POST",
-                     payload={
-                         "event_type": "plenum_public_issue_wakeup",
-                         "client_payload": {"issue_number": number},
-                     })
+        try:
+            request_json(API + "/dispatches", token, method="POST",
+                         payload={
+                             "event_type": "plenum_public_issue_wakeup",
+                             "client_payload": {"issue_number": number},
+                         })
+        except (TimeoutError, ConnectionError):
+            # The reservation is already durable. Do not resend the POST;
+            # record uncertainty and leave independent eligible work runnable.
+            ambiguous.append(number)
+            continue
+        except URLError as exc:
+            # urllib can wrap the same transport failures. Authorization,
+            # HTTP errors and unexpected exceptions still stop the sweep.
+            if not isinstance(exc.reason, (TimeoutError, ConnectionError)):
+                raise
+            ambiguous.append(number)
+            continue
         dispatched.append(number)
     coder_recovery = recover_one_post_reset_original_coder(
         items=items, token=token, now=now)
     return {
         "schema": "plenum-original-minister-missed-public-issue-recovery-v1",
         "original_coder_recovery": coder_recovery,
-        "status": ("REQUESTED_EXISTING_PUBLIC_WORKER_WAKES" if dispatched
+        "status": ("PARTIAL_AMBIGUOUS_DISPATCH_RESERVED_NO_RETRY" if ambiguous
+                   else "REQUESTED_EXISTING_PUBLIC_WORKER_WAKES" if dispatched
                    else "NO_NEW_MISSED_PUBLIC_MISSION"),
         "original_issues_woken": dispatched,
+        "ambiguous_dispatch_issues": ambiguous,
         "new_agents_created": 0,
         "private_accounts_used": False,
         "persistent_ai_host_claimed": False,
