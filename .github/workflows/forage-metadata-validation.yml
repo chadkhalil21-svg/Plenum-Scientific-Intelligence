@@ -1,0 +1,43 @@
+name: Original public EIDC forage metadata validator (#520)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/forage-metadata-validation.yml'
+      - 'tools/forage_metadata/**'
+permissions:
+  contents: read
+concurrency:
+  group: forage-metadata-validation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  review-eidc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Fetch original licensed public EIDC dataset once
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error --proto '=https' --max-filesize 2000000 --max-time 45 \
+            https://data-package.ceh.ac.uk/data/361f0587-4cc6-48df-9f7e-8ade331cf8d5.zip \
+            --output "$RUNNER_TEMP/eidc-forage.zip"
+      - name: Review exact published records and metadata without changing them
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports/forage-metadata
+          python tools/forage_metadata/validate.py "$RUNNER_TEMP/eidc-forage.zip" --require-published-bytes --audit > reports/forage-metadata/report.json
+          (cd reports/forage-metadata && sha256sum report.json > SHA256SUMS)
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: original-520-eidc-forage-metadata-audit
+          path: reports/forage-metadata/
+          if-no-files-found: error
+          retention-days: 14
