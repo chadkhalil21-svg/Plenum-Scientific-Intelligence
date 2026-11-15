@@ -234,7 +234,7 @@ def execute_local(task: str, *, source_file: str, candidate_out: str) -> dict:
             "--edit-format", "diff", "--no-git", "--no-auto-commits",
             "--no-auto-lint", "--no-auto-test", "--no-suggest-shell-commands",
             "--no-detect-urls", "--no-analytics", "--no-check-update",
-            "--no-fancy-input", "--no-stream", "--yes-always", "--map-tokens", "0",
+            "--no-show-release-notes", "--no-fancy-input", "--no-stream", "--yes-always", "--map-tokens", "0",
             "--message", "Make only this requested public Python source repair, preserving unrelated behavior. "
             "Edit proposal.py only. Do not execute code or use any other files, tools or external services. " + task.strip(),
             "proposal.py",
