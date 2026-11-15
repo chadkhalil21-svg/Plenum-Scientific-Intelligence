@@ -1,4 +1,4 @@
-name: Plenum Council | AgentPeerChat Qwen Gemini Llama Claude and Computer
+name: Plenum Council | AgentPeerChat Qwen Gemini Llama Claude Computer and Perplexity
 on:
   workflow_dispatch:
   push:
@@ -49,6 +49,8 @@ jobs:
       PLENUM_APC_CLAUDE_INVITE: ${{ secrets.PLENUM_APC_CLAUDE_INVITE }}
       PLENUM_APC_COMPUTER_KEY: ${{ secrets.PLENUM_APC_COMPUTER_KEY }}
       PLENUM_APC_COMPUTER_INVITE: ${{ secrets.PLENUM_APC_COMPUTER_INVITE }}
+      PLENUM_APC_PERPLEXITY_KEY: ${{ secrets.PLENUM_APC_PERPLEXITY_KEY }}
+      PLENUM_APC_PERPLEXITY_INVITE: ${{ secrets.PLENUM_APC_PERPLEXITY_INVITE }}
       PLENUM_APC_LLAMA_KEY: ${{ secrets.PLENUM_APC_LLAMA_KEY }}
       PLENUM_APC_QWEN_INVITE: ${{ secrets.PLENUM_APC_QWEN_INVITE }}
       PLENUM_APC_GEMINI_INVITE: ${{ secrets.PLENUM_APC_GEMINI_INVITE }}
@@ -70,19 +72,21 @@ jobs:
           python -m plenum_ai.agentpeerchat_pair --model llama
           python -m plenum_ai.agentpeerchat_pair --model claude
           python -m plenum_ai.agentpeerchat_pair --model computer
+          python -m plenum_ai.agentpeerchat_pair --model perplexity
       - name: Inspect genuine unread group messages before model startup
         id: mail
         run: |
-          if [ -z "$PLENUM_APC_QWEN_KEY" ] && [ -z "$PLENUM_APC_GEMINI_KEY" ] && [ -z "$PLENUM_APC_LLAMA_KEY" ] && [ -z "$PLENUM_APC_CLAUDE_KEY" ] && [ -z "$PLENUM_APC_COMPUTER_KEY" ]; then
+          if [ -z "$PLENUM_APC_QWEN_KEY" ] && [ -z "$PLENUM_APC_GEMINI_KEY" ] && [ -z "$PLENUM_APC_LLAMA_KEY" ] && [ -z "$PLENUM_APC_CLAUDE_KEY" ] && [ -z "$PLENUM_APC_COMPUTER_KEY" ] && [ -z "$PLENUM_APC_PERPLEXITY_KEY" ]; then
             echo 'qwen=false' >> "$GITHUB_OUTPUT"
             echo 'gemini=false' >> "$GITHUB_OUTPUT"
             echo 'llama=false' >> "$GITHUB_OUTPUT"
             echo 'claude=false' >> "$GITHUB_OUTPUT"
             echo 'computer=false' >> "$GITHUB_OUTPUT"
+            echo 'perplexity=false' >> "$GITHUB_OUTPUT"
             echo 'No private agent keys provisioned; model startup skipped'
             exit 0
           fi
-          for model in qwen gemini llama claude computer; do
+          for model in qwen gemini llama claude computer perplexity; do
             pending=$(python -m plenum_ai.agentpeerchat_council --model "$model" --mode inspect)
             echo "$model=${pending#actionable=}" >> "$GITHUB_OUTPUT"
           done
@@ -112,9 +116,9 @@ jobs:
       - name: Llama — independently respond and critique
         if: steps.mail.outputs.llama == 'true'
         run: python -m plenum_ai.agentpeerchat_council --model llama --mode run
-      - name: Install official Puter SDK only for actionable Claude or Computer mail
+      - name: Install official Puter SDK only for actionable Claude, Computer or Perplexity mail
         id: puter_install
-        if: steps.mail.outputs.claude == 'true' || steps.mail.outputs.computer == 'true'
+        if: steps.mail.outputs.claude == 'true' || steps.mail.outputs.computer == 'true' || steps.mail.outputs.perplexity == 'true'
         env:
           PLENUM_APC_QWEN_KEY: ''
           PLENUM_APC_GEMINI_KEY: ''
@@ -126,6 +130,8 @@ jobs:
           PLENUM_APC_CLAUDE_INVITE: ''
           PLENUM_APC_COMPUTER_KEY: ''
           PLENUM_APC_COMPUTER_INVITE: ''
+          PLENUM_APC_PERPLEXITY_KEY: ''
+          PLENUM_APC_PERPLEXITY_INVITE: ''
           PLENUM_GEMINI_API_KEY: ''
         run: npm install --ignore-scripts --no-audit --no-fund --no-save --package-lock=false @heyputer/puter.js@2.6.5
       - name: Claude — independently respond and critique within free allowance
@@ -141,3 +147,8 @@ jobs:
       - name: Shut down the temporary model container
         if: always()
         run: docker rm -f plenum-peerchat-qwen 2>/dev/null || true
+      - name: Perplexity Sonar — independently respond and critique within free allowance
+        if: ${{ !cancelled() && steps.puter_install.outcome == 'success' && steps.mail.outputs.perplexity == 'true' }}
+        env:
+          PLENUM_PUTER_TOKEN: ${{ secrets.PLENUM_PUTER_TOKEN }}
+        run: python -m plenum_ai.agentpeerchat_council --model perplexity --mode run
