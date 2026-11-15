@@ -3,8 +3,10 @@ on:
   pull_request:
     paths:
       - 'src/plenum_ai/openhands_coding_agent.py'
+      - 'src/plenum_ai/openhands_goldfish_review.py'
       - 'tests/test_business_workforce_integration.py'
       - 'tests/test_openhands_bounded_repair.py'
+      - 'tests/test_openhands_goldfish_review.py'
       - 'integrations/n8n/plenum-business-workforce.json'
       - 'docs/BUSINESS_WORKFORCE.md'
       - '.github/workflows/business-workforce-ci.yml'
@@ -14,6 +16,7 @@ on:
     branches: [main]
     paths:
       - 'src/plenum_ai/openhands_coding_agent.py'
+      - 'src/plenum_ai/openhands_goldfish_review.py'
       - 'tests/test_business_workforce_integration.py'
       - 'integrations/n8n/plenum-business-workforce.json'
       - '.github/workflows/business-workforce-ci.yml'
@@ -40,6 +43,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_business_workforce_integration.py' -v
       - name: Verify one bounded OpenHands syntax repair and fail-closed second failure
         run: python -m unittest discover -s tests -p 'test_openhands_bounded_repair.py' -v
+      - name: Verify pinned Goldfish can independently review a real model patch without writing or guessing
+        run: python -m unittest discover -s tests -p 'test_openhands_goldfish_review.py' -v
       - name: Validate Codespaces startup syntax and private Docker Compose
         env:
           N8N_ENCRYPTION_KEY: disposable-test-placeholder-not-a-production-secret
