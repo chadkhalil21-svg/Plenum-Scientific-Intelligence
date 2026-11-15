@@ -455,8 +455,10 @@ def execute(task: str = DEFAULT_TASK, *, source_file: str | None = None,
             + task.strip()
             + ("\nproposal.py is a COPY of public " + source_file
                + "; edit this copy only, preserving unrelated behavior." if source_file else "")
-            + "\nCreate or edit ONLY proposal.py within the current disposable "
-              "workspace. Do not use terminal, shell, browser, network, other "
+            + "\nUse the exact absolute path " + str(candidate.resolve())
+            + " for every file action. View, create, or edit ONLY that file; "
+              "the editor denies directory listing and all other paths. "
+              "Do not use terminal, shell, browser, network, other "
               "paths, environment variables, credentials, or proprietary data. "
               "Do not execute generated code. Finish with a summary."
         )
