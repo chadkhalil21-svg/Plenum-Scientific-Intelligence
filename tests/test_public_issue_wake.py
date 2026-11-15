@@ -245,36 +245,63 @@ class PublicWakeAcceptance(unittest.TestCase):
                 wake.process(498,"original_ephemeral",Path(folder),
                              require_founder_approval=True)
 
-    def test_only_original_independently_verified_chief_outcomes_mark_wake_success(self):
-        from plenum_ai.public_issue_wake import accepted_original_wake
-        for status in ("VERIFIED_BOUNDED_TEAM",
-                       "VERIFIED_BOUNDED_DATA_MISSION",
-                       "VERIFIED_BOUNDED_CONTRACT_MISSION"):
-            with self.subTest(status=status):
-                accepted={"status":status, "worker_reexecuted":True,
-                          "original_multi_specialist":True,
-                          "independent_verified":True}
-                self.assertTrue(accepted_original_wake(accepted))
-                self.assertFalse(accepted_original_wake({
-                    **accepted, "independent_verified":False}))
-        for status in ("BLOCKED_PARTIAL_TEAM", "BLOCKED_CONTRACT_EXECUTION",
-                       "SOURCE_READY_NOT_EXECUTED", "DRAFT_READY_FOR_FOUNDER",
-                       "VERIFIED_UNKNOWN"):
-            self.assertFalse(accepted_original_wake({
-                "status":status, "worker_reexecuted":True,
-                "original_multi_specialist":True,
-                "independent_verified":True}))
-        self.assertTrue(accepted_original_wake({
-            "status":"DRAFT_READY_FOR_FOUNDER","worker_reexecuted":True,
-            "original_multi_specialist":False,"independent_verified":True}))
-        self.assertFalse(accepted_original_wake({
-            "status":"DRAFT_READY_FOR_FOUNDER","worker_reexecuted":True,
-            "original_multi_specialist":False,"independent_verified":False}))
-        self.assertTrue(accepted_original_wake({
-            "status":"ALREADY_RECORDED","worker_reexecuted":False}))
-        self.assertFalse(accepted_original_wake({
-            "status":"UNVERIFIED","worker_reexecuted":False}))
-        self.assertFalse(accepted_original_wake({}))
+    def test_owner_direct_wake_reserves_before_worker_and_never_replays(self):
+        # Exactly the original Minister's missed-dispatch marker is used.
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from plenum_ai import public_issue_wake as wake
+        from plenum_ai.minister_missed_public_wake import (
+            LEGACY_OWNER_APPROVAL, RECOVERY_MAGIC,
+        )
+        original = issue(
+            number=498, comments=1, created_at="2026-11-11T20:38:55Z",
+            title="[Plenum Chief] public mission",
+            body=("PLENUM_CHIEF_PUBLIC_MISSION_V1\n"
+                  "objective: Research free documentary sources and original SVG music illustration for Plenum Terra"),
+        )
+        approval = {"user": {"login": "chadkhalil21-svg"},
+                    "body": LEGACY_OWNER_APPROVAL + "\noriginal founder-approved work"}
+        reservation = RECOVERY_MAGIC + "498 -->"
+        posted = []
+        def api(url, token, *, body=None):
+            if url.endswith("/498"):
+                return original
+            if "/comments?per_page" in url:
+                return [approval]
+            if url.endswith("/comments"):
+                posted.append(body["body"])
+                return {"html_url": "https://github.com/example/verified-comment"}
+            raise AssertionError("Unexpected endpoint")
+        def team(event, *, output_dir):
+            self.assertEqual(len(posted), 1)
+            self.assertIn(reservation, posted[0])
+            return {"status": "VERIFIED_BOUNDED_TEAM", "executed_workers": 2,
+                    "independent_verified": True}
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(wake, "gh_json", side_effect=api), \
+                patch.object(wake, "execute_original_team", side_effect=team) as worker, \
+                patch.dict("os.environ", {"GITHUB_RUN_ID": "12345"}):
+            result = wake.process(498, "original_ephemeral", Path(folder),
+                                  require_founder_approval=True)
+        self.assertTrue(result["worker_reexecuted"])
+        self.assertEqual(worker.call_count, 1)
+        self.assertEqual(len(posted), 2)
+        self.assertIn(reservation, posted[0])
+        self.assertIn("Status: **VERIFIED_BOUNDED_TEAM**", posted[1])
+
+        original["comments"] = 2
+        prior = {"user": {"login": "github-actions[bot]"},
+                 "body": posted[0]}
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(wake, "gh_json", side_effect=lambda url, *args, **kwargs:
+                    original if url.endswith("/498") else [approval, prior]), \
+                patch.object(wake, "execute_original_team") as worker:
+            result = wake.process(498, "original_ephemeral", Path(folder),
+                                  require_founder_approval=True)
+            self.assertEqual(result["status"], "ALREADY_RECORDED")
+            self.assertFalse(result["worker_reexecuted"])
+            worker.assert_not_called()
 
     def test_closed_untrusted_or_unbounded_issues_rejected(self):
         for bad in (issue(state="closed"),issue(user={"login":"attacker"}),
