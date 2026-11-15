@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 from plenum_ai import evidence_index as idx
 
 
@@ -66,6 +67,27 @@ class EvidenceIndexTests(unittest.TestCase):
     def test_unsafe_missing_source_is_rejected(self):
         with self.assertRaises(ValueError):
             idx.build_index(Path(self.tmp.name)/"not-there")
+
+    def test_unreadable_evidence_file_does_not_abort_remaining_inventory(self):
+        bad = self.root / "chemistry" / "run-2.json"
+        original_read = Path.read_bytes
+        original_stat = Path.stat
+        def disappearing_read(path):
+            if path == bad:
+                raise FileNotFoundError("file disappeared during indexing")
+            return original_read(path)
+        def disappearing_stat(path, *, follow_symlinks=True):
+            if path == bad and follow_symlinks:
+                raise FileNotFoundError("file disappeared before metadata read")
+            return original_stat(path, follow_symlinks=follow_symlinks)
+        for method, replacement in (("read_bytes", disappearing_read), ("stat", disappearing_stat)):
+            with self.subTest(failure=method), patch.object(Path, method, replacement):
+                report = idx.build_index(self.root)
+                self.assertFalse(report["inventory_complete"])
+                self.assertEqual(report["record_count"], 1)
+                self.assertEqual(report["records"][0]["path"], "evidence/physics/run-1.json")
+                self.assertEqual(report["unindexed_records"][0]["path"], "chemistry/run-2.json")
+                self.assertTrue(report["unindexed_records"][0]["reason"])
 
 
 if __name__=="__main__":
