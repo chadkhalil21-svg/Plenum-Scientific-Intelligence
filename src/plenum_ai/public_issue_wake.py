@@ -138,15 +138,42 @@ def process(number: int, token: str, output_dir: Path, *,
     original = gh_json(path, token)
     comments = gh_json(path + "/comments?per_page=100", token)
     if require_founder_approval:
-        # Same original Minister's approval/checkpoint criteria, not a new
-        # arbitrary text-command router. Previously attempted tasks stay inert.
-        from .minister_missed_public_wake import approved_legacy_public_backlog
+        # Use the SAME original scheduled Minister reservation marker.
+        # GitHub issue_comment can be edited repeatedly, so an ambiguous
+        # prior invocation without a completed bot receipt must NOT repeat
+        # the original worker or any external source operation.
+        from .minister_missed_public_wake import (
+            approved_legacy_public_backlog, RECOVERY_MAGIC,
+        )
         if not approved_legacy_public_backlog(
                 original, comments, now=datetime.now(timezone.utc)):
             raise PermissionError("Original founder legacy public approval missing")
+        marker = RECOVERY_MAGIC + str(number) + " -->"
+        if any(
+            isinstance(comment, dict)
+            and (comment.get("user") or {}).get("login") == "github-actions[bot]"
+            and isinstance(comment.get("body"), str)
+            and marker in comment["body"]
+            for comment in comments
+        ):
+            return {"status": "ALREADY_RECORDED", "issue_number": number,
+                    "worker_reexecuted": False}
     event = build_original_event(original, comments)
     if event is None:
         return {"status":"ALREADY_RECORDED", "issue_number":number, "worker_reexecuted":False}
+    if require_founder_approval:
+        # Reserve *before* calling the original team. Reuse one issue and
+        # the exact same marker as scheduled recovery: no other host, queue
+        # or model is introduced. The original receiver stays accountable
+        # to the same founder-approved PUBLIC envelope.
+        reservation = gh_json(path + "/comments", token, body={"body": (
+            marker + "\n"
+            "Original public workforce direct wake reserved before execution. "
+            "No further automatic attempt if this run ends ambiguously; "
+            "this marker is dispatch evidence, not task completion."
+        )})
+        if not reservation.get("html_url"):
+            raise RuntimeError("Original wake reservation acknowledgment missing")
     mission = original.get("title") == MISSION_TITLE
     if mission:
         # Reuse the SAME Chief/team engine and original hashed public artifacts.
