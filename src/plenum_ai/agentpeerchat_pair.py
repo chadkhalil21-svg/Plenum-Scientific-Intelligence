@@ -56,13 +56,21 @@ def pair(model, env=os.environ):
         if principal.get("kind") != "agent" or principal.get("name") != AGENTS[model]:
             raise ValueError("agent_identity_mismatch")
         return "ALREADY_JOINED"
-    code = env.get("PLENUM_APC_" + model.upper() + "_INVITE", "")
-    if not re.fullmatch(r"agp_[0-9a-f]{64}", code):
+    invitation = env.get("PLENUM_APC_" + model.upper() + "_INVITE", "")
+    if not isinstance(invitation, str) or len(invitation) > 10000:
         return "BLOCKED_FRESH_PRIVATE_INVITATION_NEEDED"
+    # Owner may have saved a raw code, link, or the original connection
+    # instructions. Extract the same single valid invitation only; never log it.
+    matches = set(re.findall(r"agp_[0-9a-f]{64}", invitation))
+    if len(matches) != 1:
+        return "BLOCKED_FRESH_PRIVATE_INVITATION_NEEDED"
+    code = matches.pop()
     token_hash = hashlib.sha256(key.encode()).hexdigest()
     req = Request(base + "/pairings/request",
                   json.dumps({"code": code, "token_hash": token_hash}).encode(),
-                  {"Content-Type": "application/json"}, method="POST")
+                  {"Content-Type": "application/json",
+                   "Accept": "application/json",
+                   "User-Agent": "PlenumPrometheus-AgentPeerChat/1.0"}, method="POST")
     try:
         with urlopen(req, timeout=30) as response:
             payload = json.loads(response.read(10000))
