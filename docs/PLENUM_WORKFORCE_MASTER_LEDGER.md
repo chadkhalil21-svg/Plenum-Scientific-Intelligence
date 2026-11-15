@@ -6,6 +6,13 @@ The efficiency regression first reproduced unnecessary model startup/request beh
 
 ---
 
+
+## 2026-11-15 | Original native coding interrupted review artifact (source/offline candidate)
+
+The existing exact public Cloud OpenHands adapter discarded its entire temporary proposal if the upstream SDK raised a typed transport/daily-cap exception after a valid source edit. On immutable main `fa8625fe`, the focused offline regression substituted only the SDK transport: it edited the authorized source copy then raised wrapped `LLMTimeoutError`; original CLI recorded no patch and the existing same-job alternate-model reservation returned TRUE. The correction reuses the original exclusive bounded review diff/hash, retains only a changed regular UTF-8 AST-valid proposal, marks `BLOCKED_INTERRUPTED_WITH_REVIEW_ARTIFACT`, `model_run_completed=false`, independent quality unverified, and exits 2. Existing fallback therefore refuses another model, the original task/source remain unchanged, and the terminal receipt checks exact issue/run/attempt, path and SHA before reporting the blocked artifact. All 9 existing focused OpenHands/Aider cases pass locally, including actual red→green retained diff and no-repeat semantics. No real model call, new host, auto-promote, raw conversation persistence, private data, hard process-kill recovery or production deployment is claimed. Existing connected independent reviewer must still inspect the original candidate bytes and verify useful behavior before any reviewed source PR.
+
+---
+
 ## 2026-11-14 | Original public planner failure stages retained (source only)
 
 Actual new missions #668/run43639014590 and #670/run43639015884 failed before any plan/worker artifact; original logs and downloaded artifacts expose only ValueError, so the exact model failure remains UNKNOWN. Do not infer memory failure, malformed JSON, wrong contract or model success. Original Chief now retains fixed diagnostic stage/code for model configuration, invocation, response shape, JSON decoding, strict contract validation and saved inference provenance. Response metadata contains only content type/length, bounded token counts, allowlisted stop reason and allowlisted tool names (unknown names redacted). No model answer, reasoning, error detail, URL or secret is exported. Strict scope/plan validation and existing model/timeout are unchanged; this diagnostic change does not repair or reclassify those failed missions. Five new no-inference regressions pass;83 focused Chief tests pass. No unchanged model rerun, production deployment, private account operation or new resource occurred. Original #432 remains the mission authority; broader autonomy and signed-in #310 acceptance remain open.

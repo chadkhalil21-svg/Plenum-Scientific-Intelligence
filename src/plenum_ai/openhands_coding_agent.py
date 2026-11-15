@@ -52,6 +52,7 @@ GEMINI_MODEL = "gemini/gemini-3.5-flash-lite"
 # from key presence; any later tier/key change requires re-verification.
 GEMINI_FREE_APPROVAL = "owner-verified-default-gemini-project-free-2026-11-15"
 REVIEW_REPORT = Path("reports/openhands-agent-review.json")
+INTERRUPTED_REVIEW_STATUS = "BLOCKED_INTERRUPTED_WITH_REVIEW_ARTIFACT"
 CLOUD_FAILURE_REPORT = Path("reports/openhands-cloud-failure.json")
 GEMINI_RESERVATION = Path("reports/openhands-gemini-fallback-reservation.json")
 GEMINI_EXECUTION = Path("reports/openhands-gemini-fallback-execution.json")
@@ -294,6 +295,29 @@ def _candidate_report(result: dict, original: bytes | None, raw: bytes,
     }
 
 
+def _interrupted_cloud_review(result, original, candidate, source_file, artifact, attempt, exc):
+    """Reuse the existing review-only patch; never accept an interrupted run."""
+    status = _cloud_failure_status(exc)
+    if status not in ("BLOCKED_ORIGINAL_DAILY_FREE_AI_CAP", "BLOCKED_ORIGINAL_CLOUD_TRANSPORT"):
+        return None
+    if candidate.is_symlink() or (candidate.exists() and not candidate.is_file()):
+        raise PermissionError("Unsafe interrupted proposal") from None
+    if not candidate.is_file() or candidate.stat().st_size > _candidate_byte_limit(original):
+        return None
+    raw = candidate.read_bytes()
+    if raw == original or len(raw) > _candidate_byte_limit(original):
+        return None
+    try:
+        ast.parse(raw.decode("utf-8"), filename="proposal.py")
+    except (SyntaxError, UnicodeDecodeError):
+        return None
+    checked = _review_output_path(artifact.as_posix(), source_file=source_file)
+    report = _candidate_report(result, original, raw, source_file, checked, attempt)
+    return {**report, "status": INTERRUPTED_REVIEW_STATUS,
+            "failure_category": CLOUD_FAILURES[status], "model_run_completed": False,
+            "note": "Typed interruption after valid source edit; unverified review-only patch retained. Never automatically retry or deploy."}
+
+
 def local_plan(task: str, *, source_file: str) -> dict:
     if len(_public_source(source_file)[0]) > LOCAL_MAX_SOURCE_BYTES:
         raise PermissionError("Source too large for bounded CPU whole-file local coding")
@@ -469,7 +493,17 @@ def execute(task: str = DEFAULT_TASK, *, source_file: str | None = None,
         # syntax repair cycle. The pinned SDK caps each completion as above.
         passes = 1 if gemini_recovery else 2
         for attempt in range(passes):
-            conversation.run()
+            try:
+                conversation.run()
+            except Exception as exc:
+                if (not gemini_recovery and model == "openai/glm-4.7-flash"
+                        and base_url == ORIGINAL_FREE_CODING_ENDPOINT and api_key
+                        and original_bytes is not None and artifact is not None):
+                    interrupted = _interrupted_cloud_review(
+                        result, original_bytes, candidate, source_file, artifact, attempt, exc)
+                    if interrupted is not None:
+                        return interrupted
+                raise
             if not candidate.is_file() or candidate.is_symlink():
                 if attempt + 1 < passes:
                     conversation.send_message(
@@ -698,13 +732,22 @@ def main() -> None:
     # Add fallback provenance without changing the original candidate schema.
     if fallback:
         report.update({key: value for key, value in fallback.items() if key != "schema"})
+    if report.get("status") == INTERRUPTED_REVIEW_STATUS:
+        if not owner_issue or use_local or use_gemini:
+            raise PermissionError("Interrupted patch requires exact original cloud repair")
+        report.update(origin_issue_number=owner_issue["issue_number"], origin_run_id=run_id,
+                      origin_run_attempt=run_attempt, retry_same_day_authorized=False,
+                      no_paid_fallback=True)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print("OpenHands coding status:", report["status"])
+    if report.get("status") == INTERRUPTED_REVIEW_STATUS:
+        raise SystemExit(2)
 
 
 if __name__ == "__main__":
     main()
+
 
 
 
