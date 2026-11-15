@@ -190,6 +190,29 @@ def process(number: int, token: str, output_dir: Path, *,
             "independent_verified":outcome.get("independent_verified", False) if mission else outcome.get("verified", False)}
 
 
+# The original Chief has three independently verified outcome families.
+# Do not translate a genuine accepted contract/data run into a failed
+# wake simply because the legacy team runner used a different status name.
+# Conversely, a status label without true independent verification is NEVER
+# success, and unrecognized statuses continue to fail closed.
+ACCEPTED_ORIGINAL_CHIEF = frozenset({
+    "VERIFIED_BOUNDED_TEAM",
+    "VERIFIED_BOUNDED_DATA_MISSION",
+    "VERIFIED_BOUNDED_CONTRACT_MISSION",
+})
+
+
+def accepted_original_wake(outcome: dict) -> bool:
+    if outcome.get("worker_reexecuted") is not True:
+        return True  # Existing issue was already recorded; no worker executed.
+    if outcome.get("independent_verified") is not True:
+        return False
+    if outcome.get("original_multi_specialist") is True:
+        return outcome.get("status") in ACCEPTED_ORIGINAL_CHIEF
+    return (outcome.get("original_multi_specialist") is False
+            and outcome.get("status") == "DRAFT_READY_FOR_FOUNDER")
+
+
 def main(argv=None):
     p = argparse.ArgumentParser()
     p.add_argument("--issue-number", required=True)
@@ -225,15 +248,9 @@ def main(argv=None):
     out = process(number, token, Path("reports/public-wake"),
                   require_founder_approval=founder_comment)
     print(json.dumps(out))
-    if out.get("worker_reexecuted") and (
-        (out.get("original_multi_specialist")
-         and (out.get("status") != "VERIFIED_BOUNDED_TEAM"
-              or out.get("independent_verified") is not True))
-        or (not out.get("original_multi_specialist")
-            and out.get("status") != "DRAFT_READY_FOR_FOUNDER")
-    ):
-        # An accepted failure receipt and an uploaded artifact do NOT turn a
-        # failed public mission into a green Github Actions job.
+    if not accepted_original_wake(out):
+        # Only a real original worker result with independent verification can
+        # make this Github Actions job succeed. Source-only success is rejected.
         raise SystemExit(1)
 
 
