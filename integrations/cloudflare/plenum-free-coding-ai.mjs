@@ -27,14 +27,15 @@ function parsePart(part) {
   return JSON.parse(new TextDecoder().decode(decodePart(part)));
 }
 
-export async function verifyOriginalGithubOIDC(token, {now = Math.floor(Date.now()/1000), fetcher = fetch} = {}) {
-  if (typeof token !== "string" || token.length < 300 || token.length > 12000) return false;
+export async function verifyOriginalGithubOIDC(token, {now = Math.floor(Date.now()/1000), fetcher = fetch, diagnostic = () => {}} = {}) {
+  const reject = stage => { diagnostic(stage); return false; };
+  if (typeof token !== "string" || token.length < 300 || token.length > 12000) return reject("shape");
   const parts = token.split(".");
-  if (parts.length !== 3) return false;
+  if (parts.length !== 3) return reject("parts");
   let header, claims;
-  try { header = parsePart(parts[0]); claims = parsePart(parts[1]); } catch { return false; }
+  try { header = parsePart(parts[0]); claims = parsePart(parts[1]); } catch { return reject("decode"); }
   if (header.alg !== "RS256" || typeof header.kid !== "string"
-      || header.kid.length > 200 || !/^[A-Za-z0-9_:-]+$/.test(header.kid)) return false;
+      || header.kid.length > 200 || !/^[A-Za-z0-9_:-]+$/.test(header.kid)) return reject("header");
   if (claims.iss !== ISSUER || claims.aud !== AUDIENCE
       || claims.repository !== REPO
       || claims.sub !== "repo:chadkhalil21-svg@251133044/Plenum-Scientific-Intelligence@1447724141:ref:refs/heads/main"
@@ -44,18 +45,18 @@ export async function verifyOriginalGithubOIDC(token, {now = Math.floor(Date.now
       || claims.event_name !== "issues"
       || !Number.isSafeInteger(claims.iat) || !Number.isSafeInteger(claims.exp)
       || claims.iat > now + 30 || claims.iat < now - 600
-      || claims.exp <= now || claims.exp > now + 600) return false;
+      || claims.exp <= now || claims.exp > now + 900) return reject("claims");
   try {
     const response = await fetcher(ISSUER + "/.well-known/jwks", {headers:{"Accept":"application/json"}});
-    if (!response.ok) return false;
+    if (!response.ok) return reject("jwks_http");
     const jwks = await response.json();
     const key = Array.isArray(jwks.keys) && jwks.keys.find(k => k.kid === header.kid
         && k.kty === "RSA" && k.use === "sig" && k.alg === "RS256");
-    if (!key) return false;
+    if (!key) return reject("jwks_key");
     const imported = await crypto.subtle.importKey("jwk", key, {name:"RSASSA-PKCS1-v1_5",hash:"SHA-256"}, false, ["verify"]);
     return await crypto.subtle.verify("RSASSA-PKCS1-v1_5", imported, decodePart(parts[2]),
-                                      encoder.encode(parts[0]+"."+parts[1]));
-  } catch { return false; }
+                                      encoder.encode(parts[0]+"."+parts[1])) || reject("signature");
+  } catch { return reject("jwks_or_crypto"); }
 }
 
 function asOpenAI(result, request) {
@@ -103,7 +104,10 @@ export async function handleFreeCodingAI(request, env, {verifier=verifyOriginalG
   if (!Number.isFinite(length) || length > MAX_BYTES) return fail(413,"request_exceeds_free_budget_limit");
   const auth=request.headers.get("authorization") || "";
   const match=/^Bearer ([A-Za-z0-9._-]{300,12000})$/.exec(auth);
-  if (!match || !await verifier(match[1])) return fail(403,"unauthorized_original_workflow");
+  if (!match) return fail(403,"unauthorized_original_workflow_format");
+  let stage = "unspecified";
+  if (!await verifier(match[1], {diagnostic: reason => { stage = reason; }}))
+    return fail(403,"unauthorized_original_workflow_"+stage);
   let bodyText;
   try { bodyText=await request.text(); } catch { return fail(400,"unreadable_request"); }
   if (encoder.encode(bodyText).length > MAX_BYTES) return fail(413,"request_exceeds_free_budget_limit");
