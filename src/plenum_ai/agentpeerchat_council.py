@@ -175,19 +175,64 @@ def gemini_answer(kind, source, env=os.environ):
                     if isinstance(part, dict))
 
 
+# Existing AgentPeerChat /inbox is ASCENDING by delivery seq, cursor-paged;
+# the first 20 results are NOT the complete mailbox (official upstream protocol).
+# Keep one ephemeral receive job bounded so free model quotas cannot be drained
+# by a large backlog. Unacknowledged work remains for the next normal sweep.
+INBOX_PAGE_SIZE = 20
+MAX_INBOX_PAGES = 8
+MAX_ACTIONABLE_PER_SWEEP = 8
+
+
 def pending_actions(api, model):
     own = api.request("/me")["principal"]["id"]
-    items = api.request("/inbox?after=0&limit=20").get("items", [])
+    cursor = 0  # Always rescan unacknowledged messages after a restart.
     actionable = []
-    for msg in items:
-        thread_id = msg.get("thread_id", "")
-        principals = members_for(api, thread_id) if thread_id.startswith("thr_") else None
-        # The authenticated agent must itself be a current member of the
-        # exact group; merely possessing a valid service-wide token is not
-        # authorization to respond in a different group.
-        action = classify(msg, model, principals, own) if principals and own in principals else None
-        if action:
-            actionable.append((msg, action))
+    cached_members = {}
+    seen = set()
+    for _ in range(MAX_INBOX_PAGES):
+        page = api.request(f"/inbox?after={cursor}&limit={INBOX_PAGE_SIZE}")
+        if not isinstance(page, dict):
+            raise RuntimeError("invalid_inbox_page")
+        items = page.get("items")
+        if not isinstance(items, list) or len(items) > INBOX_PAGE_SIZE:
+            raise RuntimeError("invalid_inbox_items")
+        for msg in items:
+            if not isinstance(msg, dict):
+                continue
+            message_id = msg.get("id")
+            if not isinstance(message_id, str) or message_id in seen:
+                continue
+            seen.add(message_id)
+            thread_id = msg.get("thread_id")
+            if not isinstance(thread_id, str) or not thread_id.startswith("thr_"):
+                continue
+            if thread_id not in cached_members:
+                cached_members[thread_id] = members_for(api, thread_id)
+            principals = cached_members[thread_id]
+            # Both sender and executing agent must belong to this exact
+            # owner-approved thread; global service directory is not consent.
+            action = classify(msg, model, principals, own) if principals and own in principals else None
+            if action:
+                actionable.append((msg, action))
+                if len(actionable) >= MAX_ACTIONABLE_PER_SWEEP:
+                    return own, actionable
+        more = page.get("has_more", False)
+        if type(more) is not bool:
+            raise RuntimeError("invalid_inbox_pagination")
+        if not more:
+            return own, actionable
+        next_cursor = page.get("next_cursor")
+        if not isinstance(next_cursor, (str, int)) or not str(next_cursor).isdigit():
+            raise RuntimeError("invalid_inbox_cursor")
+        future = int(next_cursor)
+        if future <= cursor or future > 9007199254740991:
+            raise RuntimeError("stalled_inbox_cursor")
+        cursor = future
+    # Never silently report an empty mailbox if the original upstream
+    # reported additional pages beyond our safe per-sweep request budget.
+    if not actionable:
+        raise RuntimeError("bounded_inbox_scan_limit")
     return own, actionable
 
 
