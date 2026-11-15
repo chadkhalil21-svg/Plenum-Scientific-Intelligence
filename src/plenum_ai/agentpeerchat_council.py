@@ -88,11 +88,14 @@ def members_for(api, thread_id):
     raw_members = thread.get("members", [])
     if not isinstance(raw_members, list) or len(raw_members) > 100:
         return None
-    ids = {m.get("id") if isinstance(m, dict) else m for m in raw_members}
     # A global principal listing is NOT an approval for another thread.
     # Only active identities actually present in this owner-approved group
     # may instruct or receive this council's model-generated responses.
-    members = {pid: by_id[pid] for pid in ids if isinstance(pid, str) and pid in by_id}
+    members = {}
+    for item in raw_members:
+        pid = item.get("id") if isinstance(item, dict) else item
+        if isinstance(pid, str) and pid in by_id:
+            members[pid] = by_id[pid]
     if not any(member.get("kind") == "owner" for member in members.values()):
         return None
     return members
