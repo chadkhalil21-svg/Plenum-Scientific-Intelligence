@@ -1,0 +1,90 @@
+name: Plenum Council | AgentPeerChat Qwen and Gemini
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *'
+  pull_request:
+    paths:
+      - 'src/plenum_ai/agentpeerchat_council.py'
+      - 'src/plenum_ai/agentpeerchat_pair.py'
+      - 'tests/test_agentpeerchat_council.py'
+      - '.github/workflows/agentpeerchat-multimodel-council.yml'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-agentpeerchat-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  contract:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify original model bridge contract, no model calls
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -p 'test_agentpeerchat_council.py' -v
+  receive:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 23
+    env:
+      PYTHONPATH: src
+      PLENUM_APC_URL: https://agentpeerchat.chadkhalil21.workers.dev
+      PLENUM_APC_QWEN_KEY: ${{ secrets.PLENUM_APC_QWEN_KEY }}
+      PLENUM_APC_GEMINI_KEY: ${{ secrets.PLENUM_APC_GEMINI_KEY }}
+      PLENUM_APC_QWEN_INVITE: ${{ secrets.PLENUM_APC_QWEN_INVITE }}
+      PLENUM_APC_GEMINI_INVITE: ${{ secrets.PLENUM_APC_GEMINI_INVITE }}
+      PLENUM_GEMINI_API_KEY: ${{ secrets.PLENUM_GEMINI_API_KEY }}
+      PLENUM_GEMINI_MODEL: ${{ vars.PLENUM_GEMINI_MODEL || 'gemini-2.5-flash' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Activate each AgentPeerChat identity once from private GitHub secrets
+        run: |
+          python -m plenum_ai.agentpeerchat_pair --model qwen
+          python -m plenum_ai.agentpeerchat_pair --model gemini
+      - name: Inspect genuine unread group messages before model startup
+        id: mail
+        run: |
+          if [ -z "$PLENUM_APC_QWEN_KEY" ] && [ -z "$PLENUM_APC_GEMINI_KEY" ]; then
+            echo 'qwen=false' >> "$GITHUB_OUTPUT"
+            echo 'gemini=false' >> "$GITHUB_OUTPUT"
+            echo 'No private agent keys provisioned; model startup skipped'
+            exit 0
+          fi
+          for model in qwen gemini; do
+            pending=$(python -m plenum_ai.agentpeerchat_council --model "$model" --mode inspect)
+            echo "$model=${pending#actionable=}" >> "$GITHUB_OUTPUT"
+          done
+      - name: Reuse local Qwen only if meaningful work awaits
+        if: steps.mail.outputs.qwen == 'true'
+        run: |
+          docker pull ollama/ollama:latest
+          docker run -d --rm --name plenum-peerchat-qwen \
+            -p 127.0.0.1:11434:11434 -e OLLAMA_NUM_PARALLEL=1 \
+            --memory=5g --cpus=3 ollama/ollama:latest
+          for i in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
+            sleep 2
+          done
+          docker exec plenum-peerchat-qwen ollama pull qwen3:1.7b
+      - name: Qwen — independently respond and critique
+        if: steps.mail.outputs.qwen == 'true'
+        run: python -m plenum_ai.agentpeerchat_council --model qwen --mode run
+      - name: Gemini — independently respond and critique
+        if: steps.mail.outputs.gemini == 'true'
+        run: python -m plenum_ai.agentpeerchat_council --model gemini --mode run
+      - name: Shut down the temporary model container
+        if: always()
+        run: docker rm -f plenum-peerchat-qwen 2>/dev/null || true
