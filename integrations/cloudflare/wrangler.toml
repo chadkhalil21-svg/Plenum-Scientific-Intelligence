@@ -1,0 +1,33 @@
+# Compatibility for historical `--config integrations/cloudflare/wrangler.toml`
+# and nested working-directory deploys. Root wrangler.toml is canonical.
+# The native scoped CI enforces equal effective configurations/entrypoints.
+name = "plenum-public-wake"
+main = "plenum-github-wake-worker.mjs"
+compatibility_date = "2026-11-01"
+workers_dev = true
+
+[[durable_objects.bindings]]
+name = "PLENUM_REPLAY_GUARD"
+class_name = "PublicWakeReplayGuard"
+
+[exports.PublicWakeReplayGuard]
+type = "durable-object"
+storage = "sqlite"
+
+[[durable_objects.bindings]]
+name = "PLENUM_PRIVATE_MEMORY"
+class_name = "PrivateContinuityMemory"
+
+[exports.PrivateContinuityMemory]
+type = "durable-object"
+storage = "sqlite"
+
+[ai]
+binding = "AI"
+
+[vars]
+PLENUM_FREE_AI_ENABLED = "true"
+
+[previews.vars]
+PLENUM_PREVIEW_ONLY = "true"
+PLENUM_FREE_AI_ENABLED = "false"

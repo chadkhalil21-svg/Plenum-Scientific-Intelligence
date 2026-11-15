@@ -52,6 +52,8 @@ Use the **existing** Cloudflare Workers & Pages project named `plenum-public-wak
 
 Branch builds use `npx wrangler preview` and the root `[previews.vars]` block. Their public routes are deliberately health-only; do not add private secrets, Durable Objects, AI or production bindings to Preview Base. See https://developers.cloudflare.com/workers/previews/configuration/.
 
+The historical `integrations/cloudflare/wrangler.toml` remains solely a compatibility mirror for existing explicit-config or nested-directory commands. The root file is canonical; the existing scope CI enforces both paths resolve to precisely the same Worker and production/preview settings, and bundles both without deploying. Do not create another Worker.
+
 A legitimate source commit on `main` should trigger a new Cloudflare build through the existing Git integration. A source commit alone is **NOT** proof that Cloudflare actually built or deployed the right Worker. Read the actual Cloudflare build log, deployed revision and public endpoint.
 
 ## Live acceptance: in this order
