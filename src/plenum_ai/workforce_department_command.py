@@ -266,6 +266,13 @@ def audit_public_draft_repositories(draft: str, *, catalogue=None) -> dict:
         raise ValueError("Only bounded, nonempty public draft text may be audited")
     index = load_sources() if catalogue is None else catalogue
     known_repos = {x["repository"].casefold() for x in index["entries"]}
+    # Actual original n8n Engineering #702 invented an OpenHands version
+    # "vX.Y.Z" while citing real upstream metadata. A familiar repository
+    # identity MUST NOT turn this placeholder into publishable engineering.
+    version_placeholders = re.findall(
+        r"\b(?:v?x\.y\.z|v?0\.0\.0|version(?:\s+number)?\s*[:=]?\s*(?:tbd|unknown))\b",
+        draft, re.I,
+    )
     approved, unreviewed, malformed = set(), set(), 0
     for matched in re.finditer(r"https?://[^\s<>()\[\]{}]+", draft, re.I):
         raw = matched.group(0).rstrip(".,;:!?")
@@ -285,9 +292,12 @@ def audit_public_draft_repositories(draft: str, *, catalogue=None) -> dict:
             unreviewed.add(candidate)
     return {
         "schema": "plenum-public-draft-repository-audit-v1",
-        "status": ("REVIEW_REQUIRED_UNREGISTERED_SOURCE"
+        "status": ("REVIEW_REQUIRED_PLACEHOLDER_VERSION"
+                   if version_placeholders else
+                   "REVIEW_REQUIRED_UNREGISTERED_SOURCE"
                    if unreviewed or malformed else
                    "REVIEW_REQUIRED_CLAIMS_NOT_FACT_CHECKED"),
+        "unverifiable_version_placeholder_count": len(version_placeholders),
         "matched_reviewed_repository_count": len(approved),
         "unreviewed_github_repository_count": len(unreviewed) + malformed,
         "unreviewed_github_repositories": sorted(unreviewed)[:5],
