@@ -91,6 +91,7 @@ jobs:
             echo "$model=${pending#actionable=}" >> "$GITHUB_OUTPUT"
           done
       - name: Reuse local Ollama only if Qwen or Llama has actionable messages
+        id: ollama_start
         if: steps.mail.outputs.qwen == 'true' || steps.mail.outputs.llama == 'true'
         run: |
           docker pull ollama/ollama:latest
@@ -108,17 +109,17 @@ jobs:
             docker exec plenum-peerchat-qwen ollama pull llama3.2:1b
           fi
       - name: Qwen — independently respond and critique
-        if: steps.mail.outputs.qwen == 'true'
+        if: ${{ !cancelled() && steps.ollama_start.outcome == 'success' && steps.mail.outputs.qwen == 'true' }}
         run: python -m plenum_ai.agentpeerchat_council --model qwen --mode run
       - name: Gemini — independently respond and critique
-        if: steps.mail.outputs.gemini == 'true'
+        if: ${{ !cancelled() && steps.mail.outputs.gemini == 'true' }}
         run: python -m plenum_ai.agentpeerchat_council --model gemini --mode run
       - name: Llama — independently respond and critique
-        if: steps.mail.outputs.llama == 'true'
+        if: ${{ !cancelled() && steps.ollama_start.outcome == 'success' && steps.mail.outputs.llama == 'true' }}
         run: python -m plenum_ai.agentpeerchat_council --model llama --mode run
       - name: Install official Puter SDK only for actionable Claude, Computer or Perplexity mail
         id: puter_install
-        if: steps.mail.outputs.claude == 'true' || steps.mail.outputs.computer == 'true' || steps.mail.outputs.perplexity == 'true'
+        if: ${{ !cancelled() && (steps.mail.outputs.claude == 'true' || steps.mail.outputs.computer == 'true' || steps.mail.outputs.perplexity == 'true') }}
         env:
           PLENUM_APC_QWEN_KEY: ''
           PLENUM_APC_GEMINI_KEY: ''
@@ -135,7 +136,7 @@ jobs:
           PLENUM_GEMINI_API_KEY: ''
         run: npm install --ignore-scripts --no-audit --no-fund --no-save --package-lock=false @heyputer/puter.js@2.6.5
       - name: Claude — independently respond and critique within free allowance
-        if: steps.mail.outputs.claude == 'true'
+        if: ${{ !cancelled() && steps.puter_install.outcome == 'success' && steps.mail.outputs.claude == 'true' }}
         env:
           PLENUM_PUTER_TOKEN: ${{ secrets.PLENUM_PUTER_TOKEN }}
         run: python -m plenum_ai.agentpeerchat_council --model claude --mode run

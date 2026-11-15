@@ -273,12 +273,21 @@ let stage = 'setup';
     if (remaining < 5000000) throw {code: 'insufficient_allowance'};
   }
   stage = 'chat';
-  const result = await puter.ai.chat(messages, {
+  const options = {
     model, max_tokens: 650, normalize: true,
     // Haiku 5.5 defaults to thinking, which can exhaust a concise reply's budget.
     ...(model === 'anthropic/claude-haiku-5-5' ? { thinking: { type: 'disabled' } } : {}),
     refusalFallback: false, fallback: false
-  });
+  };
+  let result = await puter.ai.chat(messages, options);
+  if (result.finish_reason === 'length') {
+    // A provider-confirmed cutoff is not a complete answer. Give the same
+    // model one bounded opportunity to answer the original question anew.
+    const shorter = [{...messages[0], content: messages[0].content +
+      ' Answer the whole question in at most 160 words, with a finished final sentence.'}, ...messages.slice(1)];
+    result = await puter.ai.chat(shorter, options);
+    if (result.finish_reason === 'length') throw {code: 'output_limit'};
+  }
   const content = result.message?.content;
   const answer = typeof content === 'string' ? content :
     Array.isArray(content) ? content.filter(p => p.type === 'text').map(p => p.text).join(' ') : '';
@@ -287,7 +296,7 @@ let stage = 'setup';
   // Never log raw SDK errors, message content, account balance or credentials.
   const known = ['network_error','request_timeout','invalid_response','insufficient_funds',
     'invalid_allowance','insufficient_allowance','permission_denied','invalid_model',
-    'rate_limit_exceeded','unauthorized'];
+    'rate_limit_exceeded','unauthorized','output_limit'];
   const code = known.includes(err?.code) ? err.code : 'unknown';
   process.stderr.write(`puter_${stage}_${code}\n`, () => process.exit(1));
 });
@@ -300,7 +309,7 @@ let stage = 'setup';
         result = subprocess.run(["node", "-e", script], input=json.dumps(messages),
                                 text=True, capture_output=True, timeout=85, env=child_env)
         if result.returncode:
-            detail = re.search(r"(?m)^puter_(?:setup|usage|chat)_(?:network_error|request_timeout|invalid_response|insufficient_funds|invalid_allowance|insufficient_allowance|permission_denied|invalid_model|rate_limit_exceeded|unauthorized|unknown)$", result.stderr)
+            detail = re.search(r"(?m)^puter_(?:setup|usage|chat)_(?:network_error|request_timeout|invalid_response|insufficient_funds|invalid_allowance|insufficient_allowance|permission_denied|invalid_model|rate_limit_exceeded|unauthorized|output_limit|unknown)$", result.stderr)
             if detail:
                 raise RuntimeError(detail.group())
             raise RuntimeError("puter_request_failed")
@@ -450,7 +459,7 @@ def main():
             print(json.dumps(run(args.model)))
     except Exception as exc:
         detail = str(exc)
-        if not re.fullmatch(r"(?:gemini_http|peer_http)_[45][0-9]{2}|empty_model_answer|answer_exceeds_message_limit|puter_request_failed|puter_(?:setup|usage|chat)_(?:network_error|request_timeout|invalid_response|insufficient_funds|invalid_allowance|insufficient_allowance|permission_denied|invalid_model|rate_limit_exceeded|unauthorized|unknown)|missing_puter_token|provider_model_(?:missing|mismatch)|incorrect_self_identity", detail):
+        if not re.fullmatch(r"(?:gemini_http|peer_http)_[45][0-9]{2}|empty_model_answer|answer_exceeds_message_limit|puter_request_failed|puter_(?:setup|usage|chat)_(?:network_error|request_timeout|invalid_response|insufficient_funds|invalid_allowance|insufficient_allowance|permission_denied|invalid_model|rate_limit_exceeded|unauthorized|output_limit|unknown)|missing_puter_token|provider_model_(?:missing|mismatch)|incorrect_self_identity", detail):
             detail = type(exc).__name__
         print("bridge_error=" + detail, file=sys.stderr)
         sys.exit(1)

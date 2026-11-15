@@ -322,6 +322,25 @@ class ClaudeBridgeTests(unittest.TestCase):
 
 
 class ComputerBridgeTests(unittest.TestCase):
+    def test_puter_retries_explicit_length_stop_for_complete_answer(self):
+        native_run = c.subprocess.run
+        def simulate_provider(args, **kwargs):
+            script = args[2].replace("const { init } = require('@heyputer/puter.js/src/init.cjs');",
+                "const init = () => { let calls=0; return {ai:{chat:async (messages) => {calls++; return calls===1 ? {message:{content:'An incomplete thought because'},finish_reason:'length'} : {message:{content:'A complete answer.'},finish_reason:'stop'};}}}; };")
+            return native_run([args[0], args[1], script], **kwargs)
+        with patch.object(c.subprocess, 'run', side_effect=simulate_provider):
+            self.assertEqual(c.computer_answer('initial', 'Question', {'PLENUM_PUTER_TOKEN':'test'}), 'A complete answer.')
+
+    def test_puter_does_not_publish_second_length_stop(self):
+        native_run = c.subprocess.run
+        def simulate_provider(args, **kwargs):
+            script = args[2].replace("const { init } = require('@heyputer/puter.js/src/init.cjs');",
+                "const init = () => ({ai:{chat:async () => ({message:{content:'Incomplete thought because'},finish_reason:'length'})}});")
+            return native_run([args[0], args[1], script], **kwargs)
+        with patch.object(c.subprocess, 'run', side_effect=simulate_provider):
+            with self.assertRaisesRegex(RuntimeError, '^puter_chat_output_limit$'):
+                c.claude_answer('initial', 'Question', {'PLENUM_PUTER_TOKEN':'test'})
+
     def test_puter_worker_exits_after_answer_despite_open_sdk_handles(self):
         native_run = c.subprocess.run
         def run_with_open_handle(args, **kwargs):
