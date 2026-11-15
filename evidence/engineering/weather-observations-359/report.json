@@ -1,0 +1,61 @@
+{
+  "covered_unique_days": 31,
+  "error_count": 0,
+  "expected_days": 31,
+  "fields": {
+    "PRCP": {
+      "measurement_flags": {
+        "T": 6
+      },
+      "missing": 0,
+      "numeric": 31,
+      "observation_times": {
+        "2400": 31
+      },
+      "quality_flagged": 0,
+      "source_flags": {
+        "W": 31
+      }
+    },
+    "TMAX": {
+      "measurement_flags": {},
+      "missing": 0,
+      "numeric": 31,
+      "observation_times": {},
+      "quality_flagged": 0,
+      "source_flags": {
+        "1": 1,
+        "W": 30
+      }
+    },
+    "TMIN": {
+      "measurement_flags": {},
+      "missing": 0,
+      "numeric": 31,
+      "observation_times": {},
+      "quality_flagged": 0,
+      "source_flags": {
+        "1": 1,
+        "W": 30
+      }
+    }
+  },
+  "findings": [],
+  "incomplete_count": 0,
+  "input_bytes": 2266,
+  "input_sha256": "354c21d5230f3a0063ce9e4127593813b6f17ce992f795a7a0892c4e7ef8fad4",
+  "interval": [
+    "2025-01-01",
+    "2025-01-31"
+  ],
+  "rows": 31,
+  "schema": "plenum-noaa-daily-intake-v1",
+  "station": "USW00012839",
+  "status": "PASSED_BOUNDED_INTAKE",
+  "units": {
+    "PRCP": "mm",
+    "TMAX": "degC",
+    "TMIN": "degC"
+  },
+  "validator_sha256": "d35b6477e586418f1221982ec558021c3797fabcd750ef595cbc090c0e23cd35"
+}
