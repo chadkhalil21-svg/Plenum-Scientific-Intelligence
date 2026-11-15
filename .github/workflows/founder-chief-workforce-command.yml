@@ -90,10 +90,14 @@ jobs:
           assert len(paths)==1, 'Missing preflight founder scope record'
           data=json.load(open(paths[0],encoding='utf-8'))
           assert data['status']=='SOURCE_READY_NOT_EXECUTED'
-          planned=data.get('planned_data_mission') is True
+          # Original explicitly scoped contract pairs (NOAA / DOI / cooling)
+          # already have independently validated deterministic dependencies.
+          # Do not install or pull Qwen when no planner can be necessary.
+          needs_model=(data.get('planned_data_mission') is True
+                       and data.get('planned_contract_mission') is not True)
           with open(os.environ['GITHUB_OUTPUT'],'a') as out:
-              out.write('planned_data_mission='+str(planned).lower()+'\n')
-          if planned:
+              out.write('needs_local_model='+str(needs_model).lower()+'\n')
+          if needs_model:
               subprocess.check_call([sys.executable,'-m','pip','install','-e','.[chief_of_staff]'])
           if ('public_science' in data.get('expected_team',[])
                   or data.get('expected_independent_kind') == 'public_science'):
@@ -113,7 +117,7 @@ jobs:
           path: reports/workforce-chief
       - name: Start existing bounded Qwen only for a new data plan
         id: data_model
-        if: steps.scope.outputs.planned_data_mission == 'true'
+        if: steps.scope.outputs.needs_local_model == 'true'
         run: |
           if find reports/workforce-chief -maxdepth 1 \( -name 'chief-data-plan-*.json' -o -name 'chief-contract-plan-*.json' \) -print -quit | read -r saved; then
             echo 'Saved immutable plan will be validated and reused; no model started'
@@ -233,5 +237,5 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
       - name: Destroy temporary data-planning model
-        if: always() && steps.scope.outputs.planned_data_mission == 'true'
+        if: always() && steps.scope.outputs.needs_local_model == 'true'
         run: docker rm -f plenum-chief-data-qwen 2>/dev/null || true
