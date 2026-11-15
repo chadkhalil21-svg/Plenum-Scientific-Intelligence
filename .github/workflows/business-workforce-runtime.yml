@@ -89,13 +89,19 @@ jobs:
         with:
           python-version: '3.12'
       - name: Authorize original founder public source BEFORE any model/network call
+        id: owner-preflight
         if: github.event_name == 'issues'
-        run: >-
-          PYTHONPATH=src python -m plenum_ai.openhands_coding_agent
-          --event "$GITHUB_EVENT_PATH"
-          --out reports/openhands-agent-preflight.json
+        run: |
+          PYTHONPATH=src python -m plenum_ai.openhands_coding_agent \
+            --event "$GITHUB_EVENT_PATH" --out reports/openhands-agent-preflight.json
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          engine=json.load(open('reports/openhands-agent-preflight.json')).get('engine','openhands')
+          assert engine in ('openhands','aider_local_ollama')
+          print('engine='+engine)
+          PY
       - name: Use only GitHub-issued ephemeral OIDC for original Free Worker AI
-        if: github.event_name == 'issues'
+        if: github.event_name == 'issues' && steps.owner-preflight.outputs.engine == 'openhands'
         shell: bash
         run: |
           set -euo pipefail
@@ -126,7 +132,7 @@ jobs:
           '
           printf 'PLENUM_OPENHANDS_API_KEY=%s\n' "$jwt" >> "$GITHUB_ENV"
       - name: Start Ollama locally, never expose model server on public interface
-        if: github.event_name != 'issues'
+        if: github.event_name != 'issues' || steps.owner-preflight.outputs.engine == 'aider_local_ollama'
         run: |
           docker pull ollama/ollama:latest
           docker image inspect ollama/ollama:latest --format 'Ollama image digest {{index .RepoDigests 0}}'
@@ -147,13 +153,32 @@ jobs:
         run: |
           docker exec plenum-temporary-ollama ollama pull qwen3:1.7b
           docker exec plenum-temporary-ollama ollama list
+      - name: Download verified free coding model and pinned Aider before isolating their network
+        if: steps.owner-preflight.outputs.engine == 'aider_local_ollama'
+        run: |
+          set -euo pipefail
+          docker exec plenum-temporary-ollama ollama pull qwen2.5-coder:1.5b
+          docker exec plenum-temporary-ollama ollama list
+          digest=$(docker exec plenum-temporary-ollama ollama list | awk '$1=="qwen2.5-coder:1.5b" {print $2}')
+          test "$digest" = d7372fd82851
+          image=$(PYTHONPATH=src python -c 'from plenum_ai.openhands_coding_agent import AIDER_IMAGE; print(AIDER_IMAGE)')
+          docker pull "$image"
+          docker network create --internal plenum-coding-isolated
+          docker network connect plenum-coding-isolated plenum-temporary-ollama
+          docker network disconnect bridge plenum-temporary-ollama
       - name: Install exact previously reviewed OpenHands SDK
+        if: steps.owner-preflight.outputs.engine != 'aider_local_ollama'
         run: |
           python -m pip install -e ".[openhands_tools]"
           python -m pip check
-      - name: Run original OpenHands isolated file editor, retain REVIEW-ONLY artifact
+      - name: Run selected original isolated coding engine, retain REVIEW-ONLY artifact
+        env:
+          PLENUM_SELECTED_CODING_ENGINE: ${{ steps.owner-preflight.outputs.engine }}
         run: |
-          if [ "$GITHUB_EVENT_NAME" = "issues" ]; then
+          if [ "$PLENUM_SELECTED_CODING_ENGINE" = "aider_local_ollama" ]; then
+            PYTHONPATH=src timeout 780 python -m plenum_ai.openhands_coding_agent --execute \
+              --event "$GITHUB_EVENT_PATH" --out reports/openhands-agent-review.json
+          elif [ "$GITHUB_EVENT_NAME" = "issues" ]; then
             timeout 240 python -m plenum_ai.openhands_coding_agent --execute \
               --event "$GITHUB_EVENT_PATH" --out reports/openhands-agent-review.json
           else
@@ -176,7 +201,7 @@ jobs:
           assert artifact.suffix == ('.patch' if data['source_file'] else '.py')
           assert not data['generated_code_executed']
           assert not data['production_written'] and not data['external_accounts_changed']
-          print('OpenHands model and real candidate PASS; SHA256:',data['candidate_sha256'])
+          print(data['upstream'],'model and real candidate PASS; SHA256:',data['candidate_sha256'])
           PY
       - name: Reuse original focused Python tests on model patch in offline restricted Docker sandbox
         if: github.event_name == 'issues'
@@ -185,7 +210,7 @@ jobs:
             --report reports/openhands-agent-review.json \
             --verdict reports/openhands-sandbox-verdict.json
       - name: Reuse imported Google Goldfish as original independent read-only coding reviewer
-        if: always() && github.event_name == 'issues'
+        if: always() && github.event_name == 'issues' && steps.owner-preflight.outputs.engine == 'openhands'
         run: >-
           python -m plenum_ai.openhands_goldfish_review
           --event "$GITHUB_EVENT_PATH"
@@ -217,6 +242,10 @@ jobs:
           report=Path("reports/openhands-agent-review.json")
           status="BLOCKED_NO_REVIEWABLE_PATCH"
           digest=""
+          engine="openhands"
+          preflight=Path("reports/openhands-agent-preflight.json")
+          if preflight.is_file():
+              engine=json.loads(preflight.read_text()).get("engine","openhands")
           if report.is_file():
               d=json.loads(report.read_text())
               if (d.get("status")=="BLOCKED_ORIGINAL_DAILY_FREE_AI_CAP"
@@ -264,7 +293,9 @@ jobs:
                   marker in str(x.get("body",""))
                   or (attempt=="1" and legacy in str(x.get("body","")))
                   for x in comments):
-              msg=(marker+"\n**OpenHands original public repair: "+status+"**\n"
+              headline=("OpenHands original public repair" if engine=="openhands" else "Aider local original public repair")
+              msg=(marker+"\n**"+headline+": "+status+"**\n"
+                   "Coding engine: "+engine+"\n"
                    "Attempt: "+attempt+"\n"
                    "Untrusted candidate only, no source code merged, no accounts written. "
                    "Independent semantic review and original CI remain REQUIRED.\n"
@@ -281,4 +312,7 @@ jobs:
           PY
       - name: Delete transient local model container
         if: always()
-        run: docker rm -f plenum-temporary-ollama 2>/dev/null || true
+        run: |
+          docker rm -f plenum-temporary-ollama 2>/dev/null || true
+          docker network rm plenum-coding-isolated 2>/dev/null || true
+
