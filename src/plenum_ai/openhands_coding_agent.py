@@ -18,6 +18,21 @@ from pathlib import Path
 import tempfile
 
 PINNED_VERSION = "1.60.1"
+ORIGINAL_FREE_CODING_ENDPOINT = "https://plenum-public-wake.chadkhalil21.workers.dev/ai/v1"
+
+
+def original_free_retry_options(model: str, base_url: str) -> dict:
+    """Use pinned upstream OpenHands retry settings, not another retry wrapper.
+
+    A genuine original job #733 repeatedly retried a deterministic local
+    daily-budget 429. One call is enough for this exact Free model endpoint.
+    Other model/provider retry behavior remains unchanged.
+    """
+    if (model == "openai/glm-4.7-flash"
+            and base_url == ORIGINAL_FREE_CODING_ENDPOINT):
+        return {"num_retries": 1}
+    return {}
+
 
 OWNER = "chadkhalil21-svg"
 REPO = "chadkhalil21-svg/Plenum-Scientific-Intelligence"
@@ -159,6 +174,7 @@ def execute(task: str = DEFAULT_TASK, *, source_file: str | None = None,
         kwargs = {"model": model, "api_key": api_key or "local-no-secret"}
         if base_url:
             kwargs["base_url"] = base_url
+        kwargs.update(original_free_retry_options(model, base_url))
         agent = Agent(llm=LLM(**kwargs), tools=[Tool(name=FileEditorTool.name)])
         conversation = Conversation(
             agent=agent, workspace=tmp, max_iteration_per_run=6,
@@ -270,8 +286,32 @@ def main() -> None:
     source_file = owner_issue["source_file"] if owner_issue else None
     artifact = (f"reports/openhands-review/issue-{owner_issue['issue_number']}.patch"
                 if owner_issue else args.candidate_out)
-    report = (execute(task, source_file=source_file, candidate_out=artifact)
-              if args.execute else plan(task, source_file=source_file))
+    try:
+        report = (execute(task, source_file=source_file, candidate_out=artifact)
+                  if args.execute else plan(task, source_file=source_file))
+    except Exception as exc:
+        # Only the exact observed, original Free Worker DAILY LOCAL quota
+        # error is downgraded to a nonsecret, fail-closed task receipt. Other
+        # model errors still surface normally for genuine engineering repair.
+        if not (args.execute
+                and os.getenv("PLENUM_OPENHANDS_MODEL") == "openai/glm-4.7-flash"
+                and os.getenv("PLENUM_OPENHANDS_BASE_URL") == ORIGINAL_FREE_CODING_ENDPOINT
+                and "original_daily_ai_budget_exhausted" in str(exc)):
+            raise
+        report = {
+            **plan(task, source_file=source_file),
+            "status": "BLOCKED_ORIGINAL_DAILY_FREE_AI_CAP",
+            "failure_category": "LOCAL_DURABLE_OBJECT_DAILY_BUDGET",
+            "provider_account_quota_verified": False,
+            "model_run_completed": False,
+            "candidate_persisted": False,
+            "retry_same_day_authorized": False,
+            "no_paid_fallback": True,
+        }
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        print("OpenHands coding status: BLOCKED_ORIGINAL_DAILY_FREE_AI_CAP")
+        raise SystemExit(2) from None
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print("OpenHands coding status:", report["status"])
