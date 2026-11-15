@@ -15,6 +15,7 @@ import importlib.metadata
 import json
 import os
 from pathlib import Path
+import subprocess
 import tempfile
 
 PINNED_VERSION = "1.60.1"
@@ -38,6 +39,11 @@ OWNER = "chadkhalil21-svg"
 REPO = "chadkhalil21-svg/Plenum-Scientific-Intelligence"
 REPAIR_TITLE = "[Plenum OpenHands] public repair"
 REPAIR_MARKER = "PLENUM_OPENHANDS_PUBLIC_REPAIR_V1"
+LOCAL_REPAIR_MARKER = "PLENUM_AIDER_LOCAL_PUBLIC_REPAIR_V1"
+LOCAL_ENGINE = "aider_local_ollama"
+# Official amd64 v0.86.0 image manifest (not a mutable latest tag).
+AIDER_IMAGE = "paulgauthier/aider@sha256:cfdc43ebd4ff163f7ef5f1803b069fa80abbd95e981d165495d459d3edcc356c"
+LOCAL_MODEL = "qwen2.5-coder:1.5b"
 
 
 def _public_source(source_file: str) -> tuple[bytes, str]:
@@ -73,7 +79,7 @@ def parse_owner_repair_event(event: dict) -> dict:
         raise PermissionError("Only original owner public repair issues")
     body = issue.get("body")
     lines = body.splitlines() if isinstance(body, str) else []
-    if (len(lines) != 3 or lines[0] != REPAIR_MARKER
+    if (len(lines) != 3 or lines[0] not in (REPAIR_MARKER, LOCAL_REPAIR_MARKER)
             or not lines[1].startswith("file: ")
             or not lines[2].startswith("objective: ")):
         raise ValueError("Exact three-line original public repair contract required")
@@ -87,7 +93,8 @@ def parse_owner_repair_event(event: dict) -> dict:
     _, sha = _public_source(source_file)
     return {"issue_number": issue["number"], "task": objective,
             "source_file": source_file, "source_sha256": sha,
-            "review_only": True, "auto_merge": False, "paid_api_authorized": False}
+            "review_only": True, "auto_merge": False, "paid_api_authorized": False,
+            **({"engine": LOCAL_ENGINE} if lines[0] == LOCAL_REPAIR_MARKER else {})}
 
 
 def _review_output_path(value: str, *, source_file: str | None) -> Path:
@@ -149,6 +156,97 @@ def plan(task: str = DEFAULT_TASK, *, source_file: str | None = None) -> dict:
         "verified_independent_quality": False,
         "human_review_required": True,
     }
+
+
+def _candidate_report(result: dict, original: bytes | None, raw: bytes,
+                      source_file: str | None, artifact: Path | None,
+                      attempt: int) -> dict:
+    if original is not None and raw == original:
+        raise RuntimeError("Coder did not modify the original source copy")
+    saved = None
+    artifact_bytes = b""
+    if artifact is not None:
+        artifact.parent.mkdir(parents=True, exist_ok=True)
+        if original is None:
+            artifact_bytes = raw
+        else:
+            artifact_bytes = "".join(difflib.unified_diff(
+                original.decode("utf-8").splitlines(keepends=True),
+                raw.decode("utf-8").splitlines(keepends=True),
+                fromfile="a/" + source_file, tofile="b/" + source_file,
+            )).encode("utf-8")
+            if not artifact_bytes or len(artifact_bytes) > 80_000:
+                raise RuntimeError("Proposed change lacks a bounded unified diff")
+        with artifact.open("xb") as destination:
+            destination.write(artifact_bytes)
+        saved = artifact.as_posix()
+    return {
+        **result,
+        "status": "PROPOSAL_AWAITING_REVIEW",
+        "candidate_persisted": saved is not None,
+        "candidate_artifact": saved,
+        "candidate_artifact_sha256": (
+            hashlib.sha256(artifact_bytes).hexdigest() if saved else None),
+        "model_run_completed": True,
+        "generated_file": "proposal.py",
+        "candidate_bytes": len(raw),
+        "candidate_sha256": hashlib.sha256(raw).hexdigest(),
+        "candidate_syntax_valid": True,
+        "repair_passes": attempt,
+        "note": ("AST pass only: artifact saved for independent human review, not deployed."
+                 if saved else "Independent AST check passed. Candidate discarded; never executed or deployed."),
+    }
+
+
+def local_plan(task: str, *, source_file: str) -> dict:
+    result = plan(task, source_file=source_file)
+    result.pop("sdk_version_required")
+    return {**result, "upstream": "Aider-AI/aider", "engine": LOCAL_ENGINE,
+            "aider_image": AIDER_IMAGE, "local_model": LOCAL_MODEL,
+            "cloud_inference_used": False, "paid_api_authorized": False}
+
+
+def execute_local(task: str, *, source_file: str, candidate_out: str) -> dict:
+    """Run official Aider noninteractively, with only a public source copy mounted.
+
+    The existing Actions job supplies an internal Docker network connected only
+    to the already-downloaded local Ollama server. No credentials are forwarded.
+    The same independent, networkless patch gate remains mandatory.
+    """
+    result = local_plan(task, source_file=source_file)
+    artifact = _review_output_path(candidate_out, source_file=source_file)
+    if os.getenv("PLENUM_EPHEMERAL_RUNNER") != "confirmed":
+        raise RuntimeError("Run only in a separately isolated ephemeral runner")
+    original, _ = _public_source(source_file)
+    with tempfile.TemporaryDirectory(prefix="plenum-aider-public-") as tmp:
+        candidate = Path(tmp) / "proposal.py"
+        candidate.write_bytes(original)
+        command = [
+            "docker", "run", "--rm", "--pull=never", "--network=plenum-coding-isolated",
+            "--cap-drop=ALL", "--security-opt=no-new-privileges", "--pids-limit=128",
+            "--memory=2g", "--cpus=1", "--read-only",
+            "--user", f"{os.getuid()}:{os.getgid()}",
+            "--tmpfs=/tmp:rw,nosuid,nodev,size=128m,mode=1777",
+            "--mount", f"type=bind,src={tmp},dst=/app", "-w", "/app",
+            "-e", "HOME=/app", "-e", "OLLAMA_API_BASE=http://plenum-temporary-ollama:11434",
+            AIDER_IMAGE, "--model", "ollama_chat/" + LOCAL_MODEL,
+            "--weak-model", "ollama_chat/" + LOCAL_MODEL,
+            "--edit-format", "diff", "--no-git", "--no-auto-commits",
+            "--no-auto-lint", "--no-auto-test", "--no-suggest-shell-commands",
+            "--no-detect-urls", "--no-analytics", "--no-check-update",
+            "--no-fancy-input", "--no-stream", "--yes-always", "--map-tokens", "0",
+            "--message", "Make only this requested public Python source repair, preserving unrelated behavior. "
+            "Edit proposal.py only. Do not execute code or use any other files, tools or external services. " + task.strip(),
+            "proposal.py",
+        ]
+        subprocess.run(command, cwd=tmp, check=True, timeout=720,
+                       env={"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": tmp})
+        if (not candidate.is_file() or candidate.is_symlink()
+                or candidate.stat().st_size > _candidate_byte_limit(original)):
+            raise RuntimeError("Local coder produced no bounded regular source copy")
+        raw = candidate.read_bytes()
+        ast.parse(raw.decode("utf-8"), filename="proposal.py")
+        return _candidate_report(result, original, raw, source_file, artifact, 0)
 
 
 def execute(task: str = DEFAULT_TASK, *, source_file: str | None = None,
@@ -230,42 +328,7 @@ def execute(task: str = DEFAULT_TASK, *, source_file: str | None = None,
                     "Candidate still failed independent Python syntax validation "
                     "after one bounded agent repair"
                 ) from None
-            if original_bytes is not None and raw == original_bytes:
-                raise RuntimeError("Coder did not modify the original source copy")
-            saved = None
-            artifact_bytes = b""
-            if artifact is not None:
-                artifact.parent.mkdir(parents=True, exist_ok=True)
-                if original_bytes is None:
-                    artifact_bytes = raw
-                else:
-                    patch = "".join(difflib.unified_diff(
-                        original_bytes.decode("utf-8").splitlines(keepends=True),
-                        raw.decode("utf-8").splitlines(keepends=True),
-                        fromfile="a/" + source_file, tofile="b/" + source_file,
-                    ))
-                    artifact_bytes = patch.encode("utf-8")
-                    if not patch or len(artifact_bytes) > 80_000:
-                        raise RuntimeError("Proposed change lacks a bounded unified diff")
-                with artifact.open("xb") as destination:
-                    destination.write(artifact_bytes)
-                saved = artifact.as_posix()
-            return {
-                **result,
-                "status": "PROPOSAL_AWAITING_REVIEW",
-                "candidate_persisted": saved is not None,
-                "candidate_artifact": saved,
-                "candidate_artifact_sha256": (
-                    hashlib.sha256(artifact_bytes).hexdigest() if saved else None),
-                "model_run_completed": True,
-                "generated_file": "proposal.py",
-                "candidate_bytes": len(raw),
-                "candidate_sha256": hashlib.sha256(raw).hexdigest(),
-                "candidate_syntax_valid": True,
-                "repair_passes": attempt,
-                "note": ("AST pass only: artifact saved for independent human review, not deployed."
-                         if saved else "Independent AST check passed. Candidate discarded; never executed or deployed."),
-            }
+            return _candidate_report(result, original_bytes, raw, source_file, artifact, attempt)
         raise AssertionError("Unreachable bounded repair exit")
 
 
@@ -286,10 +349,23 @@ def main() -> None:
     source_file = owner_issue["source_file"] if owner_issue else None
     artifact = (f"reports/openhands-review/issue-{owner_issue['issue_number']}.patch"
                 if owner_issue else args.candidate_out)
+    use_local = owner_issue is not None and owner_issue.get("engine") == LOCAL_ENGINE
     try:
-        report = (execute(task, source_file=source_file, candidate_out=artifact)
-                  if args.execute else plan(task, source_file=source_file))
+        if use_local:
+            report = (execute_local(task, source_file=source_file, candidate_out=artifact)
+                      if args.execute else local_plan(task, source_file=source_file))
+        else:
+            report = (execute(task, source_file=source_file, candidate_out=artifact)
+                      if args.execute else plan(task, source_file=source_file))
     except Exception as exc:
+        if use_local and args.execute:
+            report = {**local_plan(task, source_file=source_file),
+                      "status": "BLOCKED_LOCAL_CODER_NO_REVIEWABLE_PATCH",
+                      "failure_category": type(exc).__name__, "no_paid_fallback": True}
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+            print("Aider local coding status:", report["status"], report["failure_category"])
+            raise SystemExit(2) from None
         # Only the exact observed, original Free Worker DAILY LOCAL quota
         # error is downgraded to a nonsecret, fail-closed task receipt. Other
         # model errors still surface normally for genuine engineering repair.
@@ -319,3 +395,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
