@@ -31,7 +31,7 @@ def pair(model, env=os.environ):
         return "BLOCKED_MISSING_AGENT_KEY"
     base, key = setting
     # Restrict each credential to one randomly generated 256-bit bearer proof.
-    if not re.fullmatch(r"agt_[0-9a-f]{64}", key):
+    if not re.fullmatch(r"agt_[A-Za-z0-9]{48,80}", key):
         raise ValueError("agent_access_key_format")
     principal = verified_me(base, key)
     if principal:
