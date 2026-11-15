@@ -269,6 +269,20 @@ jobs:
           python tools/verify_original_openhands_candidate.py \
             --report reports/openhands-agent-review.json \
             --verdict reports/openhands-sandbox-verdict.json
+      - name: Examine only the saved interrupted original patch without replaying the model
+        if: >-
+          always() && github.event_name == 'issues' && steps.coding-reservation.outputs.authorized == 'true' &&
+          steps.owner-preflight.outputs.engine == 'openhands' && steps.cloud-coding.outcome == 'failure' &&
+          steps.gemini-fallback-preflight.outputs.eligible != 'true'
+        env:
+          PLENUM_REVIEW_INTERRUPTED: confirmed
+          PYTHONPATH: src
+        run: |
+          if test -f reports/openhands-agent-review.json; then
+            python tools/verify_original_openhands_candidate.py \
+              --report reports/openhands-agent-review.json \
+              --verdict reports/openhands-sandbox-verdict.json
+          fi
       - name: Reuse imported Google Goldfish as original independent read-only coding reviewer
         if: always() && github.event_name == 'issues' && steps.coding-reservation.outputs.authorized == 'true' && steps.cloud-coding.outcome == 'success'
         run: >-
@@ -346,16 +360,33 @@ jobs:
           # A runnable candidate is never equivalent to trusted source.
           # This is an OFFLINE sandbox of the ORIGINAL test, not auto-merge.
           guard=Path("reports/openhands-sandbox-verdict.json")
-          if guard.is_file():
+          sandbox_state="NOT_RUN"
+          if guard.is_file() and not guard.is_symlink():
               assessment=json.loads(guard.read_text())
-              if assessment.get("existing_focused_tests_passed") is True:
+              if status=='BLOCKED_INTERRUPTED_WITH_REVIEW_ARTIFACT':
+                  sandbox_state='INTERRUPTED_FOCUSED_TESTS_NOT_ACCEPTED'
+                  if (assessment.get('schema')=='plenum-original-openhands-candidate-regression-v1'
+                      and assessment.get('status')=='INTERRUPTED_FOCUSED_TESTS_PASS_REVIEW_STILL_REQUIRED'
+                      and assessment.get('candidate_artifact_sha256')==digest
+                      and assessment.get('source_file')==d.get('source_file')
+                      and assessment.get('source_sha256')==d.get('source_sha256')
+                      and assessment.get('origin_issue_number')==issue
+                      and assessment.get('origin_run_id')==os.environ['GITHUB_RUN_ID']
+                      and assessment.get('origin_run_attempt')==os.environ.get('GITHUB_RUN_ATTEMPT','1')
+                      and assessment.get('existing_focused_tests_passed') is True
+                      and assessment.get('network_disabled_for_candidate') is True
+                      and all(assessment.get(key) is False for key in ('model_run_completed','independent_semantic_approval','automatically_merged','production_written','external_accounts_changed'))):
+                      sandbox_state='INTERRUPTED_FOCUSED_TESTS_PASS_REVIEW_STILL_REQUIRED'
+              elif (assessment.get('status')=='FOCUSED_TESTS_PASS_REVIEW_STILL_REQUIRED'
+                    and assessment.get("existing_focused_tests_passed") is True):
                   status="REVIEW_ONLY_EXISTING_TESTS_PASS_SEMANTIC_REVIEW_REQUIRED"
+                  sandbox_state='FOCUSED_TESTS_PASS_REVIEW_STILL_REQUIRED'
               elif status=="REVIEW_ONLY_PATCH_READY_NOT_MERGED":
                   status="BLOCKED_EXISTING_SOURCE_TESTS"
           goldfish=Path("reports/openhands-goldfish-review.json")
           reviewer_state="NOT_RUN"
           reviewer_blocker_count=0
-          if goldfish.is_file():
+          if goldfish.is_file() and status!='BLOCKED_INTERRUPTED_WITH_REVIEW_ARTIFACT':
               critique=json.loads(goldfish.read_text())
               reviewer_state=critique.get("status", "BLOCKED_INVALID_REVIEW")
               reviewer_blocker_count=(critique.get("severity_counts") or {}).get("BLOCKER", 0)
@@ -383,6 +414,7 @@ jobs:
                    "Untrusted candidate only, no source code merged, no accounts written. "
                    "Independent semantic review and original CI remain REQUIRED.\n"
                    "Artifact SHA256: "+digest+"\n"
+                   "Original offline sandbox: "+sandbox_state+"\n"
                    "Original Goldfish read-only advisory: "+str(reviewer_state)+"\n"
                    "Goldfish explicit blockers: "+str(reviewer_blocker_count)+"\n"
                    "Goldfish cannot authorize source execution or auto-merge.\n"
