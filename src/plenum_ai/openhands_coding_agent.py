@@ -312,6 +312,45 @@ def gemini_plan(task: str, *, source_file: str) -> dict:
             "provider_retries": 0}
 
 
+def _register_proposal_editor() -> str:
+    """Reuse the pinned upstream editor but enforce one private temporary file.
+
+    Upstream FileEditor workspace_root is a cwd hint, not a read boundary.
+    Its allowed_edits_files also permits arbitrary views, so every command
+    must pass our lexical path and regular-file check before delegation.
+    """
+    from openhands.sdk.tool import register_tool
+    from openhands.tools.file_editor import FileEditorTool
+    from openhands.tools.file_editor.definition import FileEditorObservation
+    from openhands.tools.file_editor.impl import FileEditorExecutor
+
+    class ProposalOnlyExecutor(FileEditorExecutor):
+        def __init__(self, *, workspace_root):
+            super().__init__(workspace_root=workspace_root)
+            self._proposal = Path(workspace_root).resolve(strict=True) / "proposal.py"
+
+        def __call__(self, action, conversation=None):
+            supplied = Path(action.path)
+            if (not supplied.is_absolute() or ".." in supplied.parts
+                    or supplied != self._proposal or self._proposal.is_symlink()
+                    or self._proposal.parent.resolve() != self._proposal.parent
+                    or (self._proposal.exists() and not self._proposal.is_file())):
+                return FileEditorObservation.from_text(
+                    command=action.command, is_error=True,
+                    text="Only the disposable public proposal.py file is permitted.")
+            return super().__call__(action, conversation)
+
+    class ProposalOnlyFileEditorTool(FileEditorTool):
+        @classmethod
+        def create(cls, conv_state):
+            return [tool.set_executor(ProposalOnlyExecutor(
+                workspace_root=conv_state.workspace.working_dir))
+                for tool in super().create(conv_state)]
+
+    register_tool(ProposalOnlyFileEditorTool.name, ProposalOnlyFileEditorTool)
+    return ProposalOnlyFileEditorTool.name
+
+
 def execute_local(task: str, *, source_file: str, candidate_out: str) -> dict:
     """Run official Aider noninteractively, with only a public source copy mounted.
 
@@ -385,7 +424,7 @@ def execute(task: str = DEFAULT_TASK, *, source_file: str | None = None,
         raise RuntimeError("Pinned OpenHands SDK version mismatch")
 
     from openhands.sdk import Agent, Conversation, LLM, Tool
-    from openhands.tools.file_editor import FileEditorTool
+    editor_tool = _register_proposal_editor()
 
     original_bytes = _public_source(source_file)[0] if source_file else None
     with tempfile.TemporaryDirectory(prefix="plenum-public-coder-") as tmp:
@@ -403,7 +442,7 @@ def execute(task: str = DEFAULT_TASK, *, source_file: str | None = None,
                                                 "supports_prompt_cache": False})
         else:
             kwargs.update(original_free_retry_options(model, base_url))
-        agent = Agent(llm=LLM(**kwargs), tools=[Tool(name=FileEditorTool.name)])
+        agent = Agent(llm=LLM(**kwargs), tools=[Tool(name=editor_tool)])
         conversation = Conversation(
             agent=agent, workspace=tmp, max_iteration_per_run=4 if gemini_recovery else 6,
             max_budget_per_run=0.10 if gemini_recovery else 0.20, visualizer=None,
