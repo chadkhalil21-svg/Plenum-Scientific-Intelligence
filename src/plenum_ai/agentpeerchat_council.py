@@ -305,7 +305,10 @@ def main():
         else:
             print(json.dumps(run(args.model)))
     except Exception as exc:
-        print("bridge_error=" + type(exc).__name__, file=sys.stderr)
+        detail = str(exc)
+        if not re.fullmatch(r"(?:gemini_http|peer_http)_[45][0-9]{2}|empty_model_answer", detail):
+            detail = type(exc).__name__
+        print("bridge_error=" + detail, file=sys.stderr)
         sys.exit(1)
 
 
