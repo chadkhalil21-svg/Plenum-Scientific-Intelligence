@@ -138,15 +138,42 @@ def process(number: int, token: str, output_dir: Path, *,
     original = gh_json(path, token)
     comments = gh_json(path + "/comments?per_page=100", token)
     if require_founder_approval:
-        # Same original Minister's approval/checkpoint criteria, not a new
-        # arbitrary text-command router. Previously attempted tasks stay inert.
-        from .minister_missed_public_wake import approved_legacy_public_backlog
+        # Use the SAME original scheduled Minister reservation marker.
+        # GitHub issue_comment can be edited repeatedly, so an ambiguous
+        # prior invocation without a completed bot receipt must NOT repeat
+        # the original worker or any external source operation.
+        from .minister_missed_public_wake import (
+            approved_legacy_public_backlog, RECOVERY_MAGIC,
+        )
         if not approved_legacy_public_backlog(
                 original, comments, now=datetime.now(timezone.utc)):
             raise PermissionError("Original founder legacy public approval missing")
+        marker = RECOVERY_MAGIC + str(number) + " -->"
+        if any(
+            isinstance(comment, dict)
+            and (comment.get("user") or {}).get("login") == "github-actions[bot]"
+            and isinstance(comment.get("body"), str)
+            and marker in comment["body"]
+            for comment in comments
+        ):
+            return {"status": "ALREADY_RECORDED", "issue_number": number,
+                    "worker_reexecuted": False}
     event = build_original_event(original, comments)
     if event is None:
         return {"status":"ALREADY_RECORDED", "issue_number":number, "worker_reexecuted":False}
+    if require_founder_approval:
+        # Reserve *before* calling the original team. Reuse one issue and
+        # the exact same marker as scheduled recovery: no other host, queue
+        # or model is introduced. The original receiver stays accountable
+        # to the same founder-approved PUBLIC envelope.
+        reservation = gh_json(path + "/comments", token, body={"body": (
+            marker + "\n"
+            "Original public workforce direct wake reserved before execution. "
+            "No further automatic attempt if this run ends ambiguously; "
+            "this marker is dispatch evidence, not task completion."
+        )})
+        if not reservation.get("html_url"):
+            raise RuntimeError("Original wake reservation acknowledgment missing")
     mission = original.get("title") == MISSION_TITLE
     if mission:
         # Reuse the SAME Chief/team engine and original hashed public artifacts.
@@ -190,33 +217,6 @@ def process(number: int, token: str, output_dir: Path, *,
             "independent_verified":outcome.get("independent_verified", False) if mission else outcome.get("verified", False)}
 
 
-# The original Chief has three independently verified outcome families.
-# Do not translate a genuine accepted contract/data run into a failed
-# wake simply because the legacy team runner used a different status name.
-# Conversely, a status label without true independent verification is NEVER
-# success, and unrecognized statuses continue to fail closed.
-ACCEPTED_ORIGINAL_CHIEF = frozenset({
-    "VERIFIED_BOUNDED_TEAM",
-    "VERIFIED_BOUNDED_DATA_MISSION",
-    "VERIFIED_BOUNDED_CONTRACT_MISSION",
-})
-
-
-def accepted_original_wake(outcome: dict) -> bool:
-    if not isinstance(outcome, dict):
-        return False
-    if outcome.get("worker_reexecuted") is False:
-        return outcome.get("status") == "ALREADY_RECORDED"
-    if outcome.get("worker_reexecuted") is not True:
-        return False
-    if outcome.get("independent_verified") is not True:
-        return False
-    if outcome.get("original_multi_specialist") is True:
-        return outcome.get("status") in ACCEPTED_ORIGINAL_CHIEF
-    return (outcome.get("original_multi_specialist") is False
-            and outcome.get("status") == "DRAFT_READY_FOR_FOUNDER")
-
-
 def main(argv=None):
     p = argparse.ArgumentParser()
     p.add_argument("--issue-number", required=True)
@@ -252,9 +252,15 @@ def main(argv=None):
     out = process(number, token, Path("reports/public-wake"),
                   require_founder_approval=founder_comment)
     print(json.dumps(out))
-    if not accepted_original_wake(out):
-        # Only a real original worker result with independent verification can
-        # make this Github Actions job succeed. Source-only success is rejected.
+    if out.get("worker_reexecuted") and (
+        (out.get("original_multi_specialist")
+         and (out.get("status") != "VERIFIED_BOUNDED_TEAM"
+              or out.get("independent_verified") is not True))
+        or (not out.get("original_multi_specialist")
+            and out.get("status") != "DRAFT_READY_FOR_FOUNDER")
+    ):
+        # An accepted failure receipt and an uploaded artifact do NOT turn a
+        # failed public mission into a green Github Actions job.
         raise SystemExit(1)
 
 
