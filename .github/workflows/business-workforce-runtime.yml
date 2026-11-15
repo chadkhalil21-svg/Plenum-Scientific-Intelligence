@@ -143,17 +143,35 @@ jobs:
         run: |
           timeout 240 python -m plenum_ai.openhands_coding_agent --execute \
             --event "$GITHUB_EVENT_PATH" --out reports/openhands-agent-review.json
-      - name: Reserve zero-charge same-job recovery only from bound terminal cloud failure
-        id: local-fallback-preflight
-        if: steps.cloud-coding.outcome == 'failure'
+      - name: Reserve owner-verified Gemini Free recovery only from bound terminal cloud failure
+        id: gemini-fallback-preflight
+        if: steps.cloud-coding.outcome == 'failure' && vars.PLENUM_GEMINI_FREE_RECOVERY_DISABLED != 'true'
+        env:
+          # Existing Default Gemini Project verified Free by owner on 2026-11-15.
+          # Disable this route before changing the project/key/billing tier and reverify.
+          PLENUM_GEMINI_FREE_PROJECT_APPROVAL: 'owner-verified-default-gemini-project-free-2026-11-15'
         run: |
-          PYTHONPATH=src python -m plenum_ai.openhands_coding_agent --reserve-local-fallback \
+          PYTHONPATH=src python -m plenum_ai.openhands_coding_agent --reserve-gemini-fallback \
             --event "$GITHUB_EVENT_PATH" >> "$GITHUB_OUTPUT"
       - name: Fail closed for every unclassified or unauthorized cloud failure
-        if: steps.cloud-coding.outcome == 'failure' && steps.local-fallback-preflight.outputs.eligible != 'true'
+        if: steps.cloud-coding.outcome == 'failure' && steps.gemini-fallback-preflight.outputs.eligible != 'true'
         run: exit 1
+      - name: Invoke fixed Gemini Free OpenHands FileEditor once, review only
+        if: steps.gemini-fallback-preflight.outputs.eligible == 'true'
+        env:
+          PLENUM_GEMINI_FREE_PROJECT_APPROVAL: 'owner-verified-default-gemini-project-free-2026-11-15'
+          PLENUM_GEMINI_API_KEY: ${{ secrets.PLENUM_GEMINI_API_KEY }}
+          PLENUM_OPENHANDS_API_KEY: ''
+        run: |
+          if PYTHONPATH=src timeout 240 python -m plenum_ai.openhands_coding_agent --execute --gemini-fallback \
+            --event "$GITHUB_EVENT_PATH" --out reports/openhands-agent-review.json >/dev/null 2>&1; then
+            echo 'Gemini recovery candidate generated; original review gate required'
+          else
+            echo 'Gemini recovery blocked; inspect nonsecret receipt'
+            exit 1
+          fi
       - name: Start Ollama locally, never expose model server on public interface
-        if: github.event_name != 'issues' || steps.owner-preflight.outputs.engine == 'aider_local_ollama' || steps.local-fallback-preflight.outputs.eligible == 'true'
+        if: github.event_name != 'issues' || steps.owner-preflight.outputs.engine == 'aider_local_ollama'
         run: |
           docker pull ollama/ollama:latest
           docker image inspect ollama/ollama:latest --format 'Ollama image digest {{index .RepoDigests 0}}'
@@ -179,7 +197,7 @@ jobs:
           docker exec plenum-temporary-ollama ollama pull qwen3:1.7b
           docker exec plenum-temporary-ollama ollama list
       - name: Download verified free coding model and pinned Aider before isolating their network
-        if: steps.owner-preflight.outputs.engine == 'aider_local_ollama' || steps.local-fallback-preflight.outputs.eligible == 'true'
+        if: steps.owner-preflight.outputs.engine == 'aider_local_ollama'
         run: |
           set -euo pipefail
           docker exec plenum-temporary-ollama ollama pull qwen2.5-coder:7b
@@ -192,16 +210,12 @@ jobs:
           docker network connect plenum-coding-isolated plenum-temporary-ollama
           docker network disconnect bridge plenum-temporary-ollama
       - name: Run selected original isolated coding engine, retain REVIEW-ONLY artifact
-        if: github.event_name != 'issues' || steps.owner-preflight.outputs.engine == 'aider_local_ollama' || steps.local-fallback-preflight.outputs.eligible == 'true'
+        if: github.event_name != 'issues' || steps.owner-preflight.outputs.engine == 'aider_local_ollama'
         env:
           PLENUM_SELECTED_CODING_ENGINE: ${{ steps.owner-preflight.outputs.engine }}
-          PLENUM_LOCAL_FALLBACK: ${{ steps.local-fallback-preflight.outputs.eligible }}
           PLENUM_OPENHANDS_API_KEY: ''
         run: |
-          if [ "$PLENUM_LOCAL_FALLBACK" = "true" ]; then
-            PYTHONPATH=src timeout 1020 python -m plenum_ai.openhands_coding_agent --execute --local-fallback \
-              --event "$GITHUB_EVENT_PATH" --out reports/openhands-agent-review.json
-          elif [ "$PLENUM_SELECTED_CODING_ENGINE" = "aider_local_ollama" ]; then
+          if [ "$PLENUM_SELECTED_CODING_ENGINE" = "aider_local_ollama" ]; then
             PYTHONPATH=src timeout 1020 python -m plenum_ai.openhands_coding_agent --execute \
               --event "$GITHUB_EVENT_PATH" --out reports/openhands-agent-review.json
           else
@@ -247,8 +261,8 @@ jobs:
             reports/openhands-agent-review.json
             reports/openhands-agent-preflight.json
             reports/openhands-cloud-failure.json
-            reports/openhands-local-fallback-reservation.json
-            reports/openhands-local-fallback-execution.json
+            reports/openhands-gemini-fallback-reservation.json
+            reports/openhands-gemini-fallback-execution.json
             reports/openhands-sandbox-verdict.json
             reports/openhands-goldfish-review.json
             reports/openhands-review/
@@ -272,15 +286,15 @@ jobs:
           preflight=Path("reports/openhands-agent-preflight.json")
           if preflight.is_file():
               engine=json.loads(preflight.read_text()).get("engine","openhands")
-          fallback=Path("reports/openhands-local-fallback-reservation.json")
+          fallback=Path("reports/openhands-gemini-fallback-reservation.json")
           attempted=fallback.is_file()
           cloud_status="NOT_APPLICABLE"
           if attempted:
-              engine="aider_local_ollama"
+              engine="gemini_free_openhands"
               cloud_status=json.loads(fallback.read_text()).get("cloud_attempt_status","UNKNOWN")
-              status="BLOCKED_LOCAL_FALLBACK_PREPARATION"
-              if Path("reports/openhands-local-fallback-execution.json").is_file():
-                  status="BLOCKED_LOCAL_FALLBACK_NO_REVIEWABLE_PATCH"
+              status="BLOCKED_GEMINI_FALLBACK_PREPARATION"
+              if Path("reports/openhands-gemini-fallback-execution.json").is_file():
+                  status="BLOCKED_GEMINI_FALLBACK_NO_REVIEWABLE_PATCH"
           if report.is_file():
               d=json.loads(report.read_text())
               if (not attempted and d.get("status")=="BLOCKED_ORIGINAL_DAILY_FREE_AI_CAP"
@@ -328,10 +342,10 @@ jobs:
                   marker in str(x.get("body",""))
                   or (attempt=="1" and legacy in str(x.get("body","")))
                   for x in comments):
-              headline=("OpenHands original public repair" if engine=="openhands" else "Aider local original public repair")
+              headline={"openhands":"OpenHands original public repair","aider_local_ollama":"Aider local original public repair","gemini_free_openhands":"Gemini free original public repair"}[engine]
               msg=(marker+"\n**"+headline+": "+status+"**\n"
                    "Coding engine: "+engine+"\n"
-                   "Local fallback attempted: "+str(attempted).lower()+"\n"
+                   "Gemini fallback attempted: "+str(attempted).lower()+"\n"
                    "Cloud attempt status: "+cloud_status+"\n"
                    "Attempt: "+attempt+"\n"
                    "Untrusted candidate only, no source code merged, no accounts written. "
@@ -352,5 +366,6 @@ jobs:
         run: |
           docker rm -f plenum-temporary-ollama 2>/dev/null || true
           docker network rm plenum-coding-isolated 2>/dev/null || true
+
 
 
