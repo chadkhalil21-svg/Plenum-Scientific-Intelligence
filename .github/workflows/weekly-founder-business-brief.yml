@@ -44,6 +44,7 @@ jobs:
       - run: python -m unittest discover -s tests -p 'test_founder_instruction_audit.py' -v
       - run: python -m unittest discover -s tests -p 'test_free_local_tool_adapter.py' -v
       - run: python -m unittest discover -s tests -p 'test_minister_missed_public_wake.py' -v
+      - run: python -m unittest discover -s tests -p 'test_minister_free_coder_nextday.py' -v
   actual-public-status:
     if: >-
       github.event_name == 'workflow_dispatch' ||
@@ -92,7 +93,8 @@ jobs:
     timeout-minutes: 4
     permissions:
       contents: write  # required only for native same-repo repository_dispatch
-      issues: write    # durable wake-attempt marker on exact original issue
+      issues: write    # durable original issue reservation and execution receipt
+      actions: write   # native rerun of ONE authenticated local-budget-limited original job
     steps:
       - uses: actions/checkout@v4
         with:
@@ -102,7 +104,7 @@ jobs:
           python-version: '3.12'
       - name: Reuse original Chief/inbox parsers without a new model or queue
         run: python -m pip install -e .
-      - name: Wake at most two genuinely missed owner PUBLIC missions
+      - name: Wake missed owner work and re-run one post-reset original Free coder
         env:
           GH_TOKEN: ${{ github.token }}
         run: python -m plenum_ai.minister_missed_public_wake
