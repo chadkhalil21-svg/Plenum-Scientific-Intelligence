@@ -16,7 +16,9 @@ test("original GitHub OIDC issuer signature audience workflow and main-ref are v
   const jwk=await webcrypto.subtle.exportKey("jwk",pair.publicKey);
   const header=enc({alg:"RS256",kid:"original-ci-kid"});
   const payload={iss:"https://token.actions.githubusercontent.com",aud:"plenum-original-public-coder",
-    repository:REPO,sub:"repo:"+REPO+":ref:refs/heads/main",
+    repository:REPO,
+    repository_owner_id:"251133044",repository_id:"1447724141",
+    sub:"repo:chadkhalil21-svg@251133044/Plenum-Scientific-Intelligence@1447724141:ref:refs/heads/main",
     workflow_ref:REPO+"/.github/workflows/business-workforce-runtime.yml@refs/heads/main",
     event_name:"issues",iat:now-1,exp:now+240};
   async function sign(p) {
@@ -29,6 +31,9 @@ test("original GitHub OIDC issuer signature audience workflow and main-ref are v
   for(const modified of [
     {...payload,aud:"other"},
     {...payload,repository:"untrusted/other"},
+    {...payload,sub:"repo:"+REPO+":ref:refs/heads/main"},
+    {...payload,repository_id:"999999999"},
+    {...payload,repository_owner_id:"999999999"},
     {...payload,workflow_ref:"attacker/repo/.github/workflows/job.yml@refs/heads/main"},
     {...payload,event_name:"pull_request"},
     {...payload,exp:now-1},
