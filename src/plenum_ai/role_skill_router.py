@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 ROSTER = Path(__file__).resolve().parents[2] / "integrations/hermes/roster.json"
@@ -43,6 +44,11 @@ HUMANIZER_TRIGGERS = (
 )
 
 
+def _mentions(text: str, term: str) -> bool:
+    """Match whole words and whole multiword phrases; never substrings."""
+    return bool(re.search(r"(?<!\\w)" + re.escape(term) + r"(?!\\w)", text))
+
+
 def route(role: str, objective: str, *, roster_path: Path = ROSTER, max_skills: int = 3) -> dict:
     if not isinstance(role, str) or not isinstance(objective, str) or not 8 <= len(objective) <= 350:
         raise ValueError("Require bounded named role and objective")
@@ -60,7 +66,7 @@ def route(role: str, objective: str, *, roster_path: Path = ROSTER, max_skills: 
     for index, slug in enumerate(permitted):
         if slug in ("humanizer", "plenum-editorial-quality"):
             continue
-        overlap = sum(1 for word in MATCHES.get(slug, ()) if word in text)
+        overlap = sum(1 for word in MATCHES.get(slug, ()) if _mentions(text, word))
         ranked.append((-overlap, index, slug))
     ranked.sort()
     chosen = [item[2] for item in ranked[:1]] if ranked else []
@@ -70,8 +76,8 @@ def route(role: str, objective: str, *, roster_path: Path = ROSTER, max_skills: 
             break
         if _score < 0:
             chosen.append(slug)
-    needs_writing = any(v in text for v in WRITING_TRIGGERS)
-    needs_humanizing = any(v in text for v in HUMANIZER_TRIGGERS)
+    needs_writing = any(_mentions(text, v) for v in WRITING_TRIGGERS)
+    needs_humanizing = any(_mentions(text, v) for v in HUMANIZER_TRIGGERS)
     if needs_writing and "plenum-editorial-quality" in permitted and len(chosen) < max_skills:
         chosen.append("plenum-editorial-quality")
     if needs_humanizing and "humanizer" in permitted and len(chosen) < max_skills:
