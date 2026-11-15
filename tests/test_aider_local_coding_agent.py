@@ -214,6 +214,7 @@ class AiderLocalRouteTest(unittest.TestCase):
                 self.assertEqual(observed['conversation']['max_iteration_per_run'], 4)
                 self.assertEqual([t.name for t in observed['conversation']['agent'].tools], ['proposal_only_file_editor'])
                 self.assertEqual(len(observed['delegated']), 2)
+                self.assertIn(observed['delegated'][0], observed['message'])
                 options = observed['llm']
                 self.assertEqual(options['model'], 'gemini/gemini-3.5-flash-lite')
                 self.assertEqual(options['api_key'], env['PLENUM_GEMINI_API_KEY'])
