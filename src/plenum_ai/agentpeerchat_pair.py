@@ -22,6 +22,12 @@ def verified_me(base, key):
     except HTTPError as exc:
         if exc.code == 401:
             return None
+        if exc.code == 403:
+            # Categorize the 403 without exposing any body, headers or credentials.
+            kind = (exc.headers.get("Content-Type", "").lower()
+                    if exc.headers else "")
+            detail = "app_json" if "json" in kind else "edge_html"
+            raise RuntimeError("peer_me_http_403_" + detail) from None
         raise RuntimeError("peer_me_http_" + str(exc.code)) from None
 
 
@@ -69,7 +75,7 @@ def main():
         print("pairing_status=" + pair(args.model))
     except Exception as exc:
         detail = str(exc)
-        if not (re.fullmatch(r"(?:pairing_http_|peer_me_http_)[45][0-9]{2}", detail)
+        if not (re.fullmatch(r"(?:pairing_http_|peer_me_http_)[45][0-9]{2}(?:_(?:app_json|edge_html))?", detail)
                 or detail in ("pairing_not_authenticated", "pairing_not_accepted",
                               "agent_access_key_format", "agent_identity_mismatch",
                               "invitation_identity_mismatch")):
