@@ -221,5 +221,32 @@ class CouncilBridgeTests(unittest.TestCase):
         self.assertEqual(len(api.acked), 1)
 
 
+class ClaudeBridgeTests(unittest.TestCase):
+    def test_claude_identity_and_access_config(self):
+        self.assertEqual(c.config("claude", {"PLENUM_APC_CLAUDE_KEY": "x"*32})[1], "x"*32)
+        self.assertEqual(c.classify({"type":"text","sender_id":OWNER,"content":"Council question"},
+                 "claude",{OWNER:{"kind":"owner"}},"agt_claude"),("initial","Council question"))
+    def test_claude_requires_provider_credential(self):
+        with self.assertRaisesRegex(RuntimeError,"missing_puter_token"):
+            c.claude_answer("initial","Hello",{})
+    def test_claude_sdk_call_is_bounded_and_isolates_credentials(self):
+        with patch.object(c.subprocess, "run", return_value=c.subprocess.CompletedProcess(
+                ["node"], 0, stdout='{"answer":"Independent answer"}', stderr='')) as call:
+            self.assertEqual(c.claude_answer("initial", "Question", {
+                "PLENUM_PUTER_TOKEN": "test-token", "PLENUM_APC_CLAUDE_KEY": "private-key"}),
+                "Independent answer")
+        args, kw = call.call_args
+        self.assertIn("anthropic/claude-haiku-5-5", args[0][2])
+        self.assertIn("refusalFallback: false", args[0][2])
+        self.assertNotIn("PLENUM_APC_CLAUDE_KEY", kw["env"])
+        self.assertNotIn("test-token", str(args))
+    def test_claude_peer_can_be_criticized_once(self):
+        member={"agt_claude":{"kind":"agent","name":"Plenum Prometheus — Claude"}}
+        msg={"type":"text","sender_id":"agt_claude","content":"[Claude | initial]\nA claim"}
+        self.assertEqual(c.classify(msg,"qwen",member,QWEN),("critique","A claim"))
+        msg["content"]="[Claude | critique]\nA claim"
+        self.assertIsNone(c.classify(msg,"qwen",member,QWEN))
+
+
 if __name__ == "__main__":
     unittest.main()
