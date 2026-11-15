@@ -96,8 +96,14 @@ class IntakeTests(unittest.TestCase):
                 }), encoding="utf-8")
                 return FakeRun()
             actual = w.run_issue(owner_event, output_dir=Path(folder), runner=original_funding_result)
-            self.assertEqual(actual["status"], "DRAFT_READY_FOR_FOUNDER")
+            # Actual original #708 proved a valid NSF funding category does
+            # not imply fit with photonic concrete infrastructure sensing.
+            self.assertEqual(actual["status"], "REVIEW_REQUIRED_FUNDING_SUBJECT_RELEVANCE")
+            self.assertFalse(actual["verified"])
             self.assertEqual(actual["source_linked_records"], 1)
+            self.assertEqual(actual["quality"], "FUNDING_CATEGORY_ONLY_SUBJECT_REVIEW_REQUIRED")
+            self.assertFalse(actual["funding_subject_relevance_independently_verified"])
+            self.assertIn("eligibility remain unverified", actual["reason"])
             self.assertFalse(actual["individual_papers_independently_validated"])
             self.assertFalse(actual["scientific_discovery_verified"])
 

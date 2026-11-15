@@ -97,7 +97,11 @@ def validate_original_report(path: Path, objective: str) -> dict:
         "individual_papers_independently_validated": False,
         "scientific_discovery_verified": False,
         "business_accounts_touched": False,
-        "quality": "PUBLIC_SOURCE_LEADS_FOR_REVIEW" if vetted else "NO_SOURCE_LEADS",
+        "quality": ("FUNDING_CATEGORY_ONLY_SUBJECT_REVIEW_REQUIRED"
+                    if original_source_category(objective) == "funding" and vetted
+                    else "PUBLIC_SOURCE_LEADS_FOR_REVIEW" if vetted
+                    else "NO_SOURCE_LEADS"),
+        "funding_subject_relevance_independently_verified": False,
     }
 
 
@@ -184,6 +188,20 @@ def run_issue(event: dict, *, output_dir: Path, runner=subprocess.run) -> dict:
     if checked["source_linked_records"] == 0:
         return {**task, **checked, "status": "BLOCKED_NO_SOURCE_EVIDENCE",
                 "verified": False, "output_artifact": output.name}
+    if original_source_category(task["objective"]) == "funding":
+        # Original mission #708 retrieved genuine funding-category records
+        # unrelated to the founder's photonics objective. A real provider URL
+        # and category tag do NOT independently establish program fit.
+        # Preserve useful leads, but NEVER claim the requested subject verified.
+        return {
+            **task, **checked,
+            "status": "REVIEW_REQUIRED_FUNDING_SUBJECT_RELEVANCE",
+            "verified": False, "output_artifact": output.name,
+            "verified_scope": "funding-category public metadata only",
+            "reason": "Specific topic, application scope and eligibility remain unverified",
+            "no_money_spent_by_worker": True,
+            "completed_at_utc": datetime.now(timezone.utc).isoformat(),
+        }
     return {
         **task, **checked, "status": "DRAFT_READY_FOR_FOUNDER",
         "verified": True, "output_artifact": output.name,
