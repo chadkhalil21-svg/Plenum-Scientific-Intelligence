@@ -211,15 +211,24 @@ jobs:
                   status="REVIEW_ONLY_PATCH_READY_NOT_MERGED"
                   digest=d.get("candidate_artifact_sha256","")
           run=os.environ["GITHUB_RUN_ID"]
-          marker="<!-- plenum-openhands-review:"+run+" -->"
+          attempt=os.environ["GITHUB_RUN_ATTEMPT"]
+          if not attempt.isascii() or not attempt.isdecimal() or not 1 <= int(attempt) <= 100:
+              raise ValueError("invalid original GitHub attempt identifier")
+          marker="<!-- plenum-openhands-review:"+run+":attempt:"+attempt+" -->"
+          # Preserve idempotency for existing original first-attempt receipts.
+          legacy="<!-- plenum-openhands-review:"+run+" -->"
           root="https://api.github.com/repos/"+os.environ["GITHUB_REPOSITORY"]+"/issues/"+str(issue)+"/comments"
           headers={"Authorization":"Bearer "+os.environ["GH_TOKEN"],
                    "Accept":"application/vnd.github+json",
                    "User-Agent":"PlenumOriginalOpenHandsReview/1"}
           with urlopen(Request(root+"?per_page=100",headers=headers),timeout=15) as response:
               comments=json.loads(response.read(250000))
-          if not any(marker in str(x.get("body","")) for x in comments):
+          if not any(
+                  marker in str(x.get("body",""))
+                  or (attempt=="1" and legacy in str(x.get("body","")))
+                  for x in comments):
               msg=(marker+"\n**OpenHands original public repair: "+status+"**\n"
+                   "Attempt: "+attempt+"\n"
                    "Untrusted candidate only, no source code merged, no accounts written. "
                    "Independent semantic review and original CI remain REQUIRED.\n"
                    "Artifact SHA256: "+digest+"\n"
