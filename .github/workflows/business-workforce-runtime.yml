@@ -72,6 +72,7 @@ jobs:
     permissions:
       contents: read
       issues: write
+      actions: read
       id-token: write
     timeout-minutes: 32
     env:
@@ -123,7 +124,7 @@ jobs:
               print("authorized=true",file=output)
           PY
       - name: Use only GitHub-issued ephemeral OIDC for original Free Worker AI
-        if: github.event_name == 'issues' && steps.owner-preflight.outputs.engine == 'openhands'
+        if: github.event_name == 'issues' && steps.coding-reservation.outputs.authorized == 'true' && steps.owner-preflight.outputs.engine == 'openhands'
         shell: bash
         run: |
           set -euo pipefail
@@ -154,20 +155,20 @@ jobs:
           '
           printf 'PLENUM_OPENHANDS_API_KEY=%s\n' "$jwt" >> "$GITHUB_ENV"
       - name: Install exact previously reviewed OpenHands SDK
-        if: steps.owner-preflight.outputs.engine != 'aider_local_ollama'
+        if: github.event_name != 'issues' || (steps.coding-reservation.outputs.authorized == 'true' && steps.owner-preflight.outputs.engine != 'aider_local_ollama')
         run: |
           python -m pip install -e ".[openhands_tools]"
           python -m pip check
       - name: Invoke authenticated original cloud coding engine once
         id: cloud-coding
-        if: github.event_name == 'issues' && steps.owner-preflight.outputs.engine == 'openhands'
+        if: github.event_name == 'issues' && steps.coding-reservation.outputs.authorized == 'true' && steps.owner-preflight.outputs.engine == 'openhands'
         continue-on-error: true
         run: |
           timeout 240 python -m plenum_ai.openhands_coding_agent --execute \
             --event "$GITHUB_EVENT_PATH" --out reports/openhands-agent-review.json
       - name: Reserve owner-verified Gemini Free recovery only from bound terminal cloud failure
         id: gemini-fallback-preflight
-        if: steps.cloud-coding.outcome == 'failure' && vars.PLENUM_GEMINI_FREE_RECOVERY_DISABLED != 'true'
+        if: steps.coding-reservation.outputs.authorized == 'true' && steps.cloud-coding.outcome == 'failure' && vars.PLENUM_GEMINI_FREE_RECOVERY_DISABLED != 'true'
         env:
           # Existing Default Gemini Project verified Free by owner on 2026-11-15.
           # Disable this route before changing the project/key/billing tier and reverify.
@@ -179,7 +180,7 @@ jobs:
         if: steps.cloud-coding.outcome == 'failure' && steps.gemini-fallback-preflight.outputs.eligible != 'true'
         run: exit 1
       - name: Invoke fixed Gemini Free OpenHands FileEditor once, review only
-        if: steps.gemini-fallback-preflight.outputs.eligible == 'true'
+        if: steps.coding-reservation.outputs.authorized == 'true' && steps.gemini-fallback-preflight.outputs.eligible == 'true'
         env:
           PLENUM_GEMINI_FREE_PROJECT_APPROVAL: 'owner-verified-default-gemini-project-free-2026-11-15'
           PLENUM_GEMINI_API_KEY: ${{ secrets.PLENUM_GEMINI_API_KEY }}
@@ -193,7 +194,7 @@ jobs:
             exit 1
           fi
       - name: Start Ollama locally, never expose model server on public interface
-        if: github.event_name != 'issues' || steps.owner-preflight.outputs.engine == 'aider_local_ollama'
+        if: github.event_name != 'issues' || (steps.coding-reservation.outputs.authorized == 'true' && steps.owner-preflight.outputs.engine == 'aider_local_ollama')
         run: |
           docker pull ollama/ollama:latest
           docker image inspect ollama/ollama:latest --format 'Ollama image digest {{index .RepoDigests 0}}'
@@ -219,7 +220,7 @@ jobs:
           docker exec plenum-temporary-ollama ollama pull qwen3:1.7b
           docker exec plenum-temporary-ollama ollama list
       - name: Download verified free coding model and pinned Aider before isolating their network
-        if: steps.owner-preflight.outputs.engine == 'aider_local_ollama'
+        if: steps.coding-reservation.outputs.authorized == 'true' && steps.owner-preflight.outputs.engine == 'aider_local_ollama'
         run: |
           set -euo pipefail
           docker exec plenum-temporary-ollama ollama pull qwen2.5-coder:7b
@@ -232,7 +233,7 @@ jobs:
           docker network connect plenum-coding-isolated plenum-temporary-ollama
           docker network disconnect bridge plenum-temporary-ollama
       - name: Run selected original isolated coding engine, retain REVIEW-ONLY artifact
-        if: github.event_name != 'issues' || steps.owner-preflight.outputs.engine == 'aider_local_ollama'
+        if: github.event_name != 'issues' || (steps.coding-reservation.outputs.authorized == 'true' && steps.owner-preflight.outputs.engine == 'aider_local_ollama')
         env:
           PLENUM_SELECTED_CODING_ENGINE: ${{ steps.owner-preflight.outputs.engine }}
           PLENUM_OPENHANDS_API_KEY: ''
@@ -269,7 +270,7 @@ jobs:
             --report reports/openhands-agent-review.json \
             --verdict reports/openhands-sandbox-verdict.json
       - name: Reuse imported Google Goldfish as original independent read-only coding reviewer
-        if: always() && github.event_name == 'issues' && steps.cloud-coding.outcome == 'success'
+        if: always() && github.event_name == 'issues' && steps.coding-reservation.outputs.authorized == 'true' && steps.cloud-coding.outcome == 'success'
         run: >-
           python -m plenum_ai.openhands_goldfish_review
           --event "$GITHUB_EVENT_PATH"
