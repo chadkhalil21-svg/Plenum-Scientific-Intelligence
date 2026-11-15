@@ -1,4 +1,5 @@
 import hashlib
+import json
 import os
 from pathlib import Path
 import tempfile
@@ -34,6 +35,7 @@ class AiderLocalRouteTest(unittest.TestCase):
                     bound = Path(mount.split(',')[1].removeprefix('src='))
                     self.assertIn('--network=plenum-coding-isolated', command)
                     self.assertIn('--read-only', command)
+                    self.assertEqual(command[command.index('--model') + 1], 'ollama_chat/qwen2.5-coder:7b')
                     # #755's local model could not emit Aider SEARCH/REPLACE syntax.
                     self.assertEqual(command[command.index('--edit-format') + 1], 'whole')
                     self.assertIn('--no-suggest-shell-commands', command)
@@ -60,3 +62,61 @@ class AiderLocalRouteTest(unittest.TestCase):
                     coding.parse_owner_repair_event(event)
             finally:
                 os.chdir(previous)
+
+    def test_exact_original_cloud_receipt_authorizes_only_one_local_recovery(self):
+        with tempfile.TemporaryDirectory() as folder:
+            previous = Path.cwd()
+            os.chdir(folder)
+            try:
+                source = Path('src/plenum_ai/public_example.py')
+                source.parent.mkdir(parents=True)
+                source.write_text('def result():\n    return 1\n', encoding='utf-8')
+                event = {'action': 'opened', 'repository': {'full_name': coding.REPO},
+                         'issue': {'user': {'login': coding.OWNER}, 'number': 123,
+                                   'title': coding.REPAIR_TITLE,
+                                   'body': 'PLENUM_OPENHANDS_PUBLIC_REPAIR_V1\nfile: src/plenum_ai/public_example.py\nobjective: Correct the public function to return two.'}}
+                report = {'schema': 'plenum-openhands-coding-agent-v1',
+                          'upstream': 'OpenHands/software-agent-sdk',
+                          'status': 'BLOCKED_ORIGINAL_DAILY_FREE_AI_CAP',
+                          'failure_category': 'LOCAL_DURABLE_OBJECT_DAILY_BUDGET',
+                          'task': 'Correct the public function to return two.',
+                          'source_file': str(source), 'source_sha256': hashlib.sha256(source.read_bytes()).hexdigest(),
+                          'candidate_persisted': False, 'model_run_completed': False,
+                          'generated_code_executed': False, 'production_written': False,
+                          'external_accounts_changed': False, 'no_paid_fallback': True,
+                          'retry_same_day_authorized': False,
+                          'origin_issue_number': 123, 'origin_run_id': '1234', 'origin_run_attempt': '1'}
+                file = Path('reports/openhands-agent-review.json')
+                file.parent.mkdir()
+                original = json.dumps(report)
+                file.write_text(original)
+                if not hasattr(coding, 'reserve_local_fallback'):
+                    self.fail('No authorized same-job local fallback after cloud quota failure')
+                for key, wrong in [('source_sha256', 'bad'), ('origin_issue_number', 124),
+                                   ('origin_run_id', '9999'), ('origin_run_attempt', '2'),
+                                   ('candidate_persisted', True), ('failure_category', 'PERMISSION_DENIED')]:
+                    file.write_text(json.dumps({**report, key: wrong}))
+                    self.assertFalse(coding.reserve_local_fallback(event, run_id='1234', run_attempt='1'), key)
+                file.write_text(original)
+                self.assertFalse(coding.reserve_local_fallback(event, run_id='1234', run_attempt='2'))
+                candidate = Path('reports/openhands-review/issue-123.patch')
+                candidate.parent.mkdir()
+                candidate.write_text('already persisted')
+                self.assertFalse(coding.reserve_local_fallback(event, run_id='1234', run_attempt='1'))
+                candidate.unlink()
+                self.assertTrue(coding.reserve_local_fallback(event, run_id='1234', run_attempt='1'))
+                self.assertEqual(Path('reports/openhands-cloud-failure.json').read_text(), original)
+                self.assertFalse(coding.reserve_local_fallback(event, run_id='1234', run_attempt='1'))
+                archive = Path('reports/openhands-cloud-failure.json')
+                archive.write_text(json.dumps(report, indent=2))  # Same fields, different digest.
+                with self.assertRaises(PermissionError):
+                    coding.consume_local_fallback(event, run_id='1234', run_attempt='1')
+                archive.write_text(original)
+                consumed = coding.consume_local_fallback(event, run_id='1234', run_attempt='1')
+                self.assertEqual(consumed['cloud_attempt_status'], 'BLOCKED_ORIGINAL_DAILY_FREE_AI_CAP')
+                self.assertTrue(consumed['local_fallback_attempted'])
+                with self.assertRaises(PermissionError):
+                    coding.consume_local_fallback(event, run_id='1234', run_attempt='1')
+            finally:
+                os.chdir(previous)
+
