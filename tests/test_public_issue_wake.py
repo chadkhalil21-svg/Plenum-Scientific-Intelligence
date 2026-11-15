@@ -193,7 +193,7 @@ class PublicWakeAcceptance(unittest.TestCase):
         payload={
             "action":"edited",
             "issue":{"number":498,"state":"open","user":owner},
-            "comment":{"user":owner,"body":LEGACY_OWNER_APPROVAL+"\\nExisting original mission only"},
+            "comment":{"user":owner,"body":LEGACY_OWNER_APPROVAL+"\nExisting original mission only"},
             "sender":owner,
         }
         self.assertTrue(founder_approved_comment_event(payload,498))
@@ -217,11 +217,11 @@ class PublicWakeAcceptance(unittest.TestCase):
         prior = issue(
             number=498, comments=1, created_at="2026-11-11T20:38:55Z",
             title="[Plenum Chief] public mission",
-            body=("PLENUM_CHIEF_PUBLIC_MISSION_V1\\n"
+            body=("PLENUM_CHIEF_PUBLIC_MISSION_V1\n"
                   "objective: Research free documentary sources and original SVG music illustration for Plenum Terra"),
         )
         approved={"user":{"login":"chadkhalil21-svg"},
-                  "body":LEGACY_OWNER_APPROVAL+"\\nOriginal previously missed public mission"}
+                  "body":LEGACY_OWNER_APPROVAL+"\nOriginal previously missed public mission"}
         bot = {"status":"VERIFIED_BOUNDED_TEAM", "executed_workers":2,
                "independent_verified":True}
         def api(url,token,*,body=None):
