@@ -83,13 +83,13 @@ class CouncilBridgeTests(unittest.TestCase):
         }
         for source_model, sender in (("gemini", GEMINI), ("llama", LLAMA)):
             m = {"type": "text", "sender_id": sender,
-                 "content": c.MARKERS[source_model] + "\\nProposed approach"}
+                 "content": c.MARKERS[source_model] + "\nProposed approach"}
             self.assertEqual(c.classify(m, "qwen", peer, QWEN),
                              ("critique", "Proposed approach"))
-            m["content"] = c.CRITIQUE[source_model] + "\\nAssessment"
+            m["content"] = c.CRITIQUE[source_model] + "\nAssessment"
             self.assertIsNone(c.classify(m, "qwen", peer, QWEN))
         own = {"type": "text", "sender_id": LLAMA,
-               "content": c.MARKERS["llama"] + "\\nMy answer"}
+               "content": c.MARKERS["llama"] + "\nMy answer"}
         self.assertIsNone(c.classify(own, "llama", peer, LLAMA))
 
     def test_owner_member_required(self):
