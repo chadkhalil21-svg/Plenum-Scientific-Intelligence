@@ -151,7 +151,7 @@ def tailor_original_n8n_workflow(source: dict, task: dict) -> dict:
         # The HTTP Request output is the live public GitHub JSON object.
         # Preserve the founder's ORIGINAL task from the prior assignment node.
         agent["parameters"]["text"] = (
-            "={{ 'ROLE: ' + $('Assign Nine Roles').first().json.role + "
+            "={{ '/no_think\\nROLE: ' + $('Assign Nine Roles').first().json.role + "
             "'\\nMISSION: ' + $('Assign Nine Roles').first().json.mission + "
             "'\\nTASK: ' + $('Assign Nine Roles').first().json.instruction + "
             "'\\nRUBRIC: ' + $('Assign Nine Roles').first().json.rubric + "

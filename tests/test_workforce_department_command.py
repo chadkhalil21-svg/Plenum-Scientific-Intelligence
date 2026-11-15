@@ -81,6 +81,10 @@ class DirectNineDepartmentTests(TestCase):
         self.assertNotIn("$fromAI",json.dumps(tool))
         agent=next(x for x in compiled["nodes"] if x["name"]=="Plenum Specialist Agent")
         self.assertIn("PUBLIC GITHUB RESPONSE",agent["parameters"]["text"])
+        # Same upstream Qwen3 concise-output switch as the original Marketing route.
+        # This addresses a real empty engineering draft, but is not a live recovery claim.
+        self.assertIn("/no_think",agent["parameters"]["text"])
+        self.assertIn("/no_think\\nROLE:",agent["parameters"]["text"])
         self.assertIn("$('Assign Nine Roles').first().json.mission",
                       agent["parameters"]["text"])
         reviewer=next(x for x in compiled["nodes"] if x["name"]=="Founder Review Queue")
