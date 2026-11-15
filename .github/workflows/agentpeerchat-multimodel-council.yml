@@ -55,7 +55,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      # Idempotent: existing Qwen stays active; privately pair newly provisioned Gemini.
+      # Idempotent: Qwen remains active; Gemini now uses owner-provisioned Google AI key.
       - name: Recheck owner-saved AgentPeerChat invitations and activate available identities
         run: |
           python -m plenum_ai.agentpeerchat_pair --model qwen
