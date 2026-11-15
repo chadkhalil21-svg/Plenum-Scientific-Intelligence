@@ -532,6 +532,76 @@ def _cloud_failure_status(exc: Exception) -> str | None:
     return None
 
 
+def _gemini_failure_diagnostic(exc: Exception) -> dict:
+    """Preserve bounded, nonsecret typed causes for a failed native attempt.
+
+    OpenHands 1.60.1 wraps run errors in ConversationRunError (`raise ...
+    from e`). The outer name alone hid the actual cause in issue #770.
+    Never stringify exceptions, inspect prompts, provider bodies or logs, or
+    authorize a retry from this diagnostic.
+    """
+    import re
+
+    names = {
+        "LLMAuthenticationError": "GEMINI_LLM_AUTHENTICATION",
+        "LLMRateLimitError": "GEMINI_LLM_RATE_LIMIT",
+        "LLMTimeoutError": "GEMINI_LLM_TIMEOUT",
+        "LLMServiceUnavailableError": "GEMINI_LLM_UNAVAILABLE",
+        "LLMBadRequestError": "GEMINI_LLM_BAD_REQUEST",
+        "LLMContentPolicyViolationError": "GEMINI_LLM_CONTENT_POLICY",
+        "LLMNoResponseError": "GEMINI_LLM_NO_RESPONSE",
+        "LLMMalformedActionError": "GEMINI_LLM_MALFORMED_ACTION",
+        "LLMNoActionError": "GEMINI_LLM_NO_ACTION",
+        "LLMResponseError": "GEMINI_LLM_RESPONSE_ERROR",
+        "FunctionCallConversionError": "GEMINI_LLM_TOOL_CONVERSION",
+        "FunctionCallValidationError": "GEMINI_LLM_TOOL_VALIDATION",
+        "FunctionCallNotExistsError": "GEMINI_LLM_UNKNOWN_TOOL",
+        "LLMContextWindowExceedError": "GEMINI_LLM_CONTEXT_EXCEEDED",
+        "LLMContextWindowTooSmallError": "GEMINI_LLM_CONTEXT_TOO_SMALL",
+        "LLMMalformedConversationHistoryError": "GEMINI_LLM_MALFORMED_HISTORY",
+    }
+    categories = {NoReviewableProposalError: "GEMINI_NO_REVIEWABLE_PATCH",
+                  PermissionError: "GEMINI_LOCAL_PERMISSION"}
+    try:
+        sdk_types = importlib.import_module("openhands.sdk.llm.exceptions.types")
+    except ImportError:
+        pass
+    else:
+        for name, category in names.items():
+            kind = getattr(sdk_types, name, None)
+            if isinstance(kind, type) and issubclass(kind, Exception):
+                categories[kind] = category
+
+    chain = []
+    seen = set()
+    diagnostic = "GEMINI_UNCLASSIFIED_FAILURE"
+    current = exc
+    for _ in range(6):
+        if id(current) in seen:
+            break
+        seen.add(id(current))
+        kind = type(current)
+        # Exact SDK type identity classifies the failure, never its message.
+        if diagnostic == "GEMINI_UNCLASSIFIED_FAILURE" and kind in categories:
+            diagnostic = categories[kind]
+        identifier = kind.__name__
+        record = {"type": identifier if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,63}", identifier)
+                  else "UnclassifiedException"}
+        # Inspect only an existing plain integer field, not response bodies,
+        # request metadata, arbitrary properties, or stringified exceptions.
+        status = vars(current).get("status_code")
+        if type(status) is int and 100 <= status <= 599:
+            record["http_status"] = status
+        chain.append(record)
+        cause = current.__cause__
+        if not isinstance(cause, Exception):
+            break
+        current = cause
+    return {"failure_category": chain[0]["type"],
+            "diagnostic_category": diagnostic, "exception_chain": chain,
+            "automatic_retry_authorized": False}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--execute", action="store_true",
@@ -581,7 +651,7 @@ def main() -> None:
             report = {**gemini_plan(task, source_file=source_file),
                       **{key: value for key, value in fallback.items() if key != "schema"},
                       "status": "BLOCKED_GEMINI_CODER_NO_REVIEWABLE_PATCH",
-                      "failure_category": type(exc).__name__, "no_paid_fallback": True}
+                      **_gemini_failure_diagnostic(exc), "no_paid_fallback": True}
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
             print("Gemini coding status:", report["status"], report["failure_category"])

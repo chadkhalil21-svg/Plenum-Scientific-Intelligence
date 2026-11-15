@@ -42,12 +42,69 @@ def _sdk_exception_module():
         return types
     except ImportError:
         types = ModuleType("openhands.sdk.llm.exceptions.types")
-        for name in ("LLMRateLimitError", "LLMTimeoutError", "LLMServiceUnavailableError"):
+        for name in ("LLMRateLimitError", "LLMTimeoutError", "LLMServiceUnavailableError", "LLMBadRequestError"):
             setattr(types, name, type(name, (Exception,), {"__module__": types.__name__}))
         return types
 
 
 class OriginalFreeBudgetRecovery(unittest.TestCase):
+    def test_gemini_original_wrapped_failure_produces_nonsecret_typed_diagnostic_only(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            old = Path.cwd()
+            try:
+                os.chdir(temporary)
+                env = {**_authorized_fixture(), "PLENUM_GEMINI_FREE_PROJECT_APPROVAL": coder.GEMINI_FREE_APPROVAL}
+                event = json.loads(Path("event.json").read_text())
+                types = _sdk_exception_module()
+                cloud_error = types.LLMRateLimitError("429 original_daily_ai_budget_exhausted")
+                with patch.dict(os.environ, env), patch.dict(sys.modules, {types.__name__: types}):
+                    with patch.object(sys, "argv", ["coder", "--execute", "--event", "event.json"]), \
+                         patch.object(coder, "execute", side_effect=cloud_error):
+                        with self.assertRaises(SystemExit):
+                            coder.main()
+                    self.assertTrue(coder.reserve_gemini_fallback(event, run_id="1234", run_attempt="1"))
+                    provider_error = types.LLMBadRequestError("PRIVATE raw prompt and API key example")
+                    provider_error.status_code = 400
+                    ConversationRunError = type("ConversationRunError", (RuntimeError,), {})
+                    wrapped = ConversationRunError("PRIVATE wrapper text")
+                    wrapped.__cause__ = provider_error
+                    with patch.object(sys, "argv", ["coder", "--execute", "--gemini-fallback", "--event", "event.json"]), \
+                         patch.object(coder, "execute", side_effect=wrapped) as model:
+                        with self.assertRaises(SystemExit) as failure:
+                            coder.main()
+                        self.assertEqual(failure.exception.code, 2)
+                        self.assertEqual(model.call_count, 1)
+                report = json.loads(Path("reports/openhands-agent-review.json").read_text())
+                self.assertEqual(report["failure_category"], "ConversationRunError")
+                self.assertEqual(report["diagnostic_category"], "GEMINI_LLM_BAD_REQUEST")
+                self.assertEqual(report["exception_chain"], [{"type": "ConversationRunError"}, {"type": "LLMBadRequestError", "http_status": 400}])
+                self.assertFalse(report["automatic_retry_authorized"])
+                self.assertFalse(report["model_run_completed"])
+                self.assertFalse(report["candidate_persisted"])
+                self.assertNotIn("PRIVATE", json.dumps(report))
+            finally:
+                os.chdir(old)
+
+    def test_gemini_diagnostic_unknown_or_cyclic_chain_is_bounded_and_not_retried(self):
+        types = _sdk_exception_module()
+        fake = RuntimeError("LLMRateLimitError 429 confidential text")
+        fake.status_code = "429"
+        tail = RuntimeError("confidential tail")
+        tail.status_code = True
+        fake.__cause__ = tail
+        tail.__cause__ = fake
+        with patch.dict(sys.modules, {types.__name__: types}):
+            proof = coder._gemini_failure_diagnostic(fake)
+            self.assertEqual(proof["diagnostic_category"], "GEMINI_UNCLASSIFIED_FAILURE")
+            self.assertEqual(proof["exception_chain"], [{"type": "RuntimeError"}, {"type": "RuntimeError"}])
+            self.assertFalse(proof["automatic_retry_authorized"])
+            self.assertNotIn("confidential", str(proof))
+            first = current = RuntimeError("private")
+            for _ in range(12):
+                current.__cause__ = RuntimeError("private")
+                current = current.__cause__
+            self.assertLessEqual(len(coder._gemini_failure_diagnostic(first)["exception_chain"]), 6)
+
     def test_reuse_upstream_retry_config_only_for_exact_free_cloud_route(self):
         self.assertEqual(coder.original_free_retry_options(
             "openai/glm-4.7-flash", coder.ORIGINAL_FREE_CODING_ENDPOINT),
@@ -120,4 +177,5 @@ class OriginalFreeBudgetRecovery(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
 
