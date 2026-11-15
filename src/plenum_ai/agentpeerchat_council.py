@@ -212,8 +212,8 @@ const fs = require('node:fs');
   const content = result.message?.content;
   const answer = typeof content === 'string' ? content :
     Array.isArray(content) ? content.filter(p => p.type === 'text').map(p => p.text).join(' ') : '';
-  process.stdout.write(JSON.stringify({answer}));
-})().catch(() => { process.exitCode = 1; });
+  process.stdout.write(JSON.stringify({answer}), () => process.exit(0));
+})().catch(() => { process.exit(1); });
 """.replace("MODEL_ID", json.dumps(model))
     messages = [{"role": "system", "content": SYSTEM},
                 {"role": "user", "content": "TASK: " + kind + "\nMESSAGE:\n" + source}]

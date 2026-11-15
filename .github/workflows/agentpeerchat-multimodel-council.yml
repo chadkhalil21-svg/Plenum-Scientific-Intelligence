@@ -113,6 +113,7 @@ jobs:
         if: steps.mail.outputs.llama == 'true'
         run: python -m plenum_ai.agentpeerchat_council --model llama --mode run
       - name: Install official Puter SDK only for actionable Claude or Computer mail
+        id: puter_install
         if: steps.mail.outputs.claude == 'true' || steps.mail.outputs.computer == 'true'
         env:
           PLENUM_APC_QWEN_KEY: ''
@@ -133,7 +134,7 @@ jobs:
           PLENUM_PUTER_TOKEN: ${{ secrets.PLENUM_PUTER_TOKEN }}
         run: python -m plenum_ai.agentpeerchat_council --model claude --mode run
       - name: Computer (OpenAI GPT) — independently respond and critique within free allowance
-        if: steps.mail.outputs.computer == 'true'
+        if: ${{ !cancelled() && steps.puter_install.outcome == 'success' && steps.mail.outputs.computer == 'true' }}
         env:
           PLENUM_PUTER_TOKEN: ${{ secrets.PLENUM_PUTER_TOKEN }}
         run: python -m plenum_ai.agentpeerchat_council --model computer --mode run
