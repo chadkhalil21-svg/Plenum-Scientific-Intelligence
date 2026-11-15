@@ -52,7 +52,8 @@ class PeerAPI:
     def request(self, path, payload=None, idempotency=None, method=None):
         if not path.startswith("/") or "//" in path or ".." in path:
             raise ValueError("invalid_endpoint")
-        headers = {"Authorization": "Bearer " + self.token, "Accept": "application/json"}
+        headers = {"Authorization": "Bearer " + self.token, "Accept": "application/json",
+                   "User-Agent": "PlenumPrometheus-AgentPeerChat/1.0"}
         if idempotency:
             headers["Idempotency-Key"] = idempotency
         if payload is not None:
