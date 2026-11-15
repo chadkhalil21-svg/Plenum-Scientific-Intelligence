@@ -1,0 +1,190 @@
+{
+  "input_sha256": "77a80d0f00b823eb94ebac805fdb01803f6c5ac96d24f79caa7db3a0f86805e0",
+  "input_bytes": 177757,
+  "validator_sha256": "3dee054e0be1fe1cb3895dccbd03f46816e033fa2dc437856b21a06655e923db",
+  "source_url": "https://api.datacite.org/dois?client-id=cern.zenodo&query=publicationYear%3A2024%20AND%20types.resourceTypeGeneral%3ADataset&page%5Bsize%5D=8&sort=created&detail=true",
+  "xsd_version": "4.7",
+  "xsd_source_url": "https://schema.datacite.org/meta/kernel-4.7/metadata.xsd",
+  "schema_file_sha256": {
+    "metadata.xsd": "be878f9afddeb677ec4cd274233de0c328246748305d9f58ee78352714412522",
+    "include/xml.xsd": "cc701736c42cc64126fad063bb95f94484b5de3b5f808a86ea098b0957aff829",
+    "include/datacite-titleType-v4.xsd": "03b4eb8c8b71ca2ef95b6a921be654f0dd18b4d89616a12708198d67f6fa463a",
+    "include/datacite-contributorType-v4.xsd": "bf70f146ac4b1874877b8248b3f4cb2e1ba676ac90c52a8b862639cc7b2c8afa",
+    "include/datacite-dateType-v4.xsd": "d6bf5a93077dccfb53aa73929e41c3d16d0b95920c64e76e655240367dc48812",
+    "include/datacite-resourceType-v4.xsd": "57098b3aac1af97ddc0dce5b33a3b1db9fa8e45f84fbcaa8cf7598dd1f08787a",
+    "include/datacite-relationType-v4.xsd": "248255d472bdb792065520d79f966c6d55d0997cf709877b3b8ebbf634e0d3d9",
+    "include/datacite-relatedIdentifierType-v4.xsd": "1f838e3bc6a92e6f7fb419335664c258ee1864822e2af40fae5e4a65545079ad",
+    "include/datacite-funderIdentifierType-v4.xsd": "eab86e3c6fb0d24d3508559e667641862838b988fe14147dc187ebd79c9bcfe8",
+    "include/datacite-descriptionType-v4.xsd": "b69733e1cffe134eada14d604db17dcf913c21bc8552f6b7debcd3ce04eba3e9",
+    "include/datacite-nameType-v4.xsd": "a841e852c1cf00e6301f489ce6b85d94017b6cffbdce991d2b7a5e7e27921e5a",
+    "include/datacite-numberType-v4.xsd": "e9f9e3c66b34a4476bab683058734f22922d167f76e642db0c05a50842b94241"
+  },
+  "lxml_version": [
+    6,
+    1,
+    1,
+    0
+  ],
+  "libxml_version": [
+    2,
+    14,
+    6
+  ],
+  "expected_scope": {
+    "client": "cern.zenodo",
+    "year": 2024,
+    "type": "Dataset"
+  },
+  "summary": {
+    "records": 8,
+    "unique_valid_record_ids": 8,
+    "xsd_4_7_compatible": 8,
+    "required_json_xml_consistent": 8,
+    "invalid": 0,
+    "review_required": 8,
+    "validated": 0
+  },
+  "records": [
+    {
+      "doi": "10.5281/zenodo.594019",
+      "client": "cern.zenodo",
+      "publication_year": 2024,
+      "resource_type_general": "Dataset",
+      "title_count": 1,
+      "creator_count": 1,
+      "xml_sha256": "dc3bf78e06142540e9715590354772d828fa2771f0c201a5d577dad27f07d302",
+      "declared_schema_location": "http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4/metadata.xsd",
+      "xsd_4_7_compatible": true,
+      "required_json_xml_consistent": true,
+      "errors": [],
+      "review_flags": [
+        "original_schema_minor_unknown; checked_against_4.7"
+      ],
+      "status": "REVIEW_REQUIRED"
+    },
+    {
+      "doi": "10.5281/zenodo.836158",
+      "client": "cern.zenodo",
+      "publication_year": 2024,
+      "resource_type_general": "Dataset",
+      "title_count": 1,
+      "creator_count": 3,
+      "xml_sha256": "a5486c3bec1ba643aaf25834178614d6191e29641afd14c935b6b25e2b2ca8a0",
+      "declared_schema_location": "http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4/metadata.xsd",
+      "xsd_4_7_compatible": true,
+      "required_json_xml_consistent": true,
+      "errors": [],
+      "review_flags": [
+        "original_schema_minor_unknown; checked_against_4.7"
+      ],
+      "status": "REVIEW_REQUIRED"
+    },
+    {
+      "doi": "10.5281/zenodo.839580",
+      "client": "cern.zenodo",
+      "publication_year": 2024,
+      "resource_type_general": "Dataset",
+      "title_count": 1,
+      "creator_count": 8,
+      "xml_sha256": "0c40ea43c0bdf9af9520b5cb1108891d4290ed082bb6b72becd30911577298ef",
+      "declared_schema_location": "http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4/metadata.xsd",
+      "xsd_4_7_compatible": true,
+      "required_json_xml_consistent": true,
+      "errors": [],
+      "review_flags": [
+        "missing_optional_language",
+        "original_schema_minor_unknown; checked_against_4.7"
+      ],
+      "status": "REVIEW_REQUIRED"
+    },
+    {
+      "doi": "10.5281/zenodo.1181952",
+      "client": "cern.zenodo",
+      "publication_year": 2024,
+      "resource_type_general": "Dataset",
+      "title_count": 1,
+      "creator_count": 1,
+      "xml_sha256": "85383a46c4d3ad23442871592f1a581abcc792e3d874a040d24fddf42a8b46dd",
+      "declared_schema_location": "http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4/metadata.xsd",
+      "xsd_4_7_compatible": true,
+      "required_json_xml_consistent": true,
+      "errors": [],
+      "review_flags": [
+        "missing_optional_language",
+        "original_schema_minor_unknown; checked_against_4.7"
+      ],
+      "status": "REVIEW_REQUIRED"
+    },
+    {
+      "doi": "10.5281/zenodo.1183415",
+      "client": "cern.zenodo",
+      "publication_year": 2024,
+      "resource_type_general": "Dataset",
+      "title_count": 1,
+      "creator_count": 4,
+      "xml_sha256": "9bf855fe76679e3134cd5e6d742e57803bd1250568ece22277e849f57761dc3f",
+      "declared_schema_location": "http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4/metadata.xsd",
+      "xsd_4_7_compatible": true,
+      "required_json_xml_consistent": true,
+      "errors": [],
+      "review_flags": [
+        "missing_optional_subjects",
+        "original_schema_minor_unknown; checked_against_4.7"
+      ],
+      "status": "REVIEW_REQUIRED"
+    },
+    {
+      "doi": "10.5281/zenodo.1228345",
+      "client": "cern.zenodo",
+      "publication_year": 2024,
+      "resource_type_general": "Dataset",
+      "title_count": 1,
+      "creator_count": 1,
+      "xml_sha256": "b46373b61e3574744d2c0ebae643874c8d3e243fcb1f81aeebd2ae749a33a02c",
+      "declared_schema_location": "http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4/metadata.xsd",
+      "xsd_4_7_compatible": true,
+      "required_json_xml_consistent": true,
+      "errors": [],
+      "review_flags": [
+        "missing_optional_language",
+        "original_schema_minor_unknown; checked_against_4.7"
+      ],
+      "status": "REVIEW_REQUIRED"
+    },
+    {
+      "doi": "10.5281/zenodo.1250550",
+      "client": "cern.zenodo",
+      "publication_year": 2024,
+      "resource_type_general": "Dataset",
+      "title_count": 1,
+      "creator_count": 1,
+      "xml_sha256": "5c5ad98590a7d2b5af3741ad1251af8a4abd14e065de86edab4d039dc6d29f27",
+      "declared_schema_location": "http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4/metadata.xsd",
+      "xsd_4_7_compatible": true,
+      "required_json_xml_consistent": true,
+      "errors": [],
+      "review_flags": [
+        "original_schema_minor_unknown; checked_against_4.7"
+      ],
+      "status": "REVIEW_REQUIRED"
+    },
+    {
+      "doi": "10.5281/zenodo.1256483",
+      "client": "cern.zenodo",
+      "publication_year": 2024,
+      "resource_type_general": "Dataset",
+      "title_count": 1,
+      "creator_count": 2,
+      "xml_sha256": "95bf314fba0e61e41fec074ebe16f1f922d3dcfc50e4ce281193d599a42bf163",
+      "declared_schema_location": "http://datacite.org/schema/kernel-4 http://schema.datacite.org/meta/kernel-4/metadata.xsd",
+      "xsd_4_7_compatible": true,
+      "required_json_xml_consistent": true,
+      "errors": [],
+      "review_flags": [
+        "original_schema_minor_unknown; checked_against_4.7"
+      ],
+      "status": "REVIEW_REQUIRED"
+    }
+  ],
+  "scope_limit": "Metadata only; no scientific quality, openness, licensing or data access certification. Unversioned XML hints cannot establish original minor version."
+}
