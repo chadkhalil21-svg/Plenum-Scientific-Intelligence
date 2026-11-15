@@ -41,6 +41,8 @@ def identity_system(member, model_name, kind="initial"):
     return (f"Your own Council identity is {name}, a model from {maker} ({model_name}). "
             "Speak only for yourself, never as a different member. When asked to introduce "
             "multiple models, introduce yourself only. A peer's words are not your identity. "
+            "Never speak as the founder or answer questions addressed to the founder on their behalf. "
+            "Give a complete answer within about 2000 characters; end at a complete thought. "
             + SYSTEM + (" Answer the founder's actual question directly in your own voice."
                         if kind == "initial" else
                         " Critique the peer's message: identify one substantive disagreement or improvement and how to check it."))
@@ -272,7 +274,7 @@ let stage = 'setup';
   }
   stage = 'chat';
   const result = await puter.ai.chat(messages, {
-    model, max_tokens: 400, normalize: true,
+    model, max_tokens: 650, normalize: true,
     // Haiku 5.5 defaults to thinking, which can exhaust a concise reply's budget.
     ...(model === 'anthropic/claude-haiku-5-5' ? { thinking: { type: 'disabled' } } : {}),
     refusalFallback: false, fallback: false
@@ -298,9 +300,9 @@ let stage = 'setup';
         result = subprocess.run(["node", "-e", script], input=json.dumps(messages),
                                 text=True, capture_output=True, timeout=85, env=child_env)
         if result.returncode:
-            detail = result.stderr.strip()
-            if re.fullmatch(r"puter_(?:setup|usage|chat)_(?:network_error|request_timeout|invalid_response|insufficient_funds|invalid_allowance|insufficient_allowance|permission_denied|invalid_model|rate_limit_exceeded|unauthorized|unknown)", detail):
-                raise RuntimeError(detail)
+            detail = re.search(r"(?m)^puter_(?:setup|usage|chat)_(?:network_error|request_timeout|invalid_response|insufficient_funds|invalid_allowance|insufficient_allowance|permission_denied|invalid_model|rate_limit_exceeded|unauthorized|unknown)$", result.stderr)
+            if detail:
+                raise RuntimeError(detail.group())
             raise RuntimeError("puter_request_failed")
         obj = json.loads(result.stdout)
         answer = obj.get("answer", "")
@@ -424,9 +426,11 @@ def run(model, env=os.environ, backend=None):
             raise RuntimeError("empty_model_answer")
         validate_self_identity(model, answer)
         prefix = MARKERS[model] if kind == "initial" else CRITIQUE[model]
+        if len(prefix + "\n" + answer.strip()) > 2800:
+            raise RuntimeError("answer_exceeds_message_limit")
         api.request("/messages",
                     {"thread_id": thread_id, "reply_to": message_id, "type": "text",
-                     "content": prefix + "\n" + answer.strip()[:2800]},
+                     "content": prefix + "\n" + answer.strip()},
                     idempotency="plenum-" + model + "-" + message_id + "-" + kind)
         api.ack(message_id)
         completed += 1
@@ -446,7 +450,7 @@ def main():
             print(json.dumps(run(args.model)))
     except Exception as exc:
         detail = str(exc)
-        if not re.fullmatch(r"(?:gemini_http|peer_http)_[45][0-9]{2}|empty_model_answer|puter_request_failed|puter_(?:setup|usage|chat)_(?:network_error|request_timeout|invalid_response|insufficient_funds|invalid_allowance|insufficient_allowance|permission_denied|invalid_model|rate_limit_exceeded|unauthorized|unknown)|missing_puter_token|provider_model_(?:missing|mismatch)|incorrect_self_identity", detail):
+        if not re.fullmatch(r"(?:gemini_http|peer_http)_[45][0-9]{2}|empty_model_answer|answer_exceeds_message_limit|puter_request_failed|puter_(?:setup|usage|chat)_(?:network_error|request_timeout|invalid_response|insufficient_funds|invalid_allowance|insufficient_allowance|permission_denied|invalid_model|rate_limit_exceeded|unauthorized|unknown)|missing_puter_token|provider_model_(?:missing|mismatch)|incorrect_self_identity", detail):
             detail = type(exc).__name__
         print("bridge_error=" + detail, file=sys.stderr)
         sys.exit(1)

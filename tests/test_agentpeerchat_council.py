@@ -350,6 +350,21 @@ class ComputerBridgeTests(unittest.TestCase):
 
 
 class PerplexityBridgeTests(unittest.TestCase):
+    def test_puter_redacted_stage_survives_sdk_warning(self):
+        with patch.object(c.subprocess, 'run', return_value=c.subprocess.CompletedProcess(
+                ['node'], 1, stdout='', stderr='SDK warning PRIVATE\nputer_usage_unknown\n')):
+            with self.assertRaisesRegex(RuntimeError, '^puter_usage_unknown$'):
+                c.perplexity_answer('initial', 'Question', {'PLENUM_PUTER_TOKEN':'test'})
+
+    def test_complete_answers_not_silently_clipped(self):
+        msg = {'id':'msg_long', 'thread_id':THREAD, 'sender_id':OWNER, 'type':'text', 'content':'Question'}
+        api = FakeAPI([msg])
+        with patch.object(c, 'PeerAPI', return_value=api):
+            with self.assertRaisesRegex(RuntimeError, '^answer_exceeds_message_limit$'):
+                c.run('qwen', {'PLENUM_APC_QWEN_KEY':'x'*32}, lambda *_: 'a'*2801)
+        self.assertEqual(api.sent, [])
+        self.assertEqual(api.acked, [])
+
     def test_perplexity_reports_allowance_failure_without_disclosing_provider_error(self):
         native_run = c.subprocess.run
         def simulate_provider(args, **kwargs):
