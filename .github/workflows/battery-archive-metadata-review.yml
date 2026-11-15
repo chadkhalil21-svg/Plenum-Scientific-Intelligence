@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
       - name: Download exactly one bounded public upstream CSV and verify immutable Git blob
@@ -24,7 +24,7 @@ jobs:
               data = response.read(2_000_001)
           if len(data) > 2_000_000:
               raise SystemExit('input too large')
-          blob = hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\\0' + data).hexdigest()
+          blob = hashlib.sha1(b'blob ' + str(len(data)).encode() + bytes([0]) + data).hexdigest()
           expected = '79210cafa412a5c3da915305c8f74a23f7add32b'
           if blob != expected:
               raise SystemExit('upstream blob changed: fail closed, no substituted data')
