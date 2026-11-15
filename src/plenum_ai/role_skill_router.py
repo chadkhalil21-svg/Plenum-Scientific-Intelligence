@@ -46,7 +46,7 @@ HUMANIZER_TRIGGERS = (
 
 def _mentions(text: str, term: str) -> bool:
     """Match whole words and whole multiword phrases; never substrings."""
-    return bool(re.search(r"(?<!\\w)" + re.escape(term) + r"(?!\\w)", text))
+    return bool(re.search(r"(?<!\w)" + re.escape(term) + r"(?!\w)", text))
 
 
 def route(role: str, objective: str, *, roster_path: Path = ROSTER, max_skills: int = 3) -> dict:
