@@ -68,7 +68,13 @@ def main():
     try:
         print("pairing_status=" + pair(args.model))
     except Exception as exc:
-        print("pairing_error=" + type(exc).__name__, file=sys.stderr)
+        detail = str(exc)
+        if not (re.fullmatch(r"(?:pairing_http_|peer_me_http_)[45][0-9]{2}", detail)
+                or detail in ("pairing_not_authenticated", "pairing_not_accepted",
+                              "agent_access_key_format", "agent_identity_mismatch",
+                              "invitation_identity_mismatch")):
+            detail = type(exc).__name__
+        print("pairing_error=" + detail, file=sys.stderr)
         sys.exit(1)
 
 
