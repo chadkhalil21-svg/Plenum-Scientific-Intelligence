@@ -240,6 +240,8 @@ jobs:
               critique=json.loads(goldfish.read_text())
               reviewer_state=critique.get("status", "BLOCKED_INVALID_REVIEW")
               reviewer_blocker_count=(critique.get("severity_counts") or {}).get("BLOCKER", 0)
+              if reviewer_state=="ADVISORY_WITH_BLOCKERS" and reviewer_blocker_count>0:
+                  status="BLOCKED_GOLDFISH_SEMANTIC_REVIEW_REQUIRED"
           run=os.environ["GITHUB_RUN_ID"]
           attempt=os.environ["GITHUB_RUN_ATTEMPT"]
           if not attempt.isascii() or not attempt.isdecimal() or not 1 <= int(attempt) <= 100:
