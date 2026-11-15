@@ -256,6 +256,25 @@ class DirectNineDepartmentTests(TestCase):
         self.assertEqual(result["network_requests"],0)
         self.assertFalse(result["code_installed_or_executed"])
 
+    def test_actual_engineering_placeholder_version_is_blocked_before_acceptance(self):
+        from plenum_ai.workforce_department_command import audit_public_draft_repositories
+        bad = (
+            "Use https://github.com/OpenHands/software-agent-sdk "
+            "version vX.Y.Z and claim independent approval."
+        )
+        audit = audit_public_draft_repositories(bad)
+        self.assertEqual(audit["status"], "REVIEW_REQUIRED_PLACEHOLDER_VERSION")
+        self.assertEqual(audit["unverifiable_version_placeholder_count"], 1)
+        self.assertFalse(audit["scientific_claims_independently_verified"])
+        actual_version = audit_public_draft_repositories(
+            "Inspect https://github.com/OpenHands/software-agent-sdk version 1.60.1"
+        )
+        self.assertEqual(actual_version["unverifiable_version_placeholder_count"], 0)
+        self.assertEqual(actual_version["status"], "REVIEW_REQUIRED_CLAIMS_NOT_FACT_CHECKED")
+        workflow = (ROOT / ".github/workflows/business-workforce-n8n-agent-trial.yml").read_text()
+        self.assertIn("BLOCKED_UNVERIFIABLE_VERSION_PLACEHOLDER", workflow)
+        self.assertIn("audit['unverifiable_version_placeholder_count']", workflow)
+
     def test_known_repo_never_means_technical_claim_is_verified(self):
         audit=audit_public_draft_repositories(
             "Use https://github.com/pybamm-team/PyBaMM for battery modeling.")
