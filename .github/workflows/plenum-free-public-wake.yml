@@ -38,6 +38,11 @@ jobs:
         with:
           node-version: '22'
       - run: node --test integrations/cloudflare/plenum-github-wake-worker.test.mjs integrations/cloudflare/plenum-private-continuity.test.mjs integrations/cloudflare/plenum-private-memory-check.test.mjs integrations/cloudflare/plenum-free-coding-ai.test.mjs
+      # The real Cloudflare preview build failed after source-only CI passed.
+      # Check the real upstream Wrangler bundler/config, no token or deployment.
+      - name: Verify existing Worker bundles with official Wrangler without deployment
+        working-directory: integrations/cloudflare
+        run: npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/plenum-worker-bundle
   resume-original-task:
     if: >-
       github.event_name == 'repository_dispatch' &&
