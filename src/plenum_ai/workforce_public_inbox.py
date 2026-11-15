@@ -35,6 +35,43 @@ def original_source_category(objective: str) -> str:
 
 
 
+
+# Feed category is not evidence that a grant fits a specific research topic.
+# Lexical matches are ONLY candidate signals; never verified eligibility.
+_FUNDING_SEARCH_WORDS = frozenset("""
+find review survey inspect check verify identify locate search current latest new
+available open nsf nih sbir sttr funding funded funds grants grant leads lead
+solicitation solicitations opportunities opportunity program programs awards award
+application applications proposal proposals deadline deadlines research studies
+study scientific science for from with into on the and of about that this
+small business startup federal national public original sources source
+""".split())
+
+
+def funding_subject_title_evidence(objective: str, records: list[dict]) -> tuple[int, int]:
+    """Count distinct subject stems and titles matching the subject.
+
+    Require two matching terms when an objective has multiple subject terms;
+    broad funding-program titles alone must not count as subject-specific.
+    No claim of verified topical fit, eligibility or proposal deadlines.
+    """
+    if original_source_category(objective) != "funding":
+        return 0, 0
+    stems = {word[:4] for word in re.findall(r"[a-z]{4,}", objective.lower())
+             if word not in _FUNDING_SEARCH_WORDS}
+    if not stems:
+        return 0, 0
+    needed = min(2, len(stems))
+    matched = 0
+    for row in records:
+        if not isinstance(row, dict) or not isinstance(row.get("title"), str):
+            continue
+        title_stems = {word[:4] for word in
+                       re.findall(r"[a-z]{4,}", row["title"].lower())}
+        if len(stems & title_stems) >= needed:
+            matched += 1
+    return len(stems), matched
+
 def parse_public_issue(event: dict) -> dict:
     """Fail closed before running software, including on non-owner issue events."""
     issue = event.get("issue") or {}
@@ -91,8 +128,12 @@ def validate_original_report(path: Path, objective: str) -> dict:
         and isinstance(x.get("url"), str) and x["url"].startswith("https://")
         and isinstance(x.get("source"), str) and isinstance(x.get("title"), str)
     ]
+    funding_terms, funding_matches = funding_subject_title_evidence(objective, vetted)
     return {
         "source_linked_records": len(vetted),
+        "funding_subject_stems": funding_terms,
+        "funding_subject_title_matches": funding_matches,
+        "funding_topic_fit_independently_verified": False,
         "public_metadata_schema_verified": True,
         "individual_papers_independently_validated": False,
         "scientific_discovery_verified": False,
@@ -184,6 +225,17 @@ def run_issue(event: dict, *, output_dir: Path, runner=subprocess.run) -> dict:
     if checked["source_linked_records"] == 0:
         return {**task, **checked, "status": "BLOCKED_NO_SOURCE_EVIDENCE",
                 "verified": False, "output_artifact": output.name}
+    if (original_source_category(task["objective"]) == "funding"
+            and checked["funding_subject_stems"] > 0
+            and checked["funding_subject_title_matches"] == 0):
+        return {
+            **task, **checked,
+            "status": "BLOCKED_FUNDING_TOPIC_UNVERIFIED",
+            "verified": False, "output_artifact": output.name,
+            "reason": "Funding feed lacks title evidence for the requested research subject",
+            "verified_scope": "provider metadata only; topic relevance not established",
+            "no_money_spent_by_worker": True,
+        }
     return {
         **task, **checked, "status": "DRAFT_READY_FOR_FOUNDER",
         "verified": True, "output_artifact": output.name,
