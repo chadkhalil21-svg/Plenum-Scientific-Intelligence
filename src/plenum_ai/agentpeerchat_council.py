@@ -13,10 +13,11 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
-AGENTS = {"qwen": "Plenum Prometheus — Qwen", "gemini": "Plenum Prometheus — Gemini"}
+AGENTS = {"qwen": "Plenum Prometheus — Qwen", "gemini": "Plenum Prometheus — Gemini",
+          "llama": "Plenum Prometheus — Llama"}
 TITLE = "Plenum AI Council — Public"
-MARKERS = {"qwen": "[Qwen | initial]", "gemini": "[Gemini | initial]"}
-CRITIQUE = {"qwen": "[Qwen | critique]", "gemini": "[Gemini | critique]"}
+MARKERS = {"qwen": "[Qwen | initial]", "gemini": "[Gemini | initial]", "llama": "[Llama | initial]"}
+CRITIQUE = {"qwen": "[Qwen | critique]", "gemini": "[Gemini | critique]", "llama": "[Llama | critique]"}
 SYSTEM = (
     "You are a participant in a public AI group discussion. Answer the founder's"
     " question with independent, concise, useful reasoning. On critique, identify"
@@ -113,11 +114,13 @@ def classify(message, model, principals, own_id):
     sender = principals.get(sender_id, {})
     if sender.get("kind") == "owner":
         return ("initial", content)
-    peer = "gemini" if model == "qwen" else "qwen"
-    if (sender.get("kind") == "agent" and
-        sender.get("name") == AGENTS[peer] and
-        content.startswith(MARKERS[peer])):
-        return ("critique", content[len(MARKERS[peer]):].strip())
+    # Permit one bounded critique of each OTHER model's initial response.
+    # Critiques never generate further critique tasks (no feedback loops).
+    if sender.get("kind") != "agent":
+        return None
+    for peer, name in AGENTS.items():
+        if peer != model and sender.get("name") == name and content.startswith(MARKERS[peer]):
+            return ("critique", content[len(MARKERS[peer]):].strip())
     return None
 
 
@@ -134,18 +137,30 @@ def existing_reply(api, thread_id, message_id, own_id):
     raise RuntimeError("thread_history_too_long")
 
 
-def qwen_answer(kind, source, env=os.environ):
+def ollama_answer(model, kind, source, env=os.environ):
+    """Use the original ephemeral GitHub Actions Ollama runtime for local models."""
+    model_name = {"qwen": "qwen3:1.7b", "llama": "llama3.2:1b"}.get(model)
+    if not model_name:
+        raise ValueError("unsupported_local_model")
     model_url = env.get("PLENUM_OLLAMA_URL", "http://127.0.0.1:11434/api/chat")
     if model_url != "http://127.0.0.1:11434/api/chat":
-        raise ValueError("unapproved_qwen_endpoint")
-    payload = {"model": "qwen3:1.7b", "stream": False, "think": False,
+        raise ValueError("unapproved_ollama_endpoint")
+    payload = {"model": model_name, "stream": False, "think": False,
                "messages": [{"role": "system", "content": SYSTEM},
-                            {"role": "user", "content": "TASK: " + kind + "\nMESSAGE:\n" + source}],
+                            {"role": "user", "content": "TASK: " + kind + "\\nMESSAGE:\\n" + source}],
                "options": {"num_predict": 400, "temperature": 0.5}}
     req = Request(model_url, json.dumps(payload).encode(),
                   {"Content-Type": "application/json"}, method="POST")
     with urlopen(req, timeout=190) as response:
         return json.loads(response.read(100000)).get("message", {}).get("content", "")
+
+
+def qwen_answer(kind, source, env=os.environ):
+    return ollama_answer("qwen", kind, source, env)
+
+
+def llama_answer(kind, source, env=os.environ):
+    return ollama_answer("llama", kind, source, env)
 
 
 def gemini_answer(kind, source, env=os.environ):
@@ -264,7 +279,7 @@ def run(model, env=os.environ, backend=None):
             api.ack(message_id)
             completed += 1
             continue
-        answer = (backend or (qwen_answer if model == "qwen" else gemini_answer))(
+        answer = (backend or {"qwen": qwen_answer, "gemini": gemini_answer, "llama": llama_answer}[model])(
             kind, source, env)
         if not isinstance(answer, str) or not answer.strip():
             raise RuntimeError("empty_model_answer")
