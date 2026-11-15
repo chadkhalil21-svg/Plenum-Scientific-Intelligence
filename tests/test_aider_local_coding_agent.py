@@ -151,6 +151,22 @@ class AiderLocalRouteTest(unittest.TestCase):
                         self.fail('Unverified Free project must be rejected before model invocation')
 
                 observed = {'runs': 0}
+                class FileEditorExecutor:
+                    def __init__(self, *, workspace_root):
+                        self.root = Path(workspace_root)
+                    def __call__(self, action, conversation=None):
+                        observed.setdefault('delegated', []).append(action.path)
+                        return SimpleNamespace(is_error=False)
+                class FileEditorTool:
+                    def __init_subclass__(cls, **kwargs):
+                        super().__init_subclass__(**kwargs)
+                        cls.name = 'proposal_only_file_editor'
+                    @classmethod
+                    def create(cls, conv_state):
+                        return [cls()]
+                    def set_executor(self, executor):
+                        self.executor = executor
+                        return self
                 class Conversation:
                     def __init__(self, **kwargs):
                         observed['conversation'] = kwargs
@@ -159,7 +175,21 @@ class AiderLocalRouteTest(unittest.TestCase):
                         observed['message'] = message
                     def run(self):
                         observed['runs'] += 1
-                        (self.workspace / 'proposal.py').write_text('def result():\n    return 2\n', encoding='utf-8')
+                        candidate = self.workspace / 'proposal.py'
+                        editor = observed['registered'].create(SimpleNamespace(workspace=SimpleNamespace(working_dir=str(self.workspace))))[0].executor
+                        for command in ('view', 'create', 'str_replace', 'insert', 'undo_edit'):
+                            for path in ('/etc/passwd', str(self.workspace), str(self.workspace / '..' / 'proposal.py'), 'proposal.py'):
+                                self_outer.assertTrue(editor(SimpleNamespace(command=command, path=path)).is_error)
+                        self_outer.assertFalse(editor(SimpleNamespace(command='view', path=str(candidate))).is_error)
+                        candidate.unlink()
+                        candidate.symlink_to('/etc/passwd')
+                        self_outer.assertTrue(editor(SimpleNamespace(command='view', path=str(candidate))).is_error)
+                        candidate.unlink()
+                        candidate.mkdir()
+                        self_outer.assertTrue(editor(SimpleNamespace(command='view', path=str(candidate))).is_error)
+                        candidate.rmdir()
+                        self_outer.assertFalse(editor(SimpleNamespace(command='create', path=str(candidate))).is_error)
+                        candidate.write_text('def result():\n    return 2\n', encoding='utf-8')
                 def llm(**kwargs):
                     observed['llm'] = kwargs
                     return SimpleNamespace(**kwargs)
@@ -168,14 +198,22 @@ class AiderLocalRouteTest(unittest.TestCase):
                 sdk.LLM, sdk.Conversation = llm, Conversation
                 sdk.Tool = lambda **kwargs: SimpleNamespace(**kwargs)
                 editor = ModuleType('openhands.tools.file_editor')
-                editor.FileEditorTool = SimpleNamespace(name='FileEditorTool')
+                editor.FileEditorTool = FileEditorTool
+                tool = ModuleType('openhands.sdk.tool')
+                tool.register_tool = lambda name, factory: observed.update(registered=factory)
+                impl = ModuleType('openhands.tools.file_editor.impl')
+                impl.FileEditorExecutor = FileEditorExecutor
+                definition = ModuleType('openhands.tools.file_editor.definition')
+                definition.FileEditorObservation = SimpleNamespace(from_text=lambda **kwargs: SimpleNamespace(**kwargs))
+                self_outer = self
                 with patch.dict(os.environ, {**env, 'PLENUM_GEMINI_FREE_PROJECT_APPROVAL': 'owner-verified-default-gemini-project-free-2026-11-15'}), \
-                     patch.dict(sys.modules, {sdk.__name__: sdk, editor.__name__: editor}), \
+                     patch.dict(sys.modules, {m.__name__: m for m in (sdk, editor, tool, impl, definition)}), \
                      patch.object(coding.importlib.metadata, 'version', return_value='1.60.1'):
                     report = coding.execute('Correct the public function to return two.', **args)
                 self.assertEqual(observed['runs'], 1)
                 self.assertEqual(observed['conversation']['max_iteration_per_run'], 4)
-                self.assertEqual([t.name for t in observed['conversation']['agent'].tools], ['FileEditorTool'])
+                self.assertEqual([t.name for t in observed['conversation']['agent'].tools], ['proposal_only_file_editor'])
+                self.assertEqual(len(observed['delegated']), 2)
                 options = observed['llm']
                 self.assertEqual(options['model'], 'gemini/gemini-3.5-flash-lite')
                 self.assertEqual(options['api_key'], env['PLENUM_GEMINI_API_KEY'])
