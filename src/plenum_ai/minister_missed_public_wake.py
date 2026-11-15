@@ -12,6 +12,7 @@ import argparse
 from datetime import datetime, timezone, timedelta
 import json
 import os
+import re
 from pathlib import Path
 from urllib.request import Request, urlopen
 
@@ -24,6 +25,123 @@ FIRST_ELIGIBLE_UTC = datetime(2026, 11, 13, tzinfo=timezone.utc)
 MIN_ISSUE_AGE = timedelta(minutes=65)
 MAX_ISSUES_PER_RUN = 2
 MAX_RESPONSE = 1_000_000
+# Reuse native GitHub Actions rerun after the original Free Worker AI day rolls over.
+# This is not a new agent, scheduler, paid fallback, or permission for broad retries.
+CODER_TITLE = "[Plenum OpenHands] public repair"
+CODER_WORKFLOW = ".github/workflows/business-workforce-runtime.yml"
+CODER_WORKFLOW_ID = 412824880  # Original live #733 authenticated run.
+CODER_STATUS = "BLOCKED_LOCAL_FREE_AI_DAILY_CAP_NO_SAME_DAY_RETRY"
+CODER_RESERVATION = "<!-- plenum-minister-nextday-free-coder:"
+CODER_RECEIPT = re.compile(
+    r"^<!-- plenum-openhands-review:([1-9][0-9]{0,12}):attempt:([1-9][0-9]?) -->\\n"
+    r"\\*\\*OpenHands original public repair: ([A-Z0-9_]+)\\*\\*",
+    re.MULTILINE,
+)
+
+
+def _utc_datetime(value: object):
+    if not isinstance(value, str):
+        return None
+    try:
+        date = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return date.astimezone(timezone.utc) if date.tzinfo else None
+
+
+def free_coder_nextday_candidate(issue: object, comments: object, now: datetime):
+    """Accept only ONE authentic failed original issue-run, from a past UTC day."""
+    if (not isinstance(issue, dict) or "pull_request" in issue
+            or issue.get("state") != "open"
+            or issue.get("title") != CODER_TITLE
+            or (issue.get("user") or {}).get("login") != OWNER
+            or not isinstance(comments, list) or len(comments) >= 100):
+        return None
+    number = issue.get("number")
+    if type(number) is not int or not 1 <= number < 10**9:
+        return None
+    from .openhands_coding_agent import parse_owner_repair_event
+    try:
+        parse_owner_repair_event({
+            "action": "opened", "repository": {"full_name": REPO}, "issue": issue,
+        })
+    except (PermissionError, ValueError, TypeError, OSError):
+        return None
+    receipts = []
+    for item in comments:
+        if not isinstance(item, dict):
+            return None
+        body = item.get("body", "")
+        if not isinstance(body, str):
+            return None
+        if CODER_RESERVATION in body:
+            return None  # A reservation is consumed even if the dispatch failed.
+        if (item.get("user") or {}).get("login") != "github-actions[bot]":
+            continue
+        for match in CODER_RECEIPT.finditer(body):
+            receipts.append((int(match[1]), int(match[2]), match[3],
+                             _utc_datetime(item.get("created_at"))))
+    if len(receipts) != 1:
+        return None
+    run_id, attempt, status, recorded = receipts[0]
+    if (attempt != 1 or status != CODER_STATUS or recorded is None
+            or now.tzinfo is None or recorded.date() >= now.astimezone(timezone.utc).date()
+            or now - recorded < timedelta(hours=2)):
+        return None
+    return run_id
+
+
+def recover_one_post_reset_original_coder(*, items: list, token: str,
+                                          now: datetime):
+    """One local-budget retry after UTC reset; runs original signed issue context."""
+    for issue in items:
+        if (not isinstance(issue, dict) or issue.get("state") != "open"
+                or issue.get("title") != CODER_TITLE):
+            continue
+        number = issue.get("number")
+        if type(number) is not int or not 1 <= number < 10**9:
+            continue
+        comments = request_json(API + f"/issues/{number}/comments?per_page=100",
+                                token)
+        run_id = free_coder_nextday_candidate(issue, comments, now)
+        if run_id is None:
+            continue
+        run = request_json(API + f"/actions/runs/{run_id}", token)
+        if (not isinstance(run, dict)
+                or run.get("id") != run_id
+                or run.get("event") != "issues"
+                or run.get("workflow_id") != CODER_WORKFLOW_ID
+                or run.get("path") != CODER_WORKFLOW
+                or run.get("display_title") != CODER_TITLE
+                or run.get("head_branch") != "main"
+                or run.get("status") != "completed"
+                or run.get("conclusion") != "failure"
+                or run.get("run_attempt") != 1
+                or (run.get("repository") or {}).get("full_name") != REPO
+                or (run.get("repository") or {}).get("id") != 1447724141
+                or (run.get("actor") or {}).get("login") != OWNER
+                or (run.get("actor") or {}).get("id") != 251133044
+                or _utc_datetime(run.get("created_at")) is None
+                or _utc_datetime(run["created_at"]).date()
+                    >= now.astimezone(timezone.utc).date()):
+            continue
+        # Reserve on the SAME original issue BEFORE a potentially ambiguous
+        # dispatch response. Fail closed rather than create duplicate inference.
+        request_json(API + f"/issues/{number}/comments", token, method="POST",
+                     payload={"body": (
+                         f"{CODER_RESERVATION}{number}:{run_id} -->\\n"
+                         "The original Minister reserved ONE post-UTC-reset "
+                         "re-execution of the existing signed GitHub issue run. "
+                         "This is NOT evidence the model has completed. "
+                         "Never retry this run again automatically."
+                     )})
+        request_json(API + f"/actions/runs/{run_id}/rerun",
+                     token, method="POST")
+        return {"issue_number": number, "run_id": run_id,
+                "requested": True, "original_github_run_reused": True}
+    return None
+
+
 
 
 def original_issue_eligible(issue: object, *, now: datetime) -> bool:
@@ -100,6 +218,11 @@ def request_json(url: str, token: str, *, method="GET", payload=None):
         if status != 204:
             raise RuntimeError("Original GitHub dispatch not accepted")
         return None
+    if (method == "POST" and
+            re.fullmatch(re.escape(API) + r"/actions/runs/[1-9][0-9]*/rerun", url)):
+        if status != 201:
+            raise RuntimeError("Original GitHub Action rerun not accepted")
+        return None
     if status not in (200, 201):
         raise RuntimeError("GitHub evidence request was not accepted")
     return json.loads(raw)
@@ -144,8 +267,11 @@ def resume_missed_public_issues(*, token: str, now: datetime) -> dict:
                          "This is dispatch only, NOT completed work or private access."
                      )})
         dispatched.append(number)
+    coder_recovery = recover_one_post_reset_original_coder(
+        items=items, token=token, now=now)
     return {
         "schema": "plenum-original-minister-missed-public-issue-recovery-v1",
+        "original_coder_recovery": coder_recovery,
         "status": ("REQUESTED_EXISTING_PUBLIC_WORKER_WAKES" if dispatched
                    else "NO_NEW_MISSED_PUBLIC_MISSION"),
         "original_issues_woken": dispatched,
@@ -176,7 +302,8 @@ def main():
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, indent=2) + "\n", "utf-8")
     print("EXISTING_MINISTER " + report["status"]
-          + " original_public_issues=" + str(report["original_issues_woken"]))
+          + " original_public_issues=" + str(report["original_issues_woken"])
+          + " nextday_coder=" + str(report["original_coder_recovery"]))
 
 
 if __name__ == "__main__":
