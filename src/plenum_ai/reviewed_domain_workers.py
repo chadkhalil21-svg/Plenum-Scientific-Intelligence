@@ -128,11 +128,14 @@ def reuse_original_program(capability: str, objective: str, output_dir: Path) ->
         + "\n".join(url for _, _, url in references)
         + "\n\nNo paid inference, live provider account proof, deployment "
           "or objective-level autonomous originality is claimed.\n", encoding="utf-8")
-    check = subprocess.run(
-        [sys.executable, "-m", "unittest", "-v", "test_generated.py"],
-        cwd=output_dir, capture_output=True, text=True, timeout=12,
-        check=False,
-    )
+    try:
+        check = subprocess.run(
+            [sys.executable, "-m", "unittest", "-v", "test_generated.py"],
+            cwd=output_dir, capture_output=True, text=True, timeout=12,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("Existing audited domain program functional check timed out") from None
     if check.returncode != 0 or "OK" not in check.stderr[-700:]:
         raise RuntimeError("Existing audited domain program failed its own real functional check")
     manifest = {
