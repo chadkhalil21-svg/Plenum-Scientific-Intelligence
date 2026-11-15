@@ -55,7 +55,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Activate each AgentPeerChat identity once from private GitHub secrets
+      - name: Recheck owner-saved AgentPeerChat invitations and activate available identities
         run: |
           python -m plenum_ai.agentpeerchat_pair --model qwen
           python -m plenum_ai.agentpeerchat_pair --model gemini
