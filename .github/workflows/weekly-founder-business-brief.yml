@@ -44,6 +44,7 @@ jobs:
       - run: python -m unittest discover -s tests -p 'test_founder_instruction_audit.py' -v
       - run: python -m unittest discover -s tests -p 'test_free_local_tool_adapter.py' -v
       - run: python -m unittest discover -s tests -p 'test_minister_missed_public_wake.py' -v
+      - run: python -m unittest discover -s tests -p 'test_minister_free_coder_nextday.py' -v
   actual-public-status:
     if: >-
       github.event_name == 'workflow_dispatch' ||
