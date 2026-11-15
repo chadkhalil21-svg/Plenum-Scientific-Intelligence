@@ -1,0 +1,68 @@
+{
+  "all_missing_or_empty_property_counts": {
+    "altitude": 40,
+    "altitude_accuracy": 40,
+    "altitude_method_code": 40,
+    "altitude_method_name": 40,
+    "aquifer_code": 93,
+    "aquifer_type_code": 143,
+    "basin_code": 11,
+    "construction_date": 115,
+    "contributing_drainage_area": 215,
+    "depth_source_code": 198,
+    "drainage_area": 215,
+    "hole_constructed_depth": 187,
+    "minor_civil_division_code": 174,
+    "national_aquifer_code": 93,
+    "revision_created": 211,
+    "revision_modified": 213,
+    "revision_note": 211,
+    "vertical_datum": 40,
+    "vertical_datum_name": 40,
+    "well_constructed_depth": 40
+  },
+  "canonical_features_sha256": "795ace49246b465360931208333f366621a814c25589aca2365d54a9cec59852",
+  "construction_year_range": [
+    1940,
+    2010
+  ],
+  "continuation_link": false,
+  "critical_metadata_missing": {
+    "altitude": 40,
+    "aquifer_code": 93,
+    "aquifer_type_code": 143,
+    "construction_date": 115,
+    "hole_constructed_depth": 187,
+    "national_aquifer_code": 93,
+    "vertical_datum": 40,
+    "well_constructed_depth": 40
+  },
+  "depth_units": "feet below land surface datum",
+  "observations_retrieved": false,
+  "official_schema_sha256": "ca458e2f94576093b0b394ab13787b2687b82648e848dcdc2bdb2948536f2e28",
+  "omitted_property_counts": {},
+  "operational_status_verified": false,
+  "property_schema_engine": "jsonschema 4.26.0, Draft 2019-09; optional nullable adapter",
+  "published_coordinate_crs": "EPSG:4326",
+  "review_findings": {
+    "optional_metadata_missing_in_source": 1
+  },
+  "schema_source": "https://api.waterdata.usgs.gov/ogcapi/v1/collections/monitoring-locations/schema?f=json",
+  "source": "https://api.waterdata.usgs.gov/ogcapi/v1/collections/monitoring-locations/items?agency_code=USGS&state_code=12&county_code=086&site_type_code=GW&bbox=-80.4,25.65,-80.3,25.75&limit=500&f=json",
+  "source_bytes": 444240,
+  "source_feature_count": 215,
+  "source_original_horizontal_datums": {
+    "NAD27": 158,
+    "NAD83": 57
+  },
+  "source_sha256": "0a8531822744f2bb78e233f97c921de2f0d2491be0e43044fc5cfca2b3336fd7",
+  "source_timestamp": "2026-11-15T21:25:49.228177Z",
+  "source_vertical_datums": {
+    "NAVD88": 42,
+    "NGVD29": 133
+  },
+  "status": "REVIEW_REQUIRED",
+  "structural_errors": {},
+  "unique_location_count": 215,
+  "valid_construction_dates": 100
+}
