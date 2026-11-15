@@ -185,6 +185,7 @@ jobs:
                                if meta.get('american_rider_marketing') else None)
               status=('BLOCKED_SOURCE_TOOL_NOT_OBSERVED' if meta.get('source_tool_required') and not source_tool_observed
                       else 'BLOCKED_GENERIC_PLACEHOLDER_DRAFT' if placeholder
+                      else 'BLOCKED_UNVERIFIABLE_VERSION_PLACEHOLDER' if role in ('engineering','research') and audit['unverifiable_version_placeholder_count']
                       else 'DRAFT_REQUIRES_SOURCE_REVIEW' if audit['unreviewed_github_repository_count']
                       else marketing_check['status'] if marketing_check and marketing_check['status'].startswith('BLOCKED_')
                       else 'DRAFT_AWAITING_FOUNDER_REVIEW')
@@ -204,6 +205,7 @@ jobs:
                   'model_executed':True,
                   'source_tool_observed':source_tool_observed,
                   'unreviewed_github_repository_count':audit['unreviewed_github_repository_count'],
+                  'unverifiable_version_placeholder_count':audit['unverifiable_version_placeholder_count'],
                   'independent_fact_verification':False,
                   'external_account_actions':False,
               })+'\n')
