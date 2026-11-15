@@ -113,13 +113,28 @@ export async function handleFreeCodingAI(request, env, {verifier=verifyOriginalG
   if (encoder.encode(bodyText).length > MAX_BYTES) return fail(413,"request_exceeds_free_budget_limit");
   let body;
   try { body=JSON.parse(bodyText); } catch { return fail(400,"invalid_json"); }
-  if (!body || typeof body!=="object" || Array.isArray(body)
-      || !["glm-4.7-flash","openai/glm-4.7-flash",MODEL].includes(body.model)
-      || !Array.isArray(body.messages) || !body.messages.length || body.messages.length>16
-      || body.messages.some(x=>!x || !["system","user","assistant","tool"].includes(x.role)
-        || !(typeof x.content==="string" || x.content===null || Array.isArray(x.content)))
-      || (body.tools!==undefined && (!Array.isArray(body.tools) || body.tools.length>8))
-      || (body.n!==undefined && body.n!==1)) return fail(400,"unsupported_public_coding_request");
+  // Align with the existing upstream OpenAI-compatible schema used by
+  // OpenHands/LiteLLM (assistant tool calls may OMIT content; n may be null).
+  // Keep owner OIDC, model allowlist, byte limit and DO budget unchanged.
+  // Return only a coarse reason code; never print prompts, token or tool text.
+  let invalid = null;
+  if (!body || typeof body!=="object" || Array.isArray(body)) invalid="body";
+  else if (!["glm-4.7-flash","openai/glm-4.7-flash",MODEL].includes(body.model))
+    invalid="model";
+  else if (!Array.isArray(body.messages) || !body.messages.length
+      || body.messages.length>64) invalid="message_count";
+  else if (body.messages.some(x=>!x || typeof x!=="object"
+      || !["developer","system","user","assistant","tool","function"].includes(x.role)
+      || !(typeof x.content==="string" || x.content===null
+           || Array.isArray(x.content)
+           || (x.role==="assistant" && x.content===undefined))))
+    invalid="message_shape";
+  else if (body.tools!==undefined && body.tools!==null
+      && (!Array.isArray(body.tools) || body.tools.length>32))
+    invalid="tools";
+  else if (body.n!==undefined && body.n!==null && body.n!==1)
+    invalid="choices";
+  if (invalid) return fail(400,"unsupported_public_coding_request_"+invalid);
   let budget;
   try {
     const guard=env.PLENUM_REPLAY_GUARD.getByName("plenum-public-wake");
