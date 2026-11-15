@@ -1,0 +1,60 @@
+import hashlib
+import os
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import patch
+
+from plenum_ai import openhands_coding_agent as coding
+
+
+class AiderLocalRouteTest(unittest.TestCase):
+    def test_owner_explicit_local_route_keeps_review_only_and_emits_single_diff(self):
+        with tempfile.TemporaryDirectory() as folder:
+            previous = Path.cwd()
+            os.chdir(folder)
+            try:
+                source = Path('src/plenum_ai/public_example.py')
+                source.parent.mkdir(parents=True)
+                source.write_text('def result():\n    return 1\n', encoding='utf-8')
+                event = {'action': 'opened', 'repository': {'full_name': coding.REPO},
+                         'issue': {'user': {'login': coding.OWNER}, 'number': 123,
+                                   'title': coding.REPAIR_TITLE,
+                                   'body': 'PLENUM_AIDER_LOCAL_PUBLIC_REPAIR_V1\nfile: src/plenum_ai/public_example.py\nobjective: Correct the public function to return two.'}}
+                try:
+                    approved = coding.parse_owner_repair_event(event)
+                except ValueError:
+                    self.fail('Explicit original-owner local coding route was rejected')
+                self.assertEqual(approved['engine'], 'aider_local_ollama')
+                self.assertFalse(approved['auto_merge'])
+                self.assertFalse(approved['paid_api_authorized'])
+
+                def isolated_model(command, **kwargs):
+                    mount = next(s for s in command if s.startswith('type=bind,src='))
+                    bound = Path(mount.split(',')[1].removeprefix('src='))
+                    self.assertIn('--network=plenum-coding-isolated', command)
+                    self.assertIn('--read-only', command)
+                    self.assertIn('--no-suggest-shell-commands', command)
+                    self.assertIn('--no-auto-test', command)
+                    self.assertNotIn(str(Path.cwd()), str(bound.parent))
+                    self.assertNotIn('ACTION_TOKEN', kwargs['env'])
+                    (bound / 'proposal.py').write_text('def result():\n    return 2\n', encoding='utf-8')
+
+                with patch.dict(os.environ, {'PLENUM_EPHEMERAL_RUNNER': 'confirmed', 'ACTION_TOKEN': 'never-pass-this'}):
+                    with patch('plenum_ai.openhands_coding_agent.subprocess.run', side_effect=isolated_model):
+                        report = coding.execute_local(approved['task'], source_file=str(source),
+                            candidate_out='reports/openhands-review/issue-123.patch')
+                self.assertEqual(report['status'], 'PROPOSAL_AWAITING_REVIEW')
+                self.assertEqual(report['upstream'], 'Aider-AI/aider')
+                self.assertTrue(report['model_run_completed'])
+                self.assertFalse(report['generated_code_executed'])
+                candidate = Path(report['candidate_artifact']).read_bytes()
+                self.assertEqual(candidate, b'--- a/src/plenum_ai/public_example.py\n+++ b/src/plenum_ai/public_example.py\n@@ -1,2 +1,2 @@\n def result():\n-    return 1\n+    return 2\n')
+                self.assertEqual(report['candidate_artifact_sha256'], hashlib.sha256(candidate).hexdigest())
+                self.assertEqual(source.read_text(), 'def result():\n    return 1\n')
+
+                event['issue']['user']['login'] = 'untrusted'
+                with self.assertRaises(PermissionError):
+                    coding.parse_owner_repair_event(event)
+            finally:
+                os.chdir(previous)
