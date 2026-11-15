@@ -16,10 +16,10 @@ from urllib.request import Request, urlopen
 
 AGENTS = {"qwen": "Plenum Prometheus — Qwen", "gemini": "Plenum Prometheus — Gemini",
           "llama": "Plenum Prometheus — Llama", "claude": "Plenum Prometheus — Claude",
-          "computer": "Plenum Prometheus — Computer"}
+          "computer": "Plenum Prometheus — Computer", "perplexity": "Plenum Prometheus — Perplexity"}
 TITLE = "Plenum AI Council — Public"
-MARKERS = {"qwen": "[Qwen | initial]", "gemini": "[Gemini | initial]", "llama": "[Llama | initial]", "claude": "[Claude | initial]", "computer": "[Computer | initial]"}
-CRITIQUE = {"qwen": "[Qwen | critique]", "gemini": "[Gemini | critique]", "llama": "[Llama | critique]", "claude": "[Claude | critique]", "computer": "[Computer | critique]"}
+MARKERS = {"qwen": "[Qwen | initial]", "gemini": "[Gemini | initial]", "llama": "[Llama | initial]", "claude": "[Claude | initial]", "computer": "[Computer | initial]", "perplexity": "[Perplexity | initial]"}
+CRITIQUE = {"qwen": "[Qwen | critique]", "gemini": "[Gemini | critique]", "llama": "[Llama | critique]", "claude": "[Claude | critique]", "computer": "[Computer | critique]", "perplexity": "[Perplexity | critique]"}
 SYSTEM = (
     "You are a participant in a public AI group discussion. Answer the founder's"
     " question with independent, concise, useful reasoning. On critique, identify"
@@ -34,6 +34,7 @@ IDENTITIES = {
     "llama": ("Llama", "Meta"),
     "claude": ("Claude", "Anthropic"),
     "computer": ("Computer (GPT)", "OpenAI"),
+    "perplexity": ("Perplexity Sonar", "Perplexity"),
 }
 
 
@@ -244,7 +245,8 @@ def gemini_answer(kind, source, env=os.environ):
 
 def puter_answer(model, kind, source, env=os.environ):
     """Reuse the owner-authorized Puter SDK with a fixed model and no fallback."""
-    if model not in ("anthropic/claude-haiku-5-5", "openai/gpt-5.4-nano"):
+    members = {"anthropic/claude-haiku-5-5": "claude", "openai/gpt-5.4-nano": "computer", "perplexity/sonar": "perplexity"}
+    if model not in members:
         raise ValueError("unsupported_puter_model")
     token = env.get("PLENUM_PUTER_TOKEN", "")
     if not token:
@@ -256,6 +258,12 @@ const fs = require('node:fs');
   const puter = init(process.env.PLENUM_PUTER_TOKEN);
   const messages = JSON.parse(fs.readFileSync(0, 'utf8'));
   const model = MODEL_ID;
+  if (model === 'perplexity/sonar') {
+    // Fail closed if the free monthly allowance cannot be verified.
+    const usage = await puter.auth.getMonthlyUsage();
+    const remaining = usage?.allowanceInfo?.remaining;
+    if (!Number.isFinite(remaining) || remaining < 5000000) process.exit(1);
+  }
   const result = await puter.ai.chat(messages, {
     model, max_tokens: 400, normalize: true,
     // Haiku 5.5 defaults to thinking, which can exhaust a concise reply's budget.
@@ -268,7 +276,7 @@ const fs = require('node:fs');
   process.stdout.write(JSON.stringify({answer, model: result.model ?? null}), () => process.exit(0));
 })().catch(() => { process.exit(1); });
 """.replace("MODEL_ID", json.dumps(model))
-    member = "claude" if model.startswith("anthropic/") else "computer"
+    member = members[model]
     messages = [{"role": "system", "content": identity_system(member, model)},
                 {"role": "user", "content": "TASK: " + kind + "\nMESSAGE:\n" + source}]
     child_env = {"PATH": os.environ.get("PATH", ""), "PLENUM_PUTER_TOKEN": token}
@@ -293,6 +301,10 @@ def claude_answer(kind, source, env=os.environ):
 
 def computer_answer(kind, source, env=os.environ):
     return puter_answer("openai/gpt-5.4-nano", kind, source, env)
+
+
+def perplexity_answer(kind, source, env=os.environ):
+    return puter_answer("perplexity/sonar", kind, source, env)
 
 
 # Existing AgentPeerChat /inbox is ASCENDING by delivery seq, cursor-paged;
@@ -376,7 +388,7 @@ def run(model, env=os.environ, backend=None):
         return {"status": "BLOCKED_MISSING_AGENT_KEY", "processed": 0}
     api = PeerAPI(*setting)
     own, actions = pending_actions(api, model)
-    if model in ("claude", "computer"):
+    if model in ("claude", "computer", "perplexity"):
         actions = actions[:2]  # Preserve the finite free monthly allowance.
     completed = 0
     for message, (kind, source) in actions:
@@ -387,7 +399,7 @@ def run(model, env=os.environ, backend=None):
             completed += 1
             continue
         answer = (backend or {"qwen": qwen_answer, "gemini": gemini_answer, "llama": llama_answer,
-                              "claude": claude_answer, "computer": computer_answer}[model])(
+                              "claude": claude_answer, "computer": computer_answer, "perplexity": perplexity_answer}[model])(
             kind, source, env)
         if not isinstance(answer, str) or not answer.strip():
             raise RuntimeError("empty_model_answer")

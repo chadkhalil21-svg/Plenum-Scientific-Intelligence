@@ -323,5 +323,17 @@ class ComputerBridgeTests(unittest.TestCase):
         self.assertEqual(c.classify(msg,"qwen",member,QWEN),("critique","A claim"))
 
 
+class PerplexityBridgeTests(unittest.TestCase):
+    def test_perplexity_uses_separate_identity_and_sonar(self):
+        self.assertEqual(c.config("perplexity", {"PLENUM_APC_PERPLEXITY_KEY": "x"*32})[1], "x"*32)
+        with patch.object(c.subprocess, "run", return_value=c.subprocess.CompletedProcess(
+                ["node"], 0, stdout='{"answer":"Independent answer","model":"perplexity/sonar"}', stderr='')) as call:
+            self.assertEqual(c.perplexity_answer("initial", "Question", {"PLENUM_PUTER_TOKEN":"token"}), "Independent answer")
+        args, kw = call.call_args
+        self.assertIn('perplexity/sonar', args[0][2])
+        self.assertIn('Perplexity', kw['input'])
+        self.assertIn('getMonthlyUsage', args[0][2])
+
+
 if __name__ == "__main__":
     unittest.main()
