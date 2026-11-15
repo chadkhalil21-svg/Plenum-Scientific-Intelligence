@@ -85,10 +85,17 @@ def members_for(api, thread_id):
         return None
     principals = api.request("/principals").get("items", [])
     by_id = {p.get("id"): p for p in principals if p.get("active")}
-    ids = {m.get("id") if isinstance(m, dict) else m for m in thread.get("members", [])}
-    if not any(by_id.get(pid, {}).get("kind") == "owner" for pid in ids):
+    raw_members = thread.get("members", [])
+    if not isinstance(raw_members, list) or len(raw_members) > 100:
         return None
-    return by_id
+    ids = {m.get("id") if isinstance(m, dict) else m for m in raw_members}
+    # A global principal listing is NOT an approval for another thread.
+    # Only active identities actually present in this owner-approved group
+    # may instruct or receive this council's model-generated responses.
+    members = {pid: by_id[pid] for pid in ids if isinstance(pid, str) and pid in by_id}
+    if not any(member.get("kind") == "owner" for member in members.values()):
+        return None
+    return members
 
 
 def classify(message, model, principals, own_id):
@@ -172,7 +179,10 @@ def pending_actions(api, model):
     for msg in items:
         thread_id = msg.get("thread_id", "")
         principals = members_for(api, thread_id) if thread_id.startswith("thr_") else None
-        action = classify(msg, model, principals, own) if principals else None
+        # The authenticated agent must itself be a current member of the
+        # exact group; merely possessing a valid service-wide token is not
+        # authorization to respond in a different group.
+        action = classify(msg, model, principals, own) if principals and own in principals else None
         if action:
             actionable.append((msg, action))
     return own, actionable
