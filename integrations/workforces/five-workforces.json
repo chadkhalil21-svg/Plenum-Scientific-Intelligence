@@ -1,17 +1,17 @@
 {
   "schema": "plenum-five-workforce-registry-v1",
-  "updated_utc": "2026-11-11",
+  "updated_utc": "2026-11-15",
   "authority": "founder_approves_consequential_actions",
   "control_plane": "Minister of Operations (the original Plenum Chief of Staff), founder-authorized GitHub issue queue, five workforces, n8n nine departments, verifier council",
-  "hosting_candidate": "Oracle Always Free Ampere A1; not yet provisioned",
+  "hosting_candidate": "NONE REQUIRED: existing scheduled/on-demand GitHub Actions and signed Cloudflare Workers Free event-driven runtime; historical Oracle VM explicitly retired, not provisioned",
   "default_cost_ceiling_usd": 0,
   "rules": {
     "public_github_only": "Never include private patents, credentials, customer records, or paid actions",
-    "deployment": "No OCI provisioning or billable action without verified owner tenancy and Always Free quota",
-    "model": "One existing shared inference model on demand, not one model per role",
+    "deployment": "No OCI provisioning, new hosting, custom browser or billable account action. Original owner-approved GitHub Actions/Cloudflare event-driven runtime is canonical, and private account writes require separate scoped authorization.",
+    "model": "Reuse existing on-demand verified specialist models only within accepted bounds. Local Qwen3:1.7b OpenHands real original coding #704 timed out before any patch; DO NOT blindly retry or mark that route an autonomous coder.",
     "verification": "No status VERIFIED without actual original worker evidence and separate readback",
     "promotion": "Import third-party persona prompt only by pinned immutable SHA, review source and rights, tool scope first",
-    "free_provider": "Owned Ollama or llama.cpp local model first for actual judgment; no token charges, but compute/electricity finite; optional Groq/Gemini/Cloudflare free tiers only with owner-approved accounts and hard 429/no-charge stop.",
+    "free_provider": "Cloudflare Workers AI may offer free-plan inference within official daily neuron quota only if actual model eligibility, existing account entitlement, credentials and usage are independently verified. No GitHub Models: officially retired July 30 2026. No automatic new provider account or paid subscription.",
     "github_usage": "Public standard Actions runners remain free for legitimate project development/testing under GitHub terms; not for unrelated unrestricted commercial inference hosting.",
     "third_party_reuse": "Open source catalogue is read-only; 283 persona profiles and 1106 media resources remain idle; no new paid services, active agents or downloaded code by adding registry references."
   },
@@ -118,14 +118,14 @@
     "source_lookup_only": true,
     "automatic_install_or_execution": false,
     "infer_with_owned_local_model_when_needed": true,
-    "free_cloud_hosted_inference": "optional_rate_limited_owner_authorized_not_connected",
+    "free_cloud_hosted_inference": "existing_cloudflare_workers_ai_free_eligible_models_candidate_only_verify_token_usage_and_account_before_call",
     "no_silent_paid_api_or_model_provisioning": true,
-    "browser_tooling_note": "Existing Plenum Playwright and browser-use adapter FIRST when capable; four additional original free source refs are NOT installed, signed in, or directly ChatGPT-connected. Separate human approval and host required for real portal account changes.",
+    "browser_tooling_note": "Founder retired original custom Plenum Browser #310 NOT PLANNED; do not revive its Playwright, Auth0, vault, Cloudflare browser features or tests. Real authorized website tasks use existing ChatGPT Work connected tools, or existing metered TinyFish only if justified, with no new top-up.",
     "writing_quality_note": "Humanizer MIT skill reference and NVIDIA SkillSpector Apache security scanner are reviewed source candidates; founder private Plenum Editorial Council skill plugin saved separately, no account data or model fees.",
     "new_source_refs_executable": false
   },
   "minister_title": "Minister of Operations",
   "minister_technical_role": "existing Plenum Chief of Staff; one original supervisor, not an additional agent",
   "minister_canonical_queue": "#432",
-  "minister_mandate": "Own completion of one founder-authorized, evidence-verified free software fleet: Browser Use + Playwright MCP, permitted saved site sessions, existing paid-credit TinyFish as temporary bridge, a credential vault through owner-approved connector, five workforces, Paperclip if suitable free runtime, and existing n8n/Hermes otherwise; incorporate SkillOpt, TokenEconomizer, OpenShell and Context Mode only via applicable upstream integrations in the existing worker, without reimplementing or counting source links as active services. No new spending; report deployed/run/blocked distinctly."
+  "minister_mandate": "One EXISTING enabled six-hour Minister leads original FIVE workforces under founder master issue #432 and private Google Master Control Ledger. Execute real new approved public and provider-scoped tasks, reuse pinned free upstream before custom code, and independently verify useful outputs, idempotent recoveries and provider readbacks. Existing GitHub Actions plus signed Cloudflare Workers are the hosting decision; do not commission Oracle/second supervisor/Paperclip daemon or custom browser. Keep exact costs at zero without silent accounts. Rejected tiny-Qwen general Engineering #700/#702 and OpenHands CPU #704 are NOT working coding employees; route hard code through presently authorized stronger connected Minister/GitHub and independent CI, else BLOCKED. Preserve original n8n verified bounded tasks, research, verification and checkpoints. Never claim the army fully complete without demonstrated unattended safe recovery."
 }
