@@ -43,7 +43,21 @@ LOCAL_REPAIR_MARKER = "PLENUM_AIDER_LOCAL_PUBLIC_REPAIR_V1"
 LOCAL_ENGINE = "aider_local_ollama"
 # Official amd64 v0.86.0 image manifest (not a mutable latest tag).
 AIDER_IMAGE = "paulgauthier/aider@sha256:cfdc43ebd4ff163f7ef5f1803b069fa80abbd95e981d165495d459d3edcc356c"
-LOCAL_MODEL = "qwen2.5-coder:1.5b"
+LOCAL_MODEL = "qwen2.5-coder:7b"
+LOCAL_MAX_SOURCE_BYTES = 12_000  # Whole-file output on 4 CPU free runner.
+REVIEW_REPORT = Path("reports/openhands-agent-review.json")
+CLOUD_FAILURE_REPORT = Path("reports/openhands-cloud-failure.json")
+LOCAL_RESERVATION = Path("reports/openhands-local-fallback-reservation.json")
+LOCAL_EXECUTION = Path("reports/openhands-local-fallback-execution.json")
+CLOUD_FAILURES = {
+    "BLOCKED_ORIGINAL_DAILY_FREE_AI_CAP": "LOCAL_DURABLE_OBJECT_DAILY_BUDGET",
+    "BLOCKED_ORIGINAL_CLOUD_NO_REVIEWABLE_PATCH": "ORIGINAL_ENGINE_NO_REVIEWABLE_PATCH",
+    "BLOCKED_ORIGINAL_CLOUD_TRANSPORT": "ORIGINAL_ENGINE_TRANSPORT",
+}
+
+
+class NoReviewableProposalError(RuntimeError):
+    """An authorized model ran but produced no usable source, not a security failure."""
 
 
 def _public_source(source_file: str) -> tuple[bytes, str]:
@@ -114,6 +128,78 @@ def _review_output_path(value: str, *, source_file: str | None) -> Path:
     return path
 
 
+def _fallback_binding(event: dict, receipt_path: Path, *, run_id: str,
+                      run_attempt: str) -> dict:
+    """Validate actual original cloud failure and one exact owner/source/run binding."""
+    import re
+    owner = parse_owner_repair_event(event)
+    if (owner.get("engine") or not re.fullmatch(r"[1-9][0-9]{0,12}", run_id)
+            or run_attempt != "1"):
+        raise PermissionError("Only first original cloud issue attempt may fail over")
+    if (receipt_path.is_symlink() or not receipt_path.is_file()
+            or receipt_path.stat().st_size > 64_000):
+        raise PermissionError("No bounded original cloud failure receipt")
+    raw = receipt_path.read_bytes()
+    receipt = json.loads(raw)
+    if (not isinstance(receipt, dict)
+            or receipt.get("schema") != "plenum-openhands-coding-agent-v1"
+            or receipt.get("upstream") != "OpenHands/software-agent-sdk"
+            or receipt.get("status") not in CLOUD_FAILURES
+            or receipt.get("failure_category") != CLOUD_FAILURES[receipt["status"]]
+            or receipt.get("task") != owner["task"]
+            or receipt.get("source_file") != owner["source_file"]
+            or receipt.get("source_sha256") != owner["source_sha256"]
+            or receipt.get("origin_issue_number") != owner["issue_number"]
+            or receipt.get("origin_run_id") != run_id
+            or receipt.get("origin_run_attempt") != run_attempt
+            or any(receipt.get(key) is not False for key in (
+                "candidate_persisted", "model_run_completed", "generated_code_executed",
+                "production_written", "external_accounts_changed", "retry_same_day_authorized"))
+            or receipt.get("no_paid_fallback") is not True
+            or receipt.get("candidate_artifact") is not None):
+        raise PermissionError("Original cloud receipt does not authorize local fallback")
+    # Do not start another agent if any original candidate exists, even if
+    # report claims otherwise; do not weaken the original review path.
+    _review_output_path(f"reports/openhands-review/issue-{owner['issue_number']}.patch",
+                        source_file=owner["source_file"])
+    if len(_public_source(owner["source_file"])[0]) > LOCAL_MAX_SOURCE_BYTES:
+        raise PermissionError("Source too large for bounded CPU whole-file local fallback")
+    return {"schema": "plenum-original-local-fallback-v1",
+            "origin_issue_number": owner["issue_number"], "origin_run_id": run_id,
+            "origin_run_attempt": run_attempt, "source_sha256": owner["source_sha256"],
+            "cloud_receipt_sha256": hashlib.sha256(raw).hexdigest(),
+            "cloud_attempt_status": receipt["status"], "local_fallback_attempted": True}
+
+
+def reserve_local_fallback(event: dict, *, run_id: str, run_attempt: str) -> bool:
+    """Reserve the same-job local route before model or network preparation."""
+    try:
+        if any(p.exists() or p.is_symlink() for p in
+               (CLOUD_FAILURE_REPORT, LOCAL_RESERVATION, LOCAL_EXECUTION)):
+            return False
+        bound = _fallback_binding(event, REVIEW_REPORT, run_id=run_id, run_attempt=run_attempt)
+        with CLOUD_FAILURE_REPORT.open("xb") as dst:
+            dst.write(REVIEW_REPORT.read_bytes())
+        with LOCAL_RESERVATION.open("x", encoding="utf-8") as dst:
+            json.dump(bound, dst, indent=2)
+        return True
+    except (OSError, ValueError, PermissionError, TypeError, KeyError):
+        return False
+
+
+def consume_local_fallback(event: dict, *, run_id: str, run_attempt: str) -> dict:
+    """A reservation authorizes one isolated local call; never retry an ambiguous call."""
+    bound = _fallback_binding(event, CLOUD_FAILURE_REPORT, run_id=run_id, run_attempt=run_attempt)
+    if (LOCAL_RESERVATION.is_symlink() or not LOCAL_RESERVATION.is_file()
+            or LOCAL_RESERVATION.stat().st_size > 16_000
+            or json.loads(LOCAL_RESERVATION.read_text()) != bound
+            or LOCAL_EXECUTION.exists() or LOCAL_EXECUTION.is_symlink()):
+        raise PermissionError("No unused exact original local fallback reservation")
+    with LOCAL_EXECUTION.open("x", encoding="utf-8") as dst:
+        json.dump(bound, dst, indent=2)
+    return bound
+
+
 DEFAULT_TASK = (
     "Create a standalone Python file named proposal.py containing a documented "
     "standard-library-only function that validates a public business KPI row. "
@@ -162,7 +248,7 @@ def _candidate_report(result: dict, original: bytes | None, raw: bytes,
                       source_file: str | None, artifact: Path | None,
                       attempt: int) -> dict:
     if original is not None and raw == original:
-        raise RuntimeError("Coder did not modify the original source copy")
+        raise NoReviewableProposalError("Coder did not modify the original source copy")
     saved = None
     artifact_bytes = b""
     if artifact is not None:
@@ -199,6 +285,8 @@ def _candidate_report(result: dict, original: bytes | None, raw: bytes,
 
 
 def local_plan(task: str, *, source_file: str) -> dict:
+    if len(_public_source(source_file)[0]) > LOCAL_MAX_SOURCE_BYTES:
+        raise PermissionError("Source too large for bounded CPU whole-file local coding")
     result = plan(task, source_file=source_file)
     result.pop("sdk_version_required")
     return {**result, "upstream": "Aider-AI/aider", "engine": LOCAL_ENGINE,
@@ -237,11 +325,12 @@ def execute_local(task: str, *, source_file: str, candidate_out: str) -> dict:
             "--no-auto-lint", "--no-auto-test", "--no-suggest-shell-commands",
             "--no-detect-urls", "--no-analytics", "--no-check-update",
             "--no-show-release-notes", "--no-fancy-input", "--no-stream", "--yes-always", "--map-tokens", "0",
+            "--timeout", "900",
             "--message", "Make only this requested public Python source repair, preserving unrelated behavior. "
             "Edit proposal.py only. Do not execute code or use any other files, tools or external services. " + task.strip(),
             "proposal.py",
         ]
-        subprocess.run(command, cwd=tmp, check=True, timeout=720,
+        subprocess.run(command, cwd=tmp, check=True, timeout=960,
                        env={"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": tmp})
         if (not candidate.is_file() or candidate.is_symlink()
                 or candidate.stat().st_size > _candidate_byte_limit(original)):
@@ -306,7 +395,9 @@ def execute(task: str = DEFAULT_TASK, *, source_file: str | None = None,
                         "execute or write any other file."
                     )
                     continue
-                raise RuntimeError("No proposal.py after bounded repair attempt")
+                if candidate.is_symlink():
+                    raise PermissionError("Agent candidate is unexpectedly linked")
+                raise NoReviewableProposalError("No proposal.py after bounded repair attempt")
             raw = candidate.read_bytes()
             if len(raw) > _candidate_byte_limit(original_bytes):
                 raise RuntimeError("Candidate exceeds bounded review size")
@@ -326,7 +417,7 @@ def execute(task: str = DEFAULT_TASK, *, source_file: str | None = None,
                         "Do not execute or deploy code. Confirm the syntax."
                     )
                     continue
-                raise RuntimeError(
+                raise NoReviewableProposalError(
                     "Candidate still failed independent Python syntax validation "
                     "after one bounded agent repair"
                 ) from None
@@ -334,24 +425,65 @@ def execute(task: str = DEFAULT_TASK, *, source_file: str | None = None,
         raise AssertionError("Unreachable bounded repair exit")
 
 
+def _cloud_failure_status(exc: Exception) -> str | None:
+    if isinstance(exc, NoReviewableProposalError):
+        return "BLOCKED_ORIGINAL_CLOUD_NO_REVIEWABLE_PATCH"
+    # Use the pinned SDK's own explicit transport exception types. Never
+    # downgrade arbitrary exceptions, authentication, content-policy, or bad
+    # request errors. ConversationRunError preserves the original exception.
+    try:
+        from openhands.sdk.llm.exceptions.types import (LLMRateLimitError, LLMTimeoutError,
+                                                      LLMServiceUnavailableError)
+    except ImportError:
+        return None
+    for _ in range(6):
+        if (type(exc) is LLMRateLimitError
+                and "original_daily_ai_budget_exhausted" in str(exc)):
+            return "BLOCKED_ORIGINAL_DAILY_FREE_AI_CAP"
+        if type(exc) in (LLMTimeoutError, LLMServiceUnavailableError):
+            return "BLOCKED_ORIGINAL_CLOUD_TRANSPORT"
+        cause = exc.__cause__
+        if not isinstance(cause, Exception) or cause is exc:
+            break
+        exc = cause
+    return None
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--execute", action="store_true",
                         help="Explicitly invoke selected model in isolated ephemeral runner")
     parser.add_argument("--event", help="Original owner public repair issue event")
+    parser.add_argument("--reserve-local-fallback", action="store_true",
+                        help="Reserve once from exact original cloud failure in this job")
+    parser.add_argument("--local-fallback", action="store_true",
+                        help="Consume one exact reserved original cloud fallback")
     parser.add_argument("--candidate-out", help="Review-only artifact file")
     parser.add_argument("--task", default=DEFAULT_TASK,
                         help="PUBLIC nonconfidential coding task only")
     parser.add_argument("--out", default="reports/openhands-agent-review.json")
     args = parser.parse_args()
     path = _output_path(args.out)
-    owner_issue = (parse_owner_repair_event(json.loads(Path(args.event).read_text()))
-                   if args.event else None)
+    event = json.loads(Path(args.event).read_text()) if args.event else None
+    owner_issue = parse_owner_repair_event(event) if event else None
+    run_id, run_attempt = os.getenv("GITHUB_RUN_ID", ""), os.getenv("GITHUB_RUN_ATTEMPT", "")
+    if args.reserve_local_fallback:
+        if not owner_issue or args.execute or args.local_fallback or path != REVIEW_REPORT:
+            raise PermissionError("Only the original issue job can reserve local fallback")
+        eligible = reserve_local_fallback(event, run_id=run_id, run_attempt=run_attempt)
+        print("eligible=" + str(eligible).lower())
+        return
     task = owner_issue["task"] if owner_issue else args.task
     source_file = owner_issue["source_file"] if owner_issue else None
     artifact = (f"reports/openhands-review/issue-{owner_issue['issue_number']}.patch"
                 if owner_issue else args.candidate_out)
     use_local = owner_issue is not None and owner_issue.get("engine") == LOCAL_ENGINE
+    fallback = {}
+    if args.local_fallback:
+        if not owner_issue or use_local or not args.execute or path != REVIEW_REPORT:
+            raise PermissionError("Only a reserved original cloud job may consume local fallback")
+        fallback = consume_local_fallback(event, run_id=run_id, run_attempt=run_attempt)
+        use_local = True
     try:
         if use_local:
             report = (execute_local(task, source_file=source_file, candidate_out=artifact)
@@ -362,6 +494,7 @@ def main() -> None:
     except Exception as exc:
         if use_local and args.execute:
             report = {**local_plan(task, source_file=source_file),
+                      **{key: value for key, value in fallback.items() if key != "schema"},
                       "status": "BLOCKED_LOCAL_CODER_NO_REVIEWABLE_PATCH",
                       "failure_category": type(exc).__name__, "no_paid_fallback": True}
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -371,15 +504,23 @@ def main() -> None:
         # Only the exact observed, original Free Worker DAILY LOCAL quota
         # error is downgraded to a nonsecret, fail-closed task receipt. Other
         # model errors still surface normally for genuine engineering repair.
-        if not (args.execute
+        if not (args.execute and owner_issue
                 and os.getenv("PLENUM_OPENHANDS_MODEL") == "openai/glm-4.7-flash"
                 and os.getenv("PLENUM_OPENHANDS_BASE_URL") == ORIGINAL_FREE_CODING_ENDPOINT
-                and "original_daily_ai_budget_exhausted" in str(exc)):
+                and os.getenv("PLENUM_OPENHANDS_API_KEY")):
             raise
+        status = _cloud_failure_status(exc)
+        if status is None:
+            raise
+        # This checks for any persisted candidate, regardless of claimed state.
+        _review_output_path(artifact, source_file=source_file)
         report = {
             **plan(task, source_file=source_file),
-            "status": "BLOCKED_ORIGINAL_DAILY_FREE_AI_CAP",
-            "failure_category": "LOCAL_DURABLE_OBJECT_DAILY_BUDGET",
+            "status": status,
+            "failure_category": CLOUD_FAILURES[status],
+            "origin_issue_number": owner_issue["issue_number"],
+            "origin_run_id": run_id,
+            "origin_run_attempt": run_attempt,
             "provider_account_quota_verified": False,
             "model_run_completed": False,
             "candidate_persisted": False,
@@ -388,8 +529,11 @@ def main() -> None:
         }
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-        print("OpenHands coding status: BLOCKED_ORIGINAL_DAILY_FREE_AI_CAP")
+        print("OpenHands coding status:", status)
         raise SystemExit(2) from None
+    # Add fallback provenance without changing the original candidate schema.
+    if fallback:
+        report.update({key: value for key, value in fallback.items() if key != "schema"})
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print("OpenHands coding status:", report["status"])
@@ -397,4 +541,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 
