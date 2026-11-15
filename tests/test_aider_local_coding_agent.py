@@ -34,6 +34,8 @@ class AiderLocalRouteTest(unittest.TestCase):
                     bound = Path(mount.split(',')[1].removeprefix('src='))
                     self.assertIn('--network=plenum-coding-isolated', command)
                     self.assertIn('--read-only', command)
+                    # #755's local model could not emit Aider SEARCH/REPLACE syntax.
+                    self.assertEqual(command[command.index('--edit-format') + 1], 'whole')
                     self.assertIn('--no-suggest-shell-commands', command)
                     self.assertIn('--no-auto-test', command)
                     self.assertNotIn(str(Path.cwd()), str(bound.parent))
