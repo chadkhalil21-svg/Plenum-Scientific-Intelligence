@@ -1,5 +1,6 @@
 import {handlePrivateMemory, PrivateContinuityMemory} from "./plenum-private-continuity.mjs";
 import {ownerMemoryCheckPage, ownerMemoryCheckScript} from "./plenum-private-memory-check.mjs";
+import {handleFreeCodingAI} from "./plenum-free-coding-ai.mjs";
 export {PrivateContinuityMemory};
 /*
  * Plenum no-new-charge *event-driven wake* (SOURCE TEMPLATE ONLY).
@@ -54,7 +55,14 @@ export class PublicWakeReplayGuard {
   // The legacy Durable Object HTTP interface remains fully supported and
   // avoids requiring a Cloudflare-only runtime import in Node source tests.
   async fetch(request) {
-    if (request.method !== "POST" || new URL(request.url).pathname !== "/claim")
+    const path=new URL(request.url).pathname;
+    if (request.method === "POST" && path === "/claim-ai") {
+      try {
+        const {day,reserve,maximum}=await request.json();
+        return new Response(null,{status:await this.claimAi(day,reserve,maximum)?204:429});
+      } catch { return new Response(null,{status:503}); }
+    }
+    if (request.method !== "POST" || path !== "/claim")
       return new Response(null, {status:404});
     try {
       const {issue, now} = await request.json();
@@ -75,11 +83,26 @@ export class PublicWakeReplayGuard {
       return true;
     });
   }
+
+  async claimAi(day, reserve, maximum) {
+    if (typeof day !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(day)
+        || !Number.isInteger(reserve) || reserve !== 200
+        || !Number.isInteger(maximum) || maximum !== 4000
+        || day !== new Date().toISOString().slice(0,10)) return false;
+    return this.ctx.storage.transaction(async tx => {
+      const key="free-original-ai:"+day;
+      const used=await tx.get(key) || 0;
+      if (!Number.isSafeInteger(used) || used+reserve>maximum) return false;
+      await tx.put(key,used+reserve);
+      return true;
+    });
+  }
 }
 
 export default {
   async fetch(request, env) {
     const pathname = new URL(request.url).pathname;
+    if (pathname === "/ai/v1/chat/completions") return handleFreeCodingAI(request, env);
     if (pathname === "/memory-check" && request.method === "GET")
       return ownerMemoryCheckPage();
     if (pathname === "/memory-check.js" && request.method === "GET")
