@@ -131,16 +131,41 @@ jobs:
           if not all(checks.values()): raise SystemExit("Original public repair JWT identity mismatch; no inference")
           '
           printf 'PLENUM_OPENHANDS_API_KEY=%s\n' "$jwt" >> "$GITHUB_ENV"
+      - name: Install exact previously reviewed OpenHands SDK
+        if: steps.owner-preflight.outputs.engine != 'aider_local_ollama'
+        run: |
+          python -m pip install -e ".[openhands_tools]"
+          python -m pip check
+      - name: Invoke authenticated original cloud coding engine once
+        id: cloud-coding
+        if: github.event_name == 'issues' && steps.owner-preflight.outputs.engine == 'openhands'
+        continue-on-error: true
+        run: |
+          timeout 240 python -m plenum_ai.openhands_coding_agent --execute \
+            --event "$GITHUB_EVENT_PATH" --out reports/openhands-agent-review.json
+      - name: Reserve zero-charge same-job recovery only from bound terminal cloud failure
+        id: local-fallback-preflight
+        if: steps.cloud-coding.outcome == 'failure'
+        run: |
+          PYTHONPATH=src python -m plenum_ai.openhands_coding_agent --reserve-local-fallback \
+            --event "$GITHUB_EVENT_PATH" >> "$GITHUB_OUTPUT"
+      - name: Fail closed for every unclassified or unauthorized cloud failure
+        if: steps.cloud-coding.outcome == 'failure' && steps.local-fallback-preflight.outputs.eligible != 'true'
+        run: exit 1
       - name: Start Ollama locally, never expose model server on public interface
-        if: github.event_name != 'issues' || steps.owner-preflight.outputs.engine == 'aider_local_ollama'
+        if: github.event_name != 'issues' || steps.owner-preflight.outputs.engine == 'aider_local_ollama' || steps.local-fallback-preflight.outputs.eligible == 'true'
         run: |
           docker pull ollama/ollama:latest
           docker image inspect ollama/ollama:latest --format 'Ollama image digest {{index .RepoDigests 0}}'
+          # Existing free public runner: 16GiB RAM, 4 CPU. Keep 2GiB for Aider
+          # and remaining memory for OS; old manual route still uses 6GiB.
+          ram=6g
+          if [ "$GITHUB_EVENT_NAME" = "issues" ]; then ram=10g; fi
           docker run -d --rm --name plenum-temporary-ollama \
             -p 127.0.0.1:11434:11434 \
             -e OLLAMA_CONTEXT_LENGTH=22000 \
             -e OLLAMA_NUM_PARALLEL=1 \
-            --memory=6g --cpus=3 \
+            --memory="$ram" --cpus=3 \
             ollama/ollama:latest
           for i in $(seq 1 60); do
             curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null && exit 0
@@ -154,32 +179,30 @@ jobs:
           docker exec plenum-temporary-ollama ollama pull qwen3:1.7b
           docker exec plenum-temporary-ollama ollama list
       - name: Download verified free coding model and pinned Aider before isolating their network
-        if: steps.owner-preflight.outputs.engine == 'aider_local_ollama'
+        if: steps.owner-preflight.outputs.engine == 'aider_local_ollama' || steps.local-fallback-preflight.outputs.eligible == 'true'
         run: |
           set -euo pipefail
-          docker exec plenum-temporary-ollama ollama pull qwen2.5-coder:1.5b
+          docker exec plenum-temporary-ollama ollama pull qwen2.5-coder:7b
           docker exec plenum-temporary-ollama ollama list
-          digest=$(docker exec plenum-temporary-ollama ollama list | awk '$1=="qwen2.5-coder:1.5b" {print $2}')
-          test "$digest" = d7372fd82851
+          digest=$(docker exec plenum-temporary-ollama ollama list | awk '$1=="qwen2.5-coder:7b" {print $2}')
+          test "$digest" = dae161e27b0e
           image=$(PYTHONPATH=src python -c 'from plenum_ai.openhands_coding_agent import AIDER_IMAGE; print(AIDER_IMAGE)')
           docker pull "$image"
           docker network create --internal plenum-coding-isolated
           docker network connect plenum-coding-isolated plenum-temporary-ollama
           docker network disconnect bridge plenum-temporary-ollama
-      - name: Install exact previously reviewed OpenHands SDK
-        if: steps.owner-preflight.outputs.engine != 'aider_local_ollama'
-        run: |
-          python -m pip install -e ".[openhands_tools]"
-          python -m pip check
       - name: Run selected original isolated coding engine, retain REVIEW-ONLY artifact
+        if: github.event_name != 'issues' || steps.owner-preflight.outputs.engine == 'aider_local_ollama' || steps.local-fallback-preflight.outputs.eligible == 'true'
         env:
           PLENUM_SELECTED_CODING_ENGINE: ${{ steps.owner-preflight.outputs.engine }}
+          PLENUM_LOCAL_FALLBACK: ${{ steps.local-fallback-preflight.outputs.eligible }}
+          PLENUM_OPENHANDS_API_KEY: ''
         run: |
-          if [ "$PLENUM_SELECTED_CODING_ENGINE" = "aider_local_ollama" ]; then
-            PYTHONPATH=src timeout 780 python -m plenum_ai.openhands_coding_agent --execute \
+          if [ "$PLENUM_LOCAL_FALLBACK" = "true" ]; then
+            PYTHONPATH=src timeout 1020 python -m plenum_ai.openhands_coding_agent --execute --local-fallback \
               --event "$GITHUB_EVENT_PATH" --out reports/openhands-agent-review.json
-          elif [ "$GITHUB_EVENT_NAME" = "issues" ]; then
-            timeout 240 python -m plenum_ai.openhands_coding_agent --execute \
+          elif [ "$PLENUM_SELECTED_CODING_ENGINE" = "aider_local_ollama" ]; then
+            PYTHONPATH=src timeout 1020 python -m plenum_ai.openhands_coding_agent --execute \
               --event "$GITHUB_EVENT_PATH" --out reports/openhands-agent-review.json
           else
             timeout 600 python -m plenum_ai.openhands_coding_agent --execute \
@@ -210,7 +233,7 @@ jobs:
             --report reports/openhands-agent-review.json \
             --verdict reports/openhands-sandbox-verdict.json
       - name: Reuse imported Google Goldfish as original independent read-only coding reviewer
-        if: always() && github.event_name == 'issues' && steps.owner-preflight.outputs.engine == 'openhands'
+        if: always() && github.event_name == 'issues' && steps.cloud-coding.outcome == 'success'
         run: >-
           python -m plenum_ai.openhands_goldfish_review
           --event "$GITHUB_EVENT_PATH"
@@ -223,6 +246,9 @@ jobs:
           path: |
             reports/openhands-agent-review.json
             reports/openhands-agent-preflight.json
+            reports/openhands-cloud-failure.json
+            reports/openhands-local-fallback-reservation.json
+            reports/openhands-local-fallback-execution.json
             reports/openhands-sandbox-verdict.json
             reports/openhands-goldfish-review.json
             reports/openhands-review/
@@ -246,9 +272,18 @@ jobs:
           preflight=Path("reports/openhands-agent-preflight.json")
           if preflight.is_file():
               engine=json.loads(preflight.read_text()).get("engine","openhands")
+          fallback=Path("reports/openhands-local-fallback-reservation.json")
+          attempted=fallback.is_file()
+          cloud_status="NOT_APPLICABLE"
+          if attempted:
+              engine="aider_local_ollama"
+              cloud_status=json.loads(fallback.read_text()).get("cloud_attempt_status","UNKNOWN")
+              status="BLOCKED_LOCAL_FALLBACK_PREPARATION"
+              if Path("reports/openhands-local-fallback-execution.json").is_file():
+                  status="BLOCKED_LOCAL_FALLBACK_NO_REVIEWABLE_PATCH"
           if report.is_file():
               d=json.loads(report.read_text())
-              if (d.get("status")=="BLOCKED_ORIGINAL_DAILY_FREE_AI_CAP"
+              if (not attempted and d.get("status")=="BLOCKED_ORIGINAL_DAILY_FREE_AI_CAP"
                   and d.get("failure_category")=="LOCAL_DURABLE_OBJECT_DAILY_BUDGET"
                   and not d.get("model_run_completed")
                   and not d.get("candidate_persisted")):
@@ -296,6 +331,8 @@ jobs:
               headline=("OpenHands original public repair" if engine=="openhands" else "Aider local original public repair")
               msg=(marker+"\n**"+headline+": "+status+"**\n"
                    "Coding engine: "+engine+"\n"
+                   "Local fallback attempted: "+str(attempted).lower()+"\n"
+                   "Cloud attempt status: "+cloud_status+"\n"
                    "Attempt: "+attempt+"\n"
                    "Untrusted candidate only, no source code merged, no accounts written. "
                    "Independent semantic review and original CI remain REQUIRED.\n"
@@ -315,4 +352,5 @@ jobs:
         run: |
           docker rm -f plenum-temporary-ollama 2>/dev/null || true
           docker network rm plenum-coding-isolated 2>/dev/null || true
+
 
