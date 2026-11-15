@@ -184,6 +184,12 @@ jobs:
           python tools/verify_original_openhands_candidate.py \
             --report reports/openhands-agent-review.json \
             --verdict reports/openhands-sandbox-verdict.json
+      - name: Reuse imported Google Goldfish as original independent read-only coding reviewer
+        if: always() && github.event_name == 'issues'
+        run: >-
+          python -m plenum_ai.openhands_goldfish_review
+          --event "$GITHUB_EVENT_PATH"
+          --coding-report reports/openhands-agent-review.json
       - name: Preserve only public proof, no generated code or credentials
         if: always()
         uses: actions/upload-artifact@v7
@@ -193,6 +199,7 @@ jobs:
             reports/openhands-agent-review.json
             reports/openhands-agent-preflight.json
             reports/openhands-sandbox-verdict.json
+            reports/openhands-goldfish-review.json
             reports/openhands-review/
           if-no-files-found: ignore
           retention-days: 7
@@ -226,6 +233,15 @@ jobs:
                   status="REVIEW_ONLY_EXISTING_TESTS_PASS_SEMANTIC_REVIEW_REQUIRED"
               elif status=="REVIEW_ONLY_PATCH_READY_NOT_MERGED":
                   status="BLOCKED_EXISTING_SOURCE_TESTS"
+          goldfish=Path("reports/openhands-goldfish-review.json")
+          reviewer_state="NOT_RUN"
+          reviewer_blocker_count=0
+          if goldfish.is_file():
+              critique=json.loads(goldfish.read_text())
+              reviewer_state=critique.get("status", "BLOCKED_INVALID_REVIEW")
+              reviewer_blocker_count=(critique.get("severity_counts") or {}).get("BLOCKER", 0)
+              if reviewer_state=="ADVISORY_WITH_BLOCKERS" and reviewer_blocker_count>0:
+                  status="BLOCKED_GOLDFISH_SEMANTIC_REVIEW_REQUIRED"
           run=os.environ["GITHUB_RUN_ID"]
           attempt=os.environ["GITHUB_RUN_ATTEMPT"]
           if not attempt.isascii() or not attempt.isdecimal() or not 1 <= int(attempt) <= 100:
@@ -248,6 +264,9 @@ jobs:
                    "Untrusted candidate only, no source code merged, no accounts written. "
                    "Independent semantic review and original CI remain REQUIRED.\n"
                    "Artifact SHA256: "+digest+"\n"
+                   "Original Goldfish read-only advisory: "+str(reviewer_state)+"\n"
+                   "Goldfish explicit blockers: "+str(reviewer_blocker_count)+"\n"
+                   "Goldfish cannot authorize source execution or auto-merge.\n"
                    "Evidence: https://github.com/"+os.environ["GITHUB_REPOSITORY"]
                    +"/actions/runs/"+run)
               req=Request(root,data=json.dumps({"body":msg}).encode(),
