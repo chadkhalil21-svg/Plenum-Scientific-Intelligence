@@ -50,10 +50,15 @@ def build_original_event(issue: dict, comments: list[dict]) -> dict | None:
     for item in comments:
         if not isinstance(item, dict):
             raise ValueError("Untrusted comment history")
+        body = str(item.get("body", ""))
         if ((item.get("user") or {}).get("login") == "github-actions[bot]"
-                and ("<!-- plenum-public-workforce-run:" in str(item.get("body", ""))
-                     or "<!-- plenum-founder-chief-run:" in str(item.get("body", ""))
-                     or "Status: **DRAFT_READY_FOR_FOUNDER**" in str(item.get("body", "")))):
+                and ("<!-- plenum-public-workforce-run:" in body
+                     or "<!-- plenum-founder-chief-run:" in body
+                     or "Status: **DRAFT_READY_FOR_FOUNDER**" in body
+                     # Pre-upgrade direct execution reservations are not the
+                     # scheduled Minister's dispatch-only reservation.
+                     or (f"<!-- plenum-minister-missed-dispatch:{number} -->" in body
+                         and "Original public workforce direct wake reserved before execution." in body))):
             return None  # Already attempted: no re-running old work
     return event
 
@@ -161,19 +166,21 @@ def process(number: int, token: str, output_dir: Path, *,
     event = build_original_event(original, comments)
     if event is None:
         return {"status":"ALREADY_RECORDED", "issue_number":number, "worker_reexecuted":False}
-    if require_founder_approval:
-        # Reserve *before* calling the original team. Reuse one issue and
-        # the exact same marker as scheduled recovery: no other host, queue
-        # or model is introduced. The original receiver stays accountable
-        # to the same founder-approved PUBLIC envelope.
-        reservation = gh_json(path + "/comments", token, body={"body": (
-            marker + "\n"
-            "Original public workforce direct wake reserved before execution. "
-            "No further automatic attempt if this run ends ambiguously; "
-            "this marker is dispatch evidence, not task completion."
-        )})
-        if not reservation.get("html_url"):
-            raise RuntimeError("Original wake reservation acknowledgment missing")
+    # Both routes share the workflow's per-issue concurrency group. Record
+    # an execution (not dispatch) reservation before invoking either worker.
+    # The existing run-marker prefix stops scheduled recovery and later wakes
+    # even if this job is canceled before it can post a final receipt.
+    run = os.environ["GITHUB_RUN_ID"]
+    execution_marker = f"<!-- plenum-public-workforce-run:{run}:execution-reserved -->"
+    reservation = gh_json(path + "/comments", token, body={"body": (
+        ((marker + "\n") if require_founder_approval else "")
+        + execution_marker + "\n"
+        "Original public workforce execution reserved before calling the worker. "
+        "No further automatic attempt if this run ends ambiguously; "
+        "this marker is execution reservation evidence, not task completion."
+    )})
+    if not reservation.get("html_url"):
+        raise RuntimeError("Original wake reservation acknowledgment missing")
     mission = original.get("title") == MISSION_TITLE
     if mission:
         # Reuse the SAME Chief/team engine and original hashed public artifacts.
@@ -190,7 +197,6 @@ def process(number: int, token: str, output_dir: Path, *,
         )
     else:
         outcome = run_issue(event, output_dir=output_dir)
-    run = os.environ["GITHUB_RUN_ID"]
     marker = "<!-- plenum-public-workforce-run:" + run + " -->"
     status = outcome.get("status", "BLOCKED")
     if mission:

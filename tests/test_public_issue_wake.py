@@ -303,6 +303,46 @@ class PublicWakeAcceptance(unittest.TestCase):
             self.assertFalse(result["worker_reexecuted"])
             worker.assert_not_called()
 
+    def test_interrupted_wake_cannot_be_replayed_through_dispatch(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from plenum_ai import public_issue_wake as wake
+        from plenum_ai.minister_missed_public_wake import LEGACY_OWNER_APPROVAL, RECOVERY_MAGIC
+        for direct in (False, True):
+            with self.subTest(direct=direct), tempfile.TemporaryDirectory() as folder:
+                original = issue(number=498, created_at="2026-11-11T20:38:55Z")
+                comments = [{"user": {"login": "chadkhalil21-svg"},
+                             "body": LEGACY_OWNER_APPROVAL}]
+                if not direct:
+                    comments.append({"user": {"login": "github-actions[bot]"},
+                                     "body": RECOVERY_MAGIC + "498 -->\nScheduled dispatch only"})
+                attempts = []
+                def api(url, token, *, body=None):
+                    if url.endswith("/498"):
+                        return {**original, "comments": len(comments)}
+                    if "/comments?per_page" in url:
+                        return list(comments)
+                    if url.endswith("/comments"):
+                        comments.append({"user": {"login": "github-actions[bot]"},
+                                         "body": body["body"]})
+                        return {"html_url": "https://github.com/example/receipt"}
+                    raise AssertionError("unexpected resource")
+                def worker(event, *, output_dir):
+                    attempts.append(event["issue"]["number"])
+                    if len(attempts) == 1:
+                        raise RuntimeError("interrupted after invocation")
+                    return {"status": "DRAFT_READY_FOR_FOUNDER", "verified": True}
+                with patch.object(wake, "gh_json", side_effect=api), \
+                     patch.object(wake, "run_issue", side_effect=worker), \
+                     patch.dict("os.environ", {"GITHUB_RUN_ID": "1212"}):
+                    with self.assertRaisesRegex(RuntimeError, "interrupted after invocation"):
+                        wake.process(498, "scoped", Path(folder), require_founder_approval=direct)
+                    outcome = wake.process(498, "scoped", Path(folder))
+                self.assertEqual(attempts, [498])
+                self.assertEqual(outcome["status"], "ALREADY_RECORDED")
+                self.assertFalse(outcome["worker_reexecuted"])
+
     def test_closed_untrusted_or_unbounded_issues_rejected(self):
         for bad in (issue(state="closed"),issue(user={"login":"attacker"}),
                     issue(title="misc"),issue(body="free text"),
