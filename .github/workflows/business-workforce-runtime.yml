@@ -178,6 +178,12 @@ jobs:
           assert not data['production_written'] and not data['external_accounts_changed']
           print('OpenHands model and real candidate PASS; SHA256:',data['candidate_sha256'])
           PY
+      - name: Reuse original focused Python tests on model patch in offline restricted Docker sandbox
+        if: github.event_name == 'issues'
+        run: |
+          python tools/verify_original_openhands_candidate.py \
+            --report reports/openhands-agent-review.json \
+            --verdict reports/openhands-sandbox-verdict.json
       - name: Preserve only public proof, no generated code or credentials
         if: always()
         uses: actions/upload-artifact@v7
@@ -186,6 +192,7 @@ jobs:
           path: |
             reports/openhands-agent-review.json
             reports/openhands-agent-preflight.json
+            reports/openhands-sandbox-verdict.json
             reports/openhands-review/
           if-no-files-found: ignore
           retention-days: 7
@@ -210,6 +217,15 @@ jobs:
                   and not d.get("production_written") and not d.get("external_accounts_changed")):
                   status="REVIEW_ONLY_PATCH_READY_NOT_MERGED"
                   digest=d.get("candidate_artifact_sha256","")
+          # A runnable candidate is never equivalent to trusted source.
+          # This is an OFFLINE sandbox of the ORIGINAL test, not auto-merge.
+          guard=Path("reports/openhands-sandbox-verdict.json")
+          if guard.is_file():
+              assessment=json.loads(guard.read_text())
+              if assessment.get("existing_focused_tests_passed") is True:
+                  status="REVIEW_ONLY_EXISTING_TESTS_PASS_SEMANTIC_REVIEW_REQUIRED"
+              elif status=="REVIEW_ONLY_PATCH_READY_NOT_MERGED":
+                  status="BLOCKED_EXISTING_SOURCE_TESTS"
           run=os.environ["GITHUB_RUN_ID"]
           attempt=os.environ["GITHUB_RUN_ATTEMPT"]
           if not attempt.isascii() or not attempt.isdecimal() or not 1 <= int(attempt) <= 100:
