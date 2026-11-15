@@ -64,13 +64,22 @@ jobs:
           if body.startswith('PLENUM_PUBLIC_WORKFORCE_V2\nkind: public_science\n'):
               subprocess.check_call([sys.executable,'-m','pip','install','-e','.[numerical,orchestration]'])
           PY
+      - name: Reserve ORIGINAL native owner execution before any specialist
+        id: native-reservation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLENUM_PUBLIC_ISSUE: ${{ github.event.issue.number }}
+        run: >-
+          python -m plenum_ai.public_issue_wake --issue-number "$PLENUM_PUBLIC_ISSUE"
+          --execute --reserve-native-issue
       - name: Receive founder request, reuse approved worker, check output, persist issue status
+        if: steps.native-reservation.outputs.authorized == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python -m plenum_ai.workforce_public_inbox --event "$GITHUB_EVENT_PATH"
       - name: Attach only bounded public work results
-        if: always()
+        if: always() && steps.native-reservation.outputs.authorized == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: public-workforce-task-${{ github.event.issue.number }}
@@ -79,7 +88,7 @@ jobs:
           retention-days: 7
 
       - name: Notify the founder's Telegram group when explicitly connected (no task text or private data)
-        if: always()
+        if: always() && steps.native-reservation.outputs.authorized == 'true'
         continue-on-error: true
         env:
           PLENUM_TELEGRAM_BOT_TOKEN: ${{ secrets.PLENUM_TELEGRAM_BOT_TOKEN }}

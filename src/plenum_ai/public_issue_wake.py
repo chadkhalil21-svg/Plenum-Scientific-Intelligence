@@ -27,12 +27,30 @@ def checked_issue_number(value):
     return value
 
 
+def prior_execution_bodies(number: int, comments: list[dict]) -> list[str]:
+    """One existing bot-receipt contract shared by every original issue path."""
+    if not isinstance(comments, list) or len(comments) >= 100:
+        raise ValueError("Unbounded comment history may hide prior execution")
+    recorded = []
+    for item in comments:
+        if not isinstance(item, dict) or not isinstance(item.get("body", ""), str):
+            raise ValueError("Untrusted comment history")
+        body = item.get("body", "")
+        if ((item.get("user") or {}).get("login") == "github-actions[bot]"
+                and ("<!-- plenum-public-workforce-run:" in body
+                     or "<!-- plenum-founder-chief-run:" in body
+                     or "Status: **DRAFT_READY_FOR_FOUNDER**" in body
+                     # A dispatch-only reservation does NOT prove execution.
+                     or (f"<!-- plenum-minister-missed-dispatch:{number} -->" in body
+                         and "Original public workforce direct wake reserved before execution." in body))):
+            recorded.append(body)
+    return recorded
+
+
 def build_original_event(issue: dict, comments: list[dict]) -> dict | None:
     number = checked_issue_number(issue.get("number"))
     if issue.get("state") != "open" or "pull_request" in issue:
         raise PermissionError("Closed or pull request threads cannot wake workers")
-    if not isinstance(comments, list) or len(comments) >= 100:
-        raise ValueError("Unbounded comment history may hide prior execution")
     event = {
         "action": "opened",
         "repository": {"full_name": REPO},
@@ -47,19 +65,8 @@ def build_original_event(issue: dict, comments: list[dict]) -> dict | None:
         parse_mission(event)  # SAME founder/public/two-or-three specialist guards
     else:
         parse_public_issue(event)  # existing single-worker permission gate
-    for item in comments:
-        if not isinstance(item, dict):
-            raise ValueError("Untrusted comment history")
-        body = str(item.get("body", ""))
-        if ((item.get("user") or {}).get("login") == "github-actions[bot]"
-                and ("<!-- plenum-public-workforce-run:" in body
-                     or "<!-- plenum-founder-chief-run:" in body
-                     or "Status: **DRAFT_READY_FOR_FOUNDER**" in body
-                     # Pre-upgrade direct execution reservations are not the
-                     # scheduled Minister's dispatch-only reservation.
-                     or (f"<!-- plenum-minister-missed-dispatch:{number} -->" in body
-                         and "Original public workforce direct wake reserved before execution." in body))):
-            return None  # Already attempted: no re-running old work
+    if prior_execution_bodies(number, comments):
+        return None  # Already attempted: no re-running old work
     return event
 
 
@@ -79,6 +86,71 @@ def gh_json(url: str, token: str, *, body=None):
         if body is not None and result.status != 201:
             raise RuntimeError("GitHub did not acknowledge status comment")
         return json.loads(result.read(140000))
+
+
+def reserve_native_issue(event: dict, token: str, *, run_id: int, attempt: int,
+                         checkpoint: Path | None = None) -> bool:
+    """Reserve the first native issue execution, or one exact verified retry.
+
+    Both original native and wake workflows hold the existing per-issue lock.
+    No worker/model is invoked before the original GitHub reservation ACK.
+    """
+    from .chief_workforce_command import CHIEF_TITLE, parse_founder_chief
+    if (not token or type(run_id) is not int or not 0 < run_id < 10**13
+            or type(attempt) is not int or attempt not in (1, 2)):
+        return False
+    if (not isinstance(event, dict) or event.get("action") != "opened"
+            or (event.get("repository") or {}).get("full_name") != REPO
+            or (event.get("sender") or {}).get("login") != OWNER):
+        raise PermissionError("Only the original signed owner issue event may execute")
+    issue = event.get("issue") or {}
+    number = checked_issue_number(issue.get("number"))
+    title = issue.get("title")
+    if title == MISSION_TITLE:
+        parse_mission(event)
+    elif title == CHIEF_TITLE:
+        parse_founder_chief(event)
+    else:
+        parse_public_issue(event)
+    url = BASE + str(number)
+    original = gh_json(url, token)
+    if (not isinstance(original, dict) or original.get("number") != number
+            or original.get("state") != "open" or "pull_request" in original
+            or (original.get("user") or {}).get("login") != OWNER
+            or original.get("title") != title or original.get("body") != issue.get("body")):
+        raise PermissionError("Original issue closed, changed, or mismatched")
+    comments = gh_json(url + "/comments?per_page=100", token)
+    bodies = prior_execution_bodies(number, comments)
+    if original.get("comments") not in (None, len(comments)):
+        raise ValueError("Original comment history changed during reservation")
+    first = f"<!-- plenum-public-workforce-run:{run_id}:execution-reserved -->"
+    if attempt == 1:
+        if bodies:
+            return False
+        marker = first
+    else:
+        # Only the ORIGINAL Chief's existing same-run checkpoint retry may
+        # resume. A new run, unknown interruption, or missing proof is blocked.
+        prior_result = f"<!-- plenum-founder-chief-run:{run_id}:attempt:1 -->"
+        if (title != MISSION_TITLE or checkpoint is None
+                or sum(body.splitlines()[:1] == [first] for body in bodies) != 1
+                or any(body.splitlines()[:1] not in ([first], [prior_result]) for body in bodies)):
+            return False
+        from .chief_retry_gate import API, github_json, inspect_retry
+        old_run = github_json(f"{API}/actions/runs/{run_id}/attempts/1", token)
+        if old_run.get("id") != run_id:
+            return False
+        verdict = inspect_retry({"workflow_run": old_run}, checkpoint, original)
+        if verdict.get("status") != "ELIGIBLE_NATIVE_RETRY_ONCE":
+            return False
+        marker = f"<!-- plenum-public-workforce-run:{run_id}:retry-2-execution-reserved -->"
+    reservation = gh_json(url + "/comments", token, body={"body": (
+        marker + "\nOriginal native owner issue execution reserved before invoking the worker. "
+        "This is not completion; no replay except the original verified same-run checkpoint retry."
+    )})
+    if not isinstance(reservation, dict) or not reservation.get("html_url"):
+        raise RuntimeError("Original native execution reservation acknowledgment missing")
+    return True
 
 
 
@@ -227,6 +299,7 @@ def main(argv=None):
     p = argparse.ArgumentParser()
     p.add_argument("--issue-number", required=True)
     p.add_argument("--execute", action="store_true")
+    p.add_argument("--reserve-native-issue", action="store_true")
     args = p.parse_args(argv)
     if not args.issue_number.isascii() or not args.issue_number.isdecimal():
         raise ValueError("Issue number must be numeric")
@@ -236,6 +309,25 @@ def main(argv=None):
                           "github_issues_modified":False}))
         return
     event_name = os.environ.get("GITHUB_EVENT_NAME")
+    if args.reserve_native_issue:
+        if (os.environ.get("GITHUB_ACTIONS") != "true" or event_name != "issues"
+                or os.environ.get("GITHUB_REPOSITORY") != REPO):
+            raise PermissionError("Native reservation requires original GitHub issue event")
+        path = Path(os.environ.get("GITHUB_EVENT_PATH", ""))
+        if not path.is_file() or path.is_symlink() or path.stat().st_size > 150_000:
+            raise PermissionError("Original signed issue event payload unavailable")
+        event = json.loads(path.read_text(encoding="utf-8"))
+        if (event.get("issue") or {}).get("number") != number:
+            raise PermissionError("Native issue ID mismatch")
+        approved = reserve_native_issue(
+            event, os.environ.get("GH_TOKEN", ""),
+            run_id=int(os.environ["GITHUB_RUN_ID"]), attempt=int(os.environ["GITHUB_RUN_ATTEMPT"]),
+            checkpoint=Path("reports/workforce-chief"),
+        )
+        with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
+            output.write("authorized=" + str(approved).lower() + "\n")
+        print("ORIGINAL_NATIVE_EXECUTION_RESERVED" if approved else "ORIGINAL_NATIVE_EXECUTION_BLOCKED_NO_REPLAY")
+        return
     if (os.environ.get("GITHUB_ACTIONS") != "true"
         or event_name not in ("repository_dispatch", "issue_comment")
         or os.environ.get("GITHUB_REPOSITORY") != REPO):

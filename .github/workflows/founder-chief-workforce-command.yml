@@ -61,6 +61,7 @@ jobs:
     permissions:
       contents: read
       issues: write
+      actions: read  # verify exact same-run attempt-one metadata for a checkpoint retry
     env:
       PLENUM_TASK_KIND: ${{ github.event.issue.title }}
       LANGSMITH_TRACING: 'false'
@@ -115,9 +116,17 @@ jobs:
           run-id: ${{ github.run_id }}
           github-token: ${{ github.token }}
           path: reports/workforce-chief
+      - name: Reserve ORIGINAL native owner execution before any model or specialist
+        id: native-reservation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLENUM_PUBLIC_ISSUE: ${{ github.event.issue.number }}
+        run: >-
+          python -m plenum_ai.public_issue_wake --issue-number "$PLENUM_PUBLIC_ISSUE"
+          --execute --reserve-native-issue
       - name: Start existing bounded Qwen only for a new data plan
         id: data_model
-        if: steps.scope.outputs.needs_local_model == 'true'
+        if: steps.native-reservation.outputs.authorized == 'true' && steps.scope.outputs.needs_local_model == 'true'
         run: |
           if find reports/workforce-chief -maxdepth 1 \( -name 'chief-data-plan-*.json' -o -name 'chief-contract-plan-*.json' \) -print -quit | read -r saved; then
             echo 'Saved immutable plan will be validated and reused; no model started'
@@ -133,6 +142,7 @@ jobs:
           done
           docker exec plenum-chief-data-qwen ollama pull qwen3:1.7b
       - name: Dispatch original specialists within validated task scope
+        if: steps.native-reservation.outputs.authorized == 'true'
         env:
           PLENUM_EPHEMERAL_RUNNER: confirmed
           PLENUM_CHIEF_MODEL_URL: http://127.0.0.1:11434
@@ -146,13 +156,14 @@ jobs:
           fi
       - name: Independent local AQuA-informed review of REAL Chief output
         if: >-
-          success() && github.event.issue.title == '[Plenum Chief] public mission'
+          success() && steps.native-reservation.outputs.authorized == 'true' &&
+          github.event.issue.title == '[Plenum Chief] public mission'
         run: >-
           python -m plenum_ai.ambient_quality_insights
           --issue "${{ github.event.issue.number }}"
           --root reports/workforce-chief
       - name: Durable founder status, no task text or credentials in comment
-        if: always()
+        if: always() && steps.native-reservation.outputs.authorized == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -222,7 +233,7 @@ jobs:
               print('Founder receipt already recorded')
           PY
       - name: Retain bounded public Chief evidence only
-        if: always()
+        if: always() && steps.native-reservation.outputs.authorized == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: chief-founder-public-${{ github.event.issue.number }}
@@ -237,5 +248,5 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
       - name: Destroy temporary data-planning model
-        if: always() && steps.scope.outputs.needs_local_model == 'true'
+        if: always() && steps.native-reservation.outputs.authorized == 'true' && steps.scope.outputs.needs_local_model == 'true'
         run: docker rm -f plenum-chief-data-qwen 2>/dev/null || true
