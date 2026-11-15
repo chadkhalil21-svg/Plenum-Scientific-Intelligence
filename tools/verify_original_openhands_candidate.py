@@ -21,6 +21,49 @@ import tempfile
 SOURCE = re.compile(r"src/plenum_ai/[a-z][a-z0-9_]{1,64}\.py\Z")
 PATCH = re.compile(r"reports/openhands-review/issue-[1-9][0-9]{0,8}\.patch\Z")
 SCHEMA = "plenum-original-openhands-candidate-regression-v1"
+INTERRUPTED = "BLOCKED_INTERRUPTED_WITH_REVIEW_ARTIFACT"
+
+
+def _bound_interrupted_origin(report: dict, root: Path) -> bool:
+    """Only the original reserved issue job may examine its saved interrupted edit."""
+    from plenum_ai.openhands_coding_agent import parse_owner_repair_event
+
+    run = os.getenv("GITHUB_RUN_ID", "")
+    attempt = os.getenv("GITHUB_RUN_ATTEMPT", "")
+    if (os.getenv("PLENUM_REVIEW_INTERRUPTED") != "confirmed"
+            or os.getenv("GITHUB_ACTIONS") != "true"
+            or os.getenv("GITHUB_EVENT_NAME") != "issues"
+            or os.getenv("GITHUB_REPOSITORY") != "chadkhalil21-svg/Plenum-Scientific-Intelligence"
+            or not re.fullmatch(r"[1-9][0-9]{0,12}", run)
+            or attempt not in ("1", "2")
+            or root != Path.cwd().resolve()):
+        return False
+    event_path = Path(os.environ["GITHUB_EVENT_PATH"])
+    if (not event_path.is_file() or event_path.is_symlink()
+            or not 0 < event_path.stat().st_size <= 1_000_000):
+        return False
+    event = json.loads(event_path.read_text("utf-8"))
+    if not isinstance(event, dict) or (event.get("sender") or {}).get("login") != "chadkhalil21-svg":
+        return False
+    owner = parse_owner_repair_event(event)
+    issue = owner["issue_number"]
+    return (not owner.get("engine")
+            and report.get("schema") == "plenum-openhands-coding-agent-v1"
+            and report.get("upstream") == "OpenHands/software-agent-sdk"
+            and report.get("task") == owner["task"]
+            and report.get("source_file") == owner["source_file"]
+            and report.get("source_sha256") == owner["source_sha256"]
+            and report.get("failure_category") in ("ORIGINAL_ENGINE_TRANSPORT", "LOCAL_DURABLE_OBJECT_DAILY_BUDGET")
+            and type(report.get("origin_issue_number")) is int
+            and report["origin_issue_number"] == issue
+            and report.get("origin_run_id") == run and report.get("origin_run_attempt") == attempt
+            and report.get("candidate_artifact") == f"reports/openhands-review/issue-{issue}.patch"
+            and report.get("model_run_completed") is False
+            and report.get("generated_code_executed") is False
+            and report.get("verified_independent_quality") is False
+            and report.get("human_review_required") is True
+            and report.get("retry_same_day_authorized") is False
+            and report.get("no_paid_fallback") is True)
 
 
 def verify(report_path: Path, verdict_path: Path, *, checkout: Path | None = None) -> dict:
@@ -46,11 +89,22 @@ def verify(report_path: Path, verdict_path: Path, *, checkout: Path | None = Non
         return verdict
 
     try:
+        interrupted_only = os.getenv("PLENUM_REVIEW_INTERRUPTED") == "confirmed"
+        if interrupted_only and (report_path.is_symlink() or not report_path.is_file()
+                or report_path.parent.is_symlink()
+                or report_path.resolve() != root / "reports/openhands-agent-review.json"
+                or not 0 < report_path.stat().st_size <= 64_000):
+            return persist("BLOCKED_UNVERIFIED_CANDIDATE", "interrupted_report_not_original_regular_file")
         report = json.loads(report_path.read_text("utf-8"))
+        if not isinstance(report, dict):
+            return persist("BLOCKED_UNVERIFIED_CANDIDATE", "original_model_report_not_object")
         source = report.get("source_file")
         candidate = report.get("candidate_artifact")
-        if (report.get("status") != "PROPOSAL_AWAITING_REVIEW"
-                or report.get("model_run_completed") is not True
+        interrupted = report.get("status") == INTERRUPTED
+        authorized = (_bound_interrupted_origin(report, root) if interrupted and interrupted_only
+                      else (not interrupted_only and report.get("status") == "PROPOSAL_AWAITING_REVIEW"
+                            and report.get("model_run_completed") is True))
+        if (not authorized
                 or report.get("candidate_persisted") is not True
                 or report.get("candidate_syntax_valid") is not True
                 or report.get("production_written") is not False
@@ -62,7 +116,9 @@ def verify(report_path: Path, verdict_path: Path, *, checkout: Path | None = Non
         patch_path = root / candidate
         tests = root / "tests" / ("test_" + Path(source).stem + ".py")
         if (not source_path.is_file() or source_path.is_symlink()
-                or not patch_path.is_file() or patch_path.is_symlink()):
+                or not patch_path.is_file() or patch_path.is_symlink()
+                or (interrupted and (source_path.parent.is_symlink() or patch_path.parent.is_symlink()
+                    or patch_path.resolve() != patch_path or source_path.resolve() != source_path))):
             return persist("BLOCKED_UNVERIFIED_CANDIDATE", "original_source_or_patch_not_regular")
         original = source_path.read_bytes()
         patch_bytes = patch_path.read_bytes()
@@ -87,6 +143,12 @@ def verify(report_path: Path, verdict_path: Path, *, checkout: Path | None = Non
             return persist("BLOCKED_NO_EXISTING_FOCUSED_TEST", "no_preexisting_source_test_to_reuse")
         verdict.update(source_file=source, test_file=tests.relative_to(root).as_posix(),
                        candidate_artifact_sha256=hashlib.sha256(patch_bytes).hexdigest())
+        if interrupted:
+            verdict.update(model_run_completed=False,
+                           source_sha256=report["source_sha256"],
+                           origin_issue_number=report["origin_issue_number"],
+                           origin_run_id=report["origin_run_id"],
+                           origin_run_attempt=report["origin_run_attempt"])
         with tempfile.TemporaryDirectory(prefix="plenum-review-only-") as folder:
             isolated = Path(folder)
             shutil.copytree(root / "src" / "plenum_ai", isolated / "src" / "plenum_ai")
@@ -135,9 +197,10 @@ def verify(report_path: Path, verdict_path: Path, *, checkout: Path | None = Non
             if result.returncode:
                 return persist("BLOCKED_EXISTING_FOCUSED_TESTS", "existing_source_regressions_failed")
             verdict["existing_focused_tests_passed"] = True
-            return persist("FOCUSED_TESTS_PASS_REVIEW_STILL_REQUIRED",
+            return persist(("INTERRUPTED_FOCUSED_TESTS_PASS_REVIEW_STILL_REQUIRED" if interrupted
+                            else "FOCUSED_TESTS_PASS_REVIEW_STILL_REQUIRED"),
                            "original_focused_contracts_only_not_semantic_approval")
-    except (OSError, UnicodeError, ValueError, KeyError, TypeError, json.JSONDecodeError):
+    except (OSError, UnicodeError, ValueError, KeyError, TypeError, AttributeError, json.JSONDecodeError):
         return persist("BLOCKED_UNVERIFIED_CANDIDATE", "untrusted_or_unreadable_candidate")
 
 
