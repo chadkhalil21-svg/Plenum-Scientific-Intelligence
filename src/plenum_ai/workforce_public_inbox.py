@@ -27,6 +27,13 @@ MAGIC_V2 = "PLENUM_PUBLIC_WORKFORCE_V2"
 PUBLIC_KINDS = frozenset({"public_research", "public_program", "public_science", "public_creative"})
 TOPIC = re.compile(r"^[\w\s,\-.()/+]{20,120}$", re.UNICODE)
 
+def original_source_category(objective: str) -> str:
+    """Choose an EXISTING World Horizon category, never invent a new provider."""
+    return ("funding" if re.search(
+        r"\b(?:funding|grants?|solicitations?)\b", objective, re.I,
+    ) else "all")
+
+
 
 def parse_public_issue(event: dict) -> dict:
     """Fail closed before running software, including on non-owner issue events."""
@@ -72,6 +79,11 @@ def validate_original_report(path: Path, objective: str) -> dict:
             or not isinstance(report.get("records"), list)):
         raise ValueError("Original research worker did not produce its accepted schema")
     rows = report["records"]
+    if original_source_category(objective) == "funding" and (
+            report.get("category") != "funding"
+            or any(not isinstance(row, dict) or row.get("category") != "funding"
+                   for row in rows)):
+        raise ValueError("Unrelated science feed cannot satisfy a funding-only assignment")
     if len(rows) > 200:
         raise ValueError("Unbounded research report")
     vetted = [
@@ -145,7 +157,8 @@ def run_issue(event: dict, *, output_dir: Path, runner=subprocess.run) -> dict:
     # Reuse the ALREADY tested worker. No shell, model install, tokens, or new browser.
     command = [
         sys.executable, "-m", "plenum_ai.cli", "world-horizon",
-        "--category", "all", "--topic", task["objective"],
+        "--category", original_source_category(task["objective"]),
+        "--topic", task["objective"],
         "--online", "--out", str(output),
     ]
     safe_env = {k: v for k, v in os.environ.items()
