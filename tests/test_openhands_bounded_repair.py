@@ -85,6 +85,69 @@ class OpenHandsFeedbackContract(unittest.TestCase):
                 coder.execute()
         self.assertEqual(_FakeConversation.runs, 2)
 
+    def test_interrupted_cloud_edit_preserves_only_unverified_patch_and_blocks_fallback(self):
+        import hashlib
+        import json
+        import tempfile
+        types_module = types.ModuleType('openhands.sdk.llm.exceptions.types')
+        for name in ('LLMRateLimitError', 'LLMTimeoutError', 'LLMServiceUnavailableError'):
+            setattr(types_module, name, type(name, (Exception,), {}))
+        runs = []
+        def interrupted(conversation):
+            runs.append(1)
+            (conversation.workspace / 'proposal.py').write_text('def value():\n    return 2\n')
+            raise RuntimeError('wrapped') from types_module.LLMTimeoutError('untrusted provider detail')
+        with tempfile.TemporaryDirectory() as directory:
+            previous = Path.cwd()
+            try:
+                os.chdir(directory)
+                source = Path('src/plenum_ai/public_module.py')
+                source.parent.mkdir(parents=True)
+                before = b'def value():\n    return 1\n'
+                source.write_bytes(before)
+                event = {'action': 'opened', 'repository': {'full_name': coder.REPO},
+                         'issue': {'user': {'login': coder.OWNER}, 'number': 703,
+                                   'title': coder.REPAIR_TITLE,
+                                   'body': (coder.REPAIR_MARKER + '\nfile: ' + source.as_posix()
+                                            + '\nobjective: Correct the public function to return two.')}}
+                Path('event.json').write_text(json.dumps(event))
+                env = {'PLENUM_EPHEMERAL_RUNNER': 'confirmed',
+                       'PLENUM_OPENHANDS_MODEL': 'openai/glm-4.7-flash',
+                       'PLENUM_OPENHANDS_BASE_URL': coder.ORIGINAL_FREE_CODING_ENDPOINT,
+                       'PLENUM_OPENHANDS_API_KEY': 'test-only-key',
+                       'PLENUM_GEMINI_FREE_PROJECT_APPROVAL': coder.GEMINI_FREE_APPROVAL,
+                       'GITHUB_RUN_ID': '1234', 'GITHUB_RUN_ATTEMPT': '1'}
+                with (self._sdk_patches(), patch.dict(sys.modules, {types_module.__name__: types_module}),
+                      patch.object(_FakeConversation, 'run', interrupted),
+                      patch.object(coder.importlib.metadata, 'version', return_value='1.60.1'),
+                      patch.dict(os.environ, env),
+                      patch.object(sys, 'argv', ['coder', '--event', 'event.json', '--execute'])):
+                    with self.assertRaises(SystemExit) as stopped:
+                        coder.main()
+                    self.assertEqual(stopped.exception.code, 2)
+                    report = json.loads(coder.REVIEW_REPORT.read_text())
+                    self.assertFalse(coder.reserve_gemini_fallback(event, run_id='1234', run_attempt='1'))
+                    self.assertEqual(report['status'], 'BLOCKED_INTERRUPTED_WITH_REVIEW_ARTIFACT')
+                artifact = Path(report['candidate_artifact'])
+                expected = (b'--- a/src/plenum_ai/public_module.py\n+++ b/src/plenum_ai/public_module.py\n'
+                            b'@@ -1,2 +1,2 @@\n def value():\n-    return 1\n+    return 2\n')
+                self.assertEqual(artifact.read_bytes(), expected)
+                self.assertEqual(report['candidate_artifact_sha256'], hashlib.sha256(expected).hexdigest())
+                self.assertEqual(report['origin_issue_number'], 703)
+                self.assertEqual(report['origin_run_id'], '1234')
+                self.assertTrue(report['candidate_persisted'])
+                self.assertFalse(report['model_run_completed'])
+                self.assertFalse(report['verified_independent_quality'])
+                self.assertFalse(report['generated_code_executed'])
+                self.assertFalse(report['production_written'])
+                self.assertNotIn('untrusted provider detail', coder.REVIEW_REPORT.read_text())
+                self.assertNotIn('test-only-key', coder.REVIEW_REPORT.read_text())
+                self.assertEqual(source.read_bytes(), before)
+                self.assertEqual(runs, [1])
+                self.assertFalse(coder.GEMINI_RESERVATION.exists())
+            finally:
+                os.chdir(previous)
+
 
     def test_source_repair_byte_limit_preserves_existing_reviewed_module(self):
         self.assertEqual(coder._candidate_byte_limit(None), 20_000)
@@ -166,4 +229,5 @@ class OpenHandsFeedbackContract(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
 

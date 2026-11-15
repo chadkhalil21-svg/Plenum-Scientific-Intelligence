@@ -298,7 +298,7 @@ jobs:
           PYTHONPATH: src
         run: |
           python - <<'PY'
-          import json,os
+          import hashlib,json,os
           from pathlib import Path
           from urllib.request import Request,urlopen
           event=json.load(open(os.environ["GITHUB_EVENT_PATH"]))
@@ -321,6 +321,18 @@ jobs:
                   status="BLOCKED_GEMINI_FALLBACK_NO_REVIEWABLE_PATCH"
           if report.is_file():
               d=json.loads(report.read_text())
+              partial=Path('reports/openhands-review')/f'issue-{issue}.patch'
+              if (not attempted and d.get('status')=='BLOCKED_INTERRUPTED_WITH_REVIEW_ARTIFACT'
+                  and d.get('candidate_persisted') is True and d.get('model_run_completed') is False
+                  and d.get('candidate_artifact')==partial.as_posix()
+                  and d.get('origin_issue_number')==issue and d.get('origin_run_id')==os.environ['GITHUB_RUN_ID']
+                  and d.get('origin_run_attempt')==os.environ.get('GITHUB_RUN_ATTEMPT','1')
+                  and all(d.get(key) is False for key in ('generated_code_executed','production_written','external_accounts_changed'))
+                  and not partial.parent.is_symlink() and partial.is_file() and not partial.is_symlink()
+                  and 0<partial.stat().st_size<=80000
+                  and hashlib.sha256(partial.read_bytes()).hexdigest()==d.get('candidate_artifact_sha256')):
+                  status='BLOCKED_INTERRUPTED_WITH_REVIEW_ARTIFACT'
+                  digest=d['candidate_artifact_sha256']
               if (not attempted and d.get("status")=="BLOCKED_ORIGINAL_DAILY_FREE_AI_CAP"
                   and d.get("failure_category")=="LOCAL_DURABLE_OBJECT_DAILY_BUDGET"
                   and not d.get("model_run_completed")
@@ -386,6 +398,7 @@ jobs:
         run: |
           docker rm -f plenum-temporary-ollama 2>/dev/null || true
           docker network rm plenum-coding-isolated 2>/dev/null || true
+
 
 
 
