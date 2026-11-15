@@ -31,11 +31,11 @@ class OriginalFreeBudgetRecovery(unittest.TestCase):
             try:
                 os.chdir(temporary)
                 with patch.object(sys, "argv", ["coder", "--execute",
-                                               "--out", "reports/free-cap.json"]), \\
+                                               "--out", "reports/free-cap.json"]), \
                      patch.dict(os.environ, {
                          "PLENUM_OPENHANDS_MODEL": "openai/glm-4.7-flash",
                          "PLENUM_OPENHANDS_BASE_URL": coder.ORIGINAL_FREE_CODING_ENDPOINT,
-                     }), \\
+                     }), \
                      patch.object(coder, "execute",
                          side_effect=RuntimeError("429 original_daily_ai_budget_exhausted")) as model:
                     with self.assertRaises(SystemExit) as failure:
@@ -58,11 +58,11 @@ class OriginalFreeBudgetRecovery(unittest.TestCase):
             try:
                 os.chdir(temporary)
                 with patch.object(sys, "argv", ["coder", "--execute",
-                                               "--out", "reports/other.json"]), \\
+                                               "--out", "reports/other.json"]), \
                      patch.dict(os.environ, {
                          "PLENUM_OPENHANDS_MODEL": "openai/glm-4.7-flash",
                          "PLENUM_OPENHANDS_BASE_URL": coder.ORIGINAL_FREE_CODING_ENDPOINT,
-                     }), \\
+                     }), \
                      patch.object(coder, "execute", side_effect=RuntimeError("unknown failure")):
                     with self.assertRaisesRegex(RuntimeError, "unknown failure"):
                         coder.main()
