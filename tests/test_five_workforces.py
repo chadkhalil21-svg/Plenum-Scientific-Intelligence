@@ -46,8 +46,11 @@ class FiveWorkforceContractTests(TestCase):
         self.assertEqual([(item["items"], item["status"]) for item in catalog], [
             (283, "indexed_idle"), (1106, "metadata_only"),
         ])
-        self.assertIn("not yet provisioned", self.registry["hosting_candidate"])
+        self.assertIn("explicitly retired", self.registry["hosting_candidate"])
         self.assertIn("No OCI provisioning", self.registry["rules"]["deployment"])
+        self.assertIn("#310 NOT PLANNED", self.registry["free_first_capability_registry"]["browser_tooling_note"])
+        self.assertIn("July 30 2026", self.registry["rules"]["free_provider"])
+        self.assertIn("timed out", self.registry["rules"]["model"])
 
     def test_source_registry_reuses_existing_five_workforces_without_paid_defaults(self):
         pointer=self.registry["free_first_capability_registry"]
