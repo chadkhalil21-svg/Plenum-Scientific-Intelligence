@@ -183,7 +183,13 @@ def inspect(model, env=os.environ):
     if not setting:
         return False
     api = PeerAPI(*setting)
-    return bool(pending_actions(api, model)[1])
+    try:
+        return bool(pending_actions(api, model)[1])
+    except RuntimeError as exc:
+        if str(exc) == "peer_http_401":
+            # Identity not yet paired. Leave mailbox untouched until owner fixes invite.
+            return False
+        raise
 
 
 def run(model, env=os.environ, backend=None):
