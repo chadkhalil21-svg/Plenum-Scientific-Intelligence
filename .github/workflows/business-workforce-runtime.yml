@@ -101,6 +101,27 @@ jobs:
           jwt=$(printf '%s' "$json" | python -c 'import json,sys;print(json.load(sys.stdin)["value"])')
           test "${#jwt}" -gt 300
           echo "::add-mask::$jwt"
+          # Inspect ONLY the verified GitHub-origin IDENTITY CLAIMS locally;
+          # never print, upload, or echo the JWT or source/secret material.
+          printf '%s' "$jwt" | python -c '
+          import base64,json,sys
+          parts=sys.stdin.read().split(".")
+          if len(parts)!=3: raise SystemExit("malformed_oidc_token")
+          claims=json.loads(base64.urlsafe_b64decode(parts[1]+"="*((-len(parts[1]))%4)))
+          repo="chadkhalil21-svg/Plenum-Scientific-Intelligence"
+          checks={
+            "issuer":claims.get("iss")=="https://token.actions.githubusercontent.com",
+            "audience":claims.get("aud")=="plenum-original-public-coder",
+            "repository":claims.get("repository")==repo,
+            "immutable_owner_id":str(claims.get("repository_owner_id"))=="251133044",
+            "immutable_repository_id":str(claims.get("repository_id"))=="1447724141",
+            "immutable_subject":claims.get("sub")=="repo:chadkhalil21-svg@251133044/Plenum-Scientific-Intelligence@1447724141:ref:refs/heads/main",
+            "workflow":claims.get("workflow_ref")==repo+"/.github/workflows/business-workforce-runtime.yml@refs/heads/main",
+            "event":claims.get("event_name")=="issues",
+          }
+          for name,ok in checks.items(): print("PLENUM_ORIGINAL_OIDC_"+name.upper()+"="+("MATCH" if ok else "MISMATCH"))
+          if not all(checks.values()): raise SystemExit("Original public repair JWT identity mismatch; no inference")
+          '
           printf 'PLENUM_OPENHANDS_API_KEY=%s\n' "$jwt" >> "$GITHUB_ENV"
       - name: Start Ollama locally, never expose model server on public interface
         if: github.event_name != 'issues'
