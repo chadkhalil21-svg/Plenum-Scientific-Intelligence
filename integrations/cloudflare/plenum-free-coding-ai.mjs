@@ -37,7 +37,9 @@ export async function verifyOriginalGithubOIDC(token, {now = Math.floor(Date.now
       || header.kid.length > 200 || !/^[A-Za-z0-9_:-]+$/.test(header.kid)) return false;
   if (claims.iss !== ISSUER || claims.aud !== AUDIENCE
       || claims.repository !== REPO
-      || claims.sub !== "repo:" + REPO + ":ref:refs/heads/main"
+      || claims.sub !== "repo:chadkhalil21-svg@251133044/Plenum-Scientific-Intelligence@1447724141:ref:refs/heads/main"
+      || claims.repository_owner_id !== "251133044"
+      || claims.repository_id !== "1447724141"
       || claims.workflow_ref !== WORKFLOW
       || claims.event_name !== "issues"
       || !Number.isSafeInteger(claims.iat) || !Number.isSafeInteger(claims.exp)
