@@ -1,0 +1,55 @@
+name: Original public wind SCADA validator (#362)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/wind-scada-validation.yml'
+      - 'tools/wind_scada/**'
+permissions:
+  contents: read
+concurrency:
+  group: wind-scada-validation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  validate-engie:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Import exact official OpenOA release and actual SCADA member
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports/wind-scada "$RUNNER_TEMP/engie"
+          git clone --depth 1 --branch v3.2 https://github.com/NREL/OpenOA.git "$RUNNER_TEMP/OpenOA"
+          test "$(git -C "$RUNNER_TEMP/OpenOA" rev-parse HEAD)" = 35e8a52c4cd8f43223f8181153d4e3f083f090d2
+          test "$(git -C "$RUNNER_TEMP/OpenOA" rev-parse v3.2)" = d580ee6bc14d20e384dbb861278428cb840818a5
+          data="$RUNNER_TEMP/OpenOA/examples/data"
+          echo "be5ea66a3355286e491f5618250dc83e85252a8cb337748d7ba19edc50df6138  $data/la_haute_borne.zip" | sha256sum -c -
+          unzip -p "$data/la_haute_borne.zip" la-haute-borne-data-2014-2015.csv > "$RUNNER_TEMP/engie/scada.csv"
+          unzip -p "$data/la_haute_borne.zip" la-haute-borne_asset_table.csv > "$RUNNER_TEMP/engie/assets.csv"
+          unzip -p "$data/la_haute_borne.zip" SCADA_data_description.csv > reports/wind-scada/SCADA_data_description.csv
+          echo "9be32aabe7e6b911f58ad3a9f292aed1e5b48cdc603b35d3feccb94f4c043cf4  $RUNNER_TEMP/engie/scada.csv" | sha256sum -c -
+          echo "2c9ecf7d735a1fd6ba809cda65faf4174ca38407d7498eb14e96f6f9d8840979  $RUNNER_TEMP/engie/assets.csv" | sha256sum -c -
+          echo "bc5a7c30489fd0deaa6cb9250068fa5e6a0702bfec918b2cb1fec32f507c9e6f  $data/plant_meta.yml" | sha256sum -c -
+          cp "$data/plant_meta.yml" "$data/readme.md" "$RUNNER_TEMP/OpenOA/LICENSE.txt" reports/wind-scada/
+          python -m pip install "$RUNNER_TEMP/OpenOA"
+          python -m pip freeze > reports/wind-scada/runtime-packages.txt
+      - name: Validate all observed SCADA records without cleaning
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/wind_scada/validate.py "$RUNNER_TEMP/engie/scada.csv" --metadata "$RUNNER_TEMP/OpenOA/examples/data/plant_meta.yml" --assets "$RUNNER_TEMP/engie/assets.csv" --local-zone Europe/Paris --extra-channel Ya_avg=deg --temperature-screen-c -15 45 --out reports/wind-scada --audit
+          python tools/wind_scada/acceptance.py "$RUNNER_TEMP/engie/scada.csv" "$RUNNER_TEMP/OpenOA/examples/data/plant_meta.yml" reports/wind-scada/malformed-acceptance.json
+          (cd reports/wind-scada && sha256sum *.csv *.json *.txt *.yml *.md > SHA256SUMS)
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: original-362-engie-scada-audit
+          path: reports/wind-scada/
+          if-no-files-found: error
+          retention-days: 14
