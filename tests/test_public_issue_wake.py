@@ -16,6 +16,92 @@ class PublicWakeAcceptance(unittest.TestCase):
         e=build_original_event(issue(),[])
         self.assertEqual(e["issue"]["number"],789)
 
+    def test_native_initial_reservation_prevents_later_wake_and_native_replay(self):
+        from unittest.mock import patch
+        from plenum_ai import public_issue_wake as wake
+        for original in (
+            issue(),
+            issue(title="[Plenum Chief] public mission", body=(
+                "PLENUM_CHIEF_PUBLIC_MISSION_V1\n"
+                "objective: Survey public research sources and create a code validator")),
+            issue(title="[Plenum Chief] public assignment", body=(
+                "PLENUM_CHIEF_PUBLIC_V1\nobjective: Create a public data validator program")),
+        ):
+            with self.subTest(title=original["title"]):
+                # A scheduled dispatch-only reservation is not an execution.
+                comments = [{"user": {"login": "github-actions[bot]"},
+                             "body": "<!-- plenum-minister-missed-dispatch:789 -->"}]
+                event = {"action": "opened", "repository": {"full_name": wake.REPO},
+                         "sender": {"login": wake.OWNER}, "issue": original}
+                posts = []
+                def gh(url, token, *, body=None):
+                    if url.endswith("/789"):
+                        return original
+                    if url.endswith("/comments?per_page=100"):
+                        return comments
+                    if url.endswith("/comments"):
+                        posts.append(body)
+                        comments.append({"user": {"login": "github-actions[bot]"},
+                                         "body": body["body"]})
+                        return {"html_url": "https://github.com/acknowledged"}
+                    raise AssertionError(url)
+                with patch.object(wake, "gh_json", side_effect=gh):
+                    self.assertTrue(wake.reserve_native_issue(event, "scoped", run_id=123, attempt=1))
+                    self.assertFalse(wake.reserve_native_issue(event, "scoped", run_id=456, attempt=1))
+                    self.assertFalse(wake.reserve_native_issue(event, "scoped", run_id=123, attempt=1))
+                self.assertEqual(len(posts), 1)
+                if original["title"] != "[Plenum Chief] public assignment":
+                    self.assertIsNone(build_original_event(original, comments))
+
+    def test_native_same_run_retry_requires_original_saved_verified_sibling(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from plenum_ai import public_issue_wake as wake, chief_retry_gate as retry
+        from plenum_ai.mission_checkpoint import artifact_digest, save_checkpoint
+        original = issue(title="[Plenum Chief] public mission", body=(
+            "PLENUM_CHIEF_PUBLIC_MISSION_V1\n"
+            "objective: Survey public research sources and create a code validator"))
+        event = {"action": "opened", "repository": {"full_name": wake.REPO},
+                 "sender": {"login": wake.OWNER}, "issue": original}
+        comments = [{"user": {"login": "github-actions[bot]"}, "body":
+                     "<!-- plenum-public-workforce-run:123:execution-reserved -->"},
+                    {"user": {"login": "github-actions[bot]"}, "body":
+                     "<!-- plenum-founder-chief-run:123:attempt:1 -->\n**Chief status: BLOCKED_PARTIAL_TEAM**"}]
+        prior = {"name": retry.WORKFLOW, "event": "issues", "id": 123,
+                 "status": "completed", "conclusion": "failure", "run_attempt": 1,
+                 "actor": {"login": wake.OWNER}, "repository": {"full_name": wake.REPO}}
+        def gh(url, token, *, body=None):
+            if url.endswith("/789"): return original
+            if url.endswith("/comments?per_page=100"): return comments
+            if url.endswith("/comments"):
+                comments.append({"user": {"login": "github-actions[bot]"}, "body": body["body"]})
+                return {"html_url": "https://github.com/acknowledged"}
+            raise AssertionError(url)
+        with tempfile.TemporaryDirectory() as folder, patch.object(wake, "gh_json", side_effect=gh), patch.object(retry, "github_json", return_value=prior):
+            root = Path(folder)
+            self.assertFalse(wake.reserve_native_issue(event, "scoped", run_id=123, attempt=2, checkpoint=root))
+            relative = "workers/public_research/output.txt"
+            artifact = root / relative
+            artifact.parent.mkdir(parents=True)
+            artifact.write_text("verified original public data")
+            objective = original["body"].splitlines()[1][11:]
+            team = ("public_research", "public_program")
+            save_checkpoint(root, issue=789, objective=objective, team=team, results={
+                "public_research": {"attempt": 1, "status": "DRAFT_READY_FOR_FOUNDER", "verified": True,
+                                    "artifact_path": relative, "sha256": artifact_digest(root, relative)},
+                "public_program": {"attempt": 1, "status": "BLOCKED_WORKER_OR_VERIFICATION", "verified": False},
+            })
+            (root / "chief-result-789.json").write_text(json.dumps({
+                "issue_number": 789, "mode": "multi", "expected_team": list(team),
+                "status": "BLOCKED_PARTIAL_TEAM", "independent_verified": False,
+            }))
+            self.assertTrue(wake.reserve_native_issue(event, "scoped", run_id=123, attempt=2, checkpoint=root))
+            self.assertFalse(wake.reserve_native_issue(event, "scoped", run_id=123, attempt=2, checkpoint=root))
+            self.assertFalse(wake.reserve_native_issue(event, "scoped", run_id=123, attempt=3, checkpoint=root))
+            self.assertFalse(wake.reserve_native_issue(event, "scoped", run_id=456, attempt=2, checkpoint=root))
+
     def test_already_handled_public_issue_is_not_rerun(self):
         comments=[{"user":{"login":"github-actions[bot]"},
                    "body":"<!-- plenum-public-workforce-run:123 -->\nStatus: **DRAFT_READY_FOR_FOUNDER**."}]
