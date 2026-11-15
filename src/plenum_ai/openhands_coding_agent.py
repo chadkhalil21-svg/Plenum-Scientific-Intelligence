@@ -99,6 +99,13 @@ DEFAULT_TASK = (
 )
 
 
+def _candidate_byte_limit(original_bytes: bytes | None) -> int:
+    """A source repair may retain the full reviewed source plus a bounded edit."""
+    if original_bytes is None:
+        return 20_000
+    return min(45_000, max(20_000, len(original_bytes) + 5_000))
+
+
 def _output_path(value: str) -> Path:
     path = Path(value)
     if (path.is_absolute() or ".." in path.parts or path.suffix != ".json"
@@ -185,7 +192,7 @@ def execute(task: str = DEFAULT_TASK, *, source_file: str | None = None,
                     continue
                 raise RuntimeError("No proposal.py after bounded repair attempt")
             raw = candidate.read_bytes()
-            if len(raw) > 20_000:
+            if len(raw) > _candidate_byte_limit(original_bytes):
                 raise RuntimeError("Candidate exceeds bounded review size")
             try:
                 ast.parse(raw.decode("utf-8"), filename="proposal.py")
