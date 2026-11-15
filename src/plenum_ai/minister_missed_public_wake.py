@@ -39,7 +39,7 @@ CODER_STATUS = "BLOCKED_LOCAL_FREE_AI_DAILY_CAP_NO_SAME_DAY_RETRY"
 CODER_RESERVATION = "<!-- plenum-minister-nextday-free-coder:"
 CODER_RECEIPT = re.compile(
     r"^<!-- plenum-openhands-review:([1-9][0-9]{0,12}):attempt:([1-9][0-9]?) -->\n"
-    r"\*\*OpenHands original public repair: ([A-Z0-9_]+)\*\*",
+    r"\*\*(OpenHands original public repair|Aider local original public repair): ([A-Z0-9_]+)\*\*",
     re.MULTILINE,
 )
 
@@ -67,9 +67,11 @@ def free_coder_nextday_candidate(issue: object, comments: object, now: datetime)
         return None
     from .openhands_coding_agent import parse_owner_repair_event
     try:
-        parse_owner_repair_event({
+        contract = parse_owner_repair_event({
             "action": "opened", "repository": {"full_name": REPO}, "issue": issue,
         })
+        if contract.get("engine", "openhands") != "openhands":
+            return None  # A local model cannot have this Cloudflare quota receipt.
     except (PermissionError, ValueError, TypeError, OSError):
         return None
     receipts = []
@@ -83,13 +85,19 @@ def free_coder_nextday_candidate(issue: object, comments: object, now: datetime)
             return None  # A reservation is consumed even if the dispatch failed.
         if (item.get("user") or {}).get("login") != "github-actions[bot]":
             continue
-        for match in CODER_RECEIPT.finditer(body):
-            receipts.append((int(match[1]), int(match[2]), match[3],
+        if "Local fallback attempted: true" in body:
+            return None  # Same-job alternate engineering already consumed the task.
+        matches = list(CODER_RECEIPT.finditer(body))
+        if "<!-- plenum-openhands-review:" in body and not matches:
+            return None  # Unknown/legacy coding receipts never authorize a rerun.
+        for match in matches:
+            receipts.append((int(match[1]), int(match[2]), match[3], match[4],
                              _utc_datetime(item.get("created_at"))))
     if len(receipts) != 1:
         return None
-    run_id, attempt, status, recorded = receipts[0]
-    if (attempt != 1 or status != CODER_STATUS or recorded is None
+    run_id, attempt, engine_headline, status, recorded = receipts[0]
+    if (attempt != 1 or engine_headline != "OpenHands original public repair"
+            or status != CODER_STATUS or recorded is None
             or now.tzinfo is None or recorded.date() >= now.astimezone(timezone.utc).date()
             or now - recorded < timedelta(hours=2)):
         return None
@@ -140,10 +148,23 @@ def recover_one_post_reset_original_coder(*, items: list, token: str,
                          "This is NOT evidence the model has completed. "
                          "Never retry this run again automatically."
                      )})
-        request_json(API + f"/actions/runs/{run_id}/rerun",
-                     token, method="POST")
-        return {"issue_number": number, "run_id": run_id,
-                "requested": True, "original_github_run_reused": True}
+        # The original GitHub service may accept a rerun before the response
+        # disappears. Preserve the reservation and report uncertainty, never
+        # repeat it or turn a lost response into a confirmed model run.
+        evidence = {"issue_number": number, "run_id": run_id,
+                    "original_github_run_reused": False, "requested": False,
+                    "dispatch_outcome": "AMBIGUOUS_RESERVED_NO_RETRY"}
+        try:
+            request_json(API + f"/actions/runs/{run_id}/rerun",
+                         token, method="POST")
+        except (TimeoutError, ConnectionError):
+            return evidence
+        except URLError as exc:
+            if not isinstance(exc.reason, (TimeoutError, ConnectionError)):
+                raise
+            return evidence
+        return {**evidence, "requested": True, "original_github_run_reused": True,
+                "dispatch_outcome": "ACCEPTED"}
     return None
 
 
@@ -327,7 +348,10 @@ def resume_missed_public_issues(*, token: str, now: datetime) -> dict:
         "schema": "plenum-original-minister-missed-public-issue-recovery-v1",
         "original_coder_recovery": coder_recovery,
         "status": ("PARTIAL_AMBIGUOUS_DISPATCH_RESERVED_NO_RETRY" if ambiguous
+                   else "AMBIGUOUS_ORIGINAL_CODER_RERUN_RESERVED_NO_RETRY"
+                   if coder_recovery and not coder_recovery["requested"]
                    else "REQUESTED_EXISTING_PUBLIC_WORKER_WAKES" if dispatched
+                   else "REQUESTED_EXISTING_ORIGINAL_CODER_RERUN" if coder_recovery
                    else "NO_NEW_MISSED_PUBLIC_MISSION"),
         "original_issues_woken": dispatched,
         "ambiguous_dispatch_issues": ambiguous,

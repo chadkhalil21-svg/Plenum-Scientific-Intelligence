@@ -2,6 +2,7 @@
 import unittest
 from datetime import datetime, timezone, timedelta
 from unittest.mock import patch
+from urllib.error import URLError
 
 from plenum_ai import minister_missed_public_wake as m
 
@@ -17,6 +18,29 @@ def issue(*, num=789, age=timedelta(hours=2), actor="chadkhalil21-svg",
             "title": title, "body": body,
             "created_at": (NOW - age).isoformat(),
             "user": {"login": actor}}
+
+
+def original_coder_issue(marker="PLENUM_OPENHANDS_PUBLIC_REPAIR_V1"):
+    return issue(num=750, age=timedelta(days=1), title=m.CODER_TITLE,
+                 body=(marker + "\nfile: src/plenum_ai/mission_checkpoint.py\n"
+                       "objective: Reject oversized public artifact before opening file"))
+
+
+def original_coder_receipt(headline="OpenHands original public repair",
+                           status=m.CODER_STATUS, run_id=123456):
+    return {"user": {"login": "github-actions[bot]"},
+            "created_at": (NOW - timedelta(days=1)).isoformat(),
+            "body": (f"<!-- plenum-openhands-review:{run_id}:attempt:1 -->\n"
+                     f"**{headline}: {status}**\n")}
+
+
+def original_coder_run():
+    return {"id": 123456, "event": "issues", "workflow_id": m.CODER_WORKFLOW_ID,
+            "path": m.CODER_WORKFLOW, "display_title": m.CODER_TITLE,
+            "head_branch": "main", "status": "completed", "conclusion": "failure",
+            "run_attempt": 1, "repository": {"full_name": m.REPO, "id": 1447724141},
+            "actor": {"login": m.OWNER, "id": 251133044},
+            "created_at": (NOW - timedelta(days=1)).isoformat()}
 
 
 class OriginalMinisterMissedWakeTests(unittest.TestCase):
@@ -194,6 +218,52 @@ class OriginalMinisterMissedWakeTests(unittest.TestCase):
         self.assertFalse(m.missing_original_attempt(None, 1))
         self.assertFalse(m.missing_original_attempt([{"body": 10}], 1))
         self.assertFalse(m.missing_original_attempt([{"body": "x"}]*100, 1))
+
+    def test_coder_quota_recovery_never_ignores_another_engine_receipt(self):
+        cloud_issue = original_coder_issue()
+        receipt = original_coder_receipt()
+        self.assertEqual(m.free_coder_nextday_candidate(cloud_issue, [receipt], NOW), 123456)
+        local_receipt = original_coder_receipt("Aider local original public repair",
+                                               "BLOCKED_NO_REVIEWABLE_PATCH", 654321)
+        self.assertIsNone(m.free_coder_nextday_candidate(cloud_issue, [receipt, local_receipt], NOW))
+        local_issue = original_coder_issue("PLENUM_AIDER_LOCAL_PUBLIC_REPAIR_V1")
+        self.assertIsNone(m.free_coder_nextday_candidate(local_issue, [receipt], NOW))
+        fallback = {**receipt, "body": receipt["body"] + "Local fallback attempted: true\n"}
+        self.assertIsNone(m.free_coder_nextday_candidate(cloud_issue, [fallback], NOW))
+        self.assertIsNone(m.free_coder_nextday_candidate({**cloud_issue, "state": "closed"}, [receipt], NOW))
+
+    def test_lost_native_coder_rerun_response_keeps_one_durable_reservation(self):
+        for failure in (TimeoutError("lost response"), URLError(TimeoutError("lost response"))):
+            with self.subTest(failure=failure):
+                task = original_coder_issue()
+                comments = [original_coder_receipt()]
+                posts = []
+
+                def api(url, token, *, method="GET", payload=None):
+                    if "/issues?" in url:
+                        return [task]
+                    if "/comments?per_page" in url:
+                        return comments
+                    if url.endswith("/actions/runs/123456"):
+                        return original_coder_run()
+                    if url.endswith("/comments") and method == "POST":
+                        comments.append({"user": {"login": "github-actions[bot]"}, "body": payload["body"]})
+                        posts.append("reserve")
+                        return {"id": 987}
+                    if url.endswith("/rerun") and method == "POST":
+                        posts.append("rerun")
+                        raise failure
+                    raise AssertionError(url)
+
+                with patch.object(m, "request_json", side_effect=api):
+                    first = m.resume_missed_public_issues(token="ephemeral", now=NOW)
+                    second = m.resume_missed_public_issues(token="ephemeral", now=NOW)
+                self.assertEqual(posts, ["reserve", "rerun"])
+                self.assertEqual(first["status"], "AMBIGUOUS_ORIGINAL_CODER_RERUN_RESERVED_NO_RETRY")
+                self.assertEqual(first["original_coder_recovery"]["issue_number"], 750)
+                self.assertFalse(first["original_coder_recovery"]["requested"])
+                self.assertFalse(first["mission_completion_claimed"])
+                self.assertIsNone(second["original_coder_recovery"])
 
 
 if __name__ == "__main__":
