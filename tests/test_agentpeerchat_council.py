@@ -106,6 +106,71 @@ class CouncilBridgeTests(unittest.TestCase):
         members = c.members_for(api, THREAD)
         self.assertEqual(set(members), {OWNER})
 
+    def test_upstream_cursor_pages_reach_owner_message_beyond_first_twenty(self):
+        class PagedAPI(FakeAPI):
+            def __init__(self, incoming):
+                super().__init__(incoming)
+                self.inbox_paths = []
+            def request(self, path, payload=None, idempotency=None, method=None):
+                if path.startswith("/inbox?"):
+                    self.inbox_paths.append(path)
+                    after = int(path.split("after=")[1].split("&")[0])
+                    items = [m for m in self.incoming if m["seq"] > after][:20]
+                    return {"items": items, "next_cursor": str(items[-1]["seq"]),
+                            "has_more": any(m["seq"] > items[-1]["seq"]
+                                            for m in self.incoming)}
+                return super().request(path, payload=payload,
+                                       idempotency=idempotency, method=method)
+        unrelated = [
+            {"id": "msg_" + str(i), "seq": i, "thread_id": THREAD,
+             "sender_id": OWNER, "type": "reaction", "content": "not a task"}
+            for i in range(1, 21)
+        ]
+        older_owner = {"id": "msg_21", "seq": 21, "thread_id": THREAD,
+                       "sender_id": OWNER, "type": "text",
+                       "content": "Describe one useful public Terra result"}
+        api = PagedAPI(unrelated + [older_owner])
+        with patch.object(c, "PeerAPI", return_value=api):
+            result = c.run("qwen", {"PLENUM_APC_QWEN_KEY": "x" * 32},
+                           lambda kind, source, env: "Evidence-first draft")
+        self.assertEqual(result["processed"], 1)
+        self.assertEqual(api.inbox_paths,
+                         ["/inbox?after=0&limit=20",
+                          "/inbox?after=20&limit=20"])
+        self.assertEqual(len(api.sent), 1)
+        self.assertEqual(api.sent[0][0]["reply_to"], "msg_21")
+        self.assertEqual(api.acked, ["/messages/msg_21/ack"])
+
+    def test_many_unacked_owner_questions_are_bounded_per_inference_sweep(self):
+        class ManyAPI(FakeAPI):
+            def request(self, path, payload=None, idempotency=None, method=None):
+                if path.startswith("/inbox?"):
+                    return {"items": self.incoming[:20], "next_cursor": "20",
+                            "has_more": True}
+                return super().request(path, payload, idempotency, method)
+        items = [{"id": "msg_" + str(i), "thread_id": THREAD,
+                  "sender_id": OWNER, "type": "text",
+                  "content": "Public question " + str(i)}
+                 for i in range(1, 21)]
+        api = ManyAPI(items)
+        with patch.object(c, "PeerAPI", return_value=api):
+            result = c.run("qwen", {"PLENUM_APC_QWEN_KEY": "x" * 32},
+                           lambda kind, source, env: "Reviewed answer")
+        self.assertEqual(result["processed"], c.MAX_ACTIONABLE_PER_SWEEP)
+        self.assertEqual(len(api.sent), c.MAX_ACTIONABLE_PER_SWEEP)
+        self.assertEqual(len(api.acked), c.MAX_ACTIONABLE_PER_SWEEP)
+
+    def test_invalid_upstream_page_cursor_fails_closed(self):
+        class StalledAPI(FakeAPI):
+            def request(self, path, payload=None, idempotency=None, method=None):
+                if path.startswith("/inbox?"):
+                    return {"items": [], "next_cursor": "0",
+                            "has_more": True}
+                return super().request(path, payload, idempotency, method)
+        with patch.object(c, "PeerAPI", return_value=StalledAPI([])):
+            with self.assertRaisesRegex(RuntimeError, "stalled_inbox_cursor"):
+                c.inspect("qwen", {"PLENUM_APC_QWEN_KEY": "x" * 32})
+
     def test_send_then_ack(self):
         m = {"id": "msg_123", "thread_id": THREAD,
              "sender_id": OWNER, "type": "text", "content": "What is an idea?"}
