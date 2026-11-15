@@ -33,8 +33,8 @@ CODER_WORKFLOW_ID = 412824880  # Original live #733 authenticated run.
 CODER_STATUS = "BLOCKED_LOCAL_FREE_AI_DAILY_CAP_NO_SAME_DAY_RETRY"
 CODER_RESERVATION = "<!-- plenum-minister-nextday-free-coder:"
 CODER_RECEIPT = re.compile(
-    r"^<!-- plenum-openhands-review:([1-9][0-9]{0,12}):attempt:([1-9][0-9]?) -->\\n"
-    r"\\*\\*OpenHands original public repair: ([A-Z0-9_]+)\\*\\*",
+    r"^<!-- plenum-openhands-review:([1-9][0-9]{0,12}):attempt:([1-9][0-9]?) -->\n"
+    r"\*\*OpenHands original public repair: ([A-Z0-9_]+)\*\*",
     re.MULTILINE,
 )
 
@@ -129,7 +129,7 @@ def recover_one_post_reset_original_coder(*, items: list, token: str,
         # dispatch response. Fail closed rather than create duplicate inference.
         request_json(API + f"/issues/{number}/comments", token, method="POST",
                      payload={"body": (
-                         f"{CODER_RESERVATION}{number}:{run_id} -->\\n"
+                         f"{CODER_RESERVATION}{number}:{run_id} -->\n"
                          "The original Minister reserved ONE post-UTC-reset "
                          "re-execution of the existing signed GitHub issue run. "
                          "This is NOT evidence the model has completed. "
