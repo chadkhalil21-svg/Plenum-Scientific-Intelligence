@@ -323,7 +323,10 @@ def execute_contract_mission(event,*,output_dir,planner=None):
     valid=verify_results(scope,results)
     return {'schema':'plenum-chief-founder-team-v2','mode':'multi','issue_number':task['issue_number'],
             'status':'VERIFIED_BOUNDED_CONTRACT_MISSION' if valid else 'BLOCKED_CONTRACT_INTEGRITY',
-            'dispatcher':('original_chief_deterministic_public_scope_contracts' if receipt['inference']['provider']=='deterministic_contract_router' else 'original_chief_local_model_public_contract_composition'),
+            'dispatcher':(('original_chief_deterministic_public_contract_pair' if len(team)==2
+                           else 'original_chief_deterministic_public_scope_contracts')
+                          if receipt['inference']['provider']=='deterministic_contract_router'
+                          else 'original_chief_local_model_public_contract_composition'),
             'model_called':called,'chief_model_delegated':called,'inference_provenance':receipt['inference'],
             'expected_team':list(team),'bounded_contracts_verified':valid,
             'founder_objective_verified':False,'objective_review_required':True,'independent_verified':valid,
