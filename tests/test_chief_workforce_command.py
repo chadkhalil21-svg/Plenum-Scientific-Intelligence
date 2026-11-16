@@ -51,17 +51,24 @@ class FounderChiefWorkforcePolicy(TestCase):
             def __exit__(self, *_): pass
             def read(self, _): return json.dumps(self.value).encode("utf-8")
 
-        for comments, expected in [
-            ([{"user": {"login": "reader"}, "body": marker}], 1),
-            ([{"user": {"login": "github-actions[bot]"}, "body": "Quoted marker:\n" + marker}], 1),
-            ([{"user": {"login": "github-actions[bot]"}, "body": marker + "\nExisting receipt"}], 0),
+        full_page = [{"user": {"login": "reader"}, "body": "Prior comment"}] * 100
+        for comments, later_page, expected in [
+            ([{"user": {"login": "reader"}, "body": marker}], [], 1),
+            ([{"user": {"login": "github-actions[bot]"}, "body": "Quoted marker:\n" + marker}], [], 1),
+            ([{"user": {"login": "github-actions[bot]"}, "body": marker + "\nExisting receipt"}], [], 0),
+            (full_page, [{"user": {"login": "reader"}, "body": "New comment"}], 1),
+            (full_page, [{"user": {"login": "github-actions[bot]"}, "body": marker}], 0),
         ]:
-            with self.subTest(comments=comments):
+            with self.subTest(first_page_count=len(comments), expected=expected):
                 posted = []
                 def api(request, timeout):
                     self.assertEqual(request.full_url.split("?")[0],
                         "https://api.github.com/repos/" + REPO + "/issues/999992/comments")
                     if request.get_method() == "GET":
+                        if request.full_url.endswith("page=2"):
+                            return Response(later_page)
+                        self.assertIn(request.full_url.split("?")[1],
+                                      ("per_page=100", "per_page=100&page=1"))
                         return Response(comments)
                     self.assertEqual(request.get_method(), "POST")
                     posted.append(json.loads(request.data)["body"])
