@@ -22,7 +22,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   contract:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -37,7 +37,9 @@ jobs:
           PYTHONPATH: src
         run: python -m unittest discover -s tests -p 'test_agentpeerchat_council.py' -v
   receive:
-    if: github.event_name != 'pull_request'
+    # Deployments verify offline. Only the existing normal cadence or an
+    # explicit dispatch can wake providers and process production mail.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 23
     env:

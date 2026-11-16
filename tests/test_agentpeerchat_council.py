@@ -285,6 +285,78 @@ class CouncilBridgeTests(unittest.TestCase):
         self.assertEqual(len(api.acked), 1)
 
 
+class PeerResponseBoundaryTests(unittest.TestCase):
+    class Response(BytesIO):
+        status = 200
+
+    def test_resume_ack_finds_existing_reply_on_valid_large_history_page(self):
+        # Upstream pages target 256 KiB of serialized items, not 150,000 bytes.
+        # After a crash between send and ACK, a valid later page must let us
+        # recover the existing reply rather than strand or repeat the model call.
+        stamp = "2026-11-15T00:00:00.000Z"
+        message = {"id": "msg_1", "seq": 1, "thread_id": THREAD,
+                   "sender_id": OWNER, "type": "text", "created_at": stamp,
+                   "content": "Question", "acked_at": None}
+        principals = [dict(p, description="", created_at=stamp)
+                      for p in FakeAPI([]).principals]
+        thread = {"id": THREAD, "title": c.TITLE, "members": principals}
+        first = {"thread": thread, "items": [message],
+                 "next_cursor": "1", "has_more": True}
+        history = [dict(message, id=f"msg_{i}", seq=i, content="é" * 1200)
+                   for i in range(2, 72)]
+        history[0]["content"] = "x" + history[0]["content"]
+        history.append(dict(message, id="msg_72", seq=72, sender_id=QWEN,
+                            reply_to="msg_1", content="Already answered"))
+        second = {"thread": thread, "items": history,
+                  "next_cursor": "72", "has_more": False}
+        def encode(obj):
+            return json.dumps(obj, ensure_ascii=False).encode("utf-8")
+        body = encode(second)
+        self.assertGreater(len(body), 150000)
+        self.assertLess(len(body), 256 * 1024)
+        acked = []
+        def endpoint(req, **kwargs):
+            path = req.full_url.split("/api/v1", 1)[1]
+            if path == "/me":
+                return self.Response(encode({"principal": principals[1]}))
+            if path == "/inbox?after=0&limit=20":
+                return self.Response(encode({"items": [message],
+                    "next_cursor": "1", "has_more": False}))
+            if path == "/principals":
+                return self.Response(encode({"items": principals}))
+            if path == f"/threads/{THREAD}?after=0&limit=100":
+                return self.Response(encode(first))
+            if path == f"/threads/{THREAD}?after=1&limit=100":
+                return self.Response(body)
+            if path == "/messages/msg_1/ack" and req.get_method() == "POST":
+                acked.append(path)
+                return self.Response(encode({"acked_at": stamp}))
+            self.fail(f"unexpected request: {path}")
+        with patch.object(c, "urlopen", side_effect=endpoint):
+            result = c.run("qwen", {"PLENUM_APC_QWEN_KEY": "x" * 32},
+                           lambda *args: self.fail("duplicate model invocation"))
+        self.assertEqual(result, {"status": "PROCESSED", "processed": 1})
+        self.assertEqual(acked, ["/messages/msg_1/ack"])
+
+    def test_oversized_valid_json_prefix_is_never_accepted(self):
+        # A valid JSON prefix followed by excess whitespace must still exceed
+        # the bound; parsing only a truncated prefix would incorrectly succeed.
+        body = b'{"items": []}' + b' ' * (1024 * 1024 + 1)
+        api = c.PeerAPI("https://example.test/api/v1", "test")
+        with patch.object(c, "urlopen", return_value=self.Response(body)):
+            with self.assertRaisesRegex(RuntimeError, "^peer_response_too_large$"):
+                api.request("/inbox?after=0&limit=20")
+
+    def test_malformed_json_or_utf8_has_redacted_protocol_error(self):
+        api = c.PeerAPI("https://example.test/api/v1", "test")
+        for case, body in (("invalid-json", b'{"secret": "private content"'),
+                           ("invalid-utf8", b'{"secret": "\xff"}')):
+            with self.subTest(case=case), patch.object(
+                    c, "urlopen", return_value=self.Response(body)):
+                with self.assertRaisesRegex(RuntimeError, "^peer_invalid_json$"):
+                    api.request("/inbox?after=0&limit=20")
+
+
 class ClaudeBridgeTests(unittest.TestCase):
     def test_claude_identity_and_access_config(self):
         self.assertEqual(c.config("claude", {"PLENUM_APC_CLAUDE_KEY": "x"*32})[1], "x"*32)
