@@ -350,7 +350,9 @@ def perplexity_answer(kind, source, env=os.environ):
 # Keep one ephemeral receive job bounded so free model quotas cannot be drained
 # by a large backlog. Unacknowledged work remains for the next normal sweep.
 INBOX_PAGE_SIZE = 20
-MAX_INBOX_PAGES = 8
+# Long-lived councils retain non-actionable messages. Keep a finite scan
+# budget, but allow fresh founder questions behind substantial old backlogs.
+MAX_INBOX_PAGES = 64
 MAX_ACTIONABLE_PER_SWEEP = 8
 
 
