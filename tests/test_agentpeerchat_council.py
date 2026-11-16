@@ -197,7 +197,7 @@ class CouncilBridgeTests(unittest.TestCase):
         members = c.members_for(api, THREAD)
         self.assertEqual(set(members), {OWNER})
 
-    def test_upstream_cursor_pages_reach_owner_message_beyond_first_twenty(self):
+    def test_upstream_cursor_pages_reach_owner_message_beyond_old_backlog(self):
         class PagedAPI(FakeAPI):
             def __init__(self, incoming):
                 super().__init__(incoming)
@@ -215,22 +215,24 @@ class CouncilBridgeTests(unittest.TestCase):
         unrelated = [
             {"id": "msg_" + str(i), "seq": i, "thread_id": THREAD,
              "sender_id": OWNER, "type": "reaction", "content": "not a task"}
-            for i in range(1, 21)
+            for i in range(1, 161)
         ]
-        older_owner = {"id": "msg_21", "seq": 21, "thread_id": THREAD,
+        older_owner = {"id": "msg_161", "seq": 161, "thread_id": THREAD,
                        "sender_id": OWNER, "type": "text",
                        "content": "Describe one useful public Terra result"}
         api = PagedAPI(unrelated + [older_owner])
         with patch.object(c, "PeerAPI", return_value=api):
-            result = c.run("qwen", {"PLENUM_APC_QWEN_KEY": "x" * 32},
-                           lambda kind, source, env: "Evidence-first draft")
+            try:
+                result = c.run("qwen", {"PLENUM_APC_QWEN_KEY": "x" * 32},
+                               lambda kind, source, env: "Evidence-first draft")
+            except RuntimeError as exc:
+                self.fail(f"Founder message must be reachable after old backlog: {exc}")
         self.assertEqual(result["processed"], 1)
         self.assertEqual(api.inbox_paths,
-                         ["/inbox?after=0&limit=20",
-                          "/inbox?after=20&limit=20"])
+                         [f"/inbox?after={i}&limit=20" for i in range(0, 161, 20)])
         self.assertEqual(len(api.sent), 1)
-        self.assertEqual(api.sent[0][0]["reply_to"], "msg_21")
-        self.assertEqual(api.acked, ["/messages/msg_21/ack"])
+        self.assertEqual(api.sent[0][0]["reply_to"], "msg_161")
+        self.assertEqual(api.acked, ["/messages/msg_161/ack"])
 
     def test_many_unacked_owner_questions_are_bounded_per_inference_sweep(self):
         class ManyAPI(FakeAPI):
