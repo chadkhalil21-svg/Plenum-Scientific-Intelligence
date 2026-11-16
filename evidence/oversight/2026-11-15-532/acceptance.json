@@ -1,0 +1,176 @@
+{
+  "title": "Original founder instruction #532: bounded Agent Army acceptance and explicit exclusions",
+  "as_of_utc": "2026-11-15",
+  "authority": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/532",
+  "parent": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/432",
+  "method": "Preserve original published execution receipts and independent acceptance records; no repeated mission, model call, browser work, new audit execution, private data or expenditure. This is a source-linked artifact, not a new runtime test, automated audit output, agent framework or canonical private ledger.",
+  "original_audit": {
+    "workflow": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/.github/workflows/weekly-founder-business-brief.yml",
+    "historical_accepted_audit": {
+      "issue": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/464#issuecomment-6904887454",
+      "run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43061265649",
+      "job": 130664167570,
+      "head": "74d0c5b55b27fb0d6268fc665ee0b80a8f2be7fe",
+      "artifact": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43061265649/artifacts/13872329480",
+      "zip_sha256": "1ae73465037c47fcfecaced71efd7b2b0021db4bbde5045afee92356a22adbb3",
+      "permanent_receipt": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/432#issuecomment-6801681623",
+      "result_count": 28,
+      "status_counts": {
+        "verified_source_merge_only": 10,
+        "limited_metadata": 1,
+        "limited_real_worker": 1,
+        "missing_full_video_content": 1,
+        "missing_live_acceptance": 6,
+        "partial_advisory": 1,
+        "other_partial": 8
+      },
+      "scope": "Historical 11 November audit accepted, not all requirements. Current source and founder retirement override govern subsequent status."
+    },
+    "original_532_trigger": {
+      "run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43256160556",
+      "job": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43256160556/job/131314830696",
+      "status": "failed",
+      "reason": "PermissionError: Only exact founder public oversight command may activate audit",
+      "artifact_count": 0,
+      "disposition": "Preserved historical failure; no rerun or claim of successful #532 workflow artifact. This acceptance artifact reuses original accepted audit and later public receipts."
+    }
+  },
+  "original_operating_model": {
+    "status": "operational_bounded_event_driven",
+    "registry": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/integrations/workforces/five-workforces.json",
+    "founder_override": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/432",
+    "evidence": "Existing Chief/Minister, five logical workforces, original scheduled/on-demand GitHub Actions, and actual Cloudflare signed public wake. Oracle #384 retired NOT PLANNED. No always-on host is a prerequisite for this bounded operating route.",
+    "non_claim": "No demonstrated generalized 24/7 autonomous employees, self-recovery across arbitrary tasks, free unlimited commercial inference, private-account writes or cloud-wide zero spend."
+  },
+  "chief": {
+    "status": "verified_bounded_original_missions",
+    "receipts": [
+      {
+        "source": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/662#issuecomment-6870383945",
+        "run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43547266622",
+        "artifact": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43547266622/artifacts/14094715775",
+        "permanent_archive": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/tree/main/evidence/chief-data/2026-11-13-662",
+        "outcome": "Actual Qwen-directed Research→Engineering, two independently rechecked NOAA metadata records, original plan and input/checkpoint hashes matched; original automatic founder_objective_verified=false preserved."
+      },
+      {
+        "source": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/681#issuecomment-6887420453",
+        "run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43642885630",
+        "artifact": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43642885630/artifacts/14133425295",
+        "outcome": "Exact four-tool original Qwen-directed public NOAA station and scholarly DOI metadata composite; independent original-artifact hash and second-source verification."
+      }
+    ],
+    "limit": "Exact original public objectives independently accepted, not an unrestricted Chief."
+  },
+  "workforces": [
+    {
+      "id": "scientific_research",
+      "status": "verified_bounded_public_worker",
+      "source": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/491#issuecomment-6885597563",
+      "original_task": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/691#issuecomment-6885597002",
+      "run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43651086112",
+      "artifact": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43651086112/artifacts/14136306132",
+      "outcome": "Actual first-party USDA 30-page PDF, 78,217 extracted characters, four page-linked excerpts and pinned PaperQA2/pypdf source-backed retrieval independently accepted.",
+      "limit": "One document, no generalized ingestion, private data, efficacy or arbitrary model conclusion."
+    },
+    {
+      "id": "engineering_manufacturing",
+      "status": "verified_bounded_deliverable_supervised",
+      "source": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/387#issuecomment-6903926073",
+      "run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43780038701",
+      "review": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/793#pullrequestreview-5913734753",
+      "delivery": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/793",
+      "outcome": "Original public battery mission completed after supervised engineering continuation: real 116 metadata records, 1,943 cycling and 78 separated EIS observations; independent review and actual exact-head workflow readback.",
+      "limit": "Not autonomous arbitrary coding, full-study science certification, or production action."
+    },
+    {
+      "id": "commercial_operations",
+      "status": "verified_bounded_deliverable_supervised",
+      "source": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/363#issuecomment-6902402695",
+      "delivery": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/788",
+      "review": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/788#pullrequestreview-5913251752",
+      "outcome": "Original public weekly laboratory operating checklist independently reviewed and merged as a useful template; source receipt was premerge, delivery PR establishes subsequent merger.",
+      "limit": "No live lab execution, clinical/regulatory certification, commercial automation or private-account writes."
+    },
+    {
+      "id": "global_intelligence",
+      "status": "verified_bounded_public_research_deliverable",
+      "source": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/428#issuecomment-6885116098",
+      "independent_review": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/429#issuecomment-6885121037",
+      "outcome": "Actual primary-source diligence on named public funding opportunities and distinct advisory ranking.",
+      "limit": "No applications, award, private messages, invented partner commitments or independently autonomous private worker."
+    },
+    {
+      "id": "verification_council",
+      "status": "verified_bounded_advisory_and_artifact_readback",
+      "sources": [
+        "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/464#issuecomment-6904887454",
+        "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/431#issuecomment-6885098373",
+        "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/429#issuecomment-6885121037",
+        "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/793#pullrequestreview-5913734753"
+      ],
+      "outcome": "Independent historical audit readback and source-grounded specific advisory and engineering review receipts.",
+      "limit": "Simulated advisory perspectives are not appointed, external or licensed professional advisers; not generalized independent autonomous verification."
+    }
+  ],
+  "browser": {
+    "status": "retired_not_planned",
+    "issue": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/310",
+    "founder_override": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/432",
+    "note": "The prior issue body contains stale historical OPEN language. Current issue state closed / not_planned and later founder override govern. No acceptance requirement remains for the custom browser; no new browser/authentication/repair/demo. Existing authorized connected provider tools or permitted existing metered fallback only."
+  },
+  "cloudflare_483": {
+    "issue": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/483",
+    "closure": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/483#issuecomment-6885837921",
+    "signed_public_wake": {
+      "status": "verified_bounded_live",
+      "receipt": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/510#issuecomment-6904894680",
+      "original_receipt": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/483#issuecomment-6813865753",
+      "signed_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43150740531",
+      "downstream_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43150753953",
+      "immutable_head": "9b8a8c0474a7cee0f37b6d86ab4256dfe1051741",
+      "outcome": "Actual HTTP 202 signed wake and actual separate downstream repository_dispatch completion, no continuous agent or inference proven by the wake."
+    },
+    "durable_exact_memory": {
+      "status": "verified_owner_authenticated_cross_session",
+      "source": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/483",
+      "public_closure": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/483#issuecomment-6885837921",
+      "outcome": "Existing SQLite Durable Object, authenticated write+read and fresh-session identical revision 1; recorded 2026-11-13T04:35:48.488Z, original #483 source.",
+      "privacy": "Only public receipt retained. Owner screenshots, keys, record payload and private master ledger not published.",
+      "limit": "Does not establish automatic ChatGPT native memory or direct authorized independent-agent reads."
+    },
+    "free_inference": {
+      "status": "not_verified_for_live_cloudflare_inference_in_this_scope",
+      "source": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/483#issuecomment-6841069131",
+      "note": "Wake/memory are not model calls. Actual Workers AI no-new-charge model entitlement, usage and quota not demonstrated by these particular receipts; historical GitHub Models route retired. Bounded accepted Qwen Actions missions above are distinct."
+    }
+  },
+  "remaining_boundaries": [
+    {
+      "status": "source_only_or_proposed",
+      "scope": "Optional Mem0, Graphiti, MCP Memory installs and Paperclip/Hermes/OpenClaw integrations are not proof of live model-based memory or agent deployment; no new persistent machine needed for accepted event-driven operating route.",
+      "sources": [
+        "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/483",
+        "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/431#issuecomment-6885098373",
+        "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/432"
+      ]
+    },
+    {
+      "status": "blocked_pending_scope",
+      "scope": "Native cross-chat memory automation/direct authenticated private reads, private provider actions and external always-on host availability remain unverified where separately needed; Oracle is retired, not a current operating gate.",
+      "sources": [
+        "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/483#issuecomment-6885837921",
+        "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/432"
+      ]
+    },
+    {
+      "status": "not_demonstrated",
+      "scope": "Broad unattended autonomous planning, recovery, arbitrary coding, private operations, billing attribution and universal free unlimited inference are not established; parent #432 remains the canonical open Army acceptance.",
+      "sources": [
+        "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/432",
+        "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/431#issuecomment-6885098373",
+        "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/main/integrations/workforces/five-workforces.json"
+      ]
+    }
+  ],
+  "conclusion": "Original #532 evidence-preservation deliverable is bounded source reconciliation. No new tests, models, providers or private actions were needed; prior audit and exact historical failing #532 run remain untouched. This artifact does not close or certify full parent #432."
+}
