@@ -8,7 +8,7 @@
 ## Film direction
 Premium restrained scientific naturalism. Use genuine cattle/pasture footage only where independently licensed; original diagrams for unobserved science; clear lower-third labels for literature precedent vs **CONCEPT VISUALIZATION / NOT FIELD RESULTS**. No fabricated laboratory scenes or implied experiments. 16:9 H.264/AAC, legible accessibility captions; original or separately commercially cleared soundtrack. Measured speaking duration, not an assumption from printed timecodes. Existing verified 15-second CC0 cattle/Kokoro reel and the 95.8-second original first cut are proof-of-capability only, not finished five-minute documentary.
 
-**Voice:** deliberate, humane, institutional, ~118 words/minute overall average for 590 words; each segment target 30s including modest pauses. Requires retiming after real narration audition, and may run longer until edited. Pronounce *Asparagopsis* via an artistically approved and checked reading. Use the existing Kokoro sample as a baseline; obtain human review; consider Piper/Chatterbox only with independently verified model/voice rights and actual free compute.
+**Voice:** deliberate, humane, institutional, ~118 words/minute planning baseline for 583 actual whitespace-delimited narration words (counted 16 November 2026); each segment target 30s including modest pauses. Requires retiming after real narration audition, and may run longer until edited. Pronounce *Asparagopsis* via an artistically approved and checked reading. Use the existing Kokoro sample as a baseline; obtain human review; consider Piper/Chatterbox only with independently verified model/voice rights and actual free compute.
 
 ## Timed script and shot-level source gates
 
@@ -39,7 +39,7 @@ Premium restrained scientific naturalism. Use genuine cattle/pasture footage onl
 
 **Source/rights gate:** FAO; avoid unsupported quantitative climate claims
 
-### Scene 04 — 01:30–02:00 | A documented precedent (58 words)
+### Scene 04 — 01:30–02:00 | A documented precedent (51 words)
 **Picture:** Illustration of seaweed, not unlicensed real microscopy; original reaction-path diagram with general labels.
 
 **Narration:** “One line of investigation has focused on compounds associated with the red seaweed Asparagopsis. Peer-reviewed cattle feeding studies report methane reductions under particular diets, doses, and trial conditions. These published results concern administered seaweed-based feed supplements, not Plenum-engineered pasture forage. The distinction matters, and it shall remain visible throughout this film.”
@@ -101,6 +101,28 @@ Premium restrained scientific naturalism. Use genuine cattle/pasture footage onl
 **On-screen identification:** PLENUM TERRA | Research rooted in the pasture | Concept under investigation
 
 **Source/rights gate:** No claims of demonstrated Terra efficacy; no public release without founder approval
+
+## Measured script-text timing gate — 16 November 2026
+
+**Method:** Count whitespace-separated words inside the ten **Narration** quotations, excluding headings, picture directions, and labels; divide by the script's planning pace of 118 words/minute. These are **text estimates, not measured Kokoro audio durations**, and punctuation, *Asparagopsis* pronunciation, pauses, breaths, captions and music transitions can change real timing.
+
+| Scene | Counted words | Speech at 118 wpm | Time remaining in 30s slot |
+|---|---:|---:|---:|
+| 01 | 57 | 29.0s | +1.0s |
+| 02 | 53 | 26.9s | +3.1s |
+| 03 | 57 | 29.0s | +1.0s |
+| 04 | 51 | 25.9s | +4.1s |
+| 05 | 61 | 31.0s | -1.0s |
+| 06 | 57 | 29.0s | +1.0s |
+| 07 | 61 | 31.0s | -1.0s |
+| 08 | 65 | 33.1s | -3.1s |
+| 09 | 63 | 32.0s | -2.0s |
+| 10 | 58 | 29.5s | +0.5s |
+| **Total** | **583** | **296.4s** | **+3.6s** |
+
+**Editorial finding:** Scenes 05, 07, 08 and 09 exceed their allotted 30 seconds *before* pauses at the planned pace. A total 3.6 seconds for ten scenes cannot accommodate premium documentary breathing room, titles, musical transitions and natural pronunciation. The previously printed ~590-word estimate is not the exact narration count; scene 04's prior heading of 58 words is also corrected. Do not solve this by artificially speeding the narrator.
+
+**Next production gate:** Retain the current draft as source, prepare a scientifically faithful shorter narration (rough planning target 500–530 words, subject to actual auditions), time the *real approved WAV* scene by scene, then align subtitles to audible words and picture cuts. Any shortening must preserve the supplement-versus-Terra distinction, uncertainty and non-efficacy disclosures. Do not assert a five-minute MP4, approved narrator, or accepted caption synchronization from this text-only audit.
 
 ## Source and claim register
 1. **Established biology:** FAO, "Enteric methane," https://www.fao.org/in-action/enteric-methane/background/en ; US EPA, state greenhouse-gas inventory methodology, enteric fermentation: https://www.epa.gov/system/files/documents/2024-09/method-report_ghgibystate-508-september.pdf .
