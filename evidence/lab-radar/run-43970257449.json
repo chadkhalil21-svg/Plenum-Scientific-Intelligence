@@ -1,0 +1,268 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "43970257449",
+  "source_revision": "7d16c024a36073f12599f5848a18b8b6d2cc2ac8",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-16T22:27:59.389132+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 28,
+    "sources_returning_records": 25,
+    "source_outages": [
+      "un_climate_environment",
+      "gdelt_headlines",
+      "world_bank"
+    ],
+    "new_public_links_before_limit": 33,
+    "signals": [
+      {
+        "category": "universities",
+        "publisher": "MIT News",
+        "source": "mit_labs",
+        "url": "https://news.mit.edu/2026/qa-how-ocean-carbon-sequestration-changes-under-different-glacial-conditions-1116",
+        "title_untrusted": "Q&A: How ocean carbon sequestration changes under different glacial conditions",
+        "claimed_publication_date": "Mon, 16 Nov 2026 14:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261116023351.htm",
+        "title_untrusted": "NASA smashed into an asteroid. Now Hera has revealed a strange new world",
+        "claimed_publication_date": "Mon, 16 Nov 2026 08:40:11 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03760-2",
+        "title_untrusted": "<b>The climate is in </b><b>crisis</b><b> — here’s four things we can do</b>",
+        "claimed_publication_date": "2026-11-16",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "health",
+        "publisher": "U.S. National Institutes of Health",
+        "source": "nih_biomedical_news",
+        "url": "https://www.nih.gov/news-events/news-releases/dr-john-h-powers-iii-serve-director-nihs-national-institute-allergy-infectious-diseases",
+        "title_untrusted": "Dr. John H. Powers III to serve as director of NIH’s National Institute of Allergy and Infectious Diseases",
+        "claimed_publication_date": "Mon, 11/16/2026 - 12:00",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.17338",
+        "title_untrusted": "When Should LLM Agents Forget? Memory Filtering Under Query-Critical Resolver Errors",
+        "claimed_publication_date": "Mon, 16 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.17342",
+        "title_untrusted": "Accessible 3D Printed Archimedes System for Accurate and Precise Density Measurements and Uncertainty Analysis",
+        "claimed_publication_date": "Mon, 16 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75467242",
+        "title_untrusted": "M 0.7 - 4 km NW of The Geysers, CA",
+        "claimed_publication_date": "1794866329040",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261116014842.htm",
+        "title_untrusted": "New wearable ultrasound patch boosts REM sleep without drugs or surgery",
+        "claimed_publication_date": "Mon, 16 Nov 2026 05:22:15 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/s41586-026-11399-2",
+        "title_untrusted": "Architecture of a portal complex embedded in the poxvirus core",
+        "claimed_publication_date": "2026-11-16",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.17339",
+        "title_untrusted": "Does the Ranking Hold? A Practitioner-Facing Audit of Hallucination Detectors on Small, Quantized, On-Device LLMs",
+        "claimed_publication_date": "Mon, 16 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.17343",
+        "title_untrusted": "Curvature-Aware Edge Dynamic GNNs for Low-$p_T$ Track Reconstruction at HL-LHC",
+        "claimed_publication_date": "Mon, 16 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75467237",
+        "title_untrusted": "M 1.7 - 2 km SSW of Anderson Springs, CA",
+        "claimed_publication_date": "1794866295560",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261115085552.htm",
+        "title_untrusted": "Vitamin B12 may hold the key to treating a rare genetic disorder",
+        "claimed_publication_date": "Mon, 16 Nov 2026 09:31:10 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03715-7",
+        "title_untrusted": "As El Niño builds, studies of extreme marine heatwaves must start now",
+        "claimed_publication_date": "2026-11-16",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.17340",
+        "title_untrusted": "LoRAWeaver: Directional Adapter Routing in LoRA Representation Space",
+        "claimed_publication_date": "Mon, 16 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.17344",
+        "title_untrusted": "Rank-One Ultralight Dark Matter Response in a Full-Tensor Gravity Gradiometer",
+        "claimed_publication_date": "Mon, 16 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/hv75071182",
+        "title_untrusted": "M 2.5 - 21 km ESE of Naalehu, Hawaii",
+        "claimed_publication_date": "1794866228630",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261115085550.htm",
+        "title_untrusted": "Scientists discover that the heart doesn't age the way we thought",
+        "claimed_publication_date": "Mon, 16 Nov 2026 09:16:56 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03706-8",
+        "title_untrusted": "Secrets of the vampires: genomes reveal how these bats live off blood alone",
+        "claimed_publication_date": "2026-11-16",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.17341",
+        "title_untrusted": "Tabular Population Priors as Structured Retrieval for EHR Medication Set Prediction",
+        "claimed_publication_date": "Mon, 16 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.17345",
+        "title_untrusted": "Composition-dependent ultralight dark matter detection with a tetrahedral superconducting gravity gradiometer",
+        "claimed_publication_date": "Mon, 16 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us7000tyns",
+        "title_untrusted": "M 4.6 - 146 km SSE of Isangel, Vanuatu",
+        "claimed_publication_date": "1794866158945",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
