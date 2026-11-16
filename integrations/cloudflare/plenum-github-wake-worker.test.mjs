@@ -109,6 +109,92 @@ test("missing replay binding fails closed before dispatch",async () => {
   assert.equal((await worker.fetch(await signed(867530),scoped)).status,503);
 });
 
+test("a replay body completed after the lock expires is rejected as stale",async () => {
+  const originalNow=Date.now, originalFetch=globalThis.fetch, calls=[];
+  let now=1_800_000_000_000;
+  Date.now=()=>now;
+  globalThis.fetch=async (...args)=>{
+    calls.push(args);
+    return new Response(null,{status:204});
+  };
+  try {
+    const scoped={...env,PLENUM_REPLAY_GUARD:replayBinding()};
+    const first=await signed(765432);
+    const headers=first.headers;
+    assert.equal((await worker.fetch(first,scoped)).status,202);
+    const replay=new Request("https://placeholder.workers.dev/wake",{
+      method:"POST",headers,duplex:"half",
+      body:new ReadableStream({
+        pull(controller) {
+          // Body is read only after the entry-time timestamp check;
+          // advance beyond the original atomic lock without sleeping.
+          now+=301_000;
+          controller.enqueue(encoder.encode(JSON.stringify({issue_number:765432})));
+          controller.close();
+        }
+      },{highWaterMark:0})
+    });
+    assert.equal((await worker.fetch(replay,scoped)).status,403);
+    assert.equal(calls.length,1);
+  } finally {
+    Date.now=originalNow;
+    globalThis.fetch=originalFetch;
+  }
+});
+
+test("signed timestamp becoming stale in transit to the replay guard cannot claim",async () => {
+  const originalNow=Date.now, originalFetch=globalThis.fetch, calls=[];
+  let now=1_800_000_000_000;
+  Date.now=()=>now;
+  globalThis.fetch=async (...args)=>{
+    calls.push(args);
+    return new Response(null,{status:204});
+  };
+  try {
+    const binding=replayBinding();
+    const scoped={...env,PLENUM_REPLAY_GUARD:{getByName(name) {
+      const original=binding.getByName(name);
+      return {fetch(url,opts) {
+        now+=121_000;
+        return original.fetch(url,opts);
+      }};
+    }}};
+    assert.equal((await worker.fetch(await signed(765433),scoped)).status,403);
+    assert.equal(calls.length,0);
+    // A new valid request is still accepted; stale admission must not reserve.
+    assert.equal((await worker.fetch(await signed(765433),{...env,PLENUM_REPLAY_GUARD:binding})).status,202);
+    assert.equal(calls.length,1);
+  } finally {
+    Date.now=originalNow;
+    globalThis.fetch=originalFetch;
+  }
+});
+
+test("oversized streamed wake body is canceled before the rest is buffered",async () => {
+  const originalFetch=globalThis.fetch;
+  let reads=0, canceled=false;
+  globalThis.fetch=()=>{throw new Error("network should never be used");};
+  try {
+    const original=await signed(765434);
+    const stream=new ReadableStream({
+      pull(controller) {
+        reads++;
+        if (reads===1) controller.enqueue(new Uint8Array(141));
+        else controller.close();
+      },
+      cancel() { canceled=true; }
+    },{highWaterMark:0});
+    const request=new Request("https://placeholder.workers.dev/wake",{
+      method:"POST",headers:original.headers,duplex:"half",body:stream
+    });
+    assert.equal((await worker.fetch(request,env)).status,403);
+    assert.equal(reads,1);
+    assert.equal(canceled,true);
+  } finally {
+    globalThis.fetch=originalFetch;
+  }
+});
+
 test("invalid signature and expired request cannot dispatch",async () => {
   const old=globalThis.fetch;
   globalThis.fetch=()=>{throw new Error("network should never be used");};

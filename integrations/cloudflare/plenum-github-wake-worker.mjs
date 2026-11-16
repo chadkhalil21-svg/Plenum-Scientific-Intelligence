@@ -21,20 +21,61 @@ function response(status, data) {
   });
 }
 
+function freshStamp(stamp, nowSeconds = Math.floor(Date.now()/1000)) {
+  return Number.isSafeInteger(stamp) && Math.abs(nowSeconds-stamp) <= MAX_AGE_SECONDS;
+}
+
+async function readBoundedBody(request, stamp) {
+  if (!request.body || !freshStamp(stamp)) return null;
+  const reader = request.body.getReader();
+  const bytes = new Uint8Array(MAX_BYTES);
+  let length = 0, timer, finished = false;
+  // Time waiting for the body is wall time, not Worker CPU time.
+  const deadline = (stamp + MAX_AGE_SECONDS + 1)*1000 - Date.now();
+  const expired = new Promise(resolve => {
+    timer = setTimeout(() => resolve(null), Math.max(0, deadline));
+  });
+  try {
+    for (;;) {
+      const part = await Promise.race([reader.read(), expired]);
+      if (part === null || !freshStamp(stamp)) return null;
+      if (part.done) {
+        finished = true;
+        return bytes.subarray(0, length);
+      }
+      if (part.value.byteLength > MAX_BYTES-length) return null;
+      bytes.set(part.value, length);
+      length += part.value.byteLength;
+    }
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+    if (!finished) void reader.cancel().catch(() => {});
+    reader.releaseLock();
+  }
+}
+
 export async function authenticate(request, secret, nowSeconds = Math.floor(Date.now()/1000)) {
   if (typeof secret !== "string" || secret.length < 32) return null;
   const stamp = request.headers.get("x-plenum-timestamp") || "";
   const header = request.headers.get("x-plenum-signature") || "";
-  if (!/^\d{10,12}$/.test(stamp) || Math.abs(nowSeconds - Number(stamp)) > MAX_AGE_SECONDS
+  if (!/^\d{10,12}$/.test(stamp) || !freshStamp(Number(stamp), nowSeconds)
       || !/^sha256=[0-9a-fA-F]{64}$/.test(header)) return null;
-  const raw = await request.text();
-  if (encoder.encode(raw).length > MAX_BYTES) return null;
+  const body = await readBoundedBody(request, Number(stamp));
+  if (body === null) return null;
+  const prefix = encoder.encode(stamp + ".");
+  const message = new Uint8Array(prefix.length + body.length);
+  message.set(prefix);
+  message.set(body, prefix.length);
   const bytes = new Uint8Array(header.slice(7).match(/.{2}/g).map(v => parseInt(v, 16)));
   const key = await crypto.subtle.importKey(
     "raw", encoder.encode(secret), {name:"HMAC", hash:"SHA-256"}, false, ["verify"]
   );
-  const ok = await crypto.subtle.verify("HMAC", key, bytes, encoder.encode(stamp + "." + raw));
-  return ok ? raw : null;
+  const ok = await crypto.subtle.verify("HMAC", key, bytes, message);
+  if (!ok || !freshStamp(Number(stamp))) return null;
+  try { return new TextDecoder("utf-8", {fatal:true, ignoreBOM:true}).decode(body); }
+  catch { return null; }
 }
 
 export function parsePublicIssueId(raw) {
@@ -65,22 +106,25 @@ export class PublicWakeReplayGuard {
     if (request.method !== "POST" || path !== "/claim")
       return new Response(null, {status:404});
     try {
-      const {issue, now} = await request.json();
-      const first = await this.claim(issue, now);
-      return new Response(null, {status:first ? 204 : 409});
+      const {issue, stamp} = await request.json();
+      return new Response(null, {status:await this.claim(issue, stamp)});
     } catch {
       return new Response(null, {status:503});
     }
   }
-  async claim(issue, now) {
+  async claim(issue, stamp) {
     if (!Number.isSafeInteger(issue) || issue < 1 || issue >= 1000000000
-        || !Number.isSafeInteger(now) || now < 0) return false;
+        || !Number.isSafeInteger(stamp)) return 403;
     return this.ctx.storage.transaction(async (tx) => {
       const key = "issue:" + issue;
       const expires = await tx.get(key);
-      if (typeof expires === "number" && expires > now) return false;
+      // Revalidate with the Durable Object's own clock at the atomic claim,
+      // including on transaction retry or delayed delivery to this object.
+      const now = Math.floor(Date.now()/1000);
+      if (!freshStamp(stamp, now)) return 403;
+      if (typeof expires === "number" && expires > now) return 409;
       await tx.put(key, now + REPLAY_LOCK_SECONDS);
-      return true;
+      return 204;
     });
   }
 
@@ -137,8 +181,9 @@ export default {
       const guard = env.PLENUM_REPLAY_GUARD.getByName("plenum-public-wake");
       const replay = await guard.fetch("https://replay-guard.internal/claim", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({issue:number, now:Math.floor(Date.now() / 1000)})
+        body:JSON.stringify({issue:number, stamp:Number(request.headers.get("x-plenum-timestamp"))})
       });
+      if (replay.status === 403) return response(403, {error:"unauthorized_or_stale"});
       if (replay.status === 409) return response(409, {error:"duplicate_issue_wake"});
       if (replay.status !== 204) return response(503, {error:"replay_guard_unavailable"});
     } catch {
