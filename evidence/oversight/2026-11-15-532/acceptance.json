@@ -1,6 +1,6 @@
 {
   "title": "Original founder instruction #532: bounded Agent Army acceptance and explicit exclusions",
-  "as_of_utc": "2026-11-15",
+  "as_of_utc": "2026-11-16",
   "authority": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/532",
   "parent": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/432",
   "method": "Preserve original published execution receipts and independent acceptance records; no repeated mission, model call, browser work, new audit execution, private data or expenditure. This is a source-linked artifact, not a new runtime test, automated audit output, agent framework or canonical private ledger.",
@@ -172,5 +172,6 @@
       ]
     }
   ],
-  "conclusion": "Original #532 evidence-preservation deliverable is bounded source reconciliation. No new tests, models, providers or private actions were needed; prior audit and exact historical failing #532 run remain untouched. This artifact does not close or certify full parent #432."
+  "conclusion": "Original #532 evidence-preservation deliverable is bounded source reconciliation. No new tests, models, providers or private actions were needed; prior audit and exact historical failing #532 run remain untouched. This artifact does not close or certify full parent #432.",
+  "as_of_eastern": "2026-11-15"
 }
