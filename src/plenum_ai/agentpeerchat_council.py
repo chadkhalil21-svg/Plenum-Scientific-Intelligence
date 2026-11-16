@@ -18,6 +18,10 @@ AGENTS = {"qwen": "Plenum Prometheus — Qwen", "gemini": "Plenum Prometheus —
           "llama": "Plenum Prometheus — Llama", "claude": "Plenum Prometheus — Claude",
           "computer": "Plenum Prometheus — Computer", "perplexity": "Plenum Prometheus — Perplexity"}
 TITLE = "Plenum AI Council — Public"
+# AgentPeerChat targets 256 KiB of serialized items per page, plus the
+# response envelope; historical oversized items can also exceed that target.
+# Allow headroom, but reject responses exceeding this finite client limit.
+MAX_PEER_RESPONSE_BYTES = 1024 * 1024
 MARKERS = {"qwen": "[Qwen | initial]", "gemini": "[Gemini | initial]", "llama": "[Llama | initial]", "claude": "[Claude | initial]", "computer": "[Computer | initial]", "perplexity": "[Perplexity | initial]"}
 CRITIQUE = {"qwen": "[Qwen | critique]", "gemini": "[Gemini | critique]", "llama": "[Llama | critique]", "claude": "[Claude | critique]", "computer": "[Computer | critique]", "perplexity": "[Perplexity | critique]"}
 SYSTEM = (
@@ -118,7 +122,13 @@ class PeerAPI:
             with urlopen(req, timeout=22) as response:
                 if response.status not in (200, 201):
                     raise RuntimeError("peer_status_" + str(response.status))
-                return json.loads(response.read(150000))
+                body = response.read(MAX_PEER_RESPONSE_BYTES + 1)
+                if len(body) > MAX_PEER_RESPONSE_BYTES:
+                    raise RuntimeError("peer_response_too_large")
+                try:
+                    return json.loads(body)
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    raise RuntimeError("peer_invalid_json") from None
         except HTTPError as exc:
             raise RuntimeError("peer_http_" + str(exc.code)) from None
         except URLError:
@@ -459,7 +469,7 @@ def main():
             print(json.dumps(run(args.model)))
     except Exception as exc:
         detail = str(exc)
-        if not re.fullmatch(r"(?:gemini_http|peer_http)_[45][0-9]{2}|empty_model_answer|answer_exceeds_message_limit|puter_request_failed|puter_(?:setup|usage|chat)_(?:network_error|request_timeout|invalid_response|insufficient_funds|invalid_allowance|insufficient_allowance|permission_denied|invalid_model|rate_limit_exceeded|unauthorized|output_limit|unknown)|missing_puter_token|provider_model_(?:missing|mismatch)|incorrect_self_identity", detail):
+        if not re.fullmatch(r"(?:gemini_http|peer_http)_[45][0-9]{2}|peer_(?:response_too_large|invalid_json)|empty_model_answer|answer_exceeds_message_limit|puter_request_failed|puter_(?:setup|usage|chat)_(?:network_error|request_timeout|invalid_response|insufficient_funds|invalid_allowance|insufficient_allowance|permission_denied|invalid_model|rate_limit_exceeded|unauthorized|output_limit|unknown)|missing_puter_token|provider_model_(?:missing|mismatch)|incorrect_self_identity", detail):
             detail = type(exc).__name__
         print("bridge_error=" + detail, file=sys.stderr)
         sys.exit(1)
