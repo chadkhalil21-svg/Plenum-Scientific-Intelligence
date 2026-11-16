@@ -1,0 +1,38 @@
+name: Public battery cycling measurement review #387
+on:
+  pull_request:
+    paths:
+      - 'tools/battery_cycling_validator.py'
+      - '.github/workflows/battery-cycling-review.yml'
+permissions:
+  contents: read
+jobs:
+  validate-measurements:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Fetch one publicly published ROVI sample and verify exact immutable source
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib, pathlib, urllib.request
+          url = 'https://raw.githubusercontent.com/ROVI-org/battery-data-toolkit/19961e6bbb2d0cfe0bff9c129144fcf8f3dd3be6/tests/files/batterydata/p492-13-raw.csv'
+          with urllib.request.urlopen(url, timeout=30) as response:
+              data = response.read(2_000_001)
+          if not data or len(data) > 2_000_000:
+              raise SystemExit('empty or oversized input')
+          actual = hashlib.sha1(b'blob ' + str(len(data)).encode() + bytes([0]) + data).hexdigest()
+          if actual != '2db90e6f36a222f5204655cf879ad1ca76fb76fe':
+              raise SystemExit('upstream blob mismatch; no replacement dataset')
+          pathlib.Path('/tmp/p492-13-raw.csv').write_bytes(data)
+          print('verified_git_blob_sha1=' + actual)
+          print('input_sha256=' + hashlib.sha256(data).hexdigest())
+          PY
+      - name: Execute cycling validation and preserve actual JSON receipt in job log
+        shell: bash
+        run: |
+          python tools/battery_cycling_validator.py /tmp/p492-13-raw.csv
+          echo 'One published sample; EIS segregated; no full-study data or performance claim.'
