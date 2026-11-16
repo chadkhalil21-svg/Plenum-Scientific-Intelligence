@@ -49,15 +49,20 @@ class FounderChiefWorkforcePolicy(TestCase):
                 self.value = value
             def __enter__(self): return self
             def __exit__(self, *_): pass
-            def read(self, _): return json.dumps(self.value).encode("utf-8")
+            def read(self, limit): return json.dumps(self.value).encode("utf-8")[:limit]
 
         full_page = [{"user": {"login": "reader"}, "body": "Prior comment"}] * 100
+        pre_reservation = [{"user": {"login": "reader"}, "body": "x" * 1200}] * 99
+        self.assertTrue(100_001 < len(json.dumps(pre_reservation).encode("utf-8")) < 140_000)
+        reserved_history = pre_reservation + [{"user": {"login": "github-actions[bot]"},
+            "body": "<!-- plenum-public-workforce-run:999991:execution-reserved -->"}]
         for comments, later_page, expected in [
             ([{"user": {"login": "reader"}, "body": marker}], [], 1),
             ([{"user": {"login": "github-actions[bot]"}, "body": "Quoted marker:\n" + marker}], [], 1),
             ([{"user": {"login": "github-actions[bot]"}, "body": marker + "\nExisting receipt"}], [], 0),
             (full_page, [{"user": {"login": "reader"}, "body": "New comment"}], 1),
             (full_page, [{"user": {"login": "github-actions[bot]"}, "body": marker}], 0),
+            (reserved_history, [], 1),
         ]:
             with self.subTest(first_page_count=len(comments), expected=expected):
                 posted = []

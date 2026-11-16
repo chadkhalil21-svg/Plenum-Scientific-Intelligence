@@ -224,7 +224,11 @@ jobs:
           for page in range(1,6):
               req=Request(root+f'?per_page=100&page={page}',headers=headers)
               with urlopen(req,timeout=15) as response:
-                  batch=json.loads(response.read(100001))
+                  # Original weekly_founder_brief transport bound (#693).
+                  raw=response.read(4_000_001)
+              if len(raw)>4_000_000:
+                  raise ValueError('Original GitHub response exceeds bounded audit limit')
+              batch=json.loads(raw)
               if (not isinstance(batch,list) or len(batch)>100
                       or any(not isinstance(c,dict) or not isinstance(c.get('body'),str)
                              or (c.get('user') is not None and not isinstance(c['user'],dict))
