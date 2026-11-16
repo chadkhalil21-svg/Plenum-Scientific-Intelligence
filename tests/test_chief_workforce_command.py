@@ -28,6 +28,51 @@ def event(objective="Create a public data validator for scientific observations"
 
 
 class FounderChiefWorkforcePolicy(TestCase):
+
+    def test_terminal_receipt_requires_authentic_bot_first_line(self):
+        """A copied marker must not suppress the actual Chief terminal receipt."""
+        import os
+        import textwrap
+        from pathlib import Path
+
+        workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/"
+                    "founder-chief-workforce-command.yml").read_text("utf-8")
+        step = workflow.split("name: Durable founder status, no task text or credentials in comment", 1)[1]
+        script = textwrap.dedent(step.split("python - <<'PY'\n", 1)[1].split("\n          PY", 1)[0])
+        marker = "<!-- plenum-founder-chief-run:999991:attempt:1 -->"
+        env = {"GH_ISSUE": "999992", "GH_REPO": REPO, "GH_TOKEN": "offline",
+               "GITHUB_RUN_ID": "999991", "GITHUB_RUN_ATTEMPT": "1"}
+
+        class Response:
+            status = 201
+            def __init__(self, value):
+                self.value = value
+            def __enter__(self): return self
+            def __exit__(self, *_): pass
+            def read(self, _): return json.dumps(self.value).encode("utf-8")
+
+        for comments, expected in [
+            ([{"user": {"login": "reader"}, "body": marker}], 1),
+            ([{"user": {"login": "github-actions[bot]"}, "body": "Quoted marker:\n" + marker}], 1),
+            ([{"user": {"login": "github-actions[bot]"}, "body": marker + "\nExisting receipt"}], 0),
+        ]:
+            with self.subTest(comments=comments):
+                posted = []
+                def api(request, timeout):
+                    self.assertEqual(request.full_url.split("?")[0],
+                        "https://api.github.com/repos/" + REPO + "/issues/999992/comments")
+                    if request.get_method() == "GET":
+                        return Response(comments)
+                    self.assertEqual(request.get_method(), "POST")
+                    posted.append(json.loads(request.data)["body"])
+                    return Response({})
+                with patch.dict(os.environ, env, clear=True), patch("urllib.request.urlopen", side_effect=api):
+                    exec(compile(script, "<original-Chief-receipt>", "exec"), {})
+                self.assertEqual(len(posted), expected)
+                if posted:
+                    self.assertEqual(posted[0].splitlines()[0], marker)
+                    self.assertIn("Chief status:", posted[0])
+
     def test_real_founder_one_task_without_technical_worker_kind(self):
         e=event()
         x=parse_founder_chief(e)

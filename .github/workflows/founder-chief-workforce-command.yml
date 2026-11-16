@@ -221,7 +221,12 @@ jobs:
           req=Request(root+'?per_page=100',headers=headers)
           with urlopen(req,timeout=15) as response:
               prior=json.loads(response.read(100001))
-          if not any(marker in (c.get('body') or '') for c in prior if isinstance(c,dict)):
+          if not isinstance(prior,list) or len(prior)>=100:
+              raise ValueError('Unbounded comment history may hide prior execution')
+          if not any((c.get('user') or {}).get('login')=='github-actions[bot]'
+                     and isinstance(c.get('body'),str)
+                     and c['body'].splitlines()[:1]==[marker]
+                     for c in prior if isinstance(c,dict)):
               data=json.dumps({'body':body}).encode()
               req=Request(root,data=data,method='POST',headers={
                   **headers,'Content-Type':'application/json'})
