@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1440" height="920" viewBox="0 0 1440 920" role="img" aria-labelledby="title desc">
+  <title id="title">Plenum Prometheus — Five technical workforces</title>
+  <desc id="desc">The Founder authorizes consequential actions. The original Minister of Operations coordinates four executing divisions and the fifth, Verification and Advisory Council. Scientific Research covers research and simulation; Engineering and Manufacturing covers engineering and creative; Commercial Operations covers operations, marketing, support and business advice; Global Intelligence covers research and browser operations. Outputs independently return through the Verification and Advisory Council to the Minister. These are logical assignments and bounded capabilities, not five always-on autonomous agents. Current private access is scope-gated. Source register updated 15 November 2026.</desc>
+  <metadata>
+    Original assignment: https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/435
+    Public source snapshot commit: b70d8ee47985d498094f609ffda3794220db7853
+    Registry blob: 0c20631b491804b41fa27ec7869a32266a527db9 — https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/b70d8ee47985d498094f609ffda3794220db7853/integrations/workforces/five-workforces.json
+    Role roster blob: 9469b70b2f53446faffe053352913ca84cf15dab — https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/b70d8ee47985d498094f609ffda3794220db7853/integrations/hermes/roster.json
+    Primary-source review: https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/430#issuecomment-6833071492
+    Original master queue: https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/432
+    Bounded independent acceptance and recovery: https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/586#issuecomment-6843389815
+    Review-only coding correction: https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/724#issuecomment-6887868074
+    Historical original geometric SVG preserved: https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/43031841145/artifacts/13861455630
+  </metadata>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0 0 L8 4 L0 8Z" fill="#456783"/></marker>
+    <marker id="return-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0 0 L8 4 L0 8Z" fill="#367b70"/></marker>
+    <style>
+      text { font-family: 'DejaVu Sans', Arial, sans-serif; fill: #162b3b; }
+      .headline { font-size: 34px; font-weight: 700; }
+      .kicker { font-size: 13px; font-weight: 700; letter-spacing: 2px; fill: #466580; }
+      .sub { font-size: 15px; fill: #516575; }
+      .label { font-size: 12px; font-weight: 700; letter-spacing: 1px; fill: #456783; }
+      .title { font-size: 22px; font-weight: 700; }
+      .body { font-size: 15px; }
+      .muted { font-size: 14px; fill: #516575; }
+      .small { font-size: 12px; fill: #516575; }
+      .status { font-size: 13px; font-weight: 700; fill: #125e52; }
+      .flow { stroke: #456783; stroke-width: 2.2; fill: none; }
+      .review { stroke: #367b70; stroke-width: 2.2; fill: none; }
+      .source { font-size: 12px; fill: #265e87; text-decoration: underline; }
+    </style>
+  </defs>
+  <rect width="1440" height="920" fill="#f4f7f9"/>
+  <rect width="1440" height="7" fill="#17334a"/>
+  <text x="48" y="38" class="kicker">PLENUM PROMETHEUS  /  TECHNICAL ORGANIZATION STUDY</text>
+  <text x="48" y="78" class="headline">Five technical workforces</text>
+  <text x="1392" y="38" class="small" text-anchor="end">15 NOV 2026 · PUBLIC SCOPE · #435</text>
+  <text x="1392" y="78" class="sub" text-anchor="end">One Minister · five logical divisions · evidence-led acceptance</text>
+
+  <rect x="475" y="104" width="490" height="52" rx="6" fill="#ffffff" stroke="#9dafbd"/>
+  <text x="720" y="125" text-anchor="middle" class="label">FOUNDER AUTHORITY</text>
+  <text x="720" y="145" text-anchor="middle" class="body">Approves objectives and consequential actions</text>
+  <path d="M720 156 V177" class="flow" marker-end="url(#arrow)"/>
+
+  <rect x="440" y="181" width="560" height="84" rx="7" fill="#17334a"/>
+  <text x="720" y="207" text-anchor="middle" font-size="12" font-weight="700" letter-spacing="1" style="fill:#b8d4e5">EXISTING CONTROL PLANE · #432</text>
+  <text x="720" y="233" text-anchor="middle" class="title" style="fill:#ffffff">Minister of Operations</text>
+  <text x="720" y="251" text-anchor="middle" font-size="14" style="fill:#dbe8ef">Routes approved tasks · owns the canonical queue · reports results</text>
+
+  <path d="M720 265 V286 H204" class="flow"/>
+  <path d="M720 286 H1236" class="flow"/>
+  <path d="M204 286 V309" class="flow" marker-end="url(#arrow)"/>
+  <path d="M548 286 V309" class="flow" marker-end="url(#arrow)"/>
+  <path d="M892 286 V309" class="flow" marker-end="url(#arrow)"/>
+  <path d="M1236 286 V309" class="flow" marker-end="url(#arrow)"/>
+  <rect x="648" y="274" width="144" height="23" rx="4" fill="#f4f7f9"/>
+  <text x="720" y="290" text-anchor="middle" class="small">Scoped assignments</text>
+
+  <g id="scientific-research">
+    <rect x="48" y="313" width="312" height="203" rx="7" fill="#ffffff" stroke="#b7c6d0"/>
+    <rect x="48" y="313" width="312" height="6" rx="3" fill="#45799b"/>
+    <text x="66" y="341" class="label">01 · EXECUTION</text>
+    <text x="66" y="367" class="title">Scientific Research</text>
+    <text x="66" y="394" class="body" font-weight="700">Research · Simulation</text>
+    <text x="66" y="422" class="muted">Public research and source review</text>
+    <text x="66" y="444" class="muted">World Horizon · known-model</text>
+    <text x="66" y="464" class="muted">SciPy analyses</text>
+    <line x1="66" y1="480" x2="342" y2="480" stroke="#e1e8ec"/>
+    <text x="66" y="501" class="status">Bounded public tools verified</text>
+  </g>
+  <g id="engineering-manufacturing">
+    <rect x="392" y="313" width="312" height="203" rx="7" fill="#ffffff" stroke="#b7c6d0"/>
+    <rect x="392" y="313" width="312" height="6" rx="3" fill="#45799b"/>
+    <text x="410" y="341" class="label">02 · EXECUTION</text>
+    <text x="410" y="365" class="title">Engineering &amp;</text>
+    <text x="410" y="389" class="title">Manufacturing</text>
+    <text x="410" y="412" class="body" font-weight="700">Engineering · Creative</text>
+    <text x="410" y="439" class="muted">Reviewed code proposals · original</text>
+    <text x="410" y="460" class="muted">creative artifacts · scoped CI</text>
+    <line x1="410" y1="480" x2="686" y2="480" stroke="#e1e8ec"/>
+    <text x="410" y="501" class="status">Bounded outputs; reviews required</text>
+  </g>
+  <g id="commercial-operations">
+    <rect x="736" y="313" width="312" height="203" rx="7" fill="#ffffff" stroke="#b7c6d0"/>
+    <rect x="736" y="313" width="312" height="6" rx="3" fill="#45799b"/>
+    <text x="754" y="341" class="label">03 · EXECUTION</text>
+    <text x="754" y="367" font-size="20" font-weight="700">Commercial Operations</text>
+    <text x="754" y="394" class="body" font-weight="700">Operations · Marketing</text>
+    <text x="754" y="415" class="body" font-weight="700">Support · Business Advisor</text>
+    <text x="754" y="443" class="muted">Existing n8n drafts · public audits</text>
+    <text x="754" y="464" class="muted">No private write by default</text>
+    <line x1="754" y1="480" x2="1030" y2="480" stroke="#e1e8ec"/>
+    <text x="754" y="501" font-size="13" font-weight="700" fill="#865d23">Drafts; private writes scope-gated</text>
+  </g>
+  <g id="global-intelligence">
+    <rect x="1080" y="313" width="312" height="203" rx="7" fill="#ffffff" stroke="#b7c6d0"/>
+    <rect x="1080" y="313" width="312" height="6" rx="3" fill="#45799b"/>
+    <text x="1098" y="341" class="label">04 · EXECUTION</text>
+    <text x="1098" y="367" class="title">Global Intelligence</text>
+    <text x="1098" y="394" class="body" font-weight="700">Research · Browser</text>
+    <text x="1098" y="422" class="muted">Global public-source radar</text>
+    <text x="1098" y="444" class="muted">Existing approved browser tools</text>
+    <text x="1098" y="464" class="muted">where authorized</text>
+    <line x1="1098" y1="480" x2="1374" y2="480" stroke="#e1e8ec"/>
+    <text x="1098" y="501" class="status">Public research scope</text>
+  </g>
+
+  <path d="M204 516 V548 H1236 M548 516 V548 M892 516 V548 M1236 516 V548 M720 548 V591" class="flow" marker-end="url(#arrow)"/>
+  <rect x="593" y="537" width="254" height="24" rx="4" fill="#f4f7f9"/>
+  <text x="720" y="553" text-anchor="middle" class="small">Actual artifacts, sources and receipts</text>
+  <rect x="393" y="595" width="654" height="134" rx="8" fill="#e7f2ef" stroke="#63958b" stroke-width="1.5"/>
+  <text x="415" y="621" class="label" style="fill:#367b70">05 · SEPARATE REVIEW</text>
+  <text x="415" y="650" class="title">Verification &amp; Advisory Council</text>
+  <text x="415" y="676" class="body" font-weight="700">Independent Verification Officer</text>
+  <text x="415" y="699" class="muted">Checks sources, artifacts and readback; accepts or rejects within scope.</text>
+  <text x="415" y="718" class="small">Existing Qwen perspectives are advisory; no unrestricted decision authority.</text>
+  <path d="M1047 658 H1410 V224 H1004" class="review" marker-end="url(#return-arrow)"/>
+  <rect x="1133" y="638" width="244" height="41" rx="5" fill="#f4f7f9"/>
+  <text x="1255" y="654" text-anchor="middle" class="label" style="fill:#367b70">ACCEPT / REJECT</text>
+  <text x="1255" y="670" text-anchor="middle" class="small">Evidence-backed return to Minister</text>
+
+  <rect x="48" y="764" width="1344" height="68" rx="6" fill="#fff" stroke="#c3cfd7"/>
+  <text x="65" y="785" class="label">OPERATING BOUNDARY</text>
+  <text x="65" y="806" class="body">Existing event-driven GitHub Actions + signed Cloudflare Workers; no new host, no new spend, no unscoped private account action.</text>
+  <text x="65" y="823" class="small">Logical divisions are not five resident autonomous processes. Research role is shared. #586 proves one controlled recovery; #724 required semantic correction. General autonomy is not proven.</text>
+
+  <text x="48" y="857" class="label">SOURCE BASIS</text>
+  <a xlink:href="https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/blob/b70d8ee47985d498094f609ffda3794220db7853/integrations/workforces/five-workforces.json"><text x="48" y="880" class="source">[1] Canonical division registry · 0c20631</text></a>
+  <a xlink:href="https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/430#issuecomment-6833071492"><text x="418" y="880" class="source">[2] Primary-source review · #430</text></a>
+  <a xlink:href="https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/586#issuecomment-6843389815"><text x="780" y="880" class="source">[3] Accepted bounded recovery · #586</text></a>
+  <a xlink:href="https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/724#issuecomment-6887868074"><text x="1130" y="880" class="source">[4] Review correction · #724</text></a>
+  <text x="48" y="901" class="small">Role roster and full source hashes are embedded in SVG metadata. This technical study supersedes only the thematic content of the original #435 artifact; its historical receipt remains unchanged.</text>
+</svg>
