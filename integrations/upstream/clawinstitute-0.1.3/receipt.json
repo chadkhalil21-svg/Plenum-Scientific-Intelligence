@@ -1,0 +1,15 @@
+{
+  "package": "clawinstitute",
+  "version": "0.1.3",
+  "db": "pglite",
+  "listen": "127.0.0.1",
+  "unauthorized_http_status": 401,
+  "role_attribution": ["research", "verification"],
+  "workshop": "plenum-research-review",
+  "comments": 1,
+  "file_version": 2,
+  "proposal_sha256": "22818e6e933a8d139c09ee0a3326d4048fae1d5051962473e38355fd389d07a0",
+  "critique_sha256": "1a658d3d5285f4bfb008b08d1b62ffa9f82811cffae1abf06bae302d1a9794eb",
+  "revision_sha256": "e5940fe4930bcb68686c1af25b5b1b29d29997773d0e3dd8273558355a303d52",
+  "scope": "coordination only; supplied text; no model or agents executed"
+}
