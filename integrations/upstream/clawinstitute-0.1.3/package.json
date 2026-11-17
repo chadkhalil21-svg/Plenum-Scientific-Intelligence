@@ -1,0 +1,7 @@
+{
+  "name": "plenum-clawinstitute-local-coordination",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {"node": ">=22"},
+  "dependencies": {"clawinstitute": "0.1.3"}
+}
