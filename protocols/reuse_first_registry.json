@@ -778,7 +778,24 @@
       "default_execution": false,
       "preinstalled": false,
       "activation_gate": "no_license_permission_reference_only",
-      "notes": "No license file found at pinned revision. Review source architecture only; never copy or install. Existing ToolUniverse separately Apache-2.0 licensed at commit 42619406028235b5b8cd1023b515ca4718bcc48e; individual endpoint review remains required."
+      "notes": "No license file found at pinned revision. Review source architecture only; never copy or install. Existing ToolUniverse separately Apache-2.0 licensed at commit 42619406028235b5b8cd1023b515ca4718bcc48e; individual endpoint review remains required. Its official associated ClawInstitute coordination service is separately MIT-licensed and has one bounded authenticated local run; this does not grant AutoScientists reuse permission or install its orchestration.",
+      "related_component": {
+        "name": "ClawInstitute",
+        "relationship": "Official associated local coordination server referenced by AutoScientists; first coauthor Shanghua Gao published npm package",
+        "origin": "https://github.com/mims-harvard/ClawInstitute",
+        "release": "0.1.3",
+        "license": "MIT",
+        "tarball_integrity": "sha512-EOupkVjpDMZov486p0E7tTsX5wjO2XNGYIm+kGs/bsvnCBq8L09kSY1uRZFVZHmyX9JtRIuqWZ6/AwE/eyPbIQ==",
+        "status": "optional_local_coordination_component_merged_single_live_run_verified",
+        "default_execution": false,
+        "preinstalled": false,
+        "component_path": "integrations/upstream/clawinstitute-0.1.3/runner.cjs",
+        "component_activation": "Explicit isolated Node>=22 action with locked npm ci --ignore-scripts, public supplied text, authenticated loopback only",
+        "evidence_path": "integrations/upstream/clawinstitute-0.1.3/receipt.json",
+        "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/808",
+        "source_merge_commit": "0517e1e679c13c42b4c53bea3300ca558bec972c",
+        "notes": "One actual local original HTTP app run: unauthorized 401, one attributed comment, workspace version 2 with historical and latest contents verified. Roles share local token, not independent agents/credentials; no models, external post, persistent service, or automatic runtime. Browser-ledger CI passed; single live receipt is local."
+      }
     },
     {
       "name": "FutureHouse Robin",
@@ -846,7 +863,24 @@
       "default_execution": false,
       "preinstalled": false,
       "activation_gate": "gpl_review_isolated_process_approved_no_cost_backend",
-      "notes": "v1.0.1 GPL separate CLI process, avoid private IP/redistribution until reviewed; full analysis requires OpenAI API, no paid API authorized."
+      "notes": "v1.0.1 GPL separate CLI process, avoid private IP/redistribution until reviewed; full analysis requires OpenAI API, no paid API authorized. Official successor cmbagent_lg is a distinct distribution, not Denario's legacy cmbagent dependency. Its model factory Google/OpenAI/Anthropic options do not establish a no-cost local Denario endpoint. Independently usable MIT deterministic numeric grounding component has been merged and applied to an existing accepted receipt, not the Denario research chains.",
+      "related_component": {
+        "name": "CMBAgent-LG",
+        "relationship": "Official successor to legacy cmbagent; distinct distribution, not a compatible Denario installation",
+        "origin": "https://github.com/CMBAgents/cmbagent",
+        "source_revision": "bde10cb482357675fc747f8436895b1ed79b12b0",
+        "license": "MIT",
+        "status": "optional_numeric_grounding_component_merged_prior_real_receipt_audit_verified",
+        "default_execution": false,
+        "preinstalled": false,
+        "component_path": "integrations/upstream/cmbagent-lg-20261116/audit_claims.py",
+        "component_activation": "Explicit public bounded JSON evidence artifact and atomic numeric claims; stdlib only, no model/network",
+        "evidence_path": "evidence/cmbagent-lg/2026-11-17-fermilink/claim-grounding.json",
+        "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/807",
+        "source_merge_commit": "ce0d4698d5ee92a3216d40fb04617a998766ca5b",
+        "verified_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/44011936929",
+        "notes": "Original existing FermiLink receipt indexed 2471/2471 bytes, three matching supported numeric claims, one explicitly counterfactual value absent. Numeric matches/absence are not semantic truth, scientific validity or general autonomy; no simulation rerun, model/paid API, full agent, independent scientific discovery, or automatic invocation."
+      }
     },
     {
       "name": "EvoScientist",
