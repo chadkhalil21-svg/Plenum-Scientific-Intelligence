@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,6 +8,10 @@ version = "0.1.0"
 description = "Bounded and evidence-based AI research foundation"
 requires-python = ">=3.11"
 dependencies = []
+# Preserve third-party terms with every built distribution; no project license claim.
+license-files = ["integrations/upstream/scientist-components/LICENSE.ROBIN",
+                 "integrations/upstream/scientist-components/LICENSE.SCIENCECLAW",
+                 "integrations/upstream/scientist-components/UPSTREAM.md"]
 
 [project.optional-dependencies]
 science = ["numpy>=1.26,<3", "scipy>=1.12,<2", "rdkit>=2025.9,<2027"]
@@ -18,6 +22,7 @@ openhands_sdk = ["openhands-sdk==1.60.1"]
 openhands_tools = ["openhands-sdk==1.60.1", "openhands-tools==1.60.1"]
 chief_of_staff = ["deepagents==0.7.35", "langchain-ollama==1.1.0"]
 paperqa = ["paper-qa==2026.8.12"]
+scienceclaw_sequences = ["biopython==1.86"]
 voice_livekit = ["livekit-agents==1.8.9"]
 ml = ["numpy>=1.26,<3", "scikit-learn>=1.5,<2"]
 empirical = ["numpy>=1.26,<3"]
