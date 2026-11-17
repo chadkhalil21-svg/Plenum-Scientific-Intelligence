@@ -1,0 +1,224 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "44178166269",
+  "source_revision": "e57d6746f9fe2664787123f40345fab54d609ab6",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-17T21:17:22.479096+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 28,
+    "sources_returning_records": 25,
+    "source_outages": [
+      "un_climate_environment",
+      "arxiv_ai_new_submissions",
+      "gdelt_headlines"
+    ],
+    "new_public_links_before_limit": 28,
+    "signals": [
+      {
+        "category": "universities",
+        "publisher": "MIT News",
+        "source": "mit_labs",
+        "url": "https://news.mit.edu/2026/qa-why-building-math-muscles-remains-important-ai-era-1117",
+        "title_untrusted": "Q&A: Why building math muscles remains important in the AI era",
+        "claimed_publication_date": "Tue, 17 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261116023405.htm",
+        "title_untrusted": "This remarkable new material could solve a major carbon capture problem",
+        "claimed_publication_date": "Tue, 17 Nov 2026 06:29:36 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03750-4",
+        "title_untrusted": "Meet the ‘celestial bodies of fathomless powerful darkness’",
+        "claimed_publication_date": "2026-11-17",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.18584",
+        "title_untrusted": "Powering the Space Elevator",
+        "claimed_publication_date": "Tue, 17 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75467752",
+        "title_untrusted": "M 0.9 - 2 km NNW of The Geysers, CA",
+        "claimed_publication_date": "1794949636480",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "universities",
+        "publisher": "Harvard Gazette",
+        "source": "harvard_research",
+        "url": "https://news.harvard.edu/gazette/story/2026/11/what-gives-new-england-foliage-its-rich-palette/",
+        "title_untrusted": "What gives New England foliage its rich palette?",
+        "claimed_publication_date": "Tue, 17 Nov 2026 18:03:52 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261116023401.htm",
+        "title_untrusted": "Ozempic and Mounjaro may have a surprising effect on your brain",
+        "claimed_publication_date": "Tue, 17 Nov 2026 06:39:45 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03744-2",
+        "title_untrusted": "The prospect of a ‘super’ El Niño demands better ocean monitoring",
+        "claimed_publication_date": "2026-11-17",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.18618",
+        "title_untrusted": "All edges lead to Rome: analyzing Late Antiquity regime shifts using coin hoard data",
+        "claimed_publication_date": "Tue, 17 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026wuqxrt",
+        "title_untrusted": "M 1.8 - 51 km SSE of Denali National Park, Alaska",
+        "claimed_publication_date": "1794949014812",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261116023348.htm",
+        "title_untrusted": "A mysterious twist in the universe’s oldest light could reveal new physics",
+        "claimed_publication_date": "Tue, 17 Nov 2026 07:14:04 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03749-x",
+        "title_untrusted": "Dinosaur’s rest break leaves a lasting impression",
+        "claimed_publication_date": "2026-11-17",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.18676",
+        "title_untrusted": "Application-Oriented Evaluation of CPU/GPU Quantum Simulators: From Foundational Circuits to Quantum Chemistry",
+        "claimed_publication_date": "Tue, 17 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41363095",
+        "title_untrusted": "M 1.1 - 2 km ESE of Home Gardens, CA",
+        "claimed_publication_date": "1794948475770",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "NASA",
+        "source": "nasa_research",
+        "url": "https://www.nasa.gov/directorates/stmd/prizes-challenges-crowdsourcing-program/center-of-excellence-for-collaborative-innovation-coeci/bps-digital-avatar-challenge/",
+        "title_untrusted": "BPS Digital AVATAR Challenge",
+        "claimed_publication_date": "Tue, 17 Nov 2026 20:39:38 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03742-4",
+        "title_untrusted": "AI wearables could exploit people’s most vulnerable moments",
+        "claimed_publication_date": "2026-11-17",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.18688",
+        "title_untrusted": "An improved statistical treatment for radioassay-based background projection incorporating part-to-part variation",
+        "claimed_publication_date": "Tue, 17 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41363087",
+        "title_untrusted": "M 1.6 - 8 km WSW of Pala, CA",
+        "claimed_publication_date": "1794947739350",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
