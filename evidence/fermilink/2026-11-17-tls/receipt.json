@@ -1,0 +1,56 @@
+{
+  "schema": "plenum-fermilink-maxwelllink-offline-baseline-v1",
+  "status": "original_upstream_template_completed_once",
+  "fermilink": {
+    "repository": "https://github.com/TaoELi/FermiLink",
+    "commit": "1677243532ca1631750d5a62db9763c68291fddb",
+    "license": "AGPL-3.0",
+    "path": "src/fermilink/tools/sci-skills-generator/assets/maxwelllink-skills-template/skills/mxl-project-scaffold/assets/templates/laser-tls-embedded/",
+    "em_py_git_blob": "ed6115cc687931100f0fe9924e86da5640ea8986",
+    "config_git_blob": "0f7415e1ec8150b92c8a4ffde2519b17dbc3a36c",
+    "em_sha256": "f4995083372ad7648769d6828c1f4b2aea8a645345cd2a828e7d676f91eabecb",
+    "config_sha256": "6c920bc0576328b67d11001fd3488f8c7a787618a9dab174e9e01361f37b08ff"
+  },
+  "maxwelllink": {
+    "repository": "https://github.com/TaoELi/MaxwellLink",
+    "tag": "v0.5.0",
+    "commit": "122d655b0a6c61209ca23ae28efc3621e5283c85",
+    "license": "GPL-2.0",
+    "wheel": "maxwelllink-0.5.0-py3-none-any.whl",
+    "wheel_sha256": "512024415e0d075604803186579f7968ea3fc5ec2b0b56a14a005f020bdec886",
+    "runtime_python_sources_exact_match": 54,
+    "official_release_python_sources": 54,
+    "distribution_obtained_via": "normal configured pip index; no dependency install",
+    "runtime_dependencies": {
+      "numpy": "2.3.5",
+      "scipy": "1.17.0"
+    }
+  },
+  "output": {
+    "path": "tls_history.csv",
+    "sha256": "50b2089882424246311bad0d87f7030fd3d6ece72fac1ae74f26438c5eb71bea",
+    "rows": 1000,
+    "time_start_au": 0.5,
+    "time_end_au": 500,
+    "all_finite": true,
+    "max_population_conservation_error": 0,
+    "min_density_matrix_determinant": -1.4907779871675686e-18,
+    "max_timestep_error_au": 0,
+    "Pe_min": 0.0001,
+    "Pe_max": 0.0001,
+    "Pg_first": 0.9999,
+    "Pg_final": 0.9999,
+    "max_abs_mux": 0,
+    "max_abs_muy": 0,
+    "max_abs_muz": 3.7398055033778514,
+    "energy_au_min": 0.000024200000000000002,
+    "energy_au_max": 0.000024200000000000002
+  },
+  "execution_count": 1,
+  "paid_model_api_calls": 0,
+  "model_inference": false,
+  "dependency_install": false,
+  "non_socket_mode": true,
+  "limitation": "Original template sets coupling_axis=xy and TLS orientation=2 (z); populations remain constant and only longitudinal dipole oscillates. Valid baseline evolution, not evidence of laser-induced population transfer, new physical discovery or AGI. No copyleft source copied into Plenum's repository; any integration requires separate license review."
+}
+
