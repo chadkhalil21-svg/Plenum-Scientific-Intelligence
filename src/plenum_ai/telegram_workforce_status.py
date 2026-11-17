@@ -10,7 +10,7 @@ from pathlib import Path
 import re
 from urllib.request import Request, urlopen
 
-KINDS = {"public_research", "public_program", "public_science", "public_creative"}
+KINDS = {"public_research", "public_program", "public_science", "public_creative", "public_verification"}
 STATES = {
     "DRAFT_READY_FOR_FOUNDER", "BLOCKED_WORKER_FAILED",
     "BLOCKED_WORKER_UNAVAILABLE", "BLOCKED_VERIFICATION",

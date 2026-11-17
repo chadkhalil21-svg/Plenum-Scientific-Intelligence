@@ -9,14 +9,90 @@ import ast
 from hashlib import sha256
 import json
 from pathlib import Path
+import re
+import os
+import subprocess
+import sys
 from xml.etree import ElementTree
 
-KINDS = frozenset({"public_program", "public_science", "public_creative"})
+KINDS = frozenset({"public_program", "public_science", "public_creative", "public_verification"})
 ROLES = {
     "public_program": "existing_plenum_program_foundry",
     "public_science": "existing_plenum_durable_science",
     "public_creative": "existing_plenum_creative_studio",
+    "public_verification": "existing_cmbagent_numeric_grounding",
 }
+
+# Only these already-public immutable evidence receipts, not a caller path.
+PUBLIC_GROUNDING_RECEIPTS = {
+    "gpqa": ("evidence/evoscientist/2026-11-17-gpqa/receipt.json",
+             "bd389be2a068c0d99bffebf70259b9cfea9f58bb0c2098a255ed8f4cd77819d2",
+             frozenset({"pass_rate_delta_rounded", "candidate_qwen35_4b.correct",
+                        "reference_qwen3_06b.correct"})),
+    "tls": ("evidence/fermilink/2026-11-17-tls/receipt.json",
+            "ecf031efeb690e34d9e3a8c2174280579748642c95dff96b3fc274fe9537f2fa",
+            frozenset({"rows", "Pe_min", "Pe_max", "max_abs_muz",
+                       "max_population_conservation_error"})),
+}
+_GROUND_REQUEST = re.compile(
+    r"Ground (gpqa|tls) claim / ([A-Za-z][A-Za-z0-9_.]{0,40}) was "
+    r"([-+]?\d{1,12}(?:\.\d{1,20})?(?:[eE][-+]?\d{1,2})?)"
+)
+
+
+def parse_numeric_grounding(objective: str) -> tuple[str, str, str]:
+    """Only one fixed receipt alias, approved field and atomic numeric value."""
+    match = _GROUND_REQUEST.fullmatch(objective)
+    if not match:
+        raise ValueError("Use Ground <approved alias> claim / <field> was <number>")
+    alias, field, number = match.groups()
+    source, digest, fields = PUBLIC_GROUNDING_RECEIPTS[alias]
+    if field not in fields:
+        raise ValueError("Field is not approved for this public evidence receipt")
+    return source, digest, f"{field} was {number}"
+
+
+def _ground_public_claim(objective: str, base: Path) -> dict:
+    artifact, digest, claim = parse_numeric_grounding(objective)
+    root = Path(__file__).resolve().parents[2]
+    source = root / artifact
+    if (source.resolve() != source or source.stat().st_size > 256_000
+            or sha256(source.read_bytes()).hexdigest() != digest):
+        raise ValueError("Approved public receipt bytes did not match their immutable pin")
+    adapter = root / "integrations/upstream/cmbagent-lg-20261116/audit_claims.py"
+    # Reuse the original exact adapter with no application credential env.
+    result = subprocess.run(
+        [sys.executable, "-E", "-s", str(adapter), "--artifact", artifact, "--claim", claim],
+        cwd=root, env={"PATH": os.defpath, "PYTHONIOENCODING": "utf-8"},
+        capture_output=True, text=True, timeout=15, check=True,
+    )
+    if len(result.stdout) > 64_000:
+        raise ValueError("Numeric grounding output exceeds approved bounds")
+    report = json.loads(result.stdout)
+    claims = report.get("claims", [])
+    if (report.get("schema") != "plenum-cmbagent-numeric-grounding-v1"
+            or report.get("artifact") != artifact
+            or report.get("artifact_sha256") != digest
+            or report.get("complete_within_selected_artifact") is not True
+            or report.get("semantic_truth_verified") is not False
+            or report.get("model_inference") is not False
+            or report.get("paid_api_calls") != 0
+            or len(claims) != 1 or claims[0].get("statement") != claim
+            or claims[0].get("state") not in ("grounded", "weakly_grounded", "ungrounded", "partial")):
+        raise ValueError("Original grounding output failed bounded verification")
+    (base / "numeric-claim-grounding.json").write_text(
+        json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    return {
+        "status": "DRAFT_READY_FOR_FOUNDER", "verified": True,
+        "verified_scope": "numeric token audit and approved public artifact digest only; not semantic truth",
+        "worker": ROLES["public_verification"],
+        "numeric_claim_grounding": claims[0]["state"],
+        "semantic_truth_verified": False,
+        "model_inference": False, "paid_api_calls": 0,
+        "owner_review_required": True,
+    }
 
 
 def dispatch(task: dict, output_dir: Path) -> dict:
@@ -29,6 +105,13 @@ def dispatch(task: dict, output_dir: Path) -> dict:
         raise FileExistsError("Never overwrite previous public task artifacts")
     base.mkdir(parents=True)
     objective = task["objective"]
+
+    if kind == "public_verification":
+        try:
+            result = _ground_public_claim(objective, base)
+        except subprocess.SubprocessError as exc:
+            raise RuntimeError("Original numeric grounding worker failed") from exc
+        return {**result, "output_artifact": str(base.relative_to(output_dir))}
 
     if kind == "public_program":
         from .program_foundry import generate_program

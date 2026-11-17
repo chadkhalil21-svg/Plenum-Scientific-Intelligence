@@ -20,6 +20,28 @@ def event(kind="public_program", objective="Create a public data validator for s
 
 
 class TeamDispatchIntegration(unittest.TestCase):
+    def test_public_verification_routes_real_approved_receipt_not_science_replay(self):
+        objective = "Ground gpqa claim / pass_rate_delta_rounded was -0.33"
+        with tempfile.TemporaryDirectory() as d:
+            result = run_issue(event("public_verification", objective), output_dir=Path(d))
+            self.assertEqual(result["status"], "DRAFT_READY_FOR_FOUNDER")
+            self.assertEqual(result["worker"], "existing_cmbagent_numeric_grounding")
+            self.assertEqual(result["numeric_claim_grounding"], "grounded")
+            self.assertFalse(result["semantic_truth_verified"])
+            report = json.loads((Path(d)/"issue-901"/"numeric-claim-grounding.json").read_text())
+            self.assertEqual(report["claims"][0]["quantities"][0]["hits"][0]["value"], "-0.33")
+            self.assertEqual(report["artifact_sha256"], "bd389be2a068c0d99bffebf70259b9cfea9f58bb0c2098a255ed8f4cd77819d2")
+
+    def test_public_verification_rejects_unapproved_alias_field_and_extra_text(self):
+        for objective in (
+            "Ground arbitrary claim / pass_rate_delta_rounded was -0.33",
+            "Ground ../private claim / pass_rate_delta_rounded was -0.33",
+            "Ground gpqa claim / unrelated_field was -0.33",
+            "Ground gpqa claim / pass_rate_delta_rounded was -0.33 and other text",
+        ):
+            with self.subTest(objective=objective), self.assertRaises(ValueError):
+                parse_public_issue(event("public_verification", objective))
+
     def test_four_role_routes_preserve_original_no_model_path(self):
         roles={
             "public_research":"existing_plenum_world_horizon",
