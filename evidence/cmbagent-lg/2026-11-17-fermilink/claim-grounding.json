@@ -1,0 +1,210 @@
+{
+  "schema": "plenum-cmbagent-numeric-grounding-v1",
+  "upstream_commit": "bde10cb482357675fc747f8436895b1ed79b12b0",
+  "artifact": "evidence/fermilink/2026-11-17-tls/receipt.json",
+  "artifact_sha256": "ecf031efeb690e34d9e3a8c2174280579748642c95dff96b3fc274fe9537f2fa",
+  "coverage": {
+    "files": {
+      "data/artifact.json": {
+        "bytes": 2471,
+        "indexed_bytes": 2471,
+        "truncated": false,
+        "tier": "primary"
+      }
+    },
+    "incomplete": false,
+    "elapsed_s": 0.0004,
+    "researcher_ranges": {}
+  },
+  "complete_within_selected_artifact": true,
+  "claims": [
+    {
+      "statement": "The original output contained 1000 rows.",
+      "state": "grounded",
+      "cited_and_verified": false,
+      "wrong_citation": false,
+      "fingerprint": "e3cbba8883fe746c",
+      "quantities": [
+        {
+          "number": {
+            "text": "1000",
+            "value": 1000.0,
+            "decimals": 0,
+            "sig": 1,
+            "pct": false,
+            "kind": "value",
+            "idents": [
+              "rows",
+              "contained",
+              "output",
+              "original"
+            ],
+            "cited_path": null,
+            "op": ""
+          },
+          "best": "strong",
+          "hits": [
+            {
+              "value": "1000",
+              "source": "data/artifact.json",
+              "line": 32,
+              "tier": "primary",
+              "label": "output.rows",
+              "neighbour": "\"rows\": 1000,",
+              "match": "exact",
+              "strength": "strong",
+              "reason": "labelled (rows)"
+            }
+          ],
+          "input_only": [],
+          "note": ""
+        }
+      ],
+      "bound_checks": []
+    },
+    {
+      "statement": "The maximum excited state population Pe_max was 0.0001.",
+      "state": "grounded",
+      "cited_and_verified": false,
+      "wrong_citation": false,
+      "fingerprint": "8b9b9c3a6a9e99bb",
+      "quantities": [
+        {
+          "number": {
+            "text": "0.0001",
+            "value": 0.0001,
+            "decimals": 4,
+            "sig": 1,
+            "pct": false,
+            "kind": "value",
+            "idents": [
+              "max",
+              "pe",
+              "pe_max",
+              "population",
+              "state",
+              "excited",
+              "maximum"
+            ],
+            "cited_path": null,
+            "op": ""
+          },
+          "best": "strong",
+          "hits": [
+            {
+              "value": "0.0001",
+              "source": "data/artifact.json",
+              "line": 39,
+              "tier": "primary",
+              "label": "output.Pe_min",
+              "neighbour": "\"Pe_min\": 0.0001,",
+              "match": "exact",
+              "strength": "strong",
+              "reason": "labelled (pe)"
+            },
+            {
+              "value": "0.0001",
+              "source": "data/artifact.json",
+              "line": 40,
+              "tier": "primary",
+              "label": "output.Pe_max",
+              "neighbour": "\"Pe_max\": 0.0001,",
+              "match": "exact",
+              "strength": "strong",
+              "reason": "labelled (max)"
+            }
+          ],
+          "input_only": [],
+          "note": ""
+        }
+      ],
+      "bound_checks": []
+    },
+    {
+      "statement": "The maximum longitudinal dipole max_abs_muz was 3.7398055033778514.",
+      "state": "grounded",
+      "cited_and_verified": false,
+      "wrong_citation": false,
+      "fingerprint": "68ed3bf44cfce2b4",
+      "quantities": [
+        {
+          "number": {
+            "text": "3.7398055033778514",
+            "value": 3.7398055033778514,
+            "decimals": 16,
+            "sig": 17,
+            "pct": false,
+            "kind": "value",
+            "idents": [
+              "abs",
+              "max",
+              "max_abs_muz",
+              "muz",
+              "dipole",
+              "longitudinal",
+              "maximum"
+            ],
+            "cited_path": null,
+            "op": ""
+          },
+          "best": "strong",
+          "hits": [
+            {
+              "value": "3.7398055033778514",
+              "source": "data/artifact.json",
+              "line": 45,
+              "tier": "primary",
+              "label": "output.max_abs_muz",
+              "neighbour": "\"max_abs_muz\": 3.7398055033778514,",
+              "match": "exact",
+              "strength": "strong",
+              "reason": "labelled (abs); specific (E=7e-17)"
+            }
+          ],
+          "input_only": [],
+          "note": ""
+        }
+      ],
+      "bound_checks": []
+    },
+    {
+      "statement": "Counterfactual negative control: maximum excited state population was 0.432198765.",
+      "state": "ungrounded",
+      "cited_and_verified": false,
+      "wrong_citation": false,
+      "fingerprint": "520c64c75bdb6662",
+      "quantities": [
+        {
+          "number": {
+            "text": "0.432198765",
+            "value": 0.432198765,
+            "decimals": 9,
+            "sig": 9,
+            "pct": false,
+            "kind": "value",
+            "idents": [
+              "population",
+              "state",
+              "excited",
+              "maximum",
+              "control",
+              "negative",
+              "counterfactual"
+            ],
+            "cited_path": null,
+            "op": ""
+          },
+          "best": "none",
+          "hits": [],
+          "input_only": [],
+          "note": ""
+        }
+      ],
+      "bound_checks": []
+    }
+  ],
+  "semantic_truth_verified": false,
+  "model_inference": false,
+  "paid_api_calls": 0,
+  "limitation": "Token match, approximate match or absence within selected artifact only; not scientific validity or semantic entailment."
+}
