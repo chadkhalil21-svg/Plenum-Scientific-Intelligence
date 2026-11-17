@@ -1,0 +1,47 @@
+{
+  "schema": "plenum-evoscientist-offline-evidence-v1",
+  "execution_utc": "2026-11-17T03:17:09Z",
+  "status": "real_upstream_aggregation_of_existing_public_native_grades",
+  "upstream": {
+    "repository": "https://github.com/EvoScientist/EvoScientist",
+    "release": "v0.4.3",
+    "commit": "b1ca788ae9c6e78f5b66df56cc770c3d0bbf55e1",
+    "path": "EvoScientist/skills/skill-creator/scripts/aggregate_benchmark.py",
+    "license": "Apache-2.0",
+    "git_blob": "70c548e81b67bb85858056087e642d80b408f2a5",
+    "sha256": "540d0ee42b894428350eaf1337e436376e2429185b5ce69485434216f2d0b386"
+  },
+  "inputs": {
+    "plenum_commit": "7d16c024a36073f12599f5848a18b8b6d2cc2ac8",
+    "native_score_receipts": {
+      "evidence/inspect-gpqa/2026-11-09-qwen35-4b-paired-original-three-sciences.json": "176fad4cf76d98f1758f3b356b7e8783c41c157f41ff8f554804f19cafc8047d",
+      "evidence/inspect-gpqa/2026-11-09-original-three-sciences.json": "eb6c263f85df672b017841eefa9ebd06eeb313f43b6d3b37c02fdaa448dcb36c"
+    },
+    "original_preparer_sha256": "9be721448681ef4a9f6b54d15497fb6c9cc933d4c983fc236019da82b614ab86"
+  },
+  "outputs": {
+    "benchmark_json_sha256": "a0df92bd9663120c85f5f28303cfc4566b4d8ec6e33771263f3683a25a17e67d",
+    "benchmark_md_sha256": "3b94faa573268c0191e0092a59d3ac69968961f23f13f6e8741137ee68ba4d59",
+    "candidate_qwen35_4b": {
+      "correct": 0,
+      "attempted": 3
+    },
+    "reference_qwen3_06b": {
+      "correct": 1,
+      "attempted": 3
+    },
+    "pass_rate_delta_rounded": -0.33
+  },
+  "limitations": [
+    "Existing public historical science questions and original Inspect Evals native grades; not a new experiment or score.",
+    "Raw timing, token, tool-call and error metrics were intentionally unavailable and appear as zero defaults in the original upstream output; none are observations.",
+    "Three public questions do not support statistical model-ranking or AGI/ASI claims."
+  ],
+  "model_inference_rerun": false,
+  "paid_model_api_calls": 0,
+  "original_grades_modified": false,
+  "automatic_model_promotion": false,
+  "scientific_discovery_demonstrated": false,
+  "AGI_demonstrated": false,
+  "ASI_demonstrated": false
+}

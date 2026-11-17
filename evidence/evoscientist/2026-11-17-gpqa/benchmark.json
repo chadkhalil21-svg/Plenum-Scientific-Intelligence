@@ -1,0 +1,218 @@
+{
+  "metadata": {
+    "skill_name": "GPQA paired original science scores (candidate vs reference; no new inference)",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-11-17T03:17:09Z",
+    "evals_run": [
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": {
+      "candidate_qwen35_4b": 3,
+      "reference_qwen3_06b": 3
+    }
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "configuration": "candidate_qwen35_4b",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 1,
+        "total": 1,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Biology: native original GPQA grade",
+          "passed": false,
+          "evidence": "rec2ZTsqazBZ3LTWZ; SHA256 bc4cc985baede651ec87f2bec4c419b01a40caf69e975b98e83d1dbfb87ca5b9"
+        }
+      ],
+      "notes": [
+        "Timing and token metrics intentionally omitted: no comparable paired measurements. Upstream displays missing metrics as zero; do not interpret these zeros."
+      ]
+    },
+    {
+      "eval_id": 2,
+      "configuration": "candidate_qwen35_4b",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 1,
+        "total": 1,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Chemistry: native original GPQA grade",
+          "passed": false,
+          "evidence": "rec0Arme2jcXQZnAW; SHA256 f45ebb51e878d8b7ff3987c7fb3698851eda728a20517efae0ccaf180c587c07"
+        }
+      ],
+      "notes": [
+        "Timing and token metrics intentionally omitted: no comparable paired measurements. Upstream displays missing metrics as zero; do not interpret these zeros."
+      ]
+    },
+    {
+      "eval_id": 3,
+      "configuration": "candidate_qwen35_4b",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 1,
+        "total": 1,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Physics: native original GPQA grade",
+          "passed": false,
+          "evidence": "rec06pnAkLOr2t2mp; SHA256 87fd7222cecd4790e983c7072113a20a40fe9ffd3f9390867f82a2407f0dc7f6"
+        }
+      ],
+      "notes": [
+        "Timing and token metrics intentionally omitted: no comparable paired measurements. Upstream displays missing metrics as zero; do not interpret these zeros."
+      ]
+    },
+    {
+      "eval_id": 1,
+      "configuration": "reference_qwen3_06b",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 1,
+        "total": 1,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Biology: native original GPQA grade",
+          "passed": false,
+          "evidence": "rec2ZTsqazBZ3LTWZ; SHA256 794e1b6730960d2984168f6532a0499a709a6712f0e6a9776b91ffd0d6818966"
+        }
+      ],
+      "notes": [
+        "Timing and token metrics intentionally omitted: no comparable paired measurements. Upstream displays missing metrics as zero; do not interpret these zeros."
+      ]
+    },
+    {
+      "eval_id": 2,
+      "configuration": "reference_qwen3_06b",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 1,
+        "failed": 0,
+        "total": 1,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Chemistry: native original GPQA grade",
+          "passed": true,
+          "evidence": "rec0Arme2jcXQZnAW; SHA256 372af2a1cb86270e686de3a3b06f6dda15f2d8d06974d1e888370c48b6863e5f"
+        }
+      ],
+      "notes": [
+        "Timing and token metrics intentionally omitted: no comparable paired measurements. Upstream displays missing metrics as zero; do not interpret these zeros."
+      ]
+    },
+    {
+      "eval_id": 3,
+      "configuration": "reference_qwen3_06b",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 1,
+        "total": 1,
+        "time_seconds": 0.0,
+        "tokens": 0,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Physics: native original GPQA grade",
+          "passed": false,
+          "evidence": "rec06pnAkLOr2t2mp; SHA256 a8e8f72401aaa7df79a83c154467427aa90fe92286b3c9ab91864939fdd2aa16"
+        }
+      ],
+      "notes": [
+        "Timing and token metrics intentionally omitted: no comparable paired measurements. Upstream displays missing metrics as zero; do not interpret these zeros."
+      ]
+    }
+  ],
+  "run_summary": {
+    "candidate_qwen35_4b": {
+      "pass_rate": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0,
+        "max": 0
+      }
+    },
+    "reference_qwen3_06b": {
+      "pass_rate": {
+        "mean": 0.3333,
+        "stddev": 0.5774,
+        "min": 0.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "tokens": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0,
+        "max": 0
+      }
+    },
+    "delta": {
+      "pass_rate": "-0.33",
+      "time_seconds": "+0.0",
+      "tokens": "+0"
+    }
+  },
+  "notes": []
+}
