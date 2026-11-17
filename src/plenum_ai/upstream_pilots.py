@@ -138,8 +138,10 @@ def main():
         report = inspect_upstream(args.provider) if args.verify_library else plan(args.provider)
     path.parent.mkdir(parents=True,exist_ok=True)
     path.write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
-    print(args.provider,"upstream API verified:",report.get("api_import_verified", report.get("component_executed", False)),
-          "model/API calls:",report["model_calls"],report["external_api_calls"])
+    label = "bounded component executed:" if "component_executed" in report else "upstream API verified:"
+    result = report.get("component_executed", report.get("api_import_verified", False))
+    print(args.provider, label, result,
+          "model/API calls:", report["model_calls"], report["external_api_calls"])
 
 if __name__=="__main__":
     main()
