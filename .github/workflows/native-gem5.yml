@@ -1,0 +1,37 @@
+name: Native gem5 system simulator
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/native-gem5.yml"
+permissions:
+  contents: read
+concurrency:
+  group: native-gem5-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  upstream-memory-traffic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Install open-source build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq build-essential git m4 scons zlib1g-dev python3-dev
+      - name: Obtain pinned upstream gem5
+        run: |
+          git clone --depth 1 --branch v25.1.0.0 https://github.com/gem5/gem5.git "$RUNNER_TEMP/gem5"
+          test "$(git -C "$RUNNER_TEMP/gem5" rev-parse HEAD)" = 7a2b0e413d06c5ce7097104abef3b1d9eaabca91
+      - name: Build ISA-free system simulator
+        working-directory: ${{ runner.temp }}/gem5
+        run: |
+          scons build/NULL/gem5.fast -j4 --ignore-style
+          test -x build/NULL/gem5.fast
+          build/NULL/gem5.fast --build-info
+      - name: Execute upstream generic memory workload
+        working-directory: ${{ runner.temp }}/gem5
+        run: |
+          build/NULL/gem5.fast -d "$RUNNER_TEMP/gem5-smoke-out" configs/example/gem5_library/memory_traffic.py LinearGenerator 75
+          test -s "$RUNNER_TEMP/gem5-smoke-out/stats.txt"
+          grep -E '^simTicks[[:space:]]+[1-9][0-9]*' "$RUNNER_TEMP/gem5-smoke-out/stats.txt"
+          printf 'Native system-simulator execution verified; no production workload validation claimed.\n'
