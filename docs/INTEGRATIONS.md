@@ -102,7 +102,7 @@ run 42167232309; no real biomolecular modeling claims are warranted.
 
 The [existing reuse-first registry](../protocols/reuse_first_registry.json) and
 [scientific tool registry](../src/plenum_ai/tool_registry.py) now pin all seven
-requested upstream projects. Four bounded components are integrated in the original repository. No full scientist-agent runtime has been installed,
+requested upstream projects. Five bounded components are integrated in the original repository. No full scientist-agent runtime has been installed,
 deployed, or authorized by these entries. The original **AI Scientist v2**
 reference remains unchanged. The existing PaperQA2 and ToolUniverse references
 are not counted as Robin or AutoScientists.
@@ -113,7 +113,7 @@ are not counted as Robin or AutoScientists.
 | [Harvard AutoScientists](https://github.com/mims-harvard/AutoScientists/tree/c71a92343b9a488ed10134be805845b9473ad18f) | No license found at this revision: reference only, no copied code or installation. Reuse individually reviewed ToolUniverse endpoints already in the catalogue where appropriate. |
 | [FutureHouse Robin](https://github.com/Future-House/robin/tree/4a5cce310f3bc7663a67117db88af43b84733ffe) | Apache-2.0. Bounded hypothesis-pair scheduling algorithm merged in existing upstream pilot ([#801](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/801)); no pairwise judgment, ranking, Edison, assays, or model agent. |
 | [MIT ScienceClaw](https://github.com/lamm-mit/scienceclaw/tree/894598cd3a90891a077c254566276bd379038bad) | Apache-2.0. Bounded literal DNA statistics merged in existing upstream pilot ([#801](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/801)); optional Biopython 1.86. No external publication or model runtime. Separately tested upstream FEM script had an unresolved analytic 1.1–5.7 kHz vs finite-difference ~8.4 MHz discrepancy, so it is not adopted. |
-| [FermiLink](https://github.com/TaoELi/FermiLink/tree/1677243532ca1631750d5a62db9763c68291fddb) | AGPL-3.0, v0.3.10; isolated CLI/process candidate only, no verified installation or free backend. |
+| [FermiLink](https://github.com/TaoELi/FermiLink/tree/1677243532ca1631750d5a62db9763c68291fddb) | AGPL-3.0, v0.3.10. [#805](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/805) merges an optional isolated launch adapter for the pinned original laser-TLS template and separately supplied MaxwellLink v0.5.0 wheel (GPL-2.0). Original standalone 1,000-step result finite with zero conservation error; populations remain constant under orthogonal coupling. No upstream code, wheel or raw CSV redistributed, no full agent installed or model/API. New wrapper source/CI verified; original simulation was not rerun through it. |
 | [Denario](https://github.com/Denario-AI/Denario/tree/f6cc751603f2caed7524cc22b31652243c7b7c97) | GPL-3.0, v1.0.1; isolated process and rights review; current analysis expects OpenAI API and that is not funded/authorized. |
 | [EvoScientist](https://github.com/EvoScientist/EvoScientist/tree/b1ca788ae9c6e78f5b66df56cc770c3d0bbf55e1) | Apache-2.0, v0.4.3. Original isolated skill-creator aggregator, fixed-input runner, license and archived public GPQA aggregation merged ([#803](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/803)). Existing grades aggregated without inference: 0/3 candidate vs 1/3 reference, no promotion. Raw missing-metric zero defaults are not measured observations. Full runtime requires separate dependency environment and approved local model. |
 
@@ -149,3 +149,17 @@ locally safety-tested; EvoScientist's [foundation CI](https://github.com/chadkha
 passed. Neither source merge establishes new model evaluation, agent execution,
 general autonomy, or a discovery. Explicit run flags exist only for the fixed
 reviewed inputs; do not repeat these jobs as demonstrations.
+
+FermiLink/MaxwellLink's optional external adapter has a read-only default plan:
+
+```sh
+python integrations/upstream/fermilink-maxwelllink/run_tls.py
+```
+
+See [the exact input and execution boundary](../integrations/upstream/fermilink-maxwelllink/README.md),
+the [prior original standalone execution receipt](../evidence/fermilink/2026-11-17-tls/receipt.json)
+and [#805 foundation CI](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/44010597573). Explicit execution requires
+separately supplied hash-pinned upstream assets and license compliance. No
+automatic download, default invocation, new agent installation, model or
+provider call. Constant populations establish baseline evolution only, not
+driven excitation, novelty or AGI.

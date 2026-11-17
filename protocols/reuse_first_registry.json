@@ -818,16 +818,22 @@
     },
     {
       "name": "FermiLink",
-      "role": "scientific_workspace_reference",
+      "role": "bounded_external_scientific_baseline_launch",
       "origin": "https://github.com/TaoELi/FermiLink",
       "source_revision": "1677243532ca1631750d5a62db9763c68291fddb",
       "license": "AGPL-3.0",
-      "adoption": "reviewed_original_reference_on_demand",
-      "status": "reference_only_not_installed",
+      "adoption": "merged_optional_external_fixed_template_runner",
+      "status": "bounded_external_component_source_integrated_prior_real_baseline_verified_agent_not_installed",
       "default_execution": false,
       "preinstalled": false,
       "activation_gate": "agpl_review_isolated_process_approved_free_backend",
-      "notes": "v0.3.10 external isolated separate CLI process only after AGPL obligations and approved no-paid backend; current original runtime does not have verified installation."
+      "notes": "Pinned FermiLink v0.3.10 laser-TLS template (AGPL-3.0) plus separately supplied MaxwellLink v0.5.0 wheel (GPL-2.0, commit 122d655b0a6c61209ca23ae28efc3621e5283c85). Original standalone non-socket template completed 1000 finite steps, zero maximum population-conservation error; Pe remained 0.0001 because xy drive is orthogonal to z TLS. Output SHA256 50b2089882424246311bad0d87f7030fd3d6ece72fac1ae74f26438c5eb71bea. Integrated guarded external launch boundary has source/CI and focused input-safety verification; original simulation not rerun through new wrapper. No upstream code, wheel, raw CSV redistributed, no full agent installed, model or paid API. Separate rights review required for any further upstream integration.",
+      "component_path": "integrations/upstream/fermilink-maxwelllink/run_tls.py",
+      "component_activation": "default read-only plan; --execute requires three exact externally supplied hash-pinned assets, no automatic download/install",
+      "evidence_path": "evidence/fermilink/2026-11-17-tls/receipt.json",
+      "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/805",
+      "source_merge_commit": "a2417a3dfb04db401979afc14ca11427a5136be1",
+      "verified_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/44010597573"
     },
     {
       "name": "Denario",
