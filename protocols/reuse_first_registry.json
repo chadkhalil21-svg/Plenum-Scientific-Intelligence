@@ -751,16 +751,21 @@
     },
     {
       "name": "Sakana AI Scientist v3",
-      "role": "reference_autonomous_scientific_agent_design_v3",
+      "role": "bounded_fixed_scientific_baseline_evaluator",
       "origin": "https://github.com/SakanaAI/AI-Scientist-v3",
       "source_revision": "de1cd267b8922faa31631fb397bbc202bf714d84",
       "license": "Apache-2.0",
-      "adoption": "reviewed_original_reference_on_demand",
-      "status": "upstream_baseline_executed_separately_agent_not_installed",
+      "adoption": "merged_optional_exact_upstream_evaluator",
+      "status": "bounded_component_source_integrated_prior_real_baseline_verified_agent_not_installed",
       "default_execution": false,
       "preinstalled": false,
       "activation_gate": "approved_no_cost_backend_and_denied_host_network_before_agent",
-      "notes": "Exact pinned upstream circpack baseline evaluator executed separately on public fixture: correct=true, score 0.9597642169962064 with NumPy 2.3.5; upstream existing candidate, not Plenum-generated optimization. Evaluator SHA256 11187fcb39331efccc1c23aa2761d6eaefce200d2d81df660f32e5595d18a4fa; metrics receipt SHA256 1b6b2382256502f3206ce4bbc170cb7eae2db2f9005e32c75c5bfd6446771c9e."
+      "notes": "Exact pinned upstream circpack baseline evaluator executed separately on public fixture: correct=true, score 0.9597642169962064 with NumPy 2.3.5; upstream existing candidate, not Plenum-generated optimization. Evaluator SHA256 11187fcb39331efccc1c23aa2761d6eaefce200d2d81df660f32e5595d18a4fa; metrics receipt SHA256 1b6b2382256502f3206ce4bbc170cb7eae2db2f9005e32c75c5bfd6446771c9e. Exact upstream evaluator/candidate source, adjacent license, hash-verifying optional adapter and five original raw outputs are now integrated in the original repository. Local adapter safety verification; existing PR browser guard CI only. Do not repeat original baseline for demonstration; two of 26 radii were zero under the upstream acceptance criterion.",
+      "component_path": "integrations/upstream/sakana-ai-scientist-v3/run_fixed_baseline.py",
+      "component_activation": "explicit --verify-only or --run for exact pinned public baseline, no custom code",
+      "evidence_path": "integrations/upstream/sakana-ai-scientist-v3/baseline_receipt.json",
+      "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/802",
+      "source_merge_commit": "0d2ac407fa3569949ad9474dad2ed4e80faf2d40"
     },
     {
       "name": "Harvard AutoScientists",
@@ -782,11 +787,16 @@
       "source_revision": "4a5cce310f3bc7663a67117db88af43b84733ffe",
       "license": "Apache-2.0",
       "adoption": "bounded_existing_upstream_pilot_component",
-      "status": "source_component_reused_local_offline_verified_agent_not_installed",
+      "status": "bounded_component_source_integrated_offline_ci_verified_agent_not_installed",
       "default_execution": false,
       "preinstalled": false,
       "activation_gate": "explicit_bounded_pair_schedule_only_not_edison",
-      "notes": "Original uniformly_random_pairs algorithm adapted in existing upstream_pilots with bounded inputs and isolated RNG; real offline local run verifies unique reproducible pairs. No actual hypothesis judging, Edison use or wet-lab work."
+      "notes": "Original uniformly_random_pairs algorithm adapted in existing upstream_pilots with bounded inputs and isolated RNG; real offline local run verifies unique reproducible pairs. No actual hypothesis judging, Edison use or wet-lab work. Original exact-head CI emitted component receipts; no full Robin agent.",
+      "component_path": "src/plenum_ai/upstream_pilots.py::robin_pair_schedule",
+      "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/801",
+      "source_merge_commit": "93a1f5ac97c4f913d60b1e6e4cbbbf9899bc8f0a",
+      "verified_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/44009698260",
+      "verified_artifact": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/44009698260/artifacts/14295159723"
     },
     {
       "name": "MIT ScienceClaw",
@@ -795,11 +805,16 @@
       "source_revision": "894598cd3a90891a077c254566276bd379038bad",
       "license": "Apache-2.0",
       "adoption": "bounded_existing_upstream_pilot_component",
-      "status": "source_component_reused_local_offline_verified_optional_dependency_agent_not_installed",
+      "status": "bounded_component_source_integrated_offline_ci_verified_optional_dependency_agent_not_installed",
       "default_execution": false,
       "preinstalled": false,
       "activation_gate": "explicit_public_literal_stats_only_not_external_publication",
-      "notes": "Original compute_stats DNA branch adapted in existing upstream_pilots with literal validation and optional Biopython 1.86. Real offline local run verifies composition and GC content; no network/model/publication. Separately tested upstream modal_analysis on synthetic plate exhibited analytic 1.1-5.7 kHz vs finite-difference ~8.4 MHz; do not adopt unvalidated FEM method."
+      "notes": "Original compute_stats DNA branch adapted in existing upstream_pilots with literal validation and optional Biopython 1.86. Real offline local run verifies composition and GC content; no network/model/publication. Separately tested upstream modal_analysis on synthetic plate exhibited analytic 1.1-5.7 kHz vs finite-difference ~8.4 MHz; do not adopt unvalidated FEM method. Original exact-head CI installed only pinned optional Biopython and emitted the bounded statistics receipt; no full ScienceClaw agent.",
+      "component_path": "src/plenum_ai/upstream_pilots.py::scienceclaw_dna_statistics",
+      "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/801",
+      "source_merge_commit": "93a1f5ac97c4f913d60b1e6e4cbbbf9899bc8f0a",
+      "verified_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/44009698260",
+      "verified_artifact": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/44009698260/artifacts/14295159723"
     },
     {
       "name": "FermiLink",
@@ -829,16 +844,22 @@
     },
     {
       "name": "EvoScientist",
-      "role": "scientific_agent_evolution_reference",
+      "role": "bounded_offline_native_grade_aggregation",
       "origin": "https://github.com/EvoScientist/EvoScientist",
       "source_revision": "b1ca788ae9c6e78f5b66df56cc770c3d0bbf55e1",
       "license": "Apache-2.0",
-      "adoption": "reviewed_original_reference_on_demand",
-      "status": "upstream_evaluator_executed_separately_agent_not_installed",
+      "adoption": "merged_optional_exact_upstream_evaluator",
+      "status": "bounded_component_source_integrated_prior_real_aggregation_verified_agent_not_installed",
       "default_execution": false,
       "preinstalled": false,
       "activation_gate": "separate_environment_approved_local_model_and_no_automatic_promotion",
-      "notes": "Exact pinned upstream skill-creator aggregate_benchmark.py executed offline in separate scratch on original existing paired GPQA grade evidence: candidate 0/3 versus reference 1/3; negative evidence preserved, no additional model inference and no promotion. Source SHA256 540d0ee42b894428350eaf1337e436376e2429185b5ce69485434216f2d0b386; report SHA256 a0df92bd9663120c85f5f28303cfc4566b4d8ec6e33771263f3683a25a17e67d. Full EvoScientist not installed."
+      "notes": "Exact pinned upstream skill-creator aggregate_benchmark.py executed offline in separate scratch on original existing paired GPQA grade evidence: candidate 0/3 versus reference 1/3; negative evidence preserved, no additional model inference and no promotion. Source SHA256 540d0ee42b894428350eaf1337e436376e2429185b5ce69485434216f2d0b386; report SHA256 a0df92bd9663120c85f5f28303cfc4566b4d8ec6e33771263f3683a25a17e67d. Full EvoScientist not installed. Exact upstream aggregator, adjacent license, hash-verified fixed-input adapter and original reports are now integrated. Foundation CI verified source boundary tests; no new model scoring. Timing/token/tool/error zero defaults are not measurements.",
+      "component_path": "integrations/upstream/evoscientist-v0.4.3/aggregate_gpqa.py",
+      "component_activation": "read-only plan default, explicit --execute for fixed public native-grade inputs",
+      "evidence_path": "evidence/evoscientist/2026-11-17-gpqa/receipt.json",
+      "merged_pr": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/pull/803",
+      "source_merge_commit": "419e69fb5927f0c4487fd8cd4f2f1c8a6a000879",
+      "verified_run": "https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/44009628593"
     }
   ],
   "rules": {
