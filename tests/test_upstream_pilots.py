@@ -60,5 +60,46 @@ class ReuseFirstTests(unittest.TestCase):
         self.assertFalse(p["agent_executed"])
         self.assertFalse(p["scientific_discovery_verified"])
 
+    def test_report_cli_refuses_symlink_escape_and_does_not_mutate_hardlinks(self):
+        import os
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as work, tempfile.TemporaryDirectory() as external:
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(work)
+                outside = Path(external) / "untouched.json"
+                outside.write_text("private sentinel", encoding="utf-8")
+                def run(path):
+                    args = ["upstream_pilots", "--provider", "robin",
+                            "--hypotheses", "4", "--games", "6", "--out", path]
+                    with patch("sys.argv", args):
+                        u.main()
+
+                Path("reports").symlink_to(external, target_is_directory=True)
+                with self.assertRaises((ValueError, OSError)):
+                    run("reports/untouched.json")
+                self.assertEqual(outside.read_text(encoding="utf-8"), "private sentinel")
+                Path("reports").unlink()
+                Path("reports").mkdir()
+
+                Path("reports/nested").symlink_to(external, target_is_directory=True)
+                with self.assertRaises((ValueError, OSError)):
+                    run("reports/nested/untouched.json")
+                Path("reports/leaf.json").symlink_to(outside)
+                with self.assertRaises((ValueError, OSError)):
+                    run("reports/leaf.json")
+                self.assertEqual(outside.read_text(encoding="utf-8"), "private sentinel")
+
+                os.link(outside, "reports/hard.json")
+                run("reports/hard.json")
+                self.assertEqual(outside.read_text(encoding="utf-8"), "private sentinel")
+                self.assertTrue(Path("reports/hard.json").is_file())
+                run("reports/new/nested.json")
+                run("reports/new/nested.json")
+                self.assertTrue(Path("reports/new/nested.json").is_file())
+            finally:
+                os.chdir(original_cwd)
+
 if __name__=="__main__":
     unittest.main()

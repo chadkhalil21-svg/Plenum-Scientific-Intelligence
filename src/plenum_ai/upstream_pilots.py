@@ -110,6 +110,57 @@ def scienceclaw_dna_statistics(sequence):
     }
 
 
+def _write_report(path, report):
+    """Write atomically beneath a real reports directory, never through links."""
+    import os
+    import stat
+    import uuid
+
+    if (path.is_absolute() or ".." in path.parts or path.suffix != ".json"
+            or not 2 <= len(path.parts) <= 4 or path.parts[0] != "reports"):
+        raise ValueError("Only relative bounded reports/*.json destinations allowed")
+    if not hasattr(os, "O_DIRECTORY") or not hasattr(os, "O_NOFOLLOW"):
+        raise RuntimeError("Safe report output requires no-follow directory support")
+
+    # Pin each real directory with a descriptor. Any symlink (including the
+    # reports root) is refused by O_NOFOLLOW; no lexical path is reopened.
+    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    directory = os.open(".", flags)
+    temp_name = None
+    try:
+        for part in path.parts[:-1]:
+            try:
+                os.mkdir(part, mode=0o700, dir_fd=directory)
+            except FileExistsError:
+                pass
+            child = os.open(part, flags, dir_fd=directory)
+            os.close(directory)
+            directory = child
+        leaf = path.name
+        try:
+            mode = os.stat(leaf, dir_fd=directory, follow_symlinks=False).st_mode
+        except FileNotFoundError:
+            pass
+        else:
+            if not stat.S_ISREG(mode):
+                raise ValueError("Report output must not be a link or special file")
+
+        # Never truncate an existing inode (which could be hardlinked outside
+        # reports). Replace the directory entry atomically instead.
+        candidate = ".report-" + uuid.uuid4().hex + ".tmp"
+        handle = os.open(candidate, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                         0o600, dir_fd=directory)
+        temp_name = candidate
+        with os.fdopen(handle, "w", encoding="utf-8") as stream:
+            stream.write(json.dumps(report, indent=2) + "\n")
+        os.replace(temp_name, leaf, src_dir_fd=directory, dst_dir_fd=directory)
+        temp_name = None
+    finally:
+        if temp_name is not None:
+            os.unlink(temp_name, dir_fd=directory)
+        os.close(directory)
+
+
 def main():
     cli=argparse.ArgumentParser(description="Read-only upstream SDK and bounded scientist-component checks")
     cli.add_argument("--provider",choices=sorted([*VERSIONS, "robin", "scienceclaw"]),required=True)
@@ -136,8 +187,7 @@ def main():
         if any(x is not None for x in (args.hypotheses, args.games, args.public_dna)):
             cli.error("Component arguments are not supported by SDK-only providers")
         report = inspect_upstream(args.provider) if args.verify_library else plan(args.provider)
-    path.parent.mkdir(parents=True,exist_ok=True)
-    path.write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
+    _write_report(path, report)
     label = "bounded component executed:" if "component_executed" in report else "upstream API verified:"
     result = report.get("component_executed", report.get("api_import_verified", False))
     print(args.provider, label, result,
