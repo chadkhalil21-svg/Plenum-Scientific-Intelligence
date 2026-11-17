@@ -6,6 +6,7 @@ session. Each outcome is graded to the limited capability actually exercised.
 from __future__ import annotations
 
 import ast
+from decimal import Decimal
 from hashlib import sha256
 import json
 from pathlib import Path
@@ -40,7 +41,7 @@ _GROUND_REQUEST = re.compile(
 )
 
 
-def parse_numeric_grounding(objective: str) -> tuple[str, str, str]:
+def parse_numeric_grounding(objective: str) -> tuple[str, str, str, str, str]:
     """Only one fixed receipt alias, approved field and atomic numeric value."""
     match = _GROUND_REQUEST.fullmatch(objective)
     if not match:
@@ -49,16 +50,31 @@ def parse_numeric_grounding(objective: str) -> tuple[str, str, str]:
     source, digest, fields = PUBLIC_GROUNDING_RECEIPTS[alias]
     if field not in fields:
         raise ValueError("Field is not approved for this public evidence receipt")
-    return source, digest, f"{field} was {number}"
+    prefix = "outputs." if alias == "gpqa" else "output."
+    return source, digest, prefix + field, field, number
 
 
 def _ground_public_claim(objective: str, base: Path) -> dict:
-    artifact, digest, claim = parse_numeric_grounding(objective)
+    artifact, digest, field_path, field, number = parse_numeric_grounding(objective)
     root = Path(__file__).resolve().parents[2]
     source = root / artifact
-    if (source.resolve() != source or source.stat().st_size > 256_000
-            or sha256(source.read_bytes()).hexdigest() != digest):
+    if source.resolve() != source or source.stat().st_size > 256_000:
         raise ValueError("Approved public receipt bytes did not match their immutable pin")
+    raw = source.read_bytes()
+    if sha256(raw).hexdigest() != digest:
+        raise ValueError("Approved public receipt bytes did not match their immutable pin")
+    # Independently resolve this exact field, not a coincidental token elsewhere.
+    recorded = json.loads(raw, parse_float=Decimal, parse_int=Decimal)
+    for part in field_path.split("."):
+        recorded = recorded[part]
+    if not isinstance(recorded, Decimal):
+        raise ValueError("Approved field is not an exact JSON number")
+    requested = Decimal(number)
+    field_value_matches = recorded == requested
+    # The original engine treats bare small integers as ordinals. A decimal
+    # notation presents the same numeric value without changing the request.
+    token_number = number if "." in number or "e" in number.lower() else number + ".0"
+    claim = f"{field} was {token_number}"
     adapter = root / "integrations/upstream/cmbagent-lg-20261116/audit_claims.py"
     # Reuse the original exact adapter with no application credential env.
     result = subprocess.run(
@@ -78,17 +94,38 @@ def _ground_public_claim(objective: str, base: Path) -> dict:
             or report.get("model_inference") is not False
             or report.get("paid_api_calls") != 0
             or len(claims) != 1 or claims[0].get("statement") != claim
-            or claims[0].get("state") not in ("grounded", "weakly_grounded", "ungrounded", "partial")):
+            or claims[0].get("state") not in ("grounded", "weakly_grounded", "ungrounded", "partial", "no_quantities")):
         raise ValueError("Original grounding output failed bounded verification")
+    labelled_exact = any(
+        hit.get("source") == "data/artifact.json"
+        and hit.get("tier") == "primary" and hit.get("label") == field_path
+        and hit.get("match") == "exact" and Decimal(hit["value"]) == requested
+        for quantity in claims[0]["quantities"] for hit in quantity["hits"]
+    )
+    field_grounded = field_value_matches and labelled_exact
+    field_status = ("exact_field_match" if field_grounded else
+                    "field_value_mismatch" if not field_value_matches else
+                    "value_matches_without_exact_labelled_hit")
+    report["field_verification"] = {
+        "requested_statement": f"{field} was {number}",
+        "exact_json_field": field_path,
+        "requested_value": str(requested), "recorded_value": str(recorded),
+        "field_value_matches": field_value_matches,
+        "exact_labelled_token_hit": labelled_exact,
+        "field_grounded": field_grounded, "field_grounding_status": field_status,
+        "semantic_truth_verified": False,
+    }
     (base / "numeric-claim-grounding.json").write_text(
         json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False) + "\n",
         encoding="utf-8",
     )
     return {
         "status": "DRAFT_READY_FOR_FOUNDER", "verified": True,
-        "verified_scope": "numeric token audit and approved public artifact digest only; not semantic truth",
+        "verified_scope": f"Numeric audit completed: {field_status}; receipt comparison only, not semantic truth",
         "worker": ROLES["public_verification"],
-        "numeric_claim_grounding": claims[0]["state"],
+        "upstream_numeric_token_grounding": claims[0]["state"],
+        "field_value_matches": field_value_matches,
+        "field_grounded": field_grounded, "field_grounding_status": field_status,
         "semantic_truth_verified": False,
         "model_inference": False, "paid_api_calls": 0,
         "owner_review_required": True,

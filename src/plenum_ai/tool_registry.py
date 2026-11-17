@@ -346,7 +346,7 @@ TOOLS = {
         "https://github.com/CMBAgents/cmbagent/tree/bde10cb482357675fc747f8436895b1ed79b12b0",
         "Atomic numeric claim grounding of an existing approved public evidence receipt", None,
         "bde10cb482357675fc747f8436895b1ed79b12b0", "MIT", "verification_workforce", "bounded_component_executable",
-        limitations="Explicit owner-only V2 public_verification inbox, GPQA/TLS pinned public receipts and field allowlists; numeric token evidence only, not semantic truth. Never automatic parallel routing, private data or paid model."),
+        limitations="Explicit owner-only V2 public_verification inbox, GPQA/TLS pinned public receipts and field allowlists; separate exact recorded-field comparison and upstream token evidence, not semantic truth. Never automatic parallel routing, private data or paid model."),
     "evoscientist.scientist": Tool("evoscientist.scientist",
         "https://github.com/EvoScientist/EvoScientist/tree/b1ca788ae9c6e78f5b66df56cc770c3d0bbf55e1",
         "Evolving research-agent candidate", None, "b1ca788ae9c6e78f5b66df56cc770c3d0bbf55e1",

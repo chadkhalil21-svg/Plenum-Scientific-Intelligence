@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import patch
 
 from plenum_ai.workforce_public_inbox import parse_public_issue, run_issue
-from plenum_ai.workforce_team_dispatch import dispatch
+from plenum_ai.workforce_team_dispatch import dispatch, PUBLIC_GROUNDING_RECEIPTS
 
 
 def event(kind="public_program", objective="Create a public data validator for scientific observations"):
@@ -26,11 +26,49 @@ class TeamDispatchIntegration(unittest.TestCase):
             result = run_issue(event("public_verification", objective), output_dir=Path(d))
             self.assertEqual(result["status"], "DRAFT_READY_FOR_FOUNDER")
             self.assertEqual(result["worker"], "existing_cmbagent_numeric_grounding")
-            self.assertEqual(result["numeric_claim_grounding"], "grounded")
+            self.assertEqual(result["upstream_numeric_token_grounding"], "grounded")
+            self.assertTrue(result["field_value_matches"])
+            self.assertTrue(result["field_grounded"])
+            self.assertEqual(result["field_grounding_status"], "exact_field_match")
             self.assertFalse(result["semantic_truth_verified"])
             report = json.loads((Path(d)/"issue-901"/"numeric-claim-grounding.json").read_text())
             self.assertEqual(report["claims"][0]["quantities"][0]["hits"][0]["value"], "-0.33")
             self.assertEqual(report["artifact_sha256"], "bd389be2a068c0d99bffebf70259b9cfea9f58bb0c2098a255ed8f4cd77819d2")
+
+    def test_public_verification_exact_small_counts_and_wrong_field_value(self):
+        prefix = "Ground gpqa claim / "
+        cases = (
+            ("candidate_qwen35_4b.correct was 0", True, "exact_field_match"),
+            ("reference_qwen3_06b.correct was 1", True, "exact_field_match"),
+            # The number 1 exists for reference, but candidate actually scored 0.
+            ("candidate_qwen35_4b.correct was 1", False, "field_value_mismatch"),
+        )
+        for claim, expected, status in cases:
+            with self.subTest(claim=claim), tempfile.TemporaryDirectory() as d:
+                result = run_issue(event("public_verification", prefix + claim), output_dir=Path(d))
+                self.assertEqual(result["status"], "DRAFT_READY_FOR_FOUNDER")
+                self.assertEqual(result["field_value_matches"], expected)
+                self.assertEqual(result["field_grounded"], expected)
+                self.assertEqual(result["field_grounding_status"], status)
+                self.assertFalse(result["semantic_truth_verified"])
+                self.assertEqual(result["upstream_numeric_token_grounding"], "grounded")
+                self.assertIn(status, result["verified_scope"])
+                if not expected:
+                    report = json.loads((Path(d)/"issue-901"/"numeric-claim-grounding.json").read_text())
+                    self.assertEqual(report["field_verification"]["requested_value"], "1")
+                    self.assertEqual(report["field_verification"]["recorded_value"], "0")
+                    self.assertFalse(report["field_verification"]["exact_labelled_token_hit"])
+
+    def test_public_verification_wrong_receipt_hash_fails_before_adapter(self):
+        source, _, fields = PUBLIC_GROUNDING_RECEIPTS["gpqa"]
+        objective = "Ground gpqa claim / pass_rate_delta_rounded was -0.33"
+        with tempfile.TemporaryDirectory() as d, patch.dict(
+            PUBLIC_GROUNDING_RECEIPTS, {"gpqa": (source, "0" * 64, fields)}
+        ), patch("plenum_ai.workforce_team_dispatch.subprocess.run") as run:
+            result = run_issue(event("public_verification", objective), output_dir=Path(d))
+            self.assertEqual(result["status"], "BLOCKED_WORKER_OR_VERIFICATION")
+            self.assertFalse(result["verified"])
+            run.assert_not_called()
 
     def test_public_verification_rejects_unapproved_alias_field_and_extra_text(self):
         for objective in (
