@@ -24,7 +24,7 @@ OWNER = "chadkhalil21-svg"
 TITLE = "[Plenum Workforce] public research"
 MAGIC = "PLENUM_PUBLIC_WORKFORCE_V1"
 MAGIC_V2 = "PLENUM_PUBLIC_WORKFORCE_V2"
-PUBLIC_KINDS = frozenset({"public_research", "public_program", "public_science", "public_creative"})
+PUBLIC_KINDS = frozenset({"public_research", "public_program", "public_science", "public_creative", "public_verification"})
 TOPIC = re.compile(r"^[\w\s,\-.()/+]{20,120}$", re.UNICODE)
 
 def original_source_category(objective: str) -> str:
@@ -63,6 +63,9 @@ def parse_public_issue(event: dict) -> dict:
                 ("password", "secret", "credential", "token", "confidential", "private key"))):
         raise ValueError("Only a bounded, explicitly PUBLIC objective is allowed")
     from .workforce_team_dispatch import ROLES
+    if kind == "public_verification":
+        from .workforce_team_dispatch import parse_numeric_grounding
+        parse_numeric_grounding(objective)
     worker = "existing_plenum_world_horizon" if kind == "public_research" else ROLES[kind]
     return {"issue_number": issue["number"], "objective": objective,
             "kind": kind, "worker": worker,
