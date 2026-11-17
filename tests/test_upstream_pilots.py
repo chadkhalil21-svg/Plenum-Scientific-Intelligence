@@ -30,5 +30,35 @@ class ReuseFirstTests(unittest.TestCase):
             for name in u.VERSIONS:
                 self.assertFalse(u.plan(name)["api_import_verified"])
 
+    def test_robin_pair_schedule_is_reproducible_unique_and_bounded(self):
+        import random
+        before = random.getstate()
+        p = u.robin_pair_schedule(4, 6)
+        self.assertEqual(set(map(tuple, p["pairs"])), {(0,1),(0,2),(0,3),(1,2),(1,3),(2,3)})
+        self.assertEqual(p, u.robin_pair_schedule(4, 6))
+        self.assertEqual(random.getstate(), before)
+        self.assertEqual(p["model_calls"], 0)
+        self.assertFalse(p["agent_executed"])
+        for n, games in ((1, 1), (33, 1), (2, 0), (2, 2), (True, 1)):
+            with self.subTest(n=n, games=games), self.assertRaises(ValueError):
+                u.robin_pair_schedule(n, games)
+
+    def test_scienceclaw_sequence_rejects_untrusted_input_before_import(self):
+        for sequence in ("", "../secret", "ACGTN", "ACGT" * 2501, 2):
+            with self.subTest(sequence=str(sequence)[:10]), self.assertRaises(ValueError):
+                u.scienceclaw_dna_statistics(sequence)
+
+    def test_scienceclaw_statistic_from_optional_upstream(self):
+        import importlib.util
+        if importlib.util.find_spec("Bio") is None:
+            self.skipTest("optional Biopython integration not installed")
+        p = u.scienceclaw_dna_statistics("ACGCGTAA")
+        self.assertEqual(p["statistics"]["composition"], {"A": 3, "T": 1, "C": 2, "G": 2})
+        self.assertEqual(p["statistics"]["gc_content"], 50.0)
+        self.assertEqual(p["statistics"]["length"], 8)
+        self.assertEqual(p["model_calls"], 0)
+        self.assertFalse(p["agent_executed"])
+        self.assertFalse(p["scientific_discovery_verified"])
+
 if __name__=="__main__":
     unittest.main()

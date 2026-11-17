@@ -97,3 +97,39 @@ run 42167232309; no real biomolecular modeling claims are warranted.
 - **Official Kaggle CLI, API authorization VERIFIED:** owner secret in GitHub `kaggle-access`, successful manual notebook-listing check ([run 42408852329](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42408852329)). Read/write code path exists but a remote Kaggle write and 27B trial have NOT yet been executed.
 - **Microsoft Playwright 1.64.1 + Chromium, real CI:** public `https://example.com/` opened with HTTP 200 and a local web-page interaction typed a field and clicked a button with the expected DOM result ([run 42409395480](https://github.com/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/42409395480)). Whitelisted public GET sites only, no accounts or site mutations, no LLM-controlled action yet. Review [Browser Autonomy](BROWSER_AUTONOMY.md) for staged website-control roadmap.
 - **Service inventory:** [Connection Roadmap](CONNECTION_ROADMAP.md) marks working sources, optional owner credentials, security boundaries and expected costs. Do not install every third-party app, duplicate journal APIs, or confuse data adapters with AGI.
+
+## 16 November 2026 — Founder-requested upstream scientific agents
+
+The [existing reuse-first registry](../protocols/reuse_first_registry.json) and
+[scientific tool registry](../src/plenum_ai/tool_registry.py) now pin all seven
+requested upstream projects. No full scientist-agent runtime has been installed,
+deployed, or authorized by these entries. The original **AI Scientist v2**
+reference remains unchanged. The existing PaperQA2 and ToolUniverse references
+are not counted as Robin or AutoScientists.
+
+| Original project | Bounded evidence or gate |
+|---|---|
+| [Sakana v3](https://github.com/SakanaAI/AI-Scientist-v3/tree/de1cd267b8922faa31631fb397bbc202bf714d84) | Apache-2.0. Original circle-packing evaluator and existing candidate executed separately (correct=true; score 0.9597642169962064); not a Plenum-generated optimization. No agent startup, fallback API key, generated-code execution, or full runtime. |
+| [Harvard AutoScientists](https://github.com/mims-harvard/AutoScientists/tree/c71a92343b9a488ed10134be805845b9473ad18f) | No license found at this revision: reference only, no copied code or installation. Reuse individually reviewed ToolUniverse endpoints already in the catalogue where appropriate. |
+| [FutureHouse Robin](https://github.com/Future-House/robin/tree/4a5cce310f3bc7663a67117db88af43b84733ffe) | Apache-2.0. Bounded hypothesis-pair scheduling algorithm reused in existing upstream pilot; no pairwise judgment, ranking, Edison, assays, or model agent. |
+| [MIT ScienceClaw](https://github.com/lamm-mit/scienceclaw/tree/894598cd3a90891a077c254566276bd379038bad) | Apache-2.0. Bounded literal DNA statistics reused in existing upstream pilot; optional Bio 1.86. No external publication or model runtime. Separately tested upstream FEM script had an unresolved analytic 1.1–5.7 kHz vs finite-difference ~8.4 MHz discrepancy, so it is not adopted. |
+| [FermiLink](https://github.com/TaoELi/FermiLink/tree/1677243532ca1631750d5a62db9763c68291fddb) | AGPL-3.0, v0.3.10; isolated CLI/process candidate only, no verified installation or free backend. |
+| [Denario](https://github.com/Denario-AI/Denario/tree/f6cc751603f2caed7524cc22b31652243c7b7c97) | GPL-3.0, v1.0.1; isolated process and rights review; current analysis expects OpenAI API and that is not funded/authorized. |
+| [EvoScientist](https://github.com/EvoScientist/EvoScientist/tree/b1ca788ae9c6e78f5b66df56cc770c3d0bbf55e1) | Apache-2.0, v0.4.3. Original isolated skill-creator aggregator replayed existing Prometheus GPQA grades without inference: 0/3 candidate vs 1/3 reference, no promotion. Full runtime requires separate dependency environment and approved local model. |
+
+Execute the two bounded components through the original existing CLI
+using only PUBLIC nonconfidential inputs:
+
+```sh
+python -m plenum_ai.upstream_pilots --provider robin --hypotheses 4 --games 6 --out reports/robin-pairs.json
+python -m pip install -e '.[scienceclaw_sequences]'
+python -m plenum_ai.upstream_pilots --provider scienceclaw --public-dna ACGCGTAA --out reports/scienceclaw-dna.json
+```
+
+The isolated functions were locally executed and tested, including unique pairs,
+stable local random state and independently countable composition (A=3, T=1,
+C=2, G=2; GC=50%). These are deterministic bounded utilities, not new scientific
+results, models, or working autonomous scientists. The two new source components
+cannot enter the general parallel agent graph; the original SDK check, focused
+component tests and optional dependency path retain zero model and external API
+calls. See [upstream attribution](../integrations/upstream/scientist-components/UPSTREAM.md).

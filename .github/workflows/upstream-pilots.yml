@@ -26,10 +26,18 @@ jobs:
         with:
           python-version: '3.11'
       - run: |
-          python -m pip install -e .
+          python -m pip install -e '.[scienceclaw_sequences]'
           python -m unittest discover -s tests -p 'test_upstream_pilots.py' -v
           python -m plenum_ai.upstream_pilots --provider openhands --out reports/openhands-plan.json
           python -m plenum_ai.upstream_pilots --provider paperqa --out reports/paperqa-plan.json
+          python -m plenum_ai.upstream_pilots --provider robin --hypotheses 4 --games 6 --out reports/robin-pairs.json
+          python -m plenum_ai.upstream_pilots --provider scienceclaw --public-dna ACGCGTAA --out reports/scienceclaw-dna.json
+      - name: Preserve new bounded component receipts
+        uses: actions/upload-artifact@v7
+        with:
+          name: scientific-upstream-bounded-components
+          path: reports/
+          retention-days: 14
   optional-real-sdk-import:
     runs-on: ubuntu-latest
     timeout-minutes: 20

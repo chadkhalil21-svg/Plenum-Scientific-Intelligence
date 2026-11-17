@@ -33,5 +33,16 @@ class ScreenshotResourceTests(unittest.TestCase):
         self.assertFalse(report["all_external_execution_approved"])
         self.assertLessEqual(report["parallel_limit_per_batch"],5)
 
+    def test_requested_scientist_tools_cannot_enter_parallel_worker_gate(self):
+        keys = ("sakana.scientist", "sakana.scientist_v3", "harvard.autoscientists",
+                "futurehouse.robin", "mit.scienceclaw", "fermilink.scientist",
+                "denario.scientist", "evoscientist.scientist")
+        for key in keys:
+            with self.subTest(key=key):
+                self.assertIn(key, TOOLS)
+                self.assertNotIn(key, PARALLEL_TOOLS)
+                with self.assertRaises(ValueError):
+                    approve_request([key])
+
 if __name__=="__main__":
     unittest.main()
