@@ -9,7 +9,10 @@ file was present at this commit. See the [original paper](https://arxiv.org/abs/
 The wrapper verifies all three source hashes before copying the reviewed bytes
 into a new temporary directory. It accepts no candidate, output path or user
 prompt. It passes only the fixed upstream arguments and a minimal child-process
-environment, uses one BLAS/OMP thread and imposes a 25-second timeout. It does not
+environment, uses one BLAS/OMP thread and imposes a 25-second timeout. Execution
+requires POSIX process-group support: a new process session contains the evaluator
+and its multiprocessing child, and a timeout kills that process group and reaps
+the direct evaluator before returning failure. It does not
 instantiate an agent, download a model, invoke an API, use a GPU or perform an
 external account operation. A cleared environment and temporary directory are not
 an operating-system security sandbox; never substitute generated or untrusted
@@ -38,14 +41,17 @@ no installs (the three source files only import NumPy).
 
 The existing `baseline_receipt.json` records the original, real one-time
 execution in local scratch on November 16, 2026 (ET), before this adapter was
-added. It passed Sakana's own evaluator with a score of
+added. The exact five original raw outputs are archived in `raw_outputs/`
+(including the NumPy array archive) and match the receipt's SHA-256 hashes.
+It passed Sakana's own evaluator with a score of
 0.9597642169962064. It is a baseline result, not a new candidate, new discovery,
 or proof of 26 strictly positive radii: two radii were zero and the upstream
 validator allows this. It does not establish the full Agentic Scientist
 pipeline, autonomous research, or AGI. The adapter's scope is only the exact
 reviewed evaluator and the exact fixed baseline.
 
-Do not repeat the baseline for demonstration. The narrow boundary check
+Do not repeat the baseline for demonstration. The narrow local boundary check
 `python integrations/upstream/sakana-ai-scientist-v3/test_runner.py` verifies
-source hashing, arbitrary-input rejection and fail-closed tampering without
-running the original evaluation.
+source hashing, arbitrary-input rejection, fail-closed tampering and POSIX
+process-group timeout cleanup without running the original evaluation. These
+are local adapter safety checks, not GitHub CI or a new scientific result.

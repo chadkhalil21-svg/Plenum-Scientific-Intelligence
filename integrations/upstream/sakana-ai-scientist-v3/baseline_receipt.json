@@ -30,6 +30,7 @@
   "zero_radii": 2,
   "minimum_pair_clearance": -2.7755575615628914e-17,
   "minimum_boundary_clearance": 0.0,
+  "raw_output_archive": "raw_outputs/",
   "output_sha256": {
     "correct.json": "047606082cb987d5d3fa78c88692d1613285ffa85df4196ae814593285078bc2",
     "metrics.json": "1b6b2382256502f3206ce4bbc170cb7eae2db2f9005e32c75c5bfd6446771c9e",

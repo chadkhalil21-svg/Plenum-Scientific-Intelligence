@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import signal
 import subprocess
 import sys
 import tempfile
@@ -32,7 +33,24 @@ def verified_sources():
     return sources
 
 
+def _wait_bounded(process, timeout):
+    try:
+        return process.communicate(timeout=timeout)
+    except BaseException:
+        # The pinned evaluator starts a multiprocessing child. The parent
+        # timeout must terminate the entire session's process group, not just
+        # its direct evaluator PID.
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        process.communicate(timeout=2)
+        raise
+
+
 def _execute_baseline():
+    if os.name != "posix":
+        raise ValueError("Fixed evaluator execution requires POSIX process-group support")
     # Write the already verified bytes into a fresh directory.
     # No generated program, external input, credential or model is accepted.
     sources = verified_sources()
@@ -42,15 +60,24 @@ def _execute_baseline():
             path = scratch / name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(contents)
-        completed = subprocess.run(
-            [sys.executable, "-E", "-s", "-B",
-             "examples/circpack/evaluate.py",
-             "--program_path", "examples/circpack/program_0/src/program.py",
-             "--results_dir", "results"],
+        command = [
+            sys.executable, "-E", "-s", "-B",
+            "examples/circpack/evaluate.py",
+            "--program_path", "examples/circpack/program_0/src/program.py",
+            "--results_dir", "results",
+        ]
+        process = subprocess.Popen(
+            command,
             cwd=scratch,
             env={"PATH": os.defpath, "OPENBLAS_NUM_THREADS": "1", "OMP_NUM_THREADS": "1"},
-            capture_output=True, timeout=25, check=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            start_new_session=True,
         )
+        stdout, stderr = _wait_bounded(process, 25)
+        if process.returncode:
+            raise subprocess.CalledProcessError(
+                process.returncode, command, output=stdout, stderr=stderr,
+            )
         results = scratch / "results"
         correct = json.loads((results / "correct.json").read_text())
         metrics = json.loads((results / "metrics.json").read_text())
@@ -58,7 +85,7 @@ def _execute_baseline():
             raise ValueError("Original evaluator rejected the fixed baseline")
         return {
             "evaluator_executed": True,
-            "exit_status": completed.returncode,
+            "exit_status": process.returncode,
             "correct": True,
             "combined_score": metrics["combined_score"],
             "num_positions": metrics["public"]["num_circles"],
