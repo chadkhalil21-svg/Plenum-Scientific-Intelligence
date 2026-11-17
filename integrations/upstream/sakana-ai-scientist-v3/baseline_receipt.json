@@ -1,0 +1,48 @@
+{
+  "schema": "plenum_sakana_fixed_baseline_evidence_v1",
+  "date_et": "2026-11-16",
+  "upstream_repository": "https://github.com/SakanaAI/AI-Scientist-v3",
+  "upstream_commit": "de1cd267b8922faa31631fb397bbc202bf714d84",
+  "upstream_license": "Apache-2.0",
+  "source_git_blob_sha1": {
+    "examples/circpack/evaluate.py": "b1e14ef7e7d09ed37186ba76d5f220e88e0723f0",
+    "examples/circpack/capture.py": "94995ef38ccb06c13c21d249b3630274fcc3149c",
+    "examples/circpack/program_0/src/program.py": "4d50d0d62f132699697e148dc73782ec5a40df6d",
+    "LICENSE": "ad1aa7591788509e219390f93eb78f96b58aee02"
+  },
+  "source_sha256": {
+    "examples/circpack/evaluate.py": "11187fcb39331efccc1c23aa2761d6eaefce200d2d81df660f32e5595d18a4fa",
+    "examples/circpack/capture.py": "cc7a660d33180d61479bbf0df59fae815d0119dd19d9e5290e0d2126096804d5",
+    "examples/circpack/program_0/src/program.py": "72aaca25037f1cdc9f71257eb325ec456b888de55d9328f62eea488335d5101a"
+  },
+  "command": ["python", "examples/circpack/evaluate.py", "--program_path",
+              "examples/circpack/program_0/src/program.py", "--results_dir", "results"],
+  "evidence_scope": "Original reviewed upstream baseline executed in local scratch before adapter addition",
+  "numpy_version": "2.3.5",
+  "scipy_version_present_but_unused": "1.17.0",
+  "clean_child_environment": true,
+  "external_timeout_seconds": 25,
+  "threads_blas_omp": 1,
+  "exit_status": 0,
+  "evaluator_accepted": true,
+  "combined_score_sum_of_radii": 0.9597642169962064,
+  "positions": 26,
+  "zero_radii": 2,
+  "minimum_pair_clearance": -2.7755575615628914e-17,
+  "minimum_boundary_clearance": 0.0,
+  "output_sha256": {
+    "correct.json": "047606082cb987d5d3fa78c88692d1613285ffa85df4196ae814593285078bc2",
+    "metrics.json": "1b6b2382256502f3206ce4bbc170cb7eae2db2f9005e32c75c5bfd6446771c9e",
+    "extra.npz": "1e879ac74db27b5974e0503ad813e76270adf2b257fd32271b38109828e34f42",
+    "stdout.log": "44f8940f31164de57c1a42dfd903a8421cd08d1566579e760f1d50c8061f9967",
+    "stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "gpu_used": false,
+  "model_calls": 0,
+  "api_calls": 0,
+  "new_installations": 0,
+  "incremental_api_cost_usd": 0,
+  "new_scientific_discovery": false,
+  "full_sakana_pipeline_demonstrated": false,
+  "AGI_demonstrated": false
+}
