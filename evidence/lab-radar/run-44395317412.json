@@ -1,0 +1,289 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "44395317412",
+  "source_revision": "e57d6746f9fe2664787123f40345fab54d609ab6",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-18T20:51:30.785192+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 28,
+    "sources_returning_records": 26,
+    "source_outages": [
+      "nasa_research",
+      "gdelt_headlines"
+    ],
+    "new_public_links_before_limit": 31,
+    "signals": [
+      {
+        "category": "universities",
+        "publisher": "MIT News",
+        "source": "mit_labs",
+        "url": "https://news.mit.edu/2026/joe-higgins-to-step-down-vp-campus-services-stewardship-1118",
+        "title_untrusted": "Joe Higgins to step down as VP for campus services and stewardship",
+        "claimed_publication_date": "Wed, 18 Nov 2026 11:20:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261117035052.htm",
+        "title_untrusted": "A rare disease reveals a hidden flaw in the immune system",
+        "claimed_publication_date": "Wed, 18 Nov 2026 07:33:09 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03678-9",
+        "title_untrusted": "Conference networking made simple, in three short videos",
+        "claimed_publication_date": "2026-11-18",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "health",
+        "publisher": "U.S. National Institutes of Health",
+        "source": "nih_biomedical_news",
+        "url": "https://www.nih.gov/news-events/news-releases/nih-research-team-lays-groundwork-new-treatment-niemann-pick-type-c-infants",
+        "title_untrusted": "NIH research team lays groundwork for new treatment of Niemann-Pick Type C in infants",
+        "claimed_publication_date": "Tue, 11/17/2026 - 16:49",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.21682",
+        "title_untrusted": "NEBench R1: a Reasoning Benchmark for Evaluating Nuclear Domain Competence in Large Language Models",
+        "claimed_publication_date": "Wed, 18 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.21656",
+        "title_untrusted": "Cycles of Arbitrary Period in Multidimensional Heterogeneous Hegselmann-Krause Dynamics",
+        "claimed_publication_date": "Wed, 18 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "software",
+        "publisher": "GitHub public repository index",
+        "source": "github_public_code",
+        "url": "https://github.com/an-yu-chen/Data-Sphere",
+        "title_untrusted": "an-yu-chen/Data-Sphere",
+        "claimed_publication_date": "2026-11-18T20:44:57Z",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "United Nations Climate News",
+        "source": "un_climate_environment",
+        "url": "https://news.un.org/feed/view/en/story/2026/11/1168824",
+        "title_untrusted": "COP31: The push to protect warming oceans reaches the negotiating table",
+        "claimed_publication_date": "Tue, 17 Nov 2026 12:00:00 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "universities",
+        "publisher": "Harvard Gazette",
+        "source": "harvard_research",
+        "url": "https://news.harvard.edu/gazette/story/2026/11/why-do-so-many-people-have-neanderthal-dna/",
+        "title_untrusted": "Why do so many people have Neanderthal DNA?",
+        "claimed_publication_date": "Wed, 18 Nov 2026 20:27:18 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261117033920.htm",
+        "title_untrusted": "NASA pushes Mars helicopter blades beyond the speed of sound",
+        "claimed_publication_date": "Tue, 17 Nov 2026 22:16:19 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03784-8",
+        "title_untrusted": "First observation of a giant star swallowing its neighbour",
+        "claimed_publication_date": "2026-11-18",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.21799",
+        "title_untrusted": "Chain-of-Thought Controllability Can Reduce Chain-of-Thought Monitorability",
+        "claimed_publication_date": "Wed, 18 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.21659",
+        "title_untrusted": "Gravitational memory, spin memory and S-duality at null infinity of the heterotic string",
+        "claimed_publication_date": "Wed, 18 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "United Nations Climate News",
+        "source": "un_climate_environment",
+        "url": "https://news.un.org/feed/view/en/story/2026/11/1168817",
+        "title_untrusted": "AI gets climate science right – until users push back",
+        "claimed_publication_date": "Mon, 16 Nov 2026 12:00:00 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261117033917.htm",
+        "title_untrusted": "Bizarre deep-sea fish with a see-through head captured in stunning 4K",
+        "claimed_publication_date": "Tue, 17 Nov 2026 23:30:31 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03708-6",
+        "title_untrusted": "How to make AI data centres more sustainable",
+        "claimed_publication_date": "2026-11-18",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.21827",
+        "title_untrusted": "How Much of SAR Vehicle Recognition Is the Vehicle? Background Shortcuts, Angle Gaps and Partial Libraries on MSTAR and ATRNet-STAR",
+        "claimed_publication_date": "Wed, 18 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.21660",
+        "title_untrusted": "New Agegraphic Dark Energy in Braneworld Cosmology: A Higher Dimensional Perspective on Dark Energy Evolution",
+        "claimed_publication_date": "Wed, 18 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "United Nations Climate News",
+        "source": "un_climate_environment",
+        "url": "https://news.un.org/feed/view/en/story/2026/11/1168812",
+        "title_untrusted": "COP31 enters decisive week as climate talks face political test and AI initiatives gather pace",
+        "claimed_publication_date": "Mon, 16 Nov 2026 12:00:00 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261117033909.htm",
+        "title_untrusted": "Scientists create a remarkable new rechargeable battery using vitamin B12",
+        "claimed_publication_date": "Wed, 18 Nov 2026 07:26:20 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03710-y",
+        "title_untrusted": "Microbiome home tests are taking off. Can they be trusted?",
+        "claimed_publication_date": "2026-11-18",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.21832",
+        "title_untrusted": "Auditors Struggle to Catch Sabotage In End-to-End Transcripts of AI Safety Research",
+        "claimed_publication_date": "Wed, 18 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.21662",
+        "title_untrusted": "The Mechanics of Curvature Inflation",
+        "claimed_publication_date": "Wed, 18 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "United Nations Climate News",
+        "source": "un_climate_environment",
+        "url": "https://news.un.org/feed/view/en/story/2026/11/1168776",
+        "title_untrusted": "When the rains fail: Preparing for drought in Central America",
+        "claimed_publication_date": "Sat, 14 Nov 2026 12:00:00 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
