@@ -1,0 +1,278 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "44613539738",
+  "source_revision": "f04eb3195d5d4db964707cdad3eea99a87d7114d",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-19T20:55:40.457014+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 28,
+    "sources_returning_records": 26,
+    "source_outages": [
+      "un_climate_environment",
+      "gdelt_headlines"
+    ],
+    "new_public_links_before_limit": 30,
+    "signals": [
+      {
+        "category": "universities",
+        "publisher": "MIT News",
+        "source": "mit_labs",
+        "url": "https://news.mit.edu/2026/first-whole-body-single-cell-atlas-adult-vertebrate-1119",
+        "title_untrusted": "Scientists create the first whole-body single-cell atlas of an adult vertebrate",
+        "claimed_publication_date": "Thu, 19 Nov 2026 12:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118073749.htm",
+        "title_untrusted": "Scientists tested 212 plant-based foods. Every single one contained fungal toxins",
+        "claimed_publication_date": "Thu, 19 Nov 2026 06:13:29 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/s41586-026-11388-5",
+        "title_untrusted": "Retraction Note: Detection of anisotropic cosmic structures on a gigaparsec scale",
+        "claimed_publication_date": "2026-11-19",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.23322",
+        "title_untrusted": "Human-AI Mutualism Is Unstable under Capability Asymmetry",
+        "claimed_publication_date": "Thu, 19 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.23319",
+        "title_untrusted": "Reusing formal Vlasov-Maxwell proofs to certify plasma solver outputs",
+        "claimed_publication_date": "Thu, 19 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41363879",
+        "title_untrusted": "M 2.4 - 42 km WSW of Olancha, CA",
+        "claimed_publication_date": "1795121367500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "universities",
+        "publisher": "MIT News",
+        "source": "mit_labs",
+        "url": "https://news.mit.edu/2026/if-tiny-primordial-black-holes-exist-heres-how-we-might-find-them-1119",
+        "title_untrusted": "If tiny “primordial” black holes exist, here’s how we might find them",
+        "claimed_publication_date": "Thu, 19 Nov 2026 10:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118065528.htm",
+        "title_untrusted": "This 6-million-year-old whale may have had the most crooked face in mammal history",
+        "claimed_publication_date": "Thu, 19 Nov 2026 05:59:55 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/s41586-026-11445-z",
+        "title_untrusted": "Calcium catalysed nucleophilic fluorination",
+        "claimed_publication_date": "2026-11-19",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.23365",
+        "title_untrusted": "Training Language Models for Introspective Oversight",
+        "claimed_publication_date": "Thu, 19 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.23340",
+        "title_untrusted": "Thermodynamic Parameterizations of Dark Energy in Light of DESI DR2 BAO",
+        "claimed_publication_date": "Thu, 19 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/pr71539578",
+        "title_untrusted": "M 2.2 - 5 km SE of Maria Antonia, Puerto Rico",
+        "claimed_publication_date": "1795120386250",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "universities",
+        "publisher": "MIT News",
+        "source": "mit_labs",
+        "url": "https://news.mit.edu/2026/study-reveals-data-centers-long-distance-damage-air-quality-1119",
+        "title_untrusted": "Study reveals data centers’ long-distance damage to air quality",
+        "claimed_publication_date": "Thu, 19 Nov 2026 09:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118065524.htm",
+        "title_untrusted": "Is free will an illusion? New brain research reveals a surprising twist",
+        "claimed_publication_date": "Wed, 18 Nov 2026 20:21:35 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03748-y",
+        "title_untrusted": "More tropical cyclones hit peak fury at the worst possible time",
+        "claimed_publication_date": "2026-11-19",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.23375",
+        "title_untrusted": "Where the Tokens Go: Heat, Entropy and Error in Agentic Coding",
+        "claimed_publication_date": "Thu, 19 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.23412",
+        "title_untrusted": "Effect of scrape-off losses and current flattening on runaway electron dynamics in ARC",
+        "claimed_publication_date": "Thu, 19 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75468462",
+        "title_untrusted": "M 0.9 - 8 km NW of The Geysers, CA",
+        "claimed_publication_date": "1795119971320",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118065521.htm",
+        "title_untrusted": "Why do farts smell so bad? The secret is brewing in your gut",
+        "claimed_publication_date": "Wed, 18 Nov 2026 06:55:21 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03783-9",
+        "title_untrusted": "People entering old age now have better memory than their parents did",
+        "claimed_publication_date": "2026-11-19",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.23398",
+        "title_untrusted": "HardwareDx: A Foundational Graph Model System for Datacenter Machine Repairs",
+        "claimed_publication_date": "Thu, 19 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.23429",
+        "title_untrusted": "The balance of evidence indicates a slowing AMOC",
+        "claimed_publication_date": "Thu, 19 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026wyhwhm",
+        "title_untrusted": "M 2.9 - 69 km E of Port Alsworth, Alaska",
+        "claimed_publication_date": "1795119836618",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
