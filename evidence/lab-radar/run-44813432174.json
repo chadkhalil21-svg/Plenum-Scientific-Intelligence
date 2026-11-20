@@ -1,0 +1,299 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "44813432174",
+  "source_revision": "42f54bcb14774a83f2ce7d79996e8507671f6855",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-20T20:40:39.898543+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 28,
+    "sources_returning_records": 27,
+    "source_outages": [
+      "un_global_news"
+    ],
+    "new_public_links_before_limit": 41,
+    "signals": [
+      {
+        "category": "universities",
+        "publisher": "Harvard Gazette",
+        "source": "harvard_research",
+        "url": "https://news.harvard.edu/gazette/story/2026/11/harvard-led-team-receives-12-million-in-federal-funds-to-advance-quantum-computing-with-ai/",
+        "title_untrusted": "Harvard-led team receives $12 million in federal funds to advance quantum computing with AI",
+        "claimed_publication_date": "Fri, 20 Nov 2026 19:00:00 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261120070904.htm",
+        "title_untrusted": "Keto diet slashes liver fat by 67% in just 4 months",
+        "claimed_publication_date": "Fri, 20 Nov 2026 07:44:39 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03680-1",
+        "title_untrusted": "How AI is affecting science careers",
+        "claimed_publication_date": "2026-11-20",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "health",
+        "publisher": "U.S. National Institutes of Health",
+        "source": "nih_biomedical_news",
+        "url": "https://www.nih.gov/news-events/news-releases/large-nih-supported-study-identifies-key-underlying-pathways-endometriosis",
+        "title_untrusted": "Large NIH-supported study identifies key underlying pathways in endometriosis",
+        "claimed_publication_date": "Fri, 11/20/2026 - 08:00",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.25043",
+        "title_untrusted": "Closing the Analyze-to-Design Gap: An Authorization-Bounded Agent for Self-Driving Laboratories",
+        "claimed_publication_date": "Fri, 20 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.25041",
+        "title_untrusted": "Can Language Models Build Molecules in Three Dimensions?",
+        "claimed_publication_date": "Fri, 20 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "funding",
+        "publisher": "U.S. National Science Foundation Funding",
+        "source": "nsf_open_funding",
+        "url": "https://www.nsf.gov/funding/opportunities/pfc-physics-frontiers-centers/nsf27-502/solicitation",
+        "title_untrusted": "Physics Frontiers Centers (PFC)",
+        "claimed_publication_date": "",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "software",
+        "publisher": "GitHub public repository index",
+        "source": "github_public_code",
+        "url": "https://github.com/akshaykumar689/Akshay-Kumar-VK-",
+        "title_untrusted": "akshaykumar689/Akshay-Kumar-VK-",
+        "claimed_publication_date": "2026-11-20T11:12:55Z",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "United Nations Climate News",
+        "source": "un_climate_environment",
+        "url": "https://news.un.org/feed/view/en/story/2026/11/1168845",
+        "title_untrusted": "COP31: Countries demand stronger climate deal as talks in Antalya reach final day",
+        "claimed_publication_date": "Fri, 20 Nov 2026 12:00:00 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261119194605.htm",
+        "title_untrusted": "Two massive stars may be secretly feeding the Milky Way’s supermassive black hole",
+        "claimed_publication_date": "Fri, 20 Nov 2026 00:41:16 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03751-3",
+        "title_untrusted": "Lifting weights reduces muscle loss from obesity drugs",
+        "claimed_publication_date": "2026-11-20",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.25070",
+        "title_untrusted": "An LLM-Agentic Framework for Intelligent Work Order Management in Industrial Maintenance",
+        "claimed_publication_date": "Fri, 20 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.25052",
+        "title_untrusted": "MAPPA: Mapping of Atoms by Progressive Pattern Assembly with Molecular Symmetry",
+        "claimed_publication_date": "Fri, 20 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "funding",
+        "publisher": "U.S. National Science Foundation Funding",
+        "source": "nsf_open_funding",
+        "url": "https://www.nsf.gov/funding/opportunities/frr-foundational-research-robotics/nsf27-501/solicitation",
+        "title_untrusted": "Foundational Research in Robotics (FRR)",
+        "claimed_publication_date": "",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "United Nations Climate News",
+        "source": "un_climate_environment",
+        "url": "https://news.un.org/feed/view/en/story/2026/11/1168839",
+        "title_untrusted": "COP31: Ambition goes missing as fossil fuel language drops from draft deal",
+        "claimed_publication_date": "Thu, 19 Nov 2026 12:00:00 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261119194601.htm",
+        "title_untrusted": "For better mental health, how often you exercise may matter more than how hard",
+        "claimed_publication_date": "Fri, 20 Nov 2026 04:09:17 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03806-5",
+        "title_untrusted": "Briefing Chat: Voyager 1 is now one ‘light day’ from Earth — setting a cosmic record",
+        "claimed_publication_date": "2026-11-20",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.25087",
+        "title_untrusted": "SailSearch: Agent-Assisted Discovery in Combinatorial Optimization",
+        "claimed_publication_date": "Fri, 20 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.25075",
+        "title_untrusted": "Evaluation of machine-learning and deep-learning SPEI drought forecasts against persistence across timescales and lead times in Bangladesh",
+        "claimed_publication_date": "Fri, 20 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "United Nations Climate News",
+        "source": "un_climate_environment",
+        "url": "https://news.un.org/feed/view/en/story/2026/11/1168833",
+        "title_untrusted": "COP31 deadlock persists as countries launch new ‘climate reality check’",
+        "claimed_publication_date": "Wed, 18 Nov 2026 12:00:00 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261119194530.htm",
+        "title_untrusted": "CERN scientists finally find evidence of a particle decay so rare it took 40 years to detect",
+        "claimed_publication_date": "Fri, 20 Nov 2026 07:23:23 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03776-8",
+        "title_untrusted": "Fraud helps little fire ants to survive and conquer",
+        "claimed_publication_date": "2026-11-20",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.25088",
+        "title_untrusted": "BuggyMLE: Scaling Machine Learning Engineering Difficulty with Bug Injection",
+        "claimed_publication_date": "Fri, 20 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.25116",
+        "title_untrusted": "A Computational and Experimental Framework for Fourier Optics in Python",
+        "claimed_publication_date": "Fri, 20 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026xaeiok",
+        "title_untrusted": "M 1.8 - 64 km S of Denali National Park, Alaska",
+        "claimed_publication_date": "1795207049088",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
