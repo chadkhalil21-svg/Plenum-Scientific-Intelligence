@@ -1,0 +1,152 @@
+{
+  "schema": "plenum.terra.editorial-scene-cues.v1",
+  "status": "UNSYNCED_EDITORIAL_SOURCE_NOT_RELEASE_CAPTIONS",
+  "source": "docs/PLENUM_TERRA_5MIN_CONDENSED_NARRATION_CANDIDATE_20261117.md",
+  "created_utc_date": "2026-11-20",
+  "total_target_seconds": 300,
+  "notes": [
+    "Editorial source for subtitle segmentation and picture disclosure placement, not a verified SRT, timed WAV, or render-ready film_factory storyboard.",
+    "Scene windows are provisional picture targets; generate actual captions from approved narration WAV timestamps, then independently check cue reading speed, onset/offset, overlays and speaker intelligibility.",
+    "Do not place entire scene paragraphs in one subtitle cue. Split at natural phrase boundaries, preferably one or two short lines, then time from audio.",
+    "Never present existing cattle B-roll as Terra field trial; all other stock requires asset-specific rights approval.",
+    "Published Asparagopsis supplement evidence does not demonstrate efficacy or safety of proposed Terra engineered forage."
+  ],
+  "scenes": [
+    {
+      "scene": 1,
+      "picture_start_seconds": 0,
+      "picture_end_seconds": 30,
+      "narration_source_text": "Across the pasture, sunlight feeds the grass, and grass sustains the herd. Beneath this familiar landscape lies a less visible story: digestion produces gases, including methane. To reduce those emissions responsibly, we must first understand how they arise, what science has established, and what remains to be tested.",
+      "persistent_disclosure": "ILLUSTRATIVE FOOTAGE — NOT PLENUM FIELD RESULTS",
+      "source_dois": [],
+      "audio_start_seconds": null,
+      "audio_end_seconds": null,
+      "caption_cues": [],
+      "voice_approved": false,
+      "science_approved": false
+    },
+    {
+      "scene": 2,
+      "picture_start_seconds": 30,
+      "picture_end_seconds": 60,
+      "narration_source_text": "Cattle rely on microorganisms in the rumen to break down fibrous plants. Fermentation releases methane, much of which leaves through belching. This is a normal biological process, but it also contributes to atmospheric emissions. Scientists study whether changes to feeding can reduce methane without compromising animal health or nutrition.",
+      "persistent_disclosure": "BIOLOGICAL EXPLANATION",
+      "source_dois": [],
+      "audio_start_seconds": null,
+      "audio_end_seconds": null,
+      "caption_cues": [],
+      "voice_approved": false,
+      "science_approved": false
+    },
+    {
+      "scene": 3,
+      "picture_start_seconds": 60,
+      "picture_end_seconds": 90,
+      "narration_source_text": "Methane is a potent greenhouse gas, although it persists for less time in the atmosphere than carbon dioxide. Agricultural emissions are therefore a serious research priority. The challenge is not simply to propose an intervention, but to measure its effects under realistic conditions, including any unintended consequences.",
+      "persistent_disclosure": "ESTABLISHED BACKGROUND — NOT A TERRA OUTCOME",
+      "source_dois": [],
+      "audio_start_seconds": null,
+      "audio_end_seconds": null,
+      "caption_cues": [],
+      "voice_approved": false,
+      "science_approved": false
+    },
+    {
+      "scene": 4,
+      "picture_start_seconds": 90,
+      "picture_end_seconds": 120,
+      "narration_source_text": "Published cattle trials have investigated methane reduction using feed supplements derived from the red seaweed Asparagopsis. Outcomes depend on the particular study, diet, dose and duration. These results are evidence about administered supplements. They are not evidence that Plenum Terra's proposed engineered forage has worked in cattle.",
+      "persistent_disclosure": "PUBLISHED SUPPLEMENT RESEARCH — NOT PLENUM TERRA RESULTS",
+      "source_dois": [
+        "10.1371/journal.pone.0247820",
+        "10.1093/jas/skae109"
+      ],
+      "audio_start_seconds": null,
+      "audio_end_seconds": null,
+      "caption_cues": [],
+      "voice_approved": false,
+      "science_approved": false
+    },
+    {
+      "scene": 5,
+      "picture_start_seconds": 120,
+      "picture_end_seconds": 150,
+      "narration_source_text": "A promising trial does not establish a universal result. Different herds, feeds and management systems may respond differently. Researchers must examine consistent dosing, animal performance, residues, safety and environmental effects. Favorable findings matter, but so do null results, adverse observations and the limits of each experiment.",
+      "persistent_disclosure": "PUBLISHED SUPPLEMENT RESEARCH — NOT PLENUM TERRA RESULTS",
+      "source_dois": [
+        "10.1371/journal.pone.0247820",
+        "10.1093/jas/skae109"
+      ],
+      "audio_start_seconds": null,
+      "audio_end_seconds": null,
+      "caption_cues": [],
+      "voice_approved": false,
+      "science_approved": false
+    },
+    {
+      "scene": 6,
+      "picture_start_seconds": 150,
+      "picture_end_seconds": 180,
+      "narration_source_text": "Plenum Terra asks whether future forage-based approaches might bring methane mitigation closer to the pasture itself. This remains a scientific research concept, not a demonstrated product. Its biological feasibility, delivery, consistency and safeguards would require rigorous development and independent testing. The illustrations here depict possibilities, not observed field results.",
+      "persistent_disclosure": "CONCEPT VISUALIZATION — NOT FIELD RESULTS",
+      "source_dois": [],
+      "audio_start_seconds": null,
+      "audio_end_seconds": null,
+      "caption_cues": [],
+      "voice_approved": false,
+      "science_approved": false
+    },
+    {
+      "scene": 7,
+      "picture_start_seconds": 180,
+      "picture_end_seconds": 210,
+      "narration_source_text": "Research begins with a testable question. Does the proposed system function? What does it produce? Can measurements be reproduced against suitable controls? Only after such questions are answered could researchers consider controlled animal studies. A compelling animation is not experimental evidence, and proposed milestones must not be presented as completed.",
+      "persistent_disclosure": "CONCEPT VISUALIZATION — NOT FIELD RESULTS",
+      "source_dois": [],
+      "audio_start_seconds": null,
+      "audio_end_seconds": null,
+      "caption_cues": [],
+      "voice_approved": false,
+      "science_approved": false
+    },
+    {
+      "scene": 8,
+      "picture_start_seconds": 210,
+      "picture_end_seconds": 240,
+      "narration_source_text": "Any forage intended for livestock must meet demanding standards for animal welfare, nutrition, plant performance and environmental responsibility. Researchers would need to investigate residues, exposure, long-term effects and applicable regulatory requirements. Scientific promise is not permission to deploy. Agricultural practicality and safety must be established, not assumed.",
+      "persistent_disclosure": "CONCEPT VISUALIZATION — NOT FIELD RESULTS",
+      "source_dois": [],
+      "audio_start_seconds": null,
+      "audio_end_seconds": null,
+      "caption_cues": [],
+      "voice_approved": false,
+      "science_approved": false
+    },
+    {
+      "scene": 9,
+      "picture_start_seconds": 240,
+      "picture_end_seconds": 270,
+      "narration_source_text": "Trustworthy progress is transparent. Investigators document methods, controls, uncertainties and failures, then seek independent scrutiny. If early feasibility and safety questions can be resolved, appropriately authorized trials may follow. The measure of success will be reproducible evidence, not an attractive headline or an unsupported percentage.",
+      "persistent_disclosure": "CONCEPT VISUALIZATION — NOT FIELD RESULTS",
+      "source_dois": [],
+      "audio_start_seconds": null,
+      "audio_end_seconds": null,
+      "caption_cues": [],
+      "voice_approved": false,
+      "science_approved": false
+    },
+    {
+      "scene": 10,
+      "picture_start_seconds": 270,
+      "picture_end_seconds": 300,
+      "narration_source_text": "Plenum Terra is a research ambition inspired by published science, yet distinct from the interventions already studied. Its future depends on careful experiments, open evaluation of evidence and responsible collaboration. In the pasture, progress begins not with a promise of certainty, but with a question worth investigating. Research rooted in the pasture.",
+      "persistent_disclosure": "RESEARCH CONCEPT — NOT A VALIDATED PRODUCT",
+      "source_dois": [],
+      "audio_start_seconds": null,
+      "audio_end_seconds": null,
+      "caption_cues": [],
+      "voice_approved": false,
+      "science_approved": false
+    }
+  ]
+}
