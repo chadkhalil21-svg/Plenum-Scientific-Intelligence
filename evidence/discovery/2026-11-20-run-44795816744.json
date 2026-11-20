@@ -1,0 +1,1796 @@
+{
+  "schema": "plenum-public-cross-domain-observatory-v1",
+  "run_id": "44795816744",
+  "source_revision": "f04eb3195d5d4db964707cdad3eea99a87d7114d",
+  "snapshot": {
+    "schema": "plenum-cross-domain-research-pulse-v1",
+    "topic": "scientific discovery and engineering",
+    "observed_at_utc": "2026-11-20T18:45:59.977323+00:00",
+    "journal_selection_strategy": "rotating_six_of_twenty",
+    "journal_coverage_in_this_run": [
+      "Nature",
+      "Science",
+      "PNAS",
+      "Cell",
+      "Nature Communications",
+      "Physical Review Letters"
+    ],
+    "providers": [
+      {
+        "provider": "crossref:Nature",
+        "status": "unavailable",
+        "error_type": "HTTPError",
+        "count": 0,
+        "records": []
+      },
+      {
+        "provider": "crossref:Science",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Science",
+            "title": "AI rivals take on one of physics’ hardest math problems",
+            "doi": "https://doi.org/10.1126/science.aeo2673",
+            "url": "https://doi.org/10.1126/science.aeo2673",
+            "published": "2026-11-19",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Science",
+            "title": "Pinpointing planned speech",
+            "doi": "https://doi.org/10.1126/science.aem7976",
+            "url": "https://doi.org/10.1126/science.aem7976",
+            "published": "2026-11-19",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Science",
+            "title": "Atmospheric organic nitrogen is a major nutrient source to global oceans",
+            "doi": "https://doi.org/10.1126/science.aeg4265",
+            "url": "https://doi.org/10.1126/science.aeg4265",
+            "published": "2026-11-19",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          }
+        ],
+        "count": 3
+      },
+      {
+        "provider": "crossref:PNAS",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Proceedings of the National Academy of Sciences",
+            "title": "Correction for East et al., ICE arrests, 2015–2026: Variation in targeting, method, and geography",
+            "doi": "https://doi.org/10.1073/pnas.2635864123",
+            "url": "https://doi.org/10.1073/pnas.2635864123",
+            "published": "2026-11-20",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Proceedings of the National Academy of Sciences",
+            "title": "Small reconstructed brain differences may still have evolutionary relevance",
+            "doi": "https://doi.org/10.1073/pnas.2632704123",
+            "url": "https://doi.org/10.1073/pnas.2632704123",
+            "published": "2026-11-20",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Proceedings of the National Academy of Sciences",
+            "title": "Harnessing lattice distortion for point-defect self-healing in multi-principal element alloys",
+            "doi": "https://doi.org/10.1073/pnas.2526642123",
+            "url": "https://doi.org/10.1073/pnas.2526642123",
+            "published": "2026-11-20",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          }
+        ],
+        "count": 3
+      },
+      {
+        "provider": "crossref:Cell",
+        "status": "unavailable",
+        "error_type": "HTTPError",
+        "count": 0,
+        "records": []
+      },
+      {
+        "provider": "crossref:Nature Communications",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Communications",
+            "title": "Optical observation of ultrafast carrier separation in InGaN photocatalyst nanostructures",
+            "doi": "https://doi.org/10.1038/s41467-026-79779-w",
+            "url": "https://doi.org/10.1038/s41467-026-79779-w",
+            "published": "2026-11-20",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Communications",
+            "title": "Combinatorial mutagenesis of N-terminal sequences reveals expanded stability determinants of the Escherichia coli N-degron pathway",
+            "doi": "https://doi.org/10.1038/s41467-026-79349-0",
+            "url": "https://doi.org/10.1038/s41467-026-79349-0",
+            "published": "2026-11-20",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Nature Communications",
+            "title": "Opposite migrations of Pacific and Atlantic tropical cyclones during the Medieval Warm Period",
+            "doi": "https://doi.org/10.1038/s41467-026-79477-7",
+            "url": "https://doi.org/10.1038/s41467-026-79477-7",
+            "published": "2026-11-20",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          }
+        ],
+        "count": 3
+      },
+      {
+        "provider": "crossref:Physical Review Letters",
+        "status": "unavailable",
+        "error_type": "HTTPError",
+        "count": 0,
+        "records": []
+      },
+      {
+        "provider": "crossref:topic",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Journal of Advances in Environmental Health Research",
+            "title": "A Simplified Approach to Evaluate Retinal Blue Light Hazard Using the Correlated Color Temperature of LED Light Sources",
+            "doi": "https://doi.org/10.32598/jaehr.9.4.1226",
+            "url": "https://doi.org/10.32598/jaehr.9.4.1226",
+            "published": "2121-10-01",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Journal of Advances in Environmental Health Research",
+            "title": "Studying the Effluent Quality of Enhanced Modified Ludzack Ettinger-oxic Settling Anaerobic Process (E-MLE-OSA) for Treating Real Municipal Wastewater",
+            "doi": "https://doi.org/10.32598/jaehr.9.4.1243",
+            "url": "https://doi.org/10.32598/jaehr.9.4.1243",
+            "published": "2121-10-01",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          },
+          {
+            "source": "crossref",
+            "tier": "journal_publication_metadata",
+            "journal": "Journal of Advances in Environmental Health Research",
+            "title": "Investigation and Optimization of Air Pollution Risk by a Multi-criteria Decision Making Method Using Fuzzy TOPSIS: A Case Study of Construction Workers",
+            "doi": "https://doi.org/10.32598/jaehr.9.4.1229",
+            "url": "https://doi.org/10.32598/jaehr.9.4.1229",
+            "published": "2121-10-01",
+            "date_verified_by_publisher": false,
+            "independently_peer_reviewed": false,
+            "full_text_available": false
+          }
+        ],
+        "count": 3
+      },
+      {
+        "provider": "biorxiv",
+        "status": "retrieved_metadata",
+        "records": [],
+        "count": 0
+      },
+      {
+        "provider": "medrxiv",
+        "status": "retrieved_metadata",
+        "records": [],
+        "count": 0
+      },
+      {
+        "provider": "MIT News",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "MIT News",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "AI helps researchers investigate how thousands of medical studies share code",
+            "url": "https://news.mit.edu/2026/ai-helps-researchers-investigate-how-medical-studies-share-code-1119",
+            "published": "Thu, 19 Nov 2026 17:15:00 -0500",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "MIT News",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "Ultrasound imaging without the gel",
+            "url": "https://news.mit.edu/2026/ultrasound-imaging-without-gel-1119",
+            "published": "Thu, 19 Nov 2026 14:00:00 -0500",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "MIT News",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "Scientists create the first whole-body single-cell atlas of an adult vertebrate",
+            "url": "https://news.mit.edu/2026/first-whole-body-single-cell-atlas-adult-vertebrate-1119",
+            "published": "Thu, 19 Nov 2026 12:00:00 -0500",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "MIT News",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "If tiny “primordial” black holes exist, here’s how we might find them",
+            "url": "https://news.mit.edu/2026/if-tiny-primordial-black-holes-exist-heres-how-we-might-find-them-1119",
+            "published": "Thu, 19 Nov 2026 10:00:00 -0500",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "MIT News",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "Study reveals data centers’ long-distance damage to air quality",
+            "url": "https://news.mit.edu/2026/study-reveals-data-centers-long-distance-damage-air-quality-1119",
+            "published": "Thu, 19 Nov 2026 09:00:00 -0500",
+            "original_research_peer_review_confirmed": false
+          }
+        ],
+        "count": 5
+      },
+      {
+        "provider": "NASA Updates",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "NASA Updates",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "NASA Honor Awards Ceremony Recognizes Employees at Stennis Space Center",
+            "url": "https://www.nasa.gov/centers-and-facilities/stennis/honor-awards-ceremony-at-stennis/",
+            "published": "Fri, 20 Nov 2026 16:27:46 +0000",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "NASA Updates",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "NASA’s Curiosity Mars Rover Collects Samples",
+            "url": "https://www.nasa.gov/image-article/nasas-curiosity-mars-rover-collects-samples/",
+            "published": "Fri, 20 Nov 2026 15:53:24 +0000",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "NASA Updates",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "Challenge: Public Input on Life and the World in 2075",
+            "url": "https://www.nasa.gov/directorates/stmd/prizes-challenges-crowdsourcing-program/center-of-excellence-for-collaborative-innovation-coeci/challenge-public-input-on-life-and-the-world-in-2075/",
+            "published": "Thu, 19 Nov 2026 19:34:20 +0000",
+            "original_research_peer_review_confirmed": false
+          }
+        ],
+        "count": 3
+      },
+      {
+        "provider": "Stanford News",
+        "status": "unavailable",
+        "error_type": "HTTPError",
+        "count": 0,
+        "records": []
+      },
+      {
+        "provider": "NIH News",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "NIH News",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "Large NIH-supported study identifies key underlying pathways in endometriosis",
+            "url": "https://www.nih.gov/news-events/news-releases/large-nih-supported-study-identifies-key-underlying-pathways-endometriosis",
+            "published": "Fri, 11/20/2026 - 08:00\n",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "NIH News",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "NIH research team lays groundwork for new treatment of Niemann-Pick Type C in infants",
+            "url": "https://www.nih.gov/news-events/news-releases/nih-research-team-lays-groundwork-new-treatment-niemann-pick-type-c-infants",
+            "published": "Tue, 11/17/2026 - 16:49\n",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "NIH News",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "Dr. John H. Powers III to serve as director of NIH’s National Institute of Allergy and Infectious Diseases",
+            "url": "https://www.nih.gov/news-events/news-releases/dr-john-h-powers-iii-serve-director-nihs-national-institute-allergy-infectious-diseases",
+            "published": "Mon, 11/16/2026 - 12:00\n",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "NIH News",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "For the first time, researchers map out the brain’s behavioral gatekeeper",
+            "url": "https://www.nih.gov/news-events/news-releases/first-time-researchers-map-out-brains-behavioral-gatekeeper",
+            "published": "Thu, 11/12/2026 - 11:00\n",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "NIH News",
+            "tier": "institutional_news_not_independent_verification",
+            "title": "Two ‘forever chemicals’ associated with higher risk of aggressive breast cancer in NIH analysis",
+            "url": "https://www.nih.gov/news-events/news-releases/two-forever-chemicals-associated-higher-risk-aggressive-breast-cancer-nih-analysis",
+            "published": "Thu, 11/05/2026 - 16:00\n",
+            "original_research_peer_review_confirmed": false
+          }
+        ],
+        "count": 5
+      },
+      {
+        "provider": "Nature Journal",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "Nature Journal",
+            "tier": "publisher_updates_metadata",
+            "title": "How AI is affecting science careers",
+            "url": "https://www.nature.com/articles/d41586-026-03680-1",
+            "published": "2026-11-20",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "Nature Journal",
+            "tier": "publisher_updates_metadata",
+            "title": "Lifting weights reduces muscle loss from obesity drugs",
+            "url": "https://www.nature.com/articles/d41586-026-03751-3",
+            "published": "2026-11-20",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "Nature Journal",
+            "tier": "publisher_updates_metadata",
+            "title": "Briefing Chat: Voyager 1 is now one ‘light day’ from Earth — setting a cosmic record",
+            "url": "https://www.nature.com/articles/d41586-026-03806-5",
+            "published": "2026-11-20",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "Nature Journal",
+            "tier": "publisher_updates_metadata",
+            "title": "Fraud helps little fire ants to survive and conquer",
+            "url": "https://www.nature.com/articles/d41586-026-03776-8",
+            "published": "2026-11-20",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "Nature Journal",
+            "tier": "publisher_updates_metadata",
+            "title": "‘I had felt overconfident’: senior scientists reveal mistakes that aided discovery",
+            "url": "https://www.nature.com/articles/d41586-026-03590-2",
+            "published": "2026-11-20",
+            "original_research_peer_review_confirmed": false
+          }
+        ],
+        "count": 5
+      },
+      {
+        "provider": "ScienceDaily Research",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "Keto diet slashes liver fat by 67% in just 4 months",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261120070904.htm",
+            "published": "Fri, 20 Nov 2026 07:44:39 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "Two massive stars may be secretly feeding the Milky Way’s supermassive black hole",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261119194605.htm",
+            "published": "Fri, 20 Nov 2026 00:41:16 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "For better mental health, how often you exercise may matter more than how hard",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261119194601.htm",
+            "published": "Fri, 20 Nov 2026 04:09:17 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "CERN scientists finally find evidence of a particle decay so rare it took 40 years to detect",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261119194530.htm",
+            "published": "Fri, 20 Nov 2026 07:23:23 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "Scientists turn Moon dust into LEGO-like bricks for future lunar bases",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261119194525.htm",
+            "published": "Fri, 20 Nov 2026 07:34:56 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "Experimental compound burns fat without sacrificing muscle",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261118073918.htm",
+            "published": "Thu, 19 Nov 2026 19:19:49 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "Scientists tested 212 plant-based foods. Every single one contained fungal toxins",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261118073749.htm",
+            "published": "Thu, 19 Nov 2026 06:13:29 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "This simple habit is linked to a 33% lower risk of Alzheimer's",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261118065536.htm",
+            "published": "Fri, 20 Nov 2026 07:06:07 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "Powerful new weight-loss drug helps patients cut knee pain in half",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261118065534.htm",
+            "published": "Thu, 19 Nov 2026 23:31:15 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "A 3-million-year-old child just made human evolution far more complicated",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261118065531.htm",
+            "published": "Thu, 19 Nov 2026 22:17:52 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "This 6-million-year-old whale may have had the most crooked face in mammal history",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261118065528.htm",
+            "published": "Thu, 19 Nov 2026 05:59:55 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "Is free will an illusion? New brain research reveals a surprising twist",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261118065524.htm",
+            "published": "Wed, 18 Nov 2026 20:21:35 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "Why do farts smell so bad? The secret is brewing in your gut",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261118065521.htm",
+            "published": "Wed, 18 Nov 2026 06:55:21 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "Why don't weight-loss drugs like Ozempic and Wegovy work for everyone?",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261118065518.htm",
+            "published": "Thu, 19 Nov 2026 03:43:56 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "A study of 30,000 people reveals which antidepressants may work best",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261118065515.htm",
+            "published": "Thu, 19 Nov 2026 20:50:20 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "Something strange is living beneath the skin of deep-sea pigs",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261118065512.htm",
+            "published": "Thu, 19 Nov 2026 05:33:03 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "Why hydrogen flames can glow orange, then turn nearly invisible",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261118065509.htm",
+            "published": "Thu, 19 Nov 2026 05:10:24 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "A rare disease reveals a hidden flaw in the immune system",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261117035052.htm",
+            "published": "Wed, 18 Nov 2026 07:33:09 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "This strange creature lived 309 million years ago, long before the dinosaurs",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261117033928.htm",
+            "published": "Wed, 18 Nov 2026 18:24:05 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "Antarctica’s ice cliffs are collapsing faster than expected, but there’s a twist",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261117033925.htm",
+            "published": "Thu, 19 Nov 2026 04:51:15 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "Too much exercise could leave your brain stuck in overdrive",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261117033923.htm",
+            "published": "Wed, 18 Nov 2026 16:28:29 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "NASA pushes Mars helicopter blades beyond the speed of sound",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261117033920.htm",
+            "published": "Tue, 17 Nov 2026 22:16:19 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "Bizarre deep-sea fish with a see-through head captured in stunning 4K",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261117033917.htm",
+            "published": "Tue, 17 Nov 2026 23:30:31 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "Stonehenge’s six-ton mystery deepens as scientists narrow their search",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261117033914.htm",
+            "published": "Wed, 18 Nov 2026 22:11:22 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "Scientists discover a hidden hereditary form of aggressive prostate cancer",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261117033911.htm",
+            "published": "Wed, 18 Nov 2026 21:31:02 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "Scientists create a remarkable new rechargeable battery using vitamin B12",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261117033909.htm",
+            "published": "Wed, 18 Nov 2026 07:26:20 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "Why obesity affects men and women differently may be hiding in their fat",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261117033907.htm",
+            "published": "Tue, 17 Nov 2026 18:04:12 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "This remarkable new material could solve a major carbon capture problem",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261116023405.htm",
+            "published": "Tue, 17 Nov 2026 06:29:36 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "More than a billion years of Earth's history vanished. Scientists may finally know why",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261116023403.htm",
+            "published": "Wed, 18 Nov 2026 03:27:56 EST",
+            "original_research_peer_review_confirmed": false
+          },
+          {
+            "source": "ScienceDaily Research",
+            "tier": "secondary_science_news_not_primary_research",
+            "title": "Ozempic and Mounjaro may have a surprising effect on your brain",
+            "url": "https://www.sciencedaily.com/releases/2026/11/261116023401.htm",
+            "published": "Tue, 17 Nov 2026 06:39:45 EST",
+            "original_research_peer_review_confirmed": false
+          }
+        ],
+        "count": 30
+      },
+      {
+        "provider": "youtube-nasa",
+        "status": "retrieved_metadata",
+        "records": [
+          {
+            "source": "youtube-nasa",
+            "tier": "public_video_metadata",
+            "title": "NASA's SpaceX 35th Commercial Resupply Services Undocking",
+            "url": "https://www.youtube.com/watch?v=fTDvp9CBXoQ",
+            "video_id": "fTDvp9CBXoQ",
+            "published": "2026-11-20T17:32:24+00:00",
+            "transcript_available_or_licensed": false,
+            "video_downloaded": false,
+            "laboratory_result_verified": false
+          },
+          {
+            "source": "youtube-nasa",
+            "tier": "public_video_metadata",
+            "title": "Voyager 1 Light-Day Mission Update and Conversation",
+            "url": "https://www.youtube.com/watch?v=oPgE-ECuJEs",
+            "video_id": "oPgE-ECuJEs",
+            "published": "2026-11-19T18:26:52+00:00",
+            "transcript_available_or_licensed": false,
+            "video_downloaded": false,
+            "laboratory_result_verified": false
+          },
+          {
+            "source": "youtube-nasa",
+            "tier": "public_video_metadata",
+            "title": "Who Can Be a NASA Astronaut? Myth or Fact",
+            "url": "https://www.youtube.com/watch?v=K8DG7LUTbaM",
+            "video_id": "K8DG7LUTbaM",
+            "published": "2026-11-16T19:05:29+00:00",
+            "transcript_available_or_licensed": false,
+            "video_downloaded": false,
+            "laboratory_result_verified": false
+          },
+          {
+            "source": "youtube-nasa",
+            "tier": "public_video_metadata",
+            "title": "MAX POWER: Highlights from NASA’s First-Ever Tech Expo and Air Show",
+            "url": "https://www.youtube.com/watch?v=eXrd5sNdacA",
+            "video_id": "eXrd5sNdacA",
+            "published": "2026-11-09T17:08:54+00:00",
+            "transcript_available_or_licensed": false,
+            "video_downloaded": false,
+            "laboratory_result_verified": false
+          },
+          {
+            "source": "youtube-nasa",
+            "tier": "public_video_metadata",
+            "title": "NASA Moon Base: November 2026 Update (Nov. 7, 2026)",
+            "url": "https://www.youtube.com/watch?v=MRg4uIpJ3xE",
+            "video_id": "MRg4uIpJ3xE",
+            "published": "2026-11-07T23:39:59+00:00",
+            "transcript_available_or_licensed": false,
+            "video_downloaded": false,
+            "laboratory_result_verified": false
+          },
+          {
+            "source": "youtube-nasa",
+            "tier": "public_video_metadata",
+            "title": "NASA Expands Lunar Delivery Network to Support Moon Base Development",
+            "url": "https://www.youtube.com/watch?v=hQsM8aYR5mw",
+            "video_id": "hQsM8aYR5mw",
+            "published": "2026-11-07T22:50:57+00:00",
+            "transcript_available_or_licensed": false,
+            "video_downloaded": false,
+            "laboratory_result_verified": false
+          },
+          {
+            "source": "youtube-nasa",
+            "tier": "public_video_metadata",
+            "title": "Become a NASA Astronaut!",
+            "url": "https://www.youtube.com/watch?v=k5Z7sFwFF7Q",
+            "video_id": "k5Z7sFwFF7Q",
+            "published": "2026-11-07T18:29:19+00:00",
+            "transcript_available_or_licensed": false,
+            "video_downloaded": false,
+            "laboratory_result_verified": false
+          },
+          {
+            "source": "youtube-nasa",
+            "tier": "public_video_metadata",
+            "title": "Apply to Become A NASA Astronaut",
+            "url": "https://www.youtube.com/watch?v=61S764A-TKo",
+            "video_id": "61S764A-TKo",
+            "published": "2026-11-07T17:50:03+00:00",
+            "transcript_available_or_licensed": false,
+            "video_downloaded": false,
+            "laboratory_result_verified": false
+          }
+        ],
+        "count": 8
+      }
+    ],
+    "records": [
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Science",
+        "title": "AI rivals take on one of physics’ hardest math problems",
+        "doi": "https://doi.org/10.1126/science.aeo2673",
+        "url": "https://doi.org/10.1126/science.aeo2673",
+        "published": "2026-11-19",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Science",
+        "title": "Pinpointing planned speech",
+        "doi": "https://doi.org/10.1126/science.aem7976",
+        "url": "https://doi.org/10.1126/science.aem7976",
+        "published": "2026-11-19",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Science",
+        "title": "Atmospheric organic nitrogen is a major nutrient source to global oceans",
+        "doi": "https://doi.org/10.1126/science.aeg4265",
+        "url": "https://doi.org/10.1126/science.aeg4265",
+        "published": "2026-11-19",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Proceedings of the National Academy of Sciences",
+        "title": "Correction for East et al., ICE arrests, 2015–2026: Variation in targeting, method, and geography",
+        "doi": "https://doi.org/10.1073/pnas.2635864123",
+        "url": "https://doi.org/10.1073/pnas.2635864123",
+        "published": "2026-11-20",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Proceedings of the National Academy of Sciences",
+        "title": "Small reconstructed brain differences may still have evolutionary relevance",
+        "doi": "https://doi.org/10.1073/pnas.2632704123",
+        "url": "https://doi.org/10.1073/pnas.2632704123",
+        "published": "2026-11-20",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Proceedings of the National Academy of Sciences",
+        "title": "Harnessing lattice distortion for point-defect self-healing in multi-principal element alloys",
+        "doi": "https://doi.org/10.1073/pnas.2526642123",
+        "url": "https://doi.org/10.1073/pnas.2526642123",
+        "published": "2026-11-20",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Communications",
+        "title": "Optical observation of ultrafast carrier separation in InGaN photocatalyst nanostructures",
+        "doi": "https://doi.org/10.1038/s41467-026-79779-w",
+        "url": "https://doi.org/10.1038/s41467-026-79779-w",
+        "published": "2026-11-20",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Communications",
+        "title": "Combinatorial mutagenesis of N-terminal sequences reveals expanded stability determinants of the Escherichia coli N-degron pathway",
+        "doi": "https://doi.org/10.1038/s41467-026-79349-0",
+        "url": "https://doi.org/10.1038/s41467-026-79349-0",
+        "published": "2026-11-20",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Nature Communications",
+        "title": "Opposite migrations of Pacific and Atlantic tropical cyclones during the Medieval Warm Period",
+        "doi": "https://doi.org/10.1038/s41467-026-79477-7",
+        "url": "https://doi.org/10.1038/s41467-026-79477-7",
+        "published": "2026-11-20",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Journal of Advances in Environmental Health Research",
+        "title": "A Simplified Approach to Evaluate Retinal Blue Light Hazard Using the Correlated Color Temperature of LED Light Sources",
+        "doi": "https://doi.org/10.32598/jaehr.9.4.1226",
+        "url": "https://doi.org/10.32598/jaehr.9.4.1226",
+        "published": "2121-10-01",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Journal of Advances in Environmental Health Research",
+        "title": "Studying the Effluent Quality of Enhanced Modified Ludzack Ettinger-oxic Settling Anaerobic Process (E-MLE-OSA) for Treating Real Municipal Wastewater",
+        "doi": "https://doi.org/10.32598/jaehr.9.4.1243",
+        "url": "https://doi.org/10.32598/jaehr.9.4.1243",
+        "published": "2121-10-01",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "journal": "Journal of Advances in Environmental Health Research",
+        "title": "Investigation and Optimization of Air Pollution Risk by a Multi-criteria Decision Making Method Using Fuzzy TOPSIS: A Case Study of Construction Workers",
+        "doi": "https://doi.org/10.32598/jaehr.9.4.1229",
+        "url": "https://doi.org/10.32598/jaehr.9.4.1229",
+        "published": "2121-10-01",
+        "date_verified_by_publisher": false,
+        "independently_peer_reviewed": false,
+        "full_text_available": false
+      },
+      {
+        "source": "MIT News",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "AI helps researchers investigate how thousands of medical studies share code",
+        "url": "https://news.mit.edu/2026/ai-helps-researchers-investigate-how-medical-studies-share-code-1119",
+        "published": "Thu, 19 Nov 2026 17:15:00 -0500",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "MIT News",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "Ultrasound imaging without the gel",
+        "url": "https://news.mit.edu/2026/ultrasound-imaging-without-gel-1119",
+        "published": "Thu, 19 Nov 2026 14:00:00 -0500",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "MIT News",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "Scientists create the first whole-body single-cell atlas of an adult vertebrate",
+        "url": "https://news.mit.edu/2026/first-whole-body-single-cell-atlas-adult-vertebrate-1119",
+        "published": "Thu, 19 Nov 2026 12:00:00 -0500",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "MIT News",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "If tiny “primordial” black holes exist, here’s how we might find them",
+        "url": "https://news.mit.edu/2026/if-tiny-primordial-black-holes-exist-heres-how-we-might-find-them-1119",
+        "published": "Thu, 19 Nov 2026 10:00:00 -0500",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "MIT News",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "Study reveals data centers’ long-distance damage to air quality",
+        "url": "https://news.mit.edu/2026/study-reveals-data-centers-long-distance-damage-air-quality-1119",
+        "published": "Thu, 19 Nov 2026 09:00:00 -0500",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "NASA Updates",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "NASA Honor Awards Ceremony Recognizes Employees at Stennis Space Center",
+        "url": "https://www.nasa.gov/centers-and-facilities/stennis/honor-awards-ceremony-at-stennis/",
+        "published": "Fri, 20 Nov 2026 16:27:46 +0000",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "NASA Updates",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "NASA’s Curiosity Mars Rover Collects Samples",
+        "url": "https://www.nasa.gov/image-article/nasas-curiosity-mars-rover-collects-samples/",
+        "published": "Fri, 20 Nov 2026 15:53:24 +0000",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "NASA Updates",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "Challenge: Public Input on Life and the World in 2075",
+        "url": "https://www.nasa.gov/directorates/stmd/prizes-challenges-crowdsourcing-program/center-of-excellence-for-collaborative-innovation-coeci/challenge-public-input-on-life-and-the-world-in-2075/",
+        "published": "Thu, 19 Nov 2026 19:34:20 +0000",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "NIH News",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "Large NIH-supported study identifies key underlying pathways in endometriosis",
+        "url": "https://www.nih.gov/news-events/news-releases/large-nih-supported-study-identifies-key-underlying-pathways-endometriosis",
+        "published": "Fri, 11/20/2026 - 08:00\n",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "NIH News",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "NIH research team lays groundwork for new treatment of Niemann-Pick Type C in infants",
+        "url": "https://www.nih.gov/news-events/news-releases/nih-research-team-lays-groundwork-new-treatment-niemann-pick-type-c-infants",
+        "published": "Tue, 11/17/2026 - 16:49\n",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "NIH News",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "Dr. John H. Powers III to serve as director of NIH’s National Institute of Allergy and Infectious Diseases",
+        "url": "https://www.nih.gov/news-events/news-releases/dr-john-h-powers-iii-serve-director-nihs-national-institute-allergy-infectious-diseases",
+        "published": "Mon, 11/16/2026 - 12:00\n",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "NIH News",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "For the first time, researchers map out the brain’s behavioral gatekeeper",
+        "url": "https://www.nih.gov/news-events/news-releases/first-time-researchers-map-out-brains-behavioral-gatekeeper",
+        "published": "Thu, 11/12/2026 - 11:00\n",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "NIH News",
+        "tier": "institutional_news_not_independent_verification",
+        "title": "Two ‘forever chemicals’ associated with higher risk of aggressive breast cancer in NIH analysis",
+        "url": "https://www.nih.gov/news-events/news-releases/two-forever-chemicals-associated-higher-risk-aggressive-breast-cancer-nih-analysis",
+        "published": "Thu, 11/05/2026 - 16:00\n",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "Nature Journal",
+        "tier": "publisher_updates_metadata",
+        "title": "How AI is affecting science careers",
+        "url": "https://www.nature.com/articles/d41586-026-03680-1",
+        "published": "2026-11-20",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "Nature Journal",
+        "tier": "publisher_updates_metadata",
+        "title": "Lifting weights reduces muscle loss from obesity drugs",
+        "url": "https://www.nature.com/articles/d41586-026-03751-3",
+        "published": "2026-11-20",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "Nature Journal",
+        "tier": "publisher_updates_metadata",
+        "title": "Briefing Chat: Voyager 1 is now one ‘light day’ from Earth — setting a cosmic record",
+        "url": "https://www.nature.com/articles/d41586-026-03806-5",
+        "published": "2026-11-20",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "Nature Journal",
+        "tier": "publisher_updates_metadata",
+        "title": "Fraud helps little fire ants to survive and conquer",
+        "url": "https://www.nature.com/articles/d41586-026-03776-8",
+        "published": "2026-11-20",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "Nature Journal",
+        "tier": "publisher_updates_metadata",
+        "title": "‘I had felt overconfident’: senior scientists reveal mistakes that aided discovery",
+        "url": "https://www.nature.com/articles/d41586-026-03590-2",
+        "published": "2026-11-20",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "Keto diet slashes liver fat by 67% in just 4 months",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261120070904.htm",
+        "published": "Fri, 20 Nov 2026 07:44:39 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "Two massive stars may be secretly feeding the Milky Way’s supermassive black hole",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261119194605.htm",
+        "published": "Fri, 20 Nov 2026 00:41:16 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "For better mental health, how often you exercise may matter more than how hard",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261119194601.htm",
+        "published": "Fri, 20 Nov 2026 04:09:17 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "CERN scientists finally find evidence of a particle decay so rare it took 40 years to detect",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261119194530.htm",
+        "published": "Fri, 20 Nov 2026 07:23:23 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "Scientists turn Moon dust into LEGO-like bricks for future lunar bases",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261119194525.htm",
+        "published": "Fri, 20 Nov 2026 07:34:56 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "Experimental compound burns fat without sacrificing muscle",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118073918.htm",
+        "published": "Thu, 19 Nov 2026 19:19:49 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "Scientists tested 212 plant-based foods. Every single one contained fungal toxins",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118073749.htm",
+        "published": "Thu, 19 Nov 2026 06:13:29 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "This simple habit is linked to a 33% lower risk of Alzheimer's",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118065536.htm",
+        "published": "Fri, 20 Nov 2026 07:06:07 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "Powerful new weight-loss drug helps patients cut knee pain in half",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118065534.htm",
+        "published": "Thu, 19 Nov 2026 23:31:15 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "A 3-million-year-old child just made human evolution far more complicated",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118065531.htm",
+        "published": "Thu, 19 Nov 2026 22:17:52 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "This 6-million-year-old whale may have had the most crooked face in mammal history",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118065528.htm",
+        "published": "Thu, 19 Nov 2026 05:59:55 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "Is free will an illusion? New brain research reveals a surprising twist",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118065524.htm",
+        "published": "Wed, 18 Nov 2026 20:21:35 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "Why do farts smell so bad? The secret is brewing in your gut",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118065521.htm",
+        "published": "Wed, 18 Nov 2026 06:55:21 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "Why don't weight-loss drugs like Ozempic and Wegovy work for everyone?",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118065518.htm",
+        "published": "Thu, 19 Nov 2026 03:43:56 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "A study of 30,000 people reveals which antidepressants may work best",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118065515.htm",
+        "published": "Thu, 19 Nov 2026 20:50:20 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "Something strange is living beneath the skin of deep-sea pigs",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118065512.htm",
+        "published": "Thu, 19 Nov 2026 05:33:03 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "Why hydrogen flames can glow orange, then turn nearly invisible",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118065509.htm",
+        "published": "Thu, 19 Nov 2026 05:10:24 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "A rare disease reveals a hidden flaw in the immune system",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261117035052.htm",
+        "published": "Wed, 18 Nov 2026 07:33:09 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "This strange creature lived 309 million years ago, long before the dinosaurs",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261117033928.htm",
+        "published": "Wed, 18 Nov 2026 18:24:05 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "Antarctica’s ice cliffs are collapsing faster than expected, but there’s a twist",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261117033925.htm",
+        "published": "Thu, 19 Nov 2026 04:51:15 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "Too much exercise could leave your brain stuck in overdrive",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261117033923.htm",
+        "published": "Wed, 18 Nov 2026 16:28:29 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "NASA pushes Mars helicopter blades beyond the speed of sound",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261117033920.htm",
+        "published": "Tue, 17 Nov 2026 22:16:19 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "Bizarre deep-sea fish with a see-through head captured in stunning 4K",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261117033917.htm",
+        "published": "Tue, 17 Nov 2026 23:30:31 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "Stonehenge’s six-ton mystery deepens as scientists narrow their search",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261117033914.htm",
+        "published": "Wed, 18 Nov 2026 22:11:22 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "Scientists discover a hidden hereditary form of aggressive prostate cancer",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261117033911.htm",
+        "published": "Wed, 18 Nov 2026 21:31:02 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "Scientists create a remarkable new rechargeable battery using vitamin B12",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261117033909.htm",
+        "published": "Wed, 18 Nov 2026 07:26:20 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "Why obesity affects men and women differently may be hiding in their fat",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261117033907.htm",
+        "published": "Tue, 17 Nov 2026 18:04:12 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "This remarkable new material could solve a major carbon capture problem",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261116023405.htm",
+        "published": "Tue, 17 Nov 2026 06:29:36 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "More than a billion years of Earth's history vanished. Scientists may finally know why",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261116023403.htm",
+        "published": "Wed, 18 Nov 2026 03:27:56 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "title": "Ozempic and Mounjaro may have a surprising effect on your brain",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261116023401.htm",
+        "published": "Tue, 17 Nov 2026 06:39:45 EST",
+        "original_research_peer_review_confirmed": false
+      },
+      {
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "title": "NASA's SpaceX 35th Commercial Resupply Services Undocking",
+        "url": "https://www.youtube.com/watch?v=fTDvp9CBXoQ",
+        "video_id": "fTDvp9CBXoQ",
+        "published": "2026-11-20T17:32:24+00:00",
+        "transcript_available_or_licensed": false,
+        "video_downloaded": false,
+        "laboratory_result_verified": false
+      },
+      {
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "title": "Voyager 1 Light-Day Mission Update and Conversation",
+        "url": "https://www.youtube.com/watch?v=oPgE-ECuJEs",
+        "video_id": "oPgE-ECuJEs",
+        "published": "2026-11-19T18:26:52+00:00",
+        "transcript_available_or_licensed": false,
+        "video_downloaded": false,
+        "laboratory_result_verified": false
+      },
+      {
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "title": "Who Can Be a NASA Astronaut? Myth or Fact",
+        "url": "https://www.youtube.com/watch?v=K8DG7LUTbaM",
+        "video_id": "K8DG7LUTbaM",
+        "published": "2026-11-16T19:05:29+00:00",
+        "transcript_available_or_licensed": false,
+        "video_downloaded": false,
+        "laboratory_result_verified": false
+      },
+      {
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "title": "MAX POWER: Highlights from NASA’s First-Ever Tech Expo and Air Show",
+        "url": "https://www.youtube.com/watch?v=eXrd5sNdacA",
+        "video_id": "eXrd5sNdacA",
+        "published": "2026-11-09T17:08:54+00:00",
+        "transcript_available_or_licensed": false,
+        "video_downloaded": false,
+        "laboratory_result_verified": false
+      },
+      {
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "title": "NASA Moon Base: November 2026 Update (Nov. 7, 2026)",
+        "url": "https://www.youtube.com/watch?v=MRg4uIpJ3xE",
+        "video_id": "MRg4uIpJ3xE",
+        "published": "2026-11-07T23:39:59+00:00",
+        "transcript_available_or_licensed": false,
+        "video_downloaded": false,
+        "laboratory_result_verified": false
+      },
+      {
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "title": "NASA Expands Lunar Delivery Network to Support Moon Base Development",
+        "url": "https://www.youtube.com/watch?v=hQsM8aYR5mw",
+        "video_id": "hQsM8aYR5mw",
+        "published": "2026-11-07T22:50:57+00:00",
+        "transcript_available_or_licensed": false,
+        "video_downloaded": false,
+        "laboratory_result_verified": false
+      },
+      {
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "title": "Become a NASA Astronaut!",
+        "url": "https://www.youtube.com/watch?v=k5Z7sFwFF7Q",
+        "video_id": "k5Z7sFwFF7Q",
+        "published": "2026-11-07T18:29:19+00:00",
+        "transcript_available_or_licensed": false,
+        "video_downloaded": false,
+        "laboratory_result_verified": false
+      },
+      {
+        "source": "youtube-nasa",
+        "tier": "public_video_metadata",
+        "title": "Apply to Become A NASA Astronaut",
+        "url": "https://www.youtube.com/watch?v=61S764A-TKo",
+        "video_id": "61S764A-TKo",
+        "published": "2026-11-07T17:50:03+00:00",
+        "transcript_available_or_licensed": false,
+        "video_downloaded": false,
+        "laboratory_result_verified": false
+      }
+    ],
+    "distinct_records": 68,
+    "sources_unavailable": [
+      "crossref:Nature",
+      "crossref:Cell",
+      "crossref:Physical Review Letters",
+      "Stanford News"
+    ],
+    "peer_review_verified": false,
+    "breakthroughs_independently_confirmed": false,
+    "all_science_journals_covered": false,
+    "cross_journal_topic_query_enabled": true,
+    "copyrighted_works_downloaded": false,
+    "video_transcripts_downloaded": false,
+    "external_actions_performed": false,
+    "limitations": [
+      "Research metadata and institutional announcements are not scientific truth.",
+      "Journal indexing varies; date of publication may differ from deposit date.",
+      "Preprints are not peer-reviewed; institutional statements are not independent evidence.",
+      "A six-of-twenty rotating sample is not comprehensive worldwide surveillance.",
+      "Video listings are not transcripts or scientific assessments."
+    ]
+  },
+  "delta_from_public_memory": {
+    "schema": "plenum-research-new-to-archive-v1",
+    "current_report_time": "2026-11-20T18:45:59.977323+00:00",
+    "prior_archive_files_scanned": 19,
+    "prior_records_scanned": 975,
+    "rejected_or_unreadable_archives": 0,
+    "new_to_this_archive": 29,
+    "previously_seen_in_this_archive": 39,
+    "items_first_observed_by_plenum": [
+      {
+        "title": "AI rivals take on one of physics’ hardest math problems",
+        "url": "https://doi.org/10.1126/science.aeo2673",
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "published": "2026-11-19",
+        "record_id_sha256": "858064c054704c94761ba4f967a27b00224e1d6c0442043fcf0656a4b6540fe6",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Pinpointing planned speech",
+        "url": "https://doi.org/10.1126/science.aem7976",
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "published": "2026-11-19",
+        "record_id_sha256": "e5816a1b7c742c199f59eb3dff56a4f309755d917bb65d2357cc1094bcfe20cb",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Atmospheric organic nitrogen is a major nutrient source to global oceans",
+        "url": "https://doi.org/10.1126/science.aeg4265",
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "published": "2026-11-19",
+        "record_id_sha256": "9a4fa96062dd37b6d393fd91342381cd2cbe890a7984c0daa3bee11fb189bd98",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Correction for East et al., ICE arrests, 2015–2026: Variation in targeting, method, and geography",
+        "url": "https://doi.org/10.1073/pnas.2635864123",
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "published": "2026-11-20",
+        "record_id_sha256": "bc22ee6d08b7f65debce775954b752e3c3303a58da6fd194e6e833998c8484f1",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Small reconstructed brain differences may still have evolutionary relevance",
+        "url": "https://doi.org/10.1073/pnas.2632704123",
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "published": "2026-11-20",
+        "record_id_sha256": "cc65a1fc48bf10d2f89d11eaad6005661c8a98d406575de08dbb15cd45f41925",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Harnessing lattice distortion for point-defect self-healing in multi-principal element alloys",
+        "url": "https://doi.org/10.1073/pnas.2526642123",
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "published": "2026-11-20",
+        "record_id_sha256": "8d3795eb0dff28e639f697a1a0316e23b3995af547fa2e4b854276c3782f0d05",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Optical observation of ultrafast carrier separation in InGaN photocatalyst nanostructures",
+        "url": "https://doi.org/10.1038/s41467-026-79779-w",
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "published": "2026-11-20",
+        "record_id_sha256": "47e013a566acb825a7129ea7b124922188c8b58288c27492c0f9a4332d884765",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Combinatorial mutagenesis of N-terminal sequences reveals expanded stability determinants of the Escherichia coli N-degron pathway",
+        "url": "https://doi.org/10.1038/s41467-026-79349-0",
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "published": "2026-11-20",
+        "record_id_sha256": "2fbcf7d7f2f7a65c9a6a9e49779d70075589ce2e86966e0a2fd9e2415c2d9654",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Opposite migrations of Pacific and Atlantic tropical cyclones during the Medieval Warm Period",
+        "url": "https://doi.org/10.1038/s41467-026-79477-7",
+        "source": "crossref",
+        "tier": "journal_publication_metadata",
+        "published": "2026-11-20",
+        "record_id_sha256": "5a01d07649f3d12991c19d3b841d09501899d1ce33b209b6f7c15dcbc25cd34e",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "AI helps researchers investigate how thousands of medical studies share code",
+        "url": "https://news.mit.edu/2026/ai-helps-researchers-investigate-how-medical-studies-share-code-1119",
+        "source": "MIT News",
+        "tier": "institutional_news_not_independent_verification",
+        "published": "Thu, 19 Nov 2026 17:15:00 -0500",
+        "record_id_sha256": "c842cebd4bd1f2ab5a8ae4e2a9806d80d51a2de4b1da52a005f8092229b97a88",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "NASA Honor Awards Ceremony Recognizes Employees at Stennis Space Center",
+        "url": "https://www.nasa.gov/centers-and-facilities/stennis/honor-awards-ceremony-at-stennis/",
+        "source": "NASA Updates",
+        "tier": "institutional_news_not_independent_verification",
+        "published": "Fri, 20 Nov 2026 16:27:46 +0000",
+        "record_id_sha256": "668a9e048b9e72134c8872d3fa346807bf2ee579c3606478eda89774efb07464",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "NASA’s Curiosity Mars Rover Collects Samples",
+        "url": "https://www.nasa.gov/image-article/nasas-curiosity-mars-rover-collects-samples/",
+        "source": "NASA Updates",
+        "tier": "institutional_news_not_independent_verification",
+        "published": "Fri, 20 Nov 2026 15:53:24 +0000",
+        "record_id_sha256": "90af90b972375528e60441c603789140eb254fe573a81359f3b0b2e0660b11a6",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Challenge: Public Input on Life and the World in 2075",
+        "url": "https://www.nasa.gov/directorates/stmd/prizes-challenges-crowdsourcing-program/center-of-excellence-for-collaborative-innovation-coeci/challenge-public-input-on-life-and-the-world-in-2075/",
+        "source": "NASA Updates",
+        "tier": "institutional_news_not_independent_verification",
+        "published": "Thu, 19 Nov 2026 19:34:20 +0000",
+        "record_id_sha256": "58a8acf48ab8c7a1f9ff51fb236611c531731fa003af7b7dfd385dbe1accf54b",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Large NIH-supported study identifies key underlying pathways in endometriosis",
+        "url": "https://www.nih.gov/news-events/news-releases/large-nih-supported-study-identifies-key-underlying-pathways-endometriosis",
+        "source": "NIH News",
+        "tier": "institutional_news_not_independent_verification",
+        "published": "Fri, 11/20/2026 - 08:00\n",
+        "record_id_sha256": "ed7aaff820e8136a079fdb6f636392392576447c9f3b218ce3e94f5128b02dbc",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "How AI is affecting science careers",
+        "url": "https://www.nature.com/articles/d41586-026-03680-1",
+        "source": "Nature Journal",
+        "tier": "publisher_updates_metadata",
+        "published": "2026-11-20",
+        "record_id_sha256": "564fd3dd3f7e32b6dfd5160a0b2ed945b81dfbbff042447049c56828ca29c0b0",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Lifting weights reduces muscle loss from obesity drugs",
+        "url": "https://www.nature.com/articles/d41586-026-03751-3",
+        "source": "Nature Journal",
+        "tier": "publisher_updates_metadata",
+        "published": "2026-11-20",
+        "record_id_sha256": "688b29525d6436132edee7848dc2e37cc209b139100d55de0862a62e41539622",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Briefing Chat: Voyager 1 is now one ‘light day’ from Earth — setting a cosmic record",
+        "url": "https://www.nature.com/articles/d41586-026-03806-5",
+        "source": "Nature Journal",
+        "tier": "publisher_updates_metadata",
+        "published": "2026-11-20",
+        "record_id_sha256": "f1b6ab30be30cbcf5f19e2dee168c80f18b7660be952c7a3efa8d1e5ceb9b773",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Fraud helps little fire ants to survive and conquer",
+        "url": "https://www.nature.com/articles/d41586-026-03776-8",
+        "source": "Nature Journal",
+        "tier": "publisher_updates_metadata",
+        "published": "2026-11-20",
+        "record_id_sha256": "f22d2b6ba2ba688a687cdc0e7c304bc5202e42e76d2e1be640b7a44b5a3b244f",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "‘I had felt overconfident’: senior scientists reveal mistakes that aided discovery",
+        "url": "https://www.nature.com/articles/d41586-026-03590-2",
+        "source": "Nature Journal",
+        "tier": "publisher_updates_metadata",
+        "published": "2026-11-20",
+        "record_id_sha256": "0b02b5b3152165a1d8d09d6a0be254851823aad56252611a71378702b65abea9",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Keto diet slashes liver fat by 67% in just 4 months",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261120070904.htm",
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "published": "Fri, 20 Nov 2026 07:44:39 EST",
+        "record_id_sha256": "5193e56dacfbfcd752ce969ba1e58b7936f85f6983d9ad95cc2b1b27e20956cc",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Two massive stars may be secretly feeding the Milky Way’s supermassive black hole",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261119194605.htm",
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "published": "Fri, 20 Nov 2026 00:41:16 EST",
+        "record_id_sha256": "9d918536811022d6b145d7a0b9e41d965d664f6e97d4cf309998d2617bedcee0",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "For better mental health, how often you exercise may matter more than how hard",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261119194601.htm",
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "published": "Fri, 20 Nov 2026 04:09:17 EST",
+        "record_id_sha256": "18ab6052c042995f224b146c9759beafbf4026220acc74606c883cc89c13a020",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "CERN scientists finally find evidence of a particle decay so rare it took 40 years to detect",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261119194530.htm",
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "published": "Fri, 20 Nov 2026 07:23:23 EST",
+        "record_id_sha256": "89610e1d0d3b156d3c634897b4c093865d661afa73ff6b8f096562f871951eca",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Scientists turn Moon dust into LEGO-like bricks for future lunar bases",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261119194525.htm",
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "published": "Fri, 20 Nov 2026 07:34:56 EST",
+        "record_id_sha256": "4189f4757b3893b305e07d1179e7e61609cf882c34a68b4ff289e0835e274673",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Experimental compound burns fat without sacrificing muscle",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118073918.htm",
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "published": "Thu, 19 Nov 2026 19:19:49 EST",
+        "record_id_sha256": "f11d27f422c6eecfac062b364b5d119737eac7705d73e9046b258e112e05a8c4",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "This simple habit is linked to a 33% lower risk of Alzheimer's",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118065536.htm",
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "published": "Fri, 20 Nov 2026 07:06:07 EST",
+        "record_id_sha256": "7adb93617f970897a05fdfb4b971cb2e2935d858657530bc02a1edca01cb2d70",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "Powerful new weight-loss drug helps patients cut knee pain in half",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118065534.htm",
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "published": "Thu, 19 Nov 2026 23:31:15 EST",
+        "record_id_sha256": "674b29818fde7b3f327becc6307e279dc22be427092217967cbe206c42eb2443",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "A 3-million-year-old child just made human evolution far more complicated",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118065531.htm",
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "published": "Thu, 19 Nov 2026 22:17:52 EST",
+        "record_id_sha256": "eb701a03e4dfe7610c5e91855f6db8e57ae9083e4729c0a42bb2929d9a5600fc",
+        "breakthrough_verified": false
+      },
+      {
+        "title": "A study of 30,000 people reveals which antidepressants may work best",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261118065515.htm",
+        "source": "ScienceDaily Research",
+        "tier": "secondary_science_news_not_primary_research",
+        "published": "Thu, 19 Nov 2026 20:50:20 EST",
+        "record_id_sha256": "f4c4c859ef05c9a08db2a04afcbca73ebe3434236438116c72e8387bfc6f6136",
+        "breakthrough_verified": false
+      }
+    ],
+    "novel_to_world_or_independent_science": false,
+    "new_patentable_discoveries": false,
+    "next_step": "Read primary papers, inspect methods, compare replication and check retractions"
+  },
+  "interdisciplinary_inspiration": {
+    "schema": "plenum-source-linked-serendipity-v1",
+    "source_snapshot_time": "2026-11-20T18:45:59.977323+00:00",
+    "idea_count": 8,
+    "ideas": [
+      {
+        "label": "speculative_question_unverified",
+        "domain_to_explore": "architecture",
+        "possible_application": "parametric facades and controllable natural lighting",
+        "research_title": "AI rivals take on one of physics’ hardest math problems",
+        "reference_url": "https://doi.org/10.1126/science.aeo2673",
+        "reference_tier": "journal_publication_metadata",
+        "source_fingerprint_sha256": "858064c054704c94761ba4f967a27b00224e1d6c0442043fcf0656a4b6540fe6",
+        "question": "Could the actual measured methods or principles (if any) in the linked research be adapted to parametric facades and controllable natural lighting? Read and verify the original methodology before proposing an experiment.",
+        "first_validation_action": "Retrieve permitted primary text, identify evidence and compare prior work",
+        "second_validation_action": "Formulate falsifiable constraints and test independently",
+        "new_invention_proven": false,
+        "scientific_claim_verified": false,
+        "original_paper_read": false
+      },
+      {
+        "label": "speculative_question_unverified",
+        "domain_to_explore": "music",
+        "possible_application": "original rhythm and timbre as representations of measured data",
+        "research_title": "Pinpointing planned speech",
+        "reference_url": "https://doi.org/10.1126/science.aem7976",
+        "reference_tier": "journal_publication_metadata",
+        "source_fingerprint_sha256": "e5816a1b7c742c199f59eb3dff56a4f309755d917bb65d2357cc1094bcfe20cb",
+        "question": "Could the actual measured methods or principles (if any) in the linked research be adapted to original rhythm and timbre as representations of measured data? Read and verify the original methodology before proposing an experiment.",
+        "first_validation_action": "Retrieve permitted primary text, identify evidence and compare prior work",
+        "second_validation_action": "Formulate falsifiable constraints and test independently",
+        "new_invention_proven": false,
+        "scientific_claim_verified": false,
+        "original_paper_read": false
+      },
+      {
+        "label": "speculative_question_unverified",
+        "domain_to_explore": "visual art",
+        "possible_application": "interpretable geometric forms and public scientific education",
+        "research_title": "Atmospheric organic nitrogen is a major nutrient source to global oceans",
+        "reference_url": "https://doi.org/10.1126/science.aeg4265",
+        "reference_tier": "journal_publication_metadata",
+        "source_fingerprint_sha256": "9a4fa96062dd37b6d393fd91342381cd2cbe890a7984c0daa3bee11fb189bd98",
+        "question": "Could the actual measured methods or principles (if any) in the linked research be adapted to interpretable geometric forms and public scientific education? Read and verify the original methodology before proposing an experiment.",
+        "first_validation_action": "Retrieve permitted primary text, identify evidence and compare prior work",
+        "second_validation_action": "Formulate falsifiable constraints and test independently",
+        "new_invention_proven": false,
+        "scientific_claim_verified": false,
+        "original_paper_read": false
+      },
+      {
+        "label": "speculative_question_unverified",
+        "domain_to_explore": "product design",
+        "possible_application": "manufacturable low-waste human-centered objects",
+        "research_title": "Correction for East et al., ICE arrests, 2015–2026: Variation in targeting, method, and geography",
+        "reference_url": "https://doi.org/10.1073/pnas.2635864123",
+        "reference_tier": "journal_publication_metadata",
+        "source_fingerprint_sha256": "bc22ee6d08b7f65debce775954b752e3c3303a58da6fd194e6e833998c8484f1",
+        "question": "Could the actual measured methods or principles (if any) in the linked research be adapted to manufacturable low-waste human-centered objects? Read and verify the original methodology before proposing an experiment.",
+        "first_validation_action": "Retrieve permitted primary text, identify evidence and compare prior work",
+        "second_validation_action": "Formulate falsifiable constraints and test independently",
+        "new_invention_proven": false,
+        "scientific_claim_verified": false,
+        "original_paper_read": false
+      },
+      {
+        "label": "speculative_question_unverified",
+        "domain_to_explore": "aerospace engineering",
+        "possible_application": "lightweight structures and validated constraints",
+        "research_title": "Small reconstructed brain differences may still have evolutionary relevance",
+        "reference_url": "https://doi.org/10.1073/pnas.2632704123",
+        "reference_tier": "journal_publication_metadata",
+        "source_fingerprint_sha256": "cc65a1fc48bf10d2f89d11eaad6005661c8a98d406575de08dbb15cd45f41925",
+        "question": "Could the actual measured methods or principles (if any) in the linked research be adapted to lightweight structures and validated constraints? Read and verify the original methodology before proposing an experiment.",
+        "first_validation_action": "Retrieve permitted primary text, identify evidence and compare prior work",
+        "second_validation_action": "Formulate falsifiable constraints and test independently",
+        "new_invention_proven": false,
+        "scientific_claim_verified": false,
+        "original_paper_read": false
+      },
+      {
+        "label": "speculative_question_unverified",
+        "domain_to_explore": "agriculture",
+        "possible_application": "low-cost nutrient and environmental sensor systems",
+        "research_title": "Harnessing lattice distortion for point-defect self-healing in multi-principal element alloys",
+        "reference_url": "https://doi.org/10.1073/pnas.2526642123",
+        "reference_tier": "journal_publication_metadata",
+        "source_fingerprint_sha256": "8d3795eb0dff28e639f697a1a0316e23b3995af547fa2e4b854276c3782f0d05",
+        "question": "Could the actual measured methods or principles (if any) in the linked research be adapted to low-cost nutrient and environmental sensor systems? Read and verify the original methodology before proposing an experiment.",
+        "first_validation_action": "Retrieve permitted primary text, identify evidence and compare prior work",
+        "second_validation_action": "Formulate falsifiable constraints and test independently",
+        "new_invention_proven": false,
+        "scientific_claim_verified": false,
+        "original_paper_read": false
+      },
+      {
+        "label": "speculative_question_unverified",
+        "domain_to_explore": "fashion and textiles",
+        "possible_application": "recyclable safe materials and functional wearables",
+        "research_title": "Optical observation of ultrafast carrier separation in InGaN photocatalyst nanostructures",
+        "reference_url": "https://doi.org/10.1038/s41467-026-79779-w",
+        "reference_tier": "journal_publication_metadata",
+        "source_fingerprint_sha256": "47e013a566acb825a7129ea7b124922188c8b58288c27492c0f9a4332d884765",
+        "question": "Could the actual measured methods or principles (if any) in the linked research be adapted to recyclable safe materials and functional wearables? Read and verify the original methodology before proposing an experiment.",
+        "first_validation_action": "Retrieve permitted primary text, identify evidence and compare prior work",
+        "second_validation_action": "Formulate falsifiable constraints and test independently",
+        "new_invention_proven": false,
+        "scientific_claim_verified": false,
+        "original_paper_read": false
+      },
+      {
+        "label": "speculative_question_unverified",
+        "domain_to_explore": "education and games",
+        "possible_application": "interactive models of experimentally confirmed processes",
+        "research_title": "Combinatorial mutagenesis of N-terminal sequences reveals expanded stability determinants of the Escherichia coli N-degron pathway",
+        "reference_url": "https://doi.org/10.1038/s41467-026-79349-0",
+        "reference_tier": "journal_publication_metadata",
+        "source_fingerprint_sha256": "2fbcf7d7f2f7a65c9a6a9e49779d70075589ce2e86966e0a2fd9e2415c2d9654",
+        "question": "Could the actual measured methods or principles (if any) in the linked research be adapted to interactive models of experimentally confirmed processes? Read and verify the original methodology before proposing an experiment.",
+        "first_validation_action": "Retrieve permitted primary text, identify evidence and compare prior work",
+        "second_validation_action": "Formulate falsifiable constraints and test independently",
+        "new_invention_proven": false,
+        "scientific_claim_verified": false,
+        "original_paper_read": false
+      }
+    ],
+    "method": "deterministic_interdisciplinary_prompt_templates",
+    "foundation_model_generated_hypotheses": false,
+    "breakthrough_verified": false,
+    "patentability_verified": false,
+    "copyrighted_paper_contents_copied": false,
+    "next_step": "Use a stronger evaluated reasoning model and independent scientific tools for candidate validation"
+  },
+  "breakthrough_claims_verified": false,
+  "public_metadata_only": true
+}
