@@ -1,0 +1,145 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "44942421411",
+  "source_revision": "42f54bcb14774a83f2ce7d79996e8507671f6855",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-21T19:43:25.568514+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 28,
+    "sources_returning_records": 25,
+    "source_outages": [
+      "gdelt_headlines"
+    ],
+    "new_public_links_before_limit": 15,
+    "signals": [
+      {
+        "category": "universities",
+        "publisher": "MIT News",
+        "source": "mit_labs",
+        "url": "https://news.mit.edu/2026/tiny-superconducting-sandwich-could-help-computers-use-less-energy-1120",
+        "title_untrusted": "A tiny superconducting sandwich could help computers use less energy",
+        "claimed_publication_date": "Fri, 20 Nov 2026 16:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261120075701.htm",
+        "title_untrusted": "AI may not work like the human brain after all, scientists discover",
+        "claimed_publication_date": "Sat, 21 Nov 2026 10:24:58 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03803-8",
+        "title_untrusted": "BepiColombo finally reaches Mercury after eight-year odyssey",
+        "claimed_publication_date": "2026-11-21",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "software",
+        "publisher": "GitHub public repository index",
+        "source": "github_public_code",
+        "url": "https://github.com/isaacrishi/PROJECT-C.U.R.E",
+        "title_untrusted": "isaacrishi/PROJECT-C.U.R.E",
+        "claimed_publication_date": "2026-11-21T13:17:04Z",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "United Nations Climate News",
+        "source": "un_climate_environment",
+        "url": "https://news.un.org/feed/view/en/story/2026/11/1168834",
+        "title_untrusted": "Homes abandoned, harvests failing: Haiti’s farmers rebuild amid violence, hunger and El Niño",
+        "claimed_publication_date": "Sat, 21 Nov 2026 12:00:00 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261120075558.htm",
+        "title_untrusted": "Time may be far stranger than we realize. Scientists have a way to test it",
+        "claimed_publication_date": "Sat, 21 Nov 2026 10:09:46 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ucni",
+        "title_untrusted": "M 4.9 - 88 km WNW of El Aguilar, Argentina",
+        "claimed_publication_date": "1795287784170",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261120075556.htm",
+        "title_untrusted": "A giant star swallowed another star. James Webb reveals the aftermath",
+        "claimed_publication_date": "Sat, 21 Nov 2026 09:53:40 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41364615",
+        "title_untrusted": "M 1.1 - 12 km ESE of Coso Junction, CA",
+        "claimed_publication_date": "1795286714750",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261120075554.htm",
+        "title_untrusted": "NASA’s Voyager 1 is now so far away that light takes 24 hours to reach it",
+        "claimed_publication_date": "Fri, 20 Nov 2026 07:55:54 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75469952",
+        "title_untrusted": "M 0.7 - 5 km W of Cobb, CA",
+        "claimed_publication_date": "1795286018070",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
