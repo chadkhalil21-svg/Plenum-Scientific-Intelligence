@@ -1,0 +1,101 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "45063518846",
+  "source_revision": "b431a9e860f108887439f4758655639a6c23696e",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-22T19:56:16.075496+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 28,
+    "sources_returning_records": 25,
+    "source_outages": [
+      "gdelt_headlines"
+    ],
+    "new_public_links_before_limit": 8,
+    "signals": [
+      {
+        "category": "discoveries",
+        "publisher": "NASA",
+        "source": "nasa_research",
+        "url": "https://www.nasa.gov/centers-and-facilities/johnson/65-years-of-human-spaceflight-at-nasa-johnson/",
+        "title_untrusted": "65 Years of Human Spaceflight at NASA Johnson",
+        "claimed_publication_date": "Sun, 22 Nov 2026 19:13:25 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "software",
+        "publisher": "GitHub public repository index",
+        "source": "github_public_code",
+        "url": "https://github.com/fisallllll280-code/VX-runtime",
+        "title_untrusted": "fisallllll280-code/VX-runtime",
+        "claimed_publication_date": "2026-11-04T11:30:20Z",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "United Nations Climate News",
+        "source": "un_climate_environment",
+        "url": "https://news.un.org/feed/view/en/story/2026/11/1168855",
+        "title_untrusted": "COP31 ends without climate pact as UN chief warns there is ‘no ambiguity in the science’",
+        "claimed_publication_date": "Sun, 22 Nov 2026 12:00:00 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "NASA",
+        "source": "nasa_research",
+        "url": "https://science.nasa.gov/image-article/apod-2026-november-22-swirls-and-colors-on-jupiter-from-juno/",
+        "title_untrusted": "APOD: 2026 November 22 – Swirls and Colors on Jupiter from Juno",
+        "claimed_publication_date": "Sun, 22 Nov 2026 05:05:00 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75470722",
+        "title_untrusted": "M 3.0 - 55 km W of Petrolia, CA",
+        "claimed_publication_date": "1795377028580",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026xduehp",
+        "title_untrusted": "M 2.3 - 4 km S of Hope, Alaska",
+        "claimed_publication_date": "1795375882240",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026xduanr",
+        "title_untrusted": "M 1.8 - 54 km NE of Pedro Bay, Alaska",
+        "claimed_publication_date": "1795375618518",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
