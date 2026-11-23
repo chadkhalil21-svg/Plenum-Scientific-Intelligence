@@ -7,6 +7,7 @@ on:
       - .github/workflows/sg13g2-textbook-latch.yml
       - research/sg13g2_public_latch_smoketest.py
       - research/sg13g2_public_fanout_sweep.py
+      - research/sg13g2_public_short_pulse.py
   workflow_dispatch:
 permissions:
   contents: read
@@ -71,6 +72,15 @@ jobs:
           cp "$PDK_ROOT/$PDK/libs.tech/ngspice/.spiceinit" "$HOME/.spiceinit"
           cd research
           python3 sg13g2_public_fanout_sweep.py
+      - name: Native SG13G2 PUBLIC generic short-pulse fanout PVT sweep
+        env:
+          PDK_ROOT: /tmp/ihp-public
+          PDK: ihp-sg13g2
+        run: |
+          set -euo pipefail
+          cp "$PDK_ROOT/$PDK/libs.tech/ngspice/.spiceinit" "$HOME/.spiceinit"
+          cd research
+          python3 sg13g2_public_short_pulse.py
       - name: Confirm proprietary design was never transferred
         if: always()
         run: |
