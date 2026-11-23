@@ -1,0 +1,68 @@
+name: SG13G2 public textbook latch physical-model smoke test
+on:
+  push:
+    branches:
+      - research/sg13g2-generic-latch-20261123
+    paths:
+      - .github/workflows/sg13g2-textbook-latch.yml
+      - research/sg13g2_public_latch_smoketest.py
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: sg13g2-textbook-physical-model-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  process-model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install zero-cost open circuit simulator
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ngspice
+          ngspice -v | head -12
+      - name: Retrieve public IHP SG13G2 PDK only
+        run: |
+          set -euo pipefail
+          git clone --depth=1 --filter=blob:none --sparse --branch dev \
+            https://github.com/IHP-GmbH/IHP-Open-PDK.git /tmp/ihp-public
+          git -C /tmp/ihp-public sparse-checkout set \
+            ihp-sg13g2/libs.tech/ngspice \
+            ihp-sg13g2/libs.tech/verilog-a
+          git -C /tmp/ihp-public rev-parse HEAD
+      - name: Compile public PSP103 Verilog-A process models using upstream OpenVAF
+        env:
+          PDK_ROOT: /tmp/ihp-public
+          PDK: ihp-sg13g2
+        run: |
+          set -euo pipefail
+          curl --retry 2 --max-time 120 -fLsS \
+            https://openva.fra1.cdn.digitaloceanspaces.com/openvaf_23_5_0_linux_amd64.tar.gz \
+            -o /tmp/openvaf.tar.gz
+          mkdir -p /tmp/openvafbin
+          tar -xzf /tmp/openvaf.tar.gz -C /tmp/openvafbin
+          chmod +x /tmp/openvafbin/openvaf
+          /tmp/openvafbin/openvaf --version
+          export PATH="/tmp/openvafbin:$PATH"
+          cd "$PDK_ROOT/$PDK/libs.tech/verilog-a"
+          ./openvaf-compile-va.sh
+          ls -lh ../ngspice/osdi/*.osdi
+      - name: Real device-model transient (PUBLIC generic circuit only)
+        env:
+          PDK_ROOT: /tmp/ihp-public
+          PDK: ihp-sg13g2
+        run: |
+          set -euo pipefail
+          cp "$PDK_ROOT/$PDK/libs.tech/ngspice/.spiceinit" "$HOME/.spiceinit"
+          cd research
+          python3 sg13g2_public_latch_smoketest.py
+      - name: Confirm proprietary design was never transferred
+        if: always()
+        run: |
+          printf '%s\n' 'No private Neumann SPICE, transistor layout, model coefficients, or confidential assets were fetched.'
+          printf '%s\n' 'This isolated PUBLIC SG13G2 textbook latch cannot qualify the private Neumann receiver.'
