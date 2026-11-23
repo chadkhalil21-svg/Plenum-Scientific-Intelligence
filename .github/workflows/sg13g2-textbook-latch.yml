@@ -6,6 +6,7 @@ on:
     paths:
       - .github/workflows/sg13g2-textbook-latch.yml
       - research/sg13g2_public_latch_smoketest.py
+      - research/sg13g2_public_fanout_sweep.py
   workflow_dispatch:
 permissions:
   contents: read
@@ -61,6 +62,15 @@ jobs:
           cp "$PDK_ROOT/$PDK/libs.tech/ngspice/.spiceinit" "$HOME/.spiceinit"
           cd research
           python3 sg13g2_public_latch_smoketest.py
+      - name: Native IHP SG13G2 PVT real MOS fanout versus isolation sweep (generic PUBLIC)
+        env:
+          PDK_ROOT: /tmp/ihp-public
+          PDK: ihp-sg13g2
+        run: |
+          set -euo pipefail
+          cp "$PDK_ROOT/$PDK/libs.tech/ngspice/.spiceinit" "$HOME/.spiceinit"
+          cd research
+          python3 sg13g2_public_fanout_sweep.py
       - name: Confirm proprietary design was never transferred
         if: always()
         run: |
