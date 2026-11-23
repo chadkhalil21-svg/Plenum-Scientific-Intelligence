@@ -1,0 +1,59 @@
+name: Public open-source NGSPICE SG13G2 runtime bundle for private offline simulation
+on:
+  push:
+    branches: [research/sg13g2-generic-latch-20261123]
+    paths: [.github/workflows/sg13g2-public-runtime-export.yml]
+permissions:
+  contents: read
+concurrency:
+  group: public-open-model-runtime-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build-public-runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 16
+    steps:
+      - name: Install public NGSPICE binary
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -qq -y ngspice
+          ngspice -v | head -12
+      - name: Compile only public IHP open SG13G2 model OSDIs
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --filter=blob:none --sparse --branch dev https://github.com/IHP-GmbH/IHP-Open-PDK.git /tmp/ihp
+          git -C /tmp/ihp sparse-checkout set ihp-sg13g2/libs.tech/ngspice ihp-sg13g2/libs.tech/verilog-a
+          git -C /tmp/ihp rev-parse HEAD | tee /tmp/ihp-public-revision.txt
+          curl --fail --location --retry 2 --max-time 150 --silent --show-error https://openva.fra1.cdn.digitaloceanspaces.com/openvaf_23_5_0_linux_amd64.tar.gz -o /tmp/openvaf.tgz
+          mkdir -p /tmp/public-bin
+          tar -xzf /tmp/openvaf.tgz -C /tmp/public-bin
+          chmod +x /tmp/public-bin/openvaf
+          export PATH="/tmp/public-bin:$PATH"
+          cd /tmp/ihp/ihp-sg13g2/libs.tech/verilog-a
+          ./openvaf-compile-va.sh
+      - name: Package public compiled runtime and license only
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/sg13-public-runtime/bin /tmp/sg13-public-runtime/lib /tmp/sg13-public-runtime/ihp-sg13g2/libs.tech
+          cp /usr/bin/ngspice /tmp/sg13-public-runtime/bin/
+          # Libraries are only public system runtime dependencies; run scripts never include private sources.
+          ldd /usr/bin/ngspice | tee /tmp/sg13-public-runtime/lib/ldd-manifest.txt
+          ldd /usr/bin/ngspice | awk '/=> \//{print $3} /^\//{print $1}' | while read -r lib; do
+            if [ -f "$lib" ]; then cp -Ln "$lib" /tmp/sg13-public-runtime/lib/; fi
+          done
+          cp -a /tmp/ihp/ihp-sg13g2/libs.tech/ngspice /tmp/sg13-public-runtime/ihp-sg13g2/libs.tech/
+          cp /tmp/ihp-public-revision.txt /tmp/sg13-public-runtime/PDK_REVISION.txt
+          printf '%s\n' 'IHP public process design kit: Apache-2.0; ngspice binaries from Ubuntu packages; original open licenses apply.' > /tmp/sg13-public-runtime/README-PUBLIC.txt
+          test -f /tmp/sg13-public-runtime/ihp-sg13g2/libs.tech/ngspice/osdi/psp103.osdi
+          test -f /tmp/sg13-public-runtime/ihp-sg13g2/libs.tech/ngspice/models/cornerMOSlv.lib
+          du -sh /tmp/sg13-public-runtime
+          find /tmp/sg13-public-runtime/ -type f | wc -l
+      - name: Transfer public-only simulator toolchain as temporary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sg13g2-public-ngspice-runtime-linux-x64
+          path: /tmp/sg13-public-runtime/
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 6
