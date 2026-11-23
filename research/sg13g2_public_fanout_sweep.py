@@ -74,23 +74,30 @@ for corner,temp in [("mos_tt",27),("mos_ss",125),("mos_ff",-40)]:
     if len(data)<100:raise RuntimeError("not enough native samples")
     times=[sample_cross(data,i,.8,1.005e-9,True) for i in [1,2,3]]
     reset=[sample_cross(data,i,.2,4.005e-9,False) for i in [1,2,3]]
-    if any(t is None for t in times+reset):
-      raise RuntimeError(f"native incorrect set/reset, {corner}, fanout{fanout}, times{times}, reset{reset}")
-    selected=[min(data,key=lambda r:abs(r[0]-t)) for t in [2.5e-9,5e-9]]
-    if not all(s[1]>.8 and s[2]>.8 and s[3]>.8 for s in selected[:1]):
-      raise RuntimeError("final high must pass")
-    if not all(s[1]<.2 and s[2]<.2 and s[3]<.2 for s in selected[1:]):
-      raise RuntimeError("final low must pass")
+    selected=[min(data,key=lambda rr:abs(rr[0]-t)) for t in [2.5e-9,5e-9]]
+    final_set=all(v>.8 for v in selected[0][1:4])
+    final_reset=all(v<.2 for v in selected[1][1:4])
+    all_crossed=all(t is not None for t in times+reset)
+    pass_case=final_set and final_reset and all_crossed
     r={"corner":corner,"temp_C":temp,"fanout_CMOS_inverters":fanout,"native_samples":len(data),
-       "direct_output_set_ps":round(times[0],3),"isolated_core_set_ps":round(times[1],3),
-       "buffered_output_set_ps":round(times[2],3),
-       "direct_output_reset_ps":round(reset[0],3),"isolated_core_reset_ps":round(reset[1],3),
-       "buffered_output_reset_ps":round(reset[2],3),
-       "output_buffer_minus_direct_set_ps":round(times[2]-times[0],3),
-       "internal_isolated_core_minus_direct_set_ps":round(times[1]-times[0],3),
-       "pass":True}
+       "direct_output_set_ps":None if times[0] is None else round(times[0],3),
+       "isolated_core_set_ps":None if times[1] is None else round(times[1],3),
+       "buffered_output_set_ps":None if times[2] is None else round(times[2],3),
+       "direct_output_reset_ps":None if reset[0] is None else round(reset[0],3),
+       "isolated_core_reset_ps":None if reset[1] is None else round(reset[1],3),
+       "buffered_output_reset_ps":None if reset[2] is None else round(reset[2],3),
+       "output_buffer_minus_direct_set_ps":None if (times[0] is None or times[2] is None) else round(times[2]-times[0],3),
+       "internal_isolated_core_minus_direct_set_ps":None if (times[0] is None or times[1] is None) else round(times[1]-times[0],3),
+       "final_set_pass":final_set,"final_reset_pass":final_reset,
+       "direct_set_pass":times[0] is not None and selected[0][1]>.8,
+       "direct_reset_pass":reset[0] is not None and selected[1][1]<.2,
+       "isolated_set_pass":times[1] is not None and selected[0][2]>.8,
+       "isolated_reset_pass":reset[1] is not None and selected[1][2]<.2,
+       "buffered_set_pass":times[2] is not None and selected[0][3]>.8,
+       "buffered_reset_pass":reset[2] is not None and selected[1][3]<.2,
+       "pass":pass_case}
     results.append(r)
     print("CORNER_RESULT",json.dumps(r,sort_keys=True))
 print("FINAL_RESULT",json.dumps({"experiment":"GENERIC_PUBLIC_IHP_SG13G2_FANOUT_NATIVE_PHYSICS",
 "private_neumann_source_used":False,"native_device_model":True,"sampled_runs":len(results),
-"all_cases_pass":True,"comparisons":results},sort_keys=True))
+"all_cases_pass":all(x["pass"] for x in results),"failed_cases":sum(not x["pass"] for x in results),"comparisons":results},sort_keys=True))
