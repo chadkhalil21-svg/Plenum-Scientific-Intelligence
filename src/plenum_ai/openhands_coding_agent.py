@@ -44,6 +44,7 @@ LOCAL_ENGINE = "aider_local_ollama"
 # Official amd64 v0.86.0 image manifest (not a mutable latest tag).
 AIDER_IMAGE = "paulgauthier/aider@sha256:cfdc43ebd4ff163f7ef5f1803b069fa80abbd95e981d165495d459d3edcc356c"
 LOCAL_MODEL = "qwen2.5-coder:7b"
+STRUCTURED_EDIT_MODEL = "qwen3.5:4b"
 LOCAL_MAX_SOURCE_BYTES = 12_000  # Whole-file output on 4 CPU free runner.
 GEMINI_ENGINE = "gemini_free_openhands"
 GEMINI_MODEL = "gemini/gemini-3.5-flash-lite"
@@ -323,6 +324,11 @@ def local_plan(task: str, *, source_file: str) -> dict:
         raise PermissionError("Source too large for bounded CPU whole-file local coding")
     result = plan(task, source_file=source_file)
     result.pop("sdk_version_required")
+    if local_function_scope(task, _public_source(source_file)[0]):
+        return {**result, "upstream":"ollama/ollama", "engine":LOCAL_ENGINE,
+                "local_model":STRUCTURED_EDIT_MODEL,
+                "local_edit_strategy":"exact_anchor_structured_function_edit",
+                "cloud_inference_used":False,"paid_api_authorized":False}
     return {**result, "upstream": "Aider-AI/aider", "engine": LOCAL_ENGINE,
             "aider_image": AIDER_IMAGE, "local_model": LOCAL_MODEL,
             "cloud_inference_used": False, "paid_api_authorized": False}
@@ -408,6 +414,54 @@ def restore_function_scope(scope, edited: bytes) -> bytes:
     return result
 
 
+def apply_structured_edit(scope, choice):
+    """Apply one model-selected exact contiguous replacement, never run it."""
+    if not isinstance(choice,dict) or set(choice)!={"old","new"}:
+        raise ValueError("Expected one exact anchored edit")
+    old,new=choice["old"],choice["new"]
+    if (not isinstance(old,str) or not isinstance(new,str) or not old.strip()
+            or len(old)>4000 or len(new)>5000 or old==new):
+        raise ValueError("Invalid structured edit")
+    source=scope[1].decode("utf-8")
+    if source.count(old)!=1:
+        raise ValueError("Model anchor missing or ambiguous")
+    return restore_function_scope(scope, source.replace(old,new,1).encode("utf-8"))
+
+
+def structured_local_edit(task,scope):
+    """Reuse the existing internal Ollama network, no agent shell or mounted source."""
+    schema={"type":"object","additionalProperties":False,"required":["old","new"],
+            "properties":{"old":{"type":"string"},"new":{"type":"string"}}}
+    payload={"model":STRUCTURED_EDIT_MODEL,"stream":False,"think":False,"format":schema,
+        "options":{"temperature":0,"num_ctx":4096,"num_predict":700},
+        "messages":[{"role":"system","content":"Return one small Python edit as JSON old and new strings. "
+            "Copy old exactly once from the provided function, including whitespace. "
+            "Replace only the minimum necessary text in its body. Keep signature, imports and unrelated behavior. "
+            "Do not include markdown, commands, explanations or tests."},
+            {"role":"user","content":json.dumps({"objective":task,"function":scope[1].decode("utf-8")})}]}
+    script=("import json,sys,urllib.request; "
+            "raw=sys.stdin.buffer.read(64001); assert len(raw)<=64000; "
+            "req=urllib.request.Request('http://plenum-temporary-ollama:11434/api/chat',data=raw,"
+            "headers={'Content-Type':'application/json'},method='POST'); "
+            "client=urllib.request.build_opener(urllib.request.ProxyHandler({})); "
+            "response=client.open(req,timeout=240); "
+            "assert response.geturl()==req.full_url; "
+            "out=response.read(32001); assert len(out)<=32000; "
+            "sys.stdout.buffer.write(out)")
+    command=["docker","run","--rm","--pull=never","-i","--network=plenum-coding-isolated",
+        "--cap-drop=ALL","--security-opt=no-new-privileges","--pids-limit=64",
+        "--memory=512m","--cpus=1","--read-only","--user",f"{os.getuid()}:{os.getgid()}",
+        "--entrypoint=python",AIDER_IMAGE,"-c",script]
+    reply=subprocess.run(command,input=json.dumps(payload).encode("utf-8"),capture_output=True,
+        check=True,timeout=260,env={"PATH":os.environ.get("PATH","/usr/bin:/bin")})
+    if len(reply.stdout)>32000:
+        raise ValueError("Oversized local edit response")
+    data=json.loads(reply.stdout)
+    if data.get("done") is not True or data.get("done_reason")!="stop" or data.get("model")!=STRUCTURED_EDIT_MODEL:
+        raise ValueError("Incomplete or wrong model response")
+    return apply_structured_edit(scope,json.loads(data["message"]["content"]))
+
+
 def execute_local(task: str, *, source_file: str, candidate_out: str,
                   behavioral_recovery: bool = False) -> dict:
     """Run official Aider noninteractively, with only a public source copy mounted.
@@ -422,6 +476,13 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
         raise RuntimeError("Run only in a separately isolated ephemeral runner")
     original, _ = _public_source(source_file)
     scope = local_function_scope(task, original)
+    if scope:
+        if behavioral_recovery:
+            raise PermissionError("Unapproved structured edit recovery")
+        raw=structured_local_edit(task,scope)
+        if len(raw)>_candidate_byte_limit(original):
+            raise ValueError("Structured candidate exceeds original bound")
+        return _candidate_report(result,original,raw,source_file,artifact,0)
     feedback = (" Edit only the shown function. All surrounding module definitions are "
                 "preserved unchanged; no new imports or top-level code." if scope else "")
     if behavioral_recovery:
