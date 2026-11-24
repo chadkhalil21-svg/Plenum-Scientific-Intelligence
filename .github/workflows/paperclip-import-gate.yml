@@ -73,3 +73,5 @@ jobs:
         env:
           PYTHONPATH: src
         run: python integrations/paperclip/supervisor_resume_smoke.py
+      - name: Exact checkpoint CAS acknowledgment and readback transport regressions
+        run: python integrations/paperclip/runtime_checkpoint_smoke.py

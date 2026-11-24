@@ -14,7 +14,7 @@ from mission_scope import digest as scope_digest
 from production_wiring import prepared
 
 class Response(BytesIO):
-    pass
+    status = 200
 
 class Tests(unittest.TestCase):
     def setUp(self):
