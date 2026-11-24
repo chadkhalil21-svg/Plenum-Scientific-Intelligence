@@ -192,6 +192,24 @@ def run_issue(event: dict, *, output_dir: Path, runner=subprocess.run) -> dict:
         return {**task, **checked, "status": "BLOCKED_NO_SOURCE_EVIDENCE",
                 "verified": False, "output_artifact": output.name}
     if original_source_category(task["objective"]) == "funding":
+        from .world_horizon import funding_survey_subject, funding_title_matches
+        subject=funding_survey_subject(task["objective"])
+        if subject:
+            report=json.loads(output.read_text("utf-8"))
+            rows=report["records"]
+            if (rows and all(row.get("source")=="grants_gov_search"
+                    and re.fullmatch(r"https://www\.grants\.gov/search-results-detail/[1-9][0-9]{0,11}",row.get("url",""))
+                    and funding_title_matches(subject,row.get("title"))
+                    and str(row.get("metadata_note","")).startswith(("posted;","forecasted;"))
+                    for row in rows)):
+                return {**task,**checked,"status":"DRAFT_READY_FOR_FOUNDER","verified":True,
+                        "output_artifact":output.name,
+                        "quality":"PUBLIC_FUNDING_TITLE_MATCHED_SOURCE_SURVEY_ONLY",
+                        "funding_title_match_verified":True,
+                        "funding_subject_relevance_independently_verified":False,
+                        "verified_scope":"official public funding search metadata and explicit title matches only; eligibility and deadlines not independently audited",
+                        "no_money_spent_by_worker":True,
+                        "completed_at_utc":datetime.now(timezone.utc).isoformat()}
         # Original mission #708 retrieved genuine funding-category records
         # unrelated to the founder's photonics objective. A real provider URL
         # and category tag do NOT independently establish program fit.
