@@ -43,6 +43,9 @@ def validate_scope(value):
             n=budget[key]
             if type(n) is not int or not (1 if "tokens" in key else 0)<=n<=maximum:
                 raise ValueError("Budget parameter outside bounds")
+    elif kind=="public_dataset":
+        from dataset_mission import validate
+        validate(value)
     else:raise ValueError("Unsupported mission kind")
     return json.loads(encoded(value))
 
@@ -74,7 +77,7 @@ def profile_routes(scope):
         raise ValueError("Original profile mapping drift")
     # Profile readiness is scope/skill routing only, not eleven worker runs.
     kind=validate_scope(scope)["kind"]
-    objective=("Review public scholarly metadata and offline AI budget evidence" if kind=="bibliography_budget"
+    objective=("Review public bibliography and owner-supplied synthetic numerical data" if kind=="public_dataset" else "Review public scholarly metadata and offline AI budget evidence" if kind=="bibliography_budget"
                else "Review public station metadata and scholarly evidence")
     return {name:{"division":division,"routing":route(name,objective)}
             for name,division in PROFILE_DIVISIONS.items()}

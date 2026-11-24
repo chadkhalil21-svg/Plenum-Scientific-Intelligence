@@ -55,9 +55,11 @@ def main():
     if mode=="local":model_stop()
     restart()
     r1=mission(cid,scope,a["parent"])
-    if mode=="local":model_start()
-    scope["budget"]["neurons_reserved"]=201
-    prep2=mission(cid,scope,action="prepare",mode=mode)
+    if mode=="local":
+        model_start()
+        scope={"kind":"public_dataset","subject":"Photonic detector calibration screening","dois":["10.1145/3442188.3445922"],"values":[17,-3,8,42,12,19],"operations":["median","range","mean"]}
+    else:scope["budget"]["neurons_reserved"]=201
+    prep2=mission(cid,scope,action="prepare",mode=mode,inject=mode=="local")
     b=mission(cid,scope,prep2["mission"],action="activate")
     if mode=="local":model_stop()
     restart()
@@ -70,9 +72,11 @@ def main():
     assert a["verified_profile_work_products"]==b["verified_profile_work_products"]==11
     assert a["minister_model_executed"]==b["minister_model_executed"]==(mode=="local")
     assert a["paid_inference"] is b["paid_inference"] is False
-    if mode=="local":assert a["model_receipt_sha256"]!=b["model_receipt_sha256"]
+    if mode=="local":
+        assert a["model_receipt_sha256"]!=b["model_receipt_sha256"]
+        assert b["mission_kind"]=="public_dataset" and set(b["recovery_receipt_sha256"])=={"intelligence"}
     assert r1["qualification_sha256"]==again["qualification_sha256"]!=r2["qualification_sha256"]
-    proof={"same_company":cid,"same_minister":a["minister"],"same_six_agent_ids":a["persistent_roster"],"missions":[a["parent"],b["parent"]],"restart_digests":[r1["qualification_sha256"],r2["qualification_sha256"]],"first_mission_preserved":True,"staged_prepare_activate":True,"model_mode":mode,"paid_inference":False}
+    proof={"same_company":cid,"same_minister":a["minister"],"same_six_agent_ids":a["persistent_roster"],"missions":[a["parent"],b["parent"]],"restart_digests":[r1["qualification_sha256"],r2["qualification_sha256"]],"first_mission_preserved":True,"staged_prepare_activate":True,"model_mode":mode,"recovery_receipt_sha256":b.get("recovery_receipt_sha256",{}),"paid_inference":False}
     # Store only bounded public acceptance evidence in the existing mounted volume.
     subprocess.run(["docker","exec","--user","node",CONTAINER,"python3","-c","from pathlib import Path;import sys;Path('/paperclip/plenum-mission-evidence/persistent-lifecycle.json').write_text(sys.argv[1])",json.dumps(proof)],check=True)
     print(json.dumps(proof))

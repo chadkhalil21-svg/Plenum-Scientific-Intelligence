@@ -19,6 +19,8 @@ def chief_receipt(scope, plan):
 
 def division_receipts(role, scope, prior, result, directory):
     budget=scope["kind"]=="bibliography_budget"
+    dataset=scope["kind"]=="public_dataset"
+    bibliography=budget or dataset
     inputs={"prior":{k:hash_value(v) for k,v in prior.items()},"result":hash_value(result)}
     out={}
     def add(profile, value):
@@ -27,16 +29,16 @@ def division_receipts(role, scope, prior, result, directory):
     if role=="intelligence":
         # Actual approved API retrieval is performed by the original division.
         # This is a source-access receipt, never a graphical/browser login claim.
-        if budget:
+        if bibliography:
             identifiers=sorted(result)
         else:
             from plenum_ai.chief_team_mission import _station_rows
             ids=tuple(scope.get("station_ids",["8723214"]))
             identifiers=sorted(row["id"] for row in _station_rows(result,ids))
-        add("browser",{"transport":"approved public provider API","provider":"Crossref" if budget else "NOAA",
+        add("browser",{"transport":"approved public provider API","provider":"Crossref" if bibliography else "NOAA",
                        "identifiers":identifiers,"interactive_browser_executed":False})
     elif role=="research":
-        ids=sorted(scope["dois"]) if budget else sorted(result["readback"])
+        ids=sorted(scope["dois"]) if bibliography else sorted(result["readback"])
         add("research",{"bibliographic_identifiers":ids,"metadata_readback_sha256":hash_value(result),
                         "full_text_validation":False})
     elif role=="engineering":
@@ -50,14 +52,19 @@ def division_receipts(role, scope, prior, result, directory):
         if artifact.is_symlink() or source.is_symlink():
             raise ValueError("Unsafe profile source")
         data=source.read_bytes()
-        original=DOMAIN_FILES["cloudflare_workers_ai_free" if budget else "noaa_water_station_metadata"]
+        original=Path(__file__).with_name("dataset_program.py") if dataset else DOMAIN_FILES["cloudflare_workers_ai_free" if budget else "noaa_water_station_metadata"]
         source_hash=sha256(data).hexdigest()
         if (data!=original.read_bytes() or source_hash!=result["manifest"]["main_sha256"]
                 or result["manifest"]["functional_verifier_executed_and_passed"] is not True):
             raise ValueError("Coding source digest mismatch")
         add("coding",{"reviewed_source_sha256":source_hash,"functional_test_passed":
                       result["manifest"]["functional_verifier_executed_and_passed"],"deployed":False})
-        if budget:
+        if dataset:
+            from dataset_mission import evaluate
+            data=dict(result["input"],values=result["input"]["values"]+[result["input"]["values"][-1]])
+            add("simulation",{"scenario":"synthetic repeated last observation","inputs":data,
+                              "observed":evaluate(source,data),"physical_validation":False})
+        elif budget:
             from budget_mission import evaluate
             data=dict(result["input"])
             data["neurons_reserved"]=min(10000,data["neurons_reserved"]+1)
@@ -81,7 +88,7 @@ def division_receipts(role, scope, prior, result, directory):
     elif role=="commercial":
         recommendation=result["recommendation"]
         limitations=result["limitations"]
-        subject="offline AI budget" if budget else "coastal metadata"
+        subject="synthetic numerical data" if dataset else "offline AI budget" if budget else "coastal metadata"
         add("operations",{"next_action":recommendation,"blocked_by":limitations,
                           "owner":"Scientific Research and Engineering","external_write":False})
         add("creative",{"format":"unpublished three-panel storyboard","panels":[
