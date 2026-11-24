@@ -1,0 +1,59 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "45313394760",
+  "source_revision": "403decc8dfcb8dacebf42b5d4b75a84260262eda",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-24T02:34:54.298057+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 29,
+    "sources_returning_records": 25,
+    "source_outages": [
+      "nasa_research",
+      "un_global_news",
+      "gdelt_headlines"
+    ],
+    "new_public_links_before_limit": 3,
+    "signals": [
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75471402",
+        "title_untrusted": "M 0.7 - 8 km W of Cobb, CA",
+        "claimed_publication_date": "1795487239160",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/hv75075647",
+        "title_untrusted": "M 2.2 - 2 km SW of Pāhala, Hawaii",
+        "claimed_publication_date": "1795486963420",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41579712",
+        "title_untrusted": "M 0.5 - 11 km SE of Winchester, CA",
+        "claimed_publication_date": "1795486886010",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
