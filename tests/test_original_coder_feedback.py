@@ -165,5 +165,26 @@ class TrustedRecoveryTests(unittest.TestCase):
                 self.assertEqual(raised.exception.stage,stage)
 
 
+    def test_readonly_context_exposes_referenced_declarations_without_editing_them(self):
+        source=b"import math\nLIMIT=10\nUNRELATED=99\n\ndef helper(x):\n    return math.floor(x)\n\ndef target(x):\n    return min(LIMIT,helper(x))\n\ndef other():\n    return UNRELATED\n"
+        scope=coder.local_function_scope("Repair function target. Correct the result.",source)
+        view=coder.readonly_dependency_view(scope)
+        self.assertEqual(view,["LIMIT=10","def helper(x):\n    return math.floor(x)"])
+        self.assertLessEqual(sum(map(len,view)),2000)
+        self.assertNotIn("UNRELATED","".join(view))
+        import subprocess
+        choice={"old":"min(LIMIT,helper(x))","new":"min(LIMIT,helper(x)+1)"}
+        response={"model":coder.STRUCTURED_EDIT_MODEL,"done":True,"done_reason":"stop",
+                  "message":{"content":json.dumps(choice)}}
+        with patch.object(coder.subprocess,"run",return_value=subprocess.CompletedProcess([],0,stdout=json.dumps(response).encode())) as run:
+            actual=coder.structured_local_edit("Repair function target. Correct the result.",scope)
+            self.assertEqual(actual,source.replace(b"min(LIMIT,helper(x))",b"min(LIMIT,helper(x)+1)"))
+            payload=json.loads(run.call_args.kwargs["input"])
+            self.assertEqual(json.loads(payload["messages"][1]["content"])["readonly_dependencies"],view)
+        with self.assertRaises(ValueError):
+            coder.apply_structured_edit(scope,{"old":"LIMIT=10","new":"LIMIT=100"})
+
+
+
 if __name__=="__main__":
     unittest.main()
