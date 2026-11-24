@@ -25,8 +25,16 @@ INTERRUPTED = "BLOCKED_INTERRUPTED_WITH_REVIEW_ARTIFACT"
 
 # Exact founder task and source binding. The model may modify only its proposal,
 # not this trusted test or the selection criteria.
+# Preserve the original, already existing regression suite when its historical
+# filename differs from the module name. No candidate can select its own tests.
+FOCUSED_TESTS = {
+    "src/plenum_ai/business_public_watch.py": "test_public_business_watch.py",
+}
+
 TASK_ACCEPTANCE = {
     ("src/plenum_ai/business_public_watch.py", "Reject health JSON bodies exceeding 65536 bytes even if their first bytes form valid JSON. Preserve fixed targets and ordinary successful and failed response behavior."):
+        "health_body_limit.py",
+    ("src/plenum_ai/business_public_watch.py", "Fix health JSON byte limit. The prior patch counted dictionary keys, not bytes. Read at most 65537 raw bytes, reject length above 65536 before decoding, and preserve existing checks."):
         "health_body_limit.py",
 }
 
@@ -122,7 +130,7 @@ def verify(report_path: Path, verdict_path: Path, *, checkout: Path | None = Non
             return persist("BLOCKED_UNVERIFIED_CANDIDATE", "original_model_report_not_accepted")
         source_path = root / source
         patch_path = root / candidate
-        tests = root / "tests" / ("test_" + Path(source).stem + ".py")
+        tests = root / "tests" / FOCUSED_TESTS.get(source, "test_" + Path(source).stem + ".py")
         if (not source_path.is_file() or source_path.is_symlink()
                 or not patch_path.is_file() or patch_path.is_symlink()
                 or (interrupted and (source_path.parent.is_symlink() or patch_path.parent.is_symlink()
