@@ -140,6 +140,24 @@ def funding_title_matches(subject,title):
                 (word=="agriculture" and "agricultural" in words)) for word in subject)
 
 
+def paper_survey_subject(query):
+    """Extract a literal public scholarly topic, not the request's boilerplate."""
+    match=re.fullmatch(r"(?:Survey|Review) public ([A-Za-z][A-Za-z -]{2,70}) papers",query,re.I)
+    if not match:
+        return None
+    words=tuple(re.findall(r"[a-z]+",match.group(1).lower()))
+    return words if 1<=len(words)<=5 else None
+
+
+def paper_title_matches(subject,title):
+    if not subject or not isinstance(title,str):
+        return False
+    words=set(re.findall(r"[a-z]+",title.lower()))
+    return all(bool(words.intersection(
+        {term,term+"s"} | ({"compute","computational","computation","computations"} if term=="computing" else set())
+        )) for term in subject)
+
+
 def request_url(key, query):
     if key not in SOURCES:
         raise ValueError("Unapproved public source")
@@ -156,6 +174,10 @@ def request_url(key, query):
             "select":"id,title,doi,publication_date,authorships"
         })
     if kind == "crossref":
+        subject=paper_survey_subject(query)
+        if subject:
+            return base + "?" + urlencode({"query.title":" ".join(subject),"rows":20,
+                "filter":"type:journal-article","select":"DOI,title,container-title,published,URL,publisher"})
         return base + "?" + urlencode({
             "query.bibliographic":query,"rows":4,
             "filter":"type:journal-article",
@@ -210,7 +232,7 @@ def fetch_public(key, query, opener=urlopen):
         data = response.read(MAX_BYTES + 1)
     if len(data) > MAX_BYTES:
         raise ValueError("Public provider exceeded response byte limit")
-    return parse_public(key, data)
+    return parse_public(key, data, query=query)
 
 
 def _text(node, tag):
@@ -321,9 +343,14 @@ def parse_public(key, data, query=None):
                 break
     elif kind == "crossref":
         rows = (payload.get("message") or {}).get("items") or []
-        for p in rows[:MAX_RESULTS]:
+        subject=paper_survey_subject(query) if query else None
+        for p in rows[:20 if subject else MAX_RESULTS]:
             title = (p.get("title") or [""])[0]
             doi = str(p.get("DOI") or "")
+            if subject and (not paper_title_matches(subject,title) or not re.fullmatch(r"10\.[0-9]{4,9}/[^\s?#]+",doi)):
+                continue
+            if subject and len(result)>=MAX_RESULTS:
+                break
             url = "https://doi.org/"+doi if doi.startswith("10.") else p.get("URL","")
             journal = (p.get("container-title") or [""])[0]
             published = str((p.get("published") or {}).get("date-parts") or "")[:55]
@@ -382,6 +409,8 @@ def scan_horizon(query, category="all", online=False, opener=urlopen):
     if category != "all" and category not in CATEGORIES:
         raise ValueError("Unknown horizon category")
     keys = [k for k,p in SOURCES.items() if category=="all" or p["category"]==category]
+    if paper_survey_subject(query) and category in ("all","journals"):
+        keys=["crossref_journals"]
     if not online:
         return {"schema":"plenum-public-horizon-snapshot-v1","topic":query,
                 "category":category,

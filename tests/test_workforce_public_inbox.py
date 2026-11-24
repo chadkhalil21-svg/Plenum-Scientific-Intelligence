@@ -203,5 +203,20 @@ class IntakeTests(unittest.TestCase):
             self.assertFalse(result["verified"])
 
 
+    def test_paper_survey_rejects_unrelated_search_metadata(self):
+        objective="Survey public photonic computing papers"
+        good={"source":"crossref_journals","category":"journals","title":"Photonic computation architectures","url":"https://doi.org/10.1000/right"}
+        for record,expected in ((good,True),({**good,"title":"Public survey of papers"},False),({**good,"url":"https://example.org/other"},False)):
+            with self.subTest(record=record),tempfile.TemporaryDirectory() as folder:
+                def runner(cmd,**kwargs):
+                    self.assertEqual(cmd[cmd.index("--category")+1],"journals")
+                    Path(cmd[-1]).write_text(json.dumps({"schema":"plenum-public-horizon-snapshot-v1",
+                        "topic":objective,"category":"journals","independent_breakthrough_verified":False,
+                        "AGI_achieved":False,"records":[record]}))
+                    return FakeRun()
+                result=w.run_issue(event(body=w.MAGIC+"\nobjective: "+objective),output_dir=Path(folder),runner=runner)
+                self.assertIs(result["verified"],expected)
+                self.assertFalse(result["individual_papers_independently_validated"])
+
 if __name__=="__main__":
     unittest.main()
