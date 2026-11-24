@@ -162,5 +162,34 @@ class WorldHorizonTests(unittest.TestCase):
                             opener=lambda *a,**kw:1/0)
         self.assertEqual(len(offline["records"]),0)
 
+
+    def test_official_grant_search_subject_filters_before_truncation_and_never_records_token(self):
+        query="Survey public agricultural funding sources"
+        response={"errorcode":0,"token":"not-persisted",
+                  "data":{"oppHits":[
+                      {"id":str(i),"title":"Physics opportunity","agencyName":"NSF","oppStatus":"posted"} for i in range(1,8)
+                  ]+[
+                      {"id":"99","title":"Agricultural research program","agencyName":"USDA","oppStatus":"posted","closeDate":"01/30/2027"},
+                      {"id":"100","title":"Agriculture closed grant","agencyName":"USDA","oppStatus":"closed"},
+                      {"id":"../101","title":"Agriculture fake grant","agencyName":"USDA","oppStatus":"posted"}]}}
+        requests=[]
+        def opener(req,timeout):
+            requests.append(req)
+            if req.full_url=="https://api.grants.gov/v1/api/search2":
+                self.assertEqual(req.get_method(),"POST")
+                self.assertEqual(json.loads(req.data),{"rows":25,"keyword":"agriculture","oppStatuses":"posted|forecasted"})
+                self.assertIsNone(req.get_header("Authorization"))
+                return Stream(json.dumps(response).encode())
+            return Stream(RSS)
+        report=scan_horizon(query,category="funding",online=True,opener=opener)
+        self.assertEqual(len(report["records"]),1)
+        self.assertEqual(report["records"][0]["url"],"https://www.grants.gov/search-results-detail/99")
+        self.assertEqual(report["records"][0]["title"],"Agricultural research program")
+        self.assertNotIn("not-persisted",json.dumps(report))
+        self.assertFalse(report["records"][0]["primary_source_verified"])
+        self.assertFalse(report["records"][0]["independent_fact_check_complete"])
+        self.assertEqual(len(requests),2)
+
+
 if __name__=="__main__":
     unittest.main()

@@ -125,5 +125,30 @@ class IntakeTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 w.validate_original_report(p,OBJECTIVE)
 
+
+    def test_scoped_funding_survey_reuses_existing_worker_but_rejects_unrelated_results(self):
+        objective="Survey public agricultural funding sources"
+        original=event(body=w.MAGIC+"\nobjective: "+objective)
+        row={"url":"https://www.grants.gov/search-results-detail/12345",
+             "source":"grants_gov_search","category":"funding",
+             "title":"Agricultural research grants","metadata_note":"posted; USDA"}
+        for record,expected in ((row,True),({**row,"title":"Physics Frontiers Centers"},False),
+                                ({**row,"url":"https://example.org/12345"},False),
+                                ({**row,"metadata_note":"closed; USDA"},False)):
+            with self.subTest(record=record),tempfile.TemporaryDirectory() as folder:
+                def runner(cmd,**kwargs):
+                    Path(cmd[-1]).write_text(json.dumps({
+                        "schema":"plenum-public-horizon-snapshot-v1","topic":objective,
+                        "category":"funding","independent_breakthrough_verified":False,
+                        "AGI_achieved":False,"records":[record]}))
+                    return FakeRun()
+                report=w.run_issue(original,output_dir=Path(folder),runner=runner)
+                self.assertEqual(report["verified"],expected)
+                self.assertFalse(report["funding_subject_relevance_independently_verified"])
+                if expected:
+                    self.assertTrue(report["funding_title_match_verified"])
+                    self.assertIn("eligibility and deadlines not independently audited",report["verified_scope"])
+
+
 if __name__=="__main__":
     unittest.main()
