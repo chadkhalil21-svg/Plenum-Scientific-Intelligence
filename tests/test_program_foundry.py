@@ -53,5 +53,24 @@ class ProgramFoundryTests(unittest.TestCase):
             with self.assertRaises(FileExistsError):
                 generate_program("research_cli","Public research",root/"z")
 
+
+    def test_generated_validator_rejects_nonfinite_floats_preserves_all_integers(self):
+        import runpy
+        with tempfile.TemporaryDirectory() as tmp:
+            path=pathlib.Path(tmp)/"validated"
+            generate_program("data_validator","Public numerical validation",path)
+            validate=runpy.run_path(str(path/"main.py"))["validate"]
+            data=[{"value":0},{"value":-3},{"value":10**400},{"value":-10**400},
+                  {"value":0.5},{"value":-1.25},{"value":float("nan")},
+                  {"value":float("inf")},{"value":float("-inf")},
+                  {"value":True},{"value":False},{"value":"5"},{},"not a row"]
+            self.assertEqual(validate(data),{"valid_rows":6,"total_rows":14,
+                                            "measurement_truth_verified":False})
+            self.assertEqual(validate([]),{"valid_rows":0,"total_rows":0,
+                                          "measurement_truth_verified":False})
+            with self.assertRaises(TypeError):
+                validate({})
+
+
 if __name__=="__main__":
     unittest.main()
