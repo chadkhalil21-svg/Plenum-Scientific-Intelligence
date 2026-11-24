@@ -496,6 +496,87 @@ def grade_complete_bounded_public_goal(objective: str, team: tuple[str, ...],
 
 
 
+def grade_planned_clause(step, worker, root):
+    """Read actual bytes; None means no trusted criterion yet, False means failed."""
+    from hashlib import sha256
+    from .world_horizon import paper_survey_subject, paper_title_matches
+    from .reviewed_domain_workers import DOMAIN_FILES, _original_functional_test
+    kind,goal=step["kind"],step["objective"]
+    if kind=="public_research":
+        if not paper_survey_subject(goal):
+            return None
+    elif kind=="public_program":
+        if not re.fullmatch(r"(?:create|prepare|provide) (?:a |the )?(?:existing )?(cloudflare neuron budget|noaa station metadata) validator program",goal.lower()):
+            return None
+    else:
+        return None
+    if (worker.get("status")!="DRAFT_READY_FOR_FOUNDER" or worker.get("verified") is not True):
+        return False
+    try:
+        relative=worker.get("_artifact_path")
+        if not isinstance(relative,str) or not relative.startswith("workers/"+kind+"/"):
+            return False
+        digest=artifact_digest(root,relative)
+        if not digest:
+            return False
+        path=root/relative
+        if kind=="public_research":
+            subject=paper_survey_subject(goal)
+            if not subject or not path.is_file() or path.stat().st_size>200000:
+                return False
+            report=json.loads(path.read_text("utf-8"))
+            records=report.get("records")
+            if (report.get("schema")!="plenum-public-horizon-snapshot-v1"
+                    or report.get("topic")!=goal or report.get("category")!="journals"
+                    or report.get("independent_breakthrough_verified") is not False
+                    or not isinstance(records,list) or not 1<=len(records)<=4
+                    or any(not isinstance(r,dict) or r.get("source")!="crossref_journals"
+                           or r.get("category")!="journals"
+                           or not isinstance(r.get("url"),str)
+                           or not re.fullmatch(r"https://doi\.org/10\.[0-9]{4,9}/[^\s?#]+",r["url"])
+                           or not paper_title_matches(subject,r.get("title"))
+                           or r.get("independent_fact_check_complete") is not False
+                           for r in records)
+                    or len({r["url"].lower() for r in records})!=len(records)):
+                return False
+            return {"kind":kind,"objective":goal,"artifact":relative,"sha256":digest,
+                "acceptance":"distinct topic-matched Crossref DOI metadata",
+                "records":[{"title":r["title"],"url":r["url"]} for r in records],
+                "paper_content_verified":False}
+        elif kind=="public_program":
+            # Accept only explicit requests for the reviewed existing tools;
+            # no generic starter or extra features can inherit this credit.
+            normalized=goal.lower()
+            match=re.fullmatch(r"(?:create|prepare|provide) (?:a |the )?(?:existing )?(cloudflare neuron budget|noaa station metadata) validator program",normalized)
+            if not match or worker.get("actual_offline_functional_test_passed") is not True:
+                return False
+            capability={"cloudflare neuron budget":"cloudflare_workers_ai_free",
+                        "noaa station metadata":"noaa_water_station_metadata"}[match.group(1)]
+            code_dir=path/"code"
+            paths=[code_dir/"manifest.json",code_dir/"main.py",code_dir/"test_generated.py"]
+            if any(p.is_symlink() or not p.is_file() or p.stat().st_size>40000 for p in paths):
+                return False
+            manifest=json.loads(paths[0].read_text("utf-8"))
+            code=paths[1].read_bytes()
+            if (code!=DOMAIN_FILES[capability].read_bytes()
+                    or paths[2].read_text("utf-8")!=_original_functional_test(capability)
+                    or manifest.get("schema")!="plenum-reviewable-program-v1"
+                    or manifest.get("kind")!=capability or manifest.get("public_topic")!=goal
+                    or manifest.get("main_sha256")!=sha256(code).hexdigest()
+                    or manifest.get("functional_verifier_executed_and_passed") is not True
+                    or manifest.get("generated_program_has_not_been_deployed") is not True
+                    or manifest.get("human_code_review_required") is not True):
+                return False
+            return {"kind":kind,"objective":goal,"artifact":relative,"sha256":digest,
+                "acceptance":"exact reviewed original source and functional test receipt",
+                "program_sha256":sha256(code).hexdigest(),"new_program_invented":False}
+        else:
+            return False
+
+    except (OSError,ValueError,TypeError,KeyError,AttributeError,UnicodeError):
+        return False
+
+
 def grade_planned_deliverables(task, plan, observed, root):
     """Grade every supported requested deliverable from actual saved bytes.
 
@@ -513,67 +594,10 @@ def grade_planned_deliverables(task, plan, observed, root):
             return rejected
         deliverables=[]
         for step in plan["steps"]:
-            kind,goal=step["kind"],step["objective"]
-            worker=observed[kind]
-            relative=worker.get("_artifact_path")
-            if not isinstance(relative,str) or not relative.startswith("workers/"+kind+"/"):
+            proof=grade_planned_clause(step,observed[step["kind"]],root)
+            if not isinstance(proof,dict):
                 return rejected
-            digest=artifact_digest(root,relative)
-            if not digest:
-                return rejected
-            path=root/relative
-            if kind=="public_research":
-                subject=paper_survey_subject(goal)
-                if not subject or not path.is_file() or path.stat().st_size>200000:
-                    return rejected
-                report=json.loads(path.read_text("utf-8"))
-                records=report.get("records")
-                if (report.get("schema")!="plenum-public-horizon-snapshot-v1"
-                        or report.get("topic")!=goal or report.get("category")!="journals"
-                        or report.get("independent_breakthrough_verified") is not False
-                        or not isinstance(records,list) or not 1<=len(records)<=4
-                        or any(not isinstance(r,dict) or r.get("source")!="crossref_journals"
-                               or r.get("category")!="journals"
-                               or not isinstance(r.get("url"),str)
-                               or not re.fullmatch(r"https://doi\.org/10\.[0-9]{4,9}/[^\s?#]+",r["url"])
-                               or not paper_title_matches(subject,r.get("title"))
-                               or r.get("independent_fact_check_complete") is not False
-                               for r in records)
-                        or len({r["url"].lower() for r in records})!=len(records)):
-                    return rejected
-                deliverables.append({"kind":kind,"objective":goal,"artifact":relative,"sha256":digest,
-                    "acceptance":"distinct topic-matched Crossref DOI metadata",
-                    "records":[{"title":r["title"],"url":r["url"]} for r in records],
-                    "paper_content_verified":False})
-            elif kind=="public_program":
-                # Accept only explicit requests for the reviewed existing tools;
-                # no generic starter or extra features can inherit this credit.
-                normalized=goal.lower()
-                match=re.fullmatch(r"(?:create|prepare|provide) (?:a |the )?(?:existing )?(cloudflare neuron budget|noaa station metadata) validator program",normalized)
-                if not match or worker.get("actual_offline_functional_test_passed") is not True:
-                    return rejected
-                capability={"cloudflare neuron budget":"cloudflare_workers_ai_free",
-                            "noaa station metadata":"noaa_water_station_metadata"}[match.group(1)]
-                code_dir=path/"code"
-                paths=[code_dir/"manifest.json",code_dir/"main.py",code_dir/"test_generated.py"]
-                if any(p.is_symlink() or not p.is_file() or p.stat().st_size>40000 for p in paths):
-                    return rejected
-                manifest=json.loads(paths[0].read_text("utf-8"))
-                code=paths[1].read_bytes()
-                if (code!=DOMAIN_FILES[capability].read_bytes()
-                        or paths[2].read_text("utf-8")!=_original_functional_test(capability)
-                        or manifest.get("schema")!="plenum-reviewable-program-v1"
-                        or manifest.get("kind")!=capability or manifest.get("public_topic")!=goal
-                        or manifest.get("main_sha256")!=sha256(code).hexdigest()
-                        or manifest.get("functional_verifier_executed_and_passed") is not True
-                        or manifest.get("generated_program_has_not_been_deployed") is not True
-                        or manifest.get("human_code_review_required") is not True):
-                    return rejected
-                deliverables.append({"kind":kind,"objective":goal,"artifact":relative,"sha256":digest,
-                    "acceptance":"exact reviewed original source and functional test receipt",
-                    "program_sha256":sha256(code).hexdigest(),"new_program_invented":False})
-            else:
-                return rejected
+            deliverables.append(proof)
         if len(deliverables)!=len(plan["steps"]):
             return rejected
         return {"status":"VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE",
@@ -684,6 +708,14 @@ def execute(event: dict, *, output_dir: Path) -> dict:
             }
         if fingerprint:
             result["_artifact_path"] = relative
+        # A green worker flag cannot reserve acceptance when an independently
+        # gradeable requested clause fails. Preserve the rejected bytes and
+        # leave only this worker eligible for the existing bounded retry gate.
+        if plan_hash and result.get("verified") is True:
+            proof=grade_planned_clause({"kind":kind,"objective":assignments[kind]},result,output_dir)
+            if proof is False:
+                result={**result,"status":"BLOCKED_WORKER_OR_VERIFICATION",
+                        "verified":False,"failure_type":"IndependentClauseAcceptanceFailed"}
         observed[kind] = result
         progress[kind] = {
             "attempt": attempt,

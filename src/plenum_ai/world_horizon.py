@@ -158,7 +158,7 @@ def paper_title_matches(subject,title):
         )) for term in subject)
 
 
-def request_url(key, query):
+def request_url(key, query, *, paper_alternative=False):
     if key not in SOURCES:
         raise ValueError("Unapproved public source")
     definition = SOURCES[key]
@@ -176,7 +176,7 @@ def request_url(key, query):
     if kind == "crossref":
         subject=paper_survey_subject(query)
         if subject:
-            return base + "?" + urlencode({"query.title":" ".join(subject),"rows":20,
+            return base + "?" + urlencode({("query.bibliographic" if paper_alternative else "query.title"):" ".join(subject),"rows":20,
                 "filter":"type:journal-article","select":"DOI,title,container-title,published,URL,publisher"})
         return base + "?" + urlencode({
             "query.bibliographic":query,"rows":4,
@@ -202,8 +202,8 @@ def request_url(key, query):
     raise ValueError("Unrecognized approved data adapter")
 
 
-def fetch_public(key, query, opener=urlopen):
-    url = request_url(key, clean_query(query))
+def fetch_public(key, query, opener=urlopen, *, paper_alternative=False):
+    url = request_url(key, clean_query(query), paper_alternative=paper_alternative)
     expected = urlsplit(SOURCES[key]["url"]).netloc
     if urlsplit(url).netloc != expected:
         raise ValueError("Public source host mismatch")
@@ -228,8 +228,16 @@ def fetch_public(key, query, opener=urlopen):
         "User-Agent":"PlenumScientificIntelligence/1.8 read-only-public-signals",
         "Accept":"application/json,text/html,application/rss+xml,application/atom+xml,application/xml",
     })
-    with opener(request, timeout=13) as response:
-        data = response.read(MAX_BYTES + 1)
+    if key=="crossref_journals" and paper_survey_subject(query):
+        from .chief_of_staff_pilot import NoRedirects
+        client=build_opener(NoRedirects).open if opener is urlopen else opener
+        with client(request,timeout=13) as response:
+            if getattr(response,"status",200)!=200 or (hasattr(response,"geturl") and response.geturl()!=url):
+                raise ValueError("Unexpected scholarly search response")
+            data=response.read(MAX_BYTES+1)
+    else:
+        with opener(request, timeout=13) as response:
+            data = response.read(MAX_BYTES + 1)
     if len(data) > MAX_BYTES:
         raise ValueError("Public provider exceeded response byte limit")
     return parse_public(key, data, query=query)
@@ -440,6 +448,20 @@ def scan_horizon(query, category="all", online=False, opener=urlopen):
                     "records":[]}
     with ThreadPoolExecutor(max_workers=4) as pool:
         statuses=list(pool.map(one,keys))
+    # The same approved Crossref endpoint supports a broader bibliographic
+    # index. Change query strategy exactly once after no accepted title
+    # results or a failed first request; do not broaden the subject gate.
+    if keys==["crossref_journals"] and paper_survey_subject(query) and not statuses[0]["records"]:
+        first=statuses[0]
+        try:
+            items=fetch_public("crossref_journals",query,opener=opener,paper_alternative=True)
+            statuses[0]={"source":"crossref_journals","status":"retrieved_metadata",
+                         "records":items,"query_strategy":"bibliographic_recovery",
+                         "first_attempt":first}
+        except (OSError,ValueError,TypeError,KeyError,AttributeError,RuntimeError) as exc:
+            statuses[0]={"source":"crossref_journals","status":"unavailable",
+                         "records":[],"query_strategy":"bibliographic_recovery",
+                         "error_type":type(exc).__name__,"first_attempt":first}
     all_records=[r for s in statuses for r in s["records"]]
     seen=set()
     unique=[]
