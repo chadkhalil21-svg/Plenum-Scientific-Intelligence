@@ -240,6 +240,8 @@ def minister():
 
 
 def qualify():
+    from datetime import datetime, timezone
+    started = time.monotonic()
     if api("/api/companies"):
         raise RuntimeError("Expected fresh isolated board")
     cid=str(UUID(required(api("/api/companies","POST",{"name":"Plenum sequential public mission","description":MISSION}),"id","created_company")))
@@ -256,6 +258,7 @@ def qualify():
         return str(UUID(required(api(route+"/agents","POST",fields),"id","created_agent")))
     leader=hire("Minister of Operations","ceo","minister")
     agents={key:hire(name,"engineer" if key=="engineering" else "general",key,leader) for key,(name,_) in SPECS.items()}
+    queued = time.monotonic()
     task=api(route+"/issues","POST",{"title":TITLE,"description":MISSION,"status":"todo","priority":"high","assigneeAgentId":leader})
     parent_id=str(UUID(required(task,"id","created_parent")))
     # No board-side child assignment: wait for the actual Minister's plan and native wakes.
@@ -292,6 +295,20 @@ def qualify():
     if os.getenv("PLENUM_PAPERCLIP_MODEL")=="local" and summary["minister_model_executed"] is not True:
         raise ValueError("Missing required actual local model receipt")
     exclusive(ROOT/"qualification.json",summary)
+    terminal=datetime.now(timezone.utc)
+    issue_created=os.environ.get("PLENUM_ISSUE_CREATED_AT","")
+    timing={"schema":"plenum-paperclip-event-timing-v1","parent":parent_id,
+            "native_assignment_to_verified_seconds":round(time.monotonic()-queued,3),
+            "native_qualification_seconds":round(time.monotonic()-started,3),
+            "verified_at":terminal.isoformat(),"issue_to_verified_seconds":None,
+            "paid_inference":False,"model_executed":summary["minister_model_executed"],
+            "verified_divisions":summary["verified_divisions"]}
+    if issue_created:
+        created=datetime.fromisoformat(issue_created)
+        if created.tzinfo is None or created>terminal:raise ValueError("Invalid event timestamp")
+        timing["issue_to_verified_seconds"]=round((terminal-created).total_seconds(),3)
+    exclusive(ROOT/"event-timing.json",timing)
+    print(json.dumps(timing),flush=True)
     print(json.dumps(summary),flush=True)
 
 
