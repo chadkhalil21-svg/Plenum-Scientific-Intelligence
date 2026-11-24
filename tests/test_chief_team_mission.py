@@ -303,6 +303,19 @@ class ExtractiveTeamPlanTests(TestCase):
     plan={"steps":[{"kind":"public_program","objective":"Create a public numeric validator program"},
                    {"kind":"public_creative","objective":"draw an original SVG geometry diagram"}]}
 
+    def test_compact_boundary_selection_preserves_exact_text_and_rejects_wrong_roles(self):
+        from plenum_ai.chief_team_mission import materialize_boundary_plan
+        task=parse_mission(mission(self.objective))
+        choice={"boundaries":[0],"roles":["public_program","public_creative"]}
+        self.assertEqual(materialize_boundary_plan(task,choice),self.plan)
+        for bad in ({"boundaries":[True],"roles":choice["roles"]},
+                    {"boundaries":[1],"roles":choice["roles"]},
+                    {"boundaries":[0],"roles":list(reversed(choice["roles"]))},
+                    {"boundaries":[0],"roles":["public_program","public_program"]},
+                    {**choice,"new_goal":"unapproved"}):
+            with self.subTest(bad=bad),self.assertRaises(ValueError):
+                materialize_boundary_plan(task,bad)
+
     def test_immutable_plan_rejects_scope_expansion_omission_and_wrong_roles(self):
         from plenum_ai.chief_team_mission import validate_team_plan
         task=parse_mission(mission(self.objective))
