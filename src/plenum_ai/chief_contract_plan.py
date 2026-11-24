@@ -23,19 +23,23 @@ DOI_RE = re.compile(r'(?<![\w/])(10\.[0-9]{4,9}/[A-Za-z0-9][A-Za-z0-9.()/_+-]{0,
 TOOLS = {'noaa_metadata':'research-specialist','station_validation':'coding-specialist',
          'crossref_metadata':'research-specialist','bibliography_readback':'verification-specialist',
          'cooling_solution':'scientific-specialist','cooling_readback':'verification-specialist',
-         'evidence_report':'chief-evidence-assembly'}
+         'evidence_report':'chief-evidence-assembly',
+         'business_readback':'commercial-operations-specialist',
+         'business_review':'verification-specialist'}
 
 
 DEPENDENCIES = {'station_validation':'noaa_metadata',
                 'bibliography_readback':'crossref_metadata',
-                'cooling_readback':'cooling_solution'}
+                'cooling_readback':'cooling_solution', 'business_review':'business_readback'}
 ACCEPTANCE = {'noaa_metadata':'exact_station_identity_and_coordinates',
               'station_validation':'exact_input_structural_validation',
               'crossref_metadata':'exact_doi_and_required_metadata',
               'bibliography_readback':'same_provider_metadata_agreement',
               'cooling_solution':'finite_temperature_within_analytic_tolerance',
               'cooling_readback':'independent_analytic_temperature_agreement',
-              'evidence_report':'complete_source_bound_evidence_report'}
+              'evidence_report':'complete_source_bound_evidence_report',
+              'business_readback':'all_original_public_targets_checked_with_bounded_attempts',
+              'business_review':'exact_business_status_readback_without_readiness_claim'}
 
 
 def contract_dependencies(tool, scope):
@@ -83,9 +87,12 @@ def parse_contract_mission(event):
     cooling=dict(zip(('initial_kelvin','ambient_kelvin','rate','duration'),map(float,match.groups()))) if match else None
     if cooling and not (0 < cooling['initial_kelvin'] <= 2000 and 0 < cooling['ambient_kelvin'] <= 2000 and 0 < cooling['rate'] <= 10 and 0 < cooling['duration'] <= 10000):
         raise ValueError('Cooling parameters outside bounded physical contract')
-    if not dois and not stations and not cooling or len(dois)>2 or len(stations)>3:
+    business_scope=objective.startswith('Evidence report ') and 'American Rider public health' in objective[len('Evidence report '):].split(' and ')
+    if (not dois and not stations and not cooling and not business_scope) or len(dois)>2 or len(stations)>3:
         raise ValueError('Require explicit bounded NOAA station or DOI identifiers')
     scope={'station_ids':stations,'dois':dois,'cooling':cooling}
+    if business_scope:
+        scope['business']=True
     # The complete deliverable is independently gradeable only under this
     # exact, fully consumed report grammar. Other goals retain legacy scope.
     if objective.startswith('Evidence report '):
@@ -98,6 +105,8 @@ def parse_contract_mission(event):
                 kinds.append('dois')
             elif re.fullmatch(r'cooling initial [0-9]+(?:\.[0-9]+)? K ambient [0-9]+(?:\.[0-9]+)? K rate [0-9]+(?:\.[0-9]+)? time [0-9]+(?:\.[0-9]+)?',clause):
                 kinds.append('cooling')
+            elif clause=='American Rider public health':
+                kinds.append('business')
             else:
                 raise ValueError('Unsupported evidence report clause')
         if len(kinds)!=len(set(kinds)) or set(kinds)!={k for k,v in scope.items() if v}:
@@ -110,6 +119,7 @@ def required_tools(scope):
     return (['noaa_metadata','station_validation'] if scope['station_ids'] else []) + (
         ['crossref_metadata','bibliography_readback'] if scope['dois'] else []) + (
         ['cooling_solution','cooling_readback'] if scope.get('cooling') else []) + (
+        ['business_readback','business_review'] if scope.get('business') else []) + (
         ['evidence_report'] if scope.get('evidence_report') else [])
 
 
@@ -262,9 +272,58 @@ def run_contract(tool,scope,prior):
         error=abs(prior['cooling_solution']['observed_kelvin']-expected)
         if not math.isfinite(error) or error>1e-6:raise ValueError('Independent analytic cooling readback disagrees')
         return {'analytic_kelvin':expected,'absolute_error_kelvin':error,'experimental_validation':False}
+    if tool=='business_readback':
+        from .business_public_watch import run
+        return run()
+    if tool=='business_review':
+        return review_business_status(prior['business_readback'])
     if tool=='evidence_report':
         return build_evidence_report(scope, prior)
     raise ValueError('Unknown contract')
+
+
+def review_business_status(report):
+    """Validate the real original monitor's receipt, not a new network request.
+
+    An unavailable endpoint is a valid finding, never a green availability
+    claim. All three original endpoint observations must be accounted for.
+    """
+    from .business_public_watch import TARGETS
+    from datetime import datetime
+    if (not isinstance(report,dict)
+            or report.get('schema')!='plenum-public-business-readback-v1'
+            or report.get('scope')!='public_https_read_only'
+            or report.get('total')!=len(TARGETS)
+            or any(report.get(k) is not False for k in
+                   ('asserts_commercial_readiness','asserts_transaction_success','requires_production_credentials'))):
+        raise ValueError('Invalid public business monitor receipt')
+    stamp=datetime.fromisoformat(report['checked_at_utc'])
+    if stamp.tzinfo is None:
+        raise ValueError('Business observation time must be timezone aware')
+    rows=report.get('reports')
+    if (not isinstance(rows,list) or len(rows)!=len(TARGETS)
+            or any(not isinstance(row,dict) for row in rows)
+            or [row.get('service') for row in rows]!=[target.name for target in TARGETS]):
+        raise ValueError('Business monitor did not account for every original target')
+    good=0
+    for row in rows:
+        attempts=row.get('attempts')
+        if type(attempts) is not int or not 1<=attempts<=6 or row.get('external_actions_executed') is not False:
+            raise ValueError('Unsafe public business observation')
+        if row.get('status')=='PUBLIC_HTTP_VERIFIED':
+            if row.get('independent_gets')!=2 or attempts<2 or row.get('http')!=200:
+                raise ValueError('Missing double readback evidence')
+            good+=1
+        elif row.get('status')=='UNVERIFIED':
+            if row.get('phase') not in ('initial','readback') or not isinstance(row.get('reason'),str):
+                raise ValueError('Missing failed observation evidence')
+        else:
+            raise ValueError('Unrecognized business observation state')
+    if type(report.get('verified')) is not int or report['verified']!=good:
+        raise ValueError('Business monitor counts disagree')
+    return {'all_targets_accounted_for':True,'verified_endpoints':good,
+            'unverified_endpoints':len(TARGETS)-good,'all_endpoints_verified':good==len(TARGETS),
+            'commercial_readiness_verified':False,'transactions_verified':False}
 
 
 def build_evidence_report(scope, inputs):
@@ -287,6 +346,10 @@ def build_evidence_report(scope, inputs):
         report['sections']['cooling']={
             'solution':inputs['cooling_solution'],'readback':inputs['cooling_readback'],
             'limitation':'Analytic and numerical model only; no experimental validation'}
+    if scope.get('business'):
+        report['sections']['business']={
+            'observation':inputs['business_readback'],'review':inputs['business_review'],
+            'limitation':'Public HTTP availability only; no transaction or commercial readiness verification'}
     return report
 
 
@@ -299,6 +362,7 @@ def verify_evidence_report(scope, inputs, report):
     if scope['station_ids']: expected.add('stations')
     if scope['dois']: expected.add('bibliography')
     if scope.get('cooling'): expected.add('cooling')
+    if scope.get('business'): expected.add('business')
     if not isinstance(sections,dict) or set(sections)!=expected:
         return False
     try:
@@ -324,6 +388,12 @@ def verify_evidence_report(scope, inputs, report):
             if set(section)!={'solution','readback','limitation'} or section['limitation']!='Analytic and numerical model only; no experimental validation':
                 return False
             if section['solution']!=inputs['cooling_solution'] or section['readback']!=inputs['cooling_readback']:
+                return False
+        if 'business' in sections:
+            section=sections['business']
+            if set(section)!={'observation','review','limitation'} or section['limitation']!='Public HTTP availability only; no transaction or commercial readiness verification':
+                return False
+            if section['observation']!=inputs['business_readback'] or section['review']!=review_business_status(inputs['business_readback']) or section['review']!=inputs['business_review']:
                 return False
         return True
     except (ValueError,TypeError,KeyError,AttributeError):
@@ -351,6 +421,8 @@ def verify_results(scope,results):
                 or results['cooling_readback'].get('analytic_kelvin')!=reference
                 or results['cooling_readback'].get('absolute_error_kelvin')!=abs(observed-reference)):
             return False
+    if scope.get('business') and results['business_review']!=review_business_status(results['business_readback']):
+        return False
     if scope.get('evidence_report') and not verify_evidence_report(scope,results,results['evidence_report']):
         return False
     return True
@@ -465,6 +537,12 @@ def check_contract_result(tool, scope, inputs, result):
         if (math.isfinite(error) and error <= 1e-6
                 and result == {'analytic_kelvin':reference, 'absolute_error_kelvin':error,
                                'experimental_validation':False}):
+            return
+    elif tool == 'business_readback':
+        review_business_status(result)
+        return
+    elif tool == 'business_review':
+        if result==review_business_status(inputs['business_readback']):
             return
     elif tool == 'evidence_report':
         if verify_evidence_report(scope,inputs,result):

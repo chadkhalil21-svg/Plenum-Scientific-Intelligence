@@ -360,3 +360,58 @@ class IntegratedEvidenceGoalTests(TestCase):
                           "Evidence report DOI 10.1038/nature14539 and make a discovery"):
             with self.subTest(objective=objective), self.assertRaises(ValueError):
                 m.parse_contract_mission(event(objective))
+
+
+class CommercialEvidenceHandoffTests(TestCase):
+    objective="Evidence report American Rider public health and cooling initial 352 K ambient 291 K rate 0.04 time 15"
+
+    def test_actual_existing_monitor_integrates_mixed_availability_with_science(self):
+        from plenum_ai import business_public_watch as watch
+        calls=[]
+        def probe(target):
+            calls.append(target.name)
+            if target.name=="platform":
+                return False,"non_200_http",503
+            return True,"verified_read",200
+        original_run=watch.run
+        def monitor():
+            return original_run(probe_fn=probe,sleep_fn=lambda _:None)
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            with patch.object(watch,"run",side_effect=monitor) as worker:
+                report=m.execute_contract_mission(event(self.objective),output_dir=root)
+            worker.assert_called_once()
+            self.assertEqual(calls,["corporate","corporate","platform","platform","platform","public_server","public_server"])
+            self.assertTrue(report["founder_objective_verified"])
+            self.assertEqual(report["new_worker_invocations"],5)
+            final=json.loads((root/"workers/evidence_report/result.json").read_text())
+            self.assertEqual(set(final["input_digests"]),{"business_readback","business_review","cooling_solution","cooling_readback"})
+            review=final["result"]["sections"]["business"]["review"]
+            self.assertEqual(review["verified_endpoints"],2)
+            self.assertEqual(review["unverified_endpoints"],1)
+            self.assertFalse(review["commercial_readiness_verified"])
+            self.assertFalse(review["all_endpoints_verified"])
+            with patch.object(watch,"run",side_effect=AssertionError("repeated accepted observation")):
+                recovered=m.execute_contract_mission(event(self.objective),output_dir=root)
+            self.assertEqual(recovered["reused_prior_verified_workers"],5)
+            self.assertTrue(recovered["founder_objective_verified"])
+
+    def test_business_scope_does_not_accept_arbitrary_url_or_readiness_claim(self):
+        for objective in ("Evidence report American Rider public health and assert launch readiness",
+                          "Evidence report American Rider public health and American Rider public health",
+                          "Evidence report https american Rider public health"):
+            with self.subTest(objective=objective),self.assertRaises((ValueError,PermissionError)):
+                m.parse_contract_mission(event(objective))
+
+    def test_business_verifier_rejects_incomplete_and_unverified_green_claims(self):
+        from plenum_ai import business_public_watch as watch
+        good=watch.run(probe_fn=lambda _: (True,"verified_read",200),sleep_fn=lambda _:None)
+        self.assertTrue(m.review_business_status(good)["all_endpoints_verified"])
+        import copy
+        for field,value in (("independent_gets",1),("attempts",1),("external_actions_executed",True)):
+            bad=copy.deepcopy(good)
+            bad["reports"][0][field]=value
+            with self.subTest(field=field),self.assertRaises(ValueError):
+                m.review_business_status(bad)
+        with self.assertRaises(ValueError):
+            m.review_business_status({**good,"asserts_commercial_readiness":True})
