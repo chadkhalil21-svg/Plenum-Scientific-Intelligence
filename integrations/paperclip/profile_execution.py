@@ -20,7 +20,8 @@ def chief_receipt(scope, plan):
 def division_receipts(role, scope, prior, result, directory):
     budget=scope["kind"]=="bibliography_budget"
     dataset=scope["kind"]=="public_dataset"
-    bibliography=budget or dataset
+    objective=scope["kind"]=="public_objective"
+    bibliography=budget or dataset or objective
     inputs={"prior":{k:hash_value(v) for k,v in prior.items()},"result":hash_value(result)}
     out={}
     def add(profile, value):
@@ -52,14 +53,19 @@ def division_receipts(role, scope, prior, result, directory):
         if artifact.is_symlink() or source.is_symlink():
             raise ValueError("Unsafe profile source")
         data=source.read_bytes()
-        original=Path(__file__).with_name("dataset_program.py") if dataset else DOMAIN_FILES["cloudflare_workers_ai_free" if budget else "noaa_water_station_metadata"]
+        original=Path(__file__).with_name("objective_program.py") if objective else Path(__file__).with_name("dataset_program.py") if dataset else DOMAIN_FILES["cloudflare_workers_ai_free" if budget else "noaa_water_station_metadata"]
         source_hash=sha256(data).hexdigest()
         if (data!=original.read_bytes() or source_hash!=result["manifest"]["main_sha256"]
                 or result["manifest"]["functional_verifier_executed_and_passed"] is not True):
             raise ValueError("Coding source digest mismatch")
         add("coding",{"reviewed_source_sha256":source_hash,"functional_test_passed":
                       result["manifest"]["functional_verifier_executed_and_passed"],"deployed":False})
-        if dataset:
+        if objective:
+            from objective_mission import evaluate,simulation_input
+            scenario=simulation_input(result["input"])
+            add("simulation",{"scenario":"synthetic input perturbation","inputs":scenario,
+                              "observed":evaluate(source,scenario,result["tool"]),"physical_validation":False})
+        elif dataset:
             from dataset_mission import evaluate
             data=dict(result["input"],values=result["input"]["values"]+[result["input"]["values"][-1]])
             add("simulation",{"scenario":"synthetic repeated last observation","inputs":data,
@@ -88,7 +94,7 @@ def division_receipts(role, scope, prior, result, directory):
     elif role=="commercial":
         recommendation=result["recommendation"]
         limitations=result["limitations"]
-        subject="synthetic numerical data" if dataset else "offline AI budget" if budget else "coastal metadata"
+        subject="bounded objective evidence" if objective else "synthetic numerical data" if dataset else "offline AI budget" if budget else "coastal metadata"
         add("operations",{"next_action":recommendation,"blocked_by":limitations,
                           "owner":"Scientific Research and Engineering","external_write":False})
         add("creative",{"format":"unpublished three-panel storyboard","panels":[

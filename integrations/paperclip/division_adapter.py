@@ -149,14 +149,27 @@ def run_assigned(role, *, mission_worker=None, specs=SPECS, description=DESCRIPT
                     checked(marker,{"company":company,"mission":parent,"role":role})
                     if not (directory/(role+".attempt-2")).exists():
                         raise TimeoutError("Isolated CI transient provider fault")
+                marker=directory/"ci-replan-engineering.json"
+                if role=="engineering" and marker.exists():
+                    if os.getenv("GITHUB_ACTIONS")!="true":raise PermissionError("CI fault marker on owner host")
+                    from checkpoint_store import checked
+                    checked(marker,{"company":company,"mission":parent,"role":role})
+                    raise TimeoutError("Isolated CI primary engineering tool unavailable")
                 return mission_worker(role,inputs,directory)
         else:
             inputs = ({key: read_evidence(company, key, parent)["result"] for key in SPECS if key != role}
                       if role == "verification" else None)
             produce = lambda: public_worker(role, inputs)
-        receipt = execute_once(directory, company, role, task, produce, remote=remote)
-    from recovery_audit import finalize
-    finalize(directory,company,role,task,receipt["sha256"])
+        from checkpoint_store import SpecialistExhausted
+        try:
+            receipt = execute_once(directory, company, role, task, produce, remote=remote)
+        except SpecialistExhausted:
+            if not persistent() or role!="engineering" or expected_scope is None or expected_scope["kind"]!="public_objective":raise
+            from objective_replan import recover
+            receipt=recover(api,directory,company,parent,task,expected_scope,inputs)
+    if not (directory/(role+".replan-completed.json")).exists():
+        from recovery_audit import finalize
+        finalize(directory,company,role,task,receipt["sha256"])
     if remote is not None:
         remote.complete(receipt["sha256"])
     api(path, "PATCH", {"status": "done", "comment": "Original public worker evidence SHA256: " +

@@ -10,6 +10,12 @@ from urllib.error import URLError, HTTPError
 
 MAX_BYTES = 2_000_000
 
+class DomainBlocked(RuntimeError):
+    """Reviewed local capability unavailable; never used for authorization or integrity errors."""
+
+class SpecialistExhausted(RuntimeError):
+    """Known primary execution failure, inspect immutable failure records before replanning."""
+
 
 def encoded(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
@@ -88,7 +94,11 @@ def execute_once(directory, company, role, issue, produce, *, remote=None):
             return receipt
         except Exception as exc:
             allowed = transient(exc) and number == 1
-            exclusive(failure, dict(expected, retryable=allowed, error_type=type(exc).__name__))
+            detail=dict(expected,retryable=allowed,error_type=type(exc).__name__)
+            if isinstance(exc,DomainBlocked) or transient(exc):
+                detail["replan_eligible"]=True
+            exclusive(failure,detail)
             if not allowed:
+                if detail.get("replan_eligible"):raise SpecialistExhausted("Terminal specialist failure") from exc
                 raise RuntimeError("Terminal specialist failure") from exc
     raise RuntimeError("Bounded specialist attempt budget exhausted")

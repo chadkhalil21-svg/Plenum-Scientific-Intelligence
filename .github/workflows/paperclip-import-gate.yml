@@ -53,3 +53,7 @@ jobs:
         env:
           PYTHONPATH: src
         run: python integrations/paperclip/persistent_autonomy_smoke.py
+      - name: Composable objective routing and fail-closed alternative replan
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/objective_replan_smoke.py
