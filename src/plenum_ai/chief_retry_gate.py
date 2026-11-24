@@ -165,7 +165,10 @@ def inspect_contract_retry(root, task, cp, report, run_id):
         plan_hash=sha256(json.dumps(receipt,sort_keys=True).encode()).hexdigest()
         order=[step['tool'] for step in receipt['plan']['steps']]
         count=len(results)
-        if count<2 or set(results)!=set(order[:count]):return rejected
+        # The fixed contract workers are read-only or local numerical work.
+        # A first-worker interruption is safe to retry once even before any
+        # sibling has completed; retain the exact immutable plan/attempt gate.
+        if count<1 or set(results)!=set(order[:count]):return rejected
         completed_keys={'attempt','status','verified','worker','artifact_path','output_artifact','sha256','plan_sha256'}
         for tool in order[:count-1]:
             entry=results[tool];relative=f'workers/{tool}/result.json'
