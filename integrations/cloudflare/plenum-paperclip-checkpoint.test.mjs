@@ -16,8 +16,8 @@ const object=new PrivateContinuityMemory({storage:{get:async k=>values.get(k),
 const env={PLENUM_PRIVATE_MEMORY_HMAC_SECRET:owner,
   PLENUM_PAPERCLIP_CHECKPOINT_HMAC_SECRET:secret,PLENUM_PAPERCLIP_CHECKPOINT_SCOPE:company+"/"+mission,
   PLENUM_PRIVATE_MEMORY:{getByName:name=>{names.push(name);return {fetch:(url,opts)=>object.fetch(new Request(url,opts))};}}};
-async function signed(method,target,value,key=secret){
-  const raw=value===undefined?"":JSON.stringify(value),stamp=String(Date.now());
+async function signed(method,target,value,key=secret,stamp=String(Date.now())){
+  const raw=value===undefined?"":JSON.stringify(value);
   const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(key),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
   const sig=Buffer.from(await crypto.subtle.sign("HMAC",k,new TextEncoder().encode([method,target,stamp,raw].join("\n")))).toString("hex");
   return new Request("https://test.example"+target,{method,headers:{"x-plenum-memory-time":stamp,
@@ -29,6 +29,12 @@ test("runtime scope cannot access private memory, other missions, previews or un
   assert.equal((await worker.fetch(await signed("GET",path.replace(mission,issue)),env)).status,403);
   assert.equal((await worker.fetch(await signed("GET",path),{...env,PLENUM_PREVIEW_ONLY:"true"})).status,404);
   assert.equal((await worker.fetch(new Request("https://test.example"+path),env)).status,403);
+  const stale=await worker.fetch(await signed("GET",path,undefined,secret,String(Date.now()-121000)),env);
+  assert.equal(stale.status,403);
+  assert.deepEqual(await stale.json(),{error:"unauthorized_or_stale"});
+  const invalid=await worker.fetch(await signed("GET",path,undefined,"wrong-fixture-secret-not-production-12345"),env);
+  assert.equal(invalid.status,403);
+  assert.deepEqual(await invalid.json(),{error:"unauthorized_or_stale"});
   assert.equal((await worker.fetch(await signed("GET",path,undefined,owner),{...env,PLENUM_PAPERCLIP_CHECKPOINT_HMAC_SECRET:owner})).status,403);
   assert.equal(names.length,0);
 });
