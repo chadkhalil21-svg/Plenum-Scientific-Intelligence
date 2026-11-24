@@ -197,3 +197,42 @@ class ContractRecoveryEvidenceTests(TestCase):
                 result = m.execute_contract_mission(event(self.objective), output_dir=Path(directory))
             self.assertEqual(result["contract_results"]["cooling_solution"]["method"], "expm")
             self.assertTrue(result["bounded_contracts_verified"])
+
+
+    def test_false_success_recovers_before_persisting_invalid_producer(self):
+        import numpy as np
+        for value in (float("nan"), float("inf"), 999.0):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                with patch("scipy.integrate.solve_ivp", return_value=SimpleNamespace(
+                        success=True, y=np.array([[370.0, value]]))) as primary:
+                    result = m.execute_contract_mission(event(self.objective), output_dir=root)
+                primary.assert_called_once()
+                self.assertTrue(result["bounded_contracts_verified"])
+                self.assertEqual(result["new_worker_invocations"], 3)
+                producer = json.loads((root / "workers/cooling_solution/result.json").read_text())
+                self.assertEqual(producer["result"]["method"], "expm")
+                self.assertEqual(producer["recovery"]["reason"], "CoolingQualityFailure")
+                checkpoint = json.loads((root / "chief-checkpoint-101.json").read_text())["results"]
+                self.assertEqual(checkpoint["cooling_solution"]["attempt"], 2)
+                self.assertTrue(checkpoint["cooling_solution"]["verified"])
+
+    def test_both_invalid_producers_exhaust_budget_and_leave_no_accepted_artifact(self):
+        import numpy as np
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with patch("scipy.integrate.solve_ivp", return_value=SimpleNamespace(
+                    success=True, y=np.array([[370.0, 999.0]]))) as primary, patch.object(
+                    m, "cooling_matrix_solution", return_value={"observed_kelvin": 0.0}) as alternate:
+                with self.assertRaises(m.CoolingQualityFailure):
+                    m.execute_contract_mission(event(self.objective), output_dir=root)
+            primary.assert_called_once()
+            alternate.assert_called_once()
+            self.assertFalse((root / "workers/cooling_solution/result.json").exists())
+            self.assertFalse((root / "workers/cooling_readback/result.json").exists())
+            saved = json.loads((root / "chief-checkpoint-101.json").read_text())["results"]
+            self.assertEqual(saved["cooling_solution"]["attempt"], 2)
+            self.assertFalse(saved["cooling_solution"]["verified"])
+            with patch.object(m, "run_contract", side_effect=AssertionError("third attempt")):
+                with self.assertRaisesRegex(ValueError, "Two-attempt ceiling"):
+                    m.execute_contract_mission(event(self.objective), output_dir=root)
