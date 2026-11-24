@@ -62,6 +62,53 @@ def parse_mission(event: dict) -> dict:
             "original": original}
 
 
+def validate_specialist_graph(nodes: list, approved: dict) -> list:
+    """Order only approved goal nodes with explicit, trusted acceptance criteria.
+
+    The owner-scoped caller supplies the approved capability manifest. A proposed
+    graph cannot add a worker, input, acceptance rule or dependency. Preserve
+    the proposed order among ready nodes for existing checkpoint compatibility.
+    """
+    from graphlib import CycleError, TopologicalSorter
+
+    if not isinstance(nodes, list) or not approved or len(nodes) != len(approved):
+        raise ValueError("Graph must contain every approved specialist subgoal once")
+    by_id = {}
+    for node in nodes:
+        if (not isinstance(node, dict)
+                or set(node) != {"id", "specialist", "depends_on", "acceptance"}):
+            raise ValueError("Invalid specialist graph node")
+        key = node["id"]
+        if not isinstance(key, str) or key not in approved or key in by_id:
+            raise ValueError("Unknown or duplicate specialist graph node")
+        expected = approved[key]
+        deps = node["depends_on"]
+        if (not isinstance(deps, list) or any(not isinstance(x, str) for x in deps)
+                or len(deps) != len(set(deps)) or set(deps) != set(expected["depends_on"])
+                or not set(deps) <= set(approved)
+                or node["specialist"] != expected["specialist"]
+                or not isinstance(node["acceptance"], str) or not node["acceptance"]
+                or node["acceptance"] != expected["acceptance"]):
+            raise ValueError("Graph expands scope or changes trusted acceptance criteria")
+        by_id[key] = node
+    sorter = TopologicalSorter({key: node["depends_on"] for key, node in by_id.items()})
+    try:
+        sorter.prepare()
+    except CycleError as exc:
+        raise ValueError("Cyclic specialist dependency graph") from exc
+    ready = set(sorter.get_ready())
+    ordered = []
+    while ready:
+        key = next(key for key in by_id if key in ready)
+        ready.remove(key)
+        ordered.append(by_id[key])
+        sorter.done(key)
+        ready.update(sorter.get_ready())
+    if len(ordered) != len(nodes):
+        raise ValueError("Incomplete specialist graph")
+    return ordered
+
+
 def preflight(event: dict) -> dict:
     task = parse_mission(event)
     return {
