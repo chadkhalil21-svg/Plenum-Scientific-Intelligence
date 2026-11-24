@@ -142,6 +142,9 @@ jobs:
             sleep 2
           done
           exit 1
+      - name: Qualify two consecutive persistent missions and both restart readbacks
+        if: matrix.mode == 'off'
+        run: python3 integrations/paperclip/persistent_native_smoke.py
       - name: Collect only public task evidence
         if: always()
         env:
