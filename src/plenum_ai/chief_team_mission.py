@@ -155,31 +155,67 @@ def validate_team_plan(task, plan):
     return plan
 
 
+TEAM_PLANNER_MODEL = "qwen3.5:4b"
+
+
+def materialize_boundary_plan(task, choice):
+    """The model selects boundaries and roles; the host preserves exact text."""
+    content=task["objective"][5:]
+    separators=list(re.finditer(r", and | and |, ",content))
+    if len(separators)>20 or not isinstance(choice,dict) or set(choice)!={"boundaries","roles"}:
+        raise ValueError("Invalid compact plan")
+    boundaries, roles=choice["boundaries"],choice["roles"]
+    count=len(task["team"])
+    if (not isinstance(boundaries,list) or len(boundaries)!=count-1
+            or any(type(i) is not int or not 0<=i<len(separators) for i in boundaries)
+            or boundaries!=sorted(set(boundaries))
+            or not isinstance(roles,list) or len(roles)!=count
+            or any(not isinstance(role,str) for role in roles)):
+        raise ValueError("Invalid compact boundary selection")
+    spans=[]
+    cursor=0
+    for i in boundaries:
+        separator=separators[i]
+        spans.append(content[cursor:separator.start()])
+        cursor=separator.end()
+    spans.append(content[cursor:])
+    return validate_team_plan(task,{"steps":[{"kind":kind,"objective":goal}
+                 for kind,goal in zip(roles,spans)]})
+
+
 def plan_independent_team(task):
-    """One existing isolated Qwen inference; no recursive delegation loop."""
+    """One compact structured inference with the existing isolated local runner."""
     import os
-    from .chief_workforce_command import MODEL, MODEL_URL
+    from .chief_workforce_command import MODEL_URL
     if (os.environ.get("PLENUM_EPHEMERAL_RUNNER")!="confirmed"
             or os.environ.get("PLENUM_CHIEF_MODEL_URL")!=MODEL_URL):
         raise PermissionError("Team planning requires the original isolated loopback model")
     from langchain_ollama import ChatOllama
-    schema={"type":"object","additionalProperties":False,"required":["steps"],
-            "properties":{"steps":{"type":"array","minItems":len(task["team"]),
-                        "maxItems":len(task["team"]),"items":{"type":"object",
-                        "additionalProperties":False,"required":["kind","objective"],
-                        "properties":{"kind":{"enum":list(task["team"])},"objective":{"type":"string"}}}}}}
-    model=ChatOllama(model=MODEL,base_url=MODEL_URL,temperature=0,reasoning=False,
-                    format=schema,num_ctx=2048,num_predict=500)
-    response=model.invoke([("system","Split the exact founder instruction into separate independent specialist assignments. "
-        "Return each exact contiguous clause in original order, without its separating and or comma. "
-        "public_research retrieves sources; public_program creates review-only programs; "
-        "public_science runs known numerical tools; public_creative makes media drafts. "
-        "Use each authorized role exactly once. Do not add, paraphrase, omit, or invent words."),
-        ("human",task["objective"][5:])])
+    content=task["objective"][5:]
+    separators=list(re.finditer(r", and | and |, ",content))
+    count=len(task["team"])
+    if not count-1<=len(separators)<=20:
+        raise ValueError("Invalid available separators")
+    schema={"type":"object","additionalProperties":False,"required":["boundaries","roles"],
+            "properties":{"boundaries":{"type":"array","minItems":count-1,"maxItems":count-1,
+                        "items":{"type":"integer","enum":list(range(len(separators)))}},
+                        "roles":{"type":"array","minItems":count,"maxItems":count,
+                                 "items":{"enum":list(task["team"])}}}}
+    marked=content
+    for i in reversed(range(len(separators))):
+        m=separators[i]
+        marked=marked[:m.start()]+f" [SEP {i}] "+marked[m.end():]
+    model=ChatOllama(model=TEAM_PLANNER_MODEL,base_url=MODEL_URL,temperature=0,reasoning=False,
+                    format=schema,num_ctx=2048,num_predict=160)
+    response=model.invoke([("system","Select the separator indices that divide the instruction into independent assignments. "
+        "Return ordered boundaries and corresponding specialist roles as JSON. "
+        "Research retrieves sources; program creates review-only code; science runs known numerical tools; "
+        "creative creates drafts. Use each authorized role exactly once. No new instructions."),
+        ("human",json.dumps({"instruction":marked,"roles":list(task["team"])}))])
     raw=getattr(response,"content",None)
-    if not isinstance(raw,str) or len(raw)>4000:
+    if not isinstance(raw,str) or len(raw)>1000:
         raise ValueError("Invalid bounded team plan")
-    return validate_team_plan(task,json.loads(raw))
+    return materialize_boundary_plan(task,json.loads(raw))
 
 
 def deterministic_team_recovery(task):
