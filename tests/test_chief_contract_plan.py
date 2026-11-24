@@ -470,3 +470,28 @@ class DynamicPaperHandoffTests(TestCase):
         with self.assertRaises(ValueError):
             m.parse_contract_mission(event("Evidence report Survey public photonic computing papers and predict a discovery"))
 
+
+
+class IndependentContractReadbackTests(TestCase):
+    def test_actual_artifact_readback_rejects_rehashed_wrong_dependency(self):
+        from plenum_ai.ambient_quality_insights import verify_contract_mission_artifacts
+        from plenum_ai.mission_checkpoint import artifact_digest
+        objective="Evidence report cooling initial 350 K ambient 290 K rate 0.1 time 12"
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            result=m.execute_contract_mission(event(objective),output_dir=root)
+            self.assertTrue(result["founder_objective_verified"])
+            with patch.object(m,"run_contract",side_effect=AssertionError("replayed worker")):
+                self.assertTrue(verify_contract_mission_artifacts(result,root))
+            rel="workers/evidence_report/result.json"
+            final=root/rel
+            record=json.loads(final.read_text())
+            record["input_digests"]["cooling_solution"]="0"*64
+            final.write_text(json.dumps(record))
+            cp=root/"chief-checkpoint-101.json"
+            saved=json.loads(cp.read_text())
+            saved["results"]["evidence_report"]["sha256"]=artifact_digest(root,rel)
+            cp.write_text(json.dumps(saved))
+            self.assertFalse(verify_contract_mission_artifacts(result,root))
+            self.assertFalse(verify_contract_mission_artifacts({**result,"objective":objective+" and NOAA 8724580"},root))
+
