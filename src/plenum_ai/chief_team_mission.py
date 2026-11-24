@@ -226,6 +226,8 @@ def team_plan_receipt(task, output_dir, progress):
         try:
             plan=plan_independent_team(task)
             provenance="local_ollama"
+        except PermissionError:
+            raise
         except (ValueError,RuntimeError,OSError,ImportError,TypeError,KeyError):
             plan=deterministic_team_recovery(task)
             provenance="deterministic_extractive_recovery"
@@ -642,7 +644,9 @@ def execute(event: dict, *, output_dir: Path) -> dict:
     })
     if plan_hash:
         report.update({"dispatcher":"original_chief_extractive_team_plan",
-                       "model_called":called,"chief_model_delegated":called and receipt["provenance"]=="local_ollama",
+                       "model_called":(False if not called else True if receipt["provenance"]=="local_ollama" else None),
+                       "new_model_plan_attempted":called,
+                       "chief_model_delegated":called and receipt["provenance"]=="local_ollama",
                        "planning_provenance":receipt["provenance"],"plan_sha256":plan_hash,
                        "plan_artifact":f"chief-team-plan-{task['issue_number']}.json",
                        "specialist_assignments":receipt["plan"]["steps"],
