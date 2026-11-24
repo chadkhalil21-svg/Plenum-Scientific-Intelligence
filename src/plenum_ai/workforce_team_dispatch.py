@@ -188,6 +188,26 @@ def dispatch(task: dict, output_dir: Path) -> dict:
         }
 
     if kind == "public_science":
+        from .chief_team_mission import _planned_cooling_parameters
+        parameters = _planned_cooling_parameters(objective)
+        if parameters is not None:
+            from .chief_contract_plan import run_contract, check_contract_result
+            scope = {"cooling": parameters}
+            solution = run_contract("cooling_solution", scope, {})
+            check_contract_result("cooling_solution", scope, {}, solution)
+            prior = {"cooling_solution": solution}
+            readback = run_contract("cooling_readback", scope, prior)
+            check_contract_result("cooling_readback", scope, prior, readback)
+            (base / "cooling.json").write_text(
+                json.dumps({**prior, "cooling_readback": readback}, allow_nan=False, sort_keys=True),
+                encoding="utf-8",
+            )
+            return {"status": "DRAFT_READY_FOR_FOUNDER", "verified": True,
+                    "verified_scope": "requested numerical cooling and analytic readback, not experimental validation",
+                    "worker": ROLES[kind], "output_artifact": str(base.relative_to(output_dir)),
+                    "original_scientific_discovery": False, "owner_review_required": True}
+        if re.match(r"cooling initial\b", objective, re.I):
+            raise ValueError("Malformed parameterized cooling objective")
         from .durable_graph import run_persistent, inspect_persistent
         db = base / "checkpoint.sqlite"
         thread_id = "founder-" + str(num)
