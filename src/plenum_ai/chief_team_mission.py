@@ -16,7 +16,7 @@ import re
 
 from .chief_workforce_command import (
     CHIEF_MAGIC, CHIEF_TITLE, HINTS, KIND_TO_AGENT,
-    parse_founder_chief, worker_event,
+    parse_founder_chief, worker_event, independent_expected_kind,
 )
 from .workforce_public_inbox import run_issue
 from .agent_library import suggest_sources
@@ -58,7 +58,16 @@ def parse_mission(event: dict) -> dict:
             raise ValueError("Data mission requires one to three explicit seven-digit NOAA station IDs")
         return {**checked, "team": ("public_research", "public_program"),
                 "original": original, "data_mission": True, "station_ids": ids}
-    return {**checked, "team": independent_expected_team(checked["objective"]),
+    objective = checked["objective"]
+    if objective.startswith("Plan "):
+        # This mode is deliberately confined to independent public assignments.
+        # Real data dependencies use the existing contract mission graph.
+        content = objective[5:]
+        if re.search(r"\b(?:then|after|before|combine|integrate|depend|dependency|depends)\b", content, re.I) or re.search(r"\b(?:using|from|with)\s+(?:its|their|the previous|the resulting)\b", content, re.I):
+            raise ValueError("Dependent goals require the original typed contract route")
+        return {**checked, "team": independent_expected_team(content),
+                "original": original, "model_team_mission": True}
+    return {**checked, "team": independent_expected_team(objective),
             "original": original}
 
 
@@ -109,6 +118,144 @@ def validate_specialist_graph(nodes: list, approved: dict) -> list:
     return ordered
 
 
+def validate_team_plan(task, plan):
+    """Model may extract distinct exact founder clauses, never invent inputs."""
+    if not task.get("model_team_mission") or not isinstance(plan,dict) or set(plan)!={"steps"}:
+        raise ValueError("Expected original planned team scope")
+    steps=plan["steps"]
+    if not isinstance(steps,list) or len(steps)!=len(task["team"]):
+        raise ValueError("Missing or repeated specialist goal")
+    remaining=task["objective"][5:]
+    seen=set()
+    for index, step in enumerate(steps):
+        if not isinstance(step,dict) or set(step)!={"kind","objective"}:
+            raise ValueError("Invalid specialist assignment")
+        kind=step["kind"]
+        goal=step["objective"]
+        if (not isinstance(kind,str) or kind not in task["team"] or kind in seen
+                or not isinstance(goal,str) or not goal or goal!=goal.strip()
+                or not remaining.startswith(goal)):
+            raise ValueError("Assignment is not an exact owner objective span")
+        # Revalidate each extracted clause with the same original owner and worker gates.
+        subevent={**task["original"],"issue":{**task["original"]["issue"],
+                    "body":CHIEF_MAGIC+"\nobjective: "+goal}}
+        parse_founder_chief(subevent)
+        if independent_expected_kind(goal)!=kind:
+            raise ValueError("Assignment does not match its specialist")
+        worker_event(subevent,kind)
+        seen.add(kind)
+        remaining=remaining[len(goal):]
+        if index<len(steps)-1:
+            separator=re.match(r"(?:, and | and |, )",remaining)
+            if not separator:
+                raise ValueError("Unconsumed founder requirement")
+            remaining=remaining[separator.end():]
+    if remaining or seen!=set(task["team"]):
+        raise ValueError("Unconsumed founder requirement")
+    return plan
+
+
+def plan_independent_team(task):
+    """One existing isolated Qwen inference; no recursive delegation loop."""
+    import os
+    from .chief_workforce_command import MODEL, MODEL_URL
+    if (os.environ.get("PLENUM_EPHEMERAL_RUNNER")!="confirmed"
+            or os.environ.get("PLENUM_CHIEF_MODEL_URL")!=MODEL_URL):
+        raise PermissionError("Team planning requires the original isolated loopback model")
+    from langchain_ollama import ChatOllama
+    schema={"type":"object","additionalProperties":False,"required":["steps"],
+            "properties":{"steps":{"type":"array","minItems":len(task["team"]),
+                        "maxItems":len(task["team"]),"items":{"type":"object",
+                        "additionalProperties":False,"required":["kind","objective"],
+                        "properties":{"kind":{"enum":list(task["team"])},"objective":{"type":"string"}}}}}}
+    model=ChatOllama(model=MODEL,base_url=MODEL_URL,temperature=0,reasoning=False,
+                    format=schema,num_ctx=2048,num_predict=500)
+    response=model.invoke([("system","Split the exact founder instruction into separate independent specialist assignments. "
+        "Return each exact contiguous clause in original order, without its separating and or comma. "
+        "public_research retrieves sources; public_program creates review-only programs; "
+        "public_science runs known numerical tools; public_creative makes media drafts. "
+        "Use each authorized role exactly once. Do not add, paraphrase, omit, or invent words."),
+        ("human",task["objective"][5:])])
+    raw=getattr(response,"content",None)
+    if not isinstance(raw,str) or len(raw)>4000:
+        raise ValueError("Invalid bounded team plan")
+    return validate_team_plan(task,json.loads(raw))
+
+
+def deterministic_team_recovery(task):
+    """Different, extractive strategy after a failed model plan, never broaden scope."""
+    from itertools import combinations
+    content=task["objective"][5:]
+    separators=list(re.finditer(r", and | and |, ",content))
+    if len(separators)>20:
+        raise ValueError("Ambiguous independent goal")
+    valid=[]
+    for selected in combinations(separators,len(task["team"])-1):
+        spans=[]
+        start=0
+        for sep in selected:
+            spans.append(content[start:sep.start()])
+            start=sep.end()
+        spans.append(content[start:])
+        try:
+            plan={"steps":[{"kind":independent_expected_kind(goal),"objective":goal} for goal in spans]}
+            valid.append(validate_team_plan(task,plan))
+        except (ValueError,PermissionError,TypeError,KeyError):
+            continue
+    if len(valid)!=1:
+        raise ValueError("No unique authorized team decomposition")
+    return valid[0]
+
+
+def team_plan_receipt(task, output_dir, progress):
+    """Bind all subgoals to the original immutable founder issue and restart state."""
+    from hashlib import sha256
+    from .mission_checkpoint import objective_digest
+    import tempfile
+    path=output_dir/f"chief-team-plan-{task['issue_number']}.json"
+    if path.is_symlink() or (path.exists() and (not path.is_file() or path.stat().st_size>8000)):
+        raise ValueError("Unsafe original team plan")
+    called=False
+    if path.exists():
+        receipt=json.loads(path.read_text("utf-8"))
+        validate_team_receipt(task,receipt)
+    else:
+        if progress:
+            raise ValueError("Existing team checkpoint cannot be replanned")
+        called=True
+        try:
+            plan=plan_independent_team(task)
+            provenance="local_ollama"
+        except PermissionError:
+            raise
+        except (ValueError,RuntimeError,OSError,ImportError,TypeError,KeyError):
+            plan=deterministic_team_recovery(task)
+            provenance="deterministic_extractive_recovery"
+        receipt={"issue":task["issue_number"],"objective_sha256":objective_digest(task["objective"]),
+                 "plan":plan,"provenance":provenance}
+        validate_team_receipt(task,receipt)
+        output_dir.mkdir(parents=True,exist_ok=True)
+        with tempfile.NamedTemporaryFile(dir=output_dir,mode="w",encoding="utf-8",delete=False) as temp:
+            json.dump(receipt,temp,sort_keys=True)
+            temp_path=Path(temp.name)
+        try:
+            temp_path.replace(path)
+        finally:
+            temp_path.unlink(missing_ok=True)
+    digest=sha256(json.dumps(receipt,sort_keys=True).encode()).hexdigest()
+    return receipt,digest,called
+
+
+def validate_team_receipt(task,receipt):
+    from .mission_checkpoint import objective_digest
+    if (not isinstance(receipt,dict) or set(receipt)!={"issue","objective_sha256","plan","provenance"}
+            or type(receipt["issue"]) is not int or receipt["issue"]!=task["issue_number"]
+            or receipt["objective_sha256"]!=objective_digest(task["objective"])
+            or receipt["provenance"] not in ("local_ollama","deterministic_extractive_recovery")):
+        raise ValueError("Team plan receipt binding changed")
+    return validate_team_plan(task,receipt["plan"])
+
+
 def preflight(event: dict) -> dict:
     task = parse_mission(event)
     return {
@@ -118,6 +265,7 @@ def preflight(event: dict) -> dict:
         "mode": "multi",
         "planned_data_mission": task.get("data_mission", False) or (task.get("contract_mission", False) and len(task["team"]) > 2),
         "planned_contract_mission": task.get("contract_mission", False),
+        "planned_model_team_mission": task.get("model_team_mission", False),
         "requires_numerical": bool(task.get("scope", {}).get("cooling")),
         "station_ids": list(task.get("station_ids", ())),
         "dispatcher": "deterministic_existing_chief_scope_gate",
@@ -344,11 +492,21 @@ def execute(event: dict, *, output_dir: Path) -> dict:
         output_dir, issue=task["issue_number"],
         objective=task["objective"], team=task["team"],
     )
+    plan_hash=None
+    if task.get("model_team_mission"):
+        receipt,plan_hash,called=team_plan_receipt(task,output_dir,progress)
+        assignments={step["kind"]:step["objective"] for step in receipt["plan"]["steps"]}
+        order=tuple(assignments)
+    else:
+        assignments={kind:task["objective"] for kind in task["team"]}
+        order=task["team"]
     observed = {}
     resumed = 0
     executed = 0
-    for kind in task["team"]:
+    for kind in order:
         saved = progress.get(kind)
+        if plan_hash and saved is not None and (not isinstance(saved,dict) or saved.get("plan_sha256")!=plan_hash):
+            raise ValueError("Checkpoint is bound to a different team plan")
         recovered = verified_previous_result(output_dir, kind, saved)
         if recovered is not None:
             observed[kind] = recovered
@@ -361,12 +519,16 @@ def execute(event: dict, *, output_dir: Path) -> dict:
                 "failure_type": "PreviouslyAttemptedTwice",
             }
             continue
-        original_event = worker_event(task["original"], kind)
+        source_event={**task["original"],"issue":{**task["original"]["issue"],
+                      "body":CHIEF_MAGIC+"\nobjective: "+assignments[kind]}}
+        original_event = worker_event(source_event, kind)
         base = output_dir / "workers" / kind
         worker_dir = base if attempt == 1 else base / "retry-2"
         # Reserve this attempt atomically BEFORE a worker can be interrupted.
         # A restored RUNNING entry is unverified and consumes the same budget.
         progress[kind] = {"attempt": attempt, "status": "RUNNING", "verified": False}
+        if plan_hash:
+            progress[kind]["plan_sha256"]=plan_hash
         save_checkpoint(
             output_dir, issue=task["issue_number"],
             objective=task["objective"], team=task["team"], results=progress,
@@ -412,6 +574,8 @@ def execute(event: dict, *, output_dir: Path) -> dict:
             "artifact_path": relative if fingerprint else None,
             "sha256": fingerprint,
         }
+        if plan_hash:
+            progress[kind]["plan_sha256"]=plan_hash
         # Atomic checkpoint after EACH original specialist, even on failure.
         save_checkpoint(
             output_dir, issue=task["issue_number"],
@@ -419,9 +583,17 @@ def execute(event: dict, *, output_dir: Path) -> dict:
             results=progress,
         )
     technical_verified = independently_accept_team(task["team"], observed)
-    relevance = (named_entity_evidence_gate(
-        task["objective"], task["team"], observed, output_dir
-    ) if technical_verified else {"status": "NOT_RUN", "irrelevant_kinds": []})
+    if plan_hash and technical_verified:
+        failures=[]
+        for kind in order:
+            scoped=named_entity_evidence_gate(assignments[kind],(kind,),observed,output_dir)
+            failures.extend(scoped["irrelevant_kinds"])
+        relevance={"status":"BLOCKED_NAMED_SOURCE_MISMATCH" if failures else "NAME_MENTION_ONLY_NOT_FULL_OBJECTIVE_PROOF",
+                   "irrelevant_kinds":failures}
+    else:
+        relevance = (named_entity_evidence_gate(
+            task["objective"], task["team"], observed, output_dir
+        ) if technical_verified else {"status": "NOT_RUN", "irrelevant_kinds": []})
     verified = technical_verified and not relevance["irrelevant_kinds"]
     goal_proof = grade_complete_bounded_public_goal(
         task["objective"], task["team"], observed, output_dir,
@@ -470,6 +642,16 @@ def execute(event: dict, *, output_dir: Path) -> dict:
         "external_account_changes": False,
         "paid_api_used": False,
     })
+    if plan_hash:
+        report.update({"dispatcher":"original_chief_extractive_team_plan",
+                       "model_called":(False if not called else True if receipt["provenance"]=="local_ollama" else None),
+                       "new_model_plan_attempted":called,
+                       "chief_model_delegated":called and receipt["provenance"]=="local_ollama",
+                       "planning_provenance":receipt["provenance"],"plan_sha256":plan_hash,
+                       "plan_artifact":f"chief-team-plan-{task['issue_number']}.json",
+                       "specialist_assignments":receipt["plan"]["steps"],
+                       "founder_objective_verified":False,
+                       "founder_review_required":True})
     return report
 
 

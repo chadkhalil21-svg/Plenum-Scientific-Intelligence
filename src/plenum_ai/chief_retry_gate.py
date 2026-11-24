@@ -94,6 +94,22 @@ def inspect_retry(event: object, root: Path, issue: object) -> dict:
         return {"status": "BLOCKED_UNRELATED_OR_COMPLETED_WORK"}
     if original_task.get("data_mission"):
         return inspect_data_retry(root, original_task, results, report, run_id)
+    if original_task.get("model_team_mission"):
+        from hashlib import sha256
+        from .chief_team_mission import validate_team_receipt
+        rejected={"status":"BLOCKED_UNSAFE_RETRY_HISTORY"}
+        path=root/f"chief-team-plan-{number}.json"
+        try:
+            if not path.is_file() or path.is_symlink() or path.stat().st_size>8000:
+                return rejected
+            receipt=json.loads(path.read_text("utf-8"))
+            validate_team_receipt(original_task,receipt)
+            plan_hash=sha256(json.dumps(receipt,sort_keys=True).encode()).hexdigest()
+            if any(not isinstance(entry,dict) or entry.get("plan_sha256")!=plan_hash for entry in results.values()):
+                return rejected
+            team=[step["kind"] for step in receipt["plan"]["steps"]]
+        except (OSError,ValueError,TypeError,KeyError,UnicodeError,PermissionError):
+            return rejected
     if report["status"] == "SOURCE_READY_NOT_EXECUTED":
         # A terminated first run leaves the ORIGINAL preflight report and a
         # sequential checkpoint prefix. No speculative/unstarted work is proof.
@@ -108,7 +124,7 @@ def inspect_retry(event: object, root: Path, issue: object) -> dict:
                 return {"status": "BLOCKED_UNSAFE_RETRY_HISTORY"}
         interrupted = results[team[count - 1]]
         if (not isinstance(interrupted, dict)
-                or set(interrupted) != {"attempt", "status", "verified"}
+                or set(interrupted) != ({"attempt", "status", "verified", "plan_sha256"} if original_task.get("model_team_mission") else {"attempt", "status", "verified"})
                 or type(interrupted.get("attempt")) is not int
                 or interrupted["attempt"] != 1
                 or interrupted.get("status") != "RUNNING"

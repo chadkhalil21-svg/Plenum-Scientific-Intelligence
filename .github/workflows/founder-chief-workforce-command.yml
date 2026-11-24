@@ -95,8 +95,9 @@ jobs:
           # Original explicitly scoped contract pairs (NOAA / DOI / cooling)
           # already have independently validated deterministic dependencies.
           # Do not install or pull Qwen when no planner can be necessary.
-          needs_model=(data.get('planned_data_mission') is True
-                       and data.get('planned_contract_mission') is not True)
+          needs_model=(data.get('planned_model_team_mission') is True or
+                       (data.get('planned_data_mission') is True
+                        and data.get('planned_contract_mission') is not True))
           with open(os.environ['GITHUB_OUTPUT'],'a') as out:
               out.write('needs_local_model='+str(needs_model).lower()+'\n')
           if needs_model:
@@ -127,7 +128,7 @@ jobs:
         id: data_model
         if: steps.native-reservation.outputs.authorized == 'true' && steps.scope.outputs.needs_local_model == 'true'
         run: |
-          if find reports/workforce-chief -maxdepth 1 \( -name 'chief-data-plan-*.json' -o -name 'chief-contract-plan-*.json' \) -print -quit | read -r saved; then
+          if find reports/workforce-chief -maxdepth 1 \( -name 'chief-data-plan-*.json' -o -name 'chief-contract-plan-*.json' -o -name 'chief-team-plan-*.json' \) -print -quit | read -r saved; then
             echo 'Saved immutable plan will be validated and reused; no model started'
             exit 0
           fi
@@ -262,6 +263,7 @@ jobs:
             reports/workforce-chief/chief-checkpoint-*.json
             reports/workforce-chief/chief-data-plan-*.json
             reports/workforce-chief/chief-contract-plan-*.json
+            reports/workforce-chief/chief-team-plan-*.json
             reports/workforce-chief/ambient-quality-*.json
             reports/workforce-chief/workers/**
           overwrite: true

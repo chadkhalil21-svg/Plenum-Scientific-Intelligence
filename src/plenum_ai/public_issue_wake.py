@@ -284,7 +284,7 @@ def process(number: int, token: str, output_dir: Path, *,
     expected_team_status = None
     if mission:
         scope = preflight(event)
-        if scope.get("planned_data_mission") and not scope.get("planned_contract_mission"):
+        if scope.get("planned_model_team_mission") or (scope.get("planned_data_mission") and not scope.get("planned_contract_mission")):
             # Legacy DATA needs the native isolated model setup. The wake
             # has no authorized model host; don't consume execution reservation.
             raise PermissionError("BLOCKED_LEGACY_DATA_REQUIRES_ORIGINAL_NATIVE_MODEL_ROUTE")
