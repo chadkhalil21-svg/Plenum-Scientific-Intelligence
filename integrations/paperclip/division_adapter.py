@@ -24,7 +24,8 @@ SPECS = {
     "verification": ("Verification and Advisory", "Independently review four public worker artifacts"),
 }
 DESCRIPTION = "Public Paperclip integration acceptance; original reviewed Plenum routines only."
-ROOT = Path("/tmp/plenum-paperclip-evidence")
+ROOT = Path("/paperclip/plenum-mission-evidence")
+MISSION_ORDER = ("intelligence", "research", "engineering", "commercial", "verification")
 
 
 def public_worker(role, upstream=None):
@@ -80,7 +81,7 @@ def read_evidence(company, role):
     return record
 
 
-def run_assigned(role):
+def run_assigned(role, *, mission_worker=None):
     if role not in SPECS:
         raise ValueError("Unapproved division")
     agent = os.environ["PAPERCLIP_AGENT_ID"]
@@ -104,6 +105,8 @@ def run_assigned(role):
         raise ValueError("Expected exactly one assigned integration task")
     task = str(uuid.UUID(rows[0]["id"]))
     path = "/api/issues/" + task
+    from runtime_checkpoint import configured
+    remote = configured(company, rows[0].get("parentId"), role, task)
     api(path + "/checkout", "POST", {"agentId": agent, "expectedStatuses": ["todo", "in_progress"]}, worker=True)
     # The immutable task-bound receipt permits replay of a failed status write,
     # not repeating already completed network or program work.
@@ -115,14 +118,18 @@ def run_assigned(role):
         if receipt.get("issue") != task:
             raise ValueError("Evidence belongs to a different task")
     else:
-        inputs = ({key: read_evidence(company, key)["result"] for key in SPECS if key != role}
-                  if role == "verification" else None)
-        result = public_worker(role, inputs)
-        encoded = json.dumps(result, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
-        receipt = {"company": company, "issue": task, "role": role,
-                   "result": result, "sha256": hashlib.sha256(encoded).hexdigest()}
-        with target.open("x", encoding="utf-8") as stream:
-            json.dump(receipt, stream, sort_keys=True, allow_nan=False)
+        from checkpoint_store import execute_once
+        if mission_worker is not None:
+            previous = MISSION_ORDER[:MISSION_ORDER.index(role)]
+            inputs = {key: read_evidence(company, key)["result"] for key in previous}
+            produce = lambda: mission_worker(role, inputs, directory)
+        else:
+            inputs = ({key: read_evidence(company, key)["result"] for key in SPECS if key != role}
+                      if role == "verification" else None)
+            produce = lambda: public_worker(role, inputs)
+        receipt = execute_once(directory, company, role, task, produce, remote=remote)
+    if remote is not None:
+        remote.complete(receipt["sha256"])
     api(path, "PATCH", {"status": "done", "comment": "Original public worker evidence SHA256: " +
         receipt["sha256"]}, worker=True)
     print(json.dumps({"division": role, "issue": task, "sha256": receipt["sha256"]}), flush=True)
