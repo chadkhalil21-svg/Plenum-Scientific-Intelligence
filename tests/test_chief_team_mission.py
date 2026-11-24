@@ -298,6 +298,56 @@ class ChiefTeamMissionTests(TestCase):
         self.assertFalse(independently_accept_team(expected,{**ok,"public_creative":{**ok["public_creative"],"verified":False}}))
 
 
+class ExtractiveTeamPlanTests(TestCase):
+    objective="Plan Create a public numeric validator program and draw an original SVG geometry diagram"
+    plan={"steps":[{"kind":"public_program","objective":"Create a public numeric validator program"},
+                   {"kind":"public_creative","objective":"draw an original SVG geometry diagram"}]}
+
+    def test_immutable_plan_rejects_scope_expansion_omission_and_wrong_roles(self):
+        from plenum_ai.chief_team_mission import validate_team_plan
+        task=parse_mission(mission(self.objective))
+        self.assertTrue(preflight(mission(self.objective))["planned_model_team_mission"])
+        self.assertEqual(validate_team_plan(task,self.plan),self.plan)
+        for candidate in (
+            {"steps":[{**self.plan["steps"][0],"objective":"Create a different numeric validator program"},self.plan["steps"][1]]},
+            {"steps":[{**self.plan["steps"][0],"kind":"public_creative"},self.plan["steps"][1]]},
+            {"steps":self.plan["steps"][:1]},
+        ):
+            with self.subTest(candidate=candidate),self.assertRaises(ValueError):
+                validate_team_plan(task,candidate)
+        with self.assertRaises(ValueError):
+            parse_mission(mission(self.objective.replace(" and "," then ")))
+
+    def test_actual_original_workers_receive_distinct_subgoals_and_preserve_plan(self):
+        import json
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            with patch("plenum_ai.chief_team_mission.plan_independent_team",return_value=self.plan) as model:
+                result=execute(mission(self.objective),output_dir=root)
+            model.assert_called_once()
+            self.assertTrue(result["chief_model_delegated"])
+            self.assertTrue(result["independent_verified"])
+            self.assertFalse(result["founder_objective_verified"])
+            self.assertEqual(result["specialist_assignments"],self.plan["steps"])
+            self.assertEqual(result["new_worker_invocations"],2)
+            cp=json.loads((root/"chief-checkpoint-1001.json").read_text())
+            self.assertTrue(all(entry["plan_sha256"]==result["plan_sha256"] for entry in cp["results"].values()))
+            with patch("plenum_ai.chief_team_mission.plan_independent_team",side_effect=AssertionError("replanning")),patch("plenum_ai.chief_team_mission.run_issue",side_effect=AssertionError("repeating accepted work")):
+                resumed=execute(mission(self.objective),output_dir=root)
+            self.assertTrue(resumed["independent_verified"])
+            self.assertEqual(resumed["new_worker_invocations"],0)
+            self.assertEqual(resumed["reused_prior_verified_workers"],2)
+            self.assertFalse(resumed["model_called"])
+
+    def test_model_failure_uses_unique_extractive_strategy_not_fake_model_success(self):
+        with tempfile.TemporaryDirectory() as folder,patch("plenum_ai.chief_team_mission.plan_independent_team",side_effect=RuntimeError("fixture failure")):
+            result=execute(mission(self.objective),output_dir=Path(folder))
+        self.assertTrue(result["independent_verified"])
+        self.assertFalse(result["chief_model_delegated"])
+        self.assertEqual(result["planning_provenance"],"deterministic_extractive_recovery")
+        self.assertEqual(result["specialist_assignments"],self.plan["steps"])
+
+
 if __name__ == "__main__":
     import unittest
     unittest.main()
