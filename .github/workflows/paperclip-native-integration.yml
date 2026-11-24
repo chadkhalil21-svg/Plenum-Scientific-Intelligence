@@ -26,11 +26,11 @@ jobs:
     if: >-
       github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
       ((github.event_name == 'issues' &&
-        github.event.issue.title == '[Plenum Paperclip] public coastal qualification' &&
+        (github.event.issue.title == '[Plenum Paperclip] public coastal qualification' || github.event.issue.title == '[Plenum Paperclip] public evidence mission') &&
         github.event.issue.user.login == 'chadkhalil21-svg' &&
         github.event.sender.login == 'chadkhalil21-svg') ||
        (github.event_name == 'issue_comment' &&
-        github.event.issue.title == '[Plenum Paperclip] public coastal qualification' &&
+        (github.event.issue.title == '[Plenum Paperclip] public coastal qualification' || github.event.issue.title == '[Plenum Paperclip] public evidence mission') &&
         github.event.issue.user.login == 'chadkhalil21-svg' &&
         github.event.comment.user.login == 'chadkhalil21-svg' &&
         github.event.comment.body == '<!-- plenum-paperclip-recovery-v1 -->') ||
@@ -44,6 +44,7 @@ jobs:
     outputs:
       authorized: ${{ steps.gate.outputs.authorized }}
       created_at: ${{ steps.gate.outputs.created_at }}
+      scope: ${{ steps.gate.outputs.scope }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -62,7 +63,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mode: ${{ fromJSON(github.event_name == 'pull_request' && '["off","local"]' || '["local"]') }}
+        include: ${{ fromJSON(github.event_name == 'pull_request' && '[{"mode":"off","kind":"legacy"},{"mode":"local","kind":"legacy"},{"mode":"local","kind":"budget"}]' || '[{"mode":"local","kind":"event"}]') }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -114,7 +115,17 @@ jobs:
         env:
           MODE: ${{ matrix.mode }}
           ISSUE_CREATED: ${{ needs.authorize.outputs.created_at }}
-        run: docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/sequential_mission.py qualify
+          EVENT_SCOPE: ${{ needs.authorize.outputs.scope }}
+          KIND: ${{ matrix.kind }}
+        run: |
+          set -eu
+          case "$KIND" in
+            legacy) scope='{"kind":"coastal"}' ;;
+            budget) scope='{"kind":"bibliography_budget","dois":["10.1145/3442188.3445922"],"budget":{"model":"@cf/zai-org/glm-4.7-flash","neurons_used_today":100,"neurons_reserved":200,"input_tokens_upper_bound":3000,"output_tokens_upper_bound":1000}}' ;;
+            event) scope="$EVENT_SCOPE"; test -n "$scope" ;;
+            *) exit 1 ;;
+          esac
+          docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_MISSION_SCOPE="$scope" -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/sequential_mission.py qualify
       - name: Remove local model before independent restart readback
         if: matrix.mode == 'local'
         run: docker rm -fv plenum-paperclip-qwen
@@ -163,7 +174,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: paperclip-native-public-evidence-${{ matrix.mode }}
+          name: paperclip-native-public-evidence-${{ matrix.mode }}-${{ matrix.kind }}
           path: reports/paperclip-native/
           if-no-files-found: error
           retention-days: 7
