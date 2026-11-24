@@ -32,6 +32,8 @@ FOCUSED_TESTS = {
 }
 
 TASK_ACCEPTANCE = {
+    ("src/plenum_ai/business_public_watch.py", "Repair function probe. Reject any target not in the existing TARGETS tuple before any HTTP request. Return False with a reason and None. Preserve all existing checks."):
+        "probe_scope.py",
     ("src/plenum_ai/business_public_watch.py", "Reject health JSON bodies exceeding 65536 bytes even if their first bytes form valid JSON. Preserve fixed targets and ordinary successful and failed response behavior."):
         "health_body_limit.py",
     ("src/plenum_ai/business_public_watch.py", "Fix health JSON byte limit. The prior patch counted dictionary keys, not bytes. Read at most 65537 raw bytes, reject length above 65536 before decoding, and preserve existing checks."):
@@ -273,7 +275,7 @@ def recover_local_behavior(report_path: Path, verdict_path: Path, event_path: Pa
     test = TASK_ACCEPTANCE.get((source, task))
     patch = Path("reports/openhands-review") / f"issue-{owner['issue_number']}.patch"
     if (owner.get("engine") != LOCAL_ENGINE or first.get("engine") != LOCAL_ENGINE
-            or first.get("repair_passes") != 0 or not test
+            or first.get("repair_passes") != 0 or test != "health_body_limit.py"
             or first.get("source_file") != source or first.get("task") != task
             or first.get("source_sha256") != owner["source_sha256"]
             or first.get("status") != "PROPOSAL_AWAITING_REVIEW"
