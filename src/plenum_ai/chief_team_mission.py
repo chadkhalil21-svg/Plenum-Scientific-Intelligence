@@ -535,7 +535,7 @@ def grade_planned_deliverables(task, plan, observed, root):
                         or any(not isinstance(r,dict) or r.get("source")!="crossref_journals"
                                or r.get("category")!="journals"
                                or not isinstance(r.get("url"),str)
-                               or not re.fullmatch(r"https://doi\\.org/10\\.[0-9]{4,9}/[^\\s?#]+",r["url"])
+                               or not re.fullmatch(r"https://doi\.org/10\.[0-9]{4,9}/[^\s?#]+",r["url"])
                                or not paper_title_matches(subject,r.get("title"))
                                or r.get("independent_fact_check_complete") is not False
                                for r in records)
