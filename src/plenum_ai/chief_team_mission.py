@@ -496,6 +496,48 @@ def grade_complete_bounded_public_goal(objective: str, team: tuple[str, ...],
 
 
 
+def _planned_cooling_parameters(goal):
+    match = re.fullmatch(r"cooling initial ([0-9]+(?:\.[0-9]+)?) K ambient ([0-9]+(?:\.[0-9]+)?) K rate ([0-9]+(?:\.[0-9]+)?) time ([0-9]+(?:\.[0-9]+)?)", goal, re.I)
+    if not match:
+        return None
+    p = dict(zip(("initial_kelvin", "ambient_kelvin", "rate", "duration"), map(float, match.groups())))
+    if not (0 < p["initial_kelvin"] <= 2000 and 0 < p["ambient_kelvin"] <= 2000
+            and 0 < p["rate"] <= 10 and 0 < p["duration"] <= 10000):
+        raise ValueError("Invalid original cooling parameters")
+    return p
+
+
+def _grade_planned_cooling(goal, path, relative, digest):
+    """Independently recompute exact requested numerical outcome from saved bytes."""
+    import math
+    p = _planned_cooling_parameters(goal)
+    receipt = path / "cooling.json"
+    if receipt.is_symlink() or not receipt.is_file() or not 0 < receipt.stat().st_size <= 20000:
+        return False
+    report = json.loads(receipt.read_text("utf-8"))
+    if not isinstance(report, dict) or set(report) != {"cooling_solution", "cooling_readback"}:
+        return False
+    solution, readback = report["cooling_solution"], report["cooling_readback"]
+    if not isinstance(solution, dict) or not isinstance(readback, dict):
+        return False
+    actual = solution.get("observed_kelvin")
+    if (type(actual) not in (int, float) or not math.isfinite(actual)
+            or solution.get("parameters") != p
+            or (solution.get("library"), solution.get("method")) not in
+               (("SciPy solve_ivp", "RK45"), ("SciPy linalg.expm", "expm"))):
+        return False
+    expected = p["ambient_kelvin"] + (p["initial_kelvin"] - p["ambient_kelvin"]) * math.exp(-p["rate"] * p["duration"])
+    error = abs(actual - expected)
+    if (error > 1e-6 or readback != {"analytic_kelvin": expected, "absolute_error_kelvin": error,
+                                    "experimental_validation": False}
+            or readback.get("experimental_validation") is not False):
+        return False
+    return {"kind": "public_science", "objective": goal, "artifact": relative, "sha256": digest,
+            "acceptance": "exact requested cooling inputs and independently recomputed numerical agreement",
+            "observed_kelvin": actual, "analytic_kelvin": expected, "absolute_error_kelvin": error,
+            "experimental_validation": False}
+
+
 def grade_planned_clause(step, worker, root):
     """Read actual bytes; None means no trusted criterion yet, False means failed."""
     from hashlib import sha256
@@ -508,6 +550,12 @@ def grade_planned_clause(step, worker, root):
     elif kind=="public_program":
         if not re.fullmatch(r"(?:create|prepare|provide) (?:a |the )?(?:existing )?(cloudflare neuron budget|noaa station metadata) validator program",goal.lower()):
             return None
+    elif kind=="public_science":
+        try:
+            if _planned_cooling_parameters(goal) is None:
+                return None
+        except ValueError:
+            return False
     else:
         return None
     if (worker.get("status")!="DRAFT_READY_FOR_FOUNDER" or worker.get("verified") is not True):
@@ -520,6 +568,8 @@ def grade_planned_clause(step, worker, root):
         if not digest:
             return False
         path=root/relative
+        if kind=="public_science":
+            return _grade_planned_cooling(goal, path, relative, digest)
         if kind=="public_research":
             subject=paper_survey_subject(goal)
             if not subject or not path.is_file() or path.stat().st_size>200000:
@@ -601,7 +651,7 @@ def grade_planned_deliverables(task, plan, observed, root):
         if len(deliverables)!=len(plan["steps"]):
             return rejected
         return {"status":"VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE",
-                "scope":rejected["scope"],"deliverables":deliverables,
+                "scope":(rejected["scope"]+"; explicit parameterized numerical cooling" if any(d["kind"]=="public_science" for d in deliverables) else rejected["scope"]),"deliverables":deliverables,
                 "all_requested_clauses_accepted":True,"general_autonomy_proved":False}
     except (OSError,ValueError,TypeError,KeyError,AttributeError,UnicodeError):
         return rejected
