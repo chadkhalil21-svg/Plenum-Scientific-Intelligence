@@ -40,3 +40,55 @@ def assigned_scope(api, root, role):
     mid=canonical(row["id"] if role=="minister" else row["parentId"])
     binding=json.loads((mission_dir(root,cid,mid)/"mission-scope.json").read_text())
     return validate_scope(binding["scope"])
+
+# The pinned upstream redacts ALL plain env bindings in agent responses.
+# A persistent adapter has no stored env at all; its fixed non-secret mode is
+# encoded in the exact reviewed entrypoint and role argument, visible on readback.
+PERSISTENT_ENTRYPOINT="/plenum/integrations/paperclip/persistent_entrypoint.py"
+
+def persistent_adapter(role):
+    if role not in ("minister","intelligence","research","engineering","commercial","verification"):
+        raise ValueError("Unknown persistent role")
+    return {"command":"python3","args":[PERSISTENT_ENTRYPOINT,role],
+            "cwd":"/plenum","timeoutSec":150 if role=="minister" else 120,"env":{}}
+
+def validate_roster(rows, company, specs):
+    if not isinstance(rows,list) or any(not isinstance(r,dict) for r in rows):
+        raise ValueError("Persistent roster shape mismatch")
+    names={"minister":"Minister of Operations",**{k:v[0] for k,v in specs.items()}}
+    by_name={r.get("name"):r for r in rows}
+    if len(rows)!=6 or set(by_name)!=set(names.values()):
+        raise ValueError("Persistent roster must be the existing exact workforce")
+    ids={k:canonical(by_name[name]["id"]) for k,name in names.items()}
+    if len(set(ids.values()))!=6:raise ValueError("Persistent roster identity collision")
+    for role,name in names.items():
+        row=by_name[name]
+        cfg=row.get("adapterConfig")
+        expected=persistent_adapter(role)
+        # Missing or empty env are equivalent: there must be no stored binding,
+        # redacted or otherwise. Never accept a redacted value as authorization.
+        if not isinstance(cfg,dict) or {**cfg,"env":cfg.get("env",{})}!=expected:
+            raise ValueError("Persistent roster adapter mismatch: "+role)
+        if (row.get("companyId")!=company or row.get("adapterType")!="process"
+            or row.get("reportsTo")!=(None if role=="minister" else ids["minister"])
+            or row.get("budgetMonthlyCents")!=0):
+            raise ValueError("Persistent roster identity or budget mismatch: "+role)
+        hb=(row.get("runtimeConfig") or {}).get("heartbeat") or {}
+        perms=row.get("permissions") or {}
+        if (hb.get("enabled") is not False or hb.get("wakeOnAssignment") is not True
+            or hb.get("maxConcurrentRuns")!=1 or perms.get("canCreateAgents") is not False
+            or perms.get("canCreateSkills") is not False):
+            raise ValueError("Persistent roster execution permissions mismatch: "+role)
+    return ids
+
+def bind_roster(root, company, ids):
+    from checkpoint_store import exclusive, checked
+    directory=Path(root)/canonical(company)
+    directory.mkdir(parents=True,exist_ok=True,mode=0o700)
+    if directory.is_symlink():raise ValueError("Unsafe persistent company path")
+    path=directory/"persistent-roster.json"
+    value={"company":company,"agents":ids,"schema":"plenum-persistent-roster-v1"}
+    if path.exists() or path.is_symlink():
+        if checked(path,value)!=value:raise ValueError("Persistent roster continuity mismatch")
+    else:exclusive(path,value)
+    return value

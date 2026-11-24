@@ -27,7 +27,7 @@ PAPERS = {"paper_survey": SPECS["research"][1]}
 
 from mission_scope import LEGACY, validate_scope, digest as scope_digest, profile_routes
 from profile_execution import chief_receipt, division_receipts
-from lifecycle import persistent, mission_dir, owner_company, assigned_scope, canonical
+from lifecycle import persistent, mission_dir, owner_company, assigned_scope, canonical, persistent_adapter, validate_roster, bind_roster
 
 
 def active_scope():
@@ -345,27 +345,25 @@ def qualify():
                 "budgetMonthlyCents":0,"runtimeConfig":{"heartbeat":{"enabled":False,"wakeOnAssignment":True,"maxConcurrentRuns":1}},
                 "permissions":{"canCreateAgents":False,"canCreateSkills":False}}
         if durable:
-            fields["adapterConfig"]["env"]={"PYTHONPATH":"/plenum/src","PLENUM_PERSISTENT_BOARD":"confirmed","PLENUM_PAPERCLIP_MODEL":"off"}
-            if os.getenv("GITHUB_ACTIONS")=="true":fields["adapterConfig"]["env"]["GITHUB_ACTIONS"]="true"
+            fields["adapterConfig"]=persistent_adapter(arg)
         if parent: fields["reportsTo"]=parent
         return str(UUID(required(api(route+"/agents","POST",fields),"id","created_agent")))
     roster=api(route+"/agents") if durable else []
     if roster:
-        by_name={r["name"]:r for r in roster}
-        if len(roster)!=6 or set(by_name)!={"Minister of Operations",*[v[0] for v in specs.values()]}:
-            raise ValueError("Persistent roster must be the existing exact workforce")
-        leader=canonical(by_name["Minister of Operations"]["id"])
-        agents={k:canonical(by_name[v[0]]["id"]) for k,v in specs.items()}
-        for k,name in [("minister","Minister of Operations"),*[(k,v[0]) for k,v in specs.items()]]:
-            r=by_name[name]
-            cfg=r.get("adapterConfig") or {}
-            if (cfg.get("args")!=["/plenum/integrations/paperclip/sequential_mission.py",k] or
-                cfg.get("env",{}).get("PLENUM_PERSISTENT_BOARD")!="confirmed" or
-                (k!="minister" and r.get("reportsTo")!=leader)):
-                raise ValueError("Persistent roster adapter mismatch")
+        ids=validate_roster(roster,cid,specs)
+        # Existing boards must already have the immutable original roster proof.
+        if not (ROOT/cid/"persistent-roster.json").is_file():
+            raise ValueError("Existing persistent roster has no original continuity receipt")
+        bind_roster(ROOT,cid,ids)
+        leader=ids["minister"]
+        agents={k:ids[k] for k in specs}
     else:
         leader=hire("Minister of Operations","ceo","minister")
         agents={key:hire(name,"engineer" if key=="engineering" else "general",key,leader) for key,(name,_) in specs.items()}
+        if durable:
+            ids=validate_roster(api(route+"/agents"),cid,specs)
+            if ids!={"minister":leader,**agents}:raise ValueError("Created roster identity mismatch")
+            bind_roster(ROOT,cid,ids)
     queued = time.monotonic()
     fields={"title":binding["parent_title"],"description":binding["parent_description"],"status":"todo","priority":"high"}
     if not durable:fields["assigneeAgentId"]=leader
@@ -441,6 +439,16 @@ def readback(cid,plan,expected_agents=None):
     profiles=json.loads((directory/"profile-routing.json").read_text())
     if profiles!=profile_routes(scope):raise ValueError("Profile routing evidence mismatch")
     specs=task_specs(scope)
+    persistent_ids=None
+    if persistent():
+        persistent_ids=validate_roster(api("/api/companies/"+cid+"/agents"),cid,specs)
+        if not (ROOT/cid/"persistent-roster.json").is_file():
+            raise ValueError("Missing original persistent roster receipt")
+        bind_roster(ROOT,cid,persistent_ids)
+        if persistent_ids["minister"]!=plan["minister"]:raise ValueError("Persistent Minister identity mismatch")
+        actual={k:persistent_ids[k] for k in specs}
+        if expected_agents is not None and expected_agents!=actual:raise ValueError("Persistent assignment roster mismatch")
+        expected_agents=actual
     original=api("/api/issues/"+plan["parent"])
     if original.get("status")!="done" or original.get("assigneeAgentId")!=plan["minister"] or original.get("title")!=binding["parent_title"] or original.get("description")!=binding["parent_description"]:
         raise ValueError("Minister dispatch not accepted")
@@ -495,7 +503,7 @@ def readback(cid,plan,expected_agents=None):
         model_info={"model":receipt["model"],"model_digest":receipt["model_digest"],
                     "model_receipt_sha256":digest(receipt),"model_eval_count":receipt["eval_count"]}
     return {"company":cid,"minister":plan["minister"],"parent":plan["parent"],"order":list(MISSION_ORDER),
-            "verified_divisions":5,"minister_dispatch":True,"minister_model_executed":model_executed,**model_info,"independent_verification":result,
+            "verified_divisions":5,"minister_dispatch":True,**({"persistent_roster":persistent_ids} if persistent_ids is not None else {}),"minister_model_executed":model_executed,**model_info,"independent_verification":result,
             "paid_inference":False,"persistent_production":False,"scope_sha256":binding["scope_sha256"],
             "mission_kind":scope["kind"],"routed_profiles":len(profiles),"profile_worker_execution_claimed":False,"verified_profile_work_products":len(executed),"profile_receipt_sha256":executed,
             "evidence":{k:{"issue":v["issue"],"sha256":v["sha256"]} for k,v in records.items()}}
