@@ -36,7 +36,7 @@ jobs:
           done
           exit 1
       - name: Actual upstream board assigns work and existing specialist returns verified result
-        run: docker exec --user node plenum-paperclip-integration python3 /plenum/integrations/paperclip/acceptance.py
+        run: docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/five_division_acceptance.py
       - name: Remove isolated instance and test database
         if: always()
         run: docker rm -fv plenum-paperclip-integration 2>/dev/null || true
