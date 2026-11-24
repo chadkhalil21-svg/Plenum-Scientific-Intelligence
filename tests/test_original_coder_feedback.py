@@ -117,5 +117,21 @@ class TrustedRecoveryTests(unittest.TestCase):
 
 
 
+    def test_two_function_edits_are_atomic_and_preserve_other_bytes(self):
+        source=b"def first():\n    return 1\n\ndef second():\n    return 2\n\ndef untouched():\n    return 3\n"
+        task="Repair function first. Return four. Then repair function second. Return five."
+        requests=coder.local_edit_requests(task,source)
+        self.assertEqual(requests,["Repair function first. Return four.","Repair function second. Return five."])
+        raw=source
+        for clause,old,new in zip(requests,["return 1","return 2"],["return 4","return 5"]):
+            raw=coder.apply_structured_edit(coder.local_function_scope(clause,raw),{"old":old,"new":new})
+        self.assertEqual(raw,source.replace(b"return 1",b"return 4").replace(b"return 2",b"return 5"))
+        for bad in (task+" Then repair function untouched. Return six.",
+                    "Repair function first. Return four. Then repair function first. Return five.",
+                    "Repair function first. Return four. Then repair function missing. Return five."):
+            with self.subTest(bad=bad),self.assertRaises(ValueError):
+                coder.local_edit_requests(bad,source)
+
+
 if __name__=="__main__":
     unittest.main()
