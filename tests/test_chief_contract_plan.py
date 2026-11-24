@@ -236,3 +236,71 @@ class ContractRecoveryEvidenceTests(TestCase):
             with patch.object(m, "run_contract", side_effect=AssertionError("third attempt")):
                 with self.assertRaisesRegex(ValueError, "Two-attempt ceiling"):
                     m.execute_contract_mission(event(self.objective), output_dir=root)
+
+
+class GoalGraphAcceptanceTests(TestCase):
+    def test_approved_graph_orders_multiple_dependencies_and_refuses_cycles_or_expansion(self):
+        from plenum_ai.chief_team_mission import validate_specialist_graph
+        approved = {
+            "research": {"specialist":"research-specialist", "depends_on":[], "acceptance":"source_identity"},
+            "science": {"specialist":"scientific-specialist", "depends_on":[], "acceptance":"numeric_result"},
+            "review": {"specialist":"verification-specialist", "depends_on":["research","science"], "acceptance":"both_results"},
+        }
+        nodes = [{"id":name, **approved[name]} for name in ("review","research","science")]
+        self.assertEqual([x["id"] for x in validate_specialist_graph(nodes, approved)],
+                         ["research","science","review"])
+        invalid = [
+            [{**nodes[0], "acceptance":"always_pass"}, *nodes[1:]],
+            [{**nodes[0], "depends_on":["research"]}, *nodes[1:]],
+            [{**nodes[0], "specialist":"unknown"}, *nodes[1:]],
+            nodes[:-1],
+            [nodes[0],nodes[1],nodes[1]],
+        ]
+        for proposed in invalid:
+            with self.subTest(proposed=proposed), self.assertRaises(ValueError):
+                validate_specialist_graph(proposed, approved)
+        cycle = {**approved, "research":{**approved["research"], "depends_on":["review"]}}
+        with self.assertRaisesRegex(ValueError, "Cyclic"):
+            validate_specialist_graph([{"id":name, **value} for name,value in cycle.items()], cycle)
+
+    def test_wrong_doi_never_becomes_accepted_producer_and_resume_uses_correct_source(self):
+        objective = "Review DOI 10.1038/nature14539 deposited title year and publisher"
+        good = {"doi":"10.1038/nature14539","title":"Public metadata","year":2015,"publisher":"Publisher"}
+        bad = {**good,"doi":"10.1038/wrong"}
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with patch.object(m,"read_crossref",return_value=bad) as provider:
+                with self.assertRaisesRegex(ValueError,"trusted acceptance criterion"):
+                    m.execute_contract_mission(event(objective),output_dir=root)
+            provider.assert_called_once()
+            saved = json.loads((root/"chief-checkpoint-101.json").read_text())["results"]
+            self.assertFalse(saved["crossref_metadata"]["verified"])
+            self.assertFalse((root/"workers/crossref_metadata/result.json").exists())
+            self.assertNotIn("bibliography_readback",saved)
+            with patch.object(m,"read_crossref",return_value=good):
+                report = m.execute_contract_mission(event(objective),output_dir=root)
+            self.assertTrue(report["bounded_contracts_verified"])
+            self.assertEqual([node["id"] for node in report["goal_graph"]],
+                             ["crossref_metadata","bibliography_readback"])
+            self.assertEqual(report["goal_graph"][1]["depends_on"],["crossref_metadata"])
+            receipt = json.loads((root/"workers/crossref_metadata/result.json").read_text())
+            self.assertEqual(receipt["acceptance_criterion"],"exact_doi_and_required_metadata")
+
+    def test_hash_matching_restored_artifact_cannot_replace_acceptance_criterion(self):
+        from plenum_ai.mission_checkpoint import artifact_digest
+        objective = "Estimate cooling initial 345 K ambient 292 K rate 0.07 time 18"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            m.execute_contract_mission(event(objective),output_dir=root)
+            name = "workers/cooling_solution/result.json"
+            path = root/name
+            artifact = json.loads(path.read_text())
+            artifact["acceptance_criterion"] = "always_pass"
+            path.write_text(json.dumps(artifact))
+            checkpoint = root/"chief-checkpoint-101.json"
+            saved = json.loads(checkpoint.read_text())
+            saved["results"]["cooling_solution"]["sha256"] = artifact_digest(root,name)
+            checkpoint.write_text(json.dumps(saved))
+            with patch.object(m,"run_contract",side_effect=AssertionError("duplicate dispatch")):
+                with self.assertRaisesRegex(ValueError,"Stored acceptance criterion changed"):
+                    m.execute_contract_mission(event(objective),output_dir=root)

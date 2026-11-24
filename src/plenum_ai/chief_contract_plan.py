@@ -25,6 +25,32 @@ TOOLS = {'noaa_metadata':'research-specialist','station_validation':'coding-spec
          'cooling_solution':'scientific-specialist','cooling_readback':'verification-specialist'}
 
 
+DEPENDENCIES = {'station_validation':'noaa_metadata',
+                'bibliography_readback':'crossref_metadata',
+                'cooling_readback':'cooling_solution'}
+ACCEPTANCE = {'noaa_metadata':'exact_station_identity_and_coordinates',
+              'station_validation':'exact_input_structural_validation',
+              'crossref_metadata':'exact_doi_and_required_metadata',
+              'bibliography_readback':'same_provider_metadata_agreement',
+              'cooling_solution':'finite_temperature_within_analytic_tolerance',
+              'cooling_readback':'independent_analytic_temperature_agreement'}
+
+
+def contract_goal_graph(plan, scope):
+    """Derive the trusted goal criteria from the original authorized contracts."""
+    from .chief_team_mission import validate_specialist_graph
+    checked = validate_plan(plan, scope)
+    approved = {tool: {'specialist': TOOLS[tool],
+                       'depends_on': [DEPENDENCIES[tool]] if tool in DEPENDENCIES else [],
+                       'acceptance': ACCEPTANCE[tool]}
+                for tool in required_tools(scope)}
+    proposed = [{'id': step['tool'], 'specialist': TOOLS[step['tool']],
+                 'depends_on': [step['input_from']] if 'input_from' in step else [],
+                 'acceptance': ACCEPTANCE[step['tool']]}
+                for step in checked['steps']]
+    return validate_specialist_graph(proposed, approved)
+
+
 def fetch_noaa_metadata(station):
     from .chief_team_mission import fetch_noaa_metadata as original
     return original(station)
@@ -73,7 +99,7 @@ def validate_plan(plan,scope):
         raise ValueError('Unknown, omitted or duplicate contract')
     for step in steps:
         tool=step['tool']
-        dependency={'station_validation':'noaa_metadata','bibliography_readback':'crossref_metadata','cooling_readback':'cooling_solution'}.get(tool)
+        dependency=DEPENDENCIES.get(tool)
         if dependency:
             if step!={'tool':tool,'input_from':dependency} or names.index(dependency)>names.index(tool):
                 raise ValueError('Missing or reversed actual-data dependency')
@@ -253,11 +279,8 @@ def deterministic_scope_plan(scope):
     fixed and validated: a model cannot improve this exact scope decision.
     This ONLY handles founder-whitelisted identifiers and source/readback pairs.
     """
-    dependencies={'station_validation':'noaa_metadata',
-                  'bibliography_readback':'crossref_metadata',
-                  'cooling_readback':'cooling_solution'}
-    steps=[({'tool':tool,'input_from':dependencies[tool]}
-            if tool in dependencies else {'tool':tool})
+    steps=[({'tool':tool,'input_from':DEPENDENCIES[tool]}
+            if tool in DEPENDENCIES else {'tool':tool})
            for tool in required_tools(scope)]
     return validate_plan({'steps':steps},scope)
 
@@ -310,6 +333,42 @@ def check_cooling_producer(parameters, result):
         raise CoolingQualityFailure('Cooling producer failed analytic acceptance')
 
 
+def check_contract_result(tool, scope, inputs, result):
+    """Apply each node's trusted quality criterion before accepting its artifact."""
+    from .chief_team_mission import _station_rows
+    if tool == 'cooling_solution':
+        check_cooling_producer(scope['cooling'], result)
+        return
+    if tool == 'noaa_metadata':
+        _station_rows(result, tuple(scope['station_ids']))
+        return
+    if tool == 'station_validation':
+        if result == _validator(_station_rows(inputs['noaa_metadata'], tuple(scope['station_ids']))):
+            return
+    elif tool == 'crossref_metadata':
+        if (isinstance(result, dict) and set(result) == set(scope['dois'])
+                and all(isinstance(record, dict) and record.get('doi') == doi
+                        and isinstance(record.get('title'), str) and bool(record['title'].strip())
+                        and type(record.get('year')) is int
+                        and isinstance(record.get('publisher'), str) and bool(record['publisher'].strip())
+                        for doi, record in result.items())):
+            return
+    elif tool == 'bibliography_readback':
+        if result == {'same_provider_readback_agrees':True,
+                      'records':len(inputs['crossref_metadata']),
+                      'full_paper_or_second_provider_verified':False}:
+            return
+    elif tool == 'cooling_readback':
+        p = scope['cooling']
+        reference = p['ambient_kelvin'] + (p['initial_kelvin'] - p['ambient_kelvin']) * math.exp(-p['rate'] * p['duration'])
+        error = abs(inputs['cooling_solution']['observed_kelvin'] - reference)
+        if (math.isfinite(error) and error <= 1e-6
+                and result == {'analytic_kelvin':reference, 'absolute_error_kelvin':error,
+                               'experimental_validation':False}):
+            return
+    raise ValueError('Specialist result failed its trusted acceptance criterion')
+
+
 def execute_contract_mission(event,*,output_dir,planner=None):
     task=parse_contract_mission(event);scope=task['scope'];output_dir.mkdir(parents=True,exist_ok=True)
     team=tuple(required_tools(scope))
@@ -341,12 +400,13 @@ def execute_contract_mission(event,*,output_dir,planner=None):
         if temporary.is_symlink():raise ValueError('Unsafe temporary plan')
         temporary.write_text(json.dumps(receipt,sort_keys=True),'utf-8');temporary.replace(path);called=False
     plan_hash=sha256(json.dumps(receipt,sort_keys=True).encode()).hexdigest()
+    graph = contract_goal_graph(plan, scope)
     results = {}
     invoked = 0
     reused = 0
-    for step in plan['steps']:
-        tool = step['tool']
-        dependency = step.get('input_from')
+    for node in graph:
+        tool = node['id']
+        dependency = node['depends_on'][0] if node['depends_on'] else None
         relative = f'workers/{tool}/result.json'
         artifact = output_dir / relative
         saved = progress.get(tool)
@@ -367,6 +427,9 @@ def execute_contract_mission(event,*,output_dir,planner=None):
                                or 'schema' in restored or 'input_sha256' in restored):
                 if restored.get('input_sha256') != input_digest:
                     raise ValueError('Consumed dependency digest changed')
+            if ('acceptance_criterion' in restored and restored['acceptance_criterion'] != node['acceptance']):
+                raise ValueError('Stored acceptance criterion changed')
+            check_contract_result(tool, scope, inputs, restored['result'])
             results[tool] = restored['result']
             reused += 1
             continue
@@ -389,8 +452,7 @@ def execute_contract_mission(event,*,output_dir,planner=None):
                     result = cooling_matrix_solution(scope['cooling'])
                 else:
                     result = run_contract(tool, scope, inputs)
-                if tool == 'cooling_solution':
-                    check_cooling_producer(scope['cooling'], result)
+                check_contract_result(tool, scope, inputs, result)
                 break
             except (OSError, RuntimeError) as failure:
                 if tool != 'cooling_solution' or attempt != 1:
@@ -401,7 +463,8 @@ def execute_contract_mission(event,*,output_dir,planner=None):
         if artifact.is_symlink() or not artifact.resolve().is_relative_to(output_dir.resolve()):
             raise ValueError('Unsafe result path')
         artifact.parent.mkdir(parents=True, exist_ok=True)
-        record = {'schema': CONTRACT_ARTIFACT_SCHEMA, 'plan_sha256': plan_hash, 'result': result}
+        record = {'schema': CONTRACT_ARTIFACT_SCHEMA, 'plan_sha256': plan_hash,
+                  'acceptance_criterion': node['acceptance'], 'result': result}
         if tool == 'cooling_solution' and attempt == 2:
             record['recovery'] = {'previous_method': 'RK45', 'method': 'expm',
                                   'reason': recovery_reason}
@@ -431,7 +494,8 @@ def execute_contract_mission(event,*,output_dir,planner=None):
             'executed_workers':len(results),'new_worker_invocations':invoked,'reused_prior_verified_workers':reused,
             'specialists':[TOOLS[x['tool']] for x in plan['steps']], 'contract_results':results,
             'worker_results':[{'kind':x['tool'],'worker':TOOLS[x['tool']],'status':'DRAFT_READY_FOR_FOUNDER','output_artifact':f"workers/{x['tool']}/result.json",'verified_scope':'explicit public identifier contract only'} for x in plan['steps']],
-            'plan_artifact':path.name,'plan_sha256':plan_hash,'paid_api_used':False,'external_account_changes':False,
+            'plan_artifact':path.name,'plan_sha256':plan_hash,'goal_graph':graph,
+            'paid_api_used':False,'external_account_changes':False,
             'bounded_founder_goal_evidence':{'status':'VERIFIED_PUBLIC_CONTRACTS_NOT_FREEFORM_OBJECTIVE' if valid else 'NOT_VERIFIED'},
             'founder_review_required':True,'new_general_agent_capability_claimed':False,
             'limitations':['Freeform objective requires independent review','Crossref uses same-provider metadata readback, not full paper review','NOAA datum and instrument accuracy not checked']}
