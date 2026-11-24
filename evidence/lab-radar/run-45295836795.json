@@ -1,0 +1,279 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "45295836795",
+  "source_revision": "59af76f82c45cd5159a447d6cdd852fe0e73e420",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-24T00:17:00.819316+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 28,
+    "sources_returning_records": 25,
+    "source_outages": [
+      "nasa_research",
+      "un_global_news",
+      "gdelt_headlines"
+    ],
+    "new_public_links_before_limit": 31,
+    "signals": [
+      {
+        "category": "universities",
+        "publisher": "MIT News",
+        "source": "mit_labs",
+        "url": "https://news.mit.edu/2026/many-languages-one-common-neural-code-1123",
+        "title_untrusted": "Many languages, one common neural code",
+        "claimed_publication_date": "Mon, 23 Nov 2026 16:15:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "U.S. National Science Foundation",
+        "source": "nsf_new_discoveries",
+        "url": "https://www.nsf.gov/news/podcast-helping-doctors-save-lives-its-too-late",
+        "title_untrusted": "Podcast: Helping doctors save lives before it's too late",
+        "claimed_publication_date": "Mon, 23 Nov 2026 11:00:03 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/s41586-026-11449-9",
+        "title_untrusted": "Hexa-substituted benzene synthesis with non-classical carbocations",
+        "claimed_publication_date": "2026-11-23",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.26663",
+        "title_untrusted": "Adding One More Agent: How AI Team Size and Formation Shape Productivity and Diversity in Human-AI Brainstorming Teams",
+        "claimed_publication_date": "Mon, 23 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.26698",
+        "title_untrusted": "The Simons Observatory: A Novel Design for Heat Strap at Sub-Kelvin Temperatures",
+        "claimed_publication_date": "Mon, 23 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "software",
+        "publisher": "GitHub public repository index",
+        "source": "github_public_code",
+        "url": "https://github.com/HKUDS/AI-Researcher",
+        "title_untrusted": "HKUDS/AI-Researcher",
+        "claimed_publication_date": "2026-11-23T21:02:42Z",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "United Nations Climate News",
+        "source": "un_climate_environment",
+        "url": "https://news.un.org/feed/view/en/story/2026/11/1168856",
+        "title_untrusted": "Guterres laments COP31 outcome, urges climate justice from Barbados",
+        "claimed_publication_date": "Sun, 22 Nov 2026 12:00:00 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "universities",
+        "publisher": "Harvard Gazette",
+        "source": "harvard_research",
+        "url": "https://news.harvard.edu/gazette/story/2026/11/how-to-reject-mediocrity/",
+        "title_untrusted": "How to reject mediocrity",
+        "claimed_publication_date": "Mon, 23 Nov 2026 20:43:55 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "U.S. National Science Foundation",
+        "source": "nsf_new_discoveries",
+        "url": "https://www.nsf.gov/news/podcast-tiny-robots-could-revolutionize-medicine",
+        "title_untrusted": "Podcast: Tiny robots could revolutionize medicine",
+        "claimed_publication_date": "Mon, 23 Nov 2026 11:00:19 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03827-0",
+        "title_untrusted": "COP31 went down in flames over fossil fuels — it sends an important message",
+        "claimed_publication_date": "2026-11-23",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.26717",
+        "title_untrusted": "Coherence by Construction: Synthesizing CTI Knowledge Graphs and the Formal Limits of Coherence Validation",
+        "claimed_publication_date": "Mon, 23 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.26724",
+        "title_untrusted": "Cavity-Controlled Hysteresis and Multilevel Molecular Switching in Hybrid Optomechanics",
+        "claimed_publication_date": "Mon, 23 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026xfzdkr",
+        "title_untrusted": "M 1.3 - 6 km ENE of Fox, Alaska",
+        "claimed_publication_date": "1795478370735",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261123005356.htm",
+        "title_untrusted": "New gum disease treatment kills bad bacteria while sparing the good",
+        "claimed_publication_date": "Mon, 23 Nov 2026 06:55:17 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/s41586-026-11448-w",
+        "title_untrusted": "Continuous N-to-C Peptide Synthesis",
+        "claimed_publication_date": "2026-11-23",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.26722",
+        "title_untrusted": "TOUMAII: A 4.5M-Pair Tool-Calling Preference Dataset and Its Source-Agnostic Generator",
+        "claimed_publication_date": "Mon, 23 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.26751",
+        "title_untrusted": "Three-Dimensional Ultrasound Localization Microscopy Using Hadamard-Encoded Multipulse and 4D Denoising on a 256-Channel System with a 1024-element Matrix Array: A Feasibility Study in Human Kidney Transplants",
+        "claimed_publication_date": "Mon, 23 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/hv75075542",
+        "title_untrusted": "M 2.6 - 13 km SSW of Kapaau, Hawaii",
+        "claimed_publication_date": "1795474945780",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261122060343.htm",
+        "title_untrusted": "This tiny spider named after Stephen Colbert has a genome 50% larger than a human’s",
+        "claimed_publication_date": "Sun, 22 Nov 2026 22:54:27 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/s41586-026-11458-8",
+        "title_untrusted": "Architecture of the poxvirus early-transcription machinery and portal complex",
+        "claimed_publication_date": "2026-11-23",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.26782",
+        "title_untrusted": "ChatAtom: A Multi-Agent LLM System for Molecular Dynamics Simulation and Visualization",
+        "claimed_publication_date": "Mon, 23 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.26754",
+        "title_untrusted": "Self-verifiable LLM-driven science and why it needs human researchers",
+        "claimed_publication_date": "Mon, 23 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41579656",
+        "title_untrusted": "M 1.0 - 7 km NW of La Mesa, CA",
+        "claimed_publication_date": "1795474351710",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
