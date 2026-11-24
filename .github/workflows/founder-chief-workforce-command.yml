@@ -219,6 +219,16 @@ jobs:
                   quality.get('schema')=='plenum-chief-offline-ambient-quality-v1'):
                   lines.append('Independent offline task-outcome gate: '+
                                str(quality.get('disposition','UNVERIFIED'))[:90])
+          # Planned full-objective claims require the separate artifact reader.
+          if (p.is_file() and item.get('dispatcher')=='original_chief_extractive_team_plan'
+                  and item.get('founder_objective_verified') is True):
+              accepted=(q.is_file() and not q.is_symlink()
+                        and quality.get('original_issue_number')==issue
+                        and quality.get('independent_planned_artifact_readback_passed') is True)
+              if not accepted:
+                  status='BLOCKED_OBJECTIVE_RELEVANCE'
+                  lines[0]=lines[0].replace('founder_objective_verified=True','founder_objective_verified=False')
+                  lines.append('Independent planned artifact readback did not pass')
           attempt=os.environ.get('GITHUB_RUN_ATTEMPT','1')
           if not attempt.isdecimal() or len(attempt)>3:
               raise ValueError('Invalid original GitHub run attempt')

@@ -361,6 +361,60 @@ class ExtractiveTeamPlanTests(TestCase):
         self.assertEqual(result["specialist_assignments"],self.plan["steps"])
 
 
+class PlannedDeliverableAcceptanceTests(TestCase):
+    objective="Plan Survey public photonic computing papers and create a Cloudflare neuron budget validator program"
+    plan={"steps":[{"kind":"public_research","objective":"Survey public photonic computing papers"},
+                   {"kind":"public_program","objective":"create a Cloudflare neuron budget validator program"}]}
+
+    def test_real_program_and_source_metadata_are_graded_then_read_back_separately(self):
+        import json
+        from plenum_ai.workforce_public_inbox import run_issue
+        from plenum_ai.ambient_quality_insights import verify_planned_mission_artifacts
+        from plenum_ai.mission_checkpoint import artifact_digest
+        class Done:
+            returncode=0
+        def provider(cmd,**kwargs):
+            Path(cmd[-1]).write_text(json.dumps({
+                "schema":"plenum-public-horizon-snapshot-v1",
+                "topic":self.plan["steps"][0]["objective"],"category":"journals",
+                "independent_breakthrough_verified":False,"AGI_achieved":False,
+                "records":[{"source":"crossref_journals","category":"journals",
+                    "title":"Photonic computation architectures","url":"https://doi.org/10.1000/fixture",
+                    "independent_fact_check_complete":False}]}))
+            return Done()
+        def worker(event,output_dir):
+            return run_issue(event,output_dir=output_dir,runner=provider)
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            with patch("plenum_ai.chief_team_mission.plan_independent_team",return_value=self.plan),patch(
+                "plenum_ai.chief_team_mission.run_issue",side_effect=worker):
+                result=execute(mission(self.objective),output_dir=root)
+            self.assertTrue(result["founder_objective_verified"])
+            proof=result["bounded_founder_goal_evidence"]
+            self.assertEqual(len(proof["deliverables"]),2)
+            self.assertFalse(proof["general_autonomy_proved"])
+            self.assertTrue(verify_planned_mission_artifacts(result,root))
+            with patch("plenum_ai.chief_team_mission.run_issue",side_effect=AssertionError("repeated work")):
+                restored=execute(mission(self.objective),output_dir=root)
+            self.assertEqual(restored["new_worker_invocations"],0)
+            self.assertTrue(verify_planned_mission_artifacts(restored,root))
+            # Even a rehashed but unrelated paper cannot pass the separate evaluator.
+            rel=proof["deliverables"][0]["artifact"]
+            path=root/rel
+            raw=json.loads(path.read_text())
+            raw["records"][0]["title"]="Unrelated vegetation survey"
+            path.write_text(json.dumps(raw))
+            checkpoint=root/"chief-checkpoint-1001.json"
+            cp=json.loads(checkpoint.read_text())
+            cp["results"]["public_research"]["sha256"]=artifact_digest(root,rel)
+            checkpoint.write_text(json.dumps(cp))
+            self.assertFalse(verify_planned_mission_artifacts(result,root))
+            with patch("plenum_ai.chief_team_mission.run_issue",side_effect=AssertionError("repeated work")):
+                rejected=execute(mission(self.objective),output_dir=root)
+            self.assertFalse(rejected["founder_objective_verified"])
+
+
+
 if __name__ == "__main__":
     import unittest
     unittest.main()
