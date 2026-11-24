@@ -14,7 +14,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Start upstream release on isolated loopback, no provider credentials
+      - id: startup
+        name: Start upstream release on isolated loopback, no provider credentials
         run: |
           set -eu
           image=ghcr.io/paperclipai/paperclip:2026.1106.0
@@ -36,11 +37,14 @@ jobs:
             sleep 2
           done
           exit 1
-      - name: Runtime-volume checkpoint qualification (injected provider failures)
+      - id: checkpoint
+        name: Runtime-volume checkpoint qualification (injected provider failures)
         run: docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/checkpoint_smoke.py --root /paperclip/plenum-mission-evidence
-      - name: Native Minister assigns sequential five-division mission
+      - id: mission
+        name: Native Minister assigns sequential five-division mission
         run: docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/sequential_mission.py qualify
-      - name: Restart same upstream server and independently reread evidence without external provider calls
+      - id: restart
+        name: Restart same upstream server and independently reread evidence without external provider calls
         run: |
           set -eu
           docker restart plenum-paperclip-integration
@@ -54,15 +58,39 @@ jobs:
           exit 1
       - name: Collect only public task evidence
         if: always()
+        env:
+          STARTUP: ${{ steps.startup.outcome }}
+          CHECKPOINT: ${{ steps.checkpoint.outcome }}
+          MISSION: ${{ steps.mission.outcome }}
+          RESTART: ${{ steps.restart.outcome }}
         run: |
           mkdir -p reports/paperclip-native
-          docker cp plenum-paperclip-integration:/paperclip/plenum-mission-evidence/. reports/paperclip-native/ || true
+          if docker cp plenum-paperclip-integration:/paperclip/plenum-mission-evidence/. reports/paperclip-native/; then
+            export EVIDENCE_COPY=success
+          else
+            export EVIDENCE_COPY=unavailable
+          fi
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          root=Path("reports/paperclip-native")
+          data={"schema":"plenum-paperclip-ci-diagnostic-v1","run_id":os.environ["GITHUB_RUN_ID"],
+                "commit":os.environ["GITHUB_SHA"],"startup":os.environ["STARTUP"],
+                "checkpoint":os.environ["CHECKPOINT"],"mission":os.environ["MISSION"],
+                "restart":os.environ["RESTART"],"evidence_copy":os.environ["EVIDENCE_COPY"],
+                "qualification_present":(root/"qualification.json").is_file(),
+                "failure_receipts":len(list(root.glob("failure-*.json")))}
+          (root/"ci-diagnostic.json").write_text(json.dumps(data,indent=2)+"\n")
+          print(json.dumps(data))
+          if all(data[k]=="success" for k in ("startup","checkpoint","mission","restart")) and not data["qualification_present"]:
+              raise SystemExit("Missing actual qualification artifact")
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: paperclip-native-public-evidence
           path: reports/paperclip-native/
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 7
       - name: Remove isolated instance and test database
         if: always()
