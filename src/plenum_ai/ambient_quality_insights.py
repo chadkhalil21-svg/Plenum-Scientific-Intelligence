@@ -219,6 +219,69 @@ def verify_planned_mission_artifacts(report, root):
 
 
 
+def verify_contract_mission_artifacts(report, root):
+    """Independent, read-only full contract graph verification; no worker replay."""
+    if report.get("status")!="VERIFIED_BOUNDED_CONTRACT_MISSION" or report.get("founder_objective_verified") is not True:
+        return None
+    from .chief_contract_plan import (MAGIC, parse_contract_mission, validate_plan,
+        validate_inference_receipt, contract_goal_graph, read_contract_artifact,
+        check_contract_result, verify_results, CONTRACT_ARTIFACT_SCHEMA)
+    from .chief_workforce_command import OWNER, REPO
+    from .chief_team_mission import MISSION_TITLE
+    from .mission_checkpoint import load_checkpoint, objective_digest
+    try:
+        issue=report["issue_number"]
+        objective=report["objective"]
+        task=parse_contract_mission({"action":"opened","repository":{"full_name":REPO},
+            "issue":{"number":issue,"user":{"login":OWNER},"title":MISSION_TITLE,
+                     "body":MAGIC+"\nobjective: "+objective}})
+        scope,team=task["scope"],task["team"]
+        if not scope.get("evidence_report") or report.get("expected_team")!=list(team):
+            return False
+        path=root/f"chief-contract-plan-{issue}.json"
+        if path.is_symlink() or not path.is_file() or path.stat().st_size>8000:
+            return False
+        receipt=json.loads(path.read_text("utf-8"))
+        if (set(receipt)!={"issue","objective_sha256","scope","plan","inference"}
+                or receipt["issue"]!=issue or receipt["objective_sha256"]!=objective_digest(objective)
+                or receipt["scope"]!=scope or receipt["inference"]!=report.get("inference_provenance")):
+            return False
+        validate_plan(receipt["plan"],scope)
+        validate_inference_receipt(receipt["inference"])
+        digest=sha256(json.dumps(receipt,sort_keys=True).encode()).hexdigest()
+        graph=contract_goal_graph(receipt["plan"],scope)
+        if (digest!=report.get("plan_sha256") or report.get("plan_artifact")!=path.name
+                or graph!=report.get("goal_graph")):
+            return False
+        progress=load_checkpoint(root,issue=issue,objective=objective,team=team)
+        if set(progress)!=set(team):
+            return False
+        results={}
+        for node in graph:
+            tool=node["id"]
+            entry=progress[tool]
+            record=read_contract_artifact(root,tool,entry,digest)
+            if record.get("schema")!=CONTRACT_ARTIFACT_SCHEMA or record.get("acceptance_criterion")!=node["acceptance"]:
+                return False
+            deps=node["depends_on"]
+            inputs={dep:results[dep] for dep in deps}
+            digests={dep:progress[dep]["sha256"] for dep in deps}
+            if tool=="evidence_report":
+                if record.get("input_digests")!=digests:
+                    return False
+            elif deps and record.get("input_sha256")!=digests[deps[0]]:
+                return False
+            check_contract_result(tool,scope,inputs,record["result"])
+            results[tool]=record["result"]
+        return (results==report.get("contract_results") and verify_results(scope,results)
+                and report.get("bounded_founder_goal_evidence")=={
+                    "status":"VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE",
+                    "report_artifact":"workers/evidence_report/result.json"})
+    except (OSError,ValueError,TypeError,KeyError,AttributeError,RuntimeError):
+        return False
+
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--issue", type=int, required=True)
@@ -234,11 +297,14 @@ def main():
         parser.error("No safe original Chief report exists")
     data = json.loads(source.read_text(encoding="utf-8"))
     accepted=verify_planned_mission_artifacts(data,root)
-    if accepted is False:
+    contract_accepted=verify_contract_mission_artifacts(data,root)
+    if accepted is False or contract_accepted is False:
         data={**data,"founder_objective_verified":False,"status":"BLOCKED_OBJECTIVE_RELEVANCE"}
     result = inspect_chief_report(data)
     if accepted is not None:
         result["independent_planned_artifact_readback_passed"]=accepted
+    if contract_accepted is not None:
+        result["independent_contract_artifact_readback_passed"]=contract_accepted
     output = root / ("ambient-quality-" + str(args.issue) + ".json")
     output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n",
                       encoding="utf-8")

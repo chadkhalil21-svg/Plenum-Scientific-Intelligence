@@ -769,6 +769,7 @@ def execute_contract_mission(event,*,output_dir,planner=None):
             'specialists':[TOOLS[x['tool']] for x in plan['steps']], 'contract_results':results,
             'worker_results':[{'kind':x['tool'],'worker':TOOLS[x['tool']],'status':'DRAFT_READY_FOR_FOUNDER','output_artifact':f"workers/{x['tool']}/result.json",'verified_scope':'explicit public identifier contract only'} for x in plan['steps']],
             'plan_artifact':path.name,'plan_sha256':plan_hash,'goal_graph':graph,
+            'objective':task['objective'],
             'paid_api_used':False,'external_account_changes':False,
             'bounded_founder_goal_evidence':{'status':('VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE' if report_verified else 'VERIFIED_PUBLIC_CONTRACTS_NOT_FREEFORM_OBJECTIVE' if valid else 'NOT_VERIFIED'),
                 'report_artifact':'workers/evidence_report/result.json' if report_verified else None},

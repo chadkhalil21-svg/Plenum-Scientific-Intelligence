@@ -229,6 +229,15 @@ jobs:
                   status='BLOCKED_OBJECTIVE_RELEVANCE'
                   lines[0]=lines[0].replace('founder_objective_verified=True','founder_objective_verified=False')
                   lines.append('Independent planned artifact readback did not pass')
+          if (p.is_file() and item.get('status')=='VERIFIED_BOUNDED_CONTRACT_MISSION'
+                  and item.get('founder_objective_verified') is True):
+              accepted=(q.is_file() and not q.is_symlink()
+                        and quality.get('original_issue_number')==issue
+                        and quality.get('independent_contract_artifact_readback_passed') is True)
+              if not accepted:
+                  status='BLOCKED_CONTRACT_INTEGRITY'
+                  lines[0]=lines[0].replace('founder_objective_verified=True','founder_objective_verified=False')
+                  lines.append('Independent contract artifact readback did not pass')
           attempt=os.environ.get('GITHUB_RUN_ATTEMPT','1')
           if not attempt.isdecimal() or len(attempt)>3:
               raise ValueError('Invalid original GitHub run attempt')
