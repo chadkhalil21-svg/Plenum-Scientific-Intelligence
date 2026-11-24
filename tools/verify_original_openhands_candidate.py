@@ -32,6 +32,8 @@ FOCUSED_TESTS = {
 }
 
 TASK_ACCEPTANCE = {
+    ("src/plenum_ai/workforce_team_dispatch.py", "Repair function dispatch. For exact cooling initial K ambient K rate time, reuse run_contract for cooling_solution and cooling_readback. Save both keyed results in cooling.json. Reject invalid inputs."):
+        "parameterized_science_worker.py",
     ("src/plenum_ai/mission_checkpoint.py", "Repair function load_checkpoint. Reject any saved result without exact integer attempt 1 or 2. Then repair function artifact_digest. Reject nonregular entries in artifact trees."):
         "checkpoint_tree_invariants.py",
     ("src/plenum_ai/mission_checkpoint.py", "Repair function load_checkpoint. Require only_original_public_workers to be true. Then repair function verified_previous_result. Require attempt to be integer 1 or 2."):
