@@ -415,3 +415,58 @@ class CommercialEvidenceHandoffTests(TestCase):
                 m.review_business_status(bad)
         with self.assertRaises(ValueError):
             m.review_business_status({**good,"asserts_commercial_readiness":True})
+
+
+class DynamicPaperHandoffTests(TestCase):
+    objective="Evidence report Survey public photonic computing papers and cooling initial 342 K ambient 290 K rate 0.05 time 14"
+
+    def discovery(self):
+        query="Survey public photonic computing papers"
+        return {"schema":"plenum-public-horizon-snapshot-v1","topic":query,
+                "category":"journals","independent_breakthrough_verified":False,
+                "records":[{"source":"crossref_journals","category":"journals",
+                    "title":"Photonic computation architectures","url":"https://doi.org/10.1000/one",
+                    "independent_fact_check_complete":False},
+                    {"source":"crossref_journals","category":"journals",
+                    "title":"Photonic computing devices","url":"https://doi.org/10.1000/two",
+                    "independent_fact_check_complete":False}]}
+
+    def test_discovered_dois_flow_to_actual_readback_and_final_report(self):
+        discovery=self.discovery()
+        selected=frozenset({"10.1000/one","10.1000/two"})
+        titles={r["url"].split("doi.org/")[1]:r["title"] for r in discovery["records"]}
+        calls=[]
+        def read(doi,*,approved_dois):
+            self.assertEqual(approved_dois,selected)
+            calls.append(doi)
+            return {"doi":doi,"title":titles[doi],"year":2024,"publisher":"Public publisher"}
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            with patch("plenum_ai.world_horizon.scan_horizon",return_value=discovery) as survey,patch.object(m,"read_crossref",side_effect=read):
+                result=m.execute_contract_mission(event(self.objective),output_dir=root)
+            survey.assert_called_once_with(discovery["topic"],category="journals",online=True)
+            self.assertEqual(calls,["10.1000/one","10.1000/two"])
+            self.assertTrue(result["founder_objective_verified"])
+            self.assertEqual(result["new_worker_invocations"],5)
+            final=json.loads((root/"workers/evidence_report/result.json").read_text())
+            self.assertEqual(set(final["input_digests"]),{"paper_discovery","paper_readback","cooling_solution","cooling_readback"})
+            receipt=json.loads((root/"workers/paper_readback/result.json").read_text())
+            cp=json.loads((root/"chief-checkpoint-101.json").read_text())
+            self.assertEqual(receipt["input_sha256"],cp["results"]["paper_discovery"]["sha256"])
+            self.assertEqual(set(final["result"]["sections"]["papers"]["readback"]),selected)
+            with patch.object(m,"run_contract",side_effect=AssertionError("repeated accepted work")):
+                replay=m.execute_contract_mission(event(self.objective),output_dir=root)
+            self.assertTrue(replay["founder_objective_verified"])
+            self.assertEqual(replay["reused_prior_verified_workers"],5)
+
+    def test_discovery_rejects_nonmatching_and_non_doi_input_before_readback(self):
+        scope=m.parse_contract_mission(event(self.objective))["scope"]
+        for field,value in (("url","https://example.org/"),("url","https://doi.org/10.1000/../bad?x=1"),
+                            ("title","Unrelated vegetation survey")):
+            bad=self.discovery()
+            bad["records"][0][field]=value
+            with self.subTest(field=field),self.assertRaises(ValueError):
+                m.selected_paper_ids(scope,bad)
+        with self.assertRaises(ValueError):
+            m.parse_contract_mission(event("Evidence report Survey public photonic computing papers and predict a discovery"))
+
