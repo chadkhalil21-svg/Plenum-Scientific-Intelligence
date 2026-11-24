@@ -23,8 +23,7 @@ jobs:
   authorize:
     if: >-
       github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
-      (github.event_name == 'pull_request' ||
-       (github.event_name == 'issues' &&
+      ((github.event_name == 'issues' &&
         github.event.issue.title == '[Plenum Paperclip] public coastal qualification' &&
         github.event.issue.user.login == 'chadkhalil21-svg' &&
         github.event.sender.login == 'chadkhalil21-svg') ||
@@ -38,7 +37,6 @@ jobs:
     outputs:
       authorized: ${{ steps.gate.outputs.authorized }}
       created_at: ${{ steps.gate.outputs.created_at }}
-      modes: ${{ steps.gate.outputs.modes }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -46,26 +44,18 @@ jobs:
       - id: gate
         name: Reserve original public qualification once before model startup
         env:
-          GH_TOKEN: ${{ github.event_name != 'pull_request' && github.token || '' }}
+          GH_TOKEN: ${{ github.token }}
           ISSUE: ${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number }}
-        run: |
-          set -eu
-          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
-            echo 'authorized=true' >> "$GITHUB_OUTPUT"
-            echo 'modes=["off","local"]' >> "$GITHUB_OUTPUT"
-          else
-            PYTHONPATH=src python3 integrations/paperclip/event_gate.py --issue "$ISSUE"
-            echo 'modes=["local"]' >> "$GITHUB_OUTPUT"
-          fi
+        run: PYTHONPATH=src python3 integrations/paperclip/event_gate.py --issue "$ISSUE"
   native-integration:
     needs: authorize
-    if: needs.authorize.outputs.authorized == 'true'
+    if: always() && (github.event_name == 'pull_request' || needs.authorize.outputs.authorized == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        mode: ${{ fromJSON(needs.authorize.outputs.modes) }}
+        mode: ${{ fromJSON(github.event_name == 'pull_request' && '["off","local"]' || '["local"]') }}
     steps:
       - uses: actions/checkout@v4
         with:
