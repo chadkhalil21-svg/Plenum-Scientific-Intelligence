@@ -28,6 +28,8 @@ class NoRedirects(HTTPRedirectHandler):
 
 def probe(target: Target, *, opener=None, timeout: int = 12) -> tuple[bool, str, int | None]:
     """Only exact hardcoded public HTTPS URLs; return a small status, never page content."""
+    if target not in TARGETS:
+        return False, "target_not_in_targets", None
     client = opener or build_opener(NoRedirects)
     req = Request(target.url, headers={
         "Accept": "application/json" if target.kind == "health" else "text/html",
