@@ -50,11 +50,14 @@ def main():
     parser=argparse.ArgumentParser()
     parser.add_argument("--issue",required=True)
     args=parser.parse_args()
-    if os.environ.get("GITHUB_REPOSITORY")!=REPO:
-        raise PermissionError("Unexpected repository")
+    if (os.environ.get("GITHUB_REPOSITORY")!=REPO or os.environ.get("GITHUB_ACTIONS")!="true"
+            or os.environ.get("GITHUB_EVENT_NAME") not in ("issues","issue_comment","repository_dispatch","workflow_dispatch")):
+        raise PermissionError("Unexpected repository or event")
     if not args.issue.isascii() or not args.issue.isdecimal():
         raise ValueError("Invalid public issue ID")
     number=checked_issue_number(int(args.issue))
+    if str(number)!=args.issue:raise ValueError("Noncanonical issue ID")
+    if not os.environ.get("GH_TOKEN"):raise PermissionError("Missing scoped issue token")
     ok,created=reserve(number,os.environ["GH_TOKEN"],int(os.environ["GITHUB_RUN_ID"]),
                        int(os.environ["GITHUB_RUN_ATTEMPT"]))
     with open(os.environ["GITHUB_OUTPUT"],"a") as out:
