@@ -34,6 +34,8 @@ FOCUSED_TESTS = {
 TASK_ACCEPTANCE = {
     ("src/plenum_ai/business_public_watch.py", "Reject health JSON bodies exceeding 65536 bytes even if their first bytes form valid JSON. Preserve fixed targets and ordinary successful and failed response behavior."):
         "health_body_limit.py",
+    ("src/plenum_ai/business_public_watch.py", "Fix health JSON byte limit. The prior patch counted dictionary keys, not bytes. Read at most 65537 raw bytes, reject length above 65536 before decoding, and preserve existing checks."):
+        "health_body_limit.py",
 }
 
 
