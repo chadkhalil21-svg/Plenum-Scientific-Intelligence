@@ -2,6 +2,8 @@ name: Paperclip native workforce integration
 on:
   issues:
     types: [opened]
+  issue_comment:
+    types: [created]
   repository_dispatch:
     types: [plenum_public_issue_wakeup]
   workflow_dispatch:
@@ -27,6 +29,11 @@ jobs:
         github.event.issue.title == '[Plenum Paperclip] public coastal qualification' &&
         github.event.issue.user.login == 'chadkhalil21-svg' &&
         github.event.sender.login == 'chadkhalil21-svg') ||
+       (github.event_name == 'issue_comment' &&
+        github.event.issue.title == '[Plenum Paperclip] public coastal qualification' &&
+        github.event.issue.user.login == 'chadkhalil21-svg' &&
+        github.event.comment.user.login == 'chadkhalil21-svg' &&
+        github.event.comment.body == '<!-- plenum-paperclip-recovery-v1 -->') ||
        github.event_name == 'repository_dispatch' ||
        (github.event_name == 'workflow_dispatch' && github.actor == 'chadkhalil21-svg' && github.ref == 'refs/heads/main'))
     runs-on: ubuntu-latest
@@ -49,7 +56,7 @@ jobs:
         run: PYTHONPATH=src python3 integrations/paperclip/event_gate.py --issue "$ISSUE"
   native-integration:
     needs: authorize
-    if: always() && (github.event_name == 'pull_request' || needs.authorize.outputs.authorized == 'true')
+    if: ${{ !cancelled() && (github.event_name == 'pull_request' || needs.authorize.outputs.authorized == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -150,7 +157,7 @@ jobs:
                 "failure_receipts":len(list(root.glob("failure-*.json")))}
           (root/"ci-diagnostic.json").write_text(json.dumps(data,indent=2)+"\n")
           print(json.dumps(data))
-          if all(data[k]=="success" for k in ("startup","checkpoint","mission","restart")) and not data["qualification_present"]:
+          if all(data[k]=="success" for k in ("startup","checkpoint","mission","restart")) and not (data["qualification_present"] and (root/"event-timing.json").is_file() and (root/"restart-timing.json").is_file()):
               raise SystemExit("Missing actual qualification artifact")
           PY
       - uses: actions/upload-artifact@v4
