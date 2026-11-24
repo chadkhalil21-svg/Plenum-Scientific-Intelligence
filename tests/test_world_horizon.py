@@ -191,5 +191,22 @@ class WorldHorizonTests(unittest.TestCase):
         self.assertEqual(len(requests),2)
 
 
+    def test_paper_survey_uses_topic_not_instruction_and_filters_before_limit(self):
+        from urllib.parse import parse_qs
+        calls=[]
+        def opener(req,timeout):
+            calls.append(req.full_url)
+            query=parse_qs(urlsplit(req.full_url).query)
+            self.assertEqual(query["query.title"],["photonic computing"])
+            self.assertEqual(query["rows"],["20"])
+            rows=[{"title":["Unrelated survey of papers"],"DOI":"10.1000/wrong"+str(i)} for i in range(5)]
+            rows += [{"title":["Photonic computation architectures"],"DOI":"10.1000/right"},
+                     {"title":["Photonic computing"],"DOI":"invalid"}]
+            return Stream(json.dumps({"message":{"items":rows}}).encode())
+        report=scan_horizon("Survey public photonic computing papers",category="journals",online=True,opener=opener)
+        self.assertEqual(len(calls),1)
+        self.assertEqual([r["url"] for r in report["records"]],["https://doi.org/10.1000/right"])
+        self.assertFalse(report["records"][0]["independent_fact_check_complete"])
+
 if __name__=="__main__":
     unittest.main()
