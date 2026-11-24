@@ -2,6 +2,7 @@
 import json
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import patch
 from plenum_ai import chief_contract_plan as m
@@ -150,11 +151,12 @@ class ContractRecoveryEvidenceTests(TestCase):
 
     def test_failed_solver_recovers_with_distinct_method_and_restart_reuses_verified_pair(self):
         import math
-        from unittest.mock import patch
 
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            run = lambda: m.execute_contract_mission(event(self.objective), output_dir=root)
+            def run():
+                return m.execute_contract_mission(event(self.objective), output_dir=root)
+
             with patch("scipy.integrate.solve_ivp", side_effect=RuntimeError("fixture: solver unavailable")) as primary:
                 report = run()
             primary.assert_called_once()
@@ -188,3 +190,10 @@ class ContractRecoveryEvidenceTests(TestCase):
             checkpoint.write_text(json.dumps(state))
             with self.assertRaises(ValueError):
                 m.execute_contract_mission(event(self.objective), output_dir=root)
+
+    def test_unsuccessful_integrator_result_uses_alternative_solver(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with patch("scipy.integrate.solve_ivp", return_value=SimpleNamespace(success=False)):
+                result = m.execute_contract_mission(event(self.objective), output_dir=Path(directory))
+            self.assertEqual(result["contract_results"]["cooling_solution"]["method"], "expm")
+            self.assertTrue(result["bounded_contracts_verified"])
