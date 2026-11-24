@@ -375,6 +375,38 @@ def _register_proposal_editor() -> str:
     return ProposalOnlyFileEditorTool.name
 
 
+def local_function_scope(task: str, original: bytes):
+    """Optional owner-named top-level function; keep every other byte unchanged."""
+    import re
+    match = re.match(r"Repair function ([a-z][a-z0-9_]{1,60})\. ", task)
+    if not match:
+        return None
+    nodes = [n for n in ast.parse(original.decode("utf-8")).body
+             if isinstance(n, ast.FunctionDef) and n.name == match.group(1)]
+    if len(nodes) != 1 or nodes[0].decorator_list or nodes[0].col_offset != 0:
+        raise ValueError("Only a unique undecorated top-level function can be edited")
+    node = nodes[0]
+    lines = original.splitlines(keepends=True)
+    start, end = node.lineno-1, node.end_lineno
+    return b"".join(lines[:start]), b"".join(lines[start:end]), b"".join(lines[end:])
+
+
+def restore_function_scope(scope, edited: bytes) -> bytes:
+    if scope is None:
+        return edited
+    prefix, original, suffix = scope
+    before = ast.parse(original.decode("utf-8")).body[0]
+    nodes = ast.parse(edited.decode("utf-8")).body
+    if (len(nodes) != 1 or not isinstance(nodes[0], ast.FunctionDef)
+            or nodes[0].name != before.name or nodes[0].decorator_list
+            or ast.dump(nodes[0].args) != ast.dump(before.args)
+            or ast.dump(nodes[0].returns) != ast.dump(before.returns)):
+        raise ValueError("Candidate changed function signature or escaped exact function scope")
+    result = prefix + edited.rstrip(b"\r\n") + b"\n" + suffix
+    ast.parse(result.decode("utf-8"))
+    return result
+
+
 def execute_local(task: str, *, source_file: str, candidate_out: str,
                   behavioral_recovery: bool = False) -> dict:
     """Run official Aider noninteractively, with only a public source copy mounted.
@@ -388,20 +420,22 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
     if os.getenv("PLENUM_EPHEMERAL_RUNNER") != "confirmed":
         raise RuntimeError("Run only in a separately isolated ephemeral runner")
     original, _ = _public_source(source_file)
-    feedback = ""
+    scope = local_function_scope(task, original)
+    feedback = (" Edit only the shown function. All surrounding module definitions are "
+                "preserved unchanged; no new imports or top-level code." if scope else "")
     if behavioral_recovery:
         # Only the pre-reviewed public health-monitor task has a trusted
         # behavioral diagnostic. No test stdout, model text or external data
         # is ever recycled as an instruction.
         if source_file != "src/plenum_ai/business_public_watch.py":
             raise PermissionError("No approved behavioral recovery for source")
-        feedback = (" Independent acceptance failed. Test the raw byte limit before JSON "
+        feedback += (" Independent acceptance failed. Test the raw byte limit before JSON "
                     "decoding: 65535 and 65536 bytes may pass, 65537 and 70000 "
                     "must fail, even with valid JSON prefixes or whitespace. "
                     "Wrong service and malformed JSON must still fail.")
     with tempfile.TemporaryDirectory(prefix="plenum-aider-public-") as tmp:
         candidate = Path(tmp) / "proposal.py"
-        candidate.write_bytes(original)
+        candidate.write_bytes(scope[1] if scope else original)
         command = [
             "docker", "run", "--rm", "--pull=never", "--network=plenum-coding-isolated",
             "--cap-drop=ALL", "--security-opt=no-new-privileges", "--pids-limit=128",
@@ -428,8 +462,12 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
         if (not candidate.is_file() or candidate.is_symlink()
                 or candidate.stat().st_size > _candidate_byte_limit(original)):
             raise RuntimeError("Local coder produced no bounded regular source copy")
-        raw = candidate.read_bytes()
+        raw = restore_function_scope(scope, candidate.read_bytes())
         ast.parse(raw.decode("utf-8"), filename="proposal.py")
+        if len(raw) > _candidate_byte_limit(original):
+            raise ValueError("Restored candidate exceeds original bound")
+        if scope:
+            result["editing_scope"]="owner_named_function_only"
         return _candidate_report(result, original, raw, source_file, artifact, int(behavioral_recovery))
 
 
