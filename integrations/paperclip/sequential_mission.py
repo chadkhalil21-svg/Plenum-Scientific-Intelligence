@@ -316,13 +316,29 @@ def minister():
     print(json.dumps({"minister_dispatch":True,"plan_sha256":digest(plan),"tasks":tasks}),flush=True)
 
 
-def qualify():
+def qualify(action="qualify"):
+    from production_wiring import company_lock
+    if persistent():
+        with company_lock(ROOT,owner_company(api)):
+            return qualify_locked(action)
+    if action!="qualify":raise ValueError("Staged mission requires persistent board")
+    return qualify_locked(action)
+
+
+def qualify_locked(action):
     from datetime import datetime, timezone
     started = time.monotonic()
-    scope=active_scope()
+    durable=persistent()
+    if action=="activate":
+        from production_wiring import load_prepared
+        cid=owner_company(api)
+        mid=canonical(os.environ["PLENUM_PAPERCLIP_MISSION_UUID"])
+        directory=mission_dir(ROOT,cid,mid)
+        scope=validate_scope(json.loads((directory/"mission-scope.json").read_text())["scope"])
+        if load_prepared(directory,cid,mid)["scope_sha256"]!=scope_digest(scope):raise ValueError("Prepared scope mismatch")
+    else:scope=active_scope()
     binding=scope_binding(scope)
     specs=task_specs(scope)
-    durable=persistent()
     if durable:
         cid=owner_company(api)
         if os.getenv("PLENUM_PAPERCLIP_MODEL","off")!="off":
@@ -358,27 +374,40 @@ def qualify():
         leader=ids["minister"]
         agents={k:ids[k] for k in specs}
     else:
+        if action=="activate":raise ValueError("Prepared roster absent")
         leader=hire("Minister of Operations","ceo","minister")
         agents={key:hire(name,"engineer" if key=="engineering" else "general",key,leader) for key,(name,_) in specs.items()}
         if durable:
             ids=validate_roster(api(route+"/agents"),cid,specs)
             if ids!={"minister":leader,**agents}:raise ValueError("Created roster identity mismatch")
             bind_roster(ROOT,cid,ids)
+    from production_wiring import prepared, authorize_activation
     queued = time.monotonic()
-    fields={"title":binding["parent_title"],"description":binding["parent_description"],"status":"todo","priority":"high"}
-    if not durable:fields["assigneeAgentId"]=leader
-    if durable:
-        existing=api(route+"/issues")
-        if any(r.get("status") in ("todo","in_progress","blocked") for r in existing):
-            raise ValueError("Previous mission must be terminal before another submission")
-    task=api(route+"/issues","POST",fields)
-    parent_id=str(UUID(required(task,"id","created_parent")))
-    directory=mission_dir(ROOT,cid,parent_id)
-    if durable:
-        directory.mkdir(parents=True,exist_ok=False,mode=0o700)
-        exclusive(directory/"mission-scope.json",binding)
-        exclusive(directory/"profile-routing.json",profile_routes(scope))
-        api("/api/issues/"+parent_id,"PATCH",{"assigneeAgentId":leader})
+    if action=="activate":
+        parent_id=mid
+        authorize_activation(api,directory,cid,parent_id,leader,binding)
+    else:
+        fields={"title":binding["parent_title"],"description":binding["parent_description"],"status":"todo","priority":"high"}
+        if not durable:fields["assigneeAgentId"]=leader
+        if durable:
+            existing=api(route+"/issues")
+            if any(r.get("status") in ("todo","in_progress","blocked","backlog","in_review") for r in existing):
+                raise ValueError("Previous mission must be terminal before another submission")
+            mode=os.getenv("PLENUM_PERSISTENT_CHECKPOINT_MODE","local")
+            if mode not in ("local","remote") or (action=="qualify" and mode!="local"):
+                raise ValueError("Remote checkpoint requires staged prepare and activate")
+        task=api(route+"/issues","POST",fields)
+        parent_id=str(UUID(required(task,"id","created_parent")))
+        directory=mission_dir(ROOT,cid,parent_id)
+        if durable:
+            directory.mkdir(parents=True,exist_ok=False,mode=0o700)
+            exclusive(directory/"mission-scope.json",binding)
+            exclusive(directory/"profile-routing.json",profile_routes(scope))
+            row=prepared(directory,cid,parent_id,binding["scope_sha256"],mode)
+            if action=="prepare":
+                print(json.dumps(row),flush=True)
+                return row
+            authorize_activation(api,directory,cid,parent_id,leader,binding)
     # No board-side child assignment: wait for actual Minister and native wakes.
     deadline=time.monotonic()+360
     plan_path=directory/"minister-plan.json"
@@ -535,11 +564,11 @@ def restart_readback():
 
 if __name__=="__main__":
     arg=sys.argv[1] if len(sys.argv)==2 else "invalid"
-    if arg not in ("minister","qualify","restart-readback",*MISSION_ORDER):
+    if arg not in ("minister","qualify","prepare","activate","restart-readback",*MISSION_ORDER):
         raise SystemExit("Unknown bounded entrypoint")
     try:
         if arg=="minister":minister()
-        elif arg=="qualify":qualify()
+        elif arg in ("qualify","prepare","activate"):qualify(arg)
         elif arg=="restart-readback":restart_readback()
         else:
             scope=assigned_scope(api,ROOT,arg) if persistent() else active_scope()

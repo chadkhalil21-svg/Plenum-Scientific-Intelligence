@@ -119,8 +119,13 @@ def run_assigned(role, *, mission_worker=None, specs=SPECS, description=DESCRIPT
         original=api("/api/issues/"+parent,worker=True)
         if original.get("description")!=binding["parent_description"] or original.get("title")!=binding["parent_title"]:
             raise PermissionError("Native parent scope mismatch")
-    from runtime_checkpoint import configured
-    remote = configured(company, rows[0].get("parentId"), role, task)
+    from lifecycle import persistent
+    if persistent():
+        from production_wiring import checkpoint_for
+        remote=checkpoint_for(directory,company,parent,role,task)
+    else:
+        from runtime_checkpoint import configured
+        remote=configured(company,parent,role,task)
     api(path + "/checkout", "POST", {"agentId": agent, "expectedStatuses": ["todo", "in_progress"]}, worker=True)
     # The immutable task-bound receipt permits replay of a failed status write,
     # not repeating already completed network or program work.

@@ -23,11 +23,11 @@ class NoRedirect(HTTPRedirectHandler):
 
 
 class RuntimeCheckpoint:
-    def __init__(self, company, mission, role, issue, *, sender=None):
+    def __init__(self, company, mission, role, issue, *, sender=None, secret=None, scope=None):
         if os.getenv("GITHUB_ACTIONS") == "true":
             raise PermissionError("Public CI cannot access runtime checkpoint capability")
-        self.secret = os.getenv("PLENUM_PAPERCLIP_CHECKPOINT_HMAC_SECRET", "")
-        scope = os.getenv("PLENUM_PAPERCLIP_CHECKPOINT_SCOPE", "")
+        self.secret = os.getenv("PLENUM_PAPERCLIP_CHECKPOINT_HMAC_SECRET", "") if secret is None else secret
+        scope = os.getenv("PLENUM_PAPERCLIP_CHECKPOINT_SCOPE", "") if scope is None else scope
         for value in (company, mission, issue):
             if str(uuid.UUID(value)) != value:
                 raise ValueError("Invalid native task identity")
@@ -53,7 +53,12 @@ class RuntimeCheckpoint:
                 data = json.loads(response.read(4097))
         except HTTPError as exc:
             if method == "GET" and exc.code == 404:
-                return None
+                # Only the actual scoped storage endpoint returns not_found.
+                # A generic old Worker route 404 cannot authorize activation.
+                try: missing=json.loads(exc.read(4097))
+                except (ValueError, OSError): missing=None
+                if missing=={"error":"not_found"}:return None
+                raise RuntimeError("Checkpoint route not verified") from None
             raise RuntimeError("Checkpoint HTTP rejected: " + str(exc.code)) from None
         except Exception as exc:
             raise RuntimeError("Checkpoint transport unverified: " + type(exc).__name__) from None

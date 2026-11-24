@@ -45,3 +45,7 @@ jobs:
         env:
           PYTHONPATH: src
         run: python integrations/paperclip/profile_lifecycle_smoke.py
+      - name: Staged persistent activation, exact private grant and single-flight lock
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/production_wiring_smoke.py
