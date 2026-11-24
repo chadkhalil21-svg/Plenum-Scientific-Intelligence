@@ -19,6 +19,7 @@ from .workforce_public_inbox import REPO, OWNER, parse_public_issue, run_issue
 from .chief_team_mission import MISSION_TITLE, parse_mission, preflight, execute as execute_original_team
 from .mission_checkpoint import load_checkpoint, verified_previous_result
 
+PAPERCLIP_PUBLIC_TITLE = "[Plenum Paperclip] public coastal qualification"
 MAX_ISSUE = 10 ** 9
 BASE = "https://api.github.com/repos/" + REPO + "/issues/"
 
@@ -268,6 +269,9 @@ def process(number: int, token: str, output_dir: Path, *,
     number = checked_issue_number(number)
     path = BASE + str(number)
     original, comments = _read_original_wake_issue(path, number, token)
+    if original.get("title") == PAPERCLIP_PUBLIC_TITLE:
+        return {"status":"ROUTED_TO_NATIVE_PAPERCLIP", "issue_number":number,
+                "worker_reexecuted":False}
     if require_founder_approval:
         # Use the SAME original scheduled Minister reservation marker.
         # GitHub issue_comment can be edited repeatedly, so an ambiguous
