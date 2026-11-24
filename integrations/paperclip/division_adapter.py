@@ -24,7 +24,8 @@ SPECS = {
     "verification": ("Verification and Advisory", "Independently review four public worker artifacts"),
 }
 DESCRIPTION = "Public Paperclip integration acceptance; original reviewed Plenum routines only."
-ROOT = Path("/tmp/plenum-paperclip-evidence")
+ROOT = Path("/paperclip/plenum-mission-evidence")
+MISSION_ORDER = ("intelligence", "research", "engineering", "commercial", "verification")
 
 
 def public_worker(role, upstream=None):
@@ -80,7 +81,7 @@ def read_evidence(company, role):
     return record
 
 
-def run_assigned(role):
+def run_assigned(role, *, mission_worker=None):
     if role not in SPECS:
         raise ValueError("Unapproved division")
     agent = os.environ["PAPERCLIP_AGENT_ID"]
@@ -115,9 +116,26 @@ def run_assigned(role):
         if receipt.get("issue") != task:
             raise ValueError("Evidence belongs to a different task")
     else:
-        inputs = ({key: read_evidence(company, key)["result"] for key in SPECS if key != role}
-                  if role == "verification" else None)
-        result = public_worker(role, inputs)
+        # Native Paperclip owns task locks. Reserve at most two actual work
+        # attempts before calling the read-only tools; a saved receipt is
+        # reused without repeating provider work.
+        if mission_worker is not None:
+            for attempt in (1, 2):
+                try:
+                    with (directory / (role + ".attempt-" + str(attempt))).open("x") as stream:
+                        stream.write(task)
+                    break
+                except FileExistsError:
+                    continue
+            else:
+                raise RuntimeError("Bounded specialist attempt budget exhausted")
+            previous = MISSION_ORDER[:MISSION_ORDER.index(role)]
+            inputs = {key: read_evidence(company, key)["result"] for key in previous}
+            result = mission_worker(role, inputs, directory)
+        else:
+            inputs = ({key: read_evidence(company, key)["result"] for key in SPECS if key != role}
+                      if role == "verification" else None)
+            result = public_worker(role, inputs)
         encoded = json.dumps(result, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
         receipt = {"company": company, "issue": task, "role": role,
                    "result": result, "sha256": hashlib.sha256(encoded).hexdigest()}
