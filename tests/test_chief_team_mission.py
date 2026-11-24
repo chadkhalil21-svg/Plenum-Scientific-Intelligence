@@ -467,7 +467,10 @@ class AutomaticPartialRecoveryTests(TestCase):
             if kind == "public_program":
                 return run_issue(event, output_dir=output_dir)
             if calls.count(kind) == 1:
-                raise TimeoutError("injected transient transport interruption")
+                import subprocess
+                def interrupted_runner(*args, **kwargs):
+                    raise subprocess.TimeoutExpired("original research worker", 360)
+                return run_issue(event, output_dir=output_dir, runner=interrupted_runner)
             output_dir.mkdir(parents=True, exist_ok=True)
             (output_dir / "paper.json").write_text(json.dumps({
                 "schema": "plenum-public-horizon-snapshot-v1",
