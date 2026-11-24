@@ -1,0 +1,70 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "45305985335",
+  "source_revision": "4c5ce1877ef14d1c5d5336aecb80532ee35aa3b6",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-24T01:34:38.843633+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 29,
+    "sources_returning_records": 25,
+    "source_outages": [
+      "nasa_research",
+      "federal_reserve",
+      "gdelt_headlines"
+    ],
+    "new_public_links_before_limit": 6,
+    "signals": [
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/hv75075627",
+        "title_untrusted": "M 1.9 - 19 km W of Kalaoa, Hawaii",
+        "claimed_publication_date": "1795483214850",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026xgbawo",
+        "title_untrusted": "M 1.4 - 65 km NW of Ninilchik, Alaska",
+        "claimed_publication_date": "1795481792616",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41579680",
+        "title_untrusted": "M 2.2 - 1 km N of Malibu, CA",
+        "claimed_publication_date": "1795481196320",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75471387",
+        "title_untrusted": "M 2.0 - 6 km NW of Pinnacles, CA",
+        "claimed_publication_date": "1795481118090",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
