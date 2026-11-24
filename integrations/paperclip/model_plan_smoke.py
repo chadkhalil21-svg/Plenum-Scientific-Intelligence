@@ -50,6 +50,33 @@ class PlanTests(unittest.TestCase):
                 with self.assertRaises(ValueError):mp.model_plan(Path(tmp),cid,str(uuid4()))
         print("MODEL RECEIPT REUSE PASS one simulated chat, zero replay",flush=True)
 
+    def test_nondefault_authorized_goal_binding(self):
+        from sequential_mission import goal_texts
+        from typed_scope_smoke import BUDGET, STATION
+        tag={"models":[{"name":mp.MODEL,"digest":mp.MODEL_DIGEST+"a"*52}]}
+        reply={"model":mp.MODEL,"done":True,"message":{"content":json.dumps(valid_plan())},"eval_count":105,"prompt_eval_count":311}
+        for scope in (BUDGET,STATION):
+            goals=goal_texts(scope)
+            cid,pid=str(uuid4()),str(uuid4())
+            self.assertNotEqual(mp.digest(goals),mp.digest(mp.GOALS))
+            with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ,{"PLENUM_EPHEMERAL_RUNNER":"confirmed","PLENUM_PAPERCLIP_MODEL":"local"}):
+                directory=Path(tmp)
+                with patch.object(mp,"read_json",side_effect=[tag,reply]) as model:
+                    roles,receipt=mp.model_plan(directory,cid,pid,goals=goals)
+                    self.assertEqual(roles,mp.ORDER)
+                    self.assertEqual(receipt["goals_sha256"],mp.digest(goals))
+                    self.assertEqual(json.loads(model.call_args_list[1].args[1]["messages"][1]["content"])["goals"],goals)
+                    self.assertEqual(model.call_count,2)
+                self.assertFalse((directory/"minister-model-rejection.json").exists())
+                self.assertEqual(mp.validate_receipt(receipt,cid,pid,goals=goals),mp.ORDER)
+                with patch.object(mp,"read_json",side_effect=AssertionError("no replay")):
+                    self.assertEqual(mp.model_plan(directory,cid,pid,goals=goals),(roles,receipt))
+                    for wrong in (mp.GOALS,dict(goals,A="Different authorized objective"),dict(goals,Z="Unauthorized goal ID")):
+                        with self.assertRaises(ValueError):mp.model_plan(directory,cid,pid,goals=wrong)
+                    with self.assertRaises(ValueError):mp.validate_receipt(receipt,cid,pid)
+                    with self.assertRaises(ValueError):mp.validate_receipt(dict(receipt,paid_inference=True),cid,pid,goals=goals)
+        print("NONDEFAULT GOAL RECEIPT PASS bibliography and station fresh/restart binding; cross-scope and unauthorized IDs denied; no replay",flush=True)
+
     def test_rejected_plan_no_fallback(self):
         good=valid_plan()
         bad=dict(good,step_1=good["step_2"],step_2=good["step_1"])
