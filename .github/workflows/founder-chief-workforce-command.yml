@@ -100,6 +100,7 @@ jobs:
                         and data.get('planned_contract_mission') is not True))
           with open(os.environ['GITHUB_OUTPUT'],'a') as out:
               out.write('needs_local_model='+str(needs_model).lower()+'\n')
+              out.write('team_planner='+str(data.get('planned_model_team_mission') is True).lower()+'\n')
           if needs_model:
               subprocess.check_call([sys.executable,'-m','pip','install','-e','.[chief_of_staff]'])
           extras=original_chief_worker_extras(data)
@@ -127,20 +128,33 @@ jobs:
       - name: Start existing bounded Qwen only for a new data plan
         id: data_model
         if: steps.native-reservation.outputs.authorized == 'true' && steps.scope.outputs.needs_local_model == 'true'
+        env:
+          PLENUM_TEAM_PLANNER: ${{ steps.scope.outputs.team_planner }}
         run: |
           if find reports/workforce-chief -maxdepth 1 \( -name 'chief-data-plan-*.json' -o -name 'chief-contract-plan-*.json' -o -name 'chief-team-plan-*.json' \) -print -quit | read -r saved; then
             echo 'Saved immutable plan will be validated and reused; no model started'
             exit 0
           fi
+          model=qwen3:1.7b
+          memory=5g
+          if [ "$PLENUM_TEAM_PLANNER" = "true" ]; then
+            model=qwen3.5:4b
+            memory=8g
+          fi
           docker pull ollama/ollama:latest
           docker run -d --rm --name plenum-chief-data-qwen \
             -p 127.0.0.1:11434:11434 -e OLLAMA_CONTEXT_LENGTH=2048 \
-            -e OLLAMA_NUM_PARALLEL=1 --memory=5g --cpus=3 ollama/ollama:latest
+            -e OLLAMA_NUM_PARALLEL=1 --memory="$memory" --cpus=3 ollama/ollama:latest
           for i in $(seq 1 45); do
             if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
             sleep 2
           done
-          docker exec plenum-chief-data-qwen ollama pull qwen3:1.7b
+          docker exec plenum-chief-data-qwen ollama pull "$model"
+          docker exec plenum-chief-data-qwen ollama list
+          if [ "$PLENUM_TEAM_PLANNER" = "true" ]; then
+            digest=$(docker exec plenum-chief-data-qwen ollama list | awk '$1=="qwen3.5:4b" {print $2}')
+            test "$digest" = d8b0f5e9760c
+          fi
       - name: Dispatch original specialists within validated task scope
         if: steps.native-reservation.outputs.authorized == 'true'
         env:
