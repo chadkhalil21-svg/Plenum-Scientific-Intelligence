@@ -122,5 +122,63 @@ class ToolNetworkTests(unittest.TestCase):
         self.assertEqual(_execute_tool("nasa.gmat", "test", True)["status"], "failed")
 
 
+    def test_durable_offline_graph_continues_after_real_workers_finish(self):
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        from unittest.mock import patch
+        from plenum_ai.durable_graph import run_persistent, inspect_persistent
+        question = "Preserve completed orbital and thermal work during interruption"
+        keys = ["scipy.orbit", "scipy.thermal"]
+        with TemporaryDirectory() as folder:
+            db = Path(folder) / "mission.sqlite"
+            with patch("plenum_ai.parallel_research._optimize",
+                       side_effect=RuntimeError("simulated interruption after workers")):
+                with self.assertRaisesRegex(RuntimeError, "simulated interruption"):
+                    run_persistent(question, db, "original-resume", tool_keys=keys)
+            saved = inspect_persistent(db, "original-resume")
+            self.assertFalse(saved["finished"])
+            self.assertEqual(saved["workers_recorded"], 2)
+            # A changed scope must not consume or modify the old checkpoint.
+            with self.assertRaises(ValueError):
+                run_persistent(question, db, "original-resume", tool_keys=keys, optimize=False)
+            with self.assertRaises(ValueError):
+                run_persistent(question, db, "original-resume", tool_keys=keys, offline=False)
+            # Existing actual workers are already complete. Native LangGraph
+            # continuation must run only the unfinished dependency and verifier.
+            with patch("plenum_ai.parallel_research._execute_tool",
+                       side_effect=AssertionError("must not rerun accepted tools")) as worker:
+                completed = run_persistent(question, db, "original-resume", tool_keys=keys)
+                worker.assert_not_called()
+            self.assertTrue(completed["resumed_unfinished_graph"])
+            self.assertTrue(completed["checkpoint"]["finished"])
+            self.assertEqual(completed["checkpoint"]["workers_recorded"], 2)
+            self.assertTrue(completed["result"]["known_model_integration_passed"])
+            self.assertTrue(completed["result"]["dependent_optimization"]["verified_fixture"])
+            with patch("plenum_ai.parallel_research._execute_tool",
+                       side_effect=AssertionError("completed replay is read only")) as worker:
+                replay = run_persistent(question, db, "original-resume", tool_keys=keys)
+                worker.assert_not_called()
+            self.assertEqual(replay["status"], "recovered")
+            self.assertFalse(replay["new_scientific_work_executed"])
+
+    def test_interrupted_online_graph_cannot_automatically_resume(self):
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        from unittest.mock import patch
+        from plenum_ai.durable_graph import run_persistent, inspect_persistent
+        question = "Known thermal fixture with online mode authorized originally"
+        with TemporaryDirectory() as folder:
+            db = Path(folder) / "online.sqlite"
+            with patch("plenum_ai.parallel_research._optimize", side_effect=RuntimeError("interruption")):
+                with self.assertRaisesRegex(RuntimeError, "interruption"):
+                    run_persistent(question, db, "online-resume", tool_keys=["scipy.thermal"], offline=False)
+            with patch("plenum_ai.parallel_research._execute_tool",
+                       side_effect=AssertionError("no automatic online replay")) as worker:
+                with self.assertRaises(PermissionError):
+                    run_persistent(question, db, "online-resume", tool_keys=["scipy.thermal"], offline=False)
+                worker.assert_not_called()
+            self.assertFalse(inspect_persistent(db, "online-resume")["finished"])
+
+
 if __name__ == "__main__":
     unittest.main()
