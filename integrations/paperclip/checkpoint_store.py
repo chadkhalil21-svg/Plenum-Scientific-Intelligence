@@ -51,7 +51,7 @@ def transient(exc):
     return isinstance(exc, (TimeoutError, ConnectionError, URLError))
 
 
-def execute_once(directory, company, role, issue, produce):
+def execute_once(directory, company, role, issue, produce, *, remote=None):
     """Called only after Paperclip's exclusive checkout; never retry a 409.
     
     A crashed attempt consumes its reservation. A second failure is terminal.
@@ -78,6 +78,8 @@ def execute_once(directory, company, role, issue, produce):
                 if status.get("retryable") is not True:
                     raise RuntimeError("Terminal specialist failure")
             continue
+        if remote is not None:
+            remote.reserve(number)
         exclusive(marker, expected)
         try:
             result = produce()
