@@ -29,6 +29,9 @@ TOPIC = re.compile(r"^[\w\s,\-.()/+]{20,120}$", re.UNICODE)
 
 def original_source_category(objective: str) -> str:
     """Choose an EXISTING World Horizon category, never invent a new provider."""
+    from .world_horizon import paper_survey_subject
+    if paper_survey_subject(objective):
+        return "journals"
     return ("funding" if re.search(
         r"\b(?:funding|grants?|solicitations?)\b", objective, re.I,
     ) else "all")
@@ -234,6 +237,24 @@ def run_issue(event: dict, *, output_dir: Path, runner=subprocess.run) -> dict:
     if checked["source_linked_records"] == 0:
         return {**task, **checked, "status": "BLOCKED_NO_SOURCE_EVIDENCE",
                 "verified": False, "output_artifact": output.name}
+    from .world_horizon import paper_survey_subject, paper_title_matches
+    subject=paper_survey_subject(task["objective"])
+    if subject:
+        rows=json.loads(output.read_text("utf-8"))["records"]
+        matched=bool(rows) and all(
+            row.get("source")=="crossref_journals"
+            and row.get("category")=="journals"
+            and re.fullmatch(r"https://doi\.org/10\.[0-9]{4,9}/[^\s?#]+",row.get("url",""))
+            and paper_title_matches(subject,row.get("title"))
+            for row in rows)
+        return {**task,**checked,
+                "status":"DRAFT_READY_FOR_FOUNDER" if matched else "BLOCKED_PAPER_TOPIC_RELEVANCE",
+                "verified":matched,"output_artifact":output.name,
+                "paper_title_match_verified":matched,
+                "individual_papers_independently_validated":False,
+                "verified_scope":"topic-matched Crossref journal metadata only; paper contents and scientific claims not audited",
+                "no_money_spent_by_worker":True,
+                "completed_at_utc":datetime.now(timezone.utc).isoformat()}
     if original_source_category(task["objective"]) == "funding":
         from .world_horizon import funding_survey_subject, funding_title_matches
         subject=funding_survey_subject(task["objective"])
