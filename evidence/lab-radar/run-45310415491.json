@@ -1,0 +1,69 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "45310415491",
+  "source_revision": "accbd4d4380cda7c5b99fc367b9c06c96cd961fc",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-24T02:10:59.369147+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 29,
+    "sources_returning_records": 26,
+    "source_outages": [
+      "nasa_research",
+      "gdelt_headlines"
+    ],
+    "new_public_links_before_limit": 4,
+    "signals": [
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026xgdfty",
+        "title_untrusted": "M 2.7 - 111 km E of Chignik, Alaska",
+        "claimed_publication_date": "1795485729029",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41579704",
+        "title_untrusted": "M 1.1 - 26 km SW of Maricopa, CA",
+        "claimed_publication_date": "1795485209190",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41579696",
+        "title_untrusted": "M 1.6 - 4 km SE of Marina del Rey, CA",
+        "claimed_publication_date": "1795484277600",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/uw714142131",
+        "title_untrusted": "M 1.9 - 8 km NNE of Government Camp, Oregon",
+        "claimed_publication_date": "1795484246500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
