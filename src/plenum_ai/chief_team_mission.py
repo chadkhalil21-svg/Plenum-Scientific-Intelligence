@@ -776,6 +776,7 @@ def execute(event: dict, *, output_dir: Path) -> dict:
                        "planning_provenance":receipt["provenance"],"plan_sha256":plan_hash,
                        "plan_artifact":f"chief-team-plan-{task['issue_number']}.json",
                        "specialist_assignments":receipt["plan"]["steps"],
+                       "objective":task["objective"],
                        "bounded_founder_goal_evidence":planned_proof,
                        "founder_objective_verified":full,
                        "founder_review_required":True})
