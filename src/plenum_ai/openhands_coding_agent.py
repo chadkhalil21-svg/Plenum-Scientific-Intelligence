@@ -44,7 +44,7 @@ LOCAL_ENGINE = "aider_local_ollama"
 # Official amd64 v0.86.0 image manifest (not a mutable latest tag).
 AIDER_IMAGE = "paulgauthier/aider@sha256:cfdc43ebd4ff163f7ef5f1803b069fa80abbd95e981d165495d459d3edcc356c"
 LOCAL_MODEL = "qwen2.5-coder:7b"
-STRUCTURED_EDIT_MODEL = "qwen3.5:4b"
+STRUCTURED_EDIT_MODEL = "qwen3.5:9b-q4_K_M"
 LOCAL_MAX_SOURCE_BYTES = 12_000  # Whole-file output on 4 CPU free runner.
 GEMINI_ENGINE = "gemini_free_openhands"
 GEMINI_MODEL = "gemini/gemini-3.5-flash-lite"
@@ -328,7 +328,7 @@ def local_plan(task: str, *, source_file: str) -> dict:
     if requests:
         return {**result, "upstream":"ollama/ollama", "engine":LOCAL_ENGINE,
                 "local_model":STRUCTURED_EDIT_MODEL,
-                "local_edit_strategy":"exact_anchor_structured_function_edit",
+                "local_edit_strategy":"bounded_anchor_or_numbered_structured_function_edit",
                 "authorized_function_edits":len(requests),
                 "cloud_inference_used":False,"paid_api_authorized":False}
     return {**result, "upstream": "Aider-AI/aider", "engine": LOCAL_ENGINE,
