@@ -57,3 +57,7 @@ jobs:
         env:
           PYTHONPATH: src
         run: python integrations/paperclip/objective_replan_smoke.py
+      - name: Live verifier signed fixtures and persistent queue isolation
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/live_queue_smoke.py
