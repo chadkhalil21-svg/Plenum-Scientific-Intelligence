@@ -17,7 +17,7 @@ from plenum_ai import openhands_coding_agent as coder
 class TrustedRecoveryTests(unittest.TestCase):
     def test_only_original_failed_task_can_receive_one_corrective_attempt(self):
         source = "src/plenum_ai/business_public_watch.py"
-        task = next(t for s,t in v.TASK_ACCEPTANCE if s==source)
+        task = next(t for s,t in v.TASK_ACCEPTANCE if s==source and v.TASK_ACCEPTANCE[(s,t)]=="health_body_limit.py")
         original = (ROOT / source).read_bytes()
         with tempfile.TemporaryDirectory() as tmp:
             previous = Path.cwd()
@@ -75,6 +75,21 @@ class TrustedRecoveryTests(unittest.TestCase):
                     self.assertEqual(run.call_count,1)
             finally:
                 os.chdir(previous)
+
+    def test_function_scoped_edit_keeps_unrelated_bytes_and_signature(self):
+        source=b"import math\n\ndef first(x: int) -> int:\n    return x+1\n\ndef second():\n    return 42\n"
+        scope=coder.local_function_scope("Repair function first. Correct the result.",source)
+        self.assertEqual(scope[1],b"def first(x: int) -> int:\n    return x+1\n")
+        changed=scope[1].replace(b"x+1",b"x+2")
+        self.assertEqual(coder.restore_function_scope(scope,changed),source.replace(b"x+1",b"x+2"))
+        for bad in (changed.replace(b"first",b"other"),changed.replace(b"x: int",b"x: str"),
+                    b"import sys\n"+changed, changed+b"\nprint(123)\n"):
+            with self.subTest(bad=bad),self.assertRaises(ValueError):
+                coder.restore_function_scope(scope,bad)
+        self.assertIsNone(coder.local_function_scope("Repair this module normally.",source))
+        with self.assertRaises(ValueError):
+            coder.local_function_scope("Repair function unknown. Fix the issue.",source)
+
 
 if __name__=="__main__":
     unittest.main()
