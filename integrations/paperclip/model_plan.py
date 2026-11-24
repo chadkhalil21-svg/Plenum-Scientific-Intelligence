@@ -32,20 +32,67 @@ def valid_digest(value):
     return isinstance(value,str) and bool(re.fullmatch(r"(?:sha256:)?"+MODEL_DIGEST+r"[0-9a-f]{52}",value))
 
 
+SLOTS = tuple("step_"+str(i) for i in range(1,6))
+
+
+class PlanRejected(ValueError):
+    def __init__(self, code):
+        self.code=code
+        super().__init__(code)
+
+
+def plan_schema():
+    # Object properties give the grammar five independently constrained slots.
+    # No reliance on unsupported array uniqueItems/prefixItems behavior.
+    return {"type":"object","required":list(SLOTS),"additionalProperties":False,
+            "properties":{slot:{"type":"object","required":["goal","division"],
+              "additionalProperties":False,"properties":{
+                "goal":{"type":"string","enum":list(GOALS)},
+                "division":{"type":"string","enum":[role]}}}
+              for slot,role in zip(SLOTS,ORDER)}}
+
+
 def validate_choice(value):
-    if not isinstance(value,dict) or set(value)!={"steps"} or not isinstance(value["steps"],list) or len(value["steps"])!=5:
-        raise ValueError("Invalid bounded Minister plan shape")
+    if not isinstance(value,dict) or set(value)!=set(SLOTS):
+        raise PlanRejected("PLAN_SHAPE")
     roles=[]
-    for step in value["steps"]:
+    seen=set()
+    for slot,expected in zip(SLOTS,ORDER):
+        step=value[slot]
         if not isinstance(step,dict) or set(step)!={"goal","division"}:
-            raise ValueError("Invalid model assignment")
+            raise PlanRejected("ASSIGNMENT_SHAPE")
         goal,role=step["goal"],step["division"]
         if not isinstance(goal,str) or not isinstance(role,str) or ROLE_MAP.get(goal)!=role:
-            raise ValueError("Model assignment outside authorized scope")
+            raise PlanRejected("ASSIGNMENT_SCOPE")
+        if goal in seen or role in roles:
+            raise PlanRejected("DUPLICATE_ASSIGNMENT")
+        if role!=expected:
+            raise PlanRejected("DEPENDENCY_ORDER")
+        seen.add(goal)
         roles.append(role)
-    if roles!=ORDER:
-        raise ValueError("Model dependency order not accepted")
+    if seen!=set(GOALS) or roles!=ORDER:
+        raise PlanRejected("INCOMPLETE_ASSIGNMENTS")
     return roles
+
+
+def rejected_choice(directory, company, parent, choice, reason):
+    # Only known goal IDs, division names and numeric slot positions leave the
+    # model boundary. No raw response, arbitrary keys, prompts or provider text.
+    positions=[]
+    if isinstance(choice,dict):
+        for i,slot in enumerate(SLOTS,1):
+            step=choice.get(slot)
+            if not isinstance(step,dict):
+                positions.append({"position":i,"goal":None,"division":None})
+                continue
+            goal,role=step.get("goal"),step.get("division")
+            positions.append({"position":i,
+                "goal":goal if isinstance(goal,str) and goal in GOALS else None,
+                "division":role if isinstance(role,str) and role in ORDER else None})
+    exclusive(directory/"minister-model-rejection.json",{
+        "schema":"plenum-model-rejection-v1","company":company,"parent":parent,
+        "reason":reason,"expected_order":ORDER,"assignments":positions,
+        "accepted":False,"paid_inference":False})
 
 
 def read_json(path, payload=None, timeout=10):
@@ -82,21 +129,32 @@ def model_plan(directory, company, parent):
     matches=[x for x in tags.get("models",[]) if x.get("name")==MODEL]
     if len(matches)!=1 or not valid_digest(matches[0].get("digest")):
         raise ValueError("Unexpected local Qwen model digest")
-    schema={"type":"object","required":["steps"],"additionalProperties":False,"properties":{"steps":{
-        "type":"array","minItems":5,"maxItems":5,"items":{"type":"object","additionalProperties":False,
-        "required":["goal","division"],"properties":{"goal":{"enum":list(GOALS)},"division":{"enum":sorted(ORDER)}}}}}}
-    request={"model":MODEL,"stream":False,"think":False,"format":schema,
+    request={"model":MODEL,"stream":False,"think":False,"format":plan_schema(),
        "options":{"temperature":0,"num_ctx":2048,"num_predict":256},
-       "messages":[{"role":"system","content":"Assign each goal to exactly one matching division. Order assignments so input data comes first, scholarly validation next, engineering then commercial, and independent verification last. Return only the five assignments. Never add goals or tools."},
-       {"role":"user","content":json.dumps({"goals":GOALS,"divisions":sorted(ORDER)})}]}
+       "messages":[{"role":"system","content":"Fill exactly five numbered slots. The dependency order is fixed: step_1 intelligence, step_2 research, step_3 engineering, step_4 commercial, step_5 verification. Match each slot's division to the goal description; select one goal ID per slot. Use every goal ID exactly once. Do not repeat, omit, invent or reorder assignments. Each slot contains goal and division only. Return JSON only."},
+       {"role":"user","content":json.dumps({"goals":GOALS,"required_order":ORDER})}]}
     reply=read_json("/api/chat",request,timeout=100)
-    if reply.get("done") is not True or reply.get("model")!=MODEL: raise ValueError("Incomplete local inference")
-    raw=reply.get("message",{}).get("content")
-    if not isinstance(raw,str) or len(raw)>4000: raise ValueError("Invalid model content")
-    choice=json.loads(raw)
+    if not isinstance(reply,dict) or reply.get("done") is not True or reply.get("model")!=MODEL:
+        rejected_choice(directory,company,parent,None,"INCOMPLETE_INFERENCE")
+        raise PlanRejected("INCOMPLETE_INFERENCE")
+    message=reply.get("message")
+    raw=message.get("content") if isinstance(message,dict) else None
+    if not isinstance(raw,str) or len(raw)>4000:
+        rejected_choice(directory,company,parent,None,"MODEL_CONTENT")
+        raise PlanRejected("MODEL_CONTENT")
+    try:
+        choice=json.loads(raw)
+    except (ValueError,TypeError):
+        rejected_choice(directory,company,parent,None,"MODEL_JSON")
+        raise PlanRejected("MODEL_JSON") from None
     receipt={"company":company,"parent":parent,"model":MODEL,"model_digest":matches[0]["digest"],
              "goals_sha256":digest(GOALS),"response":choice,"response_sha256":digest(choice),
              "eval_count":reply.get("eval_count"),"prompt_eval_count":reply.get("prompt_eval_count"),"paid_inference":False}
-    roles=validate_receipt(receipt,company,parent)
+    try:
+        roles=validate_receipt(receipt,company,parent)
+    except ValueError as exc:
+        rejected_choice(directory,company,parent,choice,
+                        exc.code if isinstance(exc,PlanRejected) else "RECEIPT_BINDING")
+        raise
     exclusive(path,receipt)
     return roles,receipt
