@@ -1,4 +1,4 @@
-import {handlePrivateMemory, PrivateContinuityMemory} from "./plenum-private-continuity.mjs";
+import {handlePrivateMemory, handlePaperclipCheckpoint, PrivateContinuityMemory} from "./plenum-private-continuity.mjs";
 import {ownerMemoryCheckPage, ownerMemoryCheckScript} from "./plenum-private-memory-check.mjs";
 import {handleFreeCodingAI} from "./plenum-free-coding-ai.mjs";
 export {PrivateContinuityMemory};
@@ -158,6 +158,8 @@ export default {
       return ownerMemoryCheckPage();
     if (pathname === "/memory-check.js" && request.method === "GET")
       return ownerMemoryCheckScript();
+    if (pathname.startsWith("/paperclip-checkpoints/"))
+      return handlePaperclipCheckpoint(request, env);
     if (pathname === "/memory" || pathname.startsWith("/memory/"))
       return handlePrivateMemory(request, env);
     if (pathname === "/health" && request.method === "GET")
