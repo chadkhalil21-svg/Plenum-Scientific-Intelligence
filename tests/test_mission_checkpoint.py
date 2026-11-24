@@ -60,3 +60,45 @@ class MissionCheckpointLimitsTests(TestCase):
 
             with patch.object(checkpoint, "MAX_FILES", 3), patch.object(os, "scandir", GuardedScan):
                 self.assertIsNone(checkpoint.artifact_digest(root, "workers/program"))
+
+
+    def test_dangling_checkpoint_is_not_a_new_mission(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = checkpoint.checkpoint_path(root, 42)
+            path.symlink_to(root / "missing.json")
+            with self.assertRaises(ValueError):
+                checkpoint.load_checkpoint(root, issue=42, objective="Public task", team=("program",))
+            with self.assertRaises(ValueError):
+                checkpoint.save_checkpoint(root, issue=42, objective="Public task", team=("program",), results={})
+            self.assertTrue(path.is_symlink())
+
+    def test_intermediate_worker_alias_cannot_supply_another_worker_artifact(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            other = root / "workers/other"
+            other.mkdir(parents=True)
+            (other / "output.txt").write_text("other worker result")
+            (root / "workers/program").symlink_to(other, target_is_directory=True)
+            self.assertIsNone(checkpoint.artifact_digest(root, "workers/program/output.txt"))
+            self.assertIsNotNone(checkpoint.artifact_digest(root, "workers/other/output.txt"))
+            self.assertIsNone(checkpoint.artifact_digest(root, "workers//other/output.txt"))
+
+    def test_checkpoint_save_never_overwrites_preexisting_temporary_alias(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            existing = root / "unrelated.txt"
+            existing.write_text("preserve")
+            path = checkpoint.checkpoint_path(root, 42)
+            path.with_suffix(".json.tmp").symlink_to(existing)
+            result = {"program": {"attempt": 1, "verified": False}}
+            checkpoint.save_checkpoint(root, issue=42, objective="Public task", team=("program",), results=result)
+            self.assertEqual(existing.read_text(), "preserve")
+            self.assertEqual(checkpoint.load_checkpoint(root, issue=42, objective="Public task", team=("program",)), result)
+
+    def test_nonregular_checkpoint_is_not_a_new_mission(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            checkpoint.checkpoint_path(root, 42).mkdir()
+            with self.assertRaises(ValueError):
+                checkpoint.load_checkpoint(root, issue=42, objective="Public task", team=("program",))
