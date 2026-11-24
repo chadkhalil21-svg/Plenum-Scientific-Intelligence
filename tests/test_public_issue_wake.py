@@ -355,6 +355,42 @@ class PublicWakeAcceptance(unittest.TestCase):
         self.assertIn("Status: **VERIFIED_BOUNDED_TEAM**",
                       calls_to_gh[-1][1]["body"])
 
+    def test_wake_recovers_first_contract_failure_without_repeating_completed_work(self):
+        import tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        from plenum_ai import public_issue_wake as wake
+        from plenum_ai import chief_contract_plan as contract
+        original = issue(title="[Plenum Chief] public mission",
+            body=contract.MAGIC + "\nobjective: Review DOI 10.1038/nature14539 deposited metadata")
+        calls = []
+        record = {"doi": "10.1038/nature14539", "title": "Public record",
+                  "year": 2020, "publisher": "Publisher"}
+        def read(doi, **kwargs):
+            calls.append(doi)
+            if len(calls) == 1:
+                raise RuntimeError("temporary interruption")
+            return record
+        def api(url, token, *, body=None):
+            if url.endswith("/789"): return original
+            if "/comments?per_page" in url: return []
+            if url.endswith("/comments"): return {"html_url": "https://github.com/example/receipt"}
+            raise AssertionError(url)
+        with tempfile.TemporaryDirectory() as folder, \
+                patch.object(wake, "gh_json", side_effect=api), \
+                patch.object(contract, "read_crossref", side_effect=read), \
+                patch.dict("os.environ", {"GITHUB_RUN_ID": "123"}):
+            root = Path(folder)
+            result = wake.process(789, "scoped", root)
+            self.assertEqual(result["status"], "VERIFIED_BOUNDED_CONTRACT_MISSION")
+            self.assertTrue(result["independent_verified"])
+            self.assertEqual(len(calls), 3)
+            import json
+            outcome = json.loads((root / "chief-result-789.json").read_text())
+            self.assertTrue(outcome["same_run_bounded_recovery_attempted"])
+            self.assertFalse(wake.one_original_local_repair_warranted(
+                wake.build_original_event(original, []), root, outcome))
+
     def test_no_recovery_without_original_checkpoint_or_when_tampered(self):
         import tempfile
         from pathlib import Path
