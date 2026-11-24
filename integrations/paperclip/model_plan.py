@@ -103,12 +103,19 @@ def read_json(path, payload=None, timeout=10):
     return json.loads(raw)
 
 
-def validate_receipt(receipt, company, parent):
+def validate_goals(goals):
+    if (not isinstance(goals,dict) or set(goals)!=set(GOALS)
+            or any(not isinstance(v,str) or not v.strip() or len(v)>512 for v in goals.values())):
+        raise ValueError("Unexpected bounded goal descriptions")
+
+
+def validate_receipt(receipt, company, parent, *, goals=GOALS):
+    validate_goals(goals)
     if not isinstance(receipt,dict) or set(receipt)!={"company","parent","model","model_digest","goals_sha256","response","response_sha256","eval_count","prompt_eval_count","paid_inference"}:
         raise ValueError("Invalid local model receipt")
     if (receipt["company"]!=company or receipt["parent"]!=parent or receipt["model"]!=MODEL
             or not valid_digest(receipt["model_digest"])
-            or receipt["goals_sha256"]!=digest(GOALS) or receipt["response_sha256"]!=digest(receipt["response"])
+            or receipt["goals_sha256"]!=digest(goals) or receipt["response_sha256"]!=digest(receipt["response"])
             or type(receipt["eval_count"]) is not int or not 0<receipt["eval_count"]<=256
             or type(receipt["prompt_eval_count"]) is not int or not 0<receipt["prompt_eval_count"]<=2048
             or receipt["paid_inference"] is not False):
@@ -116,11 +123,13 @@ def validate_receipt(receipt, company, parent):
     return validate_choice(receipt["response"])
 
 
-def model_plan(directory, company, parent):
+def model_plan(directory, company, parent, *, goals=GOALS):
+    validate_goals(goals)
+    goals=dict(goals)
     path=directory/"minister-model-plan.json"
     if path.exists():
         receipt=json.loads(path.read_text())
-        return validate_receipt(receipt,company,parent),receipt
+        return validate_receipt(receipt,company,parent,goals=goals),receipt
     if os.getenv("PLENUM_EPHEMERAL_RUNNER")!="confirmed" or os.getenv("PLENUM_PAPERCLIP_MODEL")!="local":
         raise PermissionError("Only explicitly isolated local model qualification")
     # Do not make a second model call after an ambiguous interruption.
@@ -132,7 +141,7 @@ def model_plan(directory, company, parent):
     request={"model":MODEL,"stream":False,"think":False,"format":plan_schema(),
        "options":{"temperature":0,"num_ctx":2048,"num_predict":256},
        "messages":[{"role":"system","content":"Fill exactly five numbered slots. The dependency order is fixed: step_1 intelligence, step_2 research, step_3 engineering, step_4 commercial, step_5 verification. Match each slot's division to the goal description; select one goal ID per slot. Use every goal ID exactly once. Do not repeat, omit, invent or reorder assignments. Each slot contains goal and division only. Return JSON only."},
-       {"role":"user","content":json.dumps({"goals":GOALS,"required_order":ORDER})}]}
+       {"role":"user","content":json.dumps({"goals":goals,"required_order":ORDER})}]}
     reply=read_json("/api/chat",request,timeout=100)
     if not isinstance(reply,dict) or reply.get("done") is not True or reply.get("model")!=MODEL:
         rejected_choice(directory,company,parent,None,"INCOMPLETE_INFERENCE")
@@ -148,10 +157,10 @@ def model_plan(directory, company, parent):
         rejected_choice(directory,company,parent,None,"MODEL_JSON")
         raise PlanRejected("MODEL_JSON") from None
     receipt={"company":company,"parent":parent,"model":MODEL,"model_digest":matches[0]["digest"],
-             "goals_sha256":digest(GOALS),"response":choice,"response_sha256":digest(choice),
+             "goals_sha256":digest(goals),"response":choice,"response_sha256":digest(choice),
              "eval_count":reply.get("eval_count"),"prompt_eval_count":reply.get("prompt_eval_count"),"paid_inference":False}
     try:
-        roles=validate_receipt(receipt,company,parent)
+        roles=validate_receipt(receipt,company,parent,goals=goals)
     except ValueError as exc:
         rejected_choice(directory,company,parent,choice,
                         exc.code if isinstance(exc,PlanRejected) else "RECEIPT_BINDING")

@@ -81,13 +81,13 @@ def read_evidence(company, role):
     return record
 
 
-def run_assigned(role, *, mission_worker=None):
-    if role not in SPECS:
+def run_assigned(role, *, mission_worker=None, specs=SPECS, description=DESCRIPTION, expected_scope=None):
+    if role not in specs or set(specs)!=set(SPECS):
         raise ValueError("Unapproved division")
     agent = os.environ["PAPERCLIP_AGENT_ID"]
     company = os.environ["PAPERCLIP_COMPANY_ID"]
     identity = api("/api/agents/me", worker=True)
-    if identity["id"] != agent or identity["companyId"] != company or identity["name"] != SPECS[role][0]:
+    if identity["id"] != agent or identity["companyId"] != company or identity["name"] != specs[role][0]:
         raise PermissionError("Incorrect native agent identity")
     import uuid
     if str(uuid.UUID(company)) != company:
@@ -99,12 +99,22 @@ def run_assigned(role, *, mission_worker=None):
         rows = api("/api/companies/" + company + "/issues?" + urlencode({
             "assigneeAgentId": agent, "status": "todo,in_progress"}), worker=True)
     rows = [row for row in rows if row.get("assigneeAgentId") == agent
-            and row.get("title") == SPECS[role][1] and row.get("description") == DESCRIPTION
+            and row.get("title") == specs[role][1] and row.get("description") == description
             and row.get("status") in ("todo", "in_progress")]
     if len(rows) != 1:
         raise ValueError("Expected exactly one assigned integration task")
     task = str(uuid.UUID(rows[0]["id"]))
     path = "/api/issues/" + task
+    if expected_scope is not None:
+        from mission_scope import validate_scope, digest
+        from uuid import UUID
+        parent=str(UUID(rows[0]["parentId"]))
+        binding=json.loads((ROOT/company/"mission-scope.json").read_text())
+        if validate_scope(binding["scope"])!=expected_scope or binding["scope_sha256"]!=digest(expected_scope):
+            raise ValueError("Native scope receipt mismatch")
+        original=api("/api/issues/"+parent,worker=True)
+        if original.get("description")!=binding["parent_description"] or original.get("title")!=binding["parent_title"]:
+            raise PermissionError("Native parent scope mismatch")
     from runtime_checkpoint import configured
     remote = configured(company, rows[0].get("parentId"), role, task)
     api(path + "/checkout", "POST", {"agentId": agent, "expectedStatuses": ["todo", "in_progress"]}, worker=True)
