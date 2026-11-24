@@ -400,7 +400,8 @@ def restore_function_scope(scope, edited: bytes) -> bytes:
     if (len(nodes) != 1 or not isinstance(nodes[0], ast.FunctionDef)
             or nodes[0].name != before.name or nodes[0].decorator_list
             or ast.dump(nodes[0].args) != ast.dump(before.args)
-            or ast.dump(nodes[0].returns) != ast.dump(before.returns)):
+            or (ast.dump(nodes[0].returns) if nodes[0].returns else None)
+                != (ast.dump(before.returns) if before.returns else None)):
         raise ValueError("Candidate changed function signature or escaped exact function scope")
     result = prefix + edited.rstrip(b"\r\n") + b"\n" + suffix
     ast.parse(result.decode("utf-8"))
