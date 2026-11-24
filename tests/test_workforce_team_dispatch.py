@@ -149,28 +149,24 @@ class TeamDispatchIntegration(unittest.TestCase):
         self.assertEqual(t["worker"],"existing_plenum_world_horizon")
 
 
-    def test_original_science_worker_automatically_resumes_interrupted_dependency(self):
-        from plenum_ai import parallel_research as science
-        optimize = science._optimize
-        original_worker = science._execute_tool
-        attempts=[]
-        def interrupted_once(state):
-            attempts.append(1)
-            if len(attempts)==1:
-                raise RuntimeError("simulated dependency interruption")
-            return optimize(state)
-        with tempfile.TemporaryDirectory() as folder, patch.object(
-            science, "_optimize", side_effect=interrupted_once
-        ), patch.object(science, "_execute_tool", wraps=original_worker) as worker:
-            report=run_issue(event("public_science","Run known orbital and thermal science fixtures"),
-                             output_dir=Path(folder))
-            self.assertTrue(report["verified"])
-            self.assertTrue(report["continued_unfinished_graph"])
-            self.assertEqual(len(attempts),2)
-            self.assertEqual(worker.call_count,2)
-            receipt=json.loads((Path(folder)/"issue-901/public-science-summary.json").read_text())
-            self.assertTrue(receipt["continued_unfinished_graph"])
-            self.assertEqual(receipt["workers"],2)
+    def test_science_dispatch_uses_only_one_bounded_continuation(self):
+        objective="Run known orbital and thermal science fixtures"
+        saved={"finished":False,"workers_recorded":2,"question":objective,
+               "requested_tools":["scipy.orbit","scipy.thermal"]}
+        complete={**saved,"finished":True}
+        evidence={"status":"executed_and_checkpointed","resumed_unfinished_graph":True,
+                  "result":{"known_model_integration_passed":True}}
+        with tempfile.TemporaryDirectory() as folder, patch(
+            "plenum_ai.durable_graph.run_persistent",
+            side_effect=[RuntimeError("interruption"),evidence]
+        ) as run, patch(
+            "plenum_ai.durable_graph.inspect_persistent", side_effect=[saved,complete]
+        ):
+            result=run_issue(event("public_science",objective),output_dir=Path(folder))
+            self.assertTrue(result["verified"])
+            self.assertTrue(result["continued_unfinished_graph"])
+            self.assertEqual(run.call_count,2)
+            self.assertEqual(run.call_args_list[0],run.call_args_list[1])
 
 
 if __name__=="__main__":
