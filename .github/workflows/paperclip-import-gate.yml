@@ -65,3 +65,7 @@ jobs:
         env:
           PYTHONPATH: src
         run: python integrations/paperclip/live_preflight_smoke.py
+      - name: Event objective mode and fresh-runner evidence regressions
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/fresh_runner_smoke.py
