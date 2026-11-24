@@ -50,22 +50,37 @@ def main():
     mode=sys.argv[1] if len(sys.argv)>1 else "off"
     cid=py("import sys;sys.path.insert(0,'/plenum/integrations/paperclip');from acceptance import api;print(api('/api/companies','POST',{'name':'Plenum durable lifecycle qualification','description':'Bounded isolated test'})['id'])").strip()
     scope={"kind":"bibliography_budget","dois":["10.1145/3442188.3445922"],"budget":{"model":"@cf/zai-org/glm-4.7-flash","neurons_used_today":100,"neurons_reserved":200,"input_tokens_upper_bound":3000,"output_tokens_upper_bound":1000}}
-    prep1=mission(cid,scope,action="prepare",mode=mode)
-    a=mission(cid,scope,prep1["mission"],action="activate")
-    if mode=="local":model_stop()
-    restart()
-    r1=mission(cid,scope,a["parent"])
     if mode=="local":
-        model_start()
-        scope={"kind":"public_objective","objective":"Compare vocabulary overlap in synthetic procurement briefs and quantify delivery sample spread","dois":["10.1145/3442188.3445922"],"inputs":{"documents":["sensor supplier quality delivery quality","supplier delivery testing"],"samples":[17,-3,8,42,12,19]},"operations":["shared_terms","word_counts","mean","range"]}
-    else:scope["budget"]["neurons_reserved"]=201
-    prep2=mission(cid,scope,action="prepare",mode=mode,inject=mode=="local")
-    b=mission(cid,scope,prep2["mission"],action="activate")
-    if mode=="local":model_stop()
-    restart()
-    r2=mission(cid,scope,b["parent"])
-    again=mission(cid,scope,a["parent"])
-    assert a["parent"]==prep1["mission"] and b["parent"]==prep2["mission"]
+        from uuid import uuid4
+        second={"kind":"public_objective","objective":"Compare vocabulary overlap in synthetic procurement briefs and quantify delivery sample spread","dois":["10.1145/3442188.3445922"],"inputs":{"documents":["sensor supplier quality delivery quality","supplier delivery testing"],"samples":[17,-3,8,42,12,19]},"operations":["shared_terms","word_counts","mean","range"]}
+        qid=str(uuid4())
+        args=["docker","exec","--user","node","-e","PYTHONPATH=/plenum/src","-e","PLENUM_PERSISTENT_BOARD=confirmed","-e","PLENUM_PAPERCLIP_MODEL=local","-e","PLENUM_PERSISTENT_CHECKPOINT_MODE=local","-e","PLENUM_CI_QUEUE_REPLAN=confirmed","-e","PLENUM_PAPERCLIP_COMPANY_UUID="+cid,"-e","PLENUM_PAPERCLIP_QUEUE_UUID="+qid,"-e","PLENUM_MISSION_QUEUE="+json.dumps([scope,second]),CONTAINER,"python3","/plenum/integrations/paperclip/sequential_mission.py","queue-run"]
+        output=subprocess.check_output(args,text=True);print(output,flush=True)
+        q=json.loads(output.strip().splitlines()[-1])
+        assert q["state"]=="completed" and len(q["accepted"])==2 and q["paid_inference"] is False
+        # Read accepted evidence from the actual volume; second invocation must be an immutable no-replay readback.
+        again_queue=json.loads(subprocess.check_output(args,text=True).strip().splitlines()[-1])
+        assert again_queue==q
+        def qualified(mid):
+            return json.loads(py("from pathlib import Path;print((Path('/paperclip/plenum-mission-evidence')/"+repr(cid)+"/"+repr(mid)+"/'qualification.json').read_text())"))
+        a,b=[qualified(x["mission"]) for x in q["accepted"]]
+        model_stop()
+        restart()
+        r1=mission(cid,scope,a["parent"])
+        r2=mission(cid,second,b["parent"])
+        again=mission(cid,scope,a["parent"])
+    else:
+        prep1=mission(cid,scope,action="prepare",mode=mode)
+        a=mission(cid,scope,prep1["mission"],action="activate")
+        restart()
+        r1=mission(cid,scope,a["parent"])
+        scope["budget"]["neurons_reserved"]=201
+        prep2=mission(cid,scope,action="prepare",mode=mode)
+        b=mission(cid,scope,prep2["mission"],action="activate")
+        restart()
+        r2=mission(cid,scope,b["parent"])
+        again=mission(cid,scope,a["parent"])
+        assert a["parent"]==prep1["mission"] and b["parent"]==prep2["mission"]
     assert a["company"]==b["company"]==cid and a["minister"]==b["minister"]
     assert a["persistent_roster"]==b["persistent_roster"] and len(set(a["persistent_roster"].values()))==6
     assert a["parent"]!=b["parent"] and a["scope_sha256"]!=b["scope_sha256"]
@@ -77,7 +92,7 @@ def main():
         assert b["mission_kind"]=="public_objective" and set(b["recovery_receipt_sha256"])=={"intelligence"}
         assert set(b["replan_receipt_sha256"])=={"engineering"}
     assert r1["qualification_sha256"]==again["qualification_sha256"]!=r2["qualification_sha256"]
-    proof={"same_company":cid,"same_minister":a["minister"],"same_six_agent_ids":a["persistent_roster"],"missions":[a["parent"],b["parent"]],"restart_digests":[r1["qualification_sha256"],r2["qualification_sha256"]],"first_mission_preserved":True,"staged_prepare_activate":True,"model_mode":mode,"recovery_receipt_sha256":b.get("recovery_receipt_sha256",{}),"replan_receipt_sha256":b.get("replan_receipt_sha256",{}),"paid_inference":False}
+    proof={"same_company":cid,"same_minister":a["minister"],"same_six_agent_ids":a["persistent_roster"],"missions":[a["parent"],b["parent"]],"restart_digests":[r1["qualification_sha256"],r2["qualification_sha256"]],"first_mission_preserved":True,"staged_prepare_activate":True,"model_mode":mode,**({"queue_uuid":qid,"queue_no_replay":True} if mode=="local" else {}),"recovery_receipt_sha256":b.get("recovery_receipt_sha256",{}),"replan_receipt_sha256":b.get("replan_receipt_sha256",{}),"paid_inference":False}
     # Store only bounded public acceptance evidence in the existing mounted volume.
     subprocess.run(["docker","exec","--user","node",CONTAINER,"python3","-c","from pathlib import Path;import sys;Path('/paperclip/plenum-mission-evidence/persistent-lifecycle.json').write_text(sys.argv[1])",json.dumps(proof)],check=True)
     print(json.dumps(proof))

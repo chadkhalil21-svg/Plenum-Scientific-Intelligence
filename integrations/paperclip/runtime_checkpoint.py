@@ -22,6 +22,13 @@ class NoRedirect(HTTPRedirectHandler):
         return None
 
 
+class CheckpointRejected(RuntimeError):
+    def __init__(self,status,code=None):
+        self.status=status
+        self.code=code
+        super().__init__("Checkpoint HTTP rejected: "+str(status))
+
+
 class RuntimeCheckpoint:
     def __init__(self, company, mission, role, issue, *, sender=None, secret=None, scope=None):
         if os.getenv("GITHUB_ACTIONS") == "true":
@@ -59,7 +66,11 @@ class RuntimeCheckpoint:
                 except (ValueError, OSError): missing=None
                 if missing=={"error":"not_found"}:return None
                 raise RuntimeError("Checkpoint route not verified") from None
-            raise RuntimeError("Checkpoint HTTP rejected: " + str(exc.code)) from None
+            try:
+                error=json.loads(exc.read(4097))
+                code=error.get("error") if isinstance(error,dict) else None
+            except (ValueError,OSError):code=None
+            raise CheckpointRejected(exc.code,code) from None
         except Exception as exc:
             raise RuntimeError("Checkpoint transport unverified: " + type(exc).__name__) from None
         if (not isinstance(data, dict) or data.get("issue") != self.issue

@@ -500,6 +500,7 @@ def qualify_locked(action):
     exclusive(evidence_root/"event-timing.json",timing)
     print(json.dumps(timing),flush=True)
     print(json.dumps(summary),flush=True)
+    return summary
 
 
 def readback(cid,plan,expected_agents=None):
@@ -623,12 +624,18 @@ def restart_readback():
 
 if __name__=="__main__":
     arg=sys.argv[1] if len(sys.argv)==2 else "invalid"
-    if arg not in ("minister","qualify","prepare","activate","restart-readback",*MISSION_ORDER):
+    if arg not in ("minister","qualify","prepare","activate","restart-readback","verify-live","queue-run",*MISSION_ORDER):
         raise SystemExit("Unknown bounded entrypoint")
     try:
         if arg=="minister":minister()
         elif arg in ("qualify","prepare","activate"):qualify(arg)
         elif arg=="restart-readback":restart_readback()
+        elif arg=="verify-live":
+            from live_verify import verify_live
+            verify_live(api,ROOT,readback)
+        elif arg=="queue-run":
+            from mission_queue import queue_run
+            queue_run(api,ROOT,qualify_locked,readback)
         else:
             scope=assigned_scope(api,ROOT,arg) if persistent() else active_scope()
             run_assigned(arg,mission_worker=lambda role,prior,directory:mission_worker(role,prior,directory,scope),
