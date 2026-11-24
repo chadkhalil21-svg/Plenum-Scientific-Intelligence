@@ -1,4 +1,4 @@
-"""Persistent, read-only-on-replay LangGraph scientific investigations.
+"""Persistent, resumable offline LangGraph scientific investigations.
 
 SQLite checkpoints persist on the local disk across process restarts, but
 GitHub-hosted runner disks are ephemeral. Preserve/download the generated
@@ -9,7 +9,7 @@ import os
 import re
 from pathlib import Path
 
-from .parallel_research import build_graph, run_network
+from .parallel_research import build_graph, run_network, network_request, summarize_network
 
 _THREAD_ID = re.compile(r"^[A-Za-z0-9_.-]{1,80}$")
 
@@ -24,8 +24,8 @@ def _db_file(path):
     path = Path(path)
     if path.suffix.lower() not in (".db", ".sqlite", ".sqlite3"):
         raise ValueError("Checkpoint path must be an SQLite database file")
-    if path.exists() and path.is_symlink():
-        raise ValueError("Refuse to follow a symbolic-link checkpoint")
+    if path.is_symlink() or (path.exists() and not path.is_file()):
+        raise ValueError("Refuse linked or nonregular checkpoint")
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -56,32 +56,55 @@ def _snapshot_summary(graph, config):
 
 def run_persistent(question, db_path, thread_id, tool_keys=None, optimize=True,
                    offline=True):
-    """A given thread can execute once; later calls recover state without rerunning."""
+    """Continue an interrupted OFFLINE graph using native LangGraph pending writes.
+
+    Completed threads remain read-only on replay. No fresh graph input is sent
+    on continuation, and all original request parameters must agree.
+    """
     validate_thread_id(thread_id)
+    request = network_request(question, tool_keys, offline, optimize)
     path = _db_file(db_path)
     Saver = _saver()
-    config = {"configurable": {"thread_id": thread_id}}
+    config = {"configurable": {"thread_id": thread_id},
+              "max_concurrency": 5, "recursion_limit": 12}
+    resumed = False
     with Saver.from_conn_string(str(path)) as checkpointer:
         graph = build_graph(checkpointer=checkpointer)
         previous = _snapshot_summary(graph, config)
         if previous is not None:
-            if previous["question"] != question:
-                raise ValueError("Existing thread_id is bound to a different question")
-            return {"status": "recovered", "checkpoint": previous,
-                    "new_scientific_work_executed": False}
-        result = run_network(
-            question, tool_keys=tool_keys, offline=offline,
-            optimize=optimize, graph=graph, invoke_config=config,
-        )
+            state = graph.get_state(config)
+            if any(state.values.get(key) != value for key, value in request.items()):
+                raise ValueError("Existing thread_id is bound to a different scientific request")
+            if previous["finished"]:
+                return {"status": "recovered", "checkpoint": previous,
+                        "new_scientific_work_executed": False}
+            if request["offline"] is not True:
+                raise PermissionError("Interrupted online graph requires separate authorized review")
+            if not state.next or any(node not in
+                    {"planner", "worker", "dependent_openmdao", "independent_verifier"}
+                    for node in state.next):
+                raise ValueError("Unexpected saved scientific graph node")
+            # Native resume, NOT invoke(new_state), update_state or manual replay.
+            # LangGraph reuses successful pending writes and schedules unfinished
+            # nodes. This graph's offline tools have no external side effects.
+            raw = graph.invoke(None, config=config)
+            result = summarize_network(raw, request)
+            resumed = True
+        else:
+            result = run_network(
+                question, tool_keys=request["tool_keys"], offline=request["offline"],
+                optimize=request["enable_optimization"], graph=graph, invoke_config=config,
+            )
         snapshot = _snapshot_summary(graph, config)
         if not snapshot or not snapshot["finished"]:
             raise RuntimeError("No completed durable LangGraph checkpoint recorded")
-        if snapshot["workers_recorded"] != result["parallel_tool_count"]:
+        if (snapshot["workers_recorded"] != result["parallel_tool_count"]
+                or not result["verification"]["all_requested_tools_reported"]):
             raise RuntimeError("Durable checkpoint does not contain the expected workers")
     return {
         "status": "executed_and_checkpointed", "result": result,
         "checkpoint": snapshot, "new_scientific_work_executed": True,
-        "db_file": str(path),
+        "resumed_unfinished_graph": resumed, "db_file": str(path),
     }
 
 
