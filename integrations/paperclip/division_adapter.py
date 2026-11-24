@@ -105,6 +105,8 @@ def run_assigned(role, *, mission_worker=None):
         raise ValueError("Expected exactly one assigned integration task")
     task = str(uuid.UUID(rows[0]["id"]))
     path = "/api/issues/" + task
+    from runtime_checkpoint import configured
+    remote = configured(company, rows[0].get("parentId"), role, task)
     api(path + "/checkout", "POST", {"agentId": agent, "expectedStatuses": ["todo", "in_progress"]}, worker=True)
     # The immutable task-bound receipt permits replay of a failed status write,
     # not repeating already completed network or program work.
@@ -125,7 +127,9 @@ def run_assigned(role, *, mission_worker=None):
             inputs = ({key: read_evidence(company, key)["result"] for key in SPECS if key != role}
                       if role == "verification" else None)
             produce = lambda: public_worker(role, inputs)
-        receipt = execute_once(directory, company, role, task, produce)
+        receipt = execute_once(directory, company, role, task, produce, remote=remote)
+    if remote is not None:
+        remote.complete(receipt["sha256"])
     api(path, "PATCH", {"status": "done", "comment": "Original public worker evidence SHA256: " +
         receipt["sha256"]}, worker=True)
     print(json.dumps({"division": role, "issue": task, "sha256": receipt["sha256"]}), flush=True)
