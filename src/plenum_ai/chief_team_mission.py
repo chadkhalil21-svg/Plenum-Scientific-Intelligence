@@ -496,6 +496,94 @@ def grade_complete_bounded_public_goal(objective: str, team: tuple[str, ...],
 
 
 
+def grade_planned_deliverables(task, plan, observed, root):
+    """Grade every supported requested deliverable from actual saved bytes.
+
+    Unknown requirements remain open; a worker's generic green receipt alone
+    never certifies the objective. This is bounded metadata and tool reuse,
+    not general research or novel autonomous software engineering.
+    """
+    from hashlib import sha256
+    from .world_horizon import paper_survey_subject, paper_title_matches
+    from .reviewed_domain_workers import DOMAIN_FILES, _original_functional_test
+    rejected={"status":"NOT_A_FULLY_GRADED_GOAL","scope":"explicit paper metadata survey and reviewed validator reuse only"}
+    try:
+        validate_team_plan(task,plan)
+        if not independently_accept_team(task["team"],observed):
+            return rejected
+        deliverables=[]
+        for step in plan["steps"]:
+            kind,goal=step["kind"],step["objective"]
+            worker=observed[kind]
+            relative=worker.get("_artifact_path")
+            if not isinstance(relative,str) or not relative.startswith("workers/"+kind+"/"):
+                return rejected
+            digest=artifact_digest(root,relative)
+            if not digest:
+                return rejected
+            path=root/relative
+            if kind=="public_research":
+                subject=paper_survey_subject(goal)
+                if not subject or not path.is_file() or path.stat().st_size>200000:
+                    return rejected
+                report=json.loads(path.read_text("utf-8"))
+                records=report.get("records")
+                if (report.get("schema")!="plenum-public-horizon-snapshot-v1"
+                        or report.get("topic")!=goal or report.get("category")!="journals"
+                        or report.get("independent_breakthrough_verified") is not False
+                        or not isinstance(records,list) or not 1<=len(records)<=4
+                        or any(not isinstance(r,dict) or r.get("source")!="crossref_journals"
+                               or r.get("category")!="journals"
+                               or not isinstance(r.get("url"),str)
+                               or not re.fullmatch(r"https://doi\\.org/10\\.[0-9]{4,9}/[^\\s?#]+",r["url"])
+                               or not paper_title_matches(subject,r.get("title"))
+                               or r.get("independent_fact_check_complete") is not False
+                               for r in records)
+                        or len({r["url"].lower() for r in records})!=len(records)):
+                    return rejected
+                deliverables.append({"kind":kind,"objective":goal,"artifact":relative,"sha256":digest,
+                    "acceptance":"distinct topic-matched Crossref DOI metadata",
+                    "records":[{"title":r["title"],"url":r["url"]} for r in records],
+                    "paper_content_verified":False})
+            elif kind=="public_program":
+                # Accept only explicit requests for the reviewed existing tools;
+                # no generic starter or extra features can inherit this credit.
+                normalized=goal.lower()
+                match=re.fullmatch(r"(?:create|prepare|provide) (?:a |the )?(?:existing )?(cloudflare neuron budget|noaa station metadata) validator program",normalized)
+                if not match or worker.get("actual_offline_functional_test_passed") is not True:
+                    return rejected
+                capability={"cloudflare neuron budget":"cloudflare_workers_ai_free",
+                            "noaa station metadata":"noaa_water_station_metadata"}[match.group(1)]
+                code_dir=path/"code"
+                paths=[code_dir/"manifest.json",code_dir/"main.py",code_dir/"test_generated.py"]
+                if any(p.is_symlink() or not p.is_file() or p.stat().st_size>40000 for p in paths):
+                    return rejected
+                manifest=json.loads(paths[0].read_text("utf-8"))
+                code=paths[1].read_bytes()
+                if (code!=DOMAIN_FILES[capability].read_bytes()
+                        or paths[2].read_text("utf-8")!=_original_functional_test(capability)
+                        or manifest.get("schema")!="plenum-reviewable-program-v1"
+                        or manifest.get("kind")!=capability or manifest.get("public_topic")!=goal
+                        or manifest.get("main_sha256")!=sha256(code).hexdigest()
+                        or manifest.get("functional_verifier_executed_and_passed") is not True
+                        or manifest.get("generated_program_has_not_been_deployed") is not True
+                        or manifest.get("human_code_review_required") is not True):
+                    return rejected
+                deliverables.append({"kind":kind,"objective":goal,"artifact":relative,"sha256":digest,
+                    "acceptance":"exact reviewed original source and functional test receipt",
+                    "program_sha256":sha256(code).hexdigest(),"new_program_invented":False})
+            else:
+                return rejected
+        if len(deliverables)!=len(plan["steps"]):
+            return rejected
+        return {"status":"VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE",
+                "scope":rejected["scope"],"deliverables":deliverables,
+                "all_requested_clauses_accepted":True,"general_autonomy_proved":False}
+    except (OSError,ValueError,TypeError,KeyError,AttributeError,UnicodeError):
+        return rejected
+
+
+
 def execute(event: dict, *, output_dir: Path) -> dict:
     task = parse_mission(event)
     if task.get("contract_mission"):
@@ -679,6 +767,8 @@ def execute(event: dict, *, output_dir: Path) -> dict:
         "paid_api_used": False,
     })
     if plan_hash:
+        planned_proof=grade_planned_deliverables(task,receipt["plan"],observed,output_dir)
+        full=verified and planned_proof["status"]=="VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE"
         report.update({"dispatcher":"original_chief_extractive_team_plan",
                        "model_called":(False if not called else True if receipt["provenance"]=="local_ollama" else None),
                        "new_model_plan_attempted":called,
@@ -686,7 +776,8 @@ def execute(event: dict, *, output_dir: Path) -> dict:
                        "planning_provenance":receipt["provenance"],"plan_sha256":plan_hash,
                        "plan_artifact":f"chief-team-plan-{task['issue_number']}.json",
                        "specialist_assignments":receipt["plan"]["steps"],
-                       "founder_objective_verified":False,
+                       "bounded_founder_goal_evidence":planned_proof,
+                       "founder_objective_verified":full,
                        "founder_review_required":True})
     return report
 
