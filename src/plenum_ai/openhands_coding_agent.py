@@ -451,7 +451,39 @@ def apply_structured_edit(scope, choice):
     return restore_function_scope(scope, source.replace(old,new,1).encode("utf-8"))
 
 
-def structured_local_edit(task,scope):
+class StructuredEditFailure(ValueError):
+    """Only enumerated, non-model-controlled diagnostics enter receipts."""
+    def __init__(self, stage, clause=0):
+        super().__init__(stage)
+        self.stage=stage
+        self.clause=clause
+
+
+def apply_numbered_edit(scope, choice):
+    """Use exact host-indexed physical lines, not model-reproduced anchors."""
+    if not isinstance(choice,dict) or set(choice)!={"start","end","replacement"}:
+        raise ValueError("Invalid numbered edit fields")
+    start,end,new=choice["start"],choice["end"],choice["replacement"]
+    original=scope[1].decode("utf-8")
+    lines=original.splitlines(keepends=True)
+    node=ast.parse(original).body[0]
+    # Preserve signature, including multiline annotations, and docstring.
+    first=node.body[0]
+    floor=first.lineno
+    if isinstance(first,ast.Expr) and isinstance(first.value,ast.Constant) and isinstance(first.value.value,str):
+        floor=first.end_lineno+1
+    if (type(start) is not int or type(end) is not int
+            or not floor<=start<=end<=len(lines) or end-start>24
+            or not isinstance(new,str) or not new.strip() or len(new)>4000
+            or "\r" in new or "\x00" in new):
+        raise ValueError("Numbered edit outside approved function body")
+    edited="".join(lines[:start-1])+new.rstrip("\n")+"\n"+"".join(lines[end:])
+    if edited==original:
+        raise ValueError("Numbered edit unchanged")
+    return restore_function_scope(scope,edited.encode("utf-8"))
+
+
+def structured_local_edit(task,scope,*,numbered=False):
     """Reuse the existing internal Ollama network, no agent shell or mounted source."""
     schema={"type":"object","additionalProperties":False,"required":["old","new"],
             "properties":{"old":{"type":"string"},"new":{"type":"string"}}}
@@ -462,6 +494,22 @@ def structured_local_edit(task,scope):
             "Replace only the minimum necessary text in its body. Keep signature, imports and unrelated behavior. "
             "Do not include markdown, commands, explanations or tests."},
             {"role":"user","content":json.dumps({"objective":task,"function":scope[1].decode("utf-8")})}]}
+    if numbered:
+        lines=scope[1].decode("utf-8").splitlines()
+        payload["format"]={"type":"object","additionalProperties":False,
+            "required":["start","end","replacement"],"properties":{
+                "start":{"type":"integer","minimum":1,"maximum":len(lines)},
+                "end":{"type":"integer","minimum":1,"maximum":len(lines)},
+                "replacement":{"type":"string"}}}
+        payload["messages"]=[{"role":"system","content":
+            "Return a JSON edit selecting 1-based inclusive start and end line numbers. "
+            "Replace the smallest necessary range of function BODY lines. "
+            "Replacement must contain complete Python lines with original indentation, "
+            "without line numbers. Preserve signature, docstring and unrelated behavior. "
+            "For insertion, replace one existing body line with itself plus new code. "
+            "No markdown, commands, tests or explanations."},
+            {"role":"user","content":json.dumps({"objective":task,
+                "numbered_function":[f"{i+1}: {line}" for i,line in enumerate(lines)]})}]
     script=("import json,sys,urllib.request; "
             "raw=sys.stdin.buffer.read(64001); assert len(raw)<=64000; "
             "req=urllib.request.Request('http://plenum-temporary-ollama:11434/api/chat',data=raw,"
@@ -475,14 +523,26 @@ def structured_local_edit(task,scope):
         "--cap-drop=ALL","--security-opt=no-new-privileges","--pids-limit=64",
         "--memory=512m","--cpus=1","--read-only","--user",f"{os.getuid()}:{os.getgid()}",
         "--entrypoint=python",AIDER_IMAGE,"-c",script]
-    reply=subprocess.run(command,input=json.dumps(payload).encode("utf-8"),capture_output=True,
-        check=True,timeout=260,env={"PATH":os.environ.get("PATH","/usr/bin:/bin")})
+    try:
+        reply=subprocess.run(command,input=json.dumps(payload).encode("utf-8"),capture_output=True,
+            check=True,timeout=260,env={"PATH":os.environ.get("PATH","/usr/bin:/bin")})
+    except (OSError,subprocess.SubprocessError) as exc:
+        raise StructuredEditFailure("TRANSPORT") from exc
     if len(reply.stdout)>32000:
-        raise ValueError("Oversized local edit response")
-    data=json.loads(reply.stdout)
-    if data.get("done") is not True or data.get("done_reason")!="stop" or data.get("model")!=STRUCTURED_EDIT_MODEL:
-        raise ValueError("Incomplete or wrong model response")
-    return apply_structured_edit(scope,json.loads(data["message"]["content"]))
+        raise StructuredEditFailure("RESPONSE_LIMIT")
+    try:
+        data=json.loads(reply.stdout)
+        if data.get("done") is not True or data.get("done_reason")!="stop" or data.get("model")!=STRUCTURED_EDIT_MODEL:
+            raise StructuredEditFailure("INCOMPLETE_MODEL_RESPONSE")
+        choice=json.loads(data["message"]["content"])
+    except (ValueError,TypeError,KeyError,AttributeError) as exc:
+        if isinstance(exc,StructuredEditFailure):
+            raise
+        raise StructuredEditFailure("RESPONSE_SCHEMA") from exc
+    try:
+        return apply_numbered_edit(scope,choice) if numbered else apply_structured_edit(scope,choice)
+    except (ValueError,SyntaxError,TypeError,UnicodeError) as exc:
+        raise StructuredEditFailure("EDIT_VALIDATION") from exc
 
 
 def execute_local(task: str, *, source_file: str, candidate_out: str,
@@ -504,12 +564,29 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
         if behavioral_recovery:
             raise PermissionError("Unapproved structured edit recovery")
         raw=original
-        for clause in requests:
+        strategies=[]
+        for index,clause in enumerate(requests,1):
             scope=local_function_scope(clause,raw)
-            candidate=structured_local_edit(clause,scope)
-            if candidate==raw or len(candidate)>_candidate_byte_limit(original):
-                raise ValueError("Missing or oversized structured candidate edit")
+            # For multi-function tasks use a different format from failed #855.
+            # A rejected numbered edit gets one alternate anchored attempt;
+            # a transport failure never consumes a second model call.
+            numbered=len(requests)>1
+            try:
+                try:
+                    candidate=structured_local_edit(clause,scope,numbered=numbered)
+                    strategies.append({"clause":index,"strategy":"numbered" if numbered else "anchor"})
+                except StructuredEditFailure as rejected:
+                    if rejected.stage!="EDIT_VALIDATION":
+                        raise
+                    candidate=structured_local_edit(clause,scope,numbered=not numbered)
+                    strategies.append({"clause":index,"strategy":"anchor" if numbered else "numbered",
+                                       "first_failure":rejected.stage})
+                if candidate==raw or len(candidate)>_candidate_byte_limit(original):
+                    raise StructuredEditFailure("CANDIDATE_BOUND")
+            except StructuredEditFailure as exc:
+                raise StructuredEditFailure(exc.stage,index) from exc
             raw=candidate
+        result["structured_edit_strategies"]=strategies
         # Persist only after every authorized clause produced a bounded edit.
         return _candidate_report(result,original,raw,source_file,artifact,0)
     feedback = (" Edit only the shown function. All surrounding module definitions are "
@@ -836,6 +913,9 @@ def main() -> None:
                       **{key: value for key, value in fallback.items() if key != "schema"},
                       "status": "BLOCKED_LOCAL_CODER_NO_REVIEWABLE_PATCH",
                       "failure_category": type(exc).__name__, "no_paid_fallback": True}
+            if isinstance(exc,StructuredEditFailure):
+                report["structured_failure_stage"]=exc.stage
+                report["structured_failure_clause"]=exc.clause
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
             print("Aider local coding status:", report["status"], report["failure_category"])
