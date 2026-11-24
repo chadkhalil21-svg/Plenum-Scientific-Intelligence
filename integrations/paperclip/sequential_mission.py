@@ -26,6 +26,8 @@ STATIONS = {"station_ids": ["8723214"]}
 PAPERS = {"paper_survey": SPECS["research"][1]}
 
 from mission_scope import LEGACY, validate_scope, digest as scope_digest, profile_routes
+from profile_execution import chief_receipt, division_receipts
+from lifecycle import persistent, mission_dir, owner_company, assigned_scope, canonical
 
 
 def active_scope():
@@ -216,7 +218,7 @@ def verify(prior,directory,*,functional_test=False,scope=LEGACY):
             "skill_scan_applicable":False,"paid_inference":False}
 
 
-def mission_worker(role,prior,directory,scope=LEGACY):
+def original_mission_worker(role,prior,directory,scope=LEGACY):
     if scope["kind"]=="bibliography_budget":
         from budget_mission import run
         result=verify(prior,directory,functional_test=True,scope=scope) if role=="verification" else run(role,scope,prior,directory)
@@ -249,8 +251,14 @@ def mission_worker(role,prior,directory,scope=LEGACY):
     return {"input_sha256":scope_inputs(prior),"result":result}
 
 
+def mission_worker(role,prior,directory,scope=LEGACY):
+    value=original_mission_worker(role,prior,directory,scope)
+    value["profile_receipts"]=division_receipts(role,scope,prior,value["result"],directory)
+    return value
+
+
 def minister():
-    scope=active_scope()
+    scope=assigned_scope(api,ROOT,"minister") if persistent() else active_scope()
     binding=scope_binding(scope)
     specs=task_specs(scope)
     aid=env_id("PAPERCLIP_AGENT_ID")
@@ -271,9 +279,9 @@ def minister():
         raise ValueError("Unexpected original workforce roster")
     # Only the Minister creates the tasks, through the native company API.
     # Idempotency keys ensure interrupted delegation cannot duplicate children.
-    directory=ROOT/cid
+    directory=mission_dir(ROOT,cid,pid)
     directory.mkdir(parents=True,exist_ok=True,mode=0o700)
-    if scope!=LEGACY and json.loads((directory/"mission-scope.json").read_text())!=binding:
+    if (persistent() or scope!=LEGACY) and json.loads((directory/"mission-scope.json").read_text())!=binding:
         raise ValueError("Minister typed scope mismatch")
     roles=list(MISSION_ORDER)
     model_receipt=None
@@ -299,6 +307,11 @@ def minister():
             raise ValueError("Existing Minister plan differs")
     else:
         exclusive(path,plan)
+    chief=chief_receipt(scope,plan)
+    chief_path=directory/"chief-profile.json"
+    if chief_path.exists():
+        if json.loads(chief_path.read_text())!=chief:raise ValueError("Chief receipt changed")
+    else:exclusive(chief_path,chief)
     api("/api/issues/"+pid,"PATCH",{"status":"done","comment":"Minister dispatched five bounded dependent tasks; final mission acceptance is separate. Plan SHA256: "+digest(plan)},worker=True)
     print(json.dumps({"minister_dispatch":True,"plan_sha256":digest(plan),"tasks":tasks}),flush=True)
 
@@ -309,14 +322,20 @@ def qualify():
     scope=active_scope()
     binding=scope_binding(scope)
     specs=task_specs(scope)
-    if api("/api/companies"):
-        raise RuntimeError("Expected fresh isolated board")
-    cid=str(UUID(required(api("/api/companies","POST",{"name":"Plenum sequential public mission","description":MISSION}),"id","created_company")))
-    directory=ROOT/cid
-    directory.mkdir(parents=True,exist_ok=True,mode=0o700)
-    exclusive(directory/"mission-scope.json",binding)
-    exclusive(directory/"profile-routing.json",profile_routes(scope))
+    durable=persistent()
+    if durable:
+        cid=owner_company(api)
+        if os.getenv("PLENUM_PAPERCLIP_MODEL","off")!="off":
+            raise ValueError("Persistent model execution is not qualified")
+    else:
+        if api("/api/companies"):raise RuntimeError("Expected fresh isolated board")
+        cid=str(UUID(required(api("/api/companies","POST",{"name":"Plenum sequential public mission","description":MISSION}),"id","created_company")))
+        directory=mission_dir(ROOT,cid)
+        directory.mkdir(parents=True,exist_ok=True,mode=0o700)
+        exclusive(directory/"mission-scope.json",binding)
+        exclusive(directory/"profile-routing.json",profile_routes(scope))
     route="/api/companies/"+cid
+    before_failures=set(ROOT.glob("failure-*.json"))
     def hire(name,role,arg,parent=None):
         fields={"name":name,"role":role,"runner":"legacy","adapterType":"process",
                 "adapterConfig":{"command":"python3","args":["/plenum/integrations/paperclip/sequential_mission.py",arg],
@@ -325,22 +344,50 @@ def qualify():
                                  "PLENUM_EPHEMERAL_RUNNER":"confirmed","PLENUM_MISSION_SCOPE":encoded(scope).decode()}},
                 "budgetMonthlyCents":0,"runtimeConfig":{"heartbeat":{"enabled":False,"wakeOnAssignment":True,"maxConcurrentRuns":1}},
                 "permissions":{"canCreateAgents":False,"canCreateSkills":False}}
+        if durable:
+            fields["adapterConfig"]["env"]={"PYTHONPATH":"/plenum/src","PLENUM_PERSISTENT_BOARD":"confirmed","PLENUM_PAPERCLIP_MODEL":"off"}
+            if os.getenv("GITHUB_ACTIONS")=="true":fields["adapterConfig"]["env"]["GITHUB_ACTIONS"]="true"
         if parent: fields["reportsTo"]=parent
         return str(UUID(required(api(route+"/agents","POST",fields),"id","created_agent")))
-    leader=hire("Minister of Operations","ceo","minister")
-    agents={key:hire(name,"engineer" if key=="engineering" else "general",key,leader) for key,(name,_) in specs.items()}
+    roster=api(route+"/agents") if durable else []
+    if roster:
+        by_name={r["name"]:r for r in roster}
+        if len(roster)!=6 or set(by_name)!={"Minister of Operations",*[v[0] for v in specs.values()]}:
+            raise ValueError("Persistent roster must be the existing exact workforce")
+        leader=canonical(by_name["Minister of Operations"]["id"])
+        agents={k:canonical(by_name[v[0]]["id"]) for k,v in specs.items()}
+        for k,name in [("minister","Minister of Operations"),*[(k,v[0]) for k,v in specs.items()]]:
+            r=by_name[name]
+            cfg=r.get("adapterConfig") or {}
+            if (cfg.get("args")!=["/plenum/integrations/paperclip/sequential_mission.py",k] or
+                cfg.get("env",{}).get("PLENUM_PERSISTENT_BOARD")!="confirmed" or
+                (k!="minister" and r.get("reportsTo")!=leader)):
+                raise ValueError("Persistent roster adapter mismatch")
+    else:
+        leader=hire("Minister of Operations","ceo","minister")
+        agents={key:hire(name,"engineer" if key=="engineering" else "general",key,leader) for key,(name,_) in specs.items()}
     queued = time.monotonic()
-    task=api(route+"/issues","POST",{"title":binding["parent_title"],"description":binding["parent_description"],"status":"todo","priority":"high","assigneeAgentId":leader})
+    fields={"title":binding["parent_title"],"description":binding["parent_description"],"status":"todo","priority":"high"}
+    if not durable:fields["assigneeAgentId"]=leader
+    if durable:
+        existing=api(route+"/issues")
+        if any(r.get("status") in ("todo","in_progress","blocked") for r in existing):
+            raise ValueError("Previous mission must be terminal before another submission")
+    task=api(route+"/issues","POST",fields)
     parent_id=str(UUID(required(task,"id","created_parent")))
-    # No board-side child assignment: wait for the actual Minister's plan and native wakes.
-    directory=ROOT/cid
+    directory=mission_dir(ROOT,cid,parent_id)
+    if durable:
+        directory.mkdir(parents=True,exist_ok=False,mode=0o700)
+        exclusive(directory/"mission-scope.json",binding)
+        exclusive(directory/"profile-routing.json",profile_routes(scope))
+        api("/api/issues/"+parent_id,"PATCH",{"assigneeAgentId":leader})
+    # No board-side child assignment: wait for actual Minister and native wakes.
     deadline=time.monotonic()+360
     plan_path=directory/"minister-plan.json"
     while time.monotonic()<deadline:
         # The adapter writes a safe failure receipt before a nonzero exit.
         # Stop early on a definitive failure instead of waiting six minutes.
-        if list(ROOT.glob("failure-minister-*.json")) or any(
-                list(ROOT.glob("failure-"+role+"-*.json")) for role in MISSION_ORDER):
+        if set(ROOT.glob("failure-*.json"))-before_failures:
             raise RuntimeError("Native adapter failure receipt recorded")
         if plan_path.is_file() and required(api("/api/issues/"+parent_id),"status","parent_readback")=="done":
             plan=json.loads(plan_path.read_text())
@@ -365,7 +412,8 @@ def qualify():
     summary=readback(cid,plan,expected_agents=agents)
     if os.getenv("PLENUM_PAPERCLIP_MODEL")=="local" and summary["minister_model_executed"] is not True:
         raise ValueError("Missing required actual local model receipt")
-    exclusive(ROOT/"qualification.json",summary)
+    evidence_root=directory if durable else ROOT
+    exclusive(evidence_root/"qualification.json",summary)
     terminal=datetime.now(timezone.utc)
     issue_created=os.environ.get("PLENUM_ISSUE_CREATED_AT","")
     timing={"schema":"plenum-paperclip-event-timing-v1","parent":parent_id,
@@ -379,13 +427,13 @@ def qualify():
         created=datetime.fromisoformat(issue_created)
         if created.tzinfo is None or created>terminal:raise ValueError("Invalid event timestamp")
         timing["issue_to_verified_seconds"]=round((terminal-created).total_seconds(),3)
-    exclusive(ROOT/"event-timing.json",timing)
+    exclusive(evidence_root/"event-timing.json",timing)
     print(json.dumps(timing),flush=True)
     print(json.dumps(summary),flush=True)
 
 
 def readback(cid,plan,expected_agents=None):
-    directory=ROOT/cid
+    directory=mission_dir(ROOT,cid,plan["parent"])
     binding=json.loads((directory/"mission-scope.json").read_text())
     scope=validate_scope(binding["scope"])
     if binding!=scope_binding(scope) or (scope!=LEGACY and plan.get("scope_sha256")!=binding["scope_sha256"]):
@@ -414,13 +462,25 @@ def readback(cid,plan,expected_agents=None):
             # relation endpoint separately when present. Never fake a relation.
             raise ValueError("Native dependency edge not visible")
         previous=iid
-        record=read_evidence(cid,role)
+        record=read_evidence(cid,role,plan["parent"])
         if record["issue"]!=iid or record["result"]["input_sha256"]!=scope_inputs({k:v["result"] for k,v in records.items()}):
             raise ValueError("Invalid task-bound dependency evidence")
         comments=api("/api/issues/"+iid+"/comments")
         if not any("Original public worker evidence SHA256: "+record["sha256"] in c.get("body","") for c in comments):
             raise ValueError("Missing task completion receipt")
+        expected_profiles=division_receipts(role,scope,{k:v["result"] for k,v in records.items()},
+                                            record["result"]["result"],directory)
+        if record["result"].get("profile_receipts")!=expected_profiles:
+            raise ValueError("Profile work-product receipt mismatch")
         records[role]=record
+    chief=json.loads((directory/"chief-profile.json").read_text())
+    if chief!=chief_receipt(scope,plan):raise ValueError("Chief receipt mismatch")
+    executed={"chief":digest(chief)}
+    for row in records.values():
+        for name,profile in row["result"]["profile_receipts"].items():
+            if name in executed:raise ValueError("Duplicate profile execution")
+            executed[name]=digest(profile)
+    if len(executed)!=11:raise ValueError("Missing profile execution")
     result=verify({k:v["result"] for k,v in records.items() if k!="verification"},directory,functional_test=True,scope=scope)
     if result!=records["verification"]["result"]["result"]:
         raise ValueError("Independent verifier disagrees")
@@ -437,18 +497,19 @@ def readback(cid,plan,expected_agents=None):
     return {"company":cid,"minister":plan["minister"],"parent":plan["parent"],"order":list(MISSION_ORDER),
             "verified_divisions":5,"minister_dispatch":True,"minister_model_executed":model_executed,**model_info,"independent_verification":result,
             "paid_inference":False,"persistent_production":False,"scope_sha256":binding["scope_sha256"],
-            "mission_kind":scope["kind"],"routed_profiles":len(profiles),"profile_worker_execution_claimed":False,
+            "mission_kind":scope["kind"],"routed_profiles":len(profiles),"profile_worker_execution_claimed":False,"verified_profile_work_products":len(executed),"profile_receipt_sha256":executed,
             "evidence":{k:{"issue":v["issue"],"sha256":v["sha256"]} for k,v in records.items()}}
 
 
 def restart_readback():
-    old=json.loads((ROOT/"qualification.json").read_text())
-    plan=json.loads((ROOT/old["company"]/"minister-plan.json").read_text())
+    evidence_root=mission_dir(ROOT,owner_company(api),canonical(os.environ["PLENUM_PAPERCLIP_MISSION_UUID"])) if persistent() else ROOT
+    old=json.loads((evidence_root/"qualification.json").read_text())
+    plan=json.loads((mission_dir(ROOT,old["company"],old["parent"])/"minister-plan.json").read_text())
     now=readback(old["company"],plan)
     if now!=old:
         raise ValueError("Restart changed accepted mission receipts")
     from datetime import datetime, timezone
-    timing=json.loads((ROOT/"event-timing.json").read_text())
+    timing=json.loads((evidence_root/"event-timing.json").read_text())
     if timing["parent"]!=now["parent"] or timing["qualification_sha256"]!=digest(now):
         raise ValueError("Timing receipt does not match accepted mission")
     restarted=datetime.now(timezone.utc)
@@ -456,7 +517,11 @@ def restart_readback():
            "restart_verified_at":restarted.isoformat(),"issue_to_restart_verified_seconds":None}
     if timing["issue_created_at"]:
         proof["issue_to_restart_verified_seconds"]=round((restarted-datetime.fromisoformat(timing["issue_created_at"])).total_seconds(),3)
-    exclusive(ROOT/"restart-timing.json",proof)
+    target=evidence_root/"restart-timing.json"
+    if target.exists():
+        prior=json.loads(target.read_text())
+        if prior["qualification_sha256"]!=proof["qualification_sha256"]:raise ValueError("Restart receipt mismatch")
+    else:exclusive(target,proof)
     print(json.dumps(proof),flush=True)
 
 
@@ -469,7 +534,7 @@ if __name__=="__main__":
         elif arg=="qualify":qualify()
         elif arg=="restart-readback":restart_readback()
         else:
-            scope=active_scope()
+            scope=assigned_scope(api,ROOT,arg) if persistent() else active_scope()
             run_assigned(arg,mission_worker=lambda role,prior,directory:mission_worker(role,prior,directory,scope),
                          specs=task_specs(scope),description=scope_binding(scope)["child_description"],expected_scope=scope)
     except Exception as exc:

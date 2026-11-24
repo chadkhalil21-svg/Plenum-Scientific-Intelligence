@@ -69,8 +69,9 @@ def public_worker(role, upstream=None):
     raise ValueError("Unapproved division")
 
 
-def read_evidence(company, role):
-    path = ROOT / company / (role + ".json")
+def read_evidence(company, role, mission=None):
+    from lifecycle import mission_dir
+    path = mission_dir(ROOT,company,mission) / (role + ".json")
     if path.is_symlink() or not path.is_file() or path.stat().st_size > 2_000_000:
         raise ValueError("Missing or unsafe original public evidence")
     record = json.loads(path.read_text())
@@ -104,12 +105,15 @@ def run_assigned(role, *, mission_worker=None, specs=SPECS, description=DESCRIPT
     if len(rows) != 1:
         raise ValueError("Expected exactly one assigned integration task")
     task = str(uuid.UUID(rows[0]["id"]))
+    from lifecycle import mission_dir
+    parent=rows[0].get("parentId")
+    directory=mission_dir(ROOT,company,parent)
     path = "/api/issues/" + task
     if expected_scope is not None:
         from mission_scope import validate_scope, digest
         from uuid import UUID
         parent=str(UUID(rows[0]["parentId"]))
-        binding=json.loads((ROOT/company/"mission-scope.json").read_text())
+        binding=json.loads((directory/"mission-scope.json").read_text())
         if validate_scope(binding["scope"])!=expected_scope or binding["scope_sha256"]!=digest(expected_scope):
             raise ValueError("Native scope receipt mismatch")
         original=api("/api/issues/"+parent,worker=True)
@@ -120,21 +124,20 @@ def run_assigned(role, *, mission_worker=None, specs=SPECS, description=DESCRIPT
     api(path + "/checkout", "POST", {"agentId": agent, "expectedStatuses": ["todo", "in_progress"]}, worker=True)
     # The immutable task-bound receipt permits replay of a failed status write,
     # not repeating already completed network or program work.
-    directory = ROOT / company
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
     target = directory / (role + ".json")
     if target.exists():
-        receipt = read_evidence(company, role)
+        receipt = read_evidence(company, role, parent)
         if receipt.get("issue") != task:
             raise ValueError("Evidence belongs to a different task")
     else:
         from checkpoint_store import execute_once
         if mission_worker is not None:
             previous = MISSION_ORDER[:MISSION_ORDER.index(role)]
-            inputs = {key: read_evidence(company, key)["result"] for key in previous}
+            inputs = {key: read_evidence(company, key, parent)["result"] for key in previous}
             produce = lambda: mission_worker(role, inputs, directory)
         else:
-            inputs = ({key: read_evidence(company, key)["result"] for key in SPECS if key != role}
+            inputs = ({key: read_evidence(company, key, parent)["result"] for key in SPECS if key != role}
                       if role == "verification" else None)
             produce = lambda: public_worker(role, inputs)
         receipt = execute_once(directory, company, role, task, produce, remote=remote)
