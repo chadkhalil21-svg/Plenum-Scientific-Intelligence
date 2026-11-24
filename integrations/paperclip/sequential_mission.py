@@ -285,7 +285,11 @@ def minister():
         raise ValueError("Minister typed scope mismatch")
     roles=list(MISSION_ORDER)
     model_receipt=None
-    if os.getenv("PLENUM_PAPERCLIP_MODEL")=="local":
+    if persistent():
+        from production_wiring import load_prepared
+        model_mode=load_prepared(directory,cid,pid)["model_mode"]
+    else:model_mode=os.getenv("PLENUM_PAPERCLIP_MODEL","off")
+    if model_mode=="local":
         from model_plan import model_plan
         roles,model_receipt=model_plan(directory,cid,pid,goals=goal_texts(scope))
     tasks={}
@@ -341,8 +345,8 @@ def qualify_locked(action):
     specs=task_specs(scope)
     if durable:
         cid=owner_company(api)
-        if os.getenv("PLENUM_PAPERCLIP_MODEL","off")!="off":
-            raise ValueError("Persistent model execution is not qualified")
+        if os.getenv("PLENUM_PAPERCLIP_MODEL","off") not in ("off","local"):
+            raise ValueError("Unsupported persistent model mode")
     else:
         if api("/api/companies"):raise RuntimeError("Expected fresh isolated board")
         cid=str(UUID(required(api("/api/companies","POST",{"name":"Plenum sequential public mission","description":MISSION}),"id","created_company")))
@@ -403,7 +407,7 @@ def qualify_locked(action):
             directory.mkdir(parents=True,exist_ok=False,mode=0o700)
             exclusive(directory/"mission-scope.json",binding)
             exclusive(directory/"profile-routing.json",profile_routes(scope))
-            row=prepared(directory,cid,parent_id,binding["scope_sha256"],mode)
+            row=prepared(directory,cid,parent_id,binding["scope_sha256"],mode,os.getenv("PLENUM_PAPERCLIP_MODEL","off"))
             if action=="prepare":
                 print(json.dumps(row),flush=True)
                 return row
@@ -437,7 +441,8 @@ def qualify_locked(action):
                 print(json.dumps({"division":key,"diagnostic":d}),flush=True)
         raise RuntimeError("Native Minister sequential mission did not finish within deadline")
     summary=readback(cid,plan,expected_agents=agents)
-    if os.getenv("PLENUM_PAPERCLIP_MODEL")=="local" and summary["minister_model_executed"] is not True:
+    required_model=__import__("production_wiring").load_prepared(directory,cid,parent_id)["model_mode"] if durable else os.getenv("PLENUM_PAPERCLIP_MODEL","off")
+    if required_model=="local" and summary["minister_model_executed"] is not True:
         raise ValueError("Missing required actual local model receipt")
     evidence_root=directory if durable else ROOT
     exclusive(evidence_root/"qualification.json",summary)
@@ -531,6 +536,10 @@ def readback(cid,plan,expected_agents=None):
         model_executed=True
         model_info={"model":receipt["model"],"model_digest":receipt["model_digest"],
                     "model_receipt_sha256":digest(receipt),"model_eval_count":receipt["eval_count"]}
+    if persistent():
+        from production_wiring import load_prepared
+        if model_executed!=(load_prepared(directory,cid,plan["parent"])["model_mode"]=="local"):
+            raise ValueError("Persistent model receipt does not match prepared mode")
     return {"company":cid,"minister":plan["minister"],"parent":plan["parent"],"order":list(MISSION_ORDER),
             "verified_divisions":5,"minister_dispatch":True,**({"persistent_roster":persistent_ids} if persistent_ids is not None else {}),"minister_model_executed":model_executed,**model_info,"independent_verification":result,
             "paid_inference":False,"persistent_production":False,"scope_sha256":binding["scope_sha256"],

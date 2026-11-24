@@ -123,6 +123,14 @@ def validate_receipt(receipt, company, parent, *, goals=GOALS):
     return validate_choice(receipt["response"])
 
 
+def check_local_model():
+    tags=read_json("/api/tags")
+    matches=[x for x in tags.get("models",[]) if x.get("name")==MODEL]
+    if len(matches)!=1 or not valid_digest(matches[0].get("digest")):
+        raise ValueError("Unexpected local Qwen model digest")
+    return matches[0]["digest"]
+
+
 def model_plan(directory, company, parent, *, goals=GOALS):
     validate_goals(goals)
     goals=dict(goals)
@@ -130,14 +138,19 @@ def model_plan(directory, company, parent, *, goals=GOALS):
     if path.exists():
         receipt=json.loads(path.read_text())
         return validate_receipt(receipt,company,parent,goals=goals),receipt
-    if os.getenv("PLENUM_EPHEMERAL_RUNNER")!="confirmed" or os.getenv("PLENUM_PAPERCLIP_MODEL")!="local":
-        raise PermissionError("Only explicitly isolated local model qualification")
+    from lifecycle import persistent
+    if persistent():
+        from production_wiring import load_prepared
+        from checkpoint_store import checked
+        row=load_prepared(directory,company,parent)
+        checked(directory/"activation.json",{"company":company,"mission":parent,
+            "scope_sha256":row["scope_sha256"],"model_mode":"local"})
+        if row["model_mode"]!="local":raise PermissionError("Persistent model mode not approved")
+    elif os.getenv("PLENUM_EPHEMERAL_RUNNER")!="confirmed" or os.getenv("PLENUM_PAPERCLIP_MODEL")!="local":
+        raise PermissionError("Only explicitly approved local model qualification")
     # Do not make a second model call after an ambiguous interruption.
     exclusive(directory/"minister-model-attempt.json",{"company":company,"parent":parent,"maximum":1})
-    tags=read_json("/api/tags")
-    matches=[x for x in tags.get("models",[]) if x.get("name")==MODEL]
-    if len(matches)!=1 or not valid_digest(matches[0].get("digest")):
-        raise ValueError("Unexpected local Qwen model digest")
+    model_digest=check_local_model()
     request={"model":MODEL,"stream":False,"think":False,"format":plan_schema(),
        "options":{"temperature":0,"num_ctx":2048,"num_predict":256},
        "messages":[{"role":"system","content":"Fill exactly five numbered slots. The dependency order is fixed: step_1 intelligence, step_2 research, step_3 engineering, step_4 commercial, step_5 verification. Match each slot's division to the goal description; select one goal ID per slot. Use every goal ID exactly once. Do not repeat, omit, invent or reorder assignments. Each slot contains goal and division only. Return JSON only."},
@@ -156,7 +169,7 @@ def model_plan(directory, company, parent, *, goals=GOALS):
     except (ValueError,TypeError):
         rejected_choice(directory,company,parent,None,"MODEL_JSON")
         raise PlanRejected("MODEL_JSON") from None
-    receipt={"company":company,"parent":parent,"model":MODEL,"model_digest":matches[0]["digest"],
+    receipt={"company":company,"parent":parent,"model":MODEL,"model_digest":model_digest,
              "goals_sha256":digest(goals),"response":choice,"response_sha256":digest(choice),
              "eval_count":reply.get("eval_count"),"prompt_eval_count":reply.get("prompt_eval_count"),"paid_inference":False}
     try:

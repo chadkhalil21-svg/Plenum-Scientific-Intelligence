@@ -25,17 +25,18 @@ def company_lock(root,company):
         yield
     finally:os.close(fd)
 
-def prepared(directory,company,mission,scope_sha,mode):
-    if mode not in MODES:raise ValueError("Unknown checkpoint mode")
+def prepared(directory,company,mission,scope_sha,mode,model_mode="off"):
+    if mode not in MODES or model_mode not in ("off","local"):raise ValueError("Unknown execution mode")
     row={"schema":"plenum-prepared-mission-v1","company":canonical(company),
-         "mission":canonical(mission),"scope_sha256":scope_sha,"checkpoint_mode":mode}
+         "mission":canonical(mission),"scope_sha256":scope_sha,"checkpoint_mode":mode,"model_mode":model_mode}
     exclusive(Path(directory)/"prepared.json",row)
     return row
 
 def load_prepared(directory,company,mission):
     row=checked(Path(directory)/"prepared.json",{"schema":"plenum-prepared-mission-v1",
         "company":canonical(company),"mission":canonical(mission)})
-    if set(row)!={"schema","company","mission","scope_sha256","checkpoint_mode"} or row["checkpoint_mode"] not in MODES:
+    row={**row,"model_mode":row.get("model_mode","off")}
+    if set(row)!={"schema","company","mission","scope_sha256","checkpoint_mode","model_mode"} or row["checkpoint_mode"] not in MODES or row["model_mode"] not in ("off","local"):
         raise ValueError("Invalid prepared mission")
     return row
 
@@ -78,7 +79,10 @@ def authorize_activation(api,directory,company,mission,leader,binding):
     # Before any worker is assigned: verify the exact scope, private file and
     # signed remote GET. Never fall back to local when remote was requested.
     remote=preflight(directory,company,mission)
+    if row["model_mode"]=="local":
+        from model_plan import check_local_model
+        check_local_model()
     exclusive(Path(directory)/"activation.json",{"company":company,"mission":mission,
-        "minister":leader,"scope_sha256":row["scope_sha256"],"remote_checkpoint_preflight":remote})
+        "minister":leader,"scope_sha256":row["scope_sha256"],"remote_checkpoint_preflight":remote,"model_mode":row["model_mode"]})
     api("/api/issues/"+mission,"PATCH",{"assigneeAgentId":leader})
     return remote
