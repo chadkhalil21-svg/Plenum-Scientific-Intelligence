@@ -1089,10 +1089,10 @@ def execute_with_recovery(event: dict, *, output_dir: Path) -> dict:
                                objective=task["objective"], team=task["team"])
     # Only retry a single bounded transient worker failure, never invalid
     # inputs, missing evidence, permission errors, or exhausted attempts.
-    retryable = {"TimeoutError", "ConnectionError", "HTTPError", "URLError", "OSError"}
+    retryable = {"TimeoutExpired", "TimeoutError", "ConnectionError", "HTTPError", "URLError", "OSError"}
     failed = [row for row in first["worker_results"]
               if row["status"] != "DRAFT_READY_FOR_FOUNDER"]
-    if (not failed or set(progress) != set(task["team"])
+    if (len(failed) != 1 or set(progress) != set(task["team"])
             or any(row.get("failure_type") not in retryable
                    or progress[row["kind"]].get("attempt") != 1
                    for row in failed)
