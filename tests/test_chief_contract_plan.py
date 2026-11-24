@@ -373,8 +373,9 @@ class CommercialEvidenceHandoffTests(TestCase):
             if target.name=="platform":
                 return False,"non_200_http",503
             return True,"verified_read",200
+        original_run=watch.run
         def monitor():
-            return watch.run(probe_fn=probe,sleep_fn=lambda _:None)
+            return original_run(probe_fn=probe,sleep_fn=lambda _:None)
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)
             with patch.object(watch,"run",side_effect=monitor) as worker:
