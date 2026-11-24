@@ -8,11 +8,9 @@ import argparse
 from datetime import datetime, timezone
 import json
 import os
-from pathlib import Path
-from plenum_ai.public_issue_wake import BASE, REPO, checked_issue_number, gh_json, prior_execution_bodies
+from plenum_ai.public_issue_wake import BASE, REPO, OWNER, PAPERCLIP_PUBLIC_TITLE, checked_issue_number, gh_json, prior_execution_bodies
 
-OWNER="chadkhalil21-svg"
-TITLE="[Plenum Paperclip] public coastal qualification"
+TITLE=PAPERCLIP_PUBLIC_TITLE
 BODY="PLENUM_PAPERCLIP_PUBLIC_QUALIFICATION_V1\nobjective: Execute the reviewed five-division coastal monitoring qualification."
 
 
@@ -38,7 +36,8 @@ def reserve(number,token,run_id,attempt,*,reader=gh_json):
     comments=reader(url+"/comments?per_page=100",token)
     if not authorize(issue,comments,number):return False,None
     created=datetime.fromisoformat(issue["created_at"].replace("Z","+00:00"))
-    if created.tzinfo is None:raise ValueError("Missing source timestamp")
+    if created.tzinfo is None or created>datetime.now(timezone.utc):
+        raise ValueError("Invalid source timestamp")
     ack=reader(url+"/comments",token,body={"body":
         f"<!-- plenum-public-workforce-run:{run_id}:execution-reserved -->\n"
         "Original bounded Paperclip qualification reserved; no automatic replay."})
@@ -53,12 +52,15 @@ def main():
     args=parser.parse_args()
     if os.environ.get("GITHUB_REPOSITORY")!=REPO:
         raise PermissionError("Unexpected repository")
-    ok,created=reserve(args.issue,os.environ["GH_TOKEN"],int(os.environ["GITHUB_RUN_ID"]),
+    if not args.issue.isascii() or not args.issue.isdecimal():
+        raise ValueError("Invalid public issue ID")
+    number=checked_issue_number(int(args.issue))
+    ok,created=reserve(number,os.environ["GH_TOKEN"],int(os.environ["GITHUB_RUN_ID"]),
                        int(os.environ["GITHUB_RUN_ATTEMPT"]))
     with open(os.environ["GITHUB_OUTPUT"],"a") as out:
         out.write("authorized="+str(ok).lower()+"\n")
         if ok:out.write("created_at="+created+"\n")
-    print(json.dumps({"authorized":ok,"issue":checked_issue_number(args.issue),"created_at":created}))
+    print(json.dumps({"authorized":ok,"issue":number,"created_at":created}))
 
 
 if __name__=="__main__":main()
