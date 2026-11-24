@@ -110,6 +110,8 @@ def load_checkpoint(root: Path, *, issue: int, objective: str,
             or data.get("issue_number") != issue
             or data.get("objective_sha256") != objective_digest(objective)
             or data.get("team") != list(team)
+            or data.get("only_original_public_workers") is not True
+            or data.get("owner_private_accounts_used") is not False
             or not isinstance(data.get("results"), dict)
             or set(data["results"]) - set(team)):
         raise ValueError("Checkpoint belongs to a different or untrusted mission")
@@ -154,6 +156,8 @@ def verified_previous_result(root: Path, kind: str, entry: object) -> dict | Non
     if not isinstance(entry, dict) or entry.get("status") != "DRAFT_READY_FOR_FOUNDER":
         return None
     if entry.get("verified") is not True:
+        return None
+    if type(entry.get("attempt")) is not int or entry["attempt"] not in (1, 2):
         return None
     artifact = entry.get("artifact_path")
     if (not isinstance(artifact, str)
