@@ -382,11 +382,17 @@ jobs:
                       and all(assessment.get(key) is False for key in ('model_run_completed','independent_semantic_approval','automatically_merged','production_written','external_accounts_changed'))):
                       sandbox_state='INTERRUPTED_FOCUSED_TESTS_PASS_REVIEW_STILL_REQUIRED'
               elif (assessment.get('status')=='FOCUSED_TESTS_PASS_REVIEW_STILL_REQUIRED'
-                    and assessment.get("existing_focused_tests_passed") is True):
+                    and assessment.get("existing_focused_tests_passed") is True
+                    and assessment.get("task_acceptance_passed") is not False
+                    and assessment.get("candidate_artifact_sha256")==digest):
                   status="REVIEW_ONLY_EXISTING_TESTS_PASS_SEMANTIC_REVIEW_REQUIRED"
                   sandbox_state='FOCUSED_TESTS_PASS_REVIEW_STILL_REQUIRED'
               elif status=="REVIEW_ONLY_PATCH_READY_NOT_MERGED":
-                  status="BLOCKED_EXISTING_SOURCE_TESTS"
+                  if assessment.get("task_acceptance_passed") is False:
+                      status="BLOCKED_TASK_BEHAVIOR_ACCEPTANCE"
+                      sandbox_state=assessment.get("status","BLOCKED_TASK_ACCEPTANCE")
+                  else:
+                      status="BLOCKED_EXISTING_SOURCE_TESTS"
           goldfish=Path("reports/openhands-goldfish-review.json")
           reviewer_state="NOT_RUN"
           reviewer_blocker_count=0
