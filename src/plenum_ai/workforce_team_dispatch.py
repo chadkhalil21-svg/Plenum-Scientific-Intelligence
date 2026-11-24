@@ -191,11 +191,22 @@ def dispatch(task: dict, output_dir: Path) -> dict:
         from .durable_graph import run_persistent, inspect_persistent
         db = base / "checkpoint.sqlite"
         thread_id = "founder-" + str(num)
-        done = run_persistent(
-            objective, str(db), thread_id,
-            tool_keys=["scipy.orbit", "scipy.thermal"],
-            offline=True, optimize=True,
-        )
+        keys = ["scipy.orbit", "scipy.thermal"]
+        try:
+            done = run_persistent(objective, str(db), thread_id,
+                                  tool_keys=keys, offline=True, optimize=True)
+        except RuntimeError:
+            # Only continue the original, unfinished offline graph once.
+            # Invalid scope, absent checkpoint, or a finished failed graph
+            # is not permission to run all the tools again.
+            saved = inspect_persistent(str(db), thread_id)
+            if (saved["finished"] or saved["question"] != objective
+                    or saved["requested_tools"] != keys):
+                raise
+            done = run_persistent(objective, str(db), thread_id,
+                                  tool_keys=keys, offline=True, optimize=True)
+            if done.get("resumed_unfinished_graph") is not True:
+                raise RuntimeError("Expected continuation of original graph")
         restored = inspect_persistent(str(db), thread_id)
         if (done.get("status") != "executed_and_checkpointed"
                 or not restored.get("finished")
@@ -209,6 +220,7 @@ def dispatch(task: dict, output_dir: Path) -> dict:
             "thread_id": thread_id,
             "workers": restored["workers_recorded"],
             "restored_from_durable_checkpoint": True,
+            "continued_unfinished_graph": done.get("resumed_unfinished_graph") is True,
             "original_scientific_discovery": False,
         }, indent=2) + "\n", encoding="utf-8")
         return {
@@ -217,6 +229,7 @@ def dispatch(task: dict, output_dir: Path) -> dict:
             "worker": ROLES[kind], "output_artifact": str(base.relative_to(output_dir)),
             "known_models_verified": 2,
             "checkpoint_restored": True,
+            "continued_unfinished_graph": done.get("resumed_unfinished_graph") is True,
             "original_scientific_discovery": False,
             "owner_review_required": True,
         }
