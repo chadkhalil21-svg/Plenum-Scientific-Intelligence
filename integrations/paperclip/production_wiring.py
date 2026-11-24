@@ -42,13 +42,21 @@ def load_prepared(directory,company,mission):
 
 def grant(company,mission,*,root=None):
     if os.getenv("GITHUB_ACTIONS")=="true":raise PermissionError("Public CI cannot use owner checkpoint grant")
-    root=GRANT_DIR if root is None else Path(root)
+    runtime_mount=root is None
+    root=GRANT_DIR if runtime_mount else Path(root)
     scope=canonical(company)+"/"+canonical(mission)
-    if root.is_symlink():raise PermissionError("Unsafe private grant directory")
-    fd=os.open(root/(mission+".json"),os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
+    directory_fd=os.open(root,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+    try:
+        info=os.fstat(directory_fd)
+        if info.st_uid!=os.geteuid() or stat.S_IMODE(info.st_mode)!=0o700:
+            raise PermissionError("Private grant directory must be runtime-owned mode 0700")
+        if runtime_mount and not os.fstatvfs(directory_fd).f_flag & os.ST_RDONLY:
+            raise PermissionError("Private grant directory must be mounted read-only")
+        fd=os.open(mission+".json",os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK,dir_fd=directory_fd)
+    finally:os.close(directory_fd)
     with os.fdopen(fd,"rb") as stream:
         info=os.fstat(stream.fileno())
-        if not stat.S_ISREG(info.st_mode) or info.st_uid!=os.geteuid() or info.st_mode&0o077 or info.st_size>4096:
+        if not stat.S_ISREG(info.st_mode) or info.st_uid!=os.geteuid() or stat.S_IMODE(info.st_mode)!=0o600 or info.st_size>4096:
             raise PermissionError("Private checkpoint grant must be owned by runtime user, mode 0600")
         data=json.loads(stream.read(4097))
     if (not isinstance(data,dict) or set(data)!={"scope","secret"} or data["scope"]!=scope

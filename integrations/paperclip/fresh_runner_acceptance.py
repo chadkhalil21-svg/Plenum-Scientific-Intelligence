@@ -70,7 +70,23 @@ def accept(root,run,commit,expected_scope=None):
         receipt=read(directory/"minister-model-plan.json")
         if digest(receipt)!=summary["model_receipt_sha256"] or digest(receipt)!=plan["model_receipt_sha256"] or validate_receipt(receipt,cid,mid,goals=goal_texts(scope),tools=tools_for(scope))!=list(MISSION_ORDER):raise ValueError("Original model proof mismatch")
     elif summary.get("minister_model_executed") is not False or "model_receipt_sha256" in plan:raise ValueError("Model state mismatch")
-    return {"company":cid,"mission":mid,"scope_sha256":scope_digest(scope),"qualification_sha256":h,
+    extra={}
+    recovery=directory/"supervisor-recovery.json"
+    if recovery.exists():
+        proof=read(recovery,{"schema":"plenum-native-supervisor-recovery-v1","company":cid,"mission":mid,
+            "child_return_codes":[-9,-9,0],"qualification_sha256":h,"native_issue_count":6,
+            "native_task_ids":sorted({mid,*plan["tasks"].values()}),"specialist_reservations":5,"model_reservations":1,
+            "provider_calls_replayed":0,"model_calls_replayed":0,"paid_inference":False})
+        first=read(directory/"ci-supervisor-interrupt-73.json",{"company":cid,"mission":mid,"stage":"after_assignment","signal":9,"paid_inference":False})
+        second=read(directory/"ci-supervisor-interrupt-74.json",{"company":cid,"mission":mid,"stage":"after_timing","signal":9,"paid_inference":False})
+        timing=read(timing_root/"event-timing.json")
+        if first["native_parent_status"] not in ("todo","in_progress") or first["native_parent_status"]!=proof["unfinished_parent_status"] or proof["interrupt_receipt_sha256"]!=[digest(first),digest(second)] or second["timing_sha256"]!=proof["timing_sha256"] or digest(timing)!=proof["timing_sha256"]:raise ValueError("Supervisor recovery proof mismatch")
+        for role,issue in plan["tasks"].items():
+            read(directory/(role+".attempt-1"),{"company":cid,"role":role,"issue":issue,"attempt":1})
+            if (directory/(role+".attempt-2")).exists():raise ValueError("Unexpected specialist replay")
+        read(directory/"minister-model-attempt.json",{"company":cid,"parent":mid,"maximum":1})
+        extra={"supervisor_recovery_sha256":digest(proof)}
+    return {**extra,"company":cid,"mission":mid,"scope_sha256":scope_digest(scope),"qualification_sha256":h,
             "verified_divisions":5,"verified_profile_work_products":11,"model_receipt_verified":summary["minister_model_executed"],
             "independent_actual_input_test":True,"provider_calls_replayed":0,"model_calls_replayed":0,"paid_inference":False}
 
@@ -83,6 +99,7 @@ def main():
     scope=None if event=="pull_request" else validate_scope(json.loads(os.environ["EXPECTED_SCOPE"]))
     results={k:accept(paths[k],run,commit,scope) for k in sorted(paths)}
     if any(v["model_receipt_verified"]!=(k!="off-legacy") for k,v in results.items()):raise ValueError("Unexpected model receipt")
+    if event=="pull_request" and not results["local-objective"].get("supervisor_recovery_sha256"):raise ValueError("Missing native interrupted-supervisor proof")
     row={"schema":"plenum-fresh-runner-acceptance-v1","run_id":run,"commit":commit,"accepted":results,
          "fresh_runner_independent_acceptance":True,"native_board_restored":False,"provider_calls_replayed":0,"model_calls_replayed":0,"paid_inference":False}
     exclusive(out,row)

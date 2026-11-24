@@ -127,20 +127,10 @@ jobs:
             *) exit 1 ;;
           esac
           if [ "$KIND" = objective ]; then
-            set +e
-            docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_CI_INTERRUPT_SUPERVISOR=confirmed -e PLENUM_MISSION_SCOPE="$scope" -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/event_native.py execute
-            rc=$?
-            set -e
-            test "$rc" = 73
-            set +e
-            docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_CI_INTERRUPT_FINALIZATION=confirmed plenum-paperclip-integration python3 /plenum/integrations/paperclip/event_native.py resume
-            rc=$?
-            set -e
-            test "$rc" = 74
-            docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/event_native.py resume
+            docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_CI_SUPERVISOR_PROOF=confirmed -e PLENUM_MISSION_SCOPE="$scope" -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/supervise_native.py event
             docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/event_native.py resume
           else
-          docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_MISSION_SCOPE="$scope" -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/event_native.py execute
+            docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_MISSION_SCOPE="$scope" -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/supervise_native.py event
           fi
       - name: Qualify consecutive persistent model-directed missions and bounded recovery
         if: matrix.mode == 'local' && matrix.kind == 'budget'

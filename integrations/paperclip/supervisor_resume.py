@@ -1,5 +1,5 @@
 """Resume only an acknowledged native assignment. Never reassign or replay providers."""
-import os,time
+import os,time,signal
 from datetime import datetime,timezone
 from checkpoint_store import checked,exclusive
 from lifecycle import canonical
@@ -28,7 +28,7 @@ def interrupt_ci(flag,durable,action,directory,code,*,api=None):
     if prepared["checkpoint_mode"]!="local" or prepared["model_mode"]!="local":
         raise PermissionError("Supervisor interruption requires isolated local objective")
     row={"company":cid,"mission":mid,"stage":"after_assignment" if code==73 else "after_timing",
-         "exit_code":code,"paid_inference":False}
+         "signal":signal.SIGKILL.value,"paid_inference":False}
     if api is not None:
         task=api("/api/issues/"+mid)
         row["native_parent_status"]=task["status"]
@@ -37,7 +37,7 @@ def interrupt_ci(flag,durable,action,directory,code,*,api=None):
         row["timing_sha256"]=digest(checked(directory/"event-timing.json",{"parent":mid}))
         if (directory/"qualification.json").exists():raise ValueError("Expected unfinished finalization")
     exclusive(directory/("ci-supervisor-interrupt-"+str(code)+".json"),row)
-    os._exit(code)
+    os.kill(os.getpid(),signal.SIGKILL)
 
 def finalize(root,summary,started,queued,*,resuming=False,directory=None):
     """Timing first, qualification last: either can be reconciled by readback.

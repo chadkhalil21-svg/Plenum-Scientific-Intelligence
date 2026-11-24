@@ -55,4 +55,24 @@ class Tests(unittest.TestCase):
         for samples in ([10,-3,4,9],[-10,-10],[10**9,-10**9]):
             case={**data,"samples":samples}
             for tool in TOOLS:self.assertEqual(evaluate(SOURCE,case,tool),independent(case))
+    def test_supervisor_only_reattaches_after_signal(self):
+        import supervise_native as driver
+        with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{"GITHUB_ACTIONS":"true","PLENUM_CI_SUPERVISOR_PROOF":""}):
+            root=Path(tmp)
+            exclusive(root/"event-native-mission.json",{"paid_inference":False})
+            with patch.object(driver.native,"ROOT",root):
+                runner=Mock(side_effect=[Mock(returncode=-9),Mock(returncode=0)])
+                driver.supervise("event",runner=runner)
+                self.assertEqual([c.args[0][-1] for c in runner.call_args_list],["execute","resume"])
+                for code in (1,143,-15):
+                    runner=Mock(return_value=Mock(returncode=code))
+                    with self.assertRaises(RuntimeError):driver.supervise("event",runner=runner)
+                    runner.assert_called_once()
+                runner=Mock(return_value=Mock(returncode=-9))
+                with self.assertRaises(RuntimeError):driver.supervise("event",runner=runner)
+                self.assertEqual(runner.call_count,3)
+                (root/"event-native-mission.json").unlink()
+                runner=Mock(return_value=Mock(returncode=-9))
+                with self.assertRaises(ValueError):driver.supervise("event",runner=runner)
+                runner.assert_called_once()
 if __name__=="__main__":unittest.main(verbosity=2)
