@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 from plenum_ai import mission_checkpoint as checkpoint
 from acceptance.checkpoint_scope_attempt import CheckpointQualification
+from acceptance.checkpoint_tree_invariants import CheckpointTreeAcceptance
 
 
 class MissionCheckpointLimitsTests(TestCase):
