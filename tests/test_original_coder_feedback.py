@@ -133,5 +133,37 @@ class TrustedRecoveryTests(unittest.TestCase):
                 coder.local_edit_requests(bad,source)
 
 
+    def test_numbered_edit_preserves_signature_docstring_and_unrelated_source(self):
+        source=b'def first(x: int) -> int:\n    """Preserve this."""\n    y=x+1\n    return y\n\ndef second():\n    return 42\n'
+        scope=coder.local_function_scope("Repair function first. Correct result.",source)
+        self.assertEqual(coder.apply_numbered_edit(scope,{"start":3,"end":3,"replacement":"    y=x+2"}),source.replace(b"x+1",b"x+2"))
+        for bad in ({"start":1,"end":1,"replacement":"def first(x):"},
+                    {"start":2,"end":2,"replacement":"    pass"},
+                    {"start":True,"end":3,"replacement":"    pass"},
+                    {"start":3,"end":5,"replacement":"    pass"},
+                    {"start":3,"end":3,"replacement":"    y=x+1"},
+                    {"start":3,"end":4,"replacement":"    return x\nprint(x)"}):
+            with self.subTest(bad=bad),self.assertRaises(ValueError):
+                coder.apply_numbered_edit(scope,bad)
+
+    def test_numbered_response_uses_host_indices_and_reports_fixed_diagnostics(self):
+        import subprocess
+        source=b"def first():\n    return 1\n"
+        scope=coder.local_function_scope("Repair function first. Correct result.",source)
+        response={"model":coder.STRUCTURED_EDIT_MODEL,"done":True,"done_reason":"stop",
+                  "message":{"content":json.dumps({"start":2,"end":2,"replacement":"    return 2"})}}
+        with patch.object(coder.subprocess,"run",return_value=subprocess.CompletedProcess([],0,stdout=json.dumps(response).encode())) as run:
+            self.assertEqual(coder.structured_local_edit("Repair function first. Correct result.",scope,numbered=True),source.replace(b"return 1",b"return 2"))
+            payload=json.loads(run.call_args.kwargs["input"])
+            self.assertEqual(payload["format"]["required"],["start","end","replacement"])
+            self.assertIn("2:     return 1",json.loads(payload["messages"][1]["content"])["numbered_function"])
+        for raw,stage in ((b"not json","RESPONSE_SCHEMA"),(json.dumps({**response,"done":False}).encode(),"INCOMPLETE_MODEL_RESPONSE"),
+                          (json.dumps({**response,"message":{"content":'{"start":1,"end":1,"replacement":"bad"}'}}).encode(),"EDIT_VALIDATION")):
+            with patch.object(coder.subprocess,"run",return_value=subprocess.CompletedProcess([],0,stdout=raw)):
+                with self.assertRaises(coder.StructuredEditFailure) as raised:
+                    coder.structured_local_edit("Repair function first. Correct result.",scope,numbered=True)
+                self.assertEqual(raised.exception.stage,stage)
+
+
 if __name__=="__main__":
     unittest.main()
