@@ -93,6 +93,6 @@ def verify(scope,prior,directory,*,functional_test):
         raise ValueError("Unsupported account or inference claim")
     if brief(scope,prior)!=prior["commercial"]["result"]:raise ValueError("Commercial evidence mismatch")
     return {"verified_public_artifact_scope":True,"verified_producers":4,
-            "scholarly_metadata_records":len(intel),"separate_provider_metadata_readback":True,
+            "scholarly_metadata_records":len(intel),"separate_same_provider_metadata_readback":True,
             "independent_actual_input_test":functional_test,"synthetic_budget_only":True,
             "general_autonomy_verified":False,"paid_inference":False}
