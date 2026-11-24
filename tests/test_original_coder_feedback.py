@@ -91,5 +91,31 @@ class TrustedRecoveryTests(unittest.TestCase):
             coder.local_function_scope("Repair function unknown. Fix the issue.",source)
 
 
+    def test_structured_local_edit_cannot_change_signature_or_ambiguous_anchor(self):
+        source=b"import math\n\ndef first(x: int) -> int:\n    y=x+1\n    return y\n\ndef second():\n    return 42\n"
+        scope=coder.local_function_scope("Repair function first. Correct result.",source)
+        choice={"old":"    y=x+1","new":"    y=x+2"}
+        self.assertEqual(coder.apply_structured_edit(scope,choice),source.replace(b"x+1",b"x+2"))
+        for bad in ({"old":"missing","new":"x"}, {"old":" ","new":"x"},
+                    {"old":"first(x: int)","new":"other(x: int)"},
+                    {"old":"    return y","new":"    return y\nprint(2)"},
+                    {**choice,"extra":"unapproved"}):
+            with self.subTest(bad=bad),self.assertRaises(ValueError):
+                coder.apply_structured_edit(scope,bad)
+        import subprocess
+        response={"model":coder.STRUCTURED_EDIT_MODEL,"done":True,"done_reason":"stop",
+                  "message":{"content":json.dumps(choice)}}
+        with patch.object(coder.subprocess,"run",return_value=subprocess.CompletedProcess([],0,stdout=json.dumps(response).encode())) as run:
+            result=coder.structured_local_edit("Repair function first. Correct result.",scope)
+            self.assertEqual(result,source.replace(b"x+1",b"x+2"))
+            command=run.call_args.args[0]
+            self.assertIn("--network=plenum-coding-isolated",command)
+            self.assertIn("--read-only",command)
+            self.assertNotIn("--mount",command)
+            self.assertEqual(json.loads(run.call_args.kwargs["input"])["model"],coder.STRUCTURED_EDIT_MODEL)
+            self.assertEqual(set(run.call_args.kwargs["env"]),{"PATH"})
+
+
+
 if __name__=="__main__":
     unittest.main()
