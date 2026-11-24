@@ -63,7 +63,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(github.event_name == 'pull_request' && '[{"mode":"off","kind":"legacy"},{"mode":"local","kind":"legacy"},{"mode":"local","kind":"budget"}]' || '[{"mode":"local","kind":"event"}]') }}
+        include: ${{ fromJSON(github.event_name == 'pull_request' && '[{"mode":"off","kind":"legacy"},{"mode":"local","kind":"legacy"},{"mode":"local","kind":"budget"},{"mode":"local","kind":"objective"}]' || '[{"mode":"local","kind":"event"}]') }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -122,10 +122,11 @@ jobs:
           case "$KIND" in
             legacy) scope='{"kind":"coastal"}' ;;
             budget) scope='{"kind":"bibliography_budget","dois":["10.1145/3442188.3445922"],"budget":{"model":"@cf/zai-org/glm-4.7-flash","neurons_used_today":100,"neurons_reserved":200,"input_tokens_upper_bound":3000,"output_tokens_upper_bound":1000}}' ;;
+            objective) scope='{"kind":"public_objective","objective":"Compare vocabulary overlap in synthetic delivery summaries and quantify sample spread","dois":["10.1145/3442188.3445922"],"inputs":{"documents":["supplier delivery quality","delivery supplier testing"],"samples":[17,-3,8,42,12,19]},"operations":["shared_terms","word_counts","mean","range"]}' ;;
             event) scope="$EVENT_SCOPE"; test -n "$scope" ;;
             *) exit 1 ;;
           esac
-          docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_MISSION_SCOPE="$scope" -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/sequential_mission.py qualify
+          docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_MISSION_SCOPE="$scope" -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/event_native.py execute
       - name: Qualify consecutive persistent model-directed missions and bounded recovery
         if: matrix.mode == 'local' && matrix.kind == 'budget'
         run: python3 integrations/paperclip/persistent_native_smoke.py local
@@ -139,7 +140,7 @@ jobs:
           docker restart plenum-paperclip-integration
           for i in $(seq 1 90); do
             if docker exec plenum-paperclip-integration curl --fail --silent http://127.0.0.1:3100/api/health >/dev/null; then
-              docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/sequential_mission.py restart-readback
+              docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/event_native.py readback
               exit 0
             fi
             sleep 2
@@ -170,12 +171,19 @@ jobs:
                 "commit":os.environ["GITHUB_SHA"],"startup":os.environ["STARTUP"],
                 "checkpoint":os.environ["CHECKPOINT"],"mission":os.environ["MISSION"],
                 "restart":os.environ["RESTART"],"evidence_copy":os.environ["EVIDENCE_COPY"],
-                "qualification_present":(root/"qualification.json").is_file(),
+                "qualification_present":(root/"qualification.json").is_file() or (root/"event-native-mission.json").is_file(),
                 "failure_receipts":len(list(root.glob("failure-*.json")))}
           (root/"ci-diagnostic.json").write_text(json.dumps(data,indent=2)+"\n")
           print(json.dumps(data))
-          if all(data[k]=="success" for k in ("startup","checkpoint","mission","restart")) and not (data["qualification_present"] and (root/"event-timing.json").is_file() and (root/"restart-timing.json").is_file()):
-              raise SystemExit("Missing actual qualification artifact")
+          if all(data[k]=="success" for k in ("startup","checkpoint","mission","restart")):
+              marker=root/"event-native-mission.json"
+              directory=root
+              if marker.is_file():
+                  from uuid import UUID
+                  row=json.loads(marker.read_text())
+                  assert all(str(UUID(row[k]))==row[k] for k in ("company","mission"))
+                  directory=root/row["company"]/row["mission"]
+              assert all((directory/name).is_file() for name in ("qualification.json","event-timing.json","restart-timing.json")), "Missing actual qualification artifact"
           PY
       - uses: actions/upload-artifact@v4
         if: always()
@@ -191,8 +199,36 @@ jobs:
           docker rm -fv plenum-paperclip-integration 2>/dev/null || true
           docker volume rm plenum-paperclip-test-volume 2>/dev/null || true
           docker volume rm plenum-paperclip-qwen-cache 2>/dev/null || true
-  terminal-receipt:
+  fresh-runner-acceptance:
     needs: [authorize, native-integration]
+    if: ${{ !cancelled() && needs.native-integration.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: paperclip-native-public-evidence-*
+          path: reports/fresh-runner-input
+      - name: Finish independent acceptance on a new runner without model, provider calls or board credentials
+        env:
+          PYTHONPATH: src
+          EXPECTED_SCOPE: ${{ needs.authorize.outputs.scope }}
+          EVENT: ${{ github.event_name }}
+        run: python3 integrations/paperclip/fresh_runner_acceptance.py reports/fresh-runner-input reports/fresh-runner-result.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: paperclip-fresh-runner-acceptance
+          path: reports/fresh-runner-result.json
+          if-no-files-found: error
+          retention-days: 7
+  terminal-receipt:
+    needs: [authorize, native-integration, fresh-runner-acceptance]
     if: always() && github.event_name != 'pull_request' && needs.authorize.outputs.authorized == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 2
@@ -203,15 +239,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           ISSUE: ${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number }}
-          RESULT: ${{ needs.native-integration.result }}
+          NATIVE_RESULT: ${{ needs.native-integration.result }}
+          ACCEPTANCE_RESULT: ${{ needs.fresh-runner-acceptance.result }}
         run: |
           python3 - <<'PY'
           import json, os, urllib.request
           issue=int(os.environ["ISSUE"])
-          result=os.environ["RESULT"]
+          native=os.environ["NATIVE_RESULT"]
+          acceptance=os.environ["ACCEPTANCE_RESULT"]
+          result="success" if native==acceptance=="success" else "failure"
           assert 0<issue<10**9 and result in ("success","failure","cancelled","skipped")
           run=os.environ["GITHUB_RUN_ID"]
-          body={"body":f"<!-- plenum-public-workforce-run:{run}:terminal -->\nNative bounded Paperclip qualification: {result}. See https://github.com/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{run}. No automatic redispatch."}
+          body={"body":f"<!-- plenum-public-workforce-run:{run}:terminal -->\nNative bounded Paperclip qualification and fresh-runner acceptance: {result} (native={native}, independent={acceptance}). See https://github.com/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{run}. No automatic redispatch."}
           url=f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/issues/{issue}/comments"
           req=urllib.request.Request(url,data=json.dumps(body).encode(),headers={"Authorization":"Bearer "+os.environ["GH_TOKEN"],"Content-Type":"application/json","User-Agent":"PlenumPaperclipQualification/1"})
           with urllib.request.urlopen(req,timeout=15) as res:
