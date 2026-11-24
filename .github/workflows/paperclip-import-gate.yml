@@ -35,3 +35,7 @@ jobs:
         env:
           PYTHONPATH: src
         run: python integrations/paperclip/event_gate_smoke.py
+      - name: Typed public scope and independent original domain program qualification
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/typed_scope_smoke.py
