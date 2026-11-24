@@ -25,6 +25,52 @@ MISSION = "Public NOAA station, scholarly metadata, reviewed validator and comme
 STATIONS = {"station_ids": ["8723214"]}
 PAPERS = {"paper_survey": SPECS["research"][1]}
 
+from mission_scope import LEGACY, validate_scope, digest as scope_digest, profile_routes
+
+
+def active_scope():
+    return validate_scope(json.loads(os.getenv("PLENUM_MISSION_SCOPE") or '{"kind":"coastal"}'))
+
+
+def scope_binding(scope):
+    scope=validate_scope(scope)
+    tag=scope_digest(scope)
+    return {"scope":scope,"scope_sha256":tag,
+            "parent_title":TITLE if scope==LEGACY else "Delegate typed public evidence mission",
+            "parent_description":MISSION if scope==LEGACY else "Approved typed public evidence scope SHA256: "+tag,
+            "child_description":DESCRIPTION if scope==LEGACY else DESCRIPTION+" Scope SHA256: "+tag}
+
+
+def task_specs(scope):
+    if scope==LEGACY:return SPECS
+    if scope["kind"]=="station":
+        titles={"intelligence":"Retrieve approved public station metadata","research":"Survey approved public scholarly topic",
+                "engineering":"Validate public station metadata","commercial":"Prepare evidence-bound coastal screening brief",
+                "verification":"Independently verify station evidence"}
+    else:
+        titles={"intelligence":"Retrieve approved public DOI metadata","research":"Read back approved bibliography independently",
+                "engineering":"Execute reviewed offline AI budget validator","commercial":"Prepare evidence-bound budget review brief",
+                "verification":"Independently verify bibliography and budget evidence"}
+    return {role:(SPECS[role][0],titles[role]) for role in SPECS}
+
+
+def goal_texts(scope):
+    from model_plan import GOALS
+    if scope==LEGACY:return GOALS
+    if scope["kind"]=="station":
+        return {**GOALS,"A":"Retrieve public NOAA station metadata for "+", ".join(scope["station_ids"]),
+                "D":scope["paper_survey"],"B":"Functionally test reviewed station validator on the requested records"}
+    return {"C":"Draft a commercial decision brief from reviewed budget and bibliography results",
+            "E":"Independently verify dependency receipts and test original budget program",
+            "A":"Retrieve public metadata for approved DOI identifiers "+", ".join(scope["dois"]),
+            "D":"Independently read back scholarly DOI metadata",
+            "B":"Execute and functionally test the reviewed offline AI budget validator using approved synthetic counts"}
+
+
+def station_inputs(scope):
+    return (STATIONS,PAPERS) if scope==LEGACY else ({"station_ids":scope["station_ids"]},{"paper_survey":scope["paper_survey"]})
+
+
 
 def required(row, key, context):
     if not isinstance(row, dict) or key not in row or row.get(key) is None:
@@ -39,7 +85,8 @@ def env_id(key):
     return str(UUID(value))
 
 
-def minister_task(aid, cid):
+def minister_task(aid, cid, scope=LEGACY):
+    binding=scope_binding(scope)
     # The pinned Process adapter does not guarantee PAPERCLIP_TASK_ID.
     # Same authenticated assigned-issue fallback already proven in #881.
     task_id = os.getenv("PAPERCLIP_TASK_ID")
@@ -51,8 +98,8 @@ def minister_task(aid, cid):
     if not isinstance(rows, list):
         raise ValueError("Unexpected Minister issue-list shape")
     candidates = [row for row in rows if isinstance(row, dict)
-                  and row.get("assigneeAgentId") == aid and row.get("title") == TITLE
-                  and row.get("description") == MISSION
+                  and row.get("assigneeAgentId") == aid and row.get("title") == binding["parent_title"]
+                  and row.get("description") == binding["parent_description"]
                   and row.get("status") in ("todo", "in_progress")]
     if len(candidates) != 1:
         raise ValueError("Expected exactly one authorized Minister mission")
@@ -96,14 +143,15 @@ def scope_inputs(prior):
     return {key: digest(value) for key,value in prior.items()}
 
 
-def commercial_brief(prior):
+def commercial_brief(prior, scope=LEGACY):
+    stations,_=station_inputs(scope)
     from plenum_ai.chief_team_mission import _station_rows
-    row = _station_rows(prior["intelligence"]["result"], ("8723214",))[0]
+    rows = _station_rows(prior["intelligence"]["result"], tuple(stations["station_ids"]))
     engineering = prior["engineering"]["result"]
     papers = prior["research"]["result"]["readback"]
     return {
         "objective":"Assess a bounded coastal monitoring evidence opportunity",
-        "facts":{"station_id":row["id"],"station_name":required(row,"name","station"),"coordinates":[row["lat"],row["lng"]],
+        "facts":{"stations":[{"station_id":row["id"],"station_name":required(row,"name","station"),"coordinates":[row["lat"],row["lng"]]} for row in rows],
                  "scholarly_dois":sorted(papers),
                  "structurally_valid_rows":engineering["validation"]["structurally_valid_rows"]},
         "recommendation":"Scope a read-only coastal metadata and literature screening pilot",
@@ -116,7 +164,7 @@ def commercial_brief(prior):
     }
 
 
-def verify(prior,directory,*,functional_test=False):
+def verify(prior,directory,*,functional_test=False,scope=LEGACY):
     from plenum_ai.chief_contract_plan import check_contract_result
     from plenum_ai.reviewed_domain_workers import DOMAIN_FILES
     expected=MISSION_ORDER[:-1]
@@ -126,14 +174,18 @@ def verify(prior,directory,*,functional_test=False):
         value=prior[role]
         if required(value,"input_sha256","producer_receipt")!=scope_inputs({k:prior[k] for k in expected[:i]}):
             raise ValueError("Dependency receipt hash mismatch")
+    if scope["kind"]=="bibliography_budget":
+        from budget_mission import verify as verify_budget
+        return verify_budget(scope,prior,directory,functional_test=functional_test)
+    stations,papers=station_inputs(scope)
     intel=prior["intelligence"]["result"]
-    check_contract_result("noaa_metadata",STATIONS,{},intel)
+    check_contract_result("noaa_metadata",stations,{},intel)
     research=prior["research"]["result"]
-    check_contract_result("paper_discovery",PAPERS,{},research["discovery"])
-    check_contract_result("paper_readback",PAPERS,{"paper_discovery":research["discovery"]},research["readback"])
+    check_contract_result("paper_discovery",papers,{},research["discovery"])
+    check_contract_result("paper_readback",papers,{"paper_discovery":research["discovery"]},research["readback"])
     eng=prior["engineering"]["result"]
-    check_contract_result("station_validation",STATIONS,{"noaa_metadata":intel},eng["validation"])
-    if eng["validation"]["invalid_rows"]!=0 or eng["validation"]["structurally_valid_rows"]!=1:
+    check_contract_result("station_validation",stations,{"noaa_metadata":intel},eng["validation"])
+    if eng["validation"]["invalid_rows"]!=0 or eng["validation"]["structurally_valid_rows"]!=len(stations["station_ids"]):
         raise ValueError("Unexpected station validation findings")
     name=eng["artifact_dir"]
     if not isinstance(name,str) or not name.startswith("engineering-artifact-") or Path(name).name!=name:
@@ -151,54 +203,63 @@ def verify(prior,directory,*,functional_test=False):
     if functional_test:
         with tempfile.TemporaryDirectory() as tmp:
             path=Path(tmp)/"station.json"
-            path.write_text(intel["8723214"])
+            from plenum_ai.chief_team_mission import _station_rows
+            path.write_text(json.dumps({"stations":_station_rows(intel,tuple(stations["station_ids"]))}))
             observed=subprocess.run([sys.executable,str(source),str(path)],capture_output=True,text=True,timeout=15,check=True)
             if json.loads(observed.stdout)!=eng["validation"]:
                 raise ValueError("Independent actual-input program output disagrees")
-    if prior["commercial"]["result"]!=commercial_brief(prior):
+    if prior["commercial"]["result"]!=commercial_brief(prior,scope):
         raise ValueError("Commercial brief not bound to public facts")
     return {"verified_public_artifact_scope":True,"verified_producers":4,
-            "station_rows":1,"scholarly_metadata_records":len(research["readback"]),
+            "station_rows":len(stations["station_ids"]),"scholarly_metadata_records":len(research["readback"]),
             "independent_actual_input_test":functional_test,"general_autonomy_verified":False,
             "skill_scan_applicable":False,"paid_inference":False}
 
 
-def mission_worker(role,prior,directory):
+def mission_worker(role,prior,directory,scope=LEGACY):
+    if scope["kind"]=="bibliography_budget":
+        from budget_mission import run
+        result=verify(prior,directory,functional_test=True,scope=scope) if role=="verification" else run(role,scope,prior,directory)
+        return {"input_sha256":scope_inputs(prior),"result":result}
+    stations,papers=station_inputs(scope)
     from plenum_ai.chief_contract_plan import run_contract,check_contract_result
     from plenum_ai.reviewed_domain_workers import reuse_original_program
     if role=="intelligence":
-        result=run_contract("noaa_metadata",STATIONS,{})
-        check_contract_result("noaa_metadata",STATIONS,{},result)
+        result=run_contract("noaa_metadata",stations,{})
+        check_contract_result("noaa_metadata",stations,{},result)
     elif role=="research":
-        discovery=run_contract("paper_discovery",PAPERS,{})
-        check_contract_result("paper_discovery",PAPERS,{},discovery)
-        readback=run_contract("paper_readback",PAPERS,{"paper_discovery":discovery})
-        check_contract_result("paper_readback",PAPERS,{"paper_discovery":discovery},readback)
+        discovery=run_contract("paper_discovery",papers,{})
+        check_contract_result("paper_discovery",papers,{},discovery)
+        readback=run_contract("paper_readback",papers,{"paper_discovery":discovery})
+        check_contract_result("paper_readback",papers,{"paper_discovery":discovery},readback)
         result={"discovery":discovery,"readback":readback}
     elif role=="engineering":
         intel=prior["intelligence"]["result"]
-        validation=run_contract("station_validation",STATIONS,{"noaa_metadata":intel})
-        check_contract_result("station_validation",STATIONS,{"noaa_metadata":intel},validation)
+        validation=run_contract("station_validation",stations,{"noaa_metadata":intel})
+        check_contract_result("station_validation",stations,{"noaa_metadata":intel},validation)
         artifact=Path(tempfile.mkdtemp(prefix="engineering-artifact-",dir=directory))
         manifest=reuse_original_program("noaa_water_station_metadata",SPECS[role][1],artifact)
         result={"artifact_dir":artifact.name,"manifest":manifest,"validation":validation}
     elif role=="commercial":
-        result=commercial_brief(prior)
+        result=commercial_brief(prior,scope)
     elif role=="verification":
-        result=verify(prior,directory,functional_test=True)
+        result=verify(prior,directory,functional_test=True,scope=scope)
     else:
         raise ValueError("Unknown mission division")
     return {"input_sha256":scope_inputs(prior),"result":result}
 
 
 def minister():
+    scope=active_scope()
+    binding=scope_binding(scope)
+    specs=task_specs(scope)
     aid=env_id("PAPERCLIP_AGENT_ID")
     cid=env_id("PAPERCLIP_COMPANY_ID")
     identity=api("/api/agents/me",worker=True)
-    task,pid=minister_task(aid,cid)
+    task,pid=minister_task(aid,cid,scope)
     if (required(identity,"id","identity")!=aid or required(identity,"companyId","identity")!=cid or required(identity,"name","identity")!="Minister of Operations"
-            or task.get("assigneeAgentId")!=aid or task.get("title")!=TITLE
-            or task.get("description")!=MISSION or task.get("status") not in ("todo","in_progress")):
+            or task.get("assigneeAgentId")!=aid or task.get("title")!=binding["parent_title"]
+            or task.get("description")!=binding["parent_description"] or task.get("status") not in ("todo","in_progress")):
         raise PermissionError("Unauthorized Minister mission")
     api("/api/issues/"+pid+"/checkout","POST",{"agentId":aid,"expectedStatuses":["todo","in_progress"]},worker=True)
     roster=api("/api/companies/"+cid+"/agents",worker=True)
@@ -212,14 +273,16 @@ def minister():
     # Idempotency keys ensure interrupted delegation cannot duplicate children.
     directory=ROOT/cid
     directory.mkdir(parents=True,exist_ok=True,mode=0o700)
+    if scope!=LEGACY and json.loads((directory/"mission-scope.json").read_text())!=binding:
+        raise ValueError("Minister typed scope mismatch")
     roles=list(MISSION_ORDER)
     model_receipt=None
     if os.getenv("PLENUM_PAPERCLIP_MODEL")=="local":
         from model_plan import model_plan
-        roles,model_receipt=model_plan(directory,cid,pid)
+        roles,model_receipt=model_plan(directory,cid,pid,goals=goal_texts(scope))
     tasks={}
     for role in roles:
-        fields={"title":SPECS[role][1],"description":DESCRIPTION,"status":"todo","priority":"high",
+        fields={"title":specs[role][1],"description":binding["child_description"],"status":"todo","priority":"high",
                 "parentId":pid,"assigneeAgentId":direct[SPECS[role][0]],
                 "idempotencyKey":"plenum-bounded-"+pid+"-"+role}
         if tasks:
@@ -227,6 +290,7 @@ def minister():
         child=api("/api/companies/"+cid+"/issues","POST",fields,worker=True)
         tasks[role]=str(UUID(required(child,"id","created_child")))
     plan={"company":cid,"minister":aid,"parent":pid,"tasks":tasks,"order":roles}
+    if scope!=LEGACY:plan["scope_sha256"]=binding["scope_sha256"]
     if model_receipt is not None:
         plan["model_receipt_sha256"]=digest(model_receipt)
     path=directory/"minister-plan.json"
@@ -242,24 +306,31 @@ def minister():
 def qualify():
     from datetime import datetime, timezone
     started = time.monotonic()
+    scope=active_scope()
+    binding=scope_binding(scope)
+    specs=task_specs(scope)
     if api("/api/companies"):
         raise RuntimeError("Expected fresh isolated board")
     cid=str(UUID(required(api("/api/companies","POST",{"name":"Plenum sequential public mission","description":MISSION}),"id","created_company")))
+    directory=ROOT/cid
+    directory.mkdir(parents=True,exist_ok=True,mode=0o700)
+    exclusive(directory/"mission-scope.json",binding)
+    exclusive(directory/"profile-routing.json",profile_routes(scope))
     route="/api/companies/"+cid
     def hire(name,role,arg,parent=None):
         fields={"name":name,"role":role,"runner":"legacy","adapterType":"process",
                 "adapterConfig":{"command":"python3","args":["/plenum/integrations/paperclip/sequential_mission.py",arg],
                                  "cwd":"/plenum","timeoutSec":150 if arg=="minister" else 120,"env":{"PYTHONPATH":"/plenum/src","GITHUB_ACTIONS":"true",
                                  "PLENUM_PAPERCLIP_MODEL":os.getenv("PLENUM_PAPERCLIP_MODEL","off"),
-                                 "PLENUM_EPHEMERAL_RUNNER":"confirmed"}},
+                                 "PLENUM_EPHEMERAL_RUNNER":"confirmed","PLENUM_MISSION_SCOPE":encoded(scope).decode()}},
                 "budgetMonthlyCents":0,"runtimeConfig":{"heartbeat":{"enabled":False,"wakeOnAssignment":True,"maxConcurrentRuns":1}},
                 "permissions":{"canCreateAgents":False,"canCreateSkills":False}}
         if parent: fields["reportsTo"]=parent
         return str(UUID(required(api(route+"/agents","POST",fields),"id","created_agent")))
     leader=hire("Minister of Operations","ceo","minister")
-    agents={key:hire(name,"engineer" if key=="engineering" else "general",key,leader) for key,(name,_) in SPECS.items()}
+    agents={key:hire(name,"engineer" if key=="engineering" else "general",key,leader) for key,(name,_) in specs.items()}
     queued = time.monotonic()
-    task=api(route+"/issues","POST",{"title":TITLE,"description":MISSION,"status":"todo","priority":"high","assigneeAgentId":leader})
+    task=api(route+"/issues","POST",{"title":binding["parent_title"],"description":binding["parent_description"],"status":"todo","priority":"high","assigneeAgentId":leader})
     parent_id=str(UUID(required(task,"id","created_parent")))
     # No board-side child assignment: wait for the actual Minister's plan and native wakes.
     directory=ROOT/cid
@@ -315,8 +386,15 @@ def qualify():
 
 def readback(cid,plan,expected_agents=None):
     directory=ROOT/cid
+    binding=json.loads((directory/"mission-scope.json").read_text())
+    scope=validate_scope(binding["scope"])
+    if binding!=scope_binding(scope) or (scope!=LEGACY and plan.get("scope_sha256")!=binding["scope_sha256"]):
+        raise ValueError("Readback scope mismatch")
+    profiles=json.loads((directory/"profile-routing.json").read_text())
+    if profiles!=profile_routes(scope):raise ValueError("Profile routing evidence mismatch")
+    specs=task_specs(scope)
     original=api("/api/issues/"+plan["parent"])
-    if original.get("status")!="done" or original.get("assigneeAgentId")!=plan["minister"]:
+    if original.get("status")!="done" or original.get("assigneeAgentId")!=plan["minister"] or original.get("title")!=binding["parent_title"] or original.get("description")!=binding["parent_description"]:
         raise ValueError("Minister dispatch not accepted")
     parent_comments=api("/api/issues/"+plan["parent"]+"/comments")
     if not any("Plan SHA256: "+digest(plan) in c.get("body","") for c in parent_comments):
@@ -327,6 +405,7 @@ def readback(cid,plan,expected_agents=None):
         iid=plan["tasks"][role]
         task=api("/api/issues/"+iid)
         if (task.get("status")!="done" or task.get("parentId")!=plan["parent"]
+                or task.get("title")!=specs[role][1] or task.get("description")!=binding["child_description"]
                 or (expected_agents and task.get("assigneeAgentId")!=expected_agents[role])):
             raise ValueError("Wrong native child scope")
         # Native dependency relations plus actual producer hashes bind order.
@@ -342,7 +421,7 @@ def readback(cid,plan,expected_agents=None):
         if not any("Original public worker evidence SHA256: "+record["sha256"] in c.get("body","") for c in comments):
             raise ValueError("Missing task completion receipt")
         records[role]=record
-    result=verify({k:v["result"] for k,v in records.items() if k!="verification"},directory,functional_test=True)
+    result=verify({k:v["result"] for k,v in records.items() if k!="verification"},directory,functional_test=True,scope=scope)
     if result!=records["verification"]["result"]["result"]:
         raise ValueError("Independent verifier disagrees")
     model_executed=False
@@ -350,14 +429,15 @@ def readback(cid,plan,expected_agents=None):
     if "model_receipt_sha256" in plan:
         from model_plan import validate_receipt
         receipt=json.loads((directory/"minister-model-plan.json").read_text())
-        if digest(receipt)!=plan["model_receipt_sha256"] or validate_receipt(receipt,cid,plan["parent"])!=plan["order"]:
+        if digest(receipt)!=plan["model_receipt_sha256"] or validate_receipt(receipt,cid,plan["parent"],goals=goal_texts(scope))!=plan["order"]:
             raise ValueError("Local model delegation receipt mismatch")
         model_executed=True
         model_info={"model":receipt["model"],"model_digest":receipt["model_digest"],
                     "model_receipt_sha256":digest(receipt),"model_eval_count":receipt["eval_count"]}
     return {"company":cid,"minister":plan["minister"],"parent":plan["parent"],"order":list(MISSION_ORDER),
             "verified_divisions":5,"minister_dispatch":True,"minister_model_executed":model_executed,**model_info,"independent_verification":result,
-            "paid_inference":False,"persistent_production":False,
+            "paid_inference":False,"persistent_production":False,"scope_sha256":binding["scope_sha256"],
+            "mission_kind":scope["kind"],"routed_profiles":len(profiles),"profile_worker_execution_claimed":False,
             "evidence":{k:{"issue":v["issue"],"sha256":v["sha256"]} for k,v in records.items()}}
 
 
@@ -388,7 +468,10 @@ if __name__=="__main__":
         if arg=="minister":minister()
         elif arg=="qualify":qualify()
         elif arg=="restart-readback":restart_readback()
-        else:run_assigned(arg,mission_worker=mission_worker)
+        else:
+            scope=active_scope()
+            run_assigned(arg,mission_worker=lambda role,prior,directory:mission_worker(role,prior,directory,scope),
+                         specs=task_specs(scope),description=scope_binding(scope)["child_description"],expected_scope=scope)
     except Exception as exc:
         failure_receipt(arg,exc)
         raise SystemExit(1) from None
