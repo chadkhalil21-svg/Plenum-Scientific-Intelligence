@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 import tempfile
 import time
-from urllib.request import Request, build_opener, HTTPRedirectHandler
+from urllib.request import Request, build_opener, HTTPRedirectHandler, ProxyHandler
 from urllib.parse import urlsplit, urlencode
 
 COMPANY = "Plenum public integration"
@@ -32,7 +32,7 @@ def api(path, method="GET", body=None, *, worker=False):
     if worker:
         headers["Authorization"] = "Bearer " + os.environ["PAPERCLIP_API_KEY"]
         headers["X-Paperclip-Run-Id"] = os.environ["PAPERCLIP_RUN_ID"]
-    with build_opener(NoRedirect).open(Request(base + path, headers=headers,
+    with build_opener(ProxyHandler({}),NoRedirect).open(Request(base + path, headers=headers,
                 method=method, data=None if body is None else json.dumps(body).encode()), timeout=15) as response:
         raw = response.read(2_000_001)
     if len(raw) > 2_000_000:

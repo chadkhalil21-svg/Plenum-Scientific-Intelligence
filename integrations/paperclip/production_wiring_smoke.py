@@ -41,7 +41,15 @@ class Tests(unittest.TestCase):
             self.assertEqual(w.grant(self.c,self.m,root=self.root),"x"*32)
             p.chmod(0o644)
             with self.assertRaises(PermissionError):w.grant(self.c,self.m,root=self.root)
+            p.chmod(0o700)
+            with self.assertRaises(PermissionError):w.grant(self.c,self.m,root=self.root)
             p.chmod(0o600)
+            self.root.chmod(0o755)
+            try:
+                with self.assertRaises(PermissionError):w.grant(self.c,self.m,root=self.root)
+            finally:self.root.chmod(0o700)
+            with patch.object(w,"GRANT_DIR",self.root):
+                with self.assertRaises(PermissionError):w.grant(self.c,self.m)
             with self.assertRaises(PermissionError):w.grant(str(uuid4()),self.m,root=self.root)
         with patch.dict(os.environ,{"GITHUB_ACTIONS":"true"}):
             with self.assertRaises(PermissionError):w.grant(self.c,self.m,root=self.root)

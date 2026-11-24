@@ -80,9 +80,10 @@ def queue_run(api,root,qualify_locked,readback):
             if prepared["scope_sha256"]!=expected["scope_sha256"] or prepared["model_mode"]!="local" or prepared["checkpoint_mode"]!=mode:raise ValueError("Queue mission binding mismatch")
             if mid in [x["mission"] for x in accepted]:raise ValueError("Duplicate queue mission")
             if not (mission/"qualification.json").exists():
-                if done.exists() or (mission/"activation.json").exists():raise RuntimeError("Ambiguous or incomplete activation; never replay")
+                if done.exists() or done.is_symlink():raise RuntimeError("Accepted queue evidence missing")
+                activation=mission/"activation.json"
                 with environment(PLENUM_PAPERCLIP_MISSION_UUID=mid,PLENUM_MISSION_SCOPE=None):
-                    qualify_locked("activate")
+                    qualify_locked("resume" if activation.exists() or activation.is_symlink() else "activate")
             _,q,_,_,_=local_receipt(root,cid,mid,readback)
             if roster is None:roster=q["persistent_roster"]
             if roster!=q["persistent_roster"] or len(set(roster.values()))!=6:raise ValueError("Queue roster changed")

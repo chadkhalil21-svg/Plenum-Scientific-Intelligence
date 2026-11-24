@@ -25,21 +25,30 @@ def execute():
     os.environ["PLENUM_PAPERCLIP_MISSION_UUID"]=mission
     return native.qualify("activate")
 
-def readback():
+def restore_marker():
     path=native.ROOT/MARKER
     if path.exists() or path.is_symlink():
         row=checked(path,{"paid_inference":False})
         os.environ.update(PLENUM_PERSISTENT_BOARD="confirmed",PLENUM_PAPERCLIP_COMPANY_UUID=canonical(row["company"]),
                           PLENUM_PAPERCLIP_MISSION_UUID=canonical(row["mission"]))
         directory=native.ROOT/row["company"]/row["mission"]
-        checked(directory/"qualification.json",{"company":row["company"],"parent":row["mission"],"scope_sha256":row["scope_sha256"]})
+        checked(directory/"prepared.json",{"company":row["company"],"mission":row["mission"],"scope_sha256":row["scope_sha256"]})
+        return row
+    return None
+
+def readback():
+    restore_marker()
     return native.restart_readback()
+
+def resume():
+    if restore_marker() is None:raise ValueError("Missing original event mission")
+    return native.qualify("resume")
 
 if __name__=="__main__":
     if os.getenv("GITHUB_ACTIONS")!="true":raise SystemExit("Isolated public CI only")
-    if len(sys.argv)!=2 or sys.argv[1] not in ("execute","readback"):raise SystemExit("Unknown isolated event action")
+    if len(sys.argv)!=2 or sys.argv[1] not in ("execute","readback","resume"):raise SystemExit("Unknown isolated event action")
     try:
-        (execute if sys.argv[1]=="execute" else readback)()
+        {"execute":execute,"readback":readback,"resume":resume}[sys.argv[1]]()
     except Exception as exc:
         native.failure_receipt(sys.argv[1],exc)
         raise SystemExit(1) from None

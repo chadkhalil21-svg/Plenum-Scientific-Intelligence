@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import stat
 from urllib.error import URLError, HTTPError
 
 MAX_BYTES = 2_000_000
@@ -43,10 +44,26 @@ def exclusive(path, value):
 
 
 def checked(path, expected):
-    if path.is_symlink() or not path.is_file() or path.stat().st_size > MAX_BYTES:
-        raise ValueError("Invalid checkpoint file")
-    value = json.loads(path.read_bytes())
-    if any(value.get(k) != v for k, v in expected.items()):
+    """Open the actual regular file without following a link; bound the read."""
+    try:
+        fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
+    except OSError as exc:
+        raise ValueError("Invalid checkpoint file") from exc
+    with os.fdopen(fd,"rb") as stream:
+        info=os.fstat(stream.fileno())
+        if not stat.S_ISREG(info.st_mode) or info.st_size>MAX_BYTES:
+            raise ValueError("Invalid checkpoint file")
+        raw=stream.read(MAX_BYTES+1)
+    if len(raw)>MAX_BYTES:raise ValueError("Checkpoint exceeds bound")
+    def unique(pairs):
+        result={}
+        for key,value in pairs:
+            if key in result:raise ValueError("Duplicate checkpoint key")
+            result[key]=value
+        return result
+    def invalid_constant(value):raise ValueError("Nonfinite checkpoint number")
+    value=json.loads(raw,object_pairs_hook=unique,parse_constant=invalid_constant)
+    if not isinstance(value,dict) or any(k not in value or type(value[k]) is not type(v) or value[k]!=v for k,v in expected.items()):
         raise ValueError("Checkpoint identity mismatch")
     return value
 
