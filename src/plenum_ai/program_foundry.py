@@ -38,6 +38,7 @@ def _scaffold(kind, topic):
         return (
             '"""Original local scientific JSON validation starter."""\n'
             'import argparse\nimport json\nfrom pathlib import Path\n'
+            'import math\n'
             'def validate(records):\n'
             '    if not isinstance(records, list):\n'
             '        raise TypeError("Expected a JSON list")\n'
@@ -45,8 +46,8 @@ def _scaffold(kind, topic):
             '    for row in records:\n'
             '        if not isinstance(row,dict):\n'
             '            continue\n'
-            '        if isinstance(row.get("value"),(int,float)) and '
-            'not isinstance(row.get("value"),bool):\n'
+            '        value = row.get("value")\n'
+            '        if (isinstance(value, int) and not isinstance(value, bool)) or (isinstance(value, float) and math.isfinite(value)):\n'
             '            valid.append(row)\n'
             '    return {"valid_rows": len(valid), "total_rows": len(records),'
             '"measurement_truth_verified": False}\n'
