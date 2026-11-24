@@ -163,6 +163,24 @@ def one_original_local_repair_warranted(event: dict, output_dir: Path,
     The original executor independently verifies that sibling's actual SHA-256
     bytes before treating it as reusable. Never re-execute all specialists.
     """
+    if outcome.get("status") == "BLOCKED_CONTRACT_EXECUTION":
+        # The same original contract gate validates the immutable plan,
+        # exact prefix and artifact hashes, and permits only attempt one.
+        from .chief_retry_gate import inspect_contract_retry
+        task = parse_mission(event)
+        if not task.get("contract_mission"):
+            return False
+        try:
+            checkpoint = output_dir / f"chief-checkpoint-{task['issue_number']}.json"
+            if not checkpoint.is_file() or checkpoint.is_symlink() or checkpoint.stat().st_size > 120_000:
+                return False
+            state = json.loads(checkpoint.read_text("utf-8"))
+            if not isinstance(state, dict):
+                return False
+            verdict = inspect_contract_retry(output_dir, task, state, outcome, 1)
+            return verdict.get("status") == "ELIGIBLE_NATIVE_RETRY_ONCE"
+        except (OSError, ValueError, TypeError, KeyError):
+            return False
     if (outcome.get("status") != "BLOCKED_PARTIAL_TEAM"
             or outcome.get("independent_verified") is not False):
         return False
