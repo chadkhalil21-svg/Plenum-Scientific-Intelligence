@@ -107,7 +107,7 @@ def parse_owner_repair_event(event: dict) -> dict:
         raise ValueError("Exact three-line original public repair contract required")
     source_file, objective = lines[1][6:], lines[2][11:]
     if (not 25 <= len(objective) <= 200 or objective != objective.strip()
-            or not re.fullmatch(r"[A-Za-z0-9 .,()/+'-]+", objective)
+            or not re.fullmatch(r"[A-Za-z0-9_ .,()/+'-]+", objective)
             or any(term in objective.lower() for term in
                    ("secret", "credential", "password", "token", "private",
                     "customer", "deploy", "publish", "bypass", "billing", "payment"))):
@@ -324,10 +324,12 @@ def local_plan(task: str, *, source_file: str) -> dict:
         raise PermissionError("Source too large for bounded CPU whole-file local coding")
     result = plan(task, source_file=source_file)
     result.pop("sdk_version_required")
-    if local_function_scope(task, _public_source(source_file)[0]):
+    requests=local_edit_requests(task,_public_source(source_file)[0])
+    if requests:
         return {**result, "upstream":"ollama/ollama", "engine":LOCAL_ENGINE,
                 "local_model":STRUCTURED_EDIT_MODEL,
                 "local_edit_strategy":"exact_anchor_structured_function_edit",
+                "authorized_function_edits":len(requests),
                 "cloud_inference_used":False,"paid_api_authorized":False}
     return {**result, "upstream": "Aider-AI/aider", "engine": LOCAL_ENGINE,
             "aider_image": AIDER_IMAGE, "local_model": LOCAL_MODEL,
@@ -414,6 +416,27 @@ def restore_function_scope(scope, edited: bytes) -> bytes:
     return result
 
 
+def local_edit_requests(task, original):
+    """At most two explicit owner-scoped clauses in one atomic proposal."""
+    import re
+    clauses=task.split(" Then repair function ")
+    if len(clauses)>2:
+        raise ValueError("At most two named function repairs")
+    if len(clauses)==2:
+        clauses[1]="Repair function "+clauses[1]
+    if not clauses[0].startswith("Repair function "):
+        if len(clauses)!=1:
+            raise ValueError("Every edit must name its original function")
+        return []
+    names=[]
+    for clause in clauses:
+        match=re.match(r"Repair function ([a-z][a-z0-9_]{1,60})\. ",clause)
+        if not match or match.group(1) in names or local_function_scope(clause,original) is None:
+            raise ValueError("Invalid or repeated original function")
+        names.append(match.group(1))
+    return clauses
+
+
 def apply_structured_edit(scope, choice):
     """Apply one model-selected exact contiguous replacement, never run it."""
     if not isinstance(choice,dict) or set(choice)!={"old","new"}:
@@ -475,13 +498,19 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
     if os.getenv("PLENUM_EPHEMERAL_RUNNER") != "confirmed":
         raise RuntimeError("Run only in a separately isolated ephemeral runner")
     original, _ = _public_source(source_file)
-    scope = local_function_scope(task, original)
-    if scope:
+    requests=local_edit_requests(task,original)
+    scope=None
+    if requests:
         if behavioral_recovery:
             raise PermissionError("Unapproved structured edit recovery")
-        raw=structured_local_edit(task,scope)
-        if len(raw)>_candidate_byte_limit(original):
-            raise ValueError("Structured candidate exceeds original bound")
+        raw=original
+        for clause in requests:
+            scope=local_function_scope(clause,raw)
+            candidate=structured_local_edit(clause,scope)
+            if candidate==raw or len(candidate)>_candidate_byte_limit(original):
+                raise ValueError("Missing or oversized structured candidate edit")
+            raw=candidate
+        # Persist only after every authorized clause produced a bounded edit.
         return _candidate_report(result,original,raw,source_file,artifact,0)
     feedback = (" Edit only the shown function. All surrounding module definitions are "
                 "preserved unchanged; no new imports or top-level code." if scope else "")
