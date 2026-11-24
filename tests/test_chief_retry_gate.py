@@ -254,3 +254,54 @@ class DataMissionRetryGateTests(TestCase):
                     p=root/'chief-result-1001.json'; report=json.loads(p.read_text());report['status']='VERIFIED_BOUNDED_DATA_MISSION';p.write_text(json.dumps(report))
                 pp.write_text(json.dumps(receipt,sort_keys=True));cp_path.write_text(json.dumps(cp))
                 self.assertNotEqual(inspect_retry(event(),root,original)['status'],'ELIGIBLE_NATIVE_RETRY_ONCE')
+
+
+class PaperOutageRetryTests(TestCase):
+    def test_only_recorded_transient_outage_retries_with_accepted_sibling(self):
+        from hashlib import sha256
+        from plenum_ai.chief_team_mission import parse_mission
+        goal="Survey public photonic computing papers"
+        objective="Plan "+goal+" and create a NOAA station metadata validator program"
+        original=issue(objective=objective)
+        task=parse_mission({"action":"opened","repository":{"full_name":REPO},"issue":original})
+        team=task["team"]
+        plan={"steps":[{"kind":"public_research","objective":goal},
+                      {"kind":"public_program","objective":"create a NOAA station metadata validator program"}]}
+        receipt={"issue":1001,"objective_sha256":objective_digest(objective),
+                 "plan":plan,"provenance":"local_ollama"}
+        digest=sha256(json.dumps(receipt,sort_keys=True).encode()).hexdigest()
+        for variant,expected in (("outage",True),("empty",False),("schema",False),
+                                 ("changed_topic",False),("wrong_provider",False),
+                                 ("tamper",False),("bool_attempt",False)):
+            with self.subTest(variant=variant),TemporaryDirectory() as folder:
+                root=Path(folder)
+                (root/"chief-team-plan-1001.json").write_text(json.dumps(receipt))
+                research="workers/public_research/result.json"
+                program="workers/public_program/result.txt"
+                for rel in (research,program):
+                    (root/rel).parent.mkdir(parents=True)
+                (root/program).write_text("preserved accepted sibling")
+                first={"source":"crossref_journals","status":"unavailable","error_type":"TimeoutError","records":[]}
+                final={**first,"query_strategy":"bibliographic_recovery","first_attempt":first}
+                report={"schema":"plenum-public-horizon-snapshot-v1","topic":goal,
+                        "category":"journals","records":[],"providers":[final],
+                        "independent_breakthrough_verified":False,"AGI_achieved":False}
+                if variant=="empty": final["status"]="retrieved_metadata"
+                if variant=="schema": final["error_type"]="ValueError"
+                if variant=="changed_topic": report["topic"]="Survey public other papers"
+                if variant=="wrong_provider": final["source"]="unapproved_provider"
+                (root/research).write_text(json.dumps(report))
+                results={
+                    "public_research":{"attempt":True if variant=="bool_attempt" else 1,
+                        "status":"BLOCKED_NO_SOURCE_EVIDENCE","verified":False,
+                        "artifact_path":research,"sha256":artifact_digest(root,research),"plan_sha256":digest},
+                    "public_program":{"attempt":1,"status":"DRAFT_READY_FOR_FOUNDER","verified":True,
+                        "worker":"existing_worker","artifact_path":program,"output_artifact":program,
+                        "sha256":artifact_digest(root,program),"plan_sha256":digest}}
+                save_checkpoint(root,issue=1001,objective=objective,team=team,results=results)
+                (root/"chief-result-1001.json").write_text(json.dumps({
+                    "issue_number":1001,"mode":"multi","expected_team":list(team),
+                    "status":"BLOCKED_PARTIAL_TEAM","independent_verified":False}))
+                if variant=="tamper": (root/research).write_text("tampered")
+                self.assertEqual(inspect_retry(event(),root,original)["status"]=="ELIGIBLE_NATIVE_RETRY_ONCE",expected)
+
