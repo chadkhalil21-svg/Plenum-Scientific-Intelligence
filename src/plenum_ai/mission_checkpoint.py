@@ -56,6 +56,8 @@ def artifact_digest(root: Path, name: str) -> str | None:
             return None
         if not path.exists() or path.is_symlink() or not path.resolve().is_relative_to(resolved_root):
             return None
+        if not (path.is_file() or path.is_dir()):
+            return None
         files = _bounded_artifact_entries(path)
         if not files:
             return None
@@ -65,8 +67,10 @@ def artifact_digest(root: Path, name: str) -> str | None:
         for item in files:
             if item.is_symlink():
                 return None
-            if not item.is_file():
+            if item.is_dir():
                 continue
+            if not item.is_file():
+                return None
             if not item.resolve().is_relative_to(resolved_root):
                 return None
             remaining = MAX_BYTES - size
@@ -113,7 +117,11 @@ def load_checkpoint(root: Path, *, issue: int, objective: str,
             or data.get("only_original_public_workers") is not True
             or data.get("owner_private_accounts_used") is not False
             or not isinstance(data.get("results"), dict)
-            or set(data["results"]) - set(team)):
+            or set(data["results"]) - set(team)
+            or any(not isinstance(entry, dict)
+                   or type(entry.get("attempt")) is not int
+                   or entry["attempt"] not in (1, 2)
+                   for entry in data["results"].values())):
         raise ValueError("Checkpoint belongs to a different or untrusted mission")
     return data["results"]
 
