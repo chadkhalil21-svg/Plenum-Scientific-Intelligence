@@ -49,7 +49,7 @@ def task_specs(scope):
         titles={"intelligence":"Retrieve approved public station metadata","research":"Survey approved public scholarly topic",
                 "engineering":"Validate public station metadata","commercial":"Prepare evidence-bound coastal screening brief",
                 "verification":"Independently verify station evidence"}
-    elif scope["kind"]=="public_dataset":
+    elif scope["kind"] in ("public_dataset","public_objective"):
         titles={"intelligence":"Retrieve approved public DOI metadata","research":"Independently reread public bibliography",
                 "engineering":"Execute reviewed generic numerical data analysis","commercial":"Prepare bounded data evidence brief",
                 "verification":"Independently verify numerical analysis and bibliography"}
@@ -66,6 +66,9 @@ def goal_texts(scope):
     if scope["kind"]=="station":
         return {**GOALS,"A":"Retrieve public NOAA station metadata for "+", ".join(scope["station_ids"]),
                 "D":scope["paper_survey"],"B":"Functionally test reviewed station validator on the requested records"}
+    if scope["kind"]=="public_objective":
+        from objective_mission import goals
+        return goals(scope)
     if scope["kind"]=="public_dataset":
         from dataset_mission import goals
         return goals(scope)
@@ -183,6 +186,9 @@ def verify(prior,directory,*,functional_test=False,scope=LEGACY):
         value=prior[role]
         if required(value,"input_sha256","producer_receipt")!=scope_inputs({k:prior[k] for k in expected[:i]}):
             raise ValueError("Dependency receipt hash mismatch")
+    if scope["kind"]=="public_objective":
+        from objective_mission import verify as verify_objective
+        return verify_objective(scope,prior,directory,functional_test=functional_test)
     if scope["kind"]=="public_dataset":
         from dataset_mission import verify as verify_dataset
         return verify_dataset(scope,prior,directory,functional_test=functional_test)
@@ -229,6 +235,10 @@ def verify(prior,directory,*,functional_test=False,scope=LEGACY):
 
 
 def original_mission_worker(role,prior,directory,scope=LEGACY):
+    if scope["kind"]=="public_objective":
+        from objective_mission import run
+        result=verify(prior,directory,functional_test=True,scope=scope) if role=="verification" else run(role,scope,prior,directory)
+        return {"input_sha256":scope_inputs(prior),"result":result}
     if scope["kind"]=="public_dataset":
         from dataset_mission import run
         result=verify(prior,directory,functional_test=True,scope=scope) if role=="verification" else run(role,scope,prior,directory)
@@ -272,6 +282,9 @@ def mission_worker(role,prior,directory,scope=LEGACY):
 
 
 def minister():
+    if persistent():
+        from objective_replan import maybe_minister_replan
+        if maybe_minister_replan(api,ROOT):return
     scope=assigned_scope(api,ROOT,"minister") if persistent() else active_scope()
     binding=scope_binding(scope)
     specs=task_specs(scope)
@@ -305,7 +318,8 @@ def minister():
     else:model_mode=os.getenv("PLENUM_PAPERCLIP_MODEL","off")
     if model_mode=="local":
         from model_plan import model_plan
-        roles,model_receipt=model_plan(directory,cid,pid,goals=goal_texts(scope))
+        from objective_mission import tools_for
+        roles,model_receipt=model_plan(directory,cid,pid,goals=goal_texts(scope),tools=tools_for(scope))
     tasks={}
     for role in roles:
         fields={"title":specs[role][1],"description":binding["child_description"],"status":"todo","priority":"high",
@@ -357,6 +371,10 @@ def qualify_locked(action):
     else:scope=active_scope()
     binding=scope_binding(scope)
     specs=task_specs(scope)
+    if scope["kind"]=="public_objective":
+        from production_wiring import load_prepared
+        if not durable or (load_prepared(directory,cid,mid)["model_mode"] if action=="activate" else os.getenv("PLENUM_PAPERCLIP_MODEL","off"))!="local":
+            raise PermissionError("Objective scope requires persistent local model approval")
     if durable:
         cid=owner_company(api)
         if os.getenv("PLENUM_PAPERCLIP_MODEL","off") not in ("off","local"):
@@ -425,6 +443,9 @@ def qualify_locked(action):
             if os.getenv("PLENUM_CI_TRANSIENT_INTELLIGENCE")=="confirmed":
                 if os.getenv("GITHUB_ACTIONS")!="true" or action!="prepare" or mode!="local":raise PermissionError("CI fault injection requires isolated staged local checkpoints")
                 exclusive(directory/"ci-transient-intelligence.json",{"company":cid,"mission":parent_id,"role":"intelligence"})
+            if os.getenv("PLENUM_CI_REPLAN_ENGINEERING")=="confirmed":
+                if os.getenv("GITHUB_ACTIONS")!="true" or action!="prepare" or mode!="local" or scope["kind"]!="public_objective":raise PermissionError("CI-only objective replan fault")
+                exclusive(directory/"ci-replan-engineering.json",{"company":cid,"mission":parent_id,"role":"engineering"})
             if action=="prepare":
                 print(json.dumps(row),flush=True)
                 return row
@@ -508,6 +529,7 @@ def readback(cid,plan,expected_agents=None):
         raise ValueError("Missing native Minister plan receipt")
     records={}
     recoveries={}
+    replans={}
     previous=None
     for role in MISSION_ORDER:
         iid=plan["tasks"][role]
@@ -532,9 +554,13 @@ def readback(cid,plan,expected_agents=None):
                                             record["result"]["result"],directory)
         if record["result"].get("profile_receipts")!=expected_profiles:
             raise ValueError("Profile work-product receipt mismatch")
-        from recovery_audit import verify as verify_recovery
-        recovery=verify_recovery(directory,cid,role,iid,record["sha256"])
-        if recovery is not None:recoveries[role]=digest(recovery)
+        from objective_replan import verify_completed_replan
+        replan=verify_completed_replan(api,directory,cid,plan,role,record,scope)
+        if replan is not None:replans[role]=digest(replan)
+        else:
+            from recovery_audit import verify as verify_recovery
+            recovery=verify_recovery(directory,cid,role,iid,record["sha256"])
+            if recovery is not None:recoveries[role]=digest(recovery)
         records[role]=record
     chief=json.loads((directory/"chief-profile.json").read_text())
     if chief!=chief_receipt(scope,plan):raise ValueError("Chief receipt mismatch")
@@ -552,7 +578,8 @@ def readback(cid,plan,expected_agents=None):
     if "model_receipt_sha256" in plan:
         from model_plan import validate_receipt
         receipt=json.loads((directory/"minister-model-plan.json").read_text())
-        if digest(receipt)!=plan["model_receipt_sha256"] or validate_receipt(receipt,cid,plan["parent"],goals=goal_texts(scope))!=plan["order"]:
+        from objective_mission import tools_for
+        if digest(receipt)!=plan["model_receipt_sha256"] or validate_receipt(receipt,cid,plan["parent"],goals=goal_texts(scope),tools=tools_for(scope))!=plan["order"]:
             raise ValueError("Local model delegation receipt mismatch")
         model_executed=True
         model_info={"model":receipt["model"],"model_digest":receipt["model_digest"],
@@ -566,6 +593,7 @@ def readback(cid,plan,expected_agents=None):
             "paid_inference":False,"persistent_production":False,"scope_sha256":binding["scope_sha256"],
             "mission_kind":scope["kind"],"routed_profiles":len(profiles),"profile_worker_execution_claimed":False,"verified_profile_work_products":len(executed),"profile_receipt_sha256":executed,
             **({"recovery_receipt_sha256":recoveries} if recoveries else {}),
+            **({"replan_receipt_sha256":replans} if replans else {}),
             "evidence":{k:{"issue":v["issue"],"sha256":v["sha256"]} for k,v in records.items()}}
 
 
