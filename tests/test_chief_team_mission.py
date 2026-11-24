@@ -415,6 +415,41 @@ class PlannedDeliverableAcceptanceTests(TestCase):
 
 
 
+    def test_unaccepted_clause_is_not_checkpointed_as_success_and_retry_preserves_sibling(self):
+        import json
+        from plenum_ai.workforce_public_inbox import run_issue
+        attempts=[]
+        def worker(event,output_dir):
+            if "photonic computing" not in event["issue"]["body"]:
+                return run_issue(event,output_dir=output_dir)
+            attempts.append(1)
+            output_dir.mkdir(parents=True,exist_ok=True)
+            report={"schema":"plenum-public-horizon-snapshot-v1","topic":self.plan["steps"][0]["objective"],
+                    "category":"journals","independent_breakthrough_verified":False,
+                    "records":[{"source":"crossref_journals","category":"journals",
+                        "title":"Unrelated survey" if len(attempts)==1 else "Photonic computing architectures",
+                        "url":"https://doi.org/10.1000/fixture","independent_fact_check_complete":False}]}
+            (output_dir/"paper.json").write_text(json.dumps(report))
+            return {"status":"DRAFT_READY_FOR_FOUNDER","verified":True,"worker":"original_research",
+                    "output_artifact":"paper.json"}
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            with patch("plenum_ai.chief_team_mission.plan_independent_team",return_value=self.plan),patch(
+                    "plenum_ai.chief_team_mission.run_issue",side_effect=worker):
+                first=execute(mission(self.objective),output_dir=root)
+                self.assertEqual(first["status"],"BLOCKED_PARTIAL_TEAM")
+                self.assertFalse(first["founder_objective_verified"])
+                cp=json.loads((root/"chief-checkpoint-1001.json").read_text())
+                self.assertFalse(cp["results"]["public_research"]["verified"])
+                self.assertTrue(cp["results"]["public_program"]["verified"])
+                second=execute(mission(self.objective),output_dir=root)
+            self.assertTrue(second["founder_objective_verified"])
+            self.assertEqual(second["new_worker_invocations"],1)
+            self.assertEqual(second["reused_prior_verified_workers"],1)
+            self.assertEqual(len(attempts),2)
+            self.assertIn("Unrelated survey",(root/"workers/public_research/paper.json").read_text())
+
+
 if __name__ == "__main__":
     import unittest
     unittest.main()
