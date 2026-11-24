@@ -6,6 +6,7 @@ from unittest import TestCase
 from unittest.mock import patch
 
 from plenum_ai import mission_checkpoint as checkpoint
+from acceptance.checkpoint_scope_attempt import CheckpointQualification
 
 
 class MissionCheckpointLimitsTests(TestCase):
