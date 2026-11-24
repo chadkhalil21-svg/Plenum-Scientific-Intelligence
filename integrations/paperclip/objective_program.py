@@ -4,7 +4,7 @@ from fractions import Fraction
 from collections import Counter
 
 TOOLS=("sqlite","collections","stream")
-OPS=("mean","median","range","word_counts","shared_terms","term_frequency")
+OPS=("mean","median","range","word_counts","shared_terms","term_frequency","population_variance","least_squares_slope","max_step_change")
 
 def tokens(text):
     return re.findall(r"[a-z0-9]+",text.lower())
@@ -51,6 +51,11 @@ def analyze(data,tool):
             if op=="mean":value=Fraction(total,n)
             elif op=="median":value=Fraction(ordered[(n-1)//2]+ordered[n//2],2)
             elif op=="range":value=Fraction(ordered[-1]-ordered[0])
+            elif op=="population_variance":value=Fraction(n*sum(x*x for x in ordered)-total*total,n*n)
+            elif op=="least_squares_slope":
+                sx=n*(n-1)//2; sxx=n*(n-1)*(2*n-1)//6
+                value=Fraction(n*sum(i*y for i,y in enumerate(samples))-sx*total,n*sxx-sx*sx)
+            elif op=="max_step_change":value=Fraction(max(abs(y-x) for x,y in zip(samples,samples[1:])))
             else:raise ValueError("Unknown acceptance operation")
             out[op]={"numerator":value.numerator,"denominator":value.denominator}
     return {"results":out}

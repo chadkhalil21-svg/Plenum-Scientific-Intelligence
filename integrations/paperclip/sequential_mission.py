@@ -361,7 +361,7 @@ def qualify_locked(action):
     from datetime import datetime, timezone
     started = time.monotonic()
     durable=persistent()
-    if action=="activate":
+    if action in ("activate","resume"):
         from production_wiring import load_prepared
         cid=owner_company(api)
         mid=canonical(os.environ["PLENUM_PAPERCLIP_MISSION_UUID"])
@@ -373,7 +373,7 @@ def qualify_locked(action):
     specs=task_specs(scope)
     if scope["kind"]=="public_objective":
         from production_wiring import load_prepared
-        if not durable or (load_prepared(directory,cid,mid)["model_mode"] if action=="activate" else os.getenv("PLENUM_PAPERCLIP_MODEL","off"))!="local":
+        if not durable or (load_prepared(directory,cid,mid)["model_mode"] if action in ("activate","resume") else os.getenv("PLENUM_PAPERCLIP_MODEL","off"))!="local":
             raise PermissionError("Objective scope requires persistent local model approval")
     if durable:
         cid=owner_company(api)
@@ -410,7 +410,7 @@ def qualify_locked(action):
         leader=ids["minister"]
         agents={k:ids[k] for k in specs}
     else:
-        if action=="activate":raise ValueError("Prepared roster absent")
+        if action in ("activate","resume"):raise ValueError("Prepared roster absent")
         leader=hire("Minister of Operations","ceo","minister")
         agents={key:hire(name,"engineer" if key=="engineering" else "general",key,leader) for key,(name,_) in specs.items()}
         if durable:
@@ -419,9 +419,23 @@ def qualify_locked(action):
             bind_roster(ROOT,cid,ids)
     from production_wiring import prepared, authorize_activation
     queued = time.monotonic()
-    if action=="activate":
+    if action in ("activate","resume"):
         parent_id=mid
-        authorize_activation(api,directory,cid,parent_id,leader,binding)
+        if action=="activate":
+            authorize_activation(api,directory,cid,parent_id,leader,binding)
+        else:
+            from supervisor_resume import validate_resume
+            validate_resume(api,directory,cid,parent_id,leader,binding)
+            old=directory/"qualification.json"
+            if old.exists() or old.is_symlink():
+                from checkpoint_store import checked
+                accepted=checked(old,{"company":cid,"parent":parent_id,"scope_sha256":binding["scope_sha256"],"paid_inference":False})
+                plan=checked(directory/"minister-plan.json",{"company":cid,"parent":parent_id,"minister":leader})
+                if readback(cid,plan,expected_agents=agents)!=accepted:raise ValueError("Accepted native mission changed")
+                from supervisor_resume import finalize
+                finalize(directory,accepted,started,queued,resuming=True)
+                print(json.dumps(accepted),flush=True)
+                return accepted
     else:
         fields={"title":binding["parent_title"],"description":binding["parent_description"],"status":"todo","priority":"high"}
         if not durable:fields["assigneeAgentId"]=leader
@@ -450,6 +464,8 @@ def qualify_locked(action):
                 print(json.dumps(row),flush=True)
                 return row
             authorize_activation(api,directory,cid,parent_id,leader,binding)
+    from supervisor_resume import interrupt_ci
+    interrupt_ci("PLENUM_CI_INTERRUPT_SUPERVISOR",durable,action,directory,73,api=api)
     # No board-side child assignment: wait for actual Minister and native wakes.
     deadline=time.monotonic()+360
     plan_path=directory/"minister-plan.json"
@@ -483,21 +499,8 @@ def qualify_locked(action):
     if required_model=="local" and summary["minister_model_executed"] is not True:
         raise ValueError("Missing required actual local model receipt")
     evidence_root=directory if durable else ROOT
-    exclusive(evidence_root/"qualification.json",summary)
-    terminal=datetime.now(timezone.utc)
-    issue_created=os.environ.get("PLENUM_ISSUE_CREATED_AT","")
-    timing={"schema":"plenum-paperclip-event-timing-v1","parent":parent_id,
-            "native_assignment_to_verified_seconds":round(time.monotonic()-queued,3),
-            "native_qualification_seconds":round(time.monotonic()-started,3),
-            "verified_at":terminal.isoformat(),"issue_created_at":issue_created or None,
-            "qualification_sha256":digest(summary),"issue_to_verified_seconds":None,
-            "paid_inference":False,"model_executed":summary["minister_model_executed"],
-            "verified_divisions":summary["verified_divisions"]}
-    if issue_created:
-        created=datetime.fromisoformat(issue_created)
-        if created.tzinfo is None or created>terminal:raise ValueError("Invalid event timestamp")
-        timing["issue_to_verified_seconds"]=round((terminal-created).total_seconds(),3)
-    exclusive(evidence_root/"event-timing.json",timing)
+    from supervisor_resume import finalize
+    timing=finalize(evidence_root,summary,started,queued,resuming=action=="resume",directory=directory if durable else None)
     print(json.dumps(timing),flush=True)
     print(json.dumps(summary),flush=True)
     return summary
@@ -624,11 +627,11 @@ def restart_readback():
 
 if __name__=="__main__":
     arg=sys.argv[1] if len(sys.argv)==2 else "invalid"
-    if arg not in ("minister","qualify","prepare","activate","restart-readback","verify-live","preflight-live","queue-run",*MISSION_ORDER):
+    if arg not in ("minister","qualify","prepare","activate","resume","restart-readback","verify-live","preflight-live","queue-run",*MISSION_ORDER):
         raise SystemExit("Unknown bounded entrypoint")
     try:
         if arg=="minister":minister()
-        elif arg in ("qualify","prepare","activate"):qualify(arg)
+        elif arg in ("qualify","prepare","activate","resume"):qualify(arg)
         elif arg=="restart-readback":restart_readback()
         elif arg=="preflight-live":
             from live_preflight import preflight_live

@@ -122,11 +122,26 @@ jobs:
           case "$KIND" in
             legacy) scope='{"kind":"coastal"}' ;;
             budget) scope='{"kind":"bibliography_budget","dois":["10.1145/3442188.3445922"],"budget":{"model":"@cf/zai-org/glm-4.7-flash","neurons_used_today":100,"neurons_reserved":200,"input_tokens_upper_bound":3000,"output_tokens_upper_bound":1000}}' ;;
-            objective) scope='{"kind":"public_objective","objective":"Compare vocabulary overlap in synthetic delivery summaries and quantify sample spread","dois":["10.1145/3442188.3445922"],"inputs":{"documents":["supplier delivery quality","delivery supplier testing"],"samples":[17,-3,8,42,12,19]},"operations":["shared_terms","word_counts","mean","range"]}' ;;
+            objective) scope='{"kind":"public_objective","objective":"Compare vocabulary overlap in synthetic delivery summaries and quantify sample spread","dois":["10.1145/3442188.3445922"],"inputs":{"documents":["supplier delivery quality","delivery supplier testing"],"samples":[17,-3,8,42,12,19]},"operations":["shared_terms","word_counts","mean","population_variance","least_squares_slope","max_step_change"]}' ;;
             event) scope="$EVENT_SCOPE"; test -n "$scope" ;;
             *) exit 1 ;;
           esac
+          if [ "$KIND" = objective ]; then
+            set +e
+            docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_CI_INTERRUPT_SUPERVISOR=confirmed -e PLENUM_MISSION_SCOPE="$scope" -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/event_native.py execute
+            rc=$?
+            set -e
+            test "$rc" = 73
+            set +e
+            docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_CI_INTERRUPT_FINALIZATION=confirmed plenum-paperclip-integration python3 /plenum/integrations/paperclip/event_native.py resume
+            rc=$?
+            set -e
+            test "$rc" = 74
+            docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/event_native.py resume
+            docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/event_native.py resume
+          else
           docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_MISSION_SCOPE="$scope" -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/event_native.py execute
+          fi
       - name: Qualify consecutive persistent model-directed missions and bounded recovery
         if: matrix.mode == 'local' && matrix.kind == 'budget'
         run: python3 integrations/paperclip/persistent_native_smoke.py local

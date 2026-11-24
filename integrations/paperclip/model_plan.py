@@ -5,7 +5,7 @@ A valid response drives native assignment; invalid output fails closed.
 """
 import json
 import os
-from urllib.request import Request, build_opener
+from urllib.request import Request, build_opener, ProxyHandler
 from acceptance import NoRedirect
 from checkpoint_store import encoded, exclusive
 from hashlib import sha256
@@ -104,7 +104,7 @@ def rejected_choice(directory, company, parent, choice, reason):
 
 def read_json(path, payload=None, timeout=10):
     data=None if payload is None else encoded(payload)
-    with build_opener(NoRedirect).open(Request(URL+path,data=data,headers={"Content-Type":"application/json"}),timeout=timeout) as res:
+    with build_opener(ProxyHandler({}),NoRedirect).open(Request(URL+path,data=data,headers={"Content-Type":"application/json"}),timeout=timeout) as res:
         raw=res.read(65537)
     if len(raw)>65536: raise ValueError("Local model response too large")
     return json.loads(raw)

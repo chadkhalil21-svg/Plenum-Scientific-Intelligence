@@ -7,7 +7,7 @@ from checkpoint_store import exclusive,DomainBlocked
 from objective_program import TOOLS,OPS
 
 SOURCE=Path(__file__).with_name("objective_program.py")
-NUMERIC={"mean","median","range"}
+NUMERIC={"mean","median","range","population_variance","least_squares_slope","max_step_change"}
 TEXT={"word_counts","shared_terms","term_frequency"}
 
 def tools_for(scope):return TOOLS if scope["kind"]=="public_objective" else None
@@ -18,7 +18,7 @@ def validate(scope):
     ids=scope["dois"]
     if not isinstance(ids,list) or not 1<=len(ids)<=2 or any(not isinstance(x,str) or not re.fullmatch(r"10\.[0-9]{4,9}/[a-z0-9][a-z0-9.()/_+-]{0,100}",x) for x in ids) or len(set(ids))!=len(ids):raise ValueError("Invalid public DOI scope")
     data=scope["inputs"];ops=scope["operations"]
-    if not isinstance(ops,list) or not 1<=len(ops)<=6 or any(type(x) is not str or x not in OPS for x in ops) or len(set(ops))!=len(ops):raise ValueError("Unsupported acceptance operation")
+    if not isinstance(ops,list) or not 1<=len(ops)<=len(OPS) or any(type(x) is not str or x not in OPS for x in ops) or len(set(ops))!=len(ops):raise ValueError("Unsupported acceptance operation")
     if not isinstance(data,dict) or set(data)!=( {"samples"} if set(ops)&NUMERIC else set())|({"documents"} if set(ops)&TEXT else set()):raise ValueError("Input/acceptance mismatch")
     if "samples" in data:
         v=data["samples"]
@@ -59,7 +59,11 @@ def independent(data):
         elif op=="shared_terms":out[op]=sorted(t for t in set(docs[0]) if all(t in row for row in docs))
         elif op=="term_frequency":out[op]=[{t:row.count(t) for t in sorted(set(row))} for row in docs]
         else:
-            value={"mean":lambda:Fraction(sum(v),len(v)),"median":lambda:Fraction(median(v)),"range":lambda:Fraction(max(v)-min(v))}[op]()
+            n=len(v);mean=Fraction(sum(v),n);center=Fraction(n-1,2)
+            value={"mean":lambda:mean,"median":lambda:Fraction(median(v)),"range":lambda:Fraction(max(v)-min(v)),
+                   "population_variance":lambda:sum((Fraction(x)-mean)**2 for x in v)/n,
+                   "least_squares_slope":lambda:sum((i-center)*(y-mean) for i,y in enumerate(v))/sum((i-center)**2 for i in range(n)),
+                   "max_step_change":lambda:Fraction(max(abs(v[i]-v[i-1]) for i in range(1,n)))}[op]()
             out[op]={"numerator":value.numerator,"denominator":value.denominator}
     return {"results":out}
 def planned_tool(directory,scope):
