@@ -208,5 +208,24 @@ class WorldHorizonTests(unittest.TestCase):
         self.assertEqual([r["url"] for r in report["records"]],["https://doi.org/10.1000/right"])
         self.assertFalse(report["records"][0]["independent_fact_check_complete"])
 
+    def test_paper_search_changes_strategy_once_when_first_results_are_irrelevant(self):
+        from urllib.parse import parse_qs
+        calls=[]
+        def opener(req,timeout):
+            q=parse_qs(urlsplit(req.full_url).query)
+            calls.append(q)
+            rows=[{"title":["Unrelated survey"],"DOI":"10.1000/irrelevant"}]
+            if "query.bibliographic" in q:
+                rows.append({"title":["Photonic computation architecture"],"DOI":"10.1000/recovered"})
+            return Stream(json.dumps({"message":{"items":rows}}).encode())
+        report=scan_horizon("Survey public photonic computing papers",category="journals",online=True,opener=opener)
+        self.assertEqual(len(calls),2)
+        self.assertEqual(calls[0]["query.title"],["photonic computing"])
+        self.assertEqual(calls[1]["query.bibliographic"],["photonic computing"])
+        self.assertEqual([r["url"] for r in report["records"]],["https://doi.org/10.1000/recovered"])
+        self.assertEqual(report["providers"][0]["first_attempt"]["records"],[])
+        self.assertEqual(report["providers"][0]["query_strategy"],"bibliographic_recovery")
+
+
 if __name__=="__main__":
     unittest.main()
