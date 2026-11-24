@@ -23,7 +23,7 @@ DOI_RE = re.compile(r'(?<![\w/])(10\.[0-9]{4,9}/[A-Za-z0-9][A-Za-z0-9.()/_+-]{0,
 TOOLS = {'noaa_metadata':'research-specialist','station_validation':'coding-specialist',
          'crossref_metadata':'research-specialist','bibliography_readback':'verification-specialist',
          'cooling_solution':'scientific-specialist','cooling_readback':'verification-specialist',
-         'evidence_report':'report-specialist'}
+         'evidence_report':'chief-evidence-assembly'}
 
 
 DEPENDENCIES = {'station_validation':'noaa_metadata',
