@@ -107,7 +107,7 @@ def parse_owner_repair_event(event: dict) -> dict:
         raise ValueError("Exact three-line original public repair contract required")
     source_file, objective = lines[1][6:], lines[2][11:]
     if (not 25 <= len(objective) <= 200 or objective != objective.strip()
-            or not re.fullmatch(r"[A-Za-z0-9 .,()/+'-]+", objective)
+            or not re.fullmatch(r"[A-Za-z0-9_ .,()/+'-]+", objective)
             or any(term in objective.lower() for term in
                    ("secret", "credential", "password", "token", "private",
                     "customer", "deploy", "publish", "bypass", "billing", "payment"))):
