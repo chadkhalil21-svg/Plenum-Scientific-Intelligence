@@ -226,13 +226,14 @@ def verify_contract_mission_artifacts(report, root):
     from .chief_contract_plan import (MAGIC, parse_contract_mission, validate_plan,
         validate_inference_receipt, contract_goal_graph, read_contract_artifact,
         check_contract_result, verify_results, CONTRACT_ARTIFACT_SCHEMA)
-    from .chief_workforce_command import OWNER, REPO, CHIEF_TITLE
+    from .chief_workforce_command import OWNER, REPO
+    from .chief_team_mission import MISSION_TITLE
     from .mission_checkpoint import load_checkpoint, objective_digest
     try:
         issue=report["issue_number"]
         objective=report["objective"]
         task=parse_contract_mission({"action":"opened","repository":{"full_name":REPO},
-            "issue":{"number":issue,"user":{"login":OWNER},"title":CHIEF_TITLE,
+            "issue":{"number":issue,"user":{"login":OWNER},"title":MISSION_TITLE,
                      "body":MAGIC+"\nobjective: "+objective}})
         scope,team=task["scope"],task["team"]
         if not scope.get("evidence_report") or report.get("expected_team")!=list(team):
