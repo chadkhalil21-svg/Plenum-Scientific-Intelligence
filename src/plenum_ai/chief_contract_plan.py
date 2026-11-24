@@ -25,12 +25,13 @@ TOOLS = {'noaa_metadata':'research-specialist','station_validation':'coding-spec
          'cooling_solution':'scientific-specialist','cooling_readback':'verification-specialist',
          'evidence_report':'chief-evidence-assembly',
          'business_readback':'commercial-operations-specialist',
-         'business_review':'verification-specialist'}
+         'business_review':'verification-specialist',
+         'paper_discovery':'research-specialist','paper_readback':'verification-specialist'}
 
 
 DEPENDENCIES = {'station_validation':'noaa_metadata',
                 'bibliography_readback':'crossref_metadata',
-                'cooling_readback':'cooling_solution', 'business_review':'business_readback'}
+                'cooling_readback':'cooling_solution', 'business_review':'business_readback', 'paper_readback':'paper_discovery'}
 ACCEPTANCE = {'noaa_metadata':'exact_station_identity_and_coordinates',
               'station_validation':'exact_input_structural_validation',
               'crossref_metadata':'exact_doi_and_required_metadata',
@@ -39,7 +40,9 @@ ACCEPTANCE = {'noaa_metadata':'exact_station_identity_and_coordinates',
               'cooling_readback':'independent_analytic_temperature_agreement',
               'evidence_report':'complete_source_bound_evidence_report',
               'business_readback':'all_original_public_targets_checked_with_bounded_attempts',
-              'business_review':'exact_business_status_readback_without_readiness_claim'}
+              'business_review':'exact_business_status_readback_without_readiness_claim',
+              'paper_discovery':'bounded_topic_matched_doi_discovery',
+              'paper_readback':'artifact_selected_doi_identity_title_publisher_year'}
 
 
 def contract_dependencies(tool, scope):
@@ -88,11 +91,18 @@ def parse_contract_mission(event):
     if cooling and not (0 < cooling['initial_kelvin'] <= 2000 and 0 < cooling['ambient_kelvin'] <= 2000 and 0 < cooling['rate'] <= 10 and 0 < cooling['duration'] <= 10000):
         raise ValueError('Cooling parameters outside bounded physical contract')
     business_scope=objective.startswith('Evidence report ') and 'American Rider public health' in objective[len('Evidence report '):].split(' and ')
-    if (not dois and not stations and not cooling and not business_scope) or len(dois)>2 or len(stations)>3:
+    from .world_horizon import paper_survey_subject
+    paper_clauses=[clause for clause in objective[len('Evidence report '):].split(' and ')
+                   if paper_survey_subject(clause)] if objective.startswith('Evidence report ') else []
+    if len(paper_clauses)>1:
+        raise ValueError('Only one explicit topic survey per report')
+    if (not dois and not stations and not cooling and not business_scope and not paper_clauses) or len(dois)>2 or len(stations)>3:
         raise ValueError('Require explicit bounded NOAA station or DOI identifiers')
     scope={'station_ids':stations,'dois':dois,'cooling':cooling}
     if business_scope:
         scope['business']=True
+    if paper_clauses:
+        scope['paper_survey']=paper_clauses[0]
     # The complete deliverable is independently gradeable only under this
     # exact, fully consumed report grammar. Other goals retain legacy scope.
     if objective.startswith('Evidence report '):
@@ -107,6 +117,8 @@ def parse_contract_mission(event):
                 kinds.append('cooling')
             elif clause=='American Rider public health':
                 kinds.append('business')
+            elif paper_survey_subject(clause):
+                kinds.append('paper_survey')
             else:
                 raise ValueError('Unsupported evidence report clause')
         if len(kinds)!=len(set(kinds)) or set(kinds)!={k for k,v in scope.items() if v}:
@@ -120,6 +132,7 @@ def required_tools(scope):
         ['crossref_metadata','bibliography_readback'] if scope['dois'] else []) + (
         ['cooling_solution','cooling_readback'] if scope.get('cooling') else []) + (
         ['business_readback','business_review'] if scope.get('business') else []) + (
+        ['paper_discovery','paper_readback'] if scope.get('paper_survey') else []) + (
         ['evidence_report'] if scope.get('evidence_report') else [])
 
 
@@ -277,6 +290,12 @@ def run_contract(tool,scope,prior):
         return run()
     if tool=='business_review':
         return review_business_status(prior['business_readback'])
+    if tool=='paper_discovery':
+        from .world_horizon import scan_horizon
+        return scan_horizon(scope['paper_survey'],category='journals',online=True)
+    if tool=='paper_readback':
+        selected=selected_paper_ids(scope,prior['paper_discovery'])
+        return {doi:read_crossref(doi,approved_dois=frozenset(selected)) for doi in selected}
     if tool=='evidence_report':
         return build_evidence_report(scope, prior)
     raise ValueError('Unknown contract')
@@ -326,6 +345,51 @@ def review_business_status(report):
             'commercial_readiness_verified':False,'transactions_verified':False}
 
 
+def selected_paper_ids(scope, report):
+    """Only actual bounded, topic-matched deposited DOI records authorize readback."""
+    from .world_horizon import paper_survey_subject,paper_title_matches
+    subject=paper_survey_subject(scope['paper_survey'])
+    if (not subject or not isinstance(report,dict)
+            or report.get('schema')!='plenum-public-horizon-snapshot-v1'
+            or report.get('topic')!=scope['paper_survey'] or report.get('category')!='journals'
+            or report.get('independent_breakthrough_verified') is not False):
+        raise ValueError('Invalid topic discovery artifact')
+    rows=report.get('records')
+    if not isinstance(rows,list) or not 1<=len(rows)<=4:
+        raise ValueError('Missing bounded paper discovery')
+    selected=[]
+    for row in rows:
+        if (not isinstance(row,dict) or row.get('source')!='crossref_journals'
+                or row.get('category')!='journals'
+                or row.get('independent_fact_check_complete') is not False
+                or not paper_title_matches(subject,row.get('title'))
+                or not isinstance(row.get('url'),str)
+                or not row['url'].startswith('https://doi.org/')):
+            raise ValueError('Untrusted or irrelevant discovered paper')
+        doi=row['url'][len('https://doi.org/'):].lower()
+        if not DOI_RE.fullmatch(doi) or doi in selected:
+            raise ValueError('Invalid or duplicate discovered DOI')
+        selected.append(doi)
+    return selected[:2]
+
+
+def verify_paper_readback(scope, discovery, result):
+    from .world_horizon import paper_survey_subject,paper_title_matches
+    try:
+        selected=selected_paper_ids(scope,discovery)
+        rows={r['url'][len('https://doi.org/'):].lower():r for r in discovery['records']}
+        subject=paper_survey_subject(scope['paper_survey'])
+        return (isinstance(result,dict) and set(result)==set(selected)
+                and all(isinstance(record,dict) and record.get('doi')==doi
+                        and record.get('title')==rows[doi]['title']
+                        and paper_title_matches(subject,record['title'])
+                        and type(record.get('year')) is int and 1900<=record['year']<=2100
+                        and isinstance(record.get('publisher'),str) and bool(record['publisher'].strip())
+                        for doi,record in result.items()))
+    except (ValueError,TypeError,KeyError,AttributeError):
+        return False
+
+
 def build_evidence_report(scope, inputs):
     """Engineering handoff: a compact, useful report from actual producer bytes."""
     from .chief_team_mission import _station_rows
@@ -350,6 +414,10 @@ def build_evidence_report(scope, inputs):
         report['sections']['business']={
             'observation':inputs['business_readback'],'review':inputs['business_review'],
             'limitation':'Public HTTP availability only; no transaction or commercial readiness verification'}
+    if scope.get('paper_survey'):
+        report['sections']['papers']={'discovery':inputs['paper_discovery'],
+            'readback':inputs['paper_readback'],
+            'limitation':'Topic-matched discovery and separate Crossref metadata readback only; no full paper or scientific claim verification'}
     return report
 
 
@@ -363,6 +431,7 @@ def verify_evidence_report(scope, inputs, report):
     if scope['dois']: expected.add('bibliography')
     if scope.get('cooling'): expected.add('cooling')
     if scope.get('business'): expected.add('business')
+    if scope.get('paper_survey'): expected.add('papers')
     if not isinstance(sections,dict) or set(sections)!=expected:
         return False
     try:
@@ -395,6 +464,14 @@ def verify_evidence_report(scope, inputs, report):
                 return False
             if section['observation']!=inputs['business_readback'] or section['review']!=review_business_status(inputs['business_readback']) or section['review']!=inputs['business_review']:
                 return False
+        if 'papers' in sections:
+            section=sections['papers']
+            if (set(section)!={'discovery','readback','limitation'}
+                    or section['limitation']!='Topic-matched discovery and separate Crossref metadata readback only; no full paper or scientific claim verification'
+                    or section['discovery']!=inputs['paper_discovery']
+                    or section['readback']!=inputs['paper_readback']
+                    or not verify_paper_readback(scope,section['discovery'],section['readback'])):
+                return False
         return True
     except (ValueError,TypeError,KeyError,AttributeError):
         return False
@@ -422,6 +499,8 @@ def verify_results(scope,results):
                 or results['cooling_readback'].get('absolute_error_kelvin')!=abs(observed-reference)):
             return False
     if scope.get('business') and results['business_review']!=review_business_status(results['business_readback']):
+        return False
+    if scope.get('paper_survey') and not verify_paper_readback(scope,results['paper_discovery'],results['paper_readback']):
         return False
     if scope.get('evidence_report') and not verify_evidence_report(scope,results,results['evidence_report']):
         return False
@@ -543,6 +622,12 @@ def check_contract_result(tool, scope, inputs, result):
         return
     elif tool == 'business_review':
         if result==review_business_status(inputs['business_readback']):
+            return
+    elif tool == 'paper_discovery':
+        selected_paper_ids(scope,result)
+        return
+    elif tool == 'paper_readback':
+        if verify_paper_readback(scope,inputs['paper_discovery'],result):
             return
     elif tool == 'evidence_report':
         if verify_evidence_report(scope,inputs,result):
