@@ -10,7 +10,7 @@ import json
 import os
 from plenum_ai.public_issue_wake import BASE, REPO, OWNER, PAPERCLIP_PUBLIC_TITLE, PAPERCLIP_EVIDENCE_TITLE, checked_issue_number, gh_json, prior_execution_bodies
 
-from mission_scope import LEGACY, parse_body
+from mission_scope import LEGACY, parse_body, digest
 from checkpoint_store import encoded
 
 TITLE=PAPERCLIP_PUBLIC_TITLE
@@ -44,16 +44,16 @@ def reserve(number,token,run_id,attempt,*,reader=gh_json):
     url=BASE+str(number)
     issue=reader(url,token)
     # Unrelated signed wakes do not consume the original task.
-    if issue.get("title") not in (TITLE,PAPERCLIP_EVIDENCE_TITLE):return False,None
+    if issue.get("title") not in (TITLE,PAPERCLIP_EVIDENCE_TITLE):return False,None,None
     comments=reader(url+"/comments?per_page=100",token)
-    if not authorize(issue,comments,number):return False,None
+    if not authorize(issue,comments,number):return False,None,None
     scope=issue_scope(issue)
     created=datetime.fromisoformat(issue["created_at"].replace("Z","+00:00"))
     if created.tzinfo is None or created>datetime.now(timezone.utc):
         raise ValueError("Invalid source timestamp")
     ack=reader(url+"/comments",token,body={"body":
         f"<!-- plenum-public-workforce-run:{run_id}:execution-reserved -->\n"
-        "Original bounded Paperclip qualification reserved; no automatic replay."})
+        "Original bounded Paperclip qualification reserved; no automatic replay. Scope SHA256: "+digest(scope)})
     if not isinstance(ack,dict) or not ack.get("html_url"):
         raise RuntimeError("Reservation acknowledgment missing")
     return True,created.isoformat(),scope
