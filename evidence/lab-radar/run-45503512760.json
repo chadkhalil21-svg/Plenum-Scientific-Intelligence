@@ -1,0 +1,224 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "45503512760",
+  "source_revision": "15f2406c8a0e1626f420b964a2fde14127ba110b",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-24T22:43:22.207892+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 29,
+    "sources_returning_records": 25,
+    "source_outages": [
+      "arxiv_ai_new_submissions",
+      "un_global_news",
+      "gdelt_headlines"
+    ],
+    "new_public_links_before_limit": 25,
+    "signals": [
+      {
+        "category": "universities",
+        "publisher": "Harvard Gazette",
+        "source": "harvard_research",
+        "url": "https://news.harvard.edu/gazette/story/2026/11/is-headlight-glare-getting-worse/",
+        "title_untrusted": "Is headlight glare getting worse?",
+        "claimed_publication_date": "Tue, 24 Nov 2026 19:32:35 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261123232342.htm",
+        "title_untrusted": "2,200-year-old Roman shipwreck reveals an ingenious waterproofing trick",
+        "claimed_publication_date": "Tue, 24 Nov 2026 06:09:06 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03824-3",
+        "title_untrusted": "Fight AI slop without punishing legitimate researchers",
+        "claimed_publication_date": "2026-11-24",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "health",
+        "publisher": "U.S. National Institutes of Health",
+        "source": "nih_biomedical_news",
+        "url": "https://www.nih.gov/news-events/news-releases/nih-diagnostics-accelerator-enables-first-ever-fda-authorization-point-care-test-active-syphilis",
+        "title_untrusted": "NIH diagnostics accelerator enables first-ever FDA authorization for a point-of-care test for active syphilis",
+        "claimed_publication_date": "Tue, 11/24/2026 - 10:00",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.28021",
+        "title_untrusted": "Characterization and Monte Carlo Simulation of Wavelength-Shifting Absorption Length in Plastic Optical Fibers",
+        "claimed_publication_date": "Tue, 24 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026xhsnht",
+        "title_untrusted": "M 1.6 - 8 km SE of Tok, Alaska",
+        "claimed_publication_date": "1795560018230",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261123231244.htm",
+        "title_untrusted": "IBM quantum computer solves problem classical computers can’t in just 15 minutes",
+        "claimed_publication_date": "Mon, 23 Nov 2026 23:46:12 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03725-5",
+        "title_untrusted": "Richard of Wallingford and his Rectangulus",
+        "claimed_publication_date": "2026-11-24",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.28052",
+        "title_untrusted": "Magnetic Reconnection and High-Speed Jets Downstream of a Parallel Shock: Full Particle-in-cell Simulations",
+        "claimed_publication_date": "Tue, 24 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026xhserp",
+        "title_untrusted": "M 2.2 - 24 km W of Petersville, Alaska",
+        "claimed_publication_date": "1795559419444",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261123005352.htm",
+        "title_untrusted": "Scientists discover a new type of depression that common antidepressants struggle to treat",
+        "claimed_publication_date": "Tue, 24 Nov 2026 05:47:51 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03822-5",
+        "title_untrusted": "The science on AI consciousness must acknowledge uncertainty",
+        "claimed_publication_date": "2026-11-24",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.28070",
+        "title_untrusted": "Towards Automatic Ion Identification in Storage Rings",
+        "claimed_publication_date": "Tue, 24 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026xhqzom",
+        "title_untrusted": "M 1.9 - 41 km SSE of Whittier, Alaska",
+        "claimed_publication_date": "1795557267998",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "NASA",
+        "source": "nasa_research",
+        "url": "https://www.nasa.gov/nasa/nasa-content-coming-to-big-screen-at-greenbelt-maryland-cinema/",
+        "title_untrusted": "NASA+ Content Coming to Big Screen at Greenbelt, Maryland Cinema",
+        "claimed_publication_date": "Tue, 24 Nov 2026 21:14:36 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03825-2",
+        "title_untrusted": "Himalayan disasters demand biodiversity conservation across borders",
+        "claimed_publication_date": "2026-11-24",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.28071",
+        "title_untrusted": "HEP-like 1550 nm wide-field pixelated optical receiver for inter-satellite laser links: a simulation-based proof of concept for Earth, lunar and Earth-Moon scenarios",
+        "claimed_publication_date": "Tue, 24 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026xhqlxh",
+        "title_untrusted": "M 1.9 - 50 km NNW of Beluga, Alaska",
+        "claimed_publication_date": "1795556326033",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
