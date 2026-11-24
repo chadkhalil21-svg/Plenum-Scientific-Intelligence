@@ -22,7 +22,8 @@ MAGIC = 'PLENUM_CHIEF_PUBLIC_CONTRACT_MISSION_V1'
 DOI_RE = re.compile(r'(?<![\w/])(10\.[0-9]{4,9}/[A-Za-z0-9][A-Za-z0-9.()/_+-]{0,100})(?![\w/])')
 TOOLS = {'noaa_metadata':'research-specialist','station_validation':'coding-specialist',
          'crossref_metadata':'research-specialist','bibliography_readback':'verification-specialist',
-         'cooling_solution':'scientific-specialist','cooling_readback':'verification-specialist'}
+         'cooling_solution':'scientific-specialist','cooling_readback':'verification-specialist',
+         'evidence_report':'chief-evidence-assembly'}
 
 
 DEPENDENCIES = {'station_validation':'noaa_metadata',
@@ -33,7 +34,14 @@ ACCEPTANCE = {'noaa_metadata':'exact_station_identity_and_coordinates',
               'crossref_metadata':'exact_doi_and_required_metadata',
               'bibliography_readback':'same_provider_metadata_agreement',
               'cooling_solution':'finite_temperature_within_analytic_tolerance',
-              'cooling_readback':'independent_analytic_temperature_agreement'}
+              'cooling_readback':'independent_analytic_temperature_agreement',
+              'evidence_report':'complete_source_bound_evidence_report'}
+
+
+def contract_dependencies(tool, scope):
+    if tool == 'evidence_report':
+        return [name for name in required_tools(scope) if name != tool]
+    return [DEPENDENCIES[tool]] if tool in DEPENDENCIES else []
 
 
 def contract_goal_graph(plan, scope):
@@ -41,11 +49,11 @@ def contract_goal_graph(plan, scope):
     from .chief_team_mission import validate_specialist_graph
     checked = validate_plan(plan, scope)
     approved = {tool: {'specialist': TOOLS[tool],
-                       'depends_on': [DEPENDENCIES[tool]] if tool in DEPENDENCIES else [],
+                       'depends_on': contract_dependencies(tool, scope),
                        'acceptance': ACCEPTANCE[tool]}
                 for tool in required_tools(scope)}
     proposed = [{'id': step['tool'], 'specialist': TOOLS[step['tool']],
-                 'depends_on': [step['input_from']] if 'input_from' in step else [],
+                 'depends_on': contract_dependencies(step['tool'], scope),
                  'acceptance': ACCEPTANCE[step['tool']]}
                 for step in checked['steps']]
     return validate_specialist_graph(proposed, approved)
@@ -78,13 +86,31 @@ def parse_contract_mission(event):
     if not dois and not stations and not cooling or len(dois)>2 or len(stations)>3:
         raise ValueError('Require explicit bounded NOAA station or DOI identifiers')
     scope={'station_ids':stations,'dois':dois,'cooling':cooling}
+    # The complete deliverable is independently gradeable only under this
+    # exact, fully consumed report grammar. Other goals retain legacy scope.
+    if objective.startswith('Evidence report '):
+        clauses=objective[len('Evidence report '):].split(' and ')
+        kinds=[]
+        for clause in clauses:
+            if re.fullmatch(r'NOAA [0-9]{7}(?: [0-9]{7}){0,2}',clause):
+                kinds.append('station_ids')
+            elif re.fullmatch(r'DOI '+DOI_RE.pattern+r'(?: '+DOI_RE.pattern+r')?',clause):
+                kinds.append('dois')
+            elif re.fullmatch(r'cooling initial [0-9]+(?:\.[0-9]+)? K ambient [0-9]+(?:\.[0-9]+)? K rate [0-9]+(?:\.[0-9]+)? time [0-9]+(?:\.[0-9]+)?',clause):
+                kinds.append('cooling')
+            else:
+                raise ValueError('Unsupported evidence report clause')
+        if len(kinds)!=len(set(kinds)) or set(kinds)!={k for k,v in scope.items() if v}:
+            raise ValueError('Repeated or unparsed evidence report clause')
+        scope['evidence_report']=True
     return {**task,'team':tuple(required_tools(scope)), 'scope':scope,'contract_mission':True}
 
 
 def required_tools(scope):
     return (['noaa_metadata','station_validation'] if scope['station_ids'] else []) + (
         ['crossref_metadata','bibliography_readback'] if scope['dois'] else []) + (
-        ['cooling_solution','cooling_readback'] if scope.get('cooling') else [])
+        ['cooling_solution','cooling_readback'] if scope.get('cooling') else []) + (
+        ['evidence_report'] if scope.get('evidence_report') else [])
 
 
 def validate_plan(plan,scope):
@@ -99,9 +125,10 @@ def validate_plan(plan,scope):
         raise ValueError('Unknown, omitted or duplicate contract')
     for step in steps:
         tool=step['tool']
-        dependency=DEPENDENCIES.get(tool)
-        if dependency:
-            if step!={'tool':tool,'input_from':dependency} or names.index(dependency)>names.index(tool):
+        dependencies=contract_dependencies(tool,scope)
+        if dependencies:
+            input_from=dependencies if tool=='evidence_report' else dependencies[0]
+            if step!={'tool':tool,'input_from':input_from} or any(names.index(dep)>names.index(tool) for dep in dependencies):
                 raise ValueError('Missing or reversed actual-data dependency')
         elif step!={'tool':tool}:
             raise ValueError('Model cannot supply URLs, identifiers or executable code')
@@ -153,6 +180,8 @@ def model_plan(objective,scope):
     # Strict validate_plan below still rejects duplicates and bad dependencies.
     expected=required_tools(scope)
     allowed=set(expected)
+    if scope.get('evidence_report'):
+        raise PlanningFailure('MODEL_CONFIGURATION','EXPLICIT_REPORT_REQUIRES_DETERMINISTIC_GRAPH')
     choices=[]
     for source,check in (('noaa_metadata','station_validation'),
                          ('crossref_metadata','bibliography_readback'),
@@ -233,7 +262,72 @@ def run_contract(tool,scope,prior):
         error=abs(prior['cooling_solution']['observed_kelvin']-expected)
         if not math.isfinite(error) or error>1e-6:raise ValueError('Independent analytic cooling readback disagrees')
         return {'analytic_kelvin':expected,'absolute_error_kelvin':error,'experimental_validation':False}
+    if tool=='evidence_report':
+        return build_evidence_report(scope, prior)
     raise ValueError('Unknown contract')
+
+
+def build_evidence_report(scope, inputs):
+    """Engineering handoff: a compact, useful report from actual producer bytes."""
+    from .chief_team_mission import _station_rows
+    report={'schema':'plenum-source-bound-evidence-report-v1','sections':{}}
+    if scope['station_ids']:
+        rows=_station_rows(inputs['noaa_metadata'],tuple(scope['station_ids']))
+        report['sections']['stations']={
+            'records':[{key:row.get(key) for key in ('id','name','lat','lng')} for row in rows],
+            'validation':inputs['station_validation'],
+            'source':'NOAA CO-OPS station metadata',
+            'limitation':'Structural metadata only; no datum or instrument accuracy verification'}
+    if scope['dois']:
+        report['sections']['bibliography']={
+            'records':[inputs['crossref_metadata'][doi] for doi in scope['dois']],
+            'readback':inputs['bibliography_readback'],
+            'limitation':'Crossref deposited metadata and same-provider readback; not paper-content verification'}
+    if scope.get('cooling'):
+        report['sections']['cooling']={
+            'solution':inputs['cooling_solution'],'readback':inputs['cooling_readback'],
+            'limitation':'Analytic and numerical model only; no experimental validation'}
+    return report
+
+
+def verify_evidence_report(scope, inputs, report):
+    """Independently check completeness and each section against source outputs."""
+    if not isinstance(report,dict) or set(report)!={'schema','sections'} or report['schema']!='plenum-source-bound-evidence-report-v1':
+        return False
+    sections=report['sections']
+    expected=set()
+    if scope['station_ids']: expected.add('stations')
+    if scope['dois']: expected.add('bibliography')
+    if scope.get('cooling'): expected.add('cooling')
+    if not isinstance(sections,dict) or set(sections)!=expected:
+        return False
+    try:
+        if 'stations' in sections:
+            from .chief_team_mission import _station_rows
+            section=sections['stations']
+            if set(section)!={'records','validation','source','limitation'} or section['source']!='NOAA CO-OPS station metadata' or section['limitation']!='Structural metadata only; no datum or instrument accuracy verification':
+                return False
+            rows=_station_rows(inputs['noaa_metadata'],tuple(scope['station_ids']))
+            if len(section['records'])!=len(rows) or section['validation']!=_validator(rows):
+                return False
+            for observed, original in zip(section['records'],rows):
+                if set(observed)!={'id','name','lat','lng'} or any(observed[k]!=original.get(k) for k in observed):
+                    return False
+        if 'bibliography' in sections:
+            section=sections['bibliography']
+            if set(section)!={'records','readback','limitation'} or section['limitation']!='Crossref deposited metadata and same-provider readback; not paper-content verification':
+                return False
+            if section['records']!=[inputs['crossref_metadata'][doi] for doi in scope['dois']] or section['readback']!=inputs['bibliography_readback']:
+                return False
+        if 'cooling' in sections:
+            section=sections['cooling']
+            if set(section)!={'solution','readback','limitation'} or section['limitation']!='Analytic and numerical model only; no experimental validation':
+                return False
+            if section['solution']!=inputs['cooling_solution'] or section['readback']!=inputs['cooling_readback']:
+                return False
+        return True
+    except (ValueError,TypeError,KeyError,AttributeError):
+        return False
 
 
 def verify_results(scope,results):
@@ -257,6 +351,8 @@ def verify_results(scope,results):
                 or results['cooling_readback'].get('analytic_kelvin')!=reference
                 or results['cooling_readback'].get('absolute_error_kelvin')!=abs(observed-reference)):
             return False
+    if scope.get('evidence_report') and not verify_evidence_report(scope,results,results['evidence_report']):
+        return False
     return True
 
 
@@ -279,9 +375,13 @@ def deterministic_scope_plan(scope):
     fixed and validated: a model cannot improve this exact scope decision.
     This ONLY handles founder-whitelisted identifiers and source/readback pairs.
     """
-    steps=[({'tool':tool,'input_from':DEPENDENCIES[tool]}
-            if tool in DEPENDENCIES else {'tool':tool})
-           for tool in required_tools(scope)]
+    steps=[]
+    for tool in required_tools(scope):
+        dependencies=contract_dependencies(tool,scope)
+        step={'tool':tool}
+        if dependencies:
+            step['input_from']=dependencies if tool=='evidence_report' else dependencies[0]
+        steps.append(step)
     return validate_plan({'steps':steps},scope)
 
 
@@ -366,6 +466,9 @@ def check_contract_result(tool, scope, inputs, result):
                 and result == {'analytic_kelvin':reference, 'absolute_error_kelvin':error,
                                'experimental_validation':False}):
             return
+    elif tool == 'evidence_report':
+        if verify_evidence_report(scope,inputs,result):
+            return
     raise ValueError('Specialist result failed its trusted acceptance criterion')
 
 
@@ -406,7 +509,7 @@ def execute_contract_mission(event,*,output_dir,planner=None):
     reused = 0
     for node in graph:
         tool = node['id']
-        dependency = node['depends_on'][0] if node['depends_on'] else None
+        dependencies = node['depends_on']
         relative = f'workers/{tool}/result.json'
         artifact = output_dir / relative
         saved = progress.get(tool)
@@ -415,17 +518,22 @@ def execute_contract_mission(event,*,output_dir,planner=None):
 
         # Re-open the producer's durable bytes at the consumer boundary.
         inputs = {}
-        input_digest = None
-        if dependency:
+        input_digests = {}
+        sources = {}
+        for dependency in dependencies:
             source = read_contract_artifact(output_dir, dependency, progress[dependency], plan_hash)
+            sources[dependency] = source
             inputs[dependency] = source['result']
-            input_digest = progress[dependency]['sha256']
+            input_digests[dependency] = progress[dependency]['sha256']
 
         if saved and saved.get('verified'):
             restored = read_contract_artifact(output_dir, tool, saved, plan_hash)
-            if dependency and (source.get('schema') == CONTRACT_ARTIFACT_SCHEMA
+            if tool == 'evidence_report':
+                if restored.get('input_digests') != input_digests:
+                    raise ValueError('Consumed dependency digests changed')
+            elif dependencies and (sources[dependencies[0]].get('schema') == CONTRACT_ARTIFACT_SCHEMA
                                or 'schema' in restored or 'input_sha256' in restored):
-                if restored.get('input_sha256') != input_digest:
+                if restored.get('input_sha256') != input_digests[dependencies[0]]:
                     raise ValueError('Consumed dependency digest changed')
             if ('acceptance_criterion' in restored and restored['acceptance_criterion'] != node['acceptance']):
                 raise ValueError('Stored acceptance criterion changed')
@@ -468,8 +576,10 @@ def execute_contract_mission(event,*,output_dir,planner=None):
         if tool == 'cooling_solution' and attempt == 2:
             record['recovery'] = {'previous_method': 'RK45', 'method': 'expm',
                                   'reason': recovery_reason}
-        if dependency:
-            record['input_sha256'] = input_digest
+        if tool == 'evidence_report':
+            record['input_digests'] = input_digests
+        elif dependencies:
+            record['input_sha256'] = input_digests[dependencies[0]]
         artifact.write_text(json.dumps(record, sort_keys=True), 'utf-8')
         digest = artifact_digest(output_dir, relative)
         if not digest:
@@ -481,6 +591,7 @@ def execute_contract_mission(event,*,output_dir,planner=None):
                         team=team, results=progress)
         results[tool] = result
     valid=verify_results(scope,results)
+    report_verified=bool(valid and scope.get('evidence_report'))
     return {'schema':'plenum-chief-founder-team-v2','mode':'multi','issue_number':task['issue_number'],
             'status':'VERIFIED_BOUNDED_CONTRACT_MISSION' if valid else 'BLOCKED_CONTRACT_INTEGRITY',
             'dispatcher':(('original_chief_deterministic_public_contract_pair' if len(team)==2
@@ -489,13 +600,14 @@ def execute_contract_mission(event,*,output_dir,planner=None):
                           else 'original_chief_local_model_public_contract_composition'),
             'model_called':called,'chief_model_delegated':called,'inference_provenance':receipt['inference'],
             'expected_team':list(team),'bounded_contracts_verified':valid,
-            'founder_objective_verified':False,'objective_review_required':True,'independent_verified':valid,
+            'founder_objective_verified':report_verified,'objective_review_required':not report_verified,'independent_verified':valid,
             'worker_artifacts_technically_verified':valid,'tool_outputs_verified':valid,
             'executed_workers':len(results),'new_worker_invocations':invoked,'reused_prior_verified_workers':reused,
             'specialists':[TOOLS[x['tool']] for x in plan['steps']], 'contract_results':results,
             'worker_results':[{'kind':x['tool'],'worker':TOOLS[x['tool']],'status':'DRAFT_READY_FOR_FOUNDER','output_artifact':f"workers/{x['tool']}/result.json",'verified_scope':'explicit public identifier contract only'} for x in plan['steps']],
             'plan_artifact':path.name,'plan_sha256':plan_hash,'goal_graph':graph,
             'paid_api_used':False,'external_account_changes':False,
-            'bounded_founder_goal_evidence':{'status':'VERIFIED_PUBLIC_CONTRACTS_NOT_FREEFORM_OBJECTIVE' if valid else 'NOT_VERIFIED'},
-            'founder_review_required':True,'new_general_agent_capability_claimed':False,
+            'bounded_founder_goal_evidence':{'status':('VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE' if report_verified else 'VERIFIED_PUBLIC_CONTRACTS_NOT_FREEFORM_OBJECTIVE' if valid else 'NOT_VERIFIED'),
+                'report_artifact':'workers/evidence_report/result.json' if report_verified else None},
+            'founder_review_required':not report_verified,'new_general_agent_capability_claimed':False,
             'limitations':['Freeform objective requires independent review','Crossref uses same-provider metadata readback, not full paper review','NOAA datum and instrument accuracy not checked']}

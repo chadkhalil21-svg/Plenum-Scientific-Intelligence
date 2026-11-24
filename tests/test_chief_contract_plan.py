@@ -304,3 +304,59 @@ class GoalGraphAcceptanceTests(TestCase):
             with patch.object(m,"run_contract",side_effect=AssertionError("duplicate dispatch")):
                 with self.assertRaisesRegex(ValueError,"Stored acceptance criterion changed"):
                     m.execute_contract_mission(event(objective),output_dir=root)
+
+
+class IntegratedEvidenceGoalTests(TestCase):
+    objective = "Evidence report NOAA 9414290 and cooling initial 364 K ambient 289 K rate 0.08 time 17"
+
+    def test_multi_input_report_is_a_complete_bounded_deliverable_and_resumes(self):
+        def noaa(station):
+            return json.dumps({"stations":[{"id":station,"name":"San Francisco","lat":37.8,"lng":-122.4}]}).encode()
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            with patch.object(m,"fetch_noaa_metadata",side_effect=noaa) as fetch:
+                report=m.execute_contract_mission(event(self.objective),output_dir=root)
+            fetch.assert_called_once()
+            self.assertTrue(report["founder_objective_verified"])
+            self.assertFalse(report["new_general_agent_capability_claimed"])
+            self.assertEqual(report["new_worker_invocations"],5)
+            self.assertEqual(report["bounded_founder_goal_evidence"]["status"],"VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE")
+            final=json.loads((root/"workers/evidence_report/result.json").read_text())
+            self.assertEqual(set(final["input_digests"]),{"noaa_metadata","station_validation","cooling_solution","cooling_readback"})
+            self.assertEqual(set(final["result"]["sections"]),{"stations","cooling"})
+            self.assertEqual(final["result"]["sections"]["stations"]["records"][0]["id"],"9414290")
+            self.assertLess(final["result"]["sections"]["cooling"]["readback"]["absolute_error_kelvin"],1e-6)
+            with patch.object(m,"run_contract",side_effect=AssertionError("repeated work")):
+                resumed=m.execute_contract_mission(event(self.objective),output_dir=root)
+            self.assertTrue(resumed["founder_objective_verified"])
+            self.assertEqual(resumed["new_worker_invocations"],0)
+            self.assertEqual(resumed["reused_prior_verified_workers"],5)
+
+    def test_report_tamper_with_rehashed_artifact_still_fails_acceptance(self):
+        from plenum_ai.mission_checkpoint import artifact_digest
+        objective="Evidence report DOI 10.1038/nature14539"
+        record={"doi":"10.1038/nature14539","title":"Public bibliographic metadata","year":2015,"publisher":"Publisher"}
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            with patch.object(m,"read_crossref",return_value=record):
+                report=m.execute_contract_mission(event(objective),output_dir=root)
+            self.assertTrue(report["founder_objective_verified"])
+            rel="workers/evidence_report/result.json"
+            path=root/rel
+            artifact=json.loads(path.read_text())
+            artifact["result"]["sections"]["bibliography"]["records"][0]["title"]="Invented finding"
+            path.write_text(json.dumps(artifact))
+            cp=root/"chief-checkpoint-101.json"
+            saved=json.loads(cp.read_text())
+            saved["results"]["evidence_report"]["sha256"]=artifact_digest(root,rel)
+            cp.write_text(json.dumps(saved))
+            with patch.object(m,"run_contract",side_effect=AssertionError("repeated work")):
+                with self.assertRaisesRegex(ValueError,"trusted acceptance criterion"):
+                    m.execute_contract_mission(event(objective),output_dir=root)
+
+    def test_report_goal_refuses_unrecognized_or_repeated_requirements(self):
+        for objective in ("Evidence report NOAA 9414290 and predict next hurricane",
+                          "Evidence report NOAA 9414290 and NOAA 9447130",
+                          "Evidence report DOI 10.1038/nature14539 and make a discovery"):
+            with self.subTest(objective=objective), self.assertRaises(ValueError):
+                m.parse_contract_mission(event(objective))
