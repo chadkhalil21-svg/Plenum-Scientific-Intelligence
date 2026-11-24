@@ -140,12 +140,23 @@ def run_assigned(role, *, mission_worker=None, specs=SPECS, description=DESCRIPT
         if mission_worker is not None:
             previous = MISSION_ORDER[:MISSION_ORDER.index(role)]
             inputs = {key: read_evidence(company, key, parent)["result"] for key in previous}
-            produce = lambda: mission_worker(role, inputs, directory)
+            def produce():
+                # CI-only failure at specialist boundary; success still requires actual provider.
+                marker=directory/"ci-transient-intelligence.json"
+                if role=="intelligence" and marker.exists():
+                    if os.getenv("GITHUB_ACTIONS")!="true":raise PermissionError("CI fault marker on owner host")
+                    from checkpoint_store import checked
+                    checked(marker,{"company":company,"mission":parent,"role":role})
+                    if not (directory/(role+".attempt-2")).exists():
+                        raise TimeoutError("Isolated CI transient provider fault")
+                return mission_worker(role,inputs,directory)
         else:
             inputs = ({key: read_evidence(company, key, parent)["result"] for key in SPECS if key != role}
                       if role == "verification" else None)
             produce = lambda: public_worker(role, inputs)
         receipt = execute_once(directory, company, role, task, produce, remote=remote)
+    from recovery_audit import finalize
+    finalize(directory,company,role,task,receipt["sha256"])
     if remote is not None:
         remote.complete(receipt["sha256"])
     api(path, "PATCH", {"status": "done", "comment": "Original public worker evidence SHA256: " +

@@ -49,3 +49,7 @@ jobs:
         env:
           PYTHONPATH: src
         run: python integrations/paperclip/production_wiring_smoke.py
+      - name: Persistent model authorization, generic mission and recovery trace
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/persistent_autonomy_smoke.py
