@@ -23,3 +23,5 @@ jobs:
         run: python integrations/paperclip/import_smoke.py
       - name: Test bounded checkpoint and failure recovery
         run: python integrations/paperclip/checkpoint_smoke.py
+      - name: Verify isolated runtime checkpoint authorization and CAS
+        run: node --test integrations/cloudflare/plenum-paperclip-checkpoint.test.mjs integrations/cloudflare/plenum-private-continuity.test.mjs
