@@ -261,6 +261,7 @@ def recover_local_behavior(report_path: Path, verdict_path: Path, event_path: Pa
             or os.getenv("GITHUB_EVENT_NAME") != "issues"
             or os.getenv("GITHUB_REPOSITORY") != "chadkhalil21-svg/Plenum-Scientific-Intelligence"
             or os.getenv("GITHUB_RUN_ATTEMPT") != "1"
+            or os.getenv("PLENUM_ORIGINAL_CODING_RESERVED") != "true"
             or os.getenv("PLENUM_EPHEMERAL_RUNNER") != "confirmed"
             or not re.fullmatch(r"[1-9][0-9]{0,12}", os.getenv("GITHUB_RUN_ID", ""))
             or event_path != Path(os.environ["GITHUB_EVENT_PATH"])
