@@ -40,9 +40,20 @@ def division_receipts(role, scope, prior, result, directory):
         add("research",{"bibliographic_identifiers":ids,"metadata_readback_sha256":hash_value(result),
                         "full_text_validation":False})
     elif role=="engineering":
-        source=directory/result["artifact_dir"]/"main.py"
-        source_hash=sha256(source.read_bytes()).hexdigest()
-        if source_hash!=result["manifest"]["main_sha256"]:
+        from pathlib import Path
+        from plenum_ai.reviewed_domain_workers import DOMAIN_FILES
+        name=result["artifact_dir"]
+        if not isinstance(name,str) or not name.startswith("engineering-artifact-") or Path(name).name!=name:
+            raise ValueError("Unsafe profile artifact path")
+        artifact=directory/name
+        source=artifact/"main.py"
+        if artifact.is_symlink() or source.is_symlink():
+            raise ValueError("Unsafe profile source")
+        data=source.read_bytes()
+        original=DOMAIN_FILES["cloudflare_workers_ai_free" if budget else "noaa_water_station_metadata"]
+        source_hash=sha256(data).hexdigest()
+        if (data!=original.read_bytes() or source_hash!=result["manifest"]["main_sha256"]
+                or result["manifest"]["functional_verifier_executed_and_passed"] is not True):
             raise ValueError("Coding source digest mismatch")
         add("coding",{"reviewed_source_sha256":source_hash,"functional_test_passed":
                       result["manifest"]["functional_verifier_executed_and_passed"],"deployed":False})
