@@ -22,8 +22,7 @@ jobs:
           revision=$(docker image inspect "$image" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')
           test "$revision" = d69631b01b9c658f80bf8bed389863dce82643e1
           docker run -d --name plenum-paperclip-integration \
-            -p 127.0.0.1:3100:3100 \
-            -e HOST=0.0.0.0 -e PAPERCLIP_HOME=/paperclip \
+            -e HOST=127.0.0.1 -e PAPERCLIP_BIND=loopback -e PAPERCLIP_HOME=/paperclip \
             -e PAPERCLIP_DEPLOYMENT_MODE=local_trusted \
             -e PAPERCLIP_DEPLOYMENT_EXPOSURE=private \
             -e PAPERCLIP_PUBLIC_URL=http://localhost:3100 \
@@ -32,12 +31,12 @@ jobs:
             --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/plenum,readonly" \
             "$image"
           for i in $(seq 1 90); do
-            if curl --fail --silent http://127.0.0.1:3100/api/health >/dev/null; then exit 0; fi
+            if docker exec plenum-paperclip-integration curl --fail --silent http://127.0.0.1:3100/api/health >/dev/null; then exit 0; fi
             sleep 2
           done
           exit 1
       - name: Actual upstream board assigns work and existing specialist returns verified result
-        run: python3 integrations/paperclip/acceptance.py
+        run: docker exec --user node plenum-paperclip-integration python3 /plenum/integrations/paperclip/acceptance.py
       - name: Remove isolated instance and test database
         if: always()
         run: docker rm -fv plenum-paperclip-integration 2>/dev/null || true
