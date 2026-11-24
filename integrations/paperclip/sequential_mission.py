@@ -13,7 +13,9 @@ import sys
 import tempfile
 import time
 from urllib.parse import urlencode
-from uuid import UUID
+from uuid import UUID, uuid4
+import traceback
+from urllib.error import HTTPError
 from acceptance import api
 from checkpoint_store import encoded, exclusive
 from division_adapter import SPECS, DESCRIPTION, ROOT, MISSION_ORDER, read_evidence, run_assigned
@@ -22,6 +24,68 @@ TITLE = "Delegate bounded coastal monitoring evidence mission"
 MISSION = "Public NOAA station, scholarly metadata, reviewed validator and commercial evidence brief; no private operations."
 STATIONS = {"station_ids": ["8723214"]}
 PAPERS = {"paper_survey": SPECS["research"][1]}
+
+
+def required(row, key, context):
+    if not isinstance(row, dict) or key not in row or row.get(key) is None:
+        raise ValueError("Missing required field: " + context + "." + key)
+    return row[key]
+
+
+def env_id(key):
+    value = os.getenv(key)
+    if not value:
+        raise ValueError("Missing required environment: " + key)
+    return str(UUID(value))
+
+
+def minister_task(aid, cid):
+    # The pinned Process adapter does not guarantee PAPERCLIP_TASK_ID.
+    # Same authenticated assigned-issue fallback already proven in #881.
+    task_id = os.getenv("PAPERCLIP_TASK_ID")
+    if task_id:
+        rows = [api("/api/issues/" + str(UUID(task_id)), worker=True)]
+    else:
+        rows = api("/api/companies/" + cid + "/issues?" + urlencode({
+            "assigneeAgentId": aid, "status": "todo,in_progress"}), worker=True)
+    if not isinstance(rows, list):
+        raise ValueError("Unexpected Minister issue-list shape")
+    candidates = [row for row in rows if isinstance(row, dict)
+                  and row.get("assigneeAgentId") == aid and row.get("title") == TITLE
+                  and row.get("description") == MISSION
+                  and row.get("status") in ("todo", "in_progress")]
+    if len(candidates) != 1:
+        raise ValueError("Expected exactly one authorized Minister mission")
+    return candidates[0], str(UUID(required(candidates[0], "id", "minister_task")))
+
+
+def failure_receipt(stage, exc):
+    # No exception text, raw provider payload, frame locals, or environment
+    # values. Retain only known missing-field names and source coordinates.
+    known = {"PAPERCLIP_TASK_ID","PAPERCLIP_AGENT_ID","PAPERCLIP_COMPANY_ID",
+             "PAPERCLIP_API_KEY","PAPERCLIP_RUN_ID","id","companyId","name",
+             "result","input_sha256","sha256","status","tasks","parent","minister",
+             "artifact_dir","manifest","main_sha256","validation","readback","discovery",
+             "structurally_valid_rows","invalid_rows","8723214","lat","lng",
+             "assigneeAgentId","issue","role","company","order","functional_verifier_executed_and_passed"}
+    frames = [{"file": Path(frame.filename).name, "line": frame.lineno,
+               "function": frame.name} for frame in traceback.extract_tb(exc.__traceback__)
+              if "/integrations/paperclip/" in frame.filename.replace("\\", "/")]
+    # Deliberately do not serialize arbitrary exception messages.
+    missing = exc.args[0] if isinstance(exc, KeyError) and exc.args and isinstance(exc.args[0], str) and exc.args[0] in known else None
+    if isinstance(exc, ValueError) and exc.args and isinstance(exc.args[0], str):
+        prefix = exc.args[0]
+        if prefix.startswith(("Missing required field: ", "Missing required environment: ")):
+            field = prefix.rsplit(".",1)[-1].rsplit(" ",1)[-1]
+            if field in known: missing = field
+    row = {"stage":stage,"error_type":type(exc).__name__,"missing_field":missing,
+           "http_status":exc.code if isinstance(exc,HTTPError) else None,
+           "frames":frames[-8:],"native_run_id":None}
+    try: row["native_run_id"]=str(UUID(os.getenv("PAPERCLIP_RUN_ID","")))
+    except ValueError: pass
+    ROOT.mkdir(parents=True,exist_ok=True,mode=0o700)
+    exclusive(ROOT/("failure-"+stage+"-"+uuid4().hex+".json"),row)
+    print(json.dumps(row),flush=True)
 
 
 def digest(value):
@@ -95,7 +159,7 @@ def verify(prior,directory,*,functional_test=False):
         raise ValueError("Commercial brief not bound to public facts")
     return {"verified_public_artifact_scope":True,"verified_producers":4,
             "station_rows":1,"scholarly_metadata_records":len(research["readback"]),
-            "independent_actual_input_test":True,"general_autonomy_verified":False,
+            "independent_actual_input_test":functional_test,"general_autonomy_verified":False,
             "skill_scan_applicable":False,"paid_inference":False}
 
 
@@ -128,19 +192,21 @@ def mission_worker(role,prior,directory):
 
 
 def minister():
-    aid=os.environ["PAPERCLIP_AGENT_ID"]
-    cid=str(UUID(os.environ["PAPERCLIP_COMPANY_ID"]))
-    pid=str(UUID(os.environ["PAPERCLIP_TASK_ID"]))
+    aid=env_id("PAPERCLIP_AGENT_ID")
+    cid=env_id("PAPERCLIP_COMPANY_ID")
     identity=api("/api/agents/me",worker=True)
-    task=api("/api/issues/"+pid,worker=True)
-    if (identity["id"]!=aid or identity["companyId"]!=cid or identity["name"]!="Minister of Operations"
+    task,pid=minister_task(aid,cid)
+    if (required(identity,"id","identity")!=aid or required(identity,"companyId","identity")!=cid or required(identity,"name","identity")!="Minister of Operations"
             or task.get("assigneeAgentId")!=aid or task.get("title")!=TITLE
             or task.get("description")!=MISSION or task.get("status") not in ("todo","in_progress")):
         raise PermissionError("Unauthorized Minister mission")
     api("/api/issues/"+pid+"/checkout","POST",{"agentId":aid,"expectedStatuses":["todo","in_progress"]},worker=True)
     roster=api("/api/companies/"+cid+"/agents",worker=True)
-    direct={x["name"]:x["id"] for x in roster if x.get("reportsTo")==aid}
-    if set(direct)!={v[0] for v in SPECS.values()}:
+    if not isinstance(roster,list) or any(not isinstance(x,dict) for x in roster):
+        raise ValueError("Unexpected native roster shape")
+    reports=[x for x in roster if x.get("reportsTo")==aid]
+    direct={required(x,"name","roster"):str(UUID(required(x,"id","roster"))) for x in reports}
+    if len(reports)!=len(SPECS) or set(direct)!={v[0] for v in SPECS.values()}:
         raise ValueError("Unexpected original workforce roster")
     # Only the Minister creates the tasks, through the native company API.
     # Idempotency keys ensure interrupted delegation cannot duplicate children.
@@ -152,7 +218,7 @@ def minister():
         if tasks:
             fields["blockedByIssueIds"]=[list(tasks.values())[-1]]
         child=api("/api/companies/"+cid+"/issues","POST",fields,worker=True)
-        tasks[role]=child["id"]
+        tasks[role]=str(UUID(required(child,"id","created_child")))
     directory=ROOT/cid
     directory.mkdir(parents=True,exist_ok=True,mode=0o700)
     plan={"company":cid,"minister":aid,"parent":pid,"tasks":tasks,"order":list(MISSION_ORDER)}
@@ -260,8 +326,14 @@ def restart_readback():
 
 
 if __name__=="__main__":
-    arg=sys.argv[1]
-    if arg=="minister":minister()
-    elif arg=="qualify":qualify()
-    elif arg=="restart-readback":restart_readback()
-    else:run_assigned(arg,mission_worker=mission_worker)
+    arg=sys.argv[1] if len(sys.argv)==2 else "invalid"
+    if arg not in ("minister","qualify","restart-readback",*MISSION_ORDER):
+        raise SystemExit("Unknown bounded entrypoint")
+    try:
+        if arg=="minister":minister()
+        elif arg=="qualify":qualify()
+        elif arg=="restart-readback":restart_readback()
+        else:run_assigned(arg,mission_worker=mission_worker)
+    except Exception as exc:
+        failure_receipt(arg,exc)
+        raise SystemExit(1) from None
