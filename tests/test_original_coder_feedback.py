@@ -186,5 +186,31 @@ class TrustedRecoveryTests(unittest.TestCase):
 
 
 
+class ScopedModuleBudgetTests(unittest.TestCase):
+    def test_large_original_module_allows_only_small_named_function(self):
+        original = b"PAD = " + repr("x" * 13000).encode() + b"\n\ndef target():\n    return 1\n"
+        sha = hashlib.sha256(original).hexdigest()
+        source = "src/plenum_ai/workforce_team_dispatch.py"
+        with patch.object(coder, "_public_source", return_value=(original, sha)):
+            result = coder.local_plan("Repair function target. Return two.", source_file=source)
+            self.assertEqual(result["authorized_function_edits"], 1)
+            self.assertEqual(result["local_model"], coder.STRUCTURED_EDIT_MODEL)
+            self.assertEqual(result["source_sha256"], sha)
+            self.assertFalse(result["paid_api_authorized"])
+            with self.assertRaises(PermissionError):
+                coder.local_plan("Change the whole public module.", source_file=source)
+            with self.assertRaises(ValueError):
+                coder.local_plan("Repair function missing. Return two.", source_file=source)
+        scope = coder.local_function_scope("Repair function target. Return two.", original)
+        candidate = coder.apply_structured_edit(scope, {"old":"return 1", "new":"return 2"})
+        self.assertEqual(candidate, original.replace(b"return 1", b"return 2"))
+
+    def test_large_named_function_remains_blocked(self):
+        original = b"def target():\n    return " + repr("x" * 13000).encode() + b"\n"
+        with patch.object(coder, "_public_source", return_value=(original, hashlib.sha256(original).hexdigest())):
+            with self.assertRaises(PermissionError):
+                coder.local_plan("Repair function target. Return two.", source_file="src/plenum_ai/workforce_team_dispatch.py")
+
+
 if __name__=="__main__":
     unittest.main()
