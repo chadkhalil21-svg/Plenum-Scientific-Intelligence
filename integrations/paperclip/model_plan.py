@@ -27,6 +27,11 @@ def digest(value):
     return sha256(encoded(value)).hexdigest()
 
 
+def valid_digest(value):
+    import re
+    return isinstance(value,str) and bool(re.fullmatch(r"(?:sha256:)?"+MODEL_DIGEST+r"[0-9a-f]{52}",value))
+
+
 def validate_choice(value):
     if not isinstance(value,dict) or set(value)!={"steps"} or not isinstance(value["steps"],list) or len(value["steps"])!=5:
         raise ValueError("Invalid bounded Minister plan shape")
@@ -55,7 +60,7 @@ def validate_receipt(receipt, company, parent):
     if not isinstance(receipt,dict) or set(receipt)!={"company","parent","model","model_digest","goals_sha256","response","response_sha256","eval_count","prompt_eval_count","paid_inference"}:
         raise ValueError("Invalid local model receipt")
     if (receipt["company"]!=company or receipt["parent"]!=parent or receipt["model"]!=MODEL
-            or not receipt["model_digest"].startswith("sha256:"+MODEL_DIGEST)
+            or not valid_digest(receipt["model_digest"])
             or receipt["goals_sha256"]!=digest(GOALS) or receipt["response_sha256"]!=digest(receipt["response"])
             or type(receipt["eval_count"]) is not int or not 0<receipt["eval_count"]<=256
             or type(receipt["prompt_eval_count"]) is not int or not 0<receipt["prompt_eval_count"]<=2048
@@ -75,7 +80,7 @@ def model_plan(directory, company, parent):
     exclusive(directory/"minister-model-attempt.json",{"company":company,"parent":parent,"maximum":1})
     tags=read_json("/api/tags")
     matches=[x for x in tags.get("models",[]) if x.get("name")==MODEL]
-    if len(matches)!=1 or not matches[0].get("digest","").startswith("sha256:"+MODEL_DIGEST):
+    if len(matches)!=1 or not valid_digest(matches[0].get("digest")):
         raise ValueError("Unexpected local Qwen model digest")
     schema={"type":"object","required":["steps"],"additionalProperties":False,"properties":{"steps":{
         "type":"array","minItems":5,"maxItems":5,"items":{"type":"object","additionalProperties":False,
