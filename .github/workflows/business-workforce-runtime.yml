@@ -102,7 +102,7 @@ jobs:
           assert engine in ('openhands','aider_local_ollama')
           print('engine='+engine)
           model=data.get('local_model','qwen2.5-coder:7b')
-          assert model in ('qwen2.5-coder:7b','qwen3.5:4b')
+          assert model in ('qwen2.5-coder:7b','qwen3.5:9b-q4_K_M')
           print('local_model='+model)
           PY
       - name: Reserve actual original coding execution before any model or provider access
@@ -231,9 +231,14 @@ jobs:
           set -euo pipefail
           case "$PLENUM_LOCAL_MODEL" in
             qwen2.5-coder:7b) expected=dae161e27b0e ;;
-            qwen3.5:4b) expected=d8b0f5e9760c ;;
+            qwen3.5:9b-q4_K_M) expected=56671c2ab938 ;;
             *) exit 1 ;;
           esac
+          # Verify actual free-runner headroom before a larger model pull.
+          if [ "$PLENUM_LOCAL_MODEL" = "qwen3.5:9b-q4_K_M" ]; then
+            test "$(df --output=avail -B1 / | tail -1 | tr -d ' ')" -ge 9000000000
+            test "$(awk '/MemTotal/ {print $2}' /proc/meminfo)" -ge 14000000
+          fi
           docker exec plenum-temporary-ollama ollama pull "$PLENUM_LOCAL_MODEL"
           docker exec plenum-temporary-ollama ollama list
           digest=$(docker exec plenum-temporary-ollama ollama list | awk -v model="$PLENUM_LOCAL_MODEL" '$1==model {print $2}')
