@@ -29,3 +29,5 @@ jobs:
         env:
           PYTHONPATH: src
         run: python integrations/paperclip/minister_smoke.py
+      - name: Bounded local-model plan and immutable receipt regressions
+        run: python integrations/paperclip/model_plan_smoke.py

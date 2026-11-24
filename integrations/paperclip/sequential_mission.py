@@ -210,8 +210,15 @@ def minister():
         raise ValueError("Unexpected original workforce roster")
     # Only the Minister creates the tasks, through the native company API.
     # Idempotency keys ensure interrupted delegation cannot duplicate children.
+    directory=ROOT/cid
+    directory.mkdir(parents=True,exist_ok=True,mode=0o700)
+    roles=list(MISSION_ORDER)
+    model_receipt=None
+    if os.getenv("PLENUM_PAPERCLIP_MODEL")=="local":
+        from model_plan import model_plan
+        roles,model_receipt=model_plan(directory,cid,pid)
     tasks={}
-    for role in MISSION_ORDER:
+    for role in roles:
         fields={"title":SPECS[role][1],"description":DESCRIPTION,"status":"todo","priority":"high",
                 "parentId":pid,"assigneeAgentId":direct[SPECS[role][0]],
                 "idempotencyKey":"plenum-bounded-"+pid+"-"+role}
@@ -219,9 +226,9 @@ def minister():
             fields["blockedByIssueIds"]=[list(tasks.values())[-1]]
         child=api("/api/companies/"+cid+"/issues","POST",fields,worker=True)
         tasks[role]=str(UUID(required(child,"id","created_child")))
-    directory=ROOT/cid
-    directory.mkdir(parents=True,exist_ok=True,mode=0o700)
-    plan={"company":cid,"minister":aid,"parent":pid,"tasks":tasks,"order":list(MISSION_ORDER)}
+    plan={"company":cid,"minister":aid,"parent":pid,"tasks":tasks,"order":roles}
+    if model_receipt is not None:
+        plan["model_receipt_sha256"]=digest(model_receipt)
     path=directory/"minister-plan.json"
     if path.exists():
         if json.loads(path.read_text())!=plan:
@@ -240,7 +247,9 @@ def qualify():
     def hire(name,role,arg,parent=None):
         fields={"name":name,"role":role,"runner":"legacy","adapterType":"process",
                 "adapterConfig":{"command":"python3","args":["/plenum/integrations/paperclip/sequential_mission.py",arg],
-                                 "cwd":"/plenum","timeoutSec":120,"env":{"PYTHONPATH":"/plenum/src","GITHUB_ACTIONS":"true"}},
+                                 "cwd":"/plenum","timeoutSec":150 if arg=="minister" else 120,"env":{"PYTHONPATH":"/plenum/src","GITHUB_ACTIONS":"true",
+                                 "PLENUM_PAPERCLIP_MODEL":os.getenv("PLENUM_PAPERCLIP_MODEL","off"),
+                                 "PLENUM_EPHEMERAL_RUNNER":"confirmed"}},
                 "budgetMonthlyCents":0,"runtimeConfig":{"heartbeat":{"enabled":False,"wakeOnAssignment":True,"maxConcurrentRuns":1}},
                 "permissions":{"canCreateAgents":False,"canCreateSkills":False}}
         if parent: fields["reportsTo"]=parent
@@ -280,6 +289,8 @@ def qualify():
                 print(json.dumps({"division":key,"diagnostic":d}),flush=True)
         raise RuntimeError("Native Minister sequential mission did not finish within deadline")
     summary=readback(cid,plan,expected_agents=agents)
+    if os.getenv("PLENUM_PAPERCLIP_MODEL")=="local" and summary["minister_model_executed"] is not True:
+        raise ValueError("Missing required actual local model receipt")
     exclusive(ROOT/"qualification.json",summary)
     print(json.dumps(summary),flush=True)
 
@@ -316,8 +327,18 @@ def readback(cid,plan,expected_agents=None):
     result=verify({k:v["result"] for k,v in records.items() if k!="verification"},directory,functional_test=True)
     if result!=records["verification"]["result"]["result"]:
         raise ValueError("Independent verifier disagrees")
+    model_executed=False
+    model_info={}
+    if "model_receipt_sha256" in plan:
+        from model_plan import validate_receipt
+        receipt=json.loads((directory/"minister-model-plan.json").read_text())
+        if digest(receipt)!=plan["model_receipt_sha256"] or validate_receipt(receipt,cid,plan["parent"])!=plan["order"]:
+            raise ValueError("Local model delegation receipt mismatch")
+        model_executed=True
+        model_info={"model":receipt["model"],"model_digest":receipt["model_digest"],
+                    "model_receipt_sha256":digest(receipt),"model_eval_count":receipt["eval_count"]}
     return {"company":cid,"minister":plan["minister"],"parent":plan["parent"],"order":list(MISSION_ORDER),
-            "verified_divisions":5,"minister_dispatch":True,"minister_model_executed":False,"independent_verification":result,
+            "verified_divisions":5,"minister_dispatch":True,"minister_model_executed":model_executed,**model_info,"independent_verification":result,
             "paid_inference":False,"persistent_production":False,
             "evidence":{k:{"issue":v["issue"],"sha256":v["sha256"]} for k,v in records.items()}}
 
