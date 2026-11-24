@@ -103,7 +103,7 @@ def commercial_brief(prior):
     papers = prior["research"]["result"]["readback"]
     return {
         "objective":"Assess a bounded coastal monitoring evidence opportunity",
-        "facts":{"station_id":row["id"],"station_name":row["name"],"coordinates":[row["lat"],row["lng"]],
+        "facts":{"station_id":row["id"],"station_name":required(row,"name","station"),"coordinates":[row["lat"],row["lng"]],
                  "scholarly_dois":sorted(papers),
                  "structurally_valid_rows":engineering["validation"]["structurally_valid_rows"]},
         "recommendation":"Scope a read-only coastal metadata and literature screening pilot",
@@ -124,7 +124,7 @@ def verify(prior,directory,*,functional_test=False):
         raise ValueError("Missing original producers")
     for i,role in enumerate(expected):
         value=prior[role]
-        if value["input_sha256"]!=scope_inputs({k:prior[k] for k in expected[:i]}):
+        if required(value,"input_sha256","producer_receipt")!=scope_inputs({k:prior[k] for k in expected[:i]}):
             raise ValueError("Dependency receipt hash mismatch")
     intel=prior["intelligence"]["result"]
     check_contract_result("noaa_metadata",STATIONS,{},intel)
@@ -142,8 +142,8 @@ def verify(prior,directory,*,functional_test=False):
     manifest=json.loads((artifact/"manifest.json").read_text())
     source=artifact/"main.py"
     if (artifact.is_symlink() or source.is_symlink() or manifest!=eng["manifest"]
-        or manifest["functional_verifier_executed_and_passed"] is not True
-        or hashlib.sha256(source.read_bytes()).hexdigest()!=manifest["main_sha256"]
+        or required(manifest,"functional_verifier_executed_and_passed","engineering_manifest") is not True
+        or hashlib.sha256(source.read_bytes()).hexdigest()!=required(manifest,"main_sha256","engineering_manifest")
         or source.read_bytes()!=DOMAIN_FILES["noaa_water_station_metadata"].read_bytes()):
         raise ValueError("Reviewed engineering artifact disagrees")
     # Separate local reviewer process executes the copied script on actual
@@ -235,7 +235,7 @@ def minister():
 def qualify():
     if api("/api/companies"):
         raise RuntimeError("Expected fresh isolated board")
-    cid=api("/api/companies","POST",{"name":"Plenum sequential public mission","description":MISSION})["id"]
+    cid=str(UUID(required(api("/api/companies","POST",{"name":"Plenum sequential public mission","description":MISSION}),"id","created_company")))
     route="/api/companies/"+cid
     def hire(name,role,arg,parent=None):
         fields={"name":name,"role":role,"runner":"legacy","adapterType":"process",
@@ -244,21 +244,27 @@ def qualify():
                 "budgetMonthlyCents":0,"runtimeConfig":{"heartbeat":{"enabled":False,"wakeOnAssignment":True,"maxConcurrentRuns":1}},
                 "permissions":{"canCreateAgents":False,"canCreateSkills":False}}
         if parent: fields["reportsTo"]=parent
-        return api(route+"/agents","POST",fields)["id"]
+        return str(UUID(required(api(route+"/agents","POST",fields),"id","created_agent")))
     leader=hire("Minister of Operations","ceo","minister")
     agents={key:hire(name,"engineer" if key=="engineering" else "general",key,leader) for key,(name,_) in SPECS.items()}
     task=api(route+"/issues","POST",{"title":TITLE,"description":MISSION,"status":"todo","priority":"high","assigneeAgentId":leader})
+    parent_id=str(UUID(required(task,"id","created_parent")))
     # No board-side child assignment: wait for the actual Minister's plan and native wakes.
     directory=ROOT/cid
     deadline=time.monotonic()+360
     plan_path=directory/"minister-plan.json"
     while time.monotonic()<deadline:
-        if plan_path.is_file() and api("/api/issues/"+task["id"])["status"]=="done":
+        # The adapter writes a safe failure receipt before a nonzero exit.
+        # Stop early on a definitive failure instead of waiting six minutes.
+        if list(ROOT.glob("failure-minister-*.json")) or any(
+                list(ROOT.glob("failure-"+role+"-*.json")) for role in MISSION_ORDER):
+            raise RuntimeError("Native adapter failure receipt recorded")
+        if plan_path.is_file() and required(api("/api/issues/"+parent_id),"status","parent_readback")=="done":
             plan=json.loads(plan_path.read_text())
-            if (plan["minister"]!=leader or plan["parent"]!=task["id"] or plan["order"]!=list(MISSION_ORDER)
+            if (plan["minister"]!=leader or plan["parent"]!=parent_id or plan["order"]!=list(MISSION_ORDER)
                     or set(plan["tasks"])!=set(MISSION_ORDER)):
                 raise ValueError("Minister plan not bound to mission")
-            if all(api("/api/issues/"+iid)["status"]=="done" for iid in plan["tasks"].values()):
+            if all(required(api("/api/issues/"+iid),"status","child_readback")=="done" for iid in plan["tasks"].values()):
                 break
         time.sleep(3)
     else:
@@ -281,7 +287,7 @@ def qualify():
 def readback(cid,plan,expected_agents=None):
     directory=ROOT/cid
     original=api("/api/issues/"+plan["parent"])
-    if original["status"]!="done" or original["assigneeAgentId"]!=plan["minister"]:
+    if original.get("status")!="done" or original.get("assigneeAgentId")!=plan["minister"]:
         raise ValueError("Minister dispatch not accepted")
     parent_comments=api("/api/issues/"+plan["parent"]+"/comments")
     if not any("Plan SHA256: "+digest(plan) in c.get("body","") for c in parent_comments):
@@ -292,7 +298,7 @@ def readback(cid,plan,expected_agents=None):
         iid=plan["tasks"][role]
         task=api("/api/issues/"+iid)
         if (task.get("status")!="done" or task.get("parentId")!=plan["parent"]
-                or (expected_agents and task["assigneeAgentId"]!=expected_agents[role])):
+                or (expected_agents and task.get("assigneeAgentId")!=expected_agents[role])):
             raise ValueError("Wrong native child scope")
         # Native dependency relations plus actual producer hashes bind order.
         if previous and previous not in (task.get("blockedByIssueIds") or [x.get("id") for x in task.get("blockedBy",[])]):
