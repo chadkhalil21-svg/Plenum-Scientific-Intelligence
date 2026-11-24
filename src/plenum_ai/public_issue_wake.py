@@ -20,6 +20,7 @@ from .chief_team_mission import MISSION_TITLE, parse_mission, preflight, execute
 from .mission_checkpoint import load_checkpoint, verified_previous_result
 
 PAPERCLIP_PUBLIC_TITLE = "[Plenum Paperclip] public coastal qualification"
+PAPERCLIP_EVIDENCE_TITLE = "[Plenum Paperclip] public evidence mission"
 MAX_ISSUE = 10 ** 9
 BASE = "https://api.github.com/repos/" + REPO + "/issues/"
 
@@ -269,7 +270,7 @@ def process(number: int, token: str, output_dir: Path, *,
     number = checked_issue_number(number)
     path = BASE + str(number)
     original, comments = _read_original_wake_issue(path, number, token)
-    if original.get("title") == PAPERCLIP_PUBLIC_TITLE:
+    if original.get("title") in (PAPERCLIP_PUBLIC_TITLE,PAPERCLIP_EVIDENCE_TITLE):
         return {"status":"ROUTED_TO_NATIVE_PAPERCLIP", "issue_number":number,
                 "worker_reexecuted":False}
     if require_founder_approval:
