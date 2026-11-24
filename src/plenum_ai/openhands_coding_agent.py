@@ -320,11 +320,18 @@ def _interrupted_cloud_review(result, original, candidate, source_file, artifact
 
 
 def local_plan(task: str, *, source_file: str) -> dict:
-    if len(_public_source(source_file)[0]) > LOCAL_MAX_SOURCE_BYTES:
+    original, _ = _public_source(source_file)
+    requests = local_edit_requests(task, original)
+    # The structured engine receives only the named function plus bounded
+    # read-only declarations. Retain the original whole-file Aider ceiling.
+    if requests:
+        if any(len(local_function_scope(clause, original)[1]) > LOCAL_MAX_SOURCE_BYTES
+               for clause in requests):
+            raise PermissionError("Named function exceeds bounded local coding limit")
+    elif len(original) > LOCAL_MAX_SOURCE_BYTES:
         raise PermissionError("Source too large for bounded CPU whole-file local coding")
     result = plan(task, source_file=source_file)
     result.pop("sdk_version_required")
-    requests=local_edit_requests(task,_public_source(source_file)[0])
     if requests:
         return {**result, "upstream":"ollama/ollama", "engine":LOCAL_ENGINE,
                 "local_model":STRUCTURED_EDIT_MODEL,
