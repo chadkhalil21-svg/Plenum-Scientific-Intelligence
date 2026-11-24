@@ -177,8 +177,9 @@ def run_issue(event: dict, *, output_dir: Path, runner=subprocess.run) -> dict:
     try:
         result = runner(command, timeout=360, cwd=str(Path(__file__).resolve().parents[2]),
                         env=safe_env, capture_output=True, text=True, check=False)
-    except (subprocess.TimeoutExpired, OSError):
+    except (subprocess.TimeoutExpired, OSError) as exc:
         return {**task, "status": "BLOCKED_WORKER_UNAVAILABLE", "verified": False,
+                "failure_type": type(exc).__name__,
                 "reason": "Existing worker did not finish within bounded runtime",
                 "output_artifact": None}
     if result.returncode != 0:

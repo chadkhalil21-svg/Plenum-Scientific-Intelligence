@@ -450,6 +450,63 @@ class PlannedDeliverableAcceptanceTests(TestCase):
             self.assertIn("Unrelated survey",(root/"workers/public_research/paper.json").read_text())
 
 
+
+class AutomaticPartialRecoveryTests(TestCase):
+    def test_transient_failure_resumes_only_incomplete_worker(self):
+        import json
+        from plenum_ai.chief_team_mission import execute_with_recovery
+        from plenum_ai.workforce_public_inbox import run_issue
+        objective = "Plan Survey public photonic computing papers and create a Cloudflare neuron budget validator program"
+        plan = {"steps": [
+            {"kind": "public_research", "objective": "Survey public photonic computing papers"},
+            {"kind": "public_program", "objective": "create a Cloudflare neuron budget validator program"}]}
+        calls = []
+        def worker(event, output_dir):
+            kind = parse_public_issue(event)["kind"]
+            calls.append(kind)
+            if kind == "public_program":
+                return run_issue(event, output_dir=output_dir)
+            if calls.count(kind) == 1:
+                import subprocess
+                def interrupted_runner(*args, **kwargs):
+                    raise subprocess.TimeoutExpired("original research worker", 360)
+                return run_issue(event, output_dir=output_dir, runner=interrupted_runner)
+            output_dir.mkdir(parents=True, exist_ok=True)
+            (output_dir / "paper.json").write_text(json.dumps({
+                "schema": "plenum-public-horizon-snapshot-v1",
+                "topic": plan["steps"][0]["objective"], "category": "journals",
+                "independent_breakthrough_verified": False,
+                "records": [{"source": "crossref_journals", "category": "journals",
+                    "title": "Photonic computing architectures",
+                    "url": "https://doi.org/10.1000/fixture", "independent_fact_check_complete": False}]}))
+            return {"status": "DRAFT_READY_FOR_FOUNDER", "verified": True,
+                    "worker": "original_research", "output_artifact": "paper.json"}
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            with patch("plenum_ai.chief_team_mission.plan_independent_team", return_value=plan) as model, patch(
+                "plenum_ai.chief_team_mission.run_issue", side_effect=worker):
+                result = execute_with_recovery(mission(objective), output_dir=root)
+            model.assert_called_once()
+            self.assertEqual(calls, ["public_research", "public_program", "public_research"])
+            self.assertTrue(result["founder_objective_verified"])
+            self.assertEqual(result["automatic_partial_recovery"]["completed_workers_not_replayed"], 1)
+            first = json.loads((root / "chief-recovery-1001.json").read_text())
+            self.assertFalse(first["founder_objective_verified"])
+            self.assertEqual(first["plan_sha256"], result["plan_sha256"])
+            from plenum_ai.ambient_quality_insights import verify_planned_mission_artifacts
+            self.assertTrue(verify_planned_mission_artifacts(result, root))
+
+    def test_invalid_input_is_not_retried(self):
+        from plenum_ai.chief_team_mission import execute_with_recovery
+        with tempfile.TemporaryDirectory() as folder, patch(
+            "plenum_ai.chief_team_mission.run_issue", side_effect=ValueError("bad input")) as worker:
+            result = execute_with_recovery(mission(), output_dir=Path(folder))
+            self.assertEqual(worker.call_count, 2)
+            self.assertFalse(result["independent_verified"])
+            self.assertNotIn("automatic_partial_recovery", result)
+            self.assertFalse((Path(folder) / "chief-recovery-1001.json").exists())
+
+
 if __name__ == "__main__":
     import unittest
     unittest.main()
