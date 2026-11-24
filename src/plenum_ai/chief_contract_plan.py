@@ -294,6 +294,22 @@ def cooling_matrix_solution(parameters):
             'method': 'expm', 'parameters': parameters}
 
 
+class CoolingQualityFailure(RuntimeError):
+    """A producer returned an invalid result, not merely a transport failure."""
+
+
+def check_cooling_producer(parameters, result):
+    """Check correctness before reserving a verified producer receipt."""
+    reference = parameters['ambient_kelvin'] + (
+        parameters['initial_kelvin'] - parameters['ambient_kelvin']
+    ) * math.exp(-parameters['rate'] * parameters['duration'])
+    observed = result.get('observed_kelvin') if isinstance(result, dict) else None
+    if (not isinstance(observed, (float, int)) or isinstance(observed, bool)
+            or not math.isfinite(observed) or abs(observed - reference) > 1e-6
+            or result.get('parameters') != parameters):
+        raise CoolingQualityFailure('Cooling producer failed analytic acceptance')
+
+
 def execute_contract_mission(event,*,output_dir,planner=None):
     task=parse_contract_mission(event);scope=task['scope'];output_dir.mkdir(parents=True,exist_ok=True)
     team=tuple(required_tools(scope))
@@ -373,6 +389,8 @@ def execute_contract_mission(event,*,output_dir,planner=None):
                     result = cooling_matrix_solution(scope['cooling'])
                 else:
                     result = run_contract(tool, scope, inputs)
+                if tool == 'cooling_solution':
+                    check_cooling_producer(scope['cooling'], result)
                 break
             except (OSError, RuntimeError) as failure:
                 if tool != 'cooling_solution' or attempt != 1:
