@@ -2,6 +2,7 @@
 import json
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import TestCase
 from unittest.mock import patch
 from plenum_ai import chief_contract_plan as m
@@ -144,3 +145,55 @@ class ContractPlanTests(TestCase):
             self.assertTrue(resumed['bounded_contracts_verified'])
             self.assertEqual(resumed['new_worker_invocations'],4)
             self.assertNotEqual(inspect_retry(run,root,issue)['status'],'ELIGIBLE_NATIVE_RETRY_ONCE')
+
+class ContractRecoveryEvidenceTests(TestCase):
+    objective = "Check cooling initial 370 K ambient 287 K rate 0.12 time 9 and verify the final temperature"
+
+    def test_failed_solver_recovers_with_distinct_method_and_restart_reuses_verified_pair(self):
+        import math
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            def run():
+                return m.execute_contract_mission(event(self.objective), output_dir=root)
+
+            with patch("scipy.integrate.solve_ivp", side_effect=RuntimeError("fixture: solver unavailable")) as primary:
+                report = run()
+            primary.assert_called_once()
+            self.assertTrue(report["independent_verified"])
+            solution = report["contract_results"]["cooling_solution"]
+            self.assertEqual(solution["method"], "expm")
+            self.assertAlmostEqual(solution["observed_kelvin"], 287 + 83 * math.exp(-1.08), places=6)
+            checkpoint = json.loads((root / "chief-checkpoint-101.json").read_text())["results"]
+            readback = json.loads((root / "workers/cooling_readback/result.json").read_text())
+            self.assertEqual(readback["input_sha256"], checkpoint["cooling_solution"]["sha256"])
+            with patch.object(m, "run_contract", side_effect=AssertionError("duplicated work")):
+                resumed = run()
+            self.assertTrue(resumed["independent_verified"])
+            self.assertEqual(resumed["new_worker_invocations"], 0)
+            self.assertEqual(resumed["reused_prior_verified_workers"], 2)
+
+    def test_valid_file_hash_cannot_substitute_for_correct_producer_binding(self):
+        from plenum_ai.mission_checkpoint import artifact_digest
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            m.execute_contract_mission(event(self.objective), output_dir=root)
+            name = "workers/cooling_readback/result.json"
+            path = root / name
+            readback = json.loads(path.read_text())
+            readback["input_sha256"] = "0" * 64
+            path.write_text(json.dumps(readback, sort_keys=True))
+            checkpoint = root / "chief-checkpoint-101.json"
+            state = json.loads(checkpoint.read_text())
+            state["results"]["cooling_readback"]["sha256"] = artifact_digest(root, name)
+            checkpoint.write_text(json.dumps(state))
+            with self.assertRaises(ValueError):
+                m.execute_contract_mission(event(self.objective), output_dir=root)
+
+    def test_unsuccessful_integrator_result_uses_alternative_solver(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with patch("scipy.integrate.solve_ivp", return_value=SimpleNamespace(success=False)):
+                result = m.execute_contract_mission(event(self.objective), output_dir=Path(directory))
+            self.assertEqual(result["contract_results"]["cooling_solution"]["method"], "expm")
+            self.assertTrue(result["bounded_contracts_verified"])
