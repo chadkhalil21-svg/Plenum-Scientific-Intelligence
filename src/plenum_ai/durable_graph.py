@@ -92,8 +92,8 @@ def run_persistent(question, db_path, thread_id, tool_keys=None, optimize=True,
             resumed = True
         else:
             result = run_network(
-                question, tool_keys=tool_keys, offline=offline,
-                optimize=optimize, graph=graph, invoke_config=config,
+                question, tool_keys=request["tool_keys"], offline=request["offline"],
+                optimize=request["enable_optimization"], graph=graph, invoke_config=config,
             )
         snapshot = _snapshot_summary(graph, config)
         if not snapshot or not snapshot["finished"]:
