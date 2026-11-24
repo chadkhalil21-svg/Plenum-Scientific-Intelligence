@@ -103,7 +103,14 @@ def read_json(path, payload=None, timeout=10):
     return json.loads(raw)
 
 
+def validate_goals(goals):
+    if (not isinstance(goals,dict) or set(goals)!=set(GOALS)
+            or any(not isinstance(v,str) or not v.strip() or len(v)>512 for v in goals.values())):
+        raise ValueError("Unexpected bounded goal descriptions")
+
+
 def validate_receipt(receipt, company, parent, *, goals=GOALS):
+    validate_goals(goals)
     if not isinstance(receipt,dict) or set(receipt)!={"company","parent","model","model_digest","goals_sha256","response","response_sha256","eval_count","prompt_eval_count","paid_inference"}:
         raise ValueError("Invalid local model receipt")
     if (receipt["company"]!=company or receipt["parent"]!=parent or receipt["model"]!=MODEL
@@ -117,7 +124,8 @@ def validate_receipt(receipt, company, parent, *, goals=GOALS):
 
 
 def model_plan(directory, company, parent, *, goals=GOALS):
-    if set(goals)!=set(GOALS):raise ValueError("Unexpected bounded goal identifiers")
+    validate_goals(goals)
+    goals=dict(goals)
     path=directory/"minister-model-plan.json"
     if path.exists():
         receipt=json.loads(path.read_text())
@@ -152,7 +160,7 @@ def model_plan(directory, company, parent, *, goals=GOALS):
              "goals_sha256":digest(goals),"response":choice,"response_sha256":digest(choice),
              "eval_count":reply.get("eval_count"),"prompt_eval_count":reply.get("prompt_eval_count"),"paid_inference":False}
     try:
-        roles=validate_receipt(receipt,company,parent)
+        roles=validate_receipt(receipt,company,parent,goals=goals)
     except ValueError as exc:
         rejected_choice(directory,company,parent,choice,
                         exc.code if isinstance(exc,PlanRejected) else "RECEIPT_BINDING")
