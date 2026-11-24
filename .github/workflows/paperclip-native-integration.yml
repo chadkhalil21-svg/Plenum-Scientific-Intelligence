@@ -1,19 +1,71 @@
 name: Paperclip native workforce integration
 on:
+  issues:
+    types: [opened]
+  repository_dispatch:
+    types: [plenum_public_issue_wakeup]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Existing owner-created public Paperclip qualification issue
+        required: true
+        type: string
   pull_request:
     paths:
       - 'integrations/paperclip/**'
       - '.github/workflows/paperclip-native-integration.yml'
 permissions:
   contents: read
+concurrency:
+  group: paperclip-mission-${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number || github.ref }}
+  cancel-in-progress: false
 jobs:
+  authorize:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      (github.event_name == 'pull_request' ||
+       (github.event_name == 'issues' &&
+        github.event.issue.title == '[Plenum Paperclip] public coastal qualification' &&
+        github.event.issue.user.login == 'chadkhalil21-svg' &&
+        github.event.sender.login == 'chadkhalil21-svg') ||
+       github.event_name == 'repository_dispatch' ||
+       (github.event_name == 'workflow_dispatch' && github.actor == 'chadkhalil21-svg' && github.ref == 'refs/heads/main'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      issues: write
+    outputs:
+      authorized: ${{ steps.gate.outputs.authorized }}
+      created_at: ${{ steps.gate.outputs.created_at }}
+      modes: ${{ steps.gate.outputs.modes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - id: gate
+        name: Reserve original public qualification once before model startup
+        env:
+          GH_TOKEN: ${{ github.event_name != 'pull_request' && github.token || '' }}
+          ISSUE: ${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number }}
+        run: |
+          set -eu
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            echo 'authorized=true' >> "$GITHUB_OUTPUT"
+            echo 'modes=["off","local"]' >> "$GITHUB_OUTPUT"
+          else
+            PYTHONPATH=src python3 integrations/paperclip/event_gate.py --issue "$ISSUE"
+            echo 'modes=["local"]' >> "$GITHUB_OUTPUT"
+          fi
   native-integration:
+    needs: authorize
+    if: needs.authorize.outputs.authorized == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        mode: ["off", "local"]
+        mode: ${{ fromJSON(needs.authorize.outputs.modes) }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -64,7 +116,8 @@ jobs:
         name: Native Minister assigns sequential five-division mission
         env:
           MODE: ${{ matrix.mode }}
-        run: docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/sequential_mission.py qualify
+          ISSUE_CREATED: ${{ needs.authorize.outputs.created_at }}
+        run: docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/sequential_mission.py qualify
       - name: Remove local model before independent restart readback
         if: matrix.mode == 'local'
         run: docker rm -fv plenum-paperclip-qwen
@@ -123,3 +176,29 @@ jobs:
           docker rm -fv plenum-paperclip-qwen 2>/dev/null || true
           docker rm -fv plenum-paperclip-integration 2>/dev/null || true
           docker volume rm plenum-paperclip-test-volume 2>/dev/null || true
+  terminal-receipt:
+    needs: [authorize, native-integration]
+    if: always() && github.event_name != 'pull_request' && needs.authorize.outputs.authorized == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      issues: write
+    steps:
+      - name: Record bounded outcome without redispatch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number }}
+          RESULT: ${{ needs.native-integration.result }}
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request
+          issue=int(os.environ["ISSUE"])
+          result=os.environ["RESULT"]
+          assert 0<issue<10**9 and result in ("success","failure","cancelled","skipped")
+          run=os.environ["GITHUB_RUN_ID"]
+          body={"body":f"<!-- plenum-public-workforce-run:{run}:terminal -->\nNative bounded Paperclip qualification: {result}. See https://github.com/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{run}. No automatic redispatch."}
+          url=f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/issues/{issue}/comments"
+          req=urllib.request.Request(url,data=json.dumps(body).encode(),headers={"Authorization":"Bearer "+os.environ["GH_TOKEN"],"Content-Type":"application/json","User-Agent":"PlenumPaperclipQualification/1"})
+          with urllib.request.urlopen(req,timeout=15) as res:
+              assert res.status==201
+          PY
