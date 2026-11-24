@@ -297,6 +297,7 @@ jobs:
             reports/workforce-chief/chief-data-plan-*.json
             reports/workforce-chief/chief-contract-plan-*.json
             reports/workforce-chief/chief-team-plan-*.json
+            reports/workforce-chief/chief-recovery-*.json
             reports/workforce-chief/ambient-quality-*.json
             reports/workforce-chief/workers/**
           overwrite: true
