@@ -122,3 +122,25 @@ class ContractPlanTests(TestCase):
                 m.parse_contract_mission(event(objective))
         with patch.dict('os.environ',{},clear=True), self.assertRaises(PermissionError):
             m.model_plan('Public metadata review',{'station_ids':['8724580'],'dois':[]})
+
+    def test_first_readonly_contract_failure_can_resume_once_without_sibling(self):
+        from plenum_ai.chief_retry_gate import inspect_retry
+        from plenum_ai.chief_team_mission import execute
+        original=event()
+        run={'workflow_run':{'id':987,'name':'Plenum Chief | Founder Model-Directed Specialist Command','event':'issues','status':'completed','conclusion':'failure','run_attempt':1,'actor':{'login':'chadkhalil21-svg'},'repository':original['repository']}}
+        issue={**original['issue'],'state':'open'}
+        record={'doi':'10.1103/physrevlett.116.061102','title':'Public metadata','year':2020,'publisher':'Publisher'}
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            with patch.object(m,'fetch_noaa_metadata',side_effect=RuntimeError('temporary')):
+                failed=execute(original,output_dir=root)
+            self.assertEqual(failed['status'],'BLOCKED_CONTRACT_EXECUTION')
+            (root/'chief-result-101.json').write_text(json.dumps(failed))
+            verdict=inspect_retry(run,root,issue)
+            self.assertEqual(verdict['status'],'ELIGIBLE_NATIVE_RETRY_ONCE')
+            self.assertEqual(verdict['saved_verified_workers'],0)
+            with patch.object(m,'fetch_noaa_metadata',return_value=json.dumps({'stations':[{'id':'8724580','name':'Gauge','lat':25,'lng':-80}]}).encode()), patch.object(m,'read_crossref',return_value=record):
+                resumed=m.execute_contract_mission(original,output_dir=root)
+            self.assertTrue(resumed['bounded_contracts_verified'])
+            self.assertEqual(resumed['new_worker_invocations'],4)
+            self.assertNotEqual(inspect_retry(run,root,issue)['status'],'ELIGIBLE_NATIVE_RETRY_ONCE')
