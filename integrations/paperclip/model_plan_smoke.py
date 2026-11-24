@@ -45,6 +45,7 @@ class PlanTests(unittest.TestCase):
                 self.assertEqual(model.call_count,2)
                 self.assertEqual(model.call_args_list[1].args[0],"/api/chat")
                 self.assertEqual(model.call_args_list[1].args[1]["format"],mp.plan_schema())
+                self.assertEqual(json.loads(model.call_args_list[1].args[1]["messages"][1]["content"])["authorized_goal_divisions"],mp.ROLE_MAP)
             with patch.object(mp,"read_json",side_effect=AssertionError("no repeated inference")):
                 self.assertEqual(mp.model_plan(Path(tmp),cid,pid),first)
                 with self.assertRaises(ValueError):mp.model_plan(Path(tmp),cid,str(uuid4()))

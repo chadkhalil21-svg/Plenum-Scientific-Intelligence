@@ -25,7 +25,7 @@ def goals(scope):
             "E":"Independently verify numerical results and all producer receipts",
             "A":"Retrieve public scholarly metadata for approved DOI "+", ".join(scope["dois"]),
             "D":"Independently read back the public DOI metadata",
-            "B":"Execute reviewed generic numerical sample analysis: "+", ".join(scope["operations"])}
+            "B":"Execute and functionally test the reviewed generic numerical sample analysis program: "+", ".join(scope["operations"])}
 def evaluate(source,data):
     return json.loads(subprocess.run([sys.executable,str(source)],input=json.dumps(data),capture_output=True,text=True,timeout=15,check=True).stdout)
 def inputs(scope):return {"values":scope["values"],"operations":scope["operations"]}

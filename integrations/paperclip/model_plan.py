@@ -153,8 +153,8 @@ def model_plan(directory, company, parent, *, goals=GOALS):
     model_digest=check_local_model()
     request={"model":MODEL,"stream":False,"think":False,"format":plan_schema(),
        "options":{"temperature":0,"num_ctx":2048,"num_predict":256},
-       "messages":[{"role":"system","content":"Fill exactly five numbered slots. The dependency order is fixed: step_1 intelligence, step_2 research, step_3 engineering, step_4 commercial, step_5 verification. Match each slot's division to the goal description; select one goal ID per slot. Use every goal ID exactly once. Do not repeat, omit, invent or reorder assignments. Each slot contains goal and division only. Return JSON only."},
-       {"role":"user","content":json.dumps({"goals":goals,"required_order":ORDER})}]}
+       "messages":[{"role":"system","content":"Fill exactly five numbered slots. The dependency order is fixed: step_1 intelligence, step_2 research, step_3 engineering, step_4 commercial, step_5 verification. Goal IDs are arbitrary labels, NOT alphabetical order. The authorized_goal_divisions policy in the user object binds each ID to its only permitted division. For each slot find the ID whose permitted division matches that slot, then confirm the goal description. Research reads scholarly records; engineering executes the reviewed program; commercial prepares the evidence brief; verification independently verifies prior results. Use each ID once. Do not repeat, omit, invent or reorder assignments. Each slot contains goal and division only. Return JSON only."},
+       {"role":"user","content":json.dumps({"goals":goals,"required_order":ORDER,"authorized_goal_divisions":ROLE_MAP})}]}
     reply=read_json("/api/chat",request,timeout=100)
     if not isinstance(reply,dict) or reply.get("done") is not True or reply.get("model")!=MODEL:
         rejected_choice(directory,company,parent,None,"INCOMPLETE_INFERENCE")
