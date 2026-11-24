@@ -67,8 +67,11 @@ def read_crossref(doi: str, *, opener=None, sleep_fn=time.sleep, approved_dois=N
             first = parts[0] if isinstance(parts, list) and parts else None
             year = first[0] if isinstance(first, list) and first and type(first[0]) is int else None
             publisher = message.get("publisher")
+            # Deposited citation years can be one year ahead for online-first
+            # articles. This is metadata validation, not a claim of publication
+            # on the current date. Retain the independent verifier's 2100 ceiling.
             if not (isinstance(title, str) and 8 <= len(title) <= 300
-                    and isinstance(year, int) and 1900 <= year <= 2026
+                    and isinstance(year, int) and 1900 <= year <= min(2100, datetime.now(timezone.utc).year + 1)
                     and isinstance(publisher, str) and 3 <= len(publisher) <= 200):
                 raise ValueError("Required primary deposited bibliographic fields absent")
             return {
