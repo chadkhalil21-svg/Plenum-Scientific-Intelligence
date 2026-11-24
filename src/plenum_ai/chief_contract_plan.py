@@ -200,7 +200,7 @@ def run_contract(tool,scope,prior):
         solution=solve_ivp(lambda t,y:(-p['rate']*(y[0]-p['ambient_kelvin']),),
                            (0,p['duration']),[p['initial_kelvin']],method='RK45',
                            rtol=1e-10,atol=1e-12,max_step=p['duration']/20)
-        if not solution.success:raise ValueError('Existing SciPy solver failed')
+        if not solution.success:raise RuntimeError('Existing SciPy solver failed')
         return {'observed_kelvin':float(solution.y[0,-1]),'library':'SciPy solve_ivp','method':'RK45','parameters':p}
     if tool=='cooling_readback':
         p=scope['cooling'];expected=p['ambient_kelvin']+(p['initial_kelvin']-p['ambient_kelvin'])*math.exp(-p['rate']*p['duration'])
@@ -267,6 +267,33 @@ def deterministic_pair_plan(scope):
     return deterministic_scope_plan(scope)
 
 
+CONTRACT_ARTIFACT_SCHEMA = 'plenum-chief-contract-result-v2'
+
+
+def read_contract_artifact(root, tool, entry, plan_hash):
+    relative = f'workers/{tool}/result.json'
+    if (entry.get('artifact_path') != relative or entry.get('output_artifact') != relative
+            or verified_previous_result(root, tool, entry) is None):
+        raise ValueError('Consumed artifact changed')
+    record = json.loads((root / relative).read_text('utf-8'))
+    if (not isinstance(record, dict) or record.get('plan_sha256') != plan_hash
+            or 'result' not in record
+            or ('schema' in record and record['schema'] != CONTRACT_ARTIFACT_SCHEMA)):
+        raise ValueError('Artifact plan binding changed')
+    return record
+
+
+def cooling_matrix_solution(parameters):
+    """Propagate the temperature deviation with a matrix exponential on recovery."""
+    from scipy.linalg import expm
+    exponent = -parameters['rate'] * parameters['duration']
+    factor = float(expm([[exponent]])[0, 0])
+    ambient = parameters['ambient_kelvin']
+    temperature = ambient + (parameters['initial_kelvin'] - ambient) * factor
+    return {'observed_kelvin': temperature, 'library': 'SciPy linalg.expm',
+            'method': 'expm', 'parameters': parameters}
+
+
 def execute_contract_mission(event,*,output_dir,planner=None):
     task=parse_contract_mission(event);scope=task['scope'];output_dir.mkdir(parents=True,exist_ok=True)
     team=tuple(required_tools(scope))
@@ -298,28 +325,80 @@ def execute_contract_mission(event,*,output_dir,planner=None):
         if temporary.is_symlink():raise ValueError('Unsafe temporary plan')
         temporary.write_text(json.dumps(receipt,sort_keys=True),'utf-8');temporary.replace(path);called=False
     plan_hash=sha256(json.dumps(receipt,sort_keys=True).encode()).hexdigest()
-    results={};invoked=0
+    results = {}
+    invoked = 0
+    reused = 0
     for step in plan['steps']:
-        tool=step['tool'];relative=f'workers/{tool}/result.json';artifact=output_dir/relative;saved=progress.get(tool)
-        if saved is not None and (not isinstance(saved,dict) or saved.get('plan_sha256')!=plan_hash):raise ValueError('Changed checkpoint plan')
+        tool = step['tool']
+        dependency = step.get('input_from')
+        relative = f'workers/{tool}/result.json'
+        artifact = output_dir / relative
+        saved = progress.get(tool)
+        if saved is not None and (not isinstance(saved, dict) or saved.get('plan_sha256') != plan_hash):
+            raise ValueError('Changed checkpoint plan')
+
+        # Re-open the producer's durable bytes at the consumer boundary.
+        inputs = {}
+        input_digest = None
+        if dependency:
+            source = read_contract_artifact(output_dir, dependency, progress[dependency], plan_hash)
+            inputs[dependency] = source['result']
+            input_digest = progress[dependency]['sha256']
+
         if saved and saved.get('verified'):
-            if saved.get('artifact_path')!=relative or saved.get('output_artifact')!=relative or verified_previous_result(output_dir,tool,saved) is None:
-                raise ValueError('Consumed artifact changed')
-            restored=json.loads(artifact.read_text('utf-8'))
-            if restored.get('plan_sha256')!=plan_hash:raise ValueError('Artifact plan binding changed')
-            results[tool]=restored['result'];continue
-        attempt=int(saved.get('attempt',0))+1 if isinstance(saved,dict) else 1
-        if attempt>2:raise ValueError('Two-attempt ceiling reached')
-        progress[tool]={'attempt':attempt,'status':'RUNNING','verified':False,'plan_sha256':plan_hash}
-        save_checkpoint(output_dir,issue=task['issue_number'],objective=task['objective'],team=team,results=progress)
-        invoked+=1;result=run_contract(tool,scope,results)
-        if artifact.is_symlink() or not artifact.resolve().is_relative_to(output_dir.resolve()):raise ValueError('Unsafe result path')
-        artifact.parent.mkdir(parents=True,exist_ok=True)
-        artifact.write_text(json.dumps({'plan_sha256':plan_hash,'result':result},sort_keys=True),'utf-8')
-        progress[tool]={'attempt':attempt,'status':'DRAFT_READY_FOR_FOUNDER','verified':True,'worker':TOOLS[tool],
-                        'artifact_path':relative,'output_artifact':relative,'sha256':artifact_digest(output_dir,relative),'plan_sha256':plan_hash}
-        save_checkpoint(output_dir,issue=task['issue_number'],objective=task['objective'],team=team,results=progress)
-        results[tool]=result
+            restored = read_contract_artifact(output_dir, tool, saved, plan_hash)
+            if dependency and (source.get('schema') == CONTRACT_ARTIFACT_SCHEMA
+                               or 'schema' in restored or 'input_sha256' in restored):
+                if restored.get('input_sha256') != input_digest:
+                    raise ValueError('Consumed dependency digest changed')
+            results[tool] = restored['result']
+            reused += 1
+            continue
+
+        if saved and (type(saved.get('attempt')) is not int or saved.get('status') != 'RUNNING'
+                      or saved.get('verified') is not False):
+            raise ValueError('Invalid prior attempt')
+        attempt = saved['attempt'] + 1 if saved else 1
+        recovery_reason = 'interrupted_attempt' if saved else None
+        if not 1 <= attempt <= 2:
+            raise ValueError('Two-attempt ceiling reached')
+        while True:
+            progress[tool] = {'attempt': attempt, 'status': 'RUNNING', 'verified': False,
+                              'plan_sha256': plan_hash}
+            save_checkpoint(output_dir, issue=task['issue_number'], objective=task['objective'],
+                            team=team, results=progress)
+            invoked += 1
+            try:
+                if tool == 'cooling_solution' and attempt == 2:
+                    result = cooling_matrix_solution(scope['cooling'])
+                else:
+                    result = run_contract(tool, scope, inputs)
+                break
+            except (OSError, RuntimeError) as failure:
+                if tool != 'cooling_solution' or attempt != 1:
+                    raise
+                recovery_reason = type(failure).__name__
+                attempt += 1
+
+        if artifact.is_symlink() or not artifact.resolve().is_relative_to(output_dir.resolve()):
+            raise ValueError('Unsafe result path')
+        artifact.parent.mkdir(parents=True, exist_ok=True)
+        record = {'schema': CONTRACT_ARTIFACT_SCHEMA, 'plan_sha256': plan_hash, 'result': result}
+        if tool == 'cooling_solution' and attempt == 2:
+            record['recovery'] = {'previous_method': 'RK45', 'method': 'expm',
+                                  'reason': recovery_reason}
+        if dependency:
+            record['input_sha256'] = input_digest
+        artifact.write_text(json.dumps(record, sort_keys=True), 'utf-8')
+        digest = artifact_digest(output_dir, relative)
+        if not digest:
+            raise ValueError('Missing or unsafe result artifact')
+        progress[tool] = {'attempt': attempt, 'status': 'DRAFT_READY_FOR_FOUNDER',
+                          'verified': True, 'worker': TOOLS[tool], 'artifact_path': relative,
+                          'output_artifact': relative, 'sha256': digest, 'plan_sha256': plan_hash}
+        save_checkpoint(output_dir, issue=task['issue_number'], objective=task['objective'],
+                        team=team, results=progress)
+        results[tool] = result
     valid=verify_results(scope,results)
     return {'schema':'plenum-chief-founder-team-v2','mode':'multi','issue_number':task['issue_number'],
             'status':'VERIFIED_BOUNDED_CONTRACT_MISSION' if valid else 'BLOCKED_CONTRACT_INTEGRITY',
@@ -331,7 +410,7 @@ def execute_contract_mission(event,*,output_dir,planner=None):
             'expected_team':list(team),'bounded_contracts_verified':valid,
             'founder_objective_verified':False,'objective_review_required':True,'independent_verified':valid,
             'worker_artifacts_technically_verified':valid,'tool_outputs_verified':valid,
-            'executed_workers':len(results),'new_worker_invocations':invoked,'reused_prior_verified_workers':len(results)-invoked,
+            'executed_workers':len(results),'new_worker_invocations':invoked,'reused_prior_verified_workers':reused,
             'specialists':[TOOLS[x['tool']] for x in plan['steps']], 'contract_results':results,
             'worker_results':[{'kind':x['tool'],'worker':TOOLS[x['tool']],'status':'DRAFT_READY_FOR_FOUNDER','output_artifact':f"workers/{x['tool']}/result.json",'verified_scope':'explicit public identifier contract only'} for x in plan['steps']],
             'plan_artifact':path.name,'plan_sha256':plan_hash,'paid_api_used':False,'external_account_changes':False,
