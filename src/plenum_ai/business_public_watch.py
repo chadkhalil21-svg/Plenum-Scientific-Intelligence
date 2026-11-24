@@ -42,7 +42,10 @@ def probe(target: Target, *, opener=None, timeout: int = 12) -> tuple[bool, str,
             if target.kind == "health":
                 if "json" not in ct:
                     return False, "unexpected_content_type", code
-                data = json.loads(resp.read(65537))
+                raw = resp.read(65537)
+                if len(raw) > 65536:
+                    return False, "unexpected_content", code
+                data = json.loads(raw)
                 if not isinstance(data, dict) or data.get("service") != "american-rider-server":
                     return False, "unexpected_service", code
             elif "html" not in ct:
