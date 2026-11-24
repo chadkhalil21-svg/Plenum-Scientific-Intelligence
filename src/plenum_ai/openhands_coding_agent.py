@@ -375,7 +375,8 @@ def _register_proposal_editor() -> str:
     return ProposalOnlyFileEditorTool.name
 
 
-def execute_local(task: str, *, source_file: str, candidate_out: str) -> dict:
+def execute_local(task: str, *, source_file: str, candidate_out: str,
+                  behavioral_recovery: bool = False) -> dict:
     """Run official Aider noninteractively, with only a public source copy mounted.
 
     The existing Actions job supplies an internal Docker network connected only
@@ -387,6 +388,17 @@ def execute_local(task: str, *, source_file: str, candidate_out: str) -> dict:
     if os.getenv("PLENUM_EPHEMERAL_RUNNER") != "confirmed":
         raise RuntimeError("Run only in a separately isolated ephemeral runner")
     original, _ = _public_source(source_file)
+    feedback = ""
+    if behavioral_recovery:
+        # Only the pre-reviewed public health-monitor task has a trusted
+        # behavioral diagnostic. No test stdout, model text or external data
+        # is ever recycled as an instruction.
+        if source_file != "src/plenum_ai/business_public_watch.py":
+            raise PermissionError("No approved behavioral recovery for source")
+        feedback = (" Independent acceptance failed. Test the raw byte limit before JSON "
+                    "decoding: 65535 and 65536 bytes may pass, 65537 and 70000 "
+                    "must fail, even with valid JSON prefixes or whitespace. "
+                    "Wrong service and malformed JSON must still fail.")
     with tempfile.TemporaryDirectory(prefix="plenum-aider-public-") as tmp:
         candidate = Path(tmp) / "proposal.py"
         candidate.write_bytes(original)
@@ -406,19 +418,19 @@ def execute_local(task: str, *, source_file: str, candidate_out: str) -> dict:
             "--no-auto-lint", "--no-auto-test", "--no-suggest-shell-commands",
             "--no-detect-urls", "--no-analytics", "--no-check-update",
             "--no-show-release-notes", "--no-fancy-input", "--no-stream", "--yes-always", "--map-tokens", "0",
-            "--timeout", "900",
+            "--timeout", "540" if behavioral_recovery else "900",
             "--message", "Make only this requested public Python source repair, preserving unrelated behavior. "
-            "Edit proposal.py only. Do not execute code or use any other files, tools or external services. " + task.strip(),
+            "Edit proposal.py only. Do not execute code or use any other files, tools or external services. " + task.strip() + feedback,
             "proposal.py",
         ]
-        subprocess.run(command, cwd=tmp, check=True, timeout=960,
+        subprocess.run(command, cwd=tmp, check=True, timeout=600 if behavioral_recovery else 960,
                        env={"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": tmp})
         if (not candidate.is_file() or candidate.is_symlink()
                 or candidate.stat().st_size > _candidate_byte_limit(original)):
             raise RuntimeError("Local coder produced no bounded regular source copy")
         raw = candidate.read_bytes()
         ast.parse(raw.decode("utf-8"), filename="proposal.py")
-        return _candidate_report(result, original, raw, source_file, artifact, 0)
+        return _candidate_report(result, original, raw, source_file, artifact, int(behavioral_recovery))
 
 
 def execute(task: str = DEFAULT_TASK, *, source_file: str | None = None,

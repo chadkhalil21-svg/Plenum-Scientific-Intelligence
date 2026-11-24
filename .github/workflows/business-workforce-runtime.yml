@@ -265,10 +265,18 @@ jobs:
           PY
       - name: Reuse original focused Python tests on model patch in offline restricted Docker sandbox
         if: github.event_name == 'issues'
+        env:
+          PYTHONPATH: src
+          PLENUM_SELECTED_CODING_ENGINE: ${{ steps.owner-preflight.outputs.engine }}
+          PLENUM_ORIGINAL_CODING_RESERVED: ${{ steps.coding-reservation.outputs.authorized }}
         run: |
+          args=()
+          if [ "$PLENUM_SELECTED_CODING_ENGINE" = "aider_local_ollama" ] && [ "$PLENUM_ORIGINAL_CODING_RESERVED" = "true" ]; then
+            args+=(--recover-local-event "$GITHUB_EVENT_PATH")
+          fi
           python tools/verify_original_openhands_candidate.py \
             --report reports/openhands-agent-review.json \
-            --verdict reports/openhands-sandbox-verdict.json
+            --verdict reports/openhands-sandbox-verdict.json "${args[@]}"
       - name: Examine only the saved interrupted original patch without replaying the model
         if: >-
           always() && github.event_name == 'issues' && steps.coding-reservation.outputs.authorized == 'true' &&

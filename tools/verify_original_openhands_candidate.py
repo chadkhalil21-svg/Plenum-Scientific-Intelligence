@@ -240,12 +240,89 @@ def verify(report_path: Path, verdict_path: Path, *, checkout: Path | None = Non
         return persist("BLOCKED_UNVERIFIED_CANDIDATE", "untrusted_or_unreadable_candidate")
 
 
+def recover_local_behavior(report_path: Path, verdict_path: Path, event_path: Path) -> dict:
+    """One native correction from a trusted failed acceptance, never a replay.
+
+    Original issue/source/patch/verdict must bind. Preserve all initial evidence
+    before inference. Only fixed, pre-reviewed feedback is used; no model or
+    sandbox text enters the prompt. The second candidate is review-only too.
+    """
+    from plenum_ai.openhands_coding_agent import (
+        LOCAL_ENGINE, parse_owner_repair_event, execute_local, local_plan,
+    )
+    first = json.loads(report_path.read_text("utf-8"))
+    verdict = json.loads(verdict_path.read_text("utf-8"))
+    if (verdict.get("status") != "BLOCKED_TASK_ACCEPTANCE"
+            or verdict.get("task_acceptance_passed") is not False
+            or verdict.get("existing_focused_tests_passed") is not True
+            or verdict.get("network_disabled_for_candidate") is not True):
+        return verdict
+    if (os.getenv("GITHUB_ACTIONS") != "true"
+            or os.getenv("GITHUB_EVENT_NAME") != "issues"
+            or os.getenv("GITHUB_REPOSITORY") != "chadkhalil21-svg/Plenum-Scientific-Intelligence"
+            or os.getenv("GITHUB_RUN_ATTEMPT") != "1"
+            or os.getenv("PLENUM_ORIGINAL_CODING_RESERVED") != "true"
+            or os.getenv("PLENUM_EPHEMERAL_RUNNER") != "confirmed"
+            or not re.fullmatch(r"[1-9][0-9]{0,12}", os.getenv("GITHUB_RUN_ID", ""))
+            or event_path != Path(os.environ["GITHUB_EVENT_PATH"])
+            or event_path.is_symlink() or not event_path.is_file()
+            or not 0 < event_path.stat().st_size <= 1_000_000):
+        return verdict
+    owner = parse_owner_repair_event(json.loads(event_path.read_text("utf-8")))
+    source, task = owner["source_file"], owner["task"]
+    test = TASK_ACCEPTANCE.get((source, task))
+    patch = Path("reports/openhands-review") / f"issue-{owner['issue_number']}.patch"
+    if (owner.get("engine") != LOCAL_ENGINE or first.get("engine") != LOCAL_ENGINE
+            or first.get("repair_passes") != 0 or not test
+            or first.get("source_file") != source or first.get("task") != task
+            or first.get("source_sha256") != owner["source_sha256"]
+            or first.get("status") != "PROPOSAL_AWAITING_REVIEW"
+            or first.get("candidate_artifact") != patch.as_posix()
+            or verdict.get("source_file") != source
+            or verdict.get("task_acceptance_test") != "tests/acceptance/" + test
+            or report_path != Path("reports/openhands-agent-review.json")
+            or verdict_path != Path("reports/openhands-sandbox-verdict.json")
+            or any(p.is_symlink() or not p.is_file() or not 0 < p.stat().st_size <= 80_000
+                   for p in (report_path, verdict_path, patch))
+            or patch.parent.is_symlink()):
+        return verdict
+    digest = hashlib.sha256(patch.read_bytes()).hexdigest()
+    if digest != first.get("candidate_artifact_sha256") or digest != verdict.get("candidate_artifact_sha256"):
+        return verdict
+    archive = patch.parent / "first-attempt"
+    if archive.exists() or archive.is_symlink():
+        return verdict
+    archive.mkdir()
+    # A reservation is written before another model call. A repeat invocation
+    # can never consume another budget or overwrite the first evidence.
+    reservation = {"schema": "plenum-local-behavior-recovery-v1",
+                   "issue": owner["issue_number"], "run": os.environ["GITHUB_RUN_ID"],
+                   "original_patch_sha256": digest, "source_sha256": owner["source_sha256"],
+                   "trusted_test": test, "max_corrective_attempts": 1}
+    (archive / "reservation.json").write_text(json.dumps(reservation, indent=2) + "\n")
+    for p in (report_path, verdict_path, patch):
+        p.rename(archive / p.name)
+    try:
+        second = execute_local(task, source_file=source, candidate_out=patch.as_posix(),
+                               behavioral_recovery=True)
+    except Exception as exc:
+        second = {**local_plan(task, source_file=source),
+                  "status": "BLOCKED_LOCAL_CODER_NO_REVIEWABLE_PATCH",
+                  "failure_category": type(exc).__name__, "repair_passes": 1}
+    second["behavioral_recovery"] = reservation
+    report_path.write_text(json.dumps(second, indent=2) + "\n", encoding="utf-8")
+    return verify(report_path, verdict_path)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--report", type=Path, required=True)
     parser.add_argument("--verdict", type=Path, required=True)
+    parser.add_argument("--recover-local-event", type=Path)
     args = parser.parse_args()
     result = verify(args.report, args.verdict)
+    if args.recover_local_event and result["status"] == "BLOCKED_TASK_ACCEPTANCE":
+        result = recover_local_behavior(args.report, args.verdict, args.recover_local_event)
     print("Original networkless focused source gate:", result["status"])
     return 0 if result["existing_focused_tests_passed"] and result.get("task_acceptance_passed") is not False and not result["status"].startswith("BLOCKED") else 2
 
