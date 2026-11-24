@@ -1077,6 +1077,45 @@ def execute_data_mission(event: dict, *, output_dir: Path, planner=None) -> dict
     return report
 
 
+
+def execute_with_recovery(event: dict, *, output_dir: Path) -> dict:
+    """Resume one eligible interrupted public team without a new founder prompt."""
+    task = parse_mission(event)
+    first = execute(event, output_dir=output_dir)
+    if (task.get("contract_mission") or task.get("data_mission")
+            or first.get("status") != "BLOCKED_PARTIAL_TEAM"):
+        return first
+    progress = load_checkpoint(output_dir, issue=task["issue_number"],
+                               objective=task["objective"], team=task["team"])
+    # Only retry a single bounded transient worker failure, never invalid
+    # inputs, missing evidence, permission errors, or exhausted attempts.
+    retryable = {"TimeoutError", "ConnectionError", "HTTPError", "URLError", "OSError"}
+    failed = [row for row in first["worker_results"]
+              if row["status"] != "DRAFT_READY_FOR_FOUNDER"]
+    if (not failed or set(progress) != set(task["team"])
+            or any(row.get("failure_type") not in retryable
+                   or progress[row["kind"]].get("attempt") != 1
+                   for row in failed)
+            or any(verified_previous_result(output_dir, k, progress[k]) is None
+                   for k in task["team"] if k not in {row["kind"] for row in failed})):
+        return first
+    receipt = output_dir / f"chief-recovery-{task['issue_number']}.json"
+    # Exclusive preservation of the original negative outcome before retry.
+    with receipt.open("x", encoding="utf-8") as stream:
+        json.dump(first, stream, indent=2, sort_keys=True)
+    second = execute(event, output_dir=output_dir)
+    second["automatic_partial_recovery"] = {
+        "initial_report": receipt.name,
+        "retry_worker_kinds": [row["kind"] for row in failed],
+        "first_new_worker_invocations": first["new_worker_invocations"],
+        "first_model_plan_attempted": first.get("new_model_plan_attempted", False),
+        "initial_plan_sha256": first.get("plan_sha256"),
+        "completed_workers_not_replayed": second["reused_prior_verified_workers"],
+        "retry_new_worker_invocations": second["new_worker_invocations"],
+    }
+    return second
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--event", required=True)
@@ -1087,7 +1126,7 @@ def main() -> None:
     if out.is_absolute() or ".." in out.parts or not out.parts or out.parts[0] != "reports":
         parser.error("Only relative reports/ paths accepted")
     event = json.loads(Path(args.event).read_text(encoding="utf-8"))
-    report = execute(event, output_dir=out) if args.execute else preflight(event)
+    report = execute_with_recovery(event, output_dir=out) if args.execute else preflight(event)
     out.mkdir(parents=True, exist_ok=True)
     (out / ("chief-result-" + str(report["issue_number"]) + ".json")).write_text(
         json.dumps(report, indent=2) + "\n", encoding="utf-8"
