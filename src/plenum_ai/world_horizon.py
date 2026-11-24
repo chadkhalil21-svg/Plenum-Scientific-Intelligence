@@ -8,7 +8,7 @@ external execution or unpublished patent material is accessed.
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone, timedelta
 from urllib.parse import urlencode, urlsplit
-from urllib.request import Request, urlopen
+from urllib.request import Request, urlopen, build_opener
 from xml.etree import ElementTree as ET
 import json
 import re
@@ -36,6 +36,10 @@ SOURCES = {
         "url":"https://www.nsf.gov/rss/rss_www_news.xml", "publisher":"U.S. National Science Foundation"},
     "nsf_open_funding": {"category":"funding", "type":"feed",
         "url":"https://www.nsf.gov/rss/rss_www_funding_pgm_annc_inf.xml", "publisher":"U.S. National Science Foundation Funding"},
+    # Official public search2 is an unauthenticated, read-only search POST.
+    # https://www.grants.gov/api/common/search2
+    "grants_gov_search": {"category":"funding", "type":"grants_search",
+        "url":"https://api.grants.gov/v1/api/search2", "publisher":"Grants.gov public opportunity search"},
     "nature_journal_news": {"category":"journals", "type":"feed",
         "url":"https://www.nature.com/nature.rss", "publisher":"Nature Portfolio"},
     # ScienceDaily is a SECONDARY news alert, never proof of the underlying experiment.
@@ -116,13 +120,33 @@ def clean_query(query):
     return query.strip()
 
 
+def funding_survey_subject(query):
+    """Recognize a source survey, not an eligibility or application request."""
+    match=re.fullmatch(r"(?:Survey|Review) public ([A-Za-z][A-Za-z -]{2,70}) funding sources",query,re.I)
+    if not match:
+        return None
+    words=tuple(re.findall(r"[a-z]+",match.group(1).lower()))
+    if not 1<=len(words)<=4:
+        return None
+    # Preserve meaningful terms. Never substitute an arbitrary model query.
+    return tuple("agriculture" if word=="agricultural" else word for word in words)
+
+
+def funding_title_matches(subject,title):
+    if not subject or not isinstance(title,str):
+        return False
+    words=set(re.findall(r"[a-z]+",title.lower()))
+    return all((word in words or word+"s" in words or
+                (word=="agriculture" and "agricultural" in words)) for word in subject)
+
+
 def request_url(key, query):
     if key not in SOURCES:
         raise ValueError("Unapproved public source")
     definition = SOURCES[key]
     base = definition["url"]
     kind = definition["type"]
-    if kind in ("feed", "usgs", "china_cas_html"):
+    if kind in ("feed", "usgs", "china_cas_html", "grants_search"):
         return base
     if kind == "china_openalex":
         start=(datetime.now(timezone.utc)-timedelta(days=30)).date().isoformat()
@@ -161,6 +185,23 @@ def fetch_public(key, query, opener=urlopen):
     expected = urlsplit(SOURCES[key]["url"]).netloc
     if urlsplit(url).netloc != expected:
         raise ValueError("Public source host mismatch")
+    if SOURCES[key]["type"]=="grants_search":
+        subject=funding_survey_subject(query)
+        if not subject:
+            return []
+        from .chief_of_staff_pilot import NoRedirects
+        request=Request(url,data=json.dumps({"rows":25,"keyword":" ".join(subject),
+                          "oppStatuses":"posted|forecasted"}).encode("utf-8"),
+                        headers={"Content-Type":"application/json","Accept":"application/json",
+                                 "User-Agent":"PlenumPublicFundingSurvey/1"},method="POST")
+        client=build_opener(NoRedirects).open if opener is urlopen else opener
+        with client(request,timeout=13) as response:
+            if getattr(response,"status",200)!=200 or (hasattr(response,"geturl") and response.geturl()!=url):
+                raise ValueError("Unexpected public funding search response")
+            raw=response.read(MAX_BYTES+1)
+        if len(raw)>MAX_BYTES:
+            raise ValueError("Public provider exceeded response byte limit")
+        return parse_public(key,raw,query=query)
     request = Request(url, headers={
         "User-Agent":"PlenumScientificIntelligence/1.8 read-only-public-signals",
         "Accept":"application/json,text/html,application/rss+xml,application/atom+xml,application/xml",
@@ -239,7 +280,7 @@ def _feed(key, data):
     return items
 
 
-def parse_public(key, data):
+def parse_public(key, data, query=None):
     if key not in SOURCES or not isinstance(data, bytes) or len(data) > MAX_BYTES:
         raise ValueError("Invalid provider or bounded response")
     kind = SOURCES[key]["type"]
@@ -253,7 +294,32 @@ def parse_public(key, data):
                 if (r:=_record(key,title,url,date,CN_NOTE))]
     payload = json.loads(data)
     result = []
-    if kind == "crossref":
+    if kind=="grants_search":
+        if not isinstance(payload,dict) or payload.get("errorcode")!=0 or not isinstance(payload.get("data"),dict):
+            raise ValueError("Unexpected Grants.gov search schema")
+        rows=payload["data"].get("oppHits")
+        if not isinstance(rows,list) or len(rows)>25:
+            raise ValueError("Unexpected Grants.gov result count")
+        subject=funding_survey_subject(query) if query else None
+        seen=set()
+        for row in rows:
+            if not isinstance(row,dict) or row.get("oppStatus") not in ("posted","forecasted"):
+                continue
+            ident=str(row.get("id",""))
+            title=row.get("title")
+            agency=row.get("agencyName")
+            if (not re.fullmatch(r"[1-9][0-9]{0,11}",ident) or ident in seen
+                    or not isinstance(title,str) or not isinstance(agency,str) or not agency.strip()
+                    or (subject and not funding_title_matches(subject,title))):
+                continue
+            record=_record(key,title,"https://www.grants.gov/search-results-detail/"+ident,
+                           row.get("openDate"),row["oppStatus"]+"; "+agency[:80]+"; close "+str(row.get("closeDate",""))[:20])
+            if record:
+                result.append(record)
+                seen.add(ident)
+            if len(result)>=MAX_RESULTS:
+                break
+    elif kind == "crossref":
         rows = (payload.get("message") or {}).get("items") or []
         for p in rows[:MAX_RESULTS]:
             title = (p.get("title") or [""])[0]
@@ -352,6 +418,11 @@ def scan_horizon(query, category="all", online=False, opener=urlopen):
         if row["url"] not in seen:
             unique.append(row)
             seen.add(row["url"])
+    if category=="funding" and funding_survey_subject(query):
+        # The legacy broad NSF feed remains visible in provider diagnostics,
+        # but cannot masquerade as a requested subject survey.
+        unique=[row for row in unique if row["source"]=="grants_gov_search"
+                and funding_title_matches(funding_survey_subject(query),row["title"])]
     return {
         "schema":"plenum-public-horizon-snapshot-v1","topic":query,
         "category":category,"providers":statuses,
