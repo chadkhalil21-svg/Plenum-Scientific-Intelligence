@@ -179,6 +179,46 @@ def inspect_chief_report(report: dict) -> dict:
     }
 
 
+def verify_planned_mission_artifacts(report, root):
+    """Separate evaluator rereads the original immutable plan and checkpoint.
+
+    Reject the claimed full outcome unless every actual deliverable, digest
+    and trusted criterion agrees. Never dispatch workers from the evaluator.
+    """
+    if report.get("dispatcher")!="original_chief_extractive_team_plan" or report.get("founder_objective_verified") is not True:
+        return None
+    from .chief_team_mission import parse_mission, validate_team_receipt, grade_planned_deliverables, MISSION_TITLE, MISSION_MAGIC
+    from .chief_workforce_command import OWNER, REPO
+    from .mission_checkpoint import load_checkpoint, verified_previous_result
+    try:
+        issue=report["issue_number"]
+        receipt_path=root/f"chief-team-plan-{issue}.json"
+        if receipt_path.is_symlink() or not receipt_path.is_file() or receipt_path.stat().st_size>8000:
+            return False
+        receipt=json.loads(receipt_path.read_text("utf-8"))
+        # Use the actual owner instruction saved in the original Chief report;
+        # validate it against the immutable plan objective digest.
+        objective=report["objective"]
+        task=parse_mission({"action":"opened","repository":{"full_name":REPO},
+            "issue":{"number":issue,"user":{"login":OWNER},"title":MISSION_TITLE,
+                     "body":MISSION_MAGIC+"\nobjective: "+objective}})
+        validate_team_receipt(task,receipt)
+        digest=sha256(json.dumps(receipt,sort_keys=True).encode()).hexdigest()
+        if digest!=report.get("plan_sha256"):
+            return False
+        progress=load_checkpoint(root,issue=issue,objective=objective,team=task["team"])
+        if set(progress)!=set(task["team"]) or any(entry.get("plan_sha256")!=digest for entry in progress.values()):
+            return False
+        observed={kind:verified_previous_result(root,kind,entry) for kind,entry in progress.items()}
+        if any(value is None for value in observed.values()):
+            return False
+        proof=grade_planned_deliverables(task,receipt["plan"],observed,root)
+        return proof["status"]=="VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE" and proof==report.get("bounded_founder_goal_evidence")
+    except (OSError,ValueError,TypeError,KeyError,AttributeError):
+        return False
+
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--issue", type=int, required=True)
@@ -193,7 +233,12 @@ def main():
             or not source.resolve().is_relative_to(root.resolve())):
         parser.error("No safe original Chief report exists")
     data = json.loads(source.read_text(encoding="utf-8"))
+    accepted=verify_planned_mission_artifacts(data,root)
+    if accepted is False:
+        data={**data,"founder_objective_verified":False,"status":"BLOCKED_OBJECTIVE_RELEVANCE"}
     result = inspect_chief_report(data)
+    if accepted is not None:
+        result["independent_planned_artifact_readback_passed"]=accepted
     output = root / ("ambient-quality-" + str(args.issue) + ".json")
     output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n",
                       encoding="utf-8")
