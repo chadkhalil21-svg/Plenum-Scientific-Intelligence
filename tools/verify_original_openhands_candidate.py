@@ -23,6 +23,14 @@ PATCH = re.compile(r"reports/openhands-review/issue-[1-9][0-9]{0,8}\.patch\Z")
 SCHEMA = "plenum-original-openhands-candidate-regression-v1"
 INTERRUPTED = "BLOCKED_INTERRUPTED_WITH_REVIEW_ARTIFACT"
 
+# Exact founder task and source binding. The model may modify only its proposal,
+# not this trusted test or the selection criteria.
+TASK_ACCEPTANCE = {
+    ("src/plenum_ai/business_public_watch.py", "Reject health JSON bodies exceeding 65536 bytes even if their first bytes form valid JSON. Preserve fixed targets and ordinary successful and failed response behavior."):
+        "health_body_limit.py",
+}
+
+
 
 def _bound_interrupted_origin(report: dict, root: Path) -> bool:
     """Only the original reserved issue job may examine its saved interrupted edit."""
@@ -197,6 +205,26 @@ def verify(report_path: Path, verdict_path: Path, *, checkout: Path | None = Non
             if result.returncode:
                 return persist("BLOCKED_EXISTING_FOCUSED_TESTS", "existing_source_regressions_failed")
             verdict["existing_focused_tests_passed"] = True
+            acceptance = TASK_ACCEPTANCE.get((source, report.get("task")))
+            if acceptance:
+                verdict["task_acceptance_passed"] = False
+                test_path = isolated / "tests" / "acceptance" / acceptance
+                if not test_path.is_file() or test_path.is_symlink():
+                    return persist("BLOCKED_TASK_ACCEPTANCE_MISSING", "trusted_task_test_missing")
+                task_command = command[:-5] + [
+                    "-s", "/work/tests/acceptance", "-p", acceptance, "-v"]
+                verdict["task_acceptance_test"] = "tests/acceptance/" + acceptance
+                try:
+                    accepted = subprocess.run(task_command, capture_output=True, text=True,
+                                              timeout=150, check=False, env={
+                                                  "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
+                                                  "HOME": "/tmp",
+                                              })
+                except (OSError, subprocess.TimeoutExpired):
+                    return persist("BLOCKED_TASK_ACCEPTANCE_UNAVAILABLE", "trusted_task_test_did_not_finish")
+                if accepted.returncode or "Ran 2 tests" not in accepted.stderr:
+                    return persist("BLOCKED_TASK_ACCEPTANCE", "trusted_task_behavior_not_verified")
+                verdict["task_acceptance_passed"] = True
             return persist(("INTERRUPTED_FOCUSED_TESTS_PASS_REVIEW_STILL_REQUIRED" if interrupted
                             else "FOCUSED_TESTS_PASS_REVIEW_STILL_REQUIRED"),
                            "original_focused_contracts_only_not_semantic_approval")
@@ -211,7 +239,7 @@ def main() -> int:
     args = parser.parse_args()
     result = verify(args.report, args.verdict)
     print("Original networkless focused source gate:", result["status"])
-    return 0 if result["existing_focused_tests_passed"] else 2
+    return 0 if result["existing_focused_tests_passed"] and result.get("task_acceptance_passed") is not False and not result["status"].startswith("BLOCKED") else 2
 
 
 if __name__ == "__main__":
