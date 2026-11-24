@@ -44,17 +44,19 @@ def run_worker():
     from plenum_ai.workforce_team_dispatch import dispatch
     agent = os.environ["PAPERCLIP_AGENT_ID"]
     company = os.environ["PAPERCLIP_COMPANY_ID"]
-    rows = api("/api/companies/" + company + "/issues?" + urlencode(
-        {"assigneeAgentId": agent, "status": "todo"}), worker=True)
+    task_id = os.environ.get("PAPERCLIP_TASK_ID")
+    if task_id:
+        rows = [api("/api/issues/" + task_id, worker=True)]
+    else:
+        rows = api("/api/companies/" + company + "/issues?" + urlencode(
+            {"assigneeAgentId": agent, "status": "todo,in_progress"}), worker=True)
     matching = [r for r in rows if r.get("title") == TASK and r.get("description") == DESCRIPTION
-                and r.get("assigneeAgentId") == agent]
-    if not matching:
-        return
+                and r.get("assigneeAgentId") == agent and r.get("status") in ("todo", "in_progress")]
     if len(matching) != 1:
-        raise ValueError("Ambiguous integration task")
+        raise ValueError("No unique assigned integration task in eligible state")
     issue = matching[0]["id"]
     path = "/api/issues/" + issue
-    api(path + "/checkout", "POST", {"agentId": agent, "expectedStatuses": ["todo"]}, worker=True)
+    api(path + "/checkout", "POST", {"agentId": agent, "expectedStatuses": ["todo", "in_progress"]}, worker=True)
     with tempfile.TemporaryDirectory() as folder:
         result = dispatch({"kind": "public_program", "issue_number": 1,
             "objective": "create a NOAA station metadata validator program"}, Path(folder))
@@ -80,7 +82,8 @@ def seed():
                "cwd": "/plenum", "timeoutSec": 180, "env": {"PYTHONPATH": "/plenum/src"}}
     def hire(name, role, parent=None):
         fields = {"name": name, "role": role, "adapterType": "process",
-                  "adapterConfig": command, "budgetMonthlyCents": 0,
+                  "adapterConfig": command, "runner": "legacy", "budgetMonthlyCents": 0,
+                  "runtimeConfig": {"heartbeat": {"enabled": False, "wakeOnAssignment": True, "maxConcurrentRuns": 1}},
                   "permissions": {"canCreateAgents": False, "canCreateSkills": False}}
         if parent:
             fields["reportsTo"] = parent
@@ -96,6 +99,17 @@ def seed():
     issue = api("/api/companies/" + cid + "/issues", "POST", {
         "title": TASK, "description": DESCRIPTION, "status": "todo",
         "priority": "high", "assigneeAgentId": engineer})
+    # Assignment normally wakes the native adapter. Give the queue a chance
+    # to register the run; use the documented manual heartbeat once ONLY if
+    # no run has been created, and never replay a failed or unknown run.
+    runs_path = "/api/companies/" + cid + "/heartbeat-runs?" + urlencode({"agentId": engineer, "limit": 10})
+    time.sleep(5)
+    runs = api(runs_path)
+    if not runs:
+        wake = api("/api/agents/" + engineer + "/heartbeat/invoke", "POST", {
+            "reason": "integration acceptance", "payload": {"issueId": issue["id"]},
+            "idempotencyKey": "plenum-paperclip-acceptance-" + issue["id"]})
+        print(json.dumps({"heartbeat_invocation_status": wake.get("status"), "run_id": wake.get("id")}), flush=True)
     deadline = time.monotonic() + 180
     while time.monotonic() < deadline:
         result = api("/api/issues/" + issue["id"])
@@ -111,6 +125,24 @@ def seed():
                 "paid_inference": False, "persistent_production": False}))
             return
         time.sleep(3)
+    # Only public integration identifiers and runtime status are retained.
+    # Do not print arbitrary run logs, environment, tokens or provider traces.
+    runs = api(runs_path)
+    print(json.dumps({"issue_status": api("/api/issues/" + issue["id"]).get("status"),
+        "agent_status": api("/api/agents/" + engineer).get("status"),
+        "runs": [{k: row.get(k) for k in ("id", "status", "adapterType", "exitCode", "errorCode")} for row in runs]}), flush=True)
+    # Read the bounded official run log only for safe diagnostic categories,
+    # never echo actual arbitrary output or credential-like strings.
+    for row in runs[:3]:
+        try:
+            log = api("/api/heartbeat-runs/" + row["id"] + "/log?offset=0&limitBytes=16000")
+            content = str(log.get("content", ""))
+            categories = [word for word in ("ModuleNotFoundError", "PermissionError", "HTTPError", "KeyError",
+                "FileNotFoundError", "ValueError", "RuntimeError", "TimeoutError", "No unique assigned integration task")
+                if word in content]
+            print(json.dumps({"run_id": row["id"], "diagnostic_categories": categories}), flush=True)
+        except Exception as exc:
+            print(json.dumps({"log_readback_error": type(exc).__name__}), flush=True)
     raise RuntimeError("Paperclip did not complete the actual worker task")
 
 
