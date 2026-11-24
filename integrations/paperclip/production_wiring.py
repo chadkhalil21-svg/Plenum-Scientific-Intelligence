@@ -63,10 +63,22 @@ def checkpoint_for(directory,company,mission,role,issue):
     return RuntimeCheckpoint(company,mission,role,issue,secret=grant(company,mission),scope=company+"/"+mission)
 
 def preflight(directory,company,mission):
-    remote=checkpoint_for(directory,company,mission,"intelligence",mission)
-    if remote is not None and remote.request("GET") is not None:
-        raise ValueError("Remote checkpoint already exists; no fresh execution")
-    return remote is not None
+    from runtime_checkpoint import RuntimeCheckpoint,CheckpointRejected
+    from uuid import uuid4
+    row=load_prepared(directory,company,mission)
+    if row["checkpoint_mode"]=="local":return False
+    secret=grant(company,mission)
+    for role in ("intelligence","research","engineering","commercial","verification"):
+        remote=RuntimeCheckpoint(company,mission,role,mission,secret=secret,scope=company+"/"+mission)
+        if remote.request("GET") is not None:
+            raise ValueError("Remote checkpoint already exists; no fresh execution")
+    wrong=str(uuid4())
+    try:
+        RuntimeCheckpoint(company,wrong,"intelligence",mission,secret=secret,scope=company+"/"+wrong).request("GET")
+    except CheckpointRejected as exc:
+        if exc.status!=403 or exc.code!="checkpoint_scope_unavailable":raise ValueError("Wrong-scope rejection not verified") from None
+    else:raise ValueError("Wrong scope was not rejected")
+    return True
 
 def authorize_activation(api,directory,company,mission,leader,binding):
     row=load_prepared(directory,company,mission)

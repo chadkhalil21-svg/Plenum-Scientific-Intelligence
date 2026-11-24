@@ -61,3 +61,7 @@ jobs:
         env:
           PYTHONPATH: src
         run: python integrations/paperclip/live_queue_smoke.py
+      - name: Owner preflight and exact five-slot remote activation fixtures
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/live_preflight_smoke.py

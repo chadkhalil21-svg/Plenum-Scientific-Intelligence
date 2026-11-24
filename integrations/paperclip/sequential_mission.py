@@ -624,12 +624,15 @@ def restart_readback():
 
 if __name__=="__main__":
     arg=sys.argv[1] if len(sys.argv)==2 else "invalid"
-    if arg not in ("minister","qualify","prepare","activate","restart-readback","verify-live","queue-run",*MISSION_ORDER):
+    if arg not in ("minister","qualify","prepare","activate","restart-readback","verify-live","preflight-live","queue-run",*MISSION_ORDER):
         raise SystemExit("Unknown bounded entrypoint")
     try:
         if arg=="minister":minister()
         elif arg in ("qualify","prepare","activate"):qualify(arg)
         elif arg=="restart-readback":restart_readback()
+        elif arg=="preflight-live":
+            from live_preflight import preflight_live
+            preflight_live(api,ROOT)
         elif arg=="verify-live":
             from live_verify import verify_live
             verify_live(api,ROOT,readback)
