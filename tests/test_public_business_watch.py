@@ -1,5 +1,7 @@
 """Offline checks: bounded recovery, double readback, no account mutation."""
 import unittest
+# Reuse the frozen independent acceptance cases in ordinary regression CI.
+from acceptance.health_body_limit import HealthBodyAcceptance
 from plenum_ai.business_public_watch import TARGETS, NoRedirects, inspect_target, run
 
 class BusinessPublicWatchTests(unittest.TestCase):
