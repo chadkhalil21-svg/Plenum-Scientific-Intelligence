@@ -150,5 +150,58 @@ class IntakeTests(unittest.TestCase):
                     self.assertIn("eligibility and deadlines not independently audited",report["verified_scope"])
 
 
+    def test_empty_funding_search_recovers_through_reviewed_directory_only(self):
+        from plenum_ai.reviewed_domain_workers import DOMAIN_SOURCES
+        objective="Survey public agricultural funding sources"
+        original=event(body=w.MAGIC+"\nobjective: "+objective)
+        capability="usda_agricultural_funding_directory"
+        records=[{"title":title,"source":organization,"url":url,
+                  "http_status":200,"independently_quoted_page_text":False}
+                 for title,organization,url in DOMAIN_SOURCES[capability]]
+        for candidates,expected in ((records,True), (records[:1],False),
+                                    ([records[0],{**records[1],"url":"https://example.org/"}],False),
+                                    ([records[0],{**records[1],"http_status":503}],False)):
+            with self.subTest(candidates=candidates),tempfile.TemporaryDirectory() as folder:
+                def runner(cmd,**kwargs):
+                    Path(cmd[-1]).write_text(json.dumps({
+                        "schema":"plenum-public-horizon-snapshot-v1","topic":objective,
+                        "category":"funding","independent_breakthrough_verified":False,
+                        "AGI_achieved":False,"records":[],
+                        "providers":[{"source":"grants_gov_search","status":"retrieved_metadata","records":[]}]}))
+                    return FakeRun()
+                with patch("plenum_ai.reviewed_domain_workers.official_source_records",
+                           return_value=candidates) as directory:
+                    result=w.run_issue(original,output_dir=Path(folder),runner=runner)
+                directory.assert_called_once()
+                self.assertEqual(directory.call_args.args,(capability,))
+                self.assertIs(result["verified"],expected)
+                self.assertFalse(result["funding_subject_relevance_independently_verified"])
+                report=json.loads((Path(folder)/result["output_artifact"]).read_text())
+                self.assertEqual(report["providers"][0]["records"],[])
+                if expected:
+                    self.assertEqual(result["quality"],"OFFICIAL_FUNDING_SOURCE_DIRECTORY_VERIFIED")
+                    self.assertEqual(len(report["records"]),3)
+                    self.assertFalse(report["funding_recovery"]["opportunity_eligibility_or_deadline_verified"])
+                else:
+                    self.assertEqual(result["status"],"BLOCKED_NO_SOURCE_EVIDENCE")
+                    self.assertEqual(report["records"],[])
+
+    def test_specific_grant_request_cannot_use_broad_directory_fallback(self):
+        objective="Find current eligible agricultural funding grants"
+        original=event(body=w.MAGIC+"\nobjective: "+objective)
+        with tempfile.TemporaryDirectory() as folder:
+            def runner(cmd,**kwargs):
+                Path(cmd[-1]).write_text(json.dumps({
+                    "schema":"plenum-public-horizon-snapshot-v1","topic":objective,
+                    "category":"funding","independent_breakthrough_verified":False,
+                    "AGI_achieved":False,"records":[]}))
+                return FakeRun()
+            with patch("plenum_ai.reviewed_domain_workers.official_source_records") as directory:
+                result=w.run_issue(original,output_dir=Path(folder),runner=runner)
+            directory.assert_not_called()
+            self.assertEqual(result["status"],"BLOCKED_NO_SOURCE_EVIDENCE")
+            self.assertFalse(result["verified"])
+
+
 if __name__=="__main__":
     unittest.main()
