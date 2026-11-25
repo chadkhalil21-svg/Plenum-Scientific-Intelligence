@@ -13,8 +13,9 @@ def enabled(scope):
     return "followup" in scope.get("inputs",{}).get("synthesis",{})
 
 def validate(spec):
-    if not isinstance(spec,dict) or set(spec)!={"objective","cost_per_review","budget","commitment"}:
+    if not isinstance(spec,dict) or set(spec) not in ({"objective","cost_per_review","budget","commitment"},{"objective","cost_per_review","budget","commitment","engine"}):
         raise ValueError("Exact followup scope required")
+    if "engine" in spec and spec["engine"]!="deepagents":raise ValueError("Unknown followup engine")
     if not isinstance(spec["objective"],str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9 ,().?'-]{9,199}",spec["objective"]):
         raise ValueError("Invalid followup objective")
     if any(type(spec[k]) is not int or not 1<=spec[k]<=1000000 for k in ("cost_per_review","budget")):

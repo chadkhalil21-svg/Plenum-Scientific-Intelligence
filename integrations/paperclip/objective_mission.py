@@ -170,6 +170,11 @@ def brief(scope,prior,directory=None,*,execute_followup=False):
             if directory is None:raise ValueError("Followup requires original mission receipts")
             outcome=(execute if execute_followup else verify)(scope,prior,directory)
             row["adaptive_followup"]=outcome
+            if scope["inputs"]["synthesis"]["followup"].get("engine")=="deepagents":
+                import sys
+                sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"prometheus_oss"))
+                from native_bridge import apply
+                row["oss_followup"]=apply(scope,prior,directory,outcome,execute=execute_followup)
             row["recommendation"]={"review":"Prepare bounded review of disputed requirements; no expenditure authorized","defer":"Defer review commitment because the estimated cost exceeds the stated budget","no_review":"No disputed requirements selected for review"}[outcome["action"]]
         return row
     return {"objective":scope["objective"],"results":prior["engineering"]["result"]["validation"],
@@ -229,4 +234,7 @@ def verify(scope,prior,directory,*,functional_test):
         from adaptive_turns import enabled
         if enabled(scope):
             result.update(adaptive_followup_verified=True,dependent_model_turns=2,followup_sha256=hashlib.sha256(json.dumps(prior["commercial"]["result"]["adaptive_followup"],sort_keys=True,separators=(",",":"),allow_nan=False).encode()).hexdigest())
+            if scope["inputs"]["synthesis"]["followup"].get("engine")=="deepagents":
+                oss=prior["commercial"]["result"]["oss_followup"]
+                result.update(native_oss_graph_verified=True,oss_graph_sha256=hashlib.sha256(json.dumps(oss,sort_keys=True,separators=(",",":"),allow_nan=False).encode()).hexdigest())
     return result

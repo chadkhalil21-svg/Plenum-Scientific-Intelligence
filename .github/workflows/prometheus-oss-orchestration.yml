@@ -3,14 +3,19 @@ on:
   pull_request:
     paths:
       - 'integrations/prometheus_oss/**'
+      - 'integrations/paperclip/**'
       - '.github/workflows/prometheus-oss-orchestration.yml'
 permissions:
   contents: read
 jobs:
-  qualify:
+  prepare:
     if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt == 1
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     env:
       PYTHONPATH: src
       LANGSMITH_TRACING: 'false'
@@ -22,8 +27,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      - name: Install actual upstream libraries
+          python-version: '3.13'
+      - name: Install actual upstream libraries and freeze dependencies
         run: |
           python -m pip install --disable-pip-version-check --only-binary=:all: -r integrations/prometheus_oss/requirements.txt
           python -m pip check
@@ -41,16 +46,83 @@ jobs:
           done
           bash integrations/paperclip/pull_original_qwen.sh
           test "$(docker exec plenum-paperclip-qwen ollama list | awk '$1=="qwen3.5:4b" {print $2}')" = d8b0f5e9760c
-      - name: Deep Agents tool chaining and acknowledged LangGraph checkpoint
+      - name: Deep Agents executes to acknowledged LangGraph checkpoint
         run: python integrations/prometheus_oss/qualification.py pause review reports/oss/review
-      - name: Resume in a separate process from SQLite checkpoint
-        run: python integrations/prometheus_oss/qualification.py resume review reports/oss/review
+      - name: Stop model and back up actual SQLite database outside source state
+        run: |
+          docker rm -f plenum-paperclip-qwen
+          if curl --fail --silent --max-time 2 http://127.0.0.1:11434/api/tags; then exit 1; fi
+          python integrations/prometheus_oss/snapshot.py seal reports/oss/review reports/paused-backup reports/oss/dependencies.txt
+      - name: Attest exact public backup manifest and database hashes
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: reports/paused-backup/backup.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prometheus-oss-paused-checkpoint
+          path: reports/paused-backup/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Remove isolated model
+        if: always()
+        run: docker rm -f plenum-paperclip-qwen 2>/dev/null || true
+  qualify:
+    needs: prepare
+    if: needs.prepare.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+      attestations: read
+    env:
+      PYTHONPATH: src
+      LANGSMITH_TRACING: 'false'
+      LANGCHAIN_TRACING_V2: 'false'
+      LANGGRAPH_STRICT_MSGPACK: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@v4
+        with:
+          name: prometheus-oss-paused-checkpoint
+          path: reports/paused-backup
+      - name: Verify original GitHub-signed backup manifest before use
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh attestation verify reports/paused-backup/backup.json --repo "$GITHUB_REPOSITORY" --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/prometheus-oss-orchestration.yml" --source-digest "$GITHUB_SHA" --source-ref "$GITHUB_REF" --deny-self-hosted-runners
+      - name: Restore the attested checkpoint to a new database on this runner
+        run: |
+          mkdir -p reports/oss
+          python integrations/prometheus_oss/snapshot.py restore reports/paused-backup reports/oss/review reports/oss/restore-proof.json
+          cp reports/paused-backup/dependencies.txt reports/oss/dependencies.txt
+          python -m pip install --disable-pip-version-check --only-binary=:all: -r reports/oss/dependencies.txt
+          python -m pip check
+      - name: Start original local Qwen on isolated runner loopback
+        run: |
+          set -eu
+          docker pull ollama/ollama:latest
+          docker run -d --name plenum-paperclip-qwen --network host -e OLLAMA_HOST=127.0.0.1:11434 -e OLLAMA_CONTEXT_LENGTH=8192 -e OLLAMA_NUM_PARALLEL=1 --memory=8g --cpus=3 ollama/ollama:latest
+          for i in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
+            sleep 2
+          done
+          bash integrations/paperclip/pull_original_qwen.sh
+          test "$(docker exec plenum-paperclip-qwen ollama list | awk '$1=="qwen3.5:4b" {print $2}')" = d8b0f5e9760c
+      - name: Resume from restored database without rerunning acknowledged model or tools
+        run: |
+          python integrations/prometheus_oss/qualification.py resume review reports/oss/review
+          python integrations/prometheus_oss/snapshot.py verify reports/oss/review reports/oss/restore-proof.json
       - name: Opposite held-out decision with original local Qwen
         run: python integrations/prometheus_oss/qualification.py run defer reports/oss/defer
       - name: Stop model before independent local readback
         run: |
           docker rm -f plenum-paperclip-qwen
-          ! curl --fail --silent --max-time 2 http://127.0.0.1:11434/api/tags
+          if curl --fail --silent --max-time 2 http://127.0.0.1:11434/api/tags; then exit 1; fi
           python integrations/prometheus_oss/qualification.py verify review reports/oss/review > reports/oss/review-result.json
           python integrations/prometheus_oss/qualification.py verify defer reports/oss/defer > reports/oss/defer-result.json
       - uses: actions/upload-artifact@v4
@@ -66,7 +138,11 @@ jobs:
     needs: qualify
     if: needs.qualify.result == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 7
+    permissions:
+      contents: read
+      actions: read
+      attestations: read
     env:
       PYTHONPATH: src
       LANGSMITH_TRACING: 'false'
@@ -78,21 +154,42 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.13'
+      - uses: actions/download-artifact@v4
+        with:
+          name: prometheus-oss-paused-checkpoint
+          path: reports/paused-backup
+      - name: Verify original GitHub-signed backup manifest before use
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh attestation verify reports/paused-backup/backup.json --repo "$GITHUB_REPOSITORY" --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/prometheus-oss-orchestration.yml" --source-digest "$GITHUB_SHA" --source-ref "$GITHUB_REF" --deny-self-hosted-runners
       - uses: actions/download-artifact@v4
         with:
           name: prometheus-oss-public-qualification
           path: reports/oss
-      - name: Reopen original public graph on fresh runner without model
+      - name: Reopen original public graph on third runner without model
         run: |
           python -m pip install --disable-pip-version-check --only-binary=:all: -r reports/oss/dependencies.txt
           python -m pip check
-          ! curl --fail --silent --max-time 2 http://127.0.0.1:11434/api/tags
+          if curl --fail --silent --max-time 2 http://127.0.0.1:11434/api/tags; then exit 1; fi
+          python integrations/prometheus_oss/snapshot.py verify reports/oss/review reports/oss/restore-proof.json
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          a=Path("reports/paused-backup/backup.json");b=json.loads(a.read_text())
+          p=json.loads(Path("reports/oss/restore-proof.json").read_text())
+          assert p["backup_manifest_sha256"]==hashlib.sha256(a.read_bytes()).hexdigest()
+          assert p["immutable_prefix"]=={k:v for k,v in b["files"].items() if k!="graph.sqlite"}
+          assert p["logical_sha256"]==b["source_logical_sha256"] and p["separate_runner"] is True
+          assert p["model_calls_replayed"]==p["provider_calls_replayed"]==0 and p["paid_inference"] is False
+          assert p["source_runner"]!=p["restore_runner"]
+          PY
           mkdir -p reports/independent
           for case in review defer; do
             python integrations/prometheus_oss/qualification.py verify "$case" "reports/oss/$case" > "reports/independent/$case.json"
             cmp "reports/oss/$case-result.json" "reports/independent/$case.json"
           done
+          cp reports/oss/restore-proof.json reports/independent/
       - uses: actions/upload-artifact@v4
         with:
           name: prometheus-oss-fresh-acceptance
