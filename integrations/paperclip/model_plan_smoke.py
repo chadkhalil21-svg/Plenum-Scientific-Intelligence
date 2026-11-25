@@ -78,6 +78,100 @@ class PlanTests(unittest.TestCase):
                     with self.assertRaises(ValueError):mp.validate_receipt(dict(receipt,paid_inference=True),cid,pid,goals=goals)
         print("NONDEFAULT GOAL RECEIPT PASS bibliography and station fresh/restart binding; cross-scope and unauthorized IDs denied; no replay",flush=True)
 
+    def test_natural_objective_selection_is_held_out_and_drives_real_program(self):
+        import objective_mission as om
+        from mission_scope import validate_scope
+        chosen=["median","shared_terms"]
+        scope={"kind":"public_objective","objective":"Which words occur in both summaries and what is the middle ordered observation?",
+               "dois":["10.1145/3442188.3445922"],
+               "inputs":{"documents":["resilient storage systems","resilient retrieval systems"],"samples":[12,3,9,44,18]},
+               "operation_commitment":mp.digest(sorted(chosen))}
+        self.assertEqual(validate_scope(scope),scope)
+        kwargs=om.planning_kwargs(scope)
+        good=valid_plan()
+        good["step_3"].update(tool="stream",operations={op:op in chosen for op in om.OPS})
+        self.assertEqual(mp.validate_choice(good,**kwargs),mp.ORDER)
+        schema=mp.plan_schema(**kwargs)["properties"]["step_3"]["properties"]["operations"]
+        self.assertEqual(set(schema["required"]),set(om.OPS))
+        self.assertTrue(all(x=={"type":"boolean"} for x in schema["properties"].values()))
+        valid=good["step_3"]["operations"]
+        for bad in (["median","shared_terms"],{"median":True},
+                    dict(valid,median=False,mean=True),
+                    dict(valid,word_counts=True),
+                    dict(valid,median=1),
+                    dict(valid,shell=True)):
+            changed=dict(good,step_3=dict(good["step_3"],operations=bad))
+            with self.subTest(bad=bad),self.assertRaises(mp.PlanRejected):
+                mp.validate_choice(changed,**kwargs)
+        tag={"models":[{"name":mp.MODEL,"digest":mp.MODEL_DIGEST+"a"*52}]}
+        route={k:dict(v) for k,v in good.items()}
+        route["step_3"].pop("operations")
+        def reply(value):
+            return {"model":mp.MODEL,"done":True,"message":{"content":json.dumps(value)},"eval_count":55,"prompt_eval_count":251}
+        policy=kwargs["operation_policy"]
+        groups=policy["required_groups"]
+        replies=[tag,reply(route)]+[reply({op:op in chosen for op in group}) for group in groups]
+        cid,pid=str(uuid4()),str(uuid4())
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ,{"PLENUM_EPHEMERAL_RUNNER":"confirmed","PLENUM_PAPERCLIP_MODEL":"local"}):
+            directory=Path(tmp)
+            with patch.object(mp,"read_json",side_effect=replies) as model:
+                order,receipt=mp.model_plan(directory,cid,pid,goals=om.goals(scope),**kwargs)
+                self.assertEqual(model.call_count,4)
+                for index,group in enumerate(groups,2):
+                    request=model.call_args_list[index].args[1]
+                    self.assertNotIn(scope["operation_commitment"],json.dumps(request))
+                    payload=json.loads(request["messages"][1]["content"])
+                    self.assertEqual(payload["question"],scope["objective"])
+                    self.assertEqual(set(payload["operations"]),set(group))
+                    self.assertEqual(set(request["format"]["required"]),set(group))
+                self.assertEqual(len(receipt["operation_classifications"]),2)
+                for index,group in enumerate(groups,2):
+                    payload=json.loads(model.call_args_list[index].args[1]["messages"][1]["content"])
+                    self.assertEqual(payload["source_phrase_cues"],mp.semantic_evidence(scope["objective"],group))
+                    self.assertTrue(all(span in scope["objective"] for spans in payload["source_phrase_cues"].values() for span in spans))
+                self.assertEqual(receipt["response"],good)
+            self.assertEqual(order,mp.ORDER)
+            (directory/"minister-plan.json").write_text(json.dumps({"company":cid,"parent":pid,"model_receipt_sha256":mp.digest(receipt)}))
+            actual=om.engineering(scope,directory,"stream")
+            self.assertEqual(actual["validation"],{"results":{"median":{"numerator":12,"denominator":1},"shared_terms":["resilient","systems"]}})
+            with patch.object(mp,"read_json",side_effect=AssertionError("no repeated inference")):
+                self.assertEqual(mp.model_plan(directory,cid,pid,goals=om.goals(scope),**kwargs),(order,receipt))
+                (directory/"minister-operation-2.attempt.json").unlink()
+                with self.assertRaises(ValueError):mp.model_plan(directory,cid,pid,goals=om.goals(scope),**kwargs)
+
+    def test_semantic_evidence_covers_reviewed_catalogue_without_acceptance_key(self):
+        cases=[
+            ("Calculate the arithmetic average of these readings","mean"),
+            ("Report the central entry in the ordered observations","median"),
+            ("Determine the difference between highest and lowest observations","range"),
+            ("Compute the population variance of the measured series","population_variance"),
+            ("Find the least-squares slope for the readings","least_squares_slope"),
+            ("Measure the greatest jump between consecutive readings","max_step_change"),
+            ("List vocabulary shared by every report","shared_terms"),
+            ("Report the number of words in each report","word_counts"),
+            ("Compute term frequency in the reports","term_frequency")]
+        for question,operation in cases:
+            with self.subTest(operation=operation):
+                cues=mp.semantic_evidence(question,tuple(mp.OPERATION_CUES))
+                self.assertTrue(cues[operation])
+                self.assertTrue(all(span in question for spans in cues.values() for span in spans))
+                if operation in ("range","median"):
+                    self.assertFalse(cues["max_step_change"])
+        self.assertTrue(all(not spans for spans in mp.semantic_evidence("Review the supplied public records",tuple(mp.OPERATION_CUES)).values()))
+
+    def test_rejection_diagnostic_keeps_only_reviewed_choices(self):
+        policy={"allowed":("range","median","shared_terms"),
+                "required_groups":(("range","median"),("shared_terms",)),
+                "commitment":mp.digest(["range","shared_terms"])}
+        with tempfile.TemporaryDirectory() as tmp:
+            choice=valid_plan()
+            choice["step_3"]["operations"]={"median":True,"range":False,"shared_terms":"SECRET_RAW_TEXT"}
+            mp.rejected_choice(Path(tmp),"company","parent",choice,"OPERATION_SCOPE",policy)
+            raw=(Path(tmp)/"minister-model-rejection.json").read_text()
+            self.assertNotIn("SECRET_RAW_TEXT",raw)
+            self.assertEqual(json.loads(raw)["reviewed_operation_selections"],
+                             {"median":True,"range":False,"shared_terms":None})
+
     def test_rejected_plan_no_fallback(self):
         good=valid_plan()
         bad=dict(good,step_1=good["step_2"],step_2=good["step_1"])
