@@ -23,6 +23,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - name: Verify exact Litestream metadata normalization
+        run: python integrations/prometheus_durability/replica_smoke.py
       - name: Install pinned free libraries and checksum-verified Litestream
         run: |
           python -m pip install --disable-pip-version-check --only-binary=:all: -r integrations/prometheus_durability/requirements.txt

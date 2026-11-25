@@ -11,9 +11,19 @@ def identity():
     return {"run":os.environ["GITHUB_RUN_ID"],"commit":os.environ["GITHUB_SHA"],"job":os.environ["GITHUB_JOB"],"boot_sha256":sha(Path("/proc/sys/kernel/random/boot_id"))}
 def logical(p):
     if not p.is_file() or p.is_symlink():raise ValueError("Missing SQLite file")
-    with closing(sqlite3.connect(p.resolve().as_uri()+"?mode=ro",uri=True)) as db:
+    with closing(sqlite3.connect(p.resolve().as_uri()+"?mode=ro",uri=True)) as db,closing(sqlite3.connect(":memory:")) as clone:
         if db.execute("pragma integrity_check").fetchall()!=[("ok",)]:raise ValueError("SQLite corruption")
-        return digest(sorted(db.iterdump()))
+        db.backup(clone)
+        # Upstream Litestream v0.5.18 db.go creates exactly these two
+        # bookkeeping tables. Do not exclude any other application object.
+        expected={"_litestream_seq":"CREATE TABLE _litestream_seq (id INTEGER PRIMARY KEY, seq INTEGER)",
+                  "_litestream_lock":"CREATE TABLE _litestream_lock (id INTEGER)"}
+        objects=clone.execute("select type,name,tbl_name,sql from sqlite_master where name like '\\_litestream\\_%' escape '\\' or tbl_name like '\\_litestream\\_%' escape '\\'").fetchall()
+        for typ,name,table,sql in objects:
+            if typ!="table" or name!=table or name not in expected or sql!=expected[name]:raise ValueError("Unexpected Litestream schema")
+        for _,name,_,_ in objects:clone.execute('DROP TABLE "'+name+'"')
+        if clone.execute("pragma integrity_check").fetchall()!=[("ok",)]:raise ValueError("SQLite clone integrity")
+        return digest(sorted(clone.iterdump()))
 def tree(root):
     if not root.is_dir() or root.is_symlink():raise ValueError("Unsafe replica root")
     result={};total=0
@@ -48,9 +58,12 @@ def seal(source,bundle):
                 try:
                     ls("restore","-o",str(probe),url)
                     if logical(probe)==expected:break
-                except (subprocess.CalledProcessError,ValueError,sqlite3.Error):pass
+                except (subprocess.CalledProcessError,ValueError,sqlite3.Error) as exc:
+                    print("Replica not ready:",type(exc).__name__,str(exc)[:500],file=sys.stderr)
                 time.sleep(2)
-            else:raise RuntimeError("Replica has not reached committed database")
+            else:
+                print((source/"litestream.log").read_text(errors="replace")[-6000:],file=sys.stderr)
+                raise RuntimeError("Replica has not reached committed database")
         finally:
             if process.poll() is None:process.send_signal(signal.SIGTERM);process.wait(timeout=20)
     # Do not trust the probe made while replication was running. Verify final repo.
