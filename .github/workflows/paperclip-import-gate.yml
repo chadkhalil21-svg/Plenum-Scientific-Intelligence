@@ -80,3 +80,8 @@ jobs:
         env:
           PYTHONPATH: src
         run: python integrations/paperclip/pipeline_smoke.py
+
+      - name: Exact separate-workflow source and continuation regressions
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/cross_run_memory_smoke.py
