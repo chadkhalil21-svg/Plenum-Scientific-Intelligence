@@ -1,0 +1,133 @@
+name: Prometheus upstream durability qualification
+on:
+  pull_request:
+    paths:
+      - 'integrations/prometheus_durability/**'
+      - '.github/workflows/prometheus-upstream-durability.yml'
+permissions:
+  contents: read
+jobs:
+  prepare:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install pinned free libraries and checksum-verified Litestream
+        run: |
+          python -m pip install --disable-pip-version-check --only-binary=:all: -r integrations/prometheus_durability/requirements.txt
+          python -m pip check
+          curl --fail --silent --show-error --location --proto '=https' --max-time 60 -o "$RUNNER_TEMP/litestream.tar.gz" https://github.com/benbjohnson/litestream/releases/download/v0.5.18/litestream-0.5.18-linux-x86_64.tar.gz
+          echo "d3687b9fd0f2e9426bbd3da828429ff3f1dfc5c9b74d54fdf028e4ee510e7dea  $RUNNER_TEMP/litestream.tar.gz" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/litestream"
+          tar -xzf "$RUNNER_TEMP/litestream.tar.gz" -C "$RUNNER_TEMP/litestream" litestream
+          install -m 0755 "$RUNNER_TEMP/litestream/litestream" /tmp/litestream
+          echo /tmp >> "$GITHUB_PATH"
+      - name: Retrieve exact previously accepted public archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p reports/durable/source
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/15002230423/zip" > reports/durable/source/original.zip
+          echo "d57361b2e95ff4bf6e1270c784b3774fa555bfc478ca3b293adca40cb00f046d  reports/durable/source/original.zip" | sha256sum --check
+          python -m pip freeze > reports/durable/source/dependencies.txt
+      - name: Persist first actual DBOS step and terminate process
+        run: timeout 60 python integrations/prometheus_durability/durable_acceptance.py prepare reports/durable/source
+      - name: Replicate acknowledged SQLite system database through actual Litestream
+        run: python integrations/prometheus_durability/replica.py seal reports/durable/source reports/durable/sealed
+      - uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: reports/durable/sealed/backup.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prometheus-upstream-replica
+          path: reports/durable/sealed/
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 7
+  restore:
+    needs: prepare
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+      attestations: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@v4
+        with:
+          name: prometheus-upstream-replica
+          path: reports/durable/sealed
+      - name: Authenticate predecessor manifest before restoring
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh attestation verify reports/durable/sealed/backup.json --repo "$GITHUB_REPOSITORY" --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/prometheus-upstream-durability.yml" --source-digest "$GITHUB_SHA" --source-ref "$GITHUB_REF" --deny-self-hosted-runners
+      - name: Install same upstream release and restore to absent system database
+        run: |
+          curl --fail --silent --show-error --location --proto '=https' --max-time 60 -o "$RUNNER_TEMP/litestream.tar.gz" https://github.com/benbjohnson/litestream/releases/download/v0.5.18/litestream-0.5.18-linux-x86_64.tar.gz
+          echo "d3687b9fd0f2e9426bbd3da828429ff3f1dfc5c9b74d54fdf028e4ee510e7dea  $RUNNER_TEMP/litestream.tar.gz" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/litestream"
+          tar -xzf "$RUNNER_TEMP/litestream.tar.gz" -C "$RUNNER_TEMP/litestream" litestream
+          install -m 0755 "$RUNNER_TEMP/litestream/litestream" /tmp/litestream
+          export PATH="/tmp:$PATH"
+          python integrations/prometheus_durability/replica.py restore reports/durable/sealed reports/durable/restored reports/durable/restore-proof.json
+          python -m pip install --disable-pip-version-check --only-binary=:all: -r reports/durable/restored/dependencies.txt
+          python -m pip check
+      - name: Resume original workflow and verify no acknowledged step reruns
+        run: |
+          mkdir -p reports/durable/acceptance
+          timeout 90 python integrations/prometheus_durability/durable_acceptance.py resume reports/durable/restored > reports/durable/acceptance/result.json
+          cmp reports/durable/sealed/step-one.json reports/durable/restored/step-one.json
+          cp reports/durable/restore-proof.json reports/durable/acceptance/
+          cp reports/durable/restored/step-one.json reports/durable/restored/step-two.json reports/durable/acceptance/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prometheus-upstream-resume-acceptance
+          path: reports/durable/acceptance/
+          if-no-files-found: error
+          retention-days: 7
+  postgres:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt == 1
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install Ubuntu signed distribution pgBackRest and PostgreSQL
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends pgbackrest postgresql-16
+          mkdir -p reports/pgbackrest
+          dpkg-query -W pgbackrest postgresql-16 > reports/pgbackrest/versions.txt
+      - name: Retrieve original public qualification evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/15002230423/zip" > reports/pgbackrest/original.zip
+      - name: Actual pgBackRest repository backup verify and absent-target recovery
+        run: bash integrations/prometheus_durability/pgbackrest_smoke.sh reports/pgbackrest/original.zip reports/pgbackrest/result.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prometheus-upstream-postgres-acceptance
+          path: reports/pgbackrest/
+          if-no-files-found: error
+          retention-days: 7
