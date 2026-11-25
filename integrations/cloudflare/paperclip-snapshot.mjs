@@ -1,6 +1,7 @@
 // Candidate storage core only: no public route, no deployment or credential handling.
 // Call only after a separately authorized private-runtime boundary.
 const CHUNK=512*1024, MAX=256*1024*1024;
+const TOTAL_BUDGET=256*1024*1024, MAX_SNAPSHOTS=4;
 const enc=new TextEncoder();
 const hex=b=>Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,"0")).join("");
 const sha=async b=>hex(await crypto.subtle.digest("SHA-256",b));
@@ -56,6 +57,12 @@ export async function reserveSnapshot(storage,input,value){
   const h=await sha(enc.encode(JSON.stringify(m)));
   await storage.transaction(async tx=>{
     require(await tx.get(p+"reserved")===undefined&&await tx.get(p+"manifest")===undefined,"snapshot already reserved");
+    // All scopes share one dedicated object; reserve conservatively before data writes.
+    const budget=await tx.get("native-snapshot-budget")??{bytes:0,count:0};
+    require(Number.isSafeInteger(budget.bytes)&&budget.bytes>=0&&Number.isSafeInteger(budget.count)&&budget.count>=0,"invalid quota ledger");
+    const charge=m.size+m.count*16+65536;
+    require(budget.bytes+charge<=TOTAL_BUDGET&&budget.count<MAX_SNAPSHOTS,"snapshot quota exhausted");
+    await tx.put("native-snapshot-budget",{bytes:budget.bytes+charge,count:budget.count+1});
     await tx.put(p+"reserved",{manifest:m,hash:h,next:0});
   });
   return {snapshot:id.snapshot,manifest_sha256:h,ciphertext_chunks:m.count,plaintext_bytes:m.size};

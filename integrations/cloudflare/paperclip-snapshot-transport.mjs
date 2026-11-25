@@ -1,4 +1,4 @@
-// Isolated owner-only transport candidate. Not registered on the existing Worker.
+// Isolated owner-only transport candidate. Disabled by default on the existing Worker.
 // No existing checkpoint grant, route, or private memory permission is widened.
 import {verifyPrivateRequest} from "./plenum-private-continuity.mjs";
 import {reserveSnapshot,storeChunk,commitSnapshot,readManifest,readChunk} from "./paperclip-snapshot.mjs";
@@ -46,7 +46,7 @@ export async function handleNativeSnapshot(request,env){
   if(!await verifyPrivateRequest(request,secret,raw))return reply(403,{error:"unauthorized_or_stale"});
   if(request.method==="GET"&&raw!=="")return reply(400,{error:"invalid_body"});
   try{
-    const object=env.PLENUM_NATIVE_SNAPSHOT_STORE.getByName("native-snapshot:"+p.scope);
+    const object=env.PLENUM_NATIVE_SNAPSHOT_STORE.getByName("plenum-native-snapshot-budget-v1");
     return await object.fetch("https://native-snapshot.internal"+new URL(request.url).pathname,{
       method:request.method,...(request.method==="POST"?{body:raw,headers:{"Content-Type":"application/json"}}:{})});
   }catch{return reply(503,{error:"snapshot_storage_unavailable_no_automatic_replay"});}

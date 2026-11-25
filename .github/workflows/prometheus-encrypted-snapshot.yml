@@ -16,3 +16,9 @@ jobs:
         run: |
           node integrations/cloudflare/paperclip-snapshot.test.mjs
           node integrations/cloudflare/paperclip-snapshot-transport.test.mjs
+          node integrations/cloudflare/paperclip-snapshot-quota.test.mjs
+      - name: Local upstream workerd SQLite persistence (synthetic only)
+        working-directory: integrations/cloudflare
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts miniflare@4.20260730.0
+          node paperclip-snapshot-workerd.test.mjs
