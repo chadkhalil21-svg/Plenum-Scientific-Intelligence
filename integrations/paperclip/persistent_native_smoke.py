@@ -52,7 +52,7 @@ def main():
     scope={"kind":"bibliography_budget","dois":["10.1145/3442188.3445922"],"budget":{"model":"@cf/zai-org/glm-4.7-flash","neurons_used_today":100,"neurons_reserved":200,"input_tokens_upper_bound":3000,"output_tokens_upper_bound":1000}}
     if mode=="local":
         from uuid import uuid4
-        second={"kind":"public_objective","objective":"Compare vocabulary overlap in synthetic procurement briefs and quantify delivery sample spread","dois":["10.1145/3442188.3445922"],"inputs":{"documents":["sensor supplier quality delivery quality","supplier delivery testing"],"samples":[17,-3,8,42,12,19]},"operations":["shared_terms","word_counts","mean","range"]}
+        second={"kind":"public_objective","objective":"Which words appear in both procurement summaries and what is the largest minus smallest delivery sample?","dois":["10.1145/3442188.3445922"],"inputs":{"documents":["sensor supplier quality delivery quality","supplier delivery testing"],"samples":[17,-3,8,42,12,19]},"operation_commitment":"b733df9ccca117f02d3c910c7bc950294557540d03418958a49327e125ceaf92"}
         qid=str(uuid4())
         args=["docker","exec","--user","node","-e","PYTHONPATH=/plenum/src","-e","PLENUM_PERSISTENT_BOARD=confirmed","-e","PLENUM_PAPERCLIP_MODEL=local","-e","PLENUM_PERSISTENT_CHECKPOINT_MODE=local","-e","PLENUM_CI_QUEUE_REPLAN=confirmed","-e","PLENUM_PAPERCLIP_COMPANY_UUID="+cid,"-e","PLENUM_PAPERCLIP_QUEUE_UUID="+qid,"-e","PLENUM_MISSION_QUEUE="+json.dumps([scope,second]),CONTAINER,"python3","/plenum/integrations/paperclip/sequential_mission.py","queue-run"]
         output=subprocess.check_output(args,text=True);print(output,flush=True)
