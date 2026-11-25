@@ -24,6 +24,12 @@ class Tests(unittest.TestCase):
             with self.assertRaises(ValueError):f.accept(root,"original","sha")
             (root/"alias").symlink_to(root/"ci-diagnostic.json")
             with self.assertRaises(ValueError):f.safe_tree(root)
+    def test_fresh_queue_rejects_missing_or_invalid_lifecycle(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            with self.assertRaises(ValueError):f.accept_queue(root)
+            (root/"persistent-lifecycle.json").write_text(json.dumps({"model_mode":"local","queue_no_replay":False}))
+            with self.assertRaises(ValueError):f.accept_queue(root)
     def test_fresh_runner_requires_exact_archive_set(self):
         with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{"EVENT":"pull_request","GITHUB_RUN_ID":"1","GITHUB_SHA":"sha"}),patch.object(f.sys,"argv",["program",tmp,tmp+"/output.json"]):
             with self.assertRaises(ValueError):f.main()

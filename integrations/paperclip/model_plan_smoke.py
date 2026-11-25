@@ -116,6 +116,9 @@ class PlanTests(unittest.TestCase):
                 self.assertNotIn(scope["operation_commitment"],json.dumps(request))
                 payload=json.loads(request["messages"][1]["content"])
                 self.assertEqual(set(payload["approved_operations"]),set(om.OPS))
+                self.assertEqual(payload["question"],scope["objective"])
+                self.assertEqual(set(payload["operation_definitions"]),set(om.OPS))
+                self.assertNotIn("goals",payload)
                 self.assertEqual(set(payload["required_operation_groups"]["group_1"]),om.NUMERIC)
                 self.assertEqual(set(payload["required_operation_groups"]["group_2"]),om.TEXT)
             self.assertEqual(order,mp.ORDER)
@@ -124,6 +127,19 @@ class PlanTests(unittest.TestCase):
             self.assertEqual(actual["validation"],{"results":{"median":{"numerator":12,"denominator":1},"shared_terms":["resilient","systems"]}})
             with patch.object(mp,"read_json",side_effect=AssertionError("no repeated inference")):
                 self.assertEqual(mp.model_plan(directory,cid,pid,goals=om.goals(scope),**kwargs),(order,receipt))
+
+    def test_rejection_diagnostic_keeps_only_reviewed_choices(self):
+        policy={"allowed":("range","median","shared_terms"),
+                "required_groups":(("range","median"),("shared_terms",)),
+                "commitment":mp.digest(["range","shared_terms"])}
+        with tempfile.TemporaryDirectory() as tmp:
+            choice=valid_plan()
+            choice["step_3"]["operations"]={"group_1":"median","group_2":"SECRET_RAW_TEXT"}
+            mp.rejected_choice(Path(tmp),"company","parent",choice,"OPERATION_SCOPE",policy)
+            raw=(Path(tmp)/"minister-model-rejection.json").read_text()
+            self.assertNotIn("SECRET_RAW_TEXT",raw)
+            self.assertEqual(json.loads(raw)["reviewed_operation_selections"],
+                             {"group_1":"median","group_2":None})
 
     def test_rejected_plan_no_fallback(self):
         good=valid_plan()
