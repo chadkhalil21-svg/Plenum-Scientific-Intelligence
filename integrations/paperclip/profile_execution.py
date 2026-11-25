@@ -40,8 +40,10 @@ def division_receipts(role, scope, prior, result, directory):
                        "identifiers":identifiers,"interactive_browser_executed":False})
     elif role=="research":
         ids=sorted(scope["dois"]) if bibliography else sorted(result["readback"])
-        add("research",{"bibliographic_identifiers":ids,"metadata_readback_sha256":hash_value(result),
-                        "full_text_validation":False})
+        work={"bibliographic_identifiers":ids,"metadata_readback_sha256":hash_value(result),"full_text_validation":False}
+        if objective and "synthesis" in scope.get("inputs",{}):
+            work.update(source_index_sha256=result["source_index_sha256"],source_sentence_count=len(result["source_index"]))
+        add("research",work)
     elif role=="engineering":
         from pathlib import Path
         from plenum_ai.reviewed_domain_workers import DOMAIN_FILES

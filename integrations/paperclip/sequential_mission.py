@@ -320,6 +320,11 @@ def minister():
         from model_plan import model_plan
         from objective_mission import planning_kwargs
         roles,model_receipt=model_plan(directory,cid,pid,goals=goal_texts(scope),**planning_kwargs(scope))
+    synthesis_receipt=None
+    from synthesis_contract import is_synthesis
+    if is_synthesis(scope):
+        from synthesis_contract import plan as synthesis_plan
+        synthesis_receipt=synthesis_plan(directory,scope,cid,pid)
     composition_receipt=None
     from composition_contract import is_composition
     if is_composition(scope):
@@ -340,6 +345,8 @@ def minister():
         plan["model_receipt_sha256"]=digest(model_receipt)
     if composition_receipt is not None:
         plan["composition_plan_sha256"]=digest(composition_receipt)
+    if synthesis_receipt is not None:
+        plan["synthesis_plan_sha256"]=digest(synthesis_receipt)
     path=directory/"minister-plan.json"
     if path.exists():
         if json.loads(path.read_text())!=plan:

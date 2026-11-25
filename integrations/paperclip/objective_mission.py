@@ -7,17 +7,19 @@ from checkpoint_store import exclusive,DomainBlocked
 from objective_program import TOOLS,OPS
 
 from composition_contract import is_composition
+from synthesis_contract import is_synthesis
+SYNTHESIS_SOURCE=Path(__file__).with_name("synthesis_program.py")
 COMPOSITION_SOURCE=Path(__file__).with_name("composition_program.py")
 SOURCE=Path(__file__).with_name("objective_program.py")
 PIPELINE_SOURCE=Path(__file__).with_name("pipeline_program.py")
-def source_for(scope):return COMPOSITION_SOURCE if is_composition(scope) else PIPELINE_SOURCE if "pipeline" in scope.get("inputs",{}) else SOURCE
+def source_for(scope):return SYNTHESIS_SOURCE if is_synthesis(scope) else COMPOSITION_SOURCE if is_composition(scope) else PIPELINE_SOURCE if "pipeline" in scope.get("inputs",{}) else SOURCE
 NUMERIC={"mean","median","range","population_variance","least_squares_slope","max_step_change"}
 TEXT={"word_counts","shared_terms","term_frequency"}
 
-def tools_for(scope):return (("collections",) if "pipeline" in scope.get("inputs",{}) or is_composition(scope) else TOOLS) if scope["kind"]=="public_objective" else None
+def tools_for(scope):return (("collections",) if "pipeline" in scope.get("inputs",{}) or is_composition(scope) or is_synthesis(scope) else TOOLS) if scope["kind"]=="public_objective" else None
 
 def operation_policy(scope):
-    if scope["kind"]!="public_objective" or "operations" in scope or is_composition(scope):return None
+    if scope["kind"]!="public_objective" or "operations" in scope or is_composition(scope) or is_synthesis(scope):return None
     if "pipeline" in scope["inputs"]:
         from pipeline_contract import policy
         return policy(scope["inputs"]["pipeline"],scope["operation_commitment"])
@@ -33,12 +35,16 @@ def planning_kwargs(scope):
 def validate(scope):
     explicit=set(scope)=={"kind","objective","dois","inputs","operations"}
     natural=set(scope)=={"kind","objective","dois","inputs","operation_commitment"}
-    if not (explicit or natural or is_composition(scope)):raise ValueError("Exact objective envelope required")
+    if not (explicit or natural or is_composition(scope) or is_synthesis(scope)):raise ValueError("Exact objective envelope required")
     label=scope["objective"]
     if not isinstance(label,str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9 ,().?'-]{9,239}",label):raise ValueError("Invalid public objective")
     ids=scope["dois"]
     if not isinstance(ids,list) or not 1<=len(ids)<=2 or any(not isinstance(x,str) or not re.fullmatch(r"10\.[0-9]{4,9}/[a-z0-9][a-z0-9.()/_+-]{0,100}",x) for x in ids) or len(set(ids))!=len(ids):raise ValueError("Invalid public DOI scope")
     data=scope["inputs"]
+    if is_synthesis(scope):
+        from synthesis_contract import validate as validate_synthesis
+        validate_synthesis(scope)
+        return
     if is_composition(scope):
         from composition_contract import validate as validate_composition
         validate_composition(scope)
@@ -66,14 +72,17 @@ def validate(scope):
 
 def goals(scope):
     validate(scope)
-    engineering_goal=("Compose exact arithmetic expressions from authorized input names" if is_composition(scope) else "Execute reviewed tool for acceptance operations "+", ".join(scope["operations"])
+    engineering_goal=("Extract and compare cited evidence from the approved source corpus" if is_synthesis(scope) else "Compose exact arithmetic expressions from authorized input names" if is_composition(scope) else "Execute reviewed tool for acceptance operations "+", ".join(scope["operations"])
                       if "operations" in scope else "Select necessary reviewed operations from the natural objective and available "+", ".join(sorted(scope["inputs"])))
     return {"C":"Prepare bounded evidence brief for "+scope["objective"],
             "E":"Independently verify each requested acceptance operation and producer receipt",
             "A":"Retrieve approved public DOI metadata for "+", ".join(scope["dois"]),
-            "D":"Independently read back scholarly metadata",
+            "D":"Index approved source text and independently read back scholarly metadata" if is_synthesis(scope) else "Independently read back scholarly metadata",
             "B":engineering_goal+"; objective: "+scope["objective"]}
 def inputs(scope,directory=None):
+    if is_synthesis(scope):
+        from synthesis_contract import inputs as synthesis_inputs
+        return synthesis_inputs(scope,directory)
     if is_composition(scope):
         from composition_contract import inputs as composition_inputs
         return composition_inputs(scope,directory)
@@ -83,6 +92,9 @@ def inputs(scope,directory=None):
     choice=planned_choice(directory,scope)
     return {**scope["inputs"],"operations":validate_operations(choice["operations"],operation_policy(scope))}
 def simulation_input(data):
+    if "records" in data:
+        from synthesis_contract import perturb
+        return perturb(data)
     if "expressions" in data:
         return dict(data,values=dict(data["holdout"]))
     if "pipeline" in data:
@@ -103,6 +115,9 @@ def evaluate(source,data,tool):
     except subprocess.TimeoutExpired as exc:raise TimeoutError("Reviewed local computation timed out") from exc
     return json.loads(res.stdout)
 def independent(data):
+    if "records" in data:
+        from synthesis_contract import independent as synthesis_independent
+        return synthesis_independent(data)
     if "expressions" in data:
         from composition_contract import independent as composition_independent
         return composition_independent(data)
@@ -143,6 +158,13 @@ def engineering(scope,directory,tool):
     exclusive(artifact/"manifest.json",manifest)
     return {"artifact_dir":artifact.name,"manifest":manifest,"input":data,"validation":observed,"tool":tool}
 def brief(scope,prior):
+    if is_synthesis(scope):
+        results=prior["engineering"]["result"]["validation"]
+        conflict=any(x["relation"]=="conflict" for x in results["comparisons"])
+        return {"objective":scope["objective"],"results":results,
+            "recommendation":"Resolve the explicitly conflicting requirements before an external decision; consult the cited evidence" if conflict else "Review the cited evidence before any external decision",
+            "limitations":["The supplied source text is not independently established as true","Live DOI metadata is not full-text confirmation",*results["limitations"]],
+            "new_paid_services":False,"external_actions_executed":False}
     return {"objective":scope["objective"],"results":prior["engineering"]["result"]["validation"],
             "recommendation":"Review the bounded synthetic results against independently collected evidence before decisions",
             "limitations":["Synthetic public inputs are not measured evidence","DOI metadata does not independently validate these inputs","Only the scoped arithmetic grammar was executed" if is_composition(scope) else "Only the explicitly approved acceptance operations were executed"],
@@ -153,15 +175,31 @@ def run(role,scope,prior,directory):
         from plenum_ai.chief_contract_plan import run_contract,check_contract_result
         ids={"dois":scope["dois"]};tool="crossref_metadata" if role=="intelligence" else "bibliography_readback"
         previous={} if role=="intelligence" else {"crossref_metadata":prior["intelligence"]["result"]}
-        value=run_contract(tool,ids,previous);check_contract_result(tool,ids,previous,value);return value
-    if role=="engineering":return engineering(scope,directory,planned_tool(directory,scope))
+        value=run_contract(tool,ids,previous);check_contract_result(tool,ids,previous,value)
+        if is_synthesis(scope) and role=="research":
+            from synthesis_contract import index,digest
+            records=index(scope["inputs"]["synthesis"]["documents"])
+            return {**value,"source_index":records,"source_index_sha256":digest(records)}
+        return value
+    if role=="engineering":
+        if is_synthesis(scope):
+            from synthesis_contract import digest
+            data=inputs(scope,directory);r=prior["research"]["result"]
+            if r["source_index"]!=data["records"] or r["source_index_sha256"]!=digest(data["records"]):raise ValueError("Research source index changed")
+        return engineering(scope,directory,planned_tool(directory,scope))
     if role=="commercial":return brief(scope,prior)
     raise ValueError("Unknown objective role")
 def verify(scope,prior,directory,*,functional_test):
     from plenum_ai.chief_contract_plan import check_contract_result
     ids={"dois":scope["dois"]};intel=prior["intelligence"]["result"]
     check_contract_result("crossref_metadata",ids,{},intel)
-    check_contract_result("bibliography_readback",ids,{"crossref_metadata":intel},prior["research"]["result"])
+    research=prior["research"]["result"]
+    if is_synthesis(scope):
+        from synthesis_contract import index,digest
+        expected_index=index(scope["inputs"]["synthesis"]["documents"])
+        if research["source_index"]!=expected_index or research["source_index_sha256"]!=digest(expected_index):raise ValueError("Research source index verification")
+        research={k:v for k,v in research.items() if k not in ("source_index","source_index_sha256")}
+    check_contract_result("bibliography_readback",ids,{"crossref_metadata":intel},research)
     eng=prior["engineering"]["result"];name=eng["artifact_dir"]
     if not isinstance(name,str) or not name.startswith("engineering-artifact-") or Path(name).name!=name:raise ValueError("Unsafe artifact")
     artifact=directory/name;source=artifact/"main.py"
@@ -176,4 +214,9 @@ def verify(scope,prior,directory,*,functional_test):
         if eng["tool"]!=row["choice"]["tool"]:raise ValueError("Unapproved alternate tool")
     if eng["validation"]!=independent(eng["input"]) or (functional_test and evaluate(source,eng["input"],eng["tool"])!=eng["validation"]):raise ValueError("Independent objective verification disagrees")
     if brief(scope,prior)!=prior["commercial"]["result"]:raise ValueError("Brief changed")
-    return {"verified_producers":4,"independent_actual_input_test":functional_test,"scholarly_metadata_records":len(intel),"synthetic_data_only":True,"general_autonomy_verified":False,"paid_inference":False}
+    result={"verified_producers":4,"independent_actual_input_test":functional_test,"scholarly_metadata_records":len(intel),"synthetic_data_only":True,"general_autonomy_verified":False,"paid_inference":False}
+    if is_synthesis(scope):
+        v=eng["validation"]
+        result.update(grounded_synthesis_verified=True,source_sentence_count=len(eng["input"]["records"]),
+            comparison_count=len(v["comparisons"]),extract_count=len(v["extracts"]),semantic_truth_verified=False)
+    return result

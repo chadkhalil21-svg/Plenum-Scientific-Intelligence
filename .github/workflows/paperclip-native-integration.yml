@@ -168,7 +168,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(inputs.pipeline_stage != '' && '[{"mode":"local","kind":"pipeline"}]' || github.event_name == 'pull_request' && '[{"mode":"off","kind":"legacy"},{"mode":"local","kind":"legacy"},{"mode":"local","kind":"budget"},{"mode":"local","kind":"objective"},{"mode":"local","kind":"composition-logistics"},{"mode":"local","kind":"composition-energy"}]' || '[{"mode":"local","kind":"event"}]') }}
+        include: ${{ fromJSON(inputs.pipeline_stage != '' && '[{"mode":"local","kind":"pipeline"}]' || github.event_name == 'pull_request' && '[{"mode":"off","kind":"legacy"},{"mode":"local","kind":"legacy"},{"mode":"local","kind":"budget"},{"mode":"local","kind":"objective"},{"mode":"local","kind":"composition-logistics"},{"mode":"local","kind":"composition-energy"},{"mode":"local","kind":"synthesis"}]' || '[{"mode":"local","kind":"event"}]') }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -231,6 +231,7 @@ jobs:
             budget) scope='{"kind":"bibliography_budget","dois":["10.1145/3442188.3445922"],"budget":{"model":"@cf/zai-org/glm-4.7-flash","neurons_used_today":100,"neurons_reserved":200,"input_tokens_upper_bound":3000,"output_tokens_upper_bound":1000}}' ;;
             objective) scope='{"kind":"public_objective","objective":"Find the words common to both delivery summaries and the middle value after sorting the observations.","dois":["10.1007/s10791-026-10743-4","10.1016/j.jss.2026.113142"],"inputs":{"documents":["supplier delivery quality","delivery supplier testing"],"samples":[17,-3,8,42,12,19]},"operation_commitment":"b06f527ce3646bcbc14a7970066456b64e9396c24e7a6102beefcf6340985428"}' ;;
             composition-logistics|composition-energy) scope=$(PYTHONPATH=src python3 integrations/paperclip/composition_smoke.py "$KIND") ;;
+            synthesis) scope=$(PYTHONPATH=src python3 integrations/paperclip/synthesis_smoke.py scope) ;;
             event) scope="$EVENT_SCOPE"; test -n "$scope" ;;
             pipeline) scope="$PIPELINE_SCOPE"; test -n "$scope" ;;
             *) exit 1 ;;
