@@ -89,10 +89,19 @@ class PlanTests(unittest.TestCase):
         self.assertEqual(validate_scope(scope),scope)
         kwargs=om.planning_kwargs(scope)
         good=valid_plan()
-        good["step_3"].update(tool="stream",operations=chosen)
+        good["step_3"].update(tool="stream",operations={"group_1":"median","group_2":"shared_terms"})
         self.assertEqual(mp.validate_choice(good,**kwargs),mp.ORDER)
-        for bad in (["median"],["mean","shared_terms"],["median","shared_terms","word_counts"],
-                    ["median","median","shared_terms"],["median","shell"]):
+        schema=mp.plan_schema(**kwargs)["properties"]["step_3"]["properties"]["operations"]
+        self.assertEqual(set(schema["required"]),{"group_1","group_2"})
+        self.assertIn("median",schema["properties"]["group_1"]["enum"])
+        self.assertIn("median+range",schema["properties"]["group_1"]["enum"])
+        self.assertNotIn("median+median",schema["properties"]["group_1"]["enum"])
+        self.assertNotIn("shared_terms",schema["properties"]["group_1"]["enum"])
+        for bad in (["median","shared_terms"],{"group_1":"median"},
+                    {"group_1":"mean","group_2":"shared_terms"},
+                    {"group_1":"median","group_2":"shared_terms+word_counts"},
+                    {"group_1":"median+median","group_2":"shared_terms"},
+                    {"group_1":"median","group_2":"shell"}):
             changed=dict(good,step_3=dict(good["step_3"],operations=bad))
             with self.subTest(bad=bad),self.assertRaises(mp.PlanRejected):
                 mp.validate_choice(changed,**kwargs)
@@ -105,7 +114,10 @@ class PlanTests(unittest.TestCase):
                 order,receipt=mp.model_plan(directory,cid,pid,goals=om.goals(scope),**kwargs)
                 request=model.call_args_list[1].args[1]
                 self.assertNotIn(scope["operation_commitment"],json.dumps(request))
-                self.assertEqual(set(json.loads(request["messages"][1]["content"])["approved_operations"]),set(om.OPS))
+                payload=json.loads(request["messages"][1]["content"])
+                self.assertEqual(set(payload["approved_operations"]),set(om.OPS))
+                self.assertEqual(set(payload["required_operation_groups"]["group_1"]),om.NUMERIC)
+                self.assertEqual(set(payload["required_operation_groups"]["group_2"]),om.TEXT)
             self.assertEqual(order,mp.ORDER)
             (directory/"minister-plan.json").write_text(json.dumps({"company":cid,"parent":pid,"model_receipt_sha256":mp.digest(receipt)}))
             actual=om.engineering(scope,directory,"stream")
