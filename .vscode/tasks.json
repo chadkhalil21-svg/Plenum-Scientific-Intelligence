@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Prometheus: private owner bootstrap (manual, $0 cap)",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "integrations/paperclip/owner_codespace_bootstrap.sh",
+        "--confirm-owner-free-budget"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "runOptions": {
+        "runOn": "default"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
