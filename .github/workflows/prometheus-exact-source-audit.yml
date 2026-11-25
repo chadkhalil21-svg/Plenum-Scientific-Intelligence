@@ -1,0 +1,38 @@
+name: Prometheus exact baseline source audit
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/prometheus-exact-source-audit.yml'
+      - 'integrations/prometheus_durability/audit_exact_baseline_sources.py'
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact baseline and package only requested modules
+        env:
+          PAID_INFERENCE: 'false'
+        run: |
+          set -euo pipefail
+          mkdir -p source-audit
+          python3 integrations/prometheus_durability/audit_exact_baseline_sources.py > source-audit/manifest.json
+          python3 - <<'PY'
+          import json, pathlib, subprocess, hashlib
+          root = pathlib.Path('source-audit')
+          m = json.loads((root/'manifest.json').read_text())
+          for f in m['files']:
+              data = subprocess.check_output(['git','show',m['commit']+':'+f['path']])
+              assert len(data)==f['bytes'] and hashlib.sha256(data).hexdigest()==f['sha256']
+              p=root/f['path']; p.parent.mkdir(parents=True,exist_ok=True); p.write_bytes(data)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: exact-baseline-source-audit
+          path: source-audit/
+          retention-days: 1
