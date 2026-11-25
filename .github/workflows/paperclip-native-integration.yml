@@ -168,7 +168,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(inputs.pipeline_stage != '' && '[{"mode":"local","kind":"pipeline"}]' || github.event_name == 'pull_request' && '[{"mode":"off","kind":"legacy"},{"mode":"local","kind":"legacy"},{"mode":"local","kind":"budget"},{"mode":"local","kind":"objective"}]' || '[{"mode":"local","kind":"event"}]') }}
+        include: ${{ fromJSON(inputs.pipeline_stage != '' && '[{"mode":"local","kind":"pipeline"}]' || github.event_name == 'pull_request' && '[{"mode":"off","kind":"legacy"},{"mode":"local","kind":"legacy"},{"mode":"local","kind":"budget"},{"mode":"local","kind":"objective"},{"mode":"local","kind":"composition-logistics"},{"mode":"local","kind":"composition-energy"}]' || '[{"mode":"local","kind":"event"}]') }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -189,6 +189,7 @@ jobs:
             -e BETTER_AUTH_SECRET="$(openssl rand -hex 32)" \
             -e PAPERCLIP_TOOL_ACTION_SIGNING_SECRET="$(openssl rand -hex 32)" \
             --mount "type=volume,src=plenum-paperclip-test-volume,dst=/paperclip" \
+            --mount "type=volume,src=plenum-paperclip-private-proof,dst=/plenum-private-proof" \
             --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/plenum,readonly" \
             "$image"
           for i in $(seq 1 90); do
@@ -211,7 +212,7 @@ jobs:
             if docker exec plenum-paperclip-integration curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
             sleep 2
           done
-          timeout 300 docker exec plenum-paperclip-qwen ollama pull qwen3.5:4b
+          bash integrations/paperclip/pull_original_qwen.sh
           digest=$(docker exec plenum-paperclip-qwen ollama list | awk '$1=="qwen3.5:4b" {print $2}')
           test "$digest" = d8b0f5e9760c
           echo "Original Qwen model digest prefix verified: $digest"
@@ -229,6 +230,7 @@ jobs:
             legacy) scope='{"kind":"coastal"}' ;;
             budget) scope='{"kind":"bibliography_budget","dois":["10.1145/3442188.3445922"],"budget":{"model":"@cf/zai-org/glm-4.7-flash","neurons_used_today":100,"neurons_reserved":200,"input_tokens_upper_bound":3000,"output_tokens_upper_bound":1000}}' ;;
             objective) scope='{"kind":"public_objective","objective":"Find the words common to both delivery summaries and the middle value after sorting the observations.","dois":["10.1007/s10791-026-10743-4","10.1016/j.jss.2026.113142"],"inputs":{"documents":["supplier delivery quality","delivery supplier testing"],"samples":[17,-3,8,42,12,19]},"operation_commitment":"b06f527ce3646bcbc14a7970066456b64e9396c24e7a6102beefcf6340985428"}' ;;
+            composition-logistics|composition-energy) scope=$(PYTHONPATH=src python3 integrations/paperclip/composition_smoke.py "$KIND") ;;
             event) scope="$EVENT_SCOPE"; test -n "$scope" ;;
             pipeline) scope="$PIPELINE_SCOPE"; test -n "$scope" ;;
             *) exit 1 ;;
@@ -261,6 +263,23 @@ jobs:
       - name: Qualify two consecutive persistent missions and both restart readbacks
         if: matrix.mode == 'off'
         run: python3 integrations/paperclip/persistent_native_smoke.py
+      - name: Restore actual synthetic native evidence from a separate private volume across container restart
+        if: matrix.kind == 'composition-energy'
+        run: |
+          set -eu
+          docker exec --user root plenum-paperclip-integration sh -c 'chown node:node /plenum-private-proof && chmod 700 /plenum-private-proof'
+          docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/private_volume_native_smoke.py seal
+          docker restart plenum-paperclip-integration
+          for i in $(seq 1 90); do
+            if docker exec plenum-paperclip-integration curl --fail --silent http://127.0.0.1:3100/api/health >/dev/null; then
+              docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/private_volume_native_smoke.py restore
+              docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/event_native.py readback
+              docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/private_volume_native_smoke.py finish
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
       - name: Collect only public task evidence
         if: always()
         env:
@@ -309,7 +328,7 @@ jobs:
         run: |
           docker rm -fv plenum-paperclip-qwen 2>/dev/null || true
           docker rm -fv plenum-paperclip-integration 2>/dev/null || true
-          docker volume rm plenum-paperclip-test-volume 2>/dev/null || true
+          docker volume rm plenum-paperclip-private-proof plenum-paperclip-test-volume 2>/dev/null || true
           docker volume rm plenum-paperclip-qwen-cache 2>/dev/null || true
   fresh-runner-acceptance:
     needs: [authorize, native-integration]

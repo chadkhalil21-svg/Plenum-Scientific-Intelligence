@@ -21,7 +21,7 @@ def issue_scope(issue):
     if issue.get("title")==TITLE and issue.get("body")==BODY:return dict(LEGACY)
     if issue.get("title")==PAPERCLIP_EVIDENCE_TITLE:
         scope=parse_body(issue.get("body"))
-        if "pipeline" in scope.get("inputs",{}):
+        if any(k in scope.get("inputs",{}) for k in ("pipeline","composition")):
             raise ValueError("Pipeline continuation requires independently attested memory workflow")
         return scope
     raise ValueError("Unapproved public mission envelope")

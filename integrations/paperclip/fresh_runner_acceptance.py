@@ -148,12 +148,22 @@ def accept_queue(root):
 def main():
     base=Path(sys.argv[1]);out=Path(sys.argv[2])
     event=os.environ["EVENT"];run=os.environ["GITHUB_RUN_ID"];commit=os.environ["GITHUB_SHA"]
-    expected_names={"off-legacy","local-legacy","local-budget","local-objective"} if event=="pull_request" else {"local-event"}
+    expected_names={"off-legacy","local-legacy","local-budget","local-objective","local-composition-logistics","local-composition-energy"} if event=="pull_request" else {"local-event"}
     paths={p.name.removeprefix("paperclip-native-public-evidence-"):p for p in base.iterdir()}
     if set(paths)!=expected_names:raise ValueError("Missing or unexpected native evidence archives")
     scope=None if event=="pull_request" else validate_scope(json.loads(os.environ["EXPECTED_SCOPE"]))
     results={k:accept(paths[k],run,commit,scope) for k in sorted(paths)}
     if any(v["model_receipt_verified"]!=(k!="off-legacy") for k,v in results.items()):raise ValueError("Unexpected model receipt")
+    if event=="pull_request":
+        from composition_smoke import scope as expected_composition_scope
+        for case in ("composition-logistics","composition-energy"):
+            accepted=accept(paths["local-"+case],run,commit,expected_composition_scope(case))
+            if case=="composition-energy":
+                from private_volume import collect
+                root=paths["local-"+case];directory=root/accepted["company"]/accepted["mission"]
+                entries=collect(directory)
+                proof=read(root/"private-restore-proof.json",{"schema":"plenum-isolated-native-private-restore-v1","company":accepted["company"],"mission":accepted["mission"],"scope_sha256":accepted["scope_sha256"],"qualification_sha256":accepted["qualification_sha256"],"file_manifest_sha256":digest(entries),"restored_file_count":len(entries),"separate_private_volume":True,"synthetic_grant":True,"native_restart_readback_after_restore":True,"provider_calls_replayed":0,"model_calls_replayed":0,"paid_inference":False})
+                results["local-"+case]["isolated_private_restore_sha256"]=digest(proof)
     if event=="pull_request" and not results["local-objective"].get("supervisor_recovery_sha256"):raise ValueError("Missing native interrupted-supervisor proof")
     row={"schema":"plenum-fresh-runner-acceptance-v1","run_id":run,"commit":commit,"accepted":results,
          "fresh_runner_independent_acceptance":True,"native_board_restored":False,"provider_calls_replayed":0,"model_calls_replayed":0,"paid_inference":False}

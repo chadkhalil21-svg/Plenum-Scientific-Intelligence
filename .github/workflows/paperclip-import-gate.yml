@@ -85,3 +85,14 @@ jobs:
         env:
           PYTHONPATH: src
         run: python integrations/paperclip/cross_run_memory_smoke.py
+
+      - name: Independent compositional grammar and held-out calculation checks
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/composition_smoke.py
+
+      - name: Separate-process private local volume grant and restoration fixture
+        run: python integrations/paperclip/private_volume_smoke.py
+
+      - name: Bounded original-model registry startup recovery
+        run: python integrations/paperclip/model_pull_smoke.py
