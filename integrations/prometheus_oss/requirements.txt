@@ -1,0 +1,4 @@
+# Upstream MIT licensed, local libraries only. No managed service SDK use.
+deepagents==0.7.41
+langgraph==1.2.24
+langgraph-checkpoint-sqlite==3.1.3

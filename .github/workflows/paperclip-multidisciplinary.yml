@@ -2,6 +2,8 @@ name: Paperclip multidisciplinary public continuation
 on:
   pull_request:
     paths:
+      - 'integrations/prometheus_durability/**'
+      - '.github/workflows/prometheus-upstream-durability.yml'
       - 'integrations/paperclip/pipeline_*.py'
       - '.github/workflows/paperclip-multidisciplinary.yml'
       - '.github/workflows/paperclip-native-integration.yml'

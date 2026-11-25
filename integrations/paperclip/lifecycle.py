@@ -50,7 +50,7 @@ def persistent_adapter(role):
     if role not in ("minister","intelligence","research","engineering","commercial","verification"):
         raise ValueError("Unknown persistent role")
     return {"command":"python3","args":[PERSISTENT_ENTRYPOINT,role],
-            "cwd":"/plenum","timeoutSec":150 if role=="minister" else 120,"env":{}}
+            "cwd":"/plenum","timeoutSec":150 if role=="minister" else 480 if role=="commercial" else 120,"env":{}}
 
 def validate_roster(rows, company, specs):
     if not isinstance(rows,list) or any(not isinstance(r,dict) for r in rows):

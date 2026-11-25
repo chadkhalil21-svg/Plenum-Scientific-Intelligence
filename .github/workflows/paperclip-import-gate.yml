@@ -111,3 +111,12 @@ jobs:
 
       - name: Owner same-volume restart fail-closed offline fixtures
         run: python integrations/paperclip/owner_restart_smoke.py
+
+      - name: Real SQLite backup and immutable cross-runner restore fixtures
+        env:
+          PYTHONPATH: src
+        run: |
+          python integrations/prometheus_oss/snapshot_smoke.py
+          python integrations/prometheus_oss/native_scope.py oss-review >/dev/null
+          python integrations/prometheus_oss/native_scope.py oss-defer >/dev/null
+          bash -n integrations/prometheus_oss/native_restore.sh
