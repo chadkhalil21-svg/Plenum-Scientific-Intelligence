@@ -13,4 +13,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Isolated encrypted snapshot contract
-        run: node integrations/cloudflare/paperclip-snapshot.test.mjs
+        run: |
+          node integrations/cloudflare/paperclip-snapshot.test.mjs
+          node integrations/cloudflare/paperclip-snapshot-transport.test.mjs
