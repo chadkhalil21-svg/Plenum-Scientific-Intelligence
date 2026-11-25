@@ -25,7 +25,7 @@ def failure_chain(directory,company,issue):
 
 def context(directory,company,parent,issue,scope):
     from production_wiring import load_prepared
-    if scope["kind"]!="public_objective":raise PermissionError("No alternative contract for scope")
+    if scope["kind"]!="public_objective" or "synthesis" in scope.get("inputs",{}):raise PermissionError("No alternative contract for scope")
     prepared=load_prepared(directory,company,parent)
     if prepared["model_mode"]!="local" or prepared["scope_sha256"]!=scope_digest(scope):raise PermissionError("Replan not authorized")
     plan=checked(directory/"minister-plan.json",{"company":company,"parent":parent})

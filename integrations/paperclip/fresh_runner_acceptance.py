@@ -148,13 +148,16 @@ def accept_queue(root):
 def main():
     base=Path(sys.argv[1]);out=Path(sys.argv[2])
     event=os.environ["EVENT"];run=os.environ["GITHUB_RUN_ID"];commit=os.environ["GITHUB_SHA"]
-    expected_names={"off-legacy","local-legacy","local-budget","local-objective","local-composition-logistics","local-composition-energy"} if event=="pull_request" else {"local-event"}
+    expected_names={"off-legacy","local-legacy","local-budget","local-objective","local-composition-logistics","local-composition-energy","local-synthesis"} if event=="pull_request" else {"local-event"}
     paths={p.name.removeprefix("paperclip-native-public-evidence-"):p for p in base.iterdir()}
     if set(paths)!=expected_names:raise ValueError("Missing or unexpected native evidence archives")
     scope=None if event=="pull_request" else validate_scope(json.loads(os.environ["EXPECTED_SCOPE"]))
     results={k:accept(paths[k],run,commit,scope) for k in sorted(paths)}
     if any(v["model_receipt_verified"]!=(k!="off-legacy") for k,v in results.items()):raise ValueError("Unexpected model receipt")
     if event=="pull_request":
+        from synthesis_smoke import scope as expected_synthesis_scope
+        accepted=accept(paths["local-synthesis"],run,commit,expected_synthesis_scope())
+        if accepted!=results["local-synthesis"]:raise ValueError("Synthesis independent acceptance mismatch")
         from composition_smoke import scope as expected_composition_scope
         for case in ("composition-logistics","composition-energy"):
             accepted=accept(paths["local-"+case],run,commit,expected_composition_scope(case))
