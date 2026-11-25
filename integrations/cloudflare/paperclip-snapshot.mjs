@@ -49,34 +49,75 @@ export async function openSnapshot(bundle,rawKey,input){
   }
   return output;
 }
-// Durable Object storage API; reserve once, no retry or overwrite after ambiguity.
-// Each ciphertext value is below 512 KiB + 16 bytes; commit marker last.
+// Bounded independent requests: one reservation, sequential immutable chunks,
+// and a final commit marker. Call only from an authorized private transport.
+export async function reserveSnapshot(storage,input,value){
+  const id=identity(input),m=manifest(value,id),p=slot(id);
+  const h=await sha(enc.encode(JSON.stringify(m)));
+  await storage.transaction(async tx=>{
+    require(await tx.get(p+"reserved")===undefined&&await tx.get(p+"manifest")===undefined,"snapshot already reserved");
+    await tx.put(p+"reserved",{manifest:m,hash:h,next:0});
+  });
+  return {snapshot:id.snapshot,manifest_sha256:h,ciphertext_chunks:m.count,plaintext_bytes:m.size};
+}
+function expectedHash(h){require(typeof h==="string"&&digest.test(h),"independent manifest digest required");}
+export async function storeChunk(storage,input,h,i,raw){
+  const id=identity(input),p=slot(id),c=bytes(raw);
+  expectedHash(h);
+  require(Number.isSafeInteger(i)&&i>=0&&i<MAX/CHUNK&&c.length<=CHUNK+16,"invalid chunk");
+  const ch=await sha(c);
+  await storage.transaction(async tx=>{
+    const row=await tx.get(p+"reserved");
+    require(row&&row.hash===h,"snapshot reservation mismatch");
+    const m=manifest(row.manifest,id);
+    require(await tx.get(p+"manifest")===undefined,"snapshot already committed");
+    require(i===row.next&&i<m.count,"nonsequential or replayed chunk");
+    require(c.length===Math.min(CHUNK,m.size-i*CHUNK)+16&&ch===m.chunks[i],"ciphertext mismatch");
+    require(await tx.get(p+"chunk:"+i)===undefined,"chunk already exists");
+    await tx.put(p+"chunk:"+i,c);
+    await tx.put(p+"reserved",{manifest:m,hash:h,next:i+1});
+  });
+}
+export async function commitSnapshot(storage,input,h){
+  const id=identity(input),p=slot(id);expectedHash(h);
+  await storage.transaction(async tx=>{
+    const row=await tx.get(p+"reserved");
+    require(row&&row.hash===h,"snapshot reservation mismatch");
+    const m=manifest(row.manifest,id);
+    require(await tx.get(p+"manifest")===undefined,"snapshot already committed");
+    require(row.next===m.count,"incomplete snapshot");
+    await tx.put(p+"manifest",m);
+  });
+}
+export async function readManifest(storage,input,h){
+  const id=identity(input),p=slot(id);expectedHash(h);
+  const m=manifest(await storage.get(p+"manifest"),id);
+  require(await sha(enc.encode(JSON.stringify(m)))===h,"manifest digest mismatch");
+  return m;
+}
+export async function readChunk(storage,input,h,i){
+  const id=identity(input),p=slot(id),m=await readManifest(storage,id,h);
+  require(Number.isSafeInteger(i)&&i>=0&&i<m.count,"invalid chunk index");
+  const c=bytes(await storage.get(p+"chunk:"+i));
+  require(c.length===Math.min(CHUNK,m.size-i*CHUNK)+16&&await sha(c)===m.chunks[i],"ciphertext mismatch");
+  return c;
+}
+// Client/emulator convenience; use staged operations individually in a Worker.
+// This wrapper must not run with a large bundle inside a Worker memory budget.
 export async function storeSnapshot(storage,bundle,input){
-  const id=identity(input),m=manifest(bundle.manifest,id),p=slot(id);
+  const id=identity(input),m=manifest(bundle.manifest,id);
   require(Array.isArray(bundle.chunks)&&bundle.chunks.length===m.count,"incomplete snapshot");
   for(let i=0;i<m.count;i++){
     const c=bytes(bundle.chunks[i]);
     require(c.length===Math.min(CHUNK,m.size-i*CHUNK)+16&&await sha(c)===m.chunks[i],"ciphertext mismatch");
   }
-  await storage.transaction(async tx=>{
-    require(await tx.get(p+"reserved")===undefined&&await tx.get(p+"manifest")===undefined,"snapshot already reserved");
-    await tx.put(p+"reserved",true);
-  });
-  for(let i=0;i<m.count;i++)await storage.put(p+"chunk:"+i,bundle.chunks[i]);
-  await storage.put(p+"manifest",m);
-  return {snapshot:id.snapshot,manifest_sha256:await sha(enc.encode(JSON.stringify(m))),ciphertext_chunks:m.count,plaintext_bytes:m.size};
+  const receipt=await reserveSnapshot(storage,id,m);
+  for(let i=0;i<m.count;i++)await storeChunk(storage,id,receipt.manifest_sha256,i,bundle.chunks[i]);
+  await commitSnapshot(storage,id,receipt.manifest_sha256);
+  return receipt;
 }
-export async function loadSnapshot(storage,input,expectedManifestHash){
-  const id=identity(input),p=slot(id);
-  require(typeof expectedManifestHash==="string"&&digest.test(expectedManifestHash),"independent manifest digest required");
-  require(await storage.get(p+"reserved")===true,"snapshot not reserved");
-  const m=manifest(await storage.get(p+"manifest"),id);
-  require(await sha(enc.encode(JSON.stringify(m)))===expectedManifestHash,"manifest digest mismatch");
-  const chunks=[];
-  for(let i=0;i<m.count;i++){
-    const c=bytes(await storage.get(p+"chunk:"+i));
-    require(c.length===Math.min(CHUNK,m.size-i*CHUNK)+16&&await sha(c)===m.chunks[i],"ciphertext mismatch");
-    chunks.push(c);
-  }
+export async function loadSnapshot(storage,input,h){
+  const id=identity(input),m=await readManifest(storage,id,h),chunks=[];
+  for(let i=0;i<m.count;i++)chunks.push(await readChunk(storage,id,h,i));
   return {manifest:m,chunks};
 }
