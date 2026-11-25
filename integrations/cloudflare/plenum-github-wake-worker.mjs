@@ -1,7 +1,8 @@
 import {handlePrivateMemory, handlePaperclipCheckpoint, PrivateContinuityMemory} from "./plenum-private-continuity.mjs";
 import {ownerMemoryCheckPage, ownerMemoryCheckScript} from "./plenum-private-memory-check.mjs";
 import {handleFreeCodingAI} from "./plenum-free-coding-ai.mjs";
-export {PrivateContinuityMemory};
+import {handleNativeSnapshot, PaperclipSnapshotStore} from "./paperclip-snapshot-transport.mjs";
+export {PrivateContinuityMemory, PaperclipSnapshotStore};
 /*
  * Plenum no-new-charge *event-driven wake* (SOURCE TEMPLATE ONLY).
  * Cloudflare Worker holds no private task content or personal credentials.
@@ -158,6 +159,8 @@ export default {
       return ownerMemoryCheckPage();
     if (pathname === "/memory-check.js" && request.method === "GET")
       return ownerMemoryCheckScript();
+    if (pathname.startsWith("/native-snapshots/"))
+      return handleNativeSnapshot(request, env);
     if (pathname.startsWith("/paperclip-checkpoints/"))
       return handlePaperclipCheckpoint(request, env);
     if (pathname === "/memory" || pathname.startsWith("/memory/"))

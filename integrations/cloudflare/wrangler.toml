@@ -22,12 +22,24 @@ class_name = "PrivateContinuityMemory"
 type = "durable-object"
 storage = "sqlite"
 
+
+# Candidate snapshot storage is disabled until owner-authorized activation.
+[[durable_objects.bindings]]
+name = "PLENUM_NATIVE_SNAPSHOT_STORE"
+class_name = "PaperclipSnapshotStore"
+
+[exports.PaperclipSnapshotStore]
+type = "durable-object"
+storage = "sqlite"
+
 [ai]
 binding = "AI"
 
 [vars]
+PLENUM_NATIVE_SNAPSHOT_ENABLED = "false"
 PLENUM_FREE_AI_ENABLED = "true"
 
 [previews.vars]
+PLENUM_NATIVE_SNAPSHOT_ENABLED = "false"
 PLENUM_PREVIEW_ONLY = "true"
 PLENUM_FREE_AI_ENABLED = "false"

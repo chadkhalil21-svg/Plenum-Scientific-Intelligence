@@ -31,18 +31,30 @@ type = "durable-object"
 storage = "sqlite"
 
 # Reuse native Cloudflare Workers AI: no vendor token, host or additional model server.
+
+# Candidate snapshot storage is disabled until owner-authorized activation.
+[[durable_objects.bindings]]
+name = "PLENUM_NATIVE_SNAPSHOT_STORE"
+class_name = "PaperclipSnapshotStore"
+
+[exports.PaperclipSnapshotStore]
+type = "durable-object"
+storage = "sqlite"
+
 [ai]
 binding = "AI"
 
 # Only signed original founder issue workflow can reach this route.
 # Historical provider UI recorded Workers Free; no paid inference fallback.
 [vars]
+PLENUM_NATIVE_SNAPSHOT_ENABLED = "false"
 PLENUM_FREE_AI_ENABLED = "true"
 
 # Cloudflare Workers Builds uses `wrangler preview` from the repository root.
 # Preview bindings and vars do not inherit production settings. Deliberately
 # configure NO preview DO, AI, service or secret bindings; keep routes isolated.
 [previews.vars]
+PLENUM_NATIVE_SNAPSHOT_ENABLED = "false"
 PLENUM_PREVIEW_ONLY = "true"
 PLENUM_FREE_AI_ENABLED = "false"
 
