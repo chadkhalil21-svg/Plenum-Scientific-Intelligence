@@ -1,0 +1,16 @@
+name: Prometheus encrypted snapshot contract
+on:
+  pull_request:
+    paths:
+      - 'integrations/cloudflare/paperclip-snapshot*'
+      - '.github/workflows/prometheus-encrypted-snapshot.yml'
+permissions:
+  contents: read
+jobs:
+  synthetic-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Isolated encrypted snapshot contract
+        run: node integrations/cloudflare/paperclip-snapshot.test.mjs
