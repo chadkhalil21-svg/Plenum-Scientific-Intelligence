@@ -23,6 +23,8 @@ on:
         type: string
   pull_request:
     paths:
+      - 'integrations/prometheus_durability/**'
+      - '.github/workflows/prometheus-upstream-durability.yml'
       - 'integrations/paperclip/**'
       - 'integrations/prometheus_oss/**'
       - 'src/plenum_ai/chief_domain_transfer.py'

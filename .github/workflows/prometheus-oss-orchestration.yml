@@ -2,6 +2,8 @@ name: Prometheus open-source orchestration qualification
 on:
   pull_request:
     paths:
+      - 'integrations/prometheus_durability/**'
+      - '.github/workflows/prometheus-upstream-durability.yml'
       - 'integrations/prometheus_oss/**'
       - 'integrations/paperclip/**'
       - '.github/workflows/prometheus-oss-orchestration.yml'
