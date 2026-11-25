@@ -125,6 +125,10 @@ class PlanTests(unittest.TestCase):
                     self.assertEqual(set(payload["operations"]),set(group))
                     self.assertEqual(set(request["format"]["required"]),set(group))
                 self.assertEqual(len(receipt["operation_classifications"]),2)
+                for index,group in enumerate(groups,2):
+                    payload=json.loads(model.call_args_list[index].args[1]["messages"][1]["content"])
+                    self.assertEqual(payload["source_phrase_cues"],mp.semantic_evidence(scope["objective"],group))
+                    self.assertTrue(all(span in scope["objective"] for spans in payload["source_phrase_cues"].values() for span in spans))
                 self.assertEqual(receipt["response"],good)
             self.assertEqual(order,mp.ORDER)
             (directory/"minister-plan.json").write_text(json.dumps({"company":cid,"parent":pid,"model_receipt_sha256":mp.digest(receipt)}))
@@ -134,6 +138,26 @@ class PlanTests(unittest.TestCase):
                 self.assertEqual(mp.model_plan(directory,cid,pid,goals=om.goals(scope),**kwargs),(order,receipt))
                 (directory/"minister-operation-2.attempt.json").unlink()
                 with self.assertRaises(ValueError):mp.model_plan(directory,cid,pid,goals=om.goals(scope),**kwargs)
+
+    def test_semantic_evidence_covers_reviewed_catalogue_without_acceptance_key(self):
+        cases=[
+            ("Calculate the arithmetic average of these readings","mean"),
+            ("Report the central entry in the ordered observations","median"),
+            ("Determine the difference between highest and lowest observations","range"),
+            ("Compute the population variance of the measured series","population_variance"),
+            ("Find the least-squares slope for the readings","least_squares_slope"),
+            ("Measure the greatest jump between consecutive readings","max_step_change"),
+            ("List vocabulary shared by every report","shared_terms"),
+            ("Report the number of words in each report","word_counts"),
+            ("Compute term frequency in the reports","term_frequency")]
+        for question,operation in cases:
+            with self.subTest(operation=operation):
+                cues=mp.semantic_evidence(question,tuple(mp.OPERATION_CUES))
+                self.assertTrue(cues[operation])
+                self.assertTrue(all(span in question for spans in cues.values() for span in spans))
+                if operation in ("range","median"):
+                    self.assertFalse(cues["max_step_change"])
+        self.assertTrue(all(not spans for spans in mp.semantic_evidence("Review the supplied public records",tuple(mp.OPERATION_CUES)).values()))
 
     def test_rejection_diagnostic_keeps_only_reviewed_choices(self):
         policy={"allowed":("range","median","shared_terms"),
