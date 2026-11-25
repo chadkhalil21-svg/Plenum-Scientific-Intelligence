@@ -267,7 +267,7 @@ jobs:
         if: matrix.kind == 'composition-energy'
         run: |
           set -eu
-          docker exec plenum-paperclip-integration sh -c 'chown node:node /plenum-private-proof && chmod 700 /plenum-private-proof'
+          docker exec --user root plenum-paperclip-integration sh -c 'chown node:node /plenum-private-proof && chmod 700 /plenum-private-proof'
           docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/private_volume_native_smoke.py seal
           docker restart plenum-paperclip-integration
           for i in $(seq 1 90); do
