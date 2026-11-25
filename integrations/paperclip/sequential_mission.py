@@ -320,6 +320,11 @@ def minister():
         from model_plan import model_plan
         from objective_mission import planning_kwargs
         roles,model_receipt=model_plan(directory,cid,pid,goals=goal_texts(scope),**planning_kwargs(scope))
+    composition_receipt=None
+    from composition_contract import is_composition
+    if is_composition(scope):
+        from composition_contract import plan as composition_plan
+        composition_receipt=composition_plan(directory,scope,cid,pid)
     tasks={}
     for role in roles:
         fields={"title":specs[role][1],"description":binding["child_description"],"status":"todo","priority":"high",
@@ -333,6 +338,8 @@ def minister():
     if scope!=LEGACY:plan["scope_sha256"]=binding["scope_sha256"]
     if model_receipt is not None:
         plan["model_receipt_sha256"]=digest(model_receipt)
+    if composition_receipt is not None:
+        plan["composition_plan_sha256"]=digest(composition_receipt)
     path=directory/"minister-plan.json"
     if path.exists():
         if json.loads(path.read_text())!=plan:

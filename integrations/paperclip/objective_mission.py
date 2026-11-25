@@ -6,16 +6,18 @@ from statistics import median
 from checkpoint_store import exclusive,DomainBlocked
 from objective_program import TOOLS,OPS
 
+from composition_contract import is_composition
+COMPOSITION_SOURCE=Path(__file__).with_name("composition_program.py")
 SOURCE=Path(__file__).with_name("objective_program.py")
 PIPELINE_SOURCE=Path(__file__).with_name("pipeline_program.py")
-def source_for(scope):return PIPELINE_SOURCE if "pipeline" in scope.get("inputs",{}) else SOURCE
+def source_for(scope):return COMPOSITION_SOURCE if is_composition(scope) else PIPELINE_SOURCE if "pipeline" in scope.get("inputs",{}) else SOURCE
 NUMERIC={"mean","median","range","population_variance","least_squares_slope","max_step_change"}
 TEXT={"word_counts","shared_terms","term_frequency"}
 
-def tools_for(scope):return (("collections",) if "pipeline" in scope.get("inputs",{}) else TOOLS) if scope["kind"]=="public_objective" else None
+def tools_for(scope):return (("collections",) if "pipeline" in scope.get("inputs",{}) or is_composition(scope) else TOOLS) if scope["kind"]=="public_objective" else None
 
 def operation_policy(scope):
-    if scope["kind"]!="public_objective" or "operations" in scope:return None
+    if scope["kind"]!="public_objective" or "operations" in scope or is_composition(scope):return None
     if "pipeline" in scope["inputs"]:
         from pipeline_contract import policy
         return policy(scope["inputs"]["pipeline"],scope["operation_commitment"])
@@ -31,12 +33,16 @@ def planning_kwargs(scope):
 def validate(scope):
     explicit=set(scope)=={"kind","objective","dois","inputs","operations"}
     natural=set(scope)=={"kind","objective","dois","inputs","operation_commitment"}
-    if not (explicit or natural):raise ValueError("Exact objective envelope required")
+    if not (explicit or natural or is_composition(scope)):raise ValueError("Exact objective envelope required")
     label=scope["objective"]
     if not isinstance(label,str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9 ,().?'-]{9,239}",label):raise ValueError("Invalid public objective")
     ids=scope["dois"]
     if not isinstance(ids,list) or not 1<=len(ids)<=2 or any(not isinstance(x,str) or not re.fullmatch(r"10\.[0-9]{4,9}/[a-z0-9][a-z0-9.()/_+-]{0,100}",x) for x in ids) or len(set(ids))!=len(ids):raise ValueError("Invalid public DOI scope")
     data=scope["inputs"]
+    if is_composition(scope):
+        from composition_contract import validate as validate_composition
+        validate_composition(scope)
+        return
     if isinstance(data,dict) and "pipeline" in data:
         if not natural or set(data)!={"pipeline"} or not isinstance(scope["operation_commitment"],str) or not re.fullmatch(r"[0-9a-f]{64}",scope["operation_commitment"]):
             raise ValueError("Pipeline requires independent natural objective commitment")
@@ -60,7 +66,7 @@ def validate(scope):
 
 def goals(scope):
     validate(scope)
-    engineering_goal=("Execute reviewed tool for acceptance operations "+", ".join(scope["operations"])
+    engineering_goal=("Compose exact arithmetic expressions from authorized input names" if is_composition(scope) else "Execute reviewed tool for acceptance operations "+", ".join(scope["operations"])
                       if "operations" in scope else "Select necessary reviewed operations from the natural objective and available "+", ".join(sorted(scope["inputs"])))
     return {"C":"Prepare bounded evidence brief for "+scope["objective"],
             "E":"Independently verify each requested acceptance operation and producer receipt",
@@ -68,12 +74,17 @@ def goals(scope):
             "D":"Independently read back scholarly metadata",
             "B":engineering_goal+"; objective: "+scope["objective"]}
 def inputs(scope,directory=None):
+    if is_composition(scope):
+        from composition_contract import inputs as composition_inputs
+        return composition_inputs(scope,directory)
     if "operations" in scope:return {**scope["inputs"],"operations":scope["operations"]}
     if directory is None:raise ValueError("Natural objective requires original model receipt")
     from model_plan import validate_operations
     choice=planned_choice(directory,scope)
     return {**scope["inputs"],"operations":validate_operations(choice["operations"],operation_policy(scope))}
 def simulation_input(data):
+    if "expressions" in data:
+        return dict(data,values=dict(data["holdout"]))
     if "pipeline" in data:
         from pipeline_contract import perturb
         return perturb(data)
@@ -92,6 +103,9 @@ def evaluate(source,data,tool):
     except subprocess.TimeoutExpired as exc:raise TimeoutError("Reviewed local computation timed out") from exc
     return json.loads(res.stdout)
 def independent(data):
+    if "expressions" in data:
+        from composition_contract import independent as composition_independent
+        return composition_independent(data)
     if "pipeline" in data:
         from pipeline_contract import independent as pipeline_independent
         return pipeline_independent(data)
@@ -131,7 +145,7 @@ def engineering(scope,directory,tool):
 def brief(scope,prior):
     return {"objective":scope["objective"],"results":prior["engineering"]["result"]["validation"],
             "recommendation":"Review the bounded synthetic results against independently collected evidence before decisions",
-            "limitations":["Synthetic public inputs are not measured evidence","DOI metadata does not independently validate these inputs","Only the explicitly approved acceptance operations were executed"],
+            "limitations":["Synthetic public inputs are not measured evidence","DOI metadata does not independently validate these inputs","Only the scoped arithmetic grammar was executed" if is_composition(scope) else "Only the explicitly approved acceptance operations were executed"],
             "new_paid_services":False,"external_actions_executed":False}
 def run(role,scope,prior,directory):
     validate(scope)
