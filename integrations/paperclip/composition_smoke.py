@@ -8,19 +8,19 @@ def quantity(n,d=1):return {"numerator":n,"denominator":d}
 
 def scope(case):
     if case=="composition-logistics":
-        objective="Calculate total cartons from orders times cartons per order, then pallet count as ceiling of total cartons divided by cartons per pallet."
+        objective="How many cartons are required for the orders and what is the minimum number of whole pallets needed to carry them?"
         values={"orders":17,"cartons_per_order":6,"cartons_per_pallet":20}
         holdout={"orders":23,"cartons_per_order":4,"cartons_per_pallet":15}
         outputs=["total_cartons","pallet_count"]
         expected={"results":{"total_cartons":quantity(102),"pallet_count":quantity(6)},
                   "holdout":{"total_cartons":quantity(92),"pallet_count":quantity(7)}}
     elif case=="composition-energy":
-        objective="Calculate daily battery energy in watt hours as voltage times amp hours, then runtime hours as battery energy divided by load watts."
+        objective="Find the nominal battery energy in watt hours and how long the battery could ideally power the specified load in hours."
         values={"voltage":48,"amp_hours":75,"load_watts":800}
-        holdout={"voltage":24,"amp_hours":120,"load_watts":640}
+        holdout={"voltage":24,"amp_hours":120,"load_watts":480}
         outputs=["battery_energy","runtime_hours"]
         expected={"results":{"battery_energy":quantity(3600),"runtime_hours":quantity(9,2)},
-                  "holdout":{"battery_energy":quantity(2880),"runtime_hours":quantity(9,2)}}
+                  "holdout":{"battery_energy":quantity(2880),"runtime_hours":quantity(6)}}
     else:raise ValueError("Unknown independent fixture")
     return {"kind":"public_objective","objective":objective,"dois":["10.1145/3442188.3445922"],
             "inputs":{"composition":{"values":values,"holdout":holdout,"outputs":outputs}},

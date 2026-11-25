@@ -90,3 +90,6 @@ jobs:
         env:
           PYTHONPATH: src
         run: python integrations/paperclip/composition_smoke.py
+
+      - name: Separate-process private local volume grant and restoration fixture
+        run: python integrations/paperclip/private_volume_smoke.py
