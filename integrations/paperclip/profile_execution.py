@@ -53,7 +53,8 @@ def division_receipts(role, scope, prior, result, directory):
         if artifact.is_symlink() or source.is_symlink():
             raise ValueError("Unsafe profile source")
         data=source.read_bytes()
-        original=Path(__file__).with_name("objective_program.py") if objective else Path(__file__).with_name("dataset_program.py") if dataset else DOMAIN_FILES["cloudflare_workers_ai_free" if budget else "noaa_water_station_metadata"]
+        from objective_mission import source_for
+        original=source_for(scope) if objective else Path(__file__).with_name("dataset_program.py") if dataset else DOMAIN_FILES["cloudflare_workers_ai_free" if budget else "noaa_water_station_metadata"]
         source_hash=sha256(data).hexdigest()
         if (data!=original.read_bytes() or source_hash!=result["manifest"]["main_sha256"]
                 or result["manifest"]["functional_verifier_executed_and_passed"] is not True):
@@ -61,10 +62,12 @@ def division_receipts(role, scope, prior, result, directory):
         add("coding",{"reviewed_source_sha256":source_hash,"functional_test_passed":
                       result["manifest"]["functional_verifier_executed_and_passed"],"deployed":False})
         if objective:
-            from objective_mission import evaluate,simulation_input
+            from objective_mission import evaluate,simulation_input,independent
             scenario=simulation_input(result["input"])
+            observed=evaluate(source,scenario,result["tool"])
+            if observed!=independent(scenario):raise ValueError("Independent simulation disagrees")
             add("simulation",{"scenario":"synthetic input perturbation","inputs":scenario,
-                              "observed":evaluate(source,scenario,result["tool"]),"physical_validation":False})
+                              "observed":observed,"physical_validation":False})
         elif dataset:
             from dataset_mission import evaluate
             data=dict(result["input"],values=result["input"]["values"]+[result["input"]["values"][-1]])

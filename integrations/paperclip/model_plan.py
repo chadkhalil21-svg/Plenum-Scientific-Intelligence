@@ -75,6 +75,8 @@ def validate_operations(operations, policy):
     selected=sorted(k for k,v in operations.items() if v)
     if not selected or any(not set(group).intersection(selected) for group in policy["required_groups"]):
         raise PlanRejected("OPERATION_SCOPE")
+    if any(not set(policy.get("required_dependencies",{}).get(op,()))<=set(selected) for op in selected):
+        raise PlanRejected("OPERATION_DEPENDENCY")
     if digest(selected)!=policy["commitment"]:
         raise PlanRejected("OPERATION_ACCEPTANCE")
     return selected
@@ -178,9 +180,11 @@ def semantic_evidence(question,group):
     # merely retrieval hints: absent cues do not rule out an operation.
     if not isinstance(question,str) or not 10<=len(question)<=240:
         raise ValueError("Invalid operation question")
-    if len(set(group))!=len(group) or any(op not in OPERATION_CUES for op in group):
+    from pipeline_contract import CUES
+    cues={**OPERATION_CUES,**CUES}
+    if len(set(group))!=len(group) or any(op not in cues for op in group):
         raise ValueError("Invalid evidence group")
-    return {op:sorted({match.group(0) for pattern in OPERATION_CUES[op]
+    return {op:sorted({match.group(0) for pattern in cues[op]
                        for match in re.finditer(pattern,question,re.IGNORECASE)})
             for op in group}
 
@@ -196,6 +200,8 @@ def classification_request(goals, group):
         "shared_terms":"intersection: words present in every document",
         "word_counts":"total number of words in each document",
         "term_frequency":"occurrence count of each distinct term in each document"}
+    from pipeline_contract import DEFINITIONS
+    definitions.update(DEFINITIONS)
     question=goals["B"].split("; objective: ",1)[-1]
     payload={"question":question,
              "operations":{op:definitions[op] for op in group},
