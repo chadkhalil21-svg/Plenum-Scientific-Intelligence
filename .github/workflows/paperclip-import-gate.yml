@@ -93,3 +93,6 @@ jobs:
 
       - name: Separate-process private local volume grant and restoration fixture
         run: python integrations/paperclip/private_volume_smoke.py
+
+      - name: Bounded original-model registry startup recovery
+        run: python integrations/paperclip/model_pull_smoke.py
