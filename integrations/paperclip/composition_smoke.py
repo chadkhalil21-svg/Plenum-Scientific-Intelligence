@@ -38,15 +38,28 @@ def smoke():
             try:accept_choice(s,bad)
             except (ValueError,TypeError,SyntaxError,ZeroDivisionError):pass
             else:raise AssertionError("Invalid expression accepted")
-    from composition_contract import normalize,request_for
+    from composition_contract import normalize,request_for,convert
     assert normalize({"x":" math.ceil( a / b ) "})=={"x":"ceil( a / b )"}
     for invalid in ["os.system(x)", "a=2", "a; b"]:
         try:normalize({"x":invalid})
         except ValueError:pass
         else:raise AssertionError("Unsafe normalization")
     request=request_for(scope("composition-energy"),1,None)
-    second=request_for(scope("composition-energy"),2,"Independent actual and held-out answer commitment mismatch")
-    assert request!=second and "holdout" not in json.loads(request["messages"][1]["content"])
+    feedback={"category":"Independent actual and held-out answer commitment mismatch","previous_expressions":{"battery_energy":"voltage+amp_hours","runtime_hours":"battery_energy/load_watts"}}
+    second=request_for(scope("composition-energy"),2,feedback)
+    third=request_for(scope("composition-energy"),3,feedback)
+    assert len({hash_value(x) for x in (request,second,third)})==3
+    assert all("holdout" not in json.loads(x["messages"][1]["content"]) for x in (request,second,third))
+    for case,choice in [
+        ("composition-logistics",{"total_cartons":{"left":"orders","operator":"multiply","right":"cartons_per_order"},
+                                 "pallet_count":{"left":"total_cartons","operator":"ceil_divide","right":"cartons_per_pallet"}}),
+        ("composition-energy",{"battery_energy":{"left":"voltage","operator":"multiply","right":"amp_hours"},
+                               "runtime_hours":{"left":"battery_energy","operator":"divide","right":"load_watts"}})]:
+        assert analyze(accept_choice(scope(case),convert(scope(case),choice,1)))==independent(accept_choice(scope(case),convert(scope(case),choice,1)))
+        broken=dict(choice);key=next(iter(broken));broken[key]=dict(broken[key],operator="shell")
+        try:convert(scope(case),broken,1)
+        except ValueError:pass
+        else:raise AssertionError("Forbidden structured operator")
     print("Independent compositional grammar, two domains, correction request binding and held-out results passed")
 if __name__=="__main__":
     if len(sys.argv)==2:print(json.dumps(scope(sys.argv[1]),separators=(",",":")))
