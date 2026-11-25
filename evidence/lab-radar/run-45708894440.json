@@ -1,0 +1,256 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "45708894440",
+  "source_revision": "5741225d746a0f456f9166baf2ce815a08b99fd6",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-25T21:57:07.666303+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 29,
+    "sources_returning_records": 26,
+    "source_outages": [
+      "un_global_news",
+      "gdelt_headlines"
+    ],
+    "new_public_links_before_limit": 29,
+    "signals": [
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261124055854.htm",
+        "title_untrusted": "Common sleep and anxiety drugs could be harming aging brains",
+        "claimed_publication_date": "Wed, 25 Nov 2026 06:13:47 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03468-3",
+        "title_untrusted": "The leading cities in the world for high-quality research in 2025",
+        "claimed_publication_date": "2026-11-25",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.31284",
+        "title_untrusted": "Irreducible Governance Structure for Autonomous Agent Systems: Fair Allocation, Strategy-Proofness, and Multi-Scale Composition",
+        "claimed_publication_date": "Wed, 25 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.31244",
+        "title_untrusted": "On the invertibility of saddle-point matrices: exact algebraic conditions and applications to constrained dynamics",
+        "claimed_publication_date": "Wed, 25 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "software",
+        "publisher": "GitHub public repository index",
+        "source": "github_public_code",
+        "url": "https://github.com/521workspace2009-code/ASU.AI",
+        "title_untrusted": "521workspace2009-code/ASU.AI",
+        "claimed_publication_date": "2026-11-25T17:11:40Z",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75469311",
+        "title_untrusted": "M 2.1 - 12 km NW of Pinnacles, CA",
+        "claimed_publication_date": "1795643489900",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261124055852.htm",
+        "title_untrusted": "A space telescope hunting for dark matter just discovered something unexpected",
+        "claimed_publication_date": "Wed, 25 Nov 2026 05:35:04 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03853-y",
+        "title_untrusted": "Dual proofs of legendary Riemann hypothesis stun mathematicians",
+        "claimed_publication_date": "2026-11-25",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.31301",
+        "title_untrusted": "MOZAIC: An Audio-Video Deepfake Benchmark for Telling What Is Fake",
+        "claimed_publication_date": "Wed, 25 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.31278",
+        "title_untrusted": "Easing H0 tension with Constrained Cosmological Parameters in f(R,Lm) Gravity",
+        "claimed_publication_date": "Wed, 25 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75469306",
+        "title_untrusted": "M 0.7 - 10 km NW of The Geysers, CA",
+        "claimed_publication_date": "1795642839320",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261124055849.htm",
+        "title_untrusted": "Physicists trap antimatter in a breakthrough that could explain why the universe exists",
+        "claimed_publication_date": "Wed, 25 Nov 2026 05:06:22 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/s41586-026-11465-9",
+        "title_untrusted": "An in situ redox-converted molecule for all-perovskite tandem solar cells",
+        "claimed_publication_date": "2026-11-25",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.31329",
+        "title_untrusted": "Conservative Overlap Fuzzy Rough Sets for Incomplete Data",
+        "claimed_publication_date": "Wed, 25 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.31279",
+        "title_untrusted": "Gravitational-Wave Signatures of Compact Extra Dimensions and Their Detectability with Third-Generation Interferometers",
+        "claimed_publication_date": "Wed, 25 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000udib",
+        "title_untrusted": "M 4.8 - 190 km N of Hicks Bay, New Zealand",
+        "claimed_publication_date": "1795642353545",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261124055713.htm",
+        "title_untrusted": "Stanford scientists discover 3 hidden brain types behind ADHD and anxiety",
+        "claimed_publication_date": "Tue, 24 Nov 2026 23:11:59 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03472-7",
+        "title_untrusted": "How Singapore has turned a nation into a smart-city testing ground",
+        "claimed_publication_date": "2026-11-25",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.31345",
+        "title_untrusted": "Beyond Static Charts: Benchmarking Interactive Chart-to-Code Generation for MLLMs",
+        "claimed_publication_date": "Wed, 25 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.31281",
+        "title_untrusted": "Strong-lensing tests of angular structure in the radial acceleration relation",
+        "claimed_publication_date": "Wed, 25 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026xjmdde",
+        "title_untrusted": "M 1.7 - 20 km WSW of Petersville, Alaska",
+        "claimed_publication_date": "1795642075974",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
