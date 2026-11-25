@@ -3,7 +3,7 @@
   "kind": "read_only_public_record_inventory",
   "source": "research-memory/evidence",
   "mission_reference": "research-memory/state/AGI_PROGRAM.json",
-  "record_count": 128,
+  "record_count": 132,
   "records": [
     {
       "track": "agent-experiments",
@@ -174,6 +174,12 @@
       "size_bytes": 92146
     },
     {
+      "track": "discovery",
+      "path": "evidence/discovery/2026-11-24-run-45484718196.json",
+      "sha256": "2adf6020809c1a2ca4ae1529f7a3aa158ff6543ba114f9320288f996c89255f4",
+      "size_bytes": 96793
+    },
+    {
       "track": "frontiers",
       "path": "evidence/frontiers/run-42170871194.json",
       "sha256": "c6b9faf684a785cf62a157a1ffd912a6312a8167d32d3fa0288542f7d5ae7422",
@@ -285,6 +291,12 @@
       "track": "frontiers",
       "path": "evidence/frontiers/run-45279990877.json",
       "sha256": "59da688e8da4872c79707cd98ae4662381002703c6f7cee6157c123bc981c6ac",
+      "size_bytes": 4102
+    },
+    {
+      "track": "frontiers",
+      "path": "evidence/frontiers/run-45486594001.json",
+      "sha256": "9761027f6d709d0afa597b1768e7e239aafe5f27f9ca7b7c85ba79231cb6dcc9",
       "size_bytes": 4102
     },
     {
@@ -499,9 +511,15 @@
     },
     {
       "track": "lab-radar",
+      "path": "evidence/lab-radar/run-45503512760.json",
+      "sha256": "d8e7fb511803337dab623f4bb89c3df78e558af4faf11196e11d1d1d380076e4",
+      "size_bytes": 10218
+    },
+    {
+      "track": "lab-radar",
       "path": "evidence/lab-radar/seen-links.json",
-      "sha256": "e9909efeea796a2319288b6c8f905c618df0b9c2ce59290f79e0f896af25978b",
-      "size_bytes": 32242
+      "sha256": "2a995a8459b2e7a2c2e4703a7c3caeeb79363ead342439288b4e1e963ac8c90d",
+      "size_bytes": 34079
     },
     {
       "track": "noaa-independent-critic",
@@ -772,6 +790,12 @@
       "path": "evidence/world-horizon/2026-11-24-run-45313394760.json",
       "sha256": "1a0fdced06d44e7bd14b34bf105e73667e3009176dc5ff4ac0d9b83ec0f63b94",
       "size_bytes": 116014
+    },
+    {
+      "track": "world-horizon",
+      "path": "evidence/world-horizon/2026-11-24-run-45503512760.json",
+      "sha256": "5f451a982486e71f7feed8c871c75e3ff1f4c4e55e7d9beba6a4aa65ee826462",
+      "size_bytes": 115293
     }
   ],
   "groups": [
@@ -800,7 +824,7 @@
     },
     {
       "track": "discovery",
-      "records": 23,
+      "records": 24,
       "paths": [
         "evidence/discovery/2026-11-06-run-42168813339.json",
         "evidence/discovery/2026-11-06-run-42169260144.json",
@@ -824,12 +848,13 @@
         "evidence/discovery/2026-11-20-run-44795816744.json",
         "evidence/discovery/2026-11-21-run-44931696100.json",
         "evidence/discovery/2026-11-22-run-45052489681.json",
-        "evidence/discovery/2026-11-23-run-45277255379.json"
+        "evidence/discovery/2026-11-23-run-45277255379.json",
+        "evidence/discovery/2026-11-24-run-45484718196.json"
       ]
     },
     {
       "track": "frontiers",
-      "records": 19,
+      "records": 20,
       "paths": [
         "evidence/frontiers/run-42170871194.json",
         "evidence/frontiers/run-42265129530.json",
@@ -849,7 +874,8 @@
         "evidence/frontiers/run-44797833661.json",
         "evidence/frontiers/run-44932528852.json",
         "evidence/frontiers/run-45054208840.json",
-        "evidence/frontiers/run-45279990877.json"
+        "evidence/frontiers/run-45279990877.json",
+        "evidence/frontiers/run-45486594001.json"
       ]
     },
     {
@@ -926,7 +952,7 @@
     },
     {
       "track": "lab-radar",
-      "records": 24,
+      "records": 25,
       "paths": [
         "evidence/lab-radar/run-42405802931.json",
         "evidence/lab-radar/run-42406132860.json",
@@ -951,6 +977,7 @@
         "evidence/lab-radar/run-45305985335.json",
         "evidence/lab-radar/run-45310415491.json",
         "evidence/lab-radar/run-45313394760.json",
+        "evidence/lab-radar/run-45503512760.json",
         "evidence/lab-radar/seen-links.json"
       ]
     },
@@ -1034,7 +1061,7 @@
     },
     {
       "track": "world-horizon",
-      "records": 27,
+      "records": 28,
       "paths": [
         "evidence/world-horizon/2026-11-06-run-42173285138.json",
         "evidence/world-horizon/2026-11-06-run-42174424616.json",
@@ -1062,13 +1089,14 @@
         "evidence/world-horizon/2026-11-24-run-45295836795.json",
         "evidence/world-horizon/2026-11-24-run-45305985335.json",
         "evidence/world-horizon/2026-11-24-run-45310415491.json",
-        "evidence/world-horizon/2026-11-24-run-45313394760.json"
+        "evidence/world-horizon/2026-11-24-run-45313394760.json",
+        "evidence/world-horizon/2026-11-24-run-45503512760.json"
       ]
     }
   ],
   "unindexed_records": [],
   "inventory_complete": true,
-  "digest_sha256": "123a81c198b6a2a33094a6c5f3e7fa26b5684b7d3de6ecf19ea5f3a15b75d33d",
+  "digest_sha256": "c11f8b082f9dc2e1e0e20b7736b40d59585d1601464299cabb3260d55a651542",
   "scientific_claims_verified_by_index": false,
   "AGI_demonstrated": false,
   "automatic_model_promotion": false,
