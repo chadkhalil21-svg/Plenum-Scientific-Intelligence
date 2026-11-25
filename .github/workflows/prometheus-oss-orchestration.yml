@@ -1,0 +1,101 @@
+name: Prometheus open-source orchestration qualification
+on:
+  pull_request:
+    paths:
+      - 'integrations/prometheus_oss/**'
+      - '.github/workflows/prometheus-oss-orchestration.yml'
+permissions:
+  contents: read
+jobs:
+  qualify:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONPATH: src
+      LANGSMITH_TRACING: 'false'
+      LANGCHAIN_TRACING_V2: 'false'
+      LANGGRAPH_STRICT_MSGPACK: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install actual upstream libraries
+        run: |
+          python -m pip install --disable-pip-version-check --only-binary=:all: -r integrations/prometheus_oss/requirements.txt
+          python -m pip check
+          mkdir -p reports/oss
+          python -m pip freeze > reports/oss/dependencies.txt
+          python -m compileall -q integrations/prometheus_oss
+      - name: Start original local Qwen on isolated runner loopback
+        run: |
+          set -eu
+          docker pull ollama/ollama:latest
+          docker run -d --name plenum-paperclip-qwen --network host -e OLLAMA_HOST=127.0.0.1:11434 -e OLLAMA_CONTEXT_LENGTH=8192 -e OLLAMA_NUM_PARALLEL=1 --memory=8g --cpus=3 ollama/ollama:latest
+          for i in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
+            sleep 2
+          done
+          bash integrations/paperclip/pull_original_qwen.sh
+          test "$(docker exec plenum-paperclip-qwen ollama list | awk '$1=="qwen3.5:4b" {print $2}')" = d8b0f5e9760c
+      - name: Deep Agents tool chaining and acknowledged LangGraph checkpoint
+        run: python integrations/prometheus_oss/qualification.py pause review reports/oss/review
+      - name: Resume in a separate process from SQLite checkpoint
+        run: python integrations/prometheus_oss/qualification.py resume review reports/oss/review
+      - name: Opposite held-out decision with original local Qwen
+        run: python integrations/prometheus_oss/qualification.py run defer reports/oss/defer
+      - name: Stop model before independent local readback
+        run: |
+          docker rm -f plenum-paperclip-qwen
+          ! curl --fail --silent --max-time 2 http://127.0.0.1:11434/api/tags
+          python integrations/prometheus_oss/qualification.py verify review reports/oss/review > reports/oss/review-result.json
+          python integrations/prometheus_oss/qualification.py verify defer reports/oss/defer > reports/oss/defer-result.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prometheus-oss-public-qualification
+          path: reports/oss/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Remove isolated model
+        if: always()
+        run: docker rm -f plenum-paperclip-qwen 2>/dev/null || true
+  independent:
+    needs: qualify
+    if: needs.qualify.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      PYTHONPATH: src
+      LANGSMITH_TRACING: 'false'
+      LANGCHAIN_TRACING_V2: 'false'
+      LANGGRAPH_STRICT_MSGPACK: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: prometheus-oss-public-qualification
+          path: reports/oss
+      - name: Reopen original public graph on fresh runner without model
+        run: |
+          python -m pip install --disable-pip-version-check --only-binary=:all: -r reports/oss/dependencies.txt
+          python -m pip check
+          ! curl --fail --silent --max-time 2 http://127.0.0.1:11434/api/tags
+          mkdir -p reports/independent
+          for case in review defer; do
+            python integrations/prometheus_oss/qualification.py verify "$case" "reports/oss/$case" > "reports/independent/$case.json"
+            cmp "reports/oss/$case-result.json" "reports/independent/$case.json"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prometheus-oss-fresh-acceptance
+          path: reports/independent/
+          if-no-files-found: error
+          retention-days: 7
