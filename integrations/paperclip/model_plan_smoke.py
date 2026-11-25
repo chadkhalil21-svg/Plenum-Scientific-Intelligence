@@ -78,6 +78,41 @@ class PlanTests(unittest.TestCase):
                     with self.assertRaises(ValueError):mp.validate_receipt(dict(receipt,paid_inference=True),cid,pid,goals=goals)
         print("NONDEFAULT GOAL RECEIPT PASS bibliography and station fresh/restart binding; cross-scope and unauthorized IDs denied; no replay",flush=True)
 
+    def test_natural_objective_selection_is_held_out_and_drives_real_program(self):
+        import objective_mission as om
+        from mission_scope import validate_scope
+        chosen=["median","shared_terms"]
+        scope={"kind":"public_objective","objective":"Which words occur in both summaries and what is the middle ordered observation?",
+               "dois":["10.1145/3442188.3445922"],
+               "inputs":{"documents":["resilient storage systems","resilient retrieval systems"],"samples":[12,3,9,44,18]},
+               "operation_commitment":mp.digest(sorted(chosen))}
+        self.assertEqual(validate_scope(scope),scope)
+        kwargs=om.planning_kwargs(scope)
+        good=valid_plan()
+        good["step_3"].update(tool="stream",operations=chosen)
+        self.assertEqual(mp.validate_choice(good,**kwargs),mp.ORDER)
+        for bad in (["median"],["mean","shared_terms"],["median","shared_terms","word_counts"],
+                    ["median","median","shared_terms"],["median","shell"]):
+            changed=dict(good,step_3=dict(good["step_3"],operations=bad))
+            with self.subTest(bad=bad),self.assertRaises(mp.PlanRejected):
+                mp.validate_choice(changed,**kwargs)
+        tag={"models":[{"name":mp.MODEL,"digest":mp.MODEL_DIGEST+"a"*52}]}
+        reply={"model":mp.MODEL,"done":True,"message":{"content":json.dumps(good)},"eval_count":155,"prompt_eval_count":451}
+        cid,pid=str(uuid4()),str(uuid4())
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ,{"PLENUM_EPHEMERAL_RUNNER":"confirmed","PLENUM_PAPERCLIP_MODEL":"local"}):
+            directory=Path(tmp)
+            with patch.object(mp,"read_json",side_effect=[tag,reply]) as model:
+                order,receipt=mp.model_plan(directory,cid,pid,goals=om.goals(scope),**kwargs)
+                request=model.call_args_list[1].args[1]
+                self.assertNotIn(scope["operation_commitment"],json.dumps(request))
+                self.assertEqual(set(json.loads(request["messages"][1]["content"])["approved_operations"]),set(om.OPS))
+            self.assertEqual(order,mp.ORDER)
+            (directory/"minister-plan.json").write_text(json.dumps({"company":cid,"parent":pid,"model_receipt_sha256":mp.digest(receipt)}))
+            actual=om.engineering(scope,directory,"stream")
+            self.assertEqual(actual["validation"],{"results":{"median":{"numerator":12,"denominator":1},"shared_terms":["resilient","systems"]}})
+            with patch.object(mp,"read_json",side_effect=AssertionError("no repeated inference")):
+                self.assertEqual(mp.model_plan(directory,cid,pid,goals=om.goals(scope),**kwargs),(order,receipt))
+
     def test_rejected_plan_no_fallback(self):
         good=valid_plan()
         bad=dict(good,step_1=good["step_2"],step_2=good["step_1"])

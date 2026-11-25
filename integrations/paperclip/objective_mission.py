@@ -11,15 +11,35 @@ NUMERIC={"mean","median","range","population_variance","least_squares_slope","ma
 TEXT={"word_counts","shared_terms","term_frequency"}
 
 def tools_for(scope):return TOOLS if scope["kind"]=="public_objective" else None
+
+def operation_policy(scope):
+    if scope["kind"]!="public_objective" or "operations" in scope:return None
+    groups=[]
+    if "samples" in scope["inputs"]:groups.append(tuple(op for op in OPS if op in NUMERIC))
+    if "documents" in scope["inputs"]:groups.append(tuple(op for op in OPS if op in TEXT))
+    return {"allowed":tuple(op for op in OPS if any(op in group for group in groups)),
+            "required_groups":tuple(groups),"commitment":scope["operation_commitment"]}
+
+def planning_kwargs(scope):
+    return {"tools":tools_for(scope),"operation_policy":operation_policy(scope)}
+
 def validate(scope):
-    if set(scope)!={"kind","objective","dois","inputs","operations"}:raise ValueError("Exact objective envelope required")
+    explicit=set(scope)=={"kind","objective","dois","inputs","operations"}
+    natural=set(scope)=={"kind","objective","dois","inputs","operation_commitment"}
+    if not (explicit or natural):raise ValueError("Exact objective envelope required")
     label=scope["objective"]
     if not isinstance(label,str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9 ,().?'-]{9,239}",label):raise ValueError("Invalid public objective")
     ids=scope["dois"]
     if not isinstance(ids,list) or not 1<=len(ids)<=2 or any(not isinstance(x,str) or not re.fullmatch(r"10\.[0-9]{4,9}/[a-z0-9][a-z0-9.()/_+-]{0,100}",x) for x in ids) or len(set(ids))!=len(ids):raise ValueError("Invalid public DOI scope")
-    data=scope["inputs"];ops=scope["operations"]
-    if not isinstance(ops,list) or not 1<=len(ops)<=len(OPS) or any(type(x) is not str or x not in OPS for x in ops) or len(set(ops))!=len(ops):raise ValueError("Unsupported acceptance operation")
-    if not isinstance(data,dict) or set(data)!=( {"samples"} if set(ops)&NUMERIC else set())|({"documents"} if set(ops)&TEXT else set()):raise ValueError("Input/acceptance mismatch")
+    data=scope["inputs"]
+    if explicit:
+        ops=scope["operations"]
+        if not isinstance(ops,list) or not 1<=len(ops)<=len(OPS) or any(type(x) is not str or x not in OPS for x in ops) or len(set(ops))!=len(ops):raise ValueError("Unsupported acceptance operation")
+        if not isinstance(data,dict) or set(data)!=( {"samples"} if set(ops)&NUMERIC else set())|({"documents"} if set(ops)&TEXT else set()):raise ValueError("Input/acceptance mismatch")
+    else:
+        if not isinstance(data,dict) or not data or not set(data)<={"samples","documents"}:raise ValueError("Natural objective requires bounded inputs")
+        commitment=scope["operation_commitment"]
+        if not isinstance(commitment,str) or not re.fullmatch(r"[0-9a-f]{64}",commitment):raise ValueError("Independent acceptance commitment required")
     if "samples" in data:
         v=data["samples"]
         if not isinstance(v,list) or not 2<=len(v)<=64 or any(type(x) is not int or abs(x)>10**9 for x in v):raise ValueError("Invalid synthetic samples")
@@ -29,12 +49,19 @@ def validate(scope):
 
 def goals(scope):
     validate(scope)
+    engineering_goal=("Execute reviewed tool for acceptance operations "+", ".join(scope["operations"])
+                      if "operations" in scope else "Select necessary reviewed operations from the natural objective and available "+", ".join(sorted(scope["inputs"])))
     return {"C":"Prepare bounded evidence brief for "+scope["objective"],
             "E":"Independently verify each requested acceptance operation and producer receipt",
             "A":"Retrieve approved public DOI metadata for "+", ".join(scope["dois"]),
             "D":"Independently read back scholarly metadata",
-            "B":"Execute reviewed tool for acceptance operations "+", ".join(scope["operations"])+"; objective: "+scope["objective"]}
-def inputs(scope):return {**scope["inputs"],"operations":scope["operations"]}
+            "B":engineering_goal+"; objective: "+scope["objective"]}
+def inputs(scope,directory=None):
+    if "operations" in scope:return {**scope["inputs"],"operations":scope["operations"]}
+    if directory is None:raise ValueError("Natural objective requires original model receipt")
+    from model_plan import validate_operations
+    choice=planned_choice(directory,scope)
+    return {**scope["inputs"],"operations":validate_operations(choice["operations"],operation_policy(scope))}
 def simulation_input(data):
     out=dict(data)
     if "samples" in out:out["samples"]=[*out["samples"],out["samples"][-1]]
@@ -66,19 +93,20 @@ def independent(data):
                    "max_step_change":lambda:Fraction(max(abs(v[i]-v[i-1]) for i in range(1,n)))}[op]()
             out[op]={"numerator":value.numerator,"denominator":value.denominator}
     return {"results":out}
-def planned_tool(directory,scope):
+def planned_choice(directory,scope):
     from model_plan import validate_receipt
     row=json.loads((directory/"minister-model-plan.json").read_text())
     plan=json.loads((directory/"minister-plan.json").read_text())
     from model_plan import digest
     if digest(row)!=plan["model_receipt_sha256"]:raise ValueError("Model plan changed")
-    validate_receipt(row,plan["company"],plan["parent"],goals=goals(scope),tools=TOOLS)
-    return row["response"]["step_3"]["tool"]
+    validate_receipt(row,plan["company"],plan["parent"],goals=goals(scope),**planning_kwargs(scope))
+    return row["response"]["step_3"]
+def planned_tool(directory,scope):return planned_choice(directory,scope)["tool"]
 def engineering(scope,directory,tool):
     if tool not in TOOLS:raise ValueError("Invalid tool")
     artifact=Path(tempfile.mkdtemp(prefix="engineering-artifact-",dir=directory))
     source=artifact/"main.py";source.write_bytes(SOURCE.read_bytes())
-    data=inputs(scope);observed=evaluate(source,data,tool)
+    data=inputs(scope,directory);observed=evaluate(source,data,tool)
     if observed!=independent(data):raise ValueError("Objective analysis disagrees")
     manifest={"main_sha256":hashlib.sha256(source.read_bytes()).hexdigest(),"functional_verifier_executed_and_passed":True}
     exclusive(artifact/"manifest.json",manifest)
@@ -106,7 +134,7 @@ def verify(scope,prior,directory,*,functional_test):
     eng=prior["engineering"]["result"];name=eng["artifact_dir"]
     if not isinstance(name,str) or not name.startswith("engineering-artifact-") or Path(name).name!=name:raise ValueError("Unsafe artifact")
     artifact=directory/name;source=artifact/"main.py"
-    if artifact.is_symlink() or source.is_symlink() or source.read_bytes()!=SOURCE.read_bytes() or eng["input"]!=inputs(scope):raise ValueError("Objective source or input mismatch")
+    if artifact.is_symlink() or source.is_symlink() or source.read_bytes()!=SOURCE.read_bytes() or eng["input"]!=inputs(scope,directory):raise ValueError("Objective source or input mismatch")
     manifest=json.loads((artifact/"manifest.json").read_text())
     if manifest!=eng["manifest"] or manifest!={"main_sha256":hashlib.sha256(source.read_bytes()).hexdigest(),"functional_verifier_executed_and_passed":True}:raise ValueError("Manifest mismatch")
     expected=planned_tool(directory,scope)

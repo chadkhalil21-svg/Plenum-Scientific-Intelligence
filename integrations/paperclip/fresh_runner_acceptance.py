@@ -10,7 +10,7 @@ from checkpoint_store import checked,encoded,exclusive
 from lifecycle import canonical
 from mission_scope import validate_scope,digest as scope_digest,profile_routes
 from model_plan import validate_receipt
-from objective_mission import tools_for
+from objective_mission import planning_kwargs
 from sequential_mission import MISSION_ORDER,scope_binding,scope_inputs,goal_texts,verify
 from profile_execution import chief_receipt,division_receipts
 
@@ -68,7 +68,7 @@ def accept(root,run,commit,expected_scope=None):
     if actual!=prior["verification"]["result"] or actual!=summary["independent_verification"]:raise ValueError("Fresh functional verification mismatch")
     if summary.get("minister_model_executed") is True:
         receipt=read(directory/"minister-model-plan.json")
-        if digest(receipt)!=summary["model_receipt_sha256"] or digest(receipt)!=plan["model_receipt_sha256"] or validate_receipt(receipt,cid,mid,goals=goal_texts(scope),tools=tools_for(scope))!=list(MISSION_ORDER):raise ValueError("Original model proof mismatch")
+        if digest(receipt)!=summary["model_receipt_sha256"] or digest(receipt)!=plan["model_receipt_sha256"] or validate_receipt(receipt,cid,mid,goals=goal_texts(scope),**planning_kwargs(scope))!=list(MISSION_ORDER):raise ValueError("Original model proof mismatch")
     elif summary.get("minister_model_executed") is not False or "model_receipt_sha256" in plan:raise ValueError("Model state mismatch")
     extra={}
     recovery=directory/"supervisor-recovery.json"

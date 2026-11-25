@@ -318,8 +318,8 @@ def minister():
     else:model_mode=os.getenv("PLENUM_PAPERCLIP_MODEL","off")
     if model_mode=="local":
         from model_plan import model_plan
-        from objective_mission import tools_for
-        roles,model_receipt=model_plan(directory,cid,pid,goals=goal_texts(scope),tools=tools_for(scope))
+        from objective_mission import planning_kwargs
+        roles,model_receipt=model_plan(directory,cid,pid,goals=goal_texts(scope),**planning_kwargs(scope))
     tasks={}
     for role in roles:
         fields={"title":specs[role][1],"description":binding["child_description"],"status":"todo","priority":"high",
@@ -582,8 +582,8 @@ def readback(cid,plan,expected_agents=None):
     if "model_receipt_sha256" in plan:
         from model_plan import validate_receipt
         receipt=json.loads((directory/"minister-model-plan.json").read_text())
-        from objective_mission import tools_for
-        if digest(receipt)!=plan["model_receipt_sha256"] or validate_receipt(receipt,cid,plan["parent"],goals=goal_texts(scope),tools=tools_for(scope))!=plan["order"]:
+        from objective_mission import planning_kwargs
+        if digest(receipt)!=plan["model_receipt_sha256"] or validate_receipt(receipt,cid,plan["parent"],goals=goal_texts(scope),**planning_kwargs(scope))!=plan["order"]:
             raise ValueError("Local model delegation receipt mismatch")
         model_executed=True
         model_info={"model":receipt["model"],"model_digest":receipt["model_digest"],
