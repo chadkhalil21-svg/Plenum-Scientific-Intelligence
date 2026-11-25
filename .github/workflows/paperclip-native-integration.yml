@@ -1,5 +1,10 @@
 name: Paperclip native workforce integration
 on:
+  workflow_call:
+    inputs:
+      pipeline_stage:
+        required: true
+        type: string
   issues:
     types: [opened]
   issue_comment:
@@ -22,12 +27,12 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: paperclip-mission-${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number || github.ref }}
+  group: paperclip-mission-${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number || github.ref }}${{ inputs.pipeline_stage != '' && format('-pipeline-{0}', inputs.pipeline_stage) || '' }}
   cancel-in-progress: false
 jobs:
   authorize:
     if: >-
-      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      inputs.pipeline_stage == '' && github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
       ((github.event_name == 'issues' &&
         (github.event.issue.title == '[Plenum Paperclip] public coastal qualification' || github.event.issue.title == '[Plenum Paperclip] public evidence mission') &&
         github.event.issue.user.login == 'chadkhalil21-svg' &&
@@ -58,15 +63,58 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ISSUE: ${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number }}
         run: PYTHONPATH=src python3 integrations/paperclip/event_gate.py --issue "$ISSUE"
+  prepare-pipeline:
+    if: inputs.pipeline_stage != '' && github.event_name == 'pull_request' && github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+      attestations: read
+    outputs:
+      scope: ${{ steps.prepare.outputs.scope }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - id: prior
+        env:
+          STAGE: ${{ inputs.pipeline_stage }}
+        run: |
+          case "$STAGE" in
+            science) previous=none ;;
+            engineering) previous=science ;;
+            commercial) previous=engineering ;;
+            *) exit 1 ;;
+          esac
+          echo "stage=$previous" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        if: steps.prior.outputs.stage != 'none'
+        with:
+          name: paperclip-pipeline-memory-${{ steps.prior.outputs.stage }}
+          path: reports/prior-memory
+      - name: Verify signed predecessor provenance before any new model or worker call
+        if: steps.prior.outputs.stage != 'none'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh attestation verify reports/prior-memory/memory.json --repo "$GITHUB_REPOSITORY" --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/paperclip-native-integration.yml" --source-digest "$GITHUB_SHA" --source-ref "$GITHUB_REF" --deny-self-hosted-runners
+      - id: prepare
+        env:
+          STAGE: ${{ inputs.pipeline_stage }}
+          PYTHONPATH: src
+        run: python3 integrations/paperclip/pipeline_memory.py prepare "$STAGE" reports/prior-memory/memory.json
   native-integration:
-    needs: authorize
-    if: ${{ !cancelled() && (github.event_name == 'pull_request' || needs.authorize.outputs.authorized == 'true') }}
+    needs: [authorize, prepare-pipeline]
+    if: ${{ !cancelled() && ((inputs.pipeline_stage != '' && needs.prepare-pipeline.result == 'success') || (inputs.pipeline_stage == '' && (github.event_name == 'pull_request' || needs.authorize.outputs.authorized == 'true'))) }}
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(github.event_name == 'pull_request' && '[{"mode":"off","kind":"legacy"},{"mode":"local","kind":"legacy"},{"mode":"local","kind":"budget"},{"mode":"local","kind":"objective"}]' || '[{"mode":"local","kind":"event"}]') }}
+        include: ${{ fromJSON(inputs.pipeline_stage != '' && '[{"mode":"local","kind":"pipeline"}]' || github.event_name == 'pull_request' && '[{"mode":"off","kind":"legacy"},{"mode":"local","kind":"legacy"},{"mode":"local","kind":"budget"},{"mode":"local","kind":"objective"}]' || '[{"mode":"local","kind":"event"}]') }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -120,6 +168,7 @@ jobs:
           ISSUE_CREATED: ${{ needs.authorize.outputs.created_at }}
           EVENT_SCOPE: ${{ needs.authorize.outputs.scope }}
           KIND: ${{ matrix.kind }}
+          PIPELINE_SCOPE: ${{ needs.prepare-pipeline.outputs.scope }}
         run: |
           set -eu
           case "$KIND" in
@@ -127,6 +176,7 @@ jobs:
             budget) scope='{"kind":"bibliography_budget","dois":["10.1145/3442188.3445922"],"budget":{"model":"@cf/zai-org/glm-4.7-flash","neurons_used_today":100,"neurons_reserved":200,"input_tokens_upper_bound":3000,"output_tokens_upper_bound":1000}}' ;;
             objective) scope='{"kind":"public_objective","objective":"Find the words common to both delivery summaries and the middle value after sorting the observations.","dois":["10.1007/s10791-026-10743-4","10.1016/j.jss.2026.113142"],"inputs":{"documents":["supplier delivery quality","delivery supplier testing"],"samples":[17,-3,8,42,12,19]},"operation_commitment":"b06f527ce3646bcbc14a7970066456b64e9396c24e7a6102beefcf6340985428"}' ;;
             event) scope="$EVENT_SCOPE"; test -n "$scope" ;;
+            pipeline) scope="$PIPELINE_SCOPE"; test -n "$scope" ;;
             *) exit 1 ;;
           esac
           if [ "$KIND" = objective ]; then
@@ -196,7 +246,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: paperclip-native-public-evidence-${{ matrix.mode }}-${{ matrix.kind }}
+          name: ${{ inputs.pipeline_stage != '' && format('paperclip-pipeline-native-{0}', inputs.pipeline_stage) || format('paperclip-native-public-evidence-{0}-{1}', matrix.mode, matrix.kind) }}
           path: reports/paperclip-native/
           if-no-files-found: error
           retention-days: 7
@@ -209,7 +259,7 @@ jobs:
           docker volume rm plenum-paperclip-qwen-cache 2>/dev/null || true
   fresh-runner-acceptance:
     needs: [authorize, native-integration]
-    if: ${{ !cancelled() && needs.native-integration.result == 'success' }}
+    if: ${{ !cancelled() && inputs.pipeline_stage == '' && needs.native-integration.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -235,9 +285,44 @@ jobs:
           path: reports/fresh-runner-result.json
           if-no-files-found: error
           retention-days: 7
+  pipeline-memory-acceptance:
+    needs: [prepare-pipeline, native-integration]
+    if: ${{ !cancelled() && inputs.pipeline_stage != '' && needs.prepare-pipeline.result == 'success' && needs.native-integration.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: paperclip-pipeline-native-${{ inputs.pipeline_stage }}
+          path: reports/pipeline-native
+      - name: Independently verify all native producer, profile, model, dependency and restart receipts
+        env:
+          PYTHONPATH: src
+          EXPECTED_SCOPE: ${{ needs.prepare-pipeline.outputs.scope }}
+        run: |
+          mkdir -p reports/pipeline-memory
+          python3 integrations/paperclip/pipeline_memory.py export reports/pipeline-native reports/pipeline-memory/memory.json
+      - name: Attest accepted public mission memory
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: reports/pipeline-memory/memory.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: paperclip-pipeline-memory-${{ inputs.pipeline_stage }}
+          path: reports/pipeline-memory/memory.json
+          if-no-files-found: error
+          retention-days: 90
   terminal-receipt:
     needs: [authorize, native-integration, fresh-runner-acceptance]
-    if: always() && github.event_name != 'pull_request' && needs.authorize.outputs.authorized == 'true'
+    if: always() && inputs.pipeline_stage == '' && github.event_name != 'pull_request' && needs.authorize.outputs.authorized == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 2
     permissions:

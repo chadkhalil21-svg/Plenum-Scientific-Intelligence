@@ -19,7 +19,11 @@ BODY="PLENUM_PAPERCLIP_PUBLIC_QUALIFICATION_V1\nobjective: Execute the reviewed 
 
 def issue_scope(issue):
     if issue.get("title")==TITLE and issue.get("body")==BODY:return dict(LEGACY)
-    if issue.get("title")==PAPERCLIP_EVIDENCE_TITLE:return parse_body(issue.get("body"))
+    if issue.get("title")==PAPERCLIP_EVIDENCE_TITLE:
+        scope=parse_body(issue.get("body"))
+        if "pipeline" in scope.get("inputs",{}):
+            raise ValueError("Pipeline continuation requires independently attested memory workflow")
+        return scope
     raise ValueError("Unapproved public mission envelope")
 
 

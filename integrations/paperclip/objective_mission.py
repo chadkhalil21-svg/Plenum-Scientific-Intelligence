@@ -7,13 +7,18 @@ from checkpoint_store import exclusive,DomainBlocked
 from objective_program import TOOLS,OPS
 
 SOURCE=Path(__file__).with_name("objective_program.py")
+PIPELINE_SOURCE=Path(__file__).with_name("pipeline_program.py")
+def source_for(scope):return PIPELINE_SOURCE if "pipeline" in scope.get("inputs",{}) else SOURCE
 NUMERIC={"mean","median","range","population_variance","least_squares_slope","max_step_change"}
 TEXT={"word_counts","shared_terms","term_frequency"}
 
-def tools_for(scope):return TOOLS if scope["kind"]=="public_objective" else None
+def tools_for(scope):return (("collections",) if "pipeline" in scope.get("inputs",{}) else TOOLS) if scope["kind"]=="public_objective" else None
 
 def operation_policy(scope):
     if scope["kind"]!="public_objective" or "operations" in scope:return None
+    if "pipeline" in scope["inputs"]:
+        from pipeline_contract import policy
+        return policy(scope["inputs"]["pipeline"],scope["operation_commitment"])
     groups=[]
     if "samples" in scope["inputs"]:groups.append(tuple(op for op in OPS if op in NUMERIC))
     if "documents" in scope["inputs"]:groups.append(tuple(op for op in OPS if op in TEXT))
@@ -32,6 +37,12 @@ def validate(scope):
     ids=scope["dois"]
     if not isinstance(ids,list) or not 1<=len(ids)<=2 or any(not isinstance(x,str) or not re.fullmatch(r"10\.[0-9]{4,9}/[a-z0-9][a-z0-9.()/_+-]{0,100}",x) for x in ids) or len(set(ids))!=len(ids):raise ValueError("Invalid public DOI scope")
     data=scope["inputs"]
+    if isinstance(data,dict) and "pipeline" in data:
+        if not natural or set(data)!={"pipeline"} or not isinstance(scope["operation_commitment"],str) or not re.fullmatch(r"[0-9a-f]{64}",scope["operation_commitment"]):
+            raise ValueError("Pipeline requires independent natural objective commitment")
+        from pipeline_contract import validate as validate_pipeline
+        validate_pipeline(data["pipeline"])
+        return
     if explicit:
         ops=scope["operations"]
         if not isinstance(ops,list) or not 1<=len(ops)<=len(OPS) or any(type(x) is not str or x not in OPS for x in ops) or len(set(ops))!=len(ops):raise ValueError("Unsupported acceptance operation")
@@ -63,6 +74,9 @@ def inputs(scope,directory=None):
     choice=planned_choice(directory,scope)
     return {**scope["inputs"],"operations":validate_operations(choice["operations"],operation_policy(scope))}
 def simulation_input(data):
+    if "pipeline" in data:
+        from pipeline_contract import perturb
+        return perturb(data)
     out=dict(data)
     if "samples" in out:out["samples"]=[*out["samples"],out["samples"][-1]]
     if "documents" in out:out["documents"]=[*out["documents"],out["documents"][-1]]
@@ -78,6 +92,9 @@ def evaluate(source,data,tool):
     except subprocess.TimeoutExpired as exc:raise TimeoutError("Reviewed local computation timed out") from exc
     return json.loads(res.stdout)
 def independent(data):
+    if "pipeline" in data:
+        from pipeline_contract import independent as pipeline_independent
+        return pipeline_independent(data)
     docs=[re.findall("[a-z0-9]+",x.lower()) for x in data.get("documents",[])]
     v=data.get("samples",[])
     out={}
@@ -103,9 +120,9 @@ def planned_choice(directory,scope):
     return row["response"]["step_3"]
 def planned_tool(directory,scope):return planned_choice(directory,scope)["tool"]
 def engineering(scope,directory,tool):
-    if tool not in TOOLS:raise ValueError("Invalid tool")
+    if tool not in tools_for(scope):raise ValueError("Invalid tool")
     artifact=Path(tempfile.mkdtemp(prefix="engineering-artifact-",dir=directory))
-    source=artifact/"main.py";source.write_bytes(SOURCE.read_bytes())
+    source=artifact/"main.py";source.write_bytes(source_for(scope).read_bytes())
     data=inputs(scope,directory);observed=evaluate(source,data,tool)
     if observed!=independent(data):raise ValueError("Objective analysis disagrees")
     manifest={"main_sha256":hashlib.sha256(source.read_bytes()).hexdigest(),"functional_verifier_executed_and_passed":True}
@@ -134,7 +151,7 @@ def verify(scope,prior,directory,*,functional_test):
     eng=prior["engineering"]["result"];name=eng["artifact_dir"]
     if not isinstance(name,str) or not name.startswith("engineering-artifact-") or Path(name).name!=name:raise ValueError("Unsafe artifact")
     artifact=directory/name;source=artifact/"main.py"
-    if artifact.is_symlink() or source.is_symlink() or source.read_bytes()!=SOURCE.read_bytes() or eng["input"]!=inputs(scope,directory):raise ValueError("Objective source or input mismatch")
+    if artifact.is_symlink() or source.is_symlink() or source.read_bytes()!=source_for(scope).read_bytes() or eng["input"]!=inputs(scope,directory):raise ValueError("Objective source or input mismatch")
     manifest=json.loads((artifact/"manifest.json").read_text())
     if manifest!=eng["manifest"] or manifest!={"main_sha256":hashlib.sha256(source.read_bytes()).hexdigest(),"functional_verifier_executed_and_passed":True}:raise ValueError("Manifest mismatch")
     expected=planned_tool(directory,scope)
