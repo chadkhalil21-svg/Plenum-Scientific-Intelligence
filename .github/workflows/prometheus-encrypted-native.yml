@@ -1,0 +1,104 @@
+name: Prometheus encrypted native database recovery
+on:
+  pull_request:
+    paths:
+      - 'integrations/cloudflare/paperclip-snapshot-native*'
+      - '.github/workflows/prometheus-encrypted-native.yml'
+permissions:
+  contents: read
+jobs:
+  native-recovery:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.actor == 'chadkhalil21-svg' && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Start pinned synthetic Paperclip board
+        run: |
+          set -eu
+          image=ghcr.io/paperclipai/paperclip:2026.1106.0
+          docker pull "$image"
+          test "$(docker image inspect "$image" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')" = d69631b01b9c658f80bf8bed389863dce82643e1
+          docker run -d --name plenum-paperclip-integration \
+            -e GITHUB_ACTIONS=true -e HOST=127.0.0.1 -e PAPERCLIP_BIND=loopback -e PAPERCLIP_HOME=/paperclip \
+            -e PAPERCLIP_DEPLOYMENT_MODE=local_trusted -e PAPERCLIP_DEPLOYMENT_EXPOSURE=private \
+            -e PAPERCLIP_PUBLIC_URL=http://localhost:3100 \
+            -e BETTER_AUTH_SECRET="$(openssl rand -hex 32)" \
+            -e PAPERCLIP_TOOL_ACTION_SIGNING_SECRET="$(openssl rand -hex 32)" \
+            --mount type=volume,src=plenum-paperclip-test-volume,dst=/paperclip \
+            --mount type=bind,src="$GITHUB_WORKSPACE",dst=/plenum,readonly "$image"
+          for i in $(seq 1 90); do
+            if docker exec plenum-paperclip-integration curl --fail --silent http://127.0.0.1:3100/api/health >/dev/null; then exit 0; fi
+            sleep 2
+          done
+          exit 1
+      - name: Start original local Qwen
+        run: |
+          set -eu
+          docker pull ollama/ollama:latest
+          docker run -d --name plenum-paperclip-qwen --network container:plenum-paperclip-integration \
+            -e OLLAMA_HOST=127.0.0.1:11434 -e OLLAMA_CONTEXT_LENGTH=2048 -e OLLAMA_NUM_PARALLEL=1 \
+            --memory=8g --cpus=3 --mount type=volume,src=plenum-paperclip-qwen-cache,dst=/root/.ollama ollama/ollama:latest
+          for i in $(seq 1 45); do
+            if docker exec plenum-paperclip-integration curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
+            sleep 2
+          done
+          bash integrations/paperclip/pull_original_qwen.sh
+          test "$(docker exec plenum-paperclip-qwen ollama list | awk '$1=="qwen3.5:4b" {print $2}')" = d8b0f5e9760c
+      - name: Execute one new bounded synthetic native mission
+        run: |
+          set -eu
+          scope='{"kind":"public_objective","objective":"Find the words common to both delivery summaries and the middle value after sorting the observations.","dois":["10.1007/s10791-026-10743-4","10.1016/j.jss.2026.113142"],"inputs":{"documents":["supplier delivery quality","delivery supplier testing"],"samples":[17,-3,8,42,12,19]},"operation_commitment":"b06f527ce3646bcbc14a7970066456b64e9396c24e7a6102beefcf6340985428"}'
+          docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_MISSION_SCOPE="$scope" -e PLENUM_PAPERCLIP_MODEL=local plenum-paperclip-integration python3 /plenum/integrations/paperclip/supervise_native.py event
+          docker rm -fv plenum-paperclip-qwen
+          docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/event_native.py readback
+      - name: Install pinned local workerd test runtime
+        working-directory: integrations/cloudflare
+        run: npm install --no-save --no-package-lock --ignore-scripts miniflare@4.20260730.0
+      - name: Restore actual synthetic native database through encrypted local SQLite Durable Object
+        env:
+          PLENUM_SYNTHETIC_NATIVE_SNAPSHOT: confirmed
+        run: bash integrations/cloudflare/paperclip-snapshot-native-restore.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: encrypted-native-recovery-proof
+          path: reports/encrypted-native-proof/
+          retention-days: 7
+          if-no-files-found: error
+      - name: Remove isolated synthetic resources
+        if: always()
+        run: |
+          docker rm -fv plenum-paperclip-qwen plenum-paperclip-integration 2>/dev/null || true
+          docker volume rm plenum-paperclip-test-volume plenum-paperclip-qwen-cache 2>/dev/null || true
+  independent-proof:
+    needs: native-recovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: encrypted-native-recovery-proof
+          path: proof
+      - name: Independently bind original run, archive, native restore and no replay
+        run: |
+          python3 - <<'PY'
+          import json,os,re
+          from pathlib import Path
+          p=Path("proof")
+          assert {x.name for x in p.iterdir()}=={"native-database-restore.json","bridge.json"}
+          n=json.loads((p/"native-database-restore.json").read_text()); b=json.loads((p/"bridge.json").read_text())
+          assert n["schema"]=="plenum-native-cold-database-restore-v1" and b["schema"]=="plenum-synthetic-native-encrypted-bridge-v1"
+          assert n["source_run_id"]==b["source_run_id"]==os.environ["GITHUB_RUN_ID"]
+          assert n["source_commit"]==b["identity"]["source_commit"]==os.environ["GITHUB_SHA"]
+          assert n["company"]==b["identity"]["company"] and n["mission"]==b["identity"]["mission"]
+          assert n["encrypted_bridge_manifest_sha256"]==b["manifest_sha256"] and n["encrypted_archive_sha256"]==b["archive_sha256"]
+          assert n["source_container_sha256"]!=n["restored_container_sha256"] and n["postgres_file_count"]>0
+          assert n["verified_divisions"]==5 and n["verified_profile_work_products"]==11
+          assert all(n[k] is True for k in ("native_readback","separate_volume","network_isolated","actual_workerd_local","sqlite_persistence_across_instances","synthetic_data_only"))
+          for x in (n,b):
+              assert x["paid_inference"] is False and x["model_calls_replayed"]==x["provider_calls_replayed"]==0
+              assert x["raw_database_uploaded"] is False and x["live_cloudflare_verified"] is False
+          print(json.dumps({"independent_receipt_binding":True,"synthetic_native_database_restored":True,"verified_divisions":5,"verified_profile_work_products":11,"paid_inference":False,"model_calls_replayed":0,"provider_calls_replayed":0,"live_cloudflare_verified":False,"cross_runner_database_restored":False}))
+          PY
