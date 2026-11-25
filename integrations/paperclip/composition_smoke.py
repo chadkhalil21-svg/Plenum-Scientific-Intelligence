@@ -67,6 +67,14 @@ def smoke():
             try:verify_expressions(c,bad)
             except ValueError:pass
             else:raise AssertionError("Wrong physical dimensions accepted")
+        if case=="composition-logistics":
+            fractional=dict(choice,pallet_count="total_cartons/cartons_per_pallet")
+            from composition_contract import data_for,integer_outputs_valid
+            wrong=data_for(fixture,fractional)
+            assert not integer_outputs_valid(wrong,independent(wrong))
+            try:accept_choice(fixture,fractional)
+            except ValueError as exc:assert str(exc)=="Independent actual and held-out answer commitment mismatch"
+            else:raise AssertionError("Fractional discrete output accepted")
         # Original untyped scopes retain both symbolic and structured planning.
         untyped=dict(fixture,inputs={"composition":{k:v for k,v in c.items() if k not in ("dimensions","integer_outputs")}})
         assert accept_choice(untyped,choice)

@@ -82,11 +82,10 @@ def independent(data):
         verify_expressions(data,data["expressions"])
     result={"results":independent_case(data["expressions"],data["values"],data["outputs"]),
             "holdout":independent_case(data["expressions"],data["holdout"],data["outputs"])}
-    if "dimensions" in data:
-        for case in result.values():
-            if any(case[k]["denominator"]!=1 for k in data["integer_outputs"]):
-                raise ValueError("Independent actual and held-out answer commitment mismatch")
     return result
+
+def integer_outputs_valid(data,result):
+    return "dimensions" not in data or all(case[k]["denominator"]==1 for case in result.values() for k in data["integer_outputs"])
 
 def data_for(scope,expressions):
     return {**scope["inputs"]["composition"],"expressions":expressions}
@@ -94,7 +93,8 @@ def data_for(scope,expressions):
 def accept_choice(scope,expressions):
     validate(scope)
     data=data_for(scope,expressions)
-    if hash_value(independent(data))!=scope["result_commitment"]:
+    observed=independent(data)
+    if not integer_outputs_valid(data,observed) or hash_value(observed)!=scope["result_commitment"]:
         raise ValueError("Independent actual and held-out answer commitment mismatch")
     return data
 
@@ -207,8 +207,9 @@ def checked_rejection(directory,expected_attempt,scope):
     expr=failure["previous_expressions"]
     if expr is not None:
         # Only fully validated, scope-bound expression ASTs may be retained.
-        observed=independent(data_for(scope,expr))
-        if hash_value(observed)==scope["result_commitment"] or failure["category"]!="Independent actual and held-out answer commitment mismatch":
+        rejected_data=data_for(scope,expr)
+        observed=independent(rejected_data)
+        if (integer_outputs_valid(rejected_data,observed) and hash_value(observed)==scope["result_commitment"]) or failure["category"]!="Independent actual and held-out answer commitment mismatch":
             raise ValueError("Rejected candidate was accepted or mismatched")
     elif failure["category"]=="Independent actual and held-out answer commitment mismatch":
         raise ValueError("Missing validated rejected candidate")
