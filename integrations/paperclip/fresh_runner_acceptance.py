@@ -9,7 +9,7 @@ from pathlib import Path
 from checkpoint_store import checked,encoded,exclusive
 from lifecycle import canonical
 from mission_scope import validate_scope,digest as scope_digest,profile_routes
-from model_plan import validate_receipt
+from model_plan import validate_receipt,verify_classification_attempts
 from objective_mission import planning_kwargs
 from sequential_mission import MISSION_ORDER,scope_binding,scope_inputs,goal_texts,verify
 from profile_execution import chief_receipt,division_receipts
@@ -73,6 +73,7 @@ def accept_mission(directory,timing_root,summary,cid,mid,expected_scope=None):
     if summary.get("minister_model_executed") is True:
         receipt=read(directory/"minister-model-plan.json")
         if digest(receipt)!=summary["model_receipt_sha256"] or digest(receipt)!=plan["model_receipt_sha256"] or validate_receipt(receipt,cid,mid,goals=goal_texts(scope),**planning_kwargs(scope))!=list(MISSION_ORDER):raise ValueError("Original model proof mismatch")
+        verify_classification_attempts(directory,receipt,planning_kwargs(scope)["operation_policy"])
     elif summary.get("minister_model_executed") is not False or "model_receipt_sha256" in plan:raise ValueError("Model state mismatch")
     extra={}
     recovery=directory/"supervisor-recovery.json"

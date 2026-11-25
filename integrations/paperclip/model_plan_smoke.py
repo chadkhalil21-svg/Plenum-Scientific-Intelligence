@@ -104,27 +104,36 @@ class PlanTests(unittest.TestCase):
             with self.subTest(bad=bad),self.assertRaises(mp.PlanRejected):
                 mp.validate_choice(changed,**kwargs)
         tag={"models":[{"name":mp.MODEL,"digest":mp.MODEL_DIGEST+"a"*52}]}
-        reply={"model":mp.MODEL,"done":True,"message":{"content":json.dumps(good)},"eval_count":155,"prompt_eval_count":451}
+        route={k:dict(v) for k,v in good.items()}
+        route["step_3"].pop("operations")
+        def reply(value):
+            return {"model":mp.MODEL,"done":True,"message":{"content":json.dumps(value)},"eval_count":55,"prompt_eval_count":251}
+        policy=kwargs["operation_policy"]
+        groups=policy["required_groups"]
+        replies=[tag,reply(route)]+[reply({op:op in chosen for op in group}) for group in groups]
         cid,pid=str(uuid4()),str(uuid4())
         with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ,{"PLENUM_EPHEMERAL_RUNNER":"confirmed","PLENUM_PAPERCLIP_MODEL":"local"}):
             directory=Path(tmp)
-            with patch.object(mp,"read_json",side_effect=[tag,reply]) as model:
+            with patch.object(mp,"read_json",side_effect=replies) as model:
                 order,receipt=mp.model_plan(directory,cid,pid,goals=om.goals(scope),**kwargs)
-                request=model.call_args_list[1].args[1]
-                self.assertNotIn(scope["operation_commitment"],json.dumps(request))
-                payload=json.loads(request["messages"][1]["content"])
-                self.assertEqual(set(payload["approved_operations"]),set(om.OPS))
-                self.assertEqual(payload["question"],scope["objective"])
-                self.assertEqual(set(payload["operation_definitions"]),set(om.OPS))
-                self.assertNotIn("goals",payload)
-                self.assertEqual(set(payload["required_operation_groups"]["group_1"]),om.NUMERIC)
-                self.assertEqual(set(payload["required_operation_groups"]["group_2"]),om.TEXT)
+                self.assertEqual(model.call_count,4)
+                for index,group in enumerate(groups,2):
+                    request=model.call_args_list[index].args[1]
+                    self.assertNotIn(scope["operation_commitment"],json.dumps(request))
+                    payload=json.loads(request["messages"][1]["content"])
+                    self.assertEqual(payload["question"],scope["objective"])
+                    self.assertEqual(set(payload["operations"]),set(group))
+                    self.assertEqual(set(request["format"]["required"]),set(group))
+                self.assertEqual(len(receipt["operation_classifications"]),2)
+                self.assertEqual(receipt["response"],good)
             self.assertEqual(order,mp.ORDER)
             (directory/"minister-plan.json").write_text(json.dumps({"company":cid,"parent":pid,"model_receipt_sha256":mp.digest(receipt)}))
             actual=om.engineering(scope,directory,"stream")
             self.assertEqual(actual["validation"],{"results":{"median":{"numerator":12,"denominator":1},"shared_terms":["resilient","systems"]}})
             with patch.object(mp,"read_json",side_effect=AssertionError("no repeated inference")):
                 self.assertEqual(mp.model_plan(directory,cid,pid,goals=om.goals(scope),**kwargs),(order,receipt))
+                (directory/"minister-operation-2.attempt.json").unlink()
+                with self.assertRaises(ValueError):mp.model_plan(directory,cid,pid,goals=om.goals(scope),**kwargs)
 
     def test_rejection_diagnostic_keeps_only_reviewed_choices(self):
         policy={"allowed":("range","median","shared_terms"),
