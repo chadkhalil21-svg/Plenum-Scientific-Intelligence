@@ -66,8 +66,8 @@ def request(ctx,turn,result=None):
         data={"goal":ctx["goal"],"observed_comparisons":ctx["options"]}
     elif turn==2:
         schema={"type":"object","required":["action"],"additionalProperties":False,"properties":{"action":{"type":"string","enum":["review","defer","no_review"]}}}
-        instruction="Use the actual tool result. If no reviews are selected choose no_review. If review cost exceeds budget choose defer. Otherwise choose review. Never authorize spending."
-        data={"goal":ctx["goal"],"observed_tool_result":result}
+        instruction="Apply the decision rule to the observed integers only. If review_cost equals zero, return no_review. Otherwise if remaining is negative, return defer. Otherwise return review. Output one JSON object with the required action field. This records a recommendation only; no spending authorized."
+        data={"observed_tool_result":{"review_cost":result["review_cost"],"budget":result["budget"],"remaining":result["remaining"],"selected_count":len(result["selected"])},"full_tool_result_sha256":digest(result)}
     else:raise ValueError("Unknown turn")
     return {"model":MODEL,"stream":False,"think":False,"format":schema,
         "options":{"temperature":0,"num_ctx":2048,"num_predict":128},
@@ -115,16 +115,25 @@ def execute(scope,prior,directory):
         exclusive(directory/f"adaptive-turn-{turn}.reserved.json",expected)
         reply=read_json("/api/chat",req,timeout=120)
         raw=reply.get("message",{}).get("content");n=reply.get("eval_count")
-        if reply.get("done") is not True or reply.get("model")!=MODEL or not isinstance(raw,str) or len(raw)>1500 or type(n) is not int or not 0<n<=128:raise ValueError("Invalid turn response")
+        def reject(reason):
+            # Store bounded diagnostics, not an accepted receipt. No replay.
+            exclusive(directory/f"adaptive-rejection-{turn}.json",{**expected,"reason":reason,"done":reply.get("done") is True,"model_matches":reply.get("model")==MODEL,"eval_count":n if type(n) is int else None,"raw_sha256":hashlib.sha256(raw.encode()).hexdigest() if isinstance(raw,str) else None})
+        if reply.get("done") is not True or reply.get("model")!=MODEL or not isinstance(raw,str) or len(raw)>1500 or type(n) is not int or not 0<n<=128:
+            reject("invalid_envelope");raise ValueError("Invalid turn response")
         def unique(pairs):
             out={}
             for k,v in pairs:
                 if k in out:raise ValueError("Duplicate model field")
                 out[k]=v
             return out
-        response=json.loads(raw,object_pairs_hook=unique)
-        if turn==1:result=tool(ctx,response)
-        else:independent(ctx,checked(directory/"adaptive-turn-1.json",{})["response"],response,scope["inputs"]["synthesis"]["followup"]["commitment"])
+        try:response=json.loads(raw,object_pairs_hook=unique)
+        except (ValueError,TypeError):
+            reject("invalid_json");raise
+        try:
+            if turn==1:result=tool(ctx,response)
+            else:independent(ctx,checked(directory/"adaptive-turn-1.json",{})["response"],response,scope["inputs"]["synthesis"]["followup"]["commitment"])
+        except ValueError:
+            reject("semantic_gate_rejected");raise
         row={**expected,"model":MODEL,"model_digest":model_digest,"response":response,"response_sha256":digest(response),"eval_count":n}
         exclusive(directory/f"adaptive-turn-{turn}.json",row);previous=digest(row)
     return verify(scope,prior,directory)

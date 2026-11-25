@@ -405,7 +405,7 @@ def qualify_locked(action):
     def hire(name,role,arg,parent=None):
         fields={"name":name,"role":role,"runner":"legacy","adapterType":"process",
                 "adapterConfig":{"command":"python3","args":["/plenum/integrations/paperclip/sequential_mission.py",arg],
-                                 "cwd":"/plenum","timeoutSec":150 if arg=="minister" else 120,"env":{"PYTHONPATH":"/plenum/src","GITHUB_ACTIONS":"true",
+                                 "cwd":"/plenum","timeoutSec":150 if arg=="minister" else 480 if arg=="commercial" else 120,"env":{"PYTHONPATH":"/plenum/src","GITHUB_ACTIONS":"true",
                                  "PLENUM_PAPERCLIP_MODEL":os.getenv("PLENUM_PAPERCLIP_MODEL","off"),
                                  "PLENUM_EPHEMERAL_RUNNER":"confirmed","PLENUM_MISSION_SCOPE":encoded(scope).decode()}},
                 "budgetMonthlyCents":0,"runtimeConfig":{"heartbeat":{"enabled":False,"wakeOnAssignment":True,"maxConcurrentRuns":1}},
@@ -481,7 +481,10 @@ def qualify_locked(action):
     from supervisor_resume import interrupt_ci
     interrupt_ci("PLENUM_CI_INTERRUPT_SUPERVISOR",durable,action,directory,73,api=api)
     # No board-side child assignment: wait for actual Minister and native wakes.
-    deadline=time.monotonic()+360
+    # Native graph work shares CPU inference with the prior verified adaptive
+    # turns; keep a bounded mission deadline long enough for the worker cap.
+    graph_scope=scope.get("inputs",{}).get("synthesis",{}).get("followup",{}).get("engine")=="deepagents"
+    deadline=time.monotonic()+(720 if graph_scope else 360)
     plan_path=directory/"minister-plan.json"
     while time.monotonic()<deadline:
         # The adapter writes a safe failure receipt before a nonzero exit.
