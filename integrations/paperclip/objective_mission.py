@@ -4,7 +4,7 @@ from pathlib import Path
 from fractions import Fraction
 from statistics import median
 from checkpoint_store import exclusive,DomainBlocked
-from objective_program import TOOLS,OPS
+from objective_program import TOOLS,OPS,PIPELINES,PIPELINE_OPS
 
 SOURCE=Path(__file__).with_name("objective_program.py")
 NUMERIC={"mean","median","range","population_variance","least_squares_slope","max_step_change"}
@@ -15,9 +15,12 @@ def tools_for(scope):return TOOLS if scope["kind"]=="public_objective" else None
 def operation_policy(scope):
     if scope["kind"]!="public_objective" or "operations" in scope:return None
     groups=[]
+    if set(scope["inputs"])&set(PIPELINES):
+        domain=next(iter(set(scope["inputs"])&set(PIPELINES)))
+        groups.append(tuple(PIPELINES[domain]))
     if "samples" in scope["inputs"]:groups.append(tuple(op for op in OPS if op in NUMERIC))
     if "documents" in scope["inputs"]:groups.append(tuple(op for op in OPS if op in TEXT))
-    return {"allowed":tuple(op for op in OPS if any(op in group for group in groups)),
+    return {"allowed":tuple(op for op in (*OPS,*PIPELINE_OPS) if any(op in group for group in groups)),
             "required_groups":tuple(groups),"commitment":scope["operation_commitment"]}
 
 def planning_kwargs(scope):
@@ -32,6 +35,9 @@ def validate(scope):
     ids=scope["dois"]
     if not isinstance(ids,list) or not 1<=len(ids)<=2 or any(not isinstance(x,str) or not re.fullmatch(r"10\.[0-9]{4,9}/[a-z0-9][a-z0-9.()/_+-]{0,100}",x) for x in ids) or len(set(ids))!=len(ids):raise ValueError("Invalid public DOI scope")
     data=scope["inputs"]
+    if isinstance(data,dict) and set(data)&set(PIPELINES):
+        validate_pipeline_scope(scope,explicit)
+        return
     if explicit:
         ops=scope["operations"]
         if not isinstance(ops,list) or not 1<=len(ops)<=len(OPS) or any(type(x) is not str or x not in OPS for x in ops) or len(set(ops))!=len(ops):raise ValueError("Unsupported acceptance operation")
@@ -46,6 +52,67 @@ def validate(scope):
     if "documents" in data:
         docs=data["documents"]
         if not isinstance(docs,list) or not 2<=len(docs)<=4 or any(not isinstance(x,str) or not re.fullmatch(r"[A-Za-z0-9 ,().?'-]{1,240}",x) for x in docs):raise ValueError("Invalid public synthetic documents")
+
+
+def validate_pipeline_scope(scope,explicit):
+    data=scope["inputs"]
+    if len(data)!=1 or next(iter(data)) not in PIPELINES:raise ValueError("One new domain per mission")
+    domain=next(iter(data));raw=data[domain]
+    def integer(v,low=0,high=10**8):return type(v) is int and low<=v<=high
+    def series(v):return isinstance(v,list) and 2<=len(v)<=64 and all(integer(x,1,10**6) for x in v)
+    if not isinstance(raw,dict):raise ValueError("Typed pipeline parameters")
+    if domain=="experiment":
+        if set(raw)!={"control","treatment"} or not series(raw["control"]) or not series(raw["treatment"]) or len(raw["control"])!=len(raw["treatment"]):
+            raise ValueError("Paired positive experiment observations required")
+    elif domain=="design":
+        if set(raw)!={"loads","capacity"} or not series(raw["loads"]) or not integer(raw["capacity"],1):
+            raise ValueError("Bounded positive service capacity required")
+    elif set(raw)!={"units","price","variable_cost","fixed_cost"} or not all(integer(v) for v in raw.values()) or raw["price"]<=raw["variable_cost"]:
+        raise ValueError("Positive unit contribution required")
+    if explicit:
+        ops=scope["operations"]
+        if not isinstance(ops,list) or not ops or any(type(op) is not str or op not in PIPELINES[domain] for op in ops) or len(set(ops))!=len(ops):
+            raise ValueError("Unapproved pipeline terminal")
+    elif not isinstance(scope["operation_commitment"],str) or not re.fullmatch(r"[0-9a-f]{64}",scope["operation_commitment"]):
+        raise ValueError("Independent pipeline commitment required")
+
+def independent_pipeline(data):
+    # Independent direct oracle, not the executor's aggregation or DAG.
+    domain=next(iter(set(data)&set(PIPELINES)));r=data[domain]
+    if domain=="experiment":
+        n=len(r["control"]);c=sum(r["control"]);t=sum(r["treatment"])
+        expected={"control_mean":Fraction(c,n),"treatment_mean":Fraction(t,n),
+                  "absolute_reduction":Fraction(sum(a-b for a,b in zip(r["control"],r["treatment"])),n),
+                  "relative_reduction":Fraction(c-t,c)}
+        deps={"control_mean":[],"treatment_mean":[],"absolute_reduction":["control_mean","treatment_mean"],
+              "relative_reduction":["absolute_reduction","control_mean"]}
+    elif domain=="design":
+        total=sum(r["loads"]);capacity=r["capacity"]
+        expected={"total_load":Fraction(total),"reserve_capacity":Fraction(capacity-total),
+                  "reserve_fraction":Fraction(capacity-total,capacity),"utilization_fraction":Fraction(total,capacity)}
+        deps={"total_load":[],"reserve_capacity":["total_load"],"reserve_fraction":["reserve_capacity"],"utilization_fraction":["total_load"]}
+    else:
+        margin=r["price"]-r["variable_cost"]
+        expected={"unit_contribution":Fraction(margin),"total_contribution":Fraction(r["units"]*margin),
+                  "break_even_units":Fraction((r["fixed_cost"]+margin-1)//margin),
+                  "operating_profit":Fraction(r["units"]*r["price"]-r["units"]*r["variable_cost"]-r["fixed_cost"])}
+        deps={"unit_contribution":[],"total_contribution":["unit_contribution"],"break_even_units":["unit_contribution"],"operating_profit":["total_contribution"]}
+    def rational(v):return {"numerator":v.numerator,"denominator":v.denominator}
+    trace=[];seen=set()
+    for op in sorted(data["operations"]):
+        if op not in expected:raise ValueError("Unknown terminal")
+        stack=[(op,False)]
+        while stack:
+            node,ready=stack.pop()
+            if node in seen:continue
+            if ready:
+                if not set(deps[node])<=seen:raise ValueError("Invalid graph order")
+                trace.append({"operation":node,"depends_on":deps[node],"value":rational(expected[node])});seen.add(node)
+            else:
+                stack.append((node,True))
+                stack.extend((dep,False) for dep in reversed(deps[node]))
+    return {"results":{op:rational(expected[op]) for op in data["operations"]},"pipeline":{"domain":domain,"steps":trace}}
+
 
 def goals(scope):
     validate(scope)
@@ -64,6 +131,12 @@ def inputs(scope,directory=None):
     return {**scope["inputs"],"operations":validate_operations(choice["operations"],operation_policy(scope))}
 def simulation_input(data):
     out=dict(data)
+    if "experiment" in out:
+        x=out["experiment"];out["experiment"]={k:[*v,v[-1]] for k,v in x.items()}
+    if "design" in out:
+        x=out["design"];out["design"]={**x,"loads":[*x["loads"],x["loads"][-1]]}
+    if "business" in out:
+        x=out["business"];out["business"]={**x,"units":x["units"]+1}
     if "samples" in out:out["samples"]=[*out["samples"],out["samples"][-1]]
     if "documents" in out:out["documents"]=[*out["documents"],out["documents"][-1]]
     return out
@@ -78,6 +151,7 @@ def evaluate(source,data,tool):
     except subprocess.TimeoutExpired as exc:raise TimeoutError("Reviewed local computation timed out") from exc
     return json.loads(res.stdout)
 def independent(data):
+    if set(data)&set(PIPELINES):return independent_pipeline(data)
     docs=[re.findall("[a-z0-9]+",x.lower()) for x in data.get("documents",[])]
     v=data.get("samples",[])
     out={}
