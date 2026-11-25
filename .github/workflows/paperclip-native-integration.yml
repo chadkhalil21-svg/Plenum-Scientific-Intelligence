@@ -5,6 +5,10 @@ on:
       pipeline_stage:
         required: true
         type: string
+      cross_run_case:
+        required: false
+        type: string
+        default: ''
   issues:
     types: [opened]
   issue_comment:
@@ -64,7 +68,16 @@ jobs:
           ISSUE: ${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number }}
         run: PYTHONPATH=src python3 integrations/paperclip/event_gate.py --issue "$ISSUE"
   prepare-pipeline:
-    if: inputs.pipeline_stage != '' && github.event_name == 'pull_request' && github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt == 1
+    if: >-
+      inputs.pipeline_stage != '' && github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.actor == 'chadkhalil21-svg' && github.run_attempt == 1 &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository &&
+        (inputs.cross_run_case == '' || (inputs.pipeline_stage == 'commercial' && inputs.cross_run_case == 'pr'))) ||
+       (github.event_name == 'issues' && github.ref == 'refs/heads/main' && inputs.pipeline_stage == 'commercial' &&
+        inputs.cross_run_case == 'live' && github.event.action == 'opened' &&
+        github.event.issue.user.login == 'chadkhalil21-svg' && github.event.sender.login == 'chadkhalil21-svg' &&
+        github.event.issue.title == '[Plenum Paperclip] signed cross-run continuation' &&
+        github.event.issue.body == 'PLENUM_PUBLIC_CROSS_RUN_V1:45549381583:14993446038'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -89,21 +102,62 @@ jobs:
           esac
           echo "stage=$previous" >> "$GITHUB_OUTPUT"
       - uses: actions/download-artifact@v4
-        if: steps.prior.outputs.stage != 'none'
+        if: steps.prior.outputs.stage != 'none' && inputs.cross_run_case == ''
         with:
           name: paperclip-pipeline-memory-${{ steps.prior.outputs.stage }}
           path: reports/prior-memory
       - name: Verify signed predecessor provenance before any new model or worker call
-        if: steps.prior.outputs.stage != 'none'
+        if: steps.prior.outputs.stage != 'none' && inputs.cross_run_case == ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh attestation verify reports/prior-memory/memory.json --repo "$GITHUB_REPOSITORY" --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/paperclip-native-integration.yml" --source-digest "$GITHUB_SHA" --source-ref "$GITHUB_REF" --deny-self-hosted-runners
+      - name: Verify original successful run and exact artifact metadata
+        if: inputs.cross_run_case != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PYTHONPATH: src
+        run: |
+          set -eu
+          mkdir -p reports/cross-run-source
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/45549381583" > reports/cross-run-source/run.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/14993446038" > reports/cross-run-source/artifact.json
+          python3 integrations/paperclip/cross_run_memory.py metadata reports/cross-run-source/run.json reports/cross-run-source/artifact.json
+      - uses: actions/download-artifact@v4
+        if: inputs.cross_run_case != ''
+        with:
+          name: paperclip-pipeline-memory-engineering
+          path: reports/prior-memory
+          run-id: 45549381583
+          github-token: ${{ github.token }}
+      - name: Verify exact predecessor bytes and original signed provenance
+        if: inputs.cross_run_case != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          test "$(sha256sum reports/prior-memory/memory.json | cut -d' ' -f1)" = 62ad650fa46a14976be18238822a73c5fde3301e978650d6828e01f84e16c676
+          gh attestation verify reports/prior-memory/memory.json --repo "$GITHUB_REPOSITORY" --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/paperclip-native-integration.yml" --source-digest 16738e2e366e9078701a1209adbc73209684231d --source-ref refs/pull/906/merge --deny-self-hosted-runners --format json > reports/cross-run-source/attestation.json
+          cp reports/prior-memory/memory.json reports/cross-run-source/memory.json
       - id: prepare
         env:
           STAGE: ${{ inputs.pipeline_stage }}
+          CROSS_RUN_CASE: ${{ inputs.cross_run_case }}
           PYTHONPATH: src
-        run: python3 integrations/paperclip/pipeline_memory.py prepare "$STAGE" reports/prior-memory/memory.json
+        run: |
+          set -eu
+          if [ -n "$CROSS_RUN_CASE" ]; then
+            python3 integrations/paperclip/cross_run_memory.py prepare reports/prior-memory/memory.json "$CROSS_RUN_CASE"
+          else
+            python3 integrations/paperclip/pipeline_memory.py prepare "$STAGE" reports/prior-memory/memory.json
+          fi
+      - uses: actions/upload-artifact@v4
+        if: inputs.cross_run_case != ''
+        with:
+          name: paperclip-cross-run-source
+          path: reports/cross-run-source/
+          if-no-files-found: error
+          retention-days: 90
   native-integration:
     needs: [authorize, prepare-pipeline]
     if: ${{ !cancelled() && ((inputs.pipeline_stage != '' && needs.prepare-pipeline.result == 'success') || (inputs.pipeline_stage == '' && (github.event_name == 'pull_request' || needs.authorize.outputs.authorized == 'true'))) }}
