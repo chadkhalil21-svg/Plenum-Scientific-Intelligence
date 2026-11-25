@@ -64,9 +64,12 @@ def validate(scope):
     if set(scope)!={'kind','objective','dois','inputs','result_commitment'} or set(scope['inputs'])!={'synthesis'}:
         raise ValueError('Exact synthesis scope')
     x=scope['inputs']['synthesis']
-    if not isinstance(x,dict) or set(x)!={'documents'} or not isinstance(scope['result_commitment'],str) or not HEX.fullmatch(scope['result_commitment']):
+    if not isinstance(x,dict) or set(x) not in ({'documents'},{'documents','followup'}) or not isinstance(scope['result_commitment'],str) or not HEX.fullmatch(scope['result_commitment']):
         raise ValueError('Independent synthesis commitment required')
     records=index(x['documents']);candidates(records)
+    if 'followup' in x:
+        from adaptive_turns import validate as validate_followup
+        validate_followup(x['followup'])
 
 
 def data_for(scope,selection):
