@@ -148,7 +148,7 @@ def accept_queue(root):
 def main():
     base=Path(sys.argv[1]);out=Path(sys.argv[2])
     event=os.environ["EVENT"];run=os.environ["GITHUB_RUN_ID"];commit=os.environ["GITHUB_SHA"]
-    expected_names={"off-legacy","local-legacy","local-budget","local-objective","local-composition-logistics","local-composition-energy","local-synthesis","local-adaptive-review","local-adaptive-defer"} if event=="pull_request" else {"local-event"}
+    expected_names={"off-legacy","local-legacy","local-budget","local-objective","local-composition-logistics","local-composition-energy","local-synthesis","local-adaptive-review","local-adaptive-defer","local-oss-review","local-oss-defer"} if event=="pull_request" else {"local-event"}
     paths={p.name.removeprefix("paperclip-native-public-evidence-"):p for p in base.iterdir()}
     if set(paths)!=expected_names:raise ValueError("Missing or unexpected native evidence archives")
     scope=None if event=="pull_request" else validate_scope(json.loads(os.environ["EXPECTED_SCOPE"]))
@@ -162,6 +162,19 @@ def main():
         for case in ("adaptive-review","adaptive-defer"):
             accepted=accept(paths["local-"+case],run,commit,expected_adaptive_scope(case))
             if accepted!=results["local-"+case]:raise ValueError("Adaptive independent acceptance mismatch")
+        sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"prometheus_oss"))
+        from native_scope import scope as expected_oss_scope
+        for case in ("oss-review","oss-defer"):
+            accepted=accept(paths["local-"+case],run,commit,expected_oss_scope(case))
+            if accepted!=results["local-"+case]:raise ValueError("Native OSS independent acceptance mismatch")
+            root=paths["local-"+case]
+            directory=root/accepted["company"]/accepted["mission"]
+            q=read(directory/"qualification.json")
+            if q["independent_verification"].get("native_oss_graph_verified") is not True:raise ValueError("Native OSS work product missing")
+            if case=="oss-review":
+                proof=read(root/"native-database-restore.json",{"schema":"plenum-native-cold-database-restore-v1","company":accepted["company"],"mission":accepted["mission"],"qualification_sha256":accepted["qualification_sha256"],"source_run_id":run,"source_commit":commit,"separate_volume":True,"network_isolated":True,"native_readback":True,"raw_database_uploaded":False,"verified_divisions":5,"verified_profile_work_products":11,"model_calls_replayed":0,"provider_calls_replayed":0,"paid_inference":False})
+                if proof["source_container_sha256"]==proof["restored_container_sha256"] or type(proof["postgres_file_count"]) is not int or not 0<proof["postgres_file_count"]<=proof["restored_file_count"]:raise ValueError("Native DB restore proof incomplete")
+                results["local-"+case]["native_database_restore_sha256"]=digest(proof)
         from composition_smoke import scope as expected_composition_scope
         for case in ("composition-logistics","composition-energy"):
             accepted=accept(paths["local-"+case],run,commit,expected_composition_scope(case))
