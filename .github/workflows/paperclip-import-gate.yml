@@ -103,3 +103,11 @@ jobs:
         run: |
           python integrations/paperclip/synthesis_smoke.py
           python integrations/paperclip/synthesis_receipt_smoke.py
+
+      - name: Outcome-dependent local model turn receipts and zero replay regressions
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/adaptive_turns_smoke.py
+
+      - name: Owner same-volume restart fail-closed offline fixtures
+        run: python integrations/paperclip/owner_restart_smoke.py
