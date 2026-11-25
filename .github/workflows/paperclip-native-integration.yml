@@ -27,7 +27,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: paperclip-mission-${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number || github.ref }}-${{ inputs.pipeline_stage || 'original' }}
+  group: paperclip-mission-${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number || github.ref }}${{ inputs.pipeline_stage != '' && format('-pipeline-{0}', inputs.pipeline_stage) || '' }}
   cancel-in-progress: false
 jobs:
   authorize:

@@ -18,6 +18,9 @@ jobs:
       actions: read
       id-token: write
       attestations: write
+      # Ceiling for skipped original issue jobs in the reused workflow.
+      # Active pipeline jobs explicitly lack issues:write.
+      issues: write
   engineering:
     needs: science
     uses: ./.github/workflows/paperclip-native-integration.yml
@@ -28,6 +31,9 @@ jobs:
       actions: read
       id-token: write
       attestations: write
+      # Ceiling for skipped original issue jobs in the reused workflow.
+      # Active pipeline jobs explicitly lack issues:write.
+      issues: write
   commercial:
     needs: engineering
     uses: ./.github/workflows/paperclip-native-integration.yml
@@ -38,3 +44,6 @@ jobs:
       actions: read
       id-token: write
       attestations: write
+      # Ceiling for skipped original issue jobs in the reused workflow.
+      # Active pipeline jobs explicitly lack issues:write.
+      issues: write
