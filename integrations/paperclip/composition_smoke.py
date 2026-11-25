@@ -38,7 +38,16 @@ def smoke():
             try:accept_choice(s,bad)
             except (ValueError,TypeError,SyntaxError,ZeroDivisionError):pass
             else:raise AssertionError("Invalid expression accepted")
-    print("Independent compositional grammar, two domains and held-out results passed")
+    from composition_contract import normalize,request_for
+    assert normalize({"x":" math.ceil( a / b ) "})=={"x":"ceil( a / b )"}
+    for invalid in ["os.system(x)", "a=2", "a; b"]:
+        try:normalize({"x":invalid})
+        except ValueError:pass
+        else:raise AssertionError("Unsafe normalization")
+    request=request_for(scope("composition-energy"),1,None)
+    second=request_for(scope("composition-energy"),2,"Independent actual and held-out answer commitment mismatch")
+    assert request!=second and "holdout" not in json.loads(request["messages"][1]["content"])
+    print("Independent compositional grammar, two domains, correction request binding and held-out results passed")
 if __name__=="__main__":
     if len(sys.argv)==2:print(json.dumps(scope(sys.argv[1]),separators=(",",":")))
     else:smoke()
