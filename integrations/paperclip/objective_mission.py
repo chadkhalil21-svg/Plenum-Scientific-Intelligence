@@ -157,14 +157,21 @@ def engineering(scope,directory,tool):
     manifest={"main_sha256":hashlib.sha256(source.read_bytes()).hexdigest(),"functional_verifier_executed_and_passed":True}
     exclusive(artifact/"manifest.json",manifest)
     return {"artifact_dir":artifact.name,"manifest":manifest,"input":data,"validation":observed,"tool":tool}
-def brief(scope,prior):
+def brief(scope,prior,directory=None,*,execute_followup=False):
     if is_synthesis(scope):
         results=prior["engineering"]["result"]["validation"]
         conflict=any(x["relation"]=="conflict" for x in results["comparisons"])
-        return {"objective":scope["objective"],"results":results,
+        row={"objective":scope["objective"],"results":results,
             "recommendation":"Resolve the explicitly conflicting requirements before an external decision; consult the cited evidence" if conflict else "Review the cited evidence before any external decision",
             "limitations":["The supplied source text is not independently established as true","Live DOI metadata is not full-text confirmation",*results["limitations"]],
             "new_paid_services":False,"external_actions_executed":False}
+        from adaptive_turns import enabled,execute,verify
+        if enabled(scope):
+            if directory is None:raise ValueError("Followup requires original mission receipts")
+            outcome=(execute if execute_followup else verify)(scope,prior,directory)
+            row["adaptive_followup"]=outcome
+            row["recommendation"]={"review":"Prepare bounded review of disputed requirements; no expenditure authorized","defer":"Defer review commitment because the estimated cost exceeds the stated budget","no_review":"No disputed requirements selected for review"}[outcome["action"]]
+        return row
     return {"objective":scope["objective"],"results":prior["engineering"]["result"]["validation"],
             "recommendation":"Review the bounded synthetic results against independently collected evidence before decisions",
             "limitations":["Synthetic public inputs are not measured evidence","DOI metadata does not independently validate these inputs","Only the scoped arithmetic grammar was executed" if is_composition(scope) else "Only the explicitly approved acceptance operations were executed"],
@@ -187,7 +194,7 @@ def run(role,scope,prior,directory):
             data=inputs(scope,directory);r=prior["research"]["result"]
             if r["source_index"]!=data["records"] or r["source_index_sha256"]!=digest(data["records"]):raise ValueError("Research source index changed")
         return engineering(scope,directory,planned_tool(directory,scope))
-    if role=="commercial":return brief(scope,prior)
+    if role=="commercial":return brief(scope,prior,directory,execute_followup=True)
     raise ValueError("Unknown objective role")
 def verify(scope,prior,directory,*,functional_test):
     from plenum_ai.chief_contract_plan import check_contract_result
@@ -213,10 +220,13 @@ def verify(scope,prior,directory,*,functional_test):
         row=validate_saved(directory,plan["company"],plan["parent"],plan["tasks"]["engineering"],scope)
         if eng["tool"]!=row["choice"]["tool"]:raise ValueError("Unapproved alternate tool")
     if eng["validation"]!=independent(eng["input"]) or (functional_test and evaluate(source,eng["input"],eng["tool"])!=eng["validation"]):raise ValueError("Independent objective verification disagrees")
-    if brief(scope,prior)!=prior["commercial"]["result"]:raise ValueError("Brief changed")
+    if brief(scope,prior,directory)!=prior["commercial"]["result"]:raise ValueError("Brief changed")
     result={"verified_producers":4,"independent_actual_input_test":functional_test,"scholarly_metadata_records":len(intel),"synthetic_data_only":True,"general_autonomy_verified":False,"paid_inference":False}
     if is_synthesis(scope):
         v=eng["validation"]
         result.update(grounded_synthesis_verified=True,source_sentence_count=len(eng["input"]["records"]),
             comparison_count=len(v["comparisons"]),extract_count=len(v["extracts"]),semantic_truth_verified=False)
+        from adaptive_turns import enabled
+        if enabled(scope):
+            result.update(adaptive_followup_verified=True,dependent_model_turns=2,followup_sha256=hashlib.sha256(json.dumps(prior["commercial"]["result"]["adaptive_followup"],sort_keys=True,separators=(",",":"),allow_nan=False).encode()).hexdigest())
     return result
