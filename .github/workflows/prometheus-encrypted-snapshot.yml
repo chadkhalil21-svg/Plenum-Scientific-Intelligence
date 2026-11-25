@@ -17,6 +17,8 @@ jobs:
           node integrations/cloudflare/paperclip-snapshot.test.mjs
           node integrations/cloudflare/paperclip-snapshot-transport.test.mjs
           node integrations/cloudflare/paperclip-snapshot-quota.test.mjs
+          python3 -m py_compile integrations/cloudflare/paperclip-snapshot-owner-recovery.py
+          if GITHUB_ACTIONS=true python3 integrations/cloudflare/paperclip-snapshot-owner-recovery.py; then exit 1; fi
       - name: Local upstream workerd SQLite persistence (synthetic only)
         working-directory: integrations/cloudflare
         run: |
