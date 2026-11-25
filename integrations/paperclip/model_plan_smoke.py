@@ -89,19 +89,17 @@ class PlanTests(unittest.TestCase):
         self.assertEqual(validate_scope(scope),scope)
         kwargs=om.planning_kwargs(scope)
         good=valid_plan()
-        good["step_3"].update(tool="stream",operations={"group_1":"median","group_2":"shared_terms"})
+        good["step_3"].update(tool="stream",operations={op:op in chosen for op in om.OPS})
         self.assertEqual(mp.validate_choice(good,**kwargs),mp.ORDER)
         schema=mp.plan_schema(**kwargs)["properties"]["step_3"]["properties"]["operations"]
-        self.assertEqual(set(schema["required"]),{"group_1","group_2"})
-        self.assertIn("median",schema["properties"]["group_1"]["enum"])
-        self.assertIn("median+range",schema["properties"]["group_1"]["enum"])
-        self.assertNotIn("median+median",schema["properties"]["group_1"]["enum"])
-        self.assertNotIn("shared_terms",schema["properties"]["group_1"]["enum"])
-        for bad in (["median","shared_terms"],{"group_1":"median"},
-                    {"group_1":"mean","group_2":"shared_terms"},
-                    {"group_1":"median","group_2":"shared_terms+word_counts"},
-                    {"group_1":"median+median","group_2":"shared_terms"},
-                    {"group_1":"median","group_2":"shell"}):
+        self.assertEqual(set(schema["required"]),set(om.OPS))
+        self.assertTrue(all(x=={"type":"boolean"} for x in schema["properties"].values()))
+        valid=good["step_3"]["operations"]
+        for bad in (["median","shared_terms"],{"median":True},
+                    dict(valid,median=False,mean=True),
+                    dict(valid,word_counts=True),
+                    dict(valid,median=1),
+                    dict(valid,shell=True)):
             changed=dict(good,step_3=dict(good["step_3"],operations=bad))
             with self.subTest(bad=bad),self.assertRaises(mp.PlanRejected):
                 mp.validate_choice(changed,**kwargs)
@@ -134,12 +132,12 @@ class PlanTests(unittest.TestCase):
                 "commitment":mp.digest(["range","shared_terms"])}
         with tempfile.TemporaryDirectory() as tmp:
             choice=valid_plan()
-            choice["step_3"]["operations"]={"group_1":"median","group_2":"SECRET_RAW_TEXT"}
+            choice["step_3"]["operations"]={"median":True,"range":False,"shared_terms":"SECRET_RAW_TEXT"}
             mp.rejected_choice(Path(tmp),"company","parent",choice,"OPERATION_SCOPE",policy)
             raw=(Path(tmp)/"minister-model-rejection.json").read_text()
             self.assertNotIn("SECRET_RAW_TEXT",raw)
             self.assertEqual(json.loads(raw)["reviewed_operation_selections"],
-                             {"group_1":"median","group_2":None})
+                             {"median":True,"range":False,"shared_terms":None})
 
     def test_rejected_plan_no_fallback(self):
         good=valid_plan()
