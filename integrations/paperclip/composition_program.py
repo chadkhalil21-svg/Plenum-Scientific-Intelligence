@@ -23,6 +23,8 @@ def calculate(expressions, values, outputs):
                 value=Fraction(node.value)
             elif isinstance(node,ast.UnaryOp) and isinstance(node.op,ast.USub):
                 value=-walk(node.operand)
+            elif isinstance(node,ast.Call) and isinstance(node.func,ast.Name) and node.func.id in ("ceil","floor") and len(node.args)==1 and not node.keywords:
+                x=walk(node.args[0]);value=Fraction(-(-x.numerator//x.denominator) if node.func.id=="ceil" else x.numerator//x.denominator)
             elif isinstance(node,ast.BinOp):
                 a,b=walk(node.left),walk(node.right)
                 if isinstance(node.op,ast.Add):value=a+b

@@ -189,6 +189,7 @@ jobs:
             -e BETTER_AUTH_SECRET="$(openssl rand -hex 32)" \
             -e PAPERCLIP_TOOL_ACTION_SIGNING_SECRET="$(openssl rand -hex 32)" \
             --mount "type=volume,src=plenum-paperclip-test-volume,dst=/paperclip" \
+            --mount "type=volume,src=plenum-paperclip-private-proof,dst=/plenum-private-proof" \
             --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/plenum,readonly" \
             "$image"
           for i in $(seq 1 90); do
@@ -262,6 +263,23 @@ jobs:
       - name: Qualify two consecutive persistent missions and both restart readbacks
         if: matrix.mode == 'off'
         run: python3 integrations/paperclip/persistent_native_smoke.py
+      - name: Restore actual synthetic native evidence from a separate private volume across container restart
+        if: matrix.kind == 'composition-energy'
+        run: |
+          set -eu
+          docker exec plenum-paperclip-integration sh -c 'chown node:node /plenum-private-proof && chmod 700 /plenum-private-proof'
+          docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/private_volume_native_smoke.py seal
+          docker restart plenum-paperclip-integration
+          for i in $(seq 1 90); do
+            if docker exec plenum-paperclip-integration curl --fail --silent http://127.0.0.1:3100/api/health >/dev/null; then
+              docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/private_volume_native_smoke.py restore
+              docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/event_native.py readback
+              docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/private_volume_native_smoke.py finish
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
       - name: Collect only public task evidence
         if: always()
         env:
@@ -310,7 +328,7 @@ jobs:
         run: |
           docker rm -fv plenum-paperclip-qwen 2>/dev/null || true
           docker rm -fv plenum-paperclip-integration 2>/dev/null || true
-          docker volume rm plenum-paperclip-test-volume 2>/dev/null || true
+          docker volume rm plenum-paperclip-private-proof plenum-paperclip-test-volume 2>/dev/null || true
           docker volume rm plenum-paperclip-qwen-cache 2>/dev/null || true
   fresh-runner-acceptance:
     needs: [authorize, native-integration]

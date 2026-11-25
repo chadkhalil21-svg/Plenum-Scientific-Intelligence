@@ -157,7 +157,13 @@ def main():
     if event=="pull_request":
         from composition_smoke import scope as expected_composition_scope
         for case in ("composition-logistics","composition-energy"):
-            accept(paths["local-"+case],run,commit,expected_composition_scope(case))
+            accepted=accept(paths["local-"+case],run,commit,expected_composition_scope(case))
+            if case=="composition-energy":
+                from private_volume import collect
+                root=paths["local-"+case];directory=root/accepted["company"]/accepted["mission"]
+                entries=collect(directory)
+                proof=read(root/"private-restore-proof.json",{"schema":"plenum-isolated-native-private-restore-v1","company":accepted["company"],"mission":accepted["mission"],"scope_sha256":accepted["scope_sha256"],"qualification_sha256":accepted["qualification_sha256"],"file_manifest_sha256":digest(entries),"restored_file_count":len(entries),"separate_private_volume":True,"synthetic_grant":True,"native_restart_readback_after_restore":True,"provider_calls_replayed":0,"model_calls_replayed":0,"paid_inference":False})
+                results["local-"+case]["isolated_private_restore_sha256"]=digest(proof)
     if event=="pull_request" and not results["local-objective"].get("supervisor_recovery_sha256"):raise ValueError("Missing native interrupted-supervisor proof")
     row={"schema":"plenum-fresh-runner-acceptance-v1","run_id":run,"commit":commit,"accepted":results,
          "fresh_runner_independent_acceptance":True,"native_board_restored":False,"provider_calls_replayed":0,"model_calls_replayed":0,"paid_inference":False}

@@ -29,11 +29,11 @@ def scope(case):
 def smoke():
     from mission_scope import validate_scope
     for case,expr in [
-      ("composition-logistics",{"total_cartons":"orders*cartons_per_order","pallet_count":"(total_cartons+cartons_per_pallet-1)//cartons_per_pallet"}),
+      ("composition-logistics",{"total_cartons":"orders*cartons_per_order","pallet_count":"ceil(total_cartons/cartons_per_pallet)"}),
       ("composition-energy",{"battery_energy":"voltage*amp_hours","runtime_hours":"battery_energy/load_watts"})]:
         s=validate_scope(scope(case));data=accept_choice(s,expr)
         assert analyze(data)==independent(data)
-        for invalid in ["__import__('os')","orders**99","unknown","1","1/0","[1]"]:
+        for invalid in ["__import__('os')","orders**99","unknown","1","1/0","[1]","ceil(orders,2)","ceil(x=orders)","round(orders)"]:
             bad=dict(expr);bad[next(iter(bad))]=invalid
             try:accept_choice(s,bad)
             except (ValueError,TypeError,SyntaxError,ZeroDivisionError):pass
