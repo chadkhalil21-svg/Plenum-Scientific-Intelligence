@@ -148,16 +148,21 @@ def accept_queue(root):
 def main():
     base=Path(sys.argv[1]);out=Path(sys.argv[2])
     event=os.environ["EVENT"];run=os.environ["GITHUB_RUN_ID"];commit=os.environ["GITHUB_SHA"]
-    expected_names={"off-legacy","local-legacy","local-budget","local-objective"} if event=="pull_request" else {"local-event"}
+    novel=event=="pull_request" and os.environ.get("QUALIFICATION_SUITE")=="multidisciplinary"
+    if novel:
+        from pipeline_fixtures import KINDS,scope as fixture_scope
+        expected_names={"local-"+k for k in KINDS}
+    else:
+        expected_names={"off-legacy","local-legacy","local-budget","local-objective"} if event=="pull_request" else {"local-event"}
     paths={p.name.removeprefix("paperclip-native-public-evidence-"):p for p in base.iterdir()}
     if set(paths)!=expected_names:raise ValueError("Missing or unexpected native evidence archives")
     scope=None if event=="pull_request" else validate_scope(json.loads(os.environ["EXPECTED_SCOPE"]))
-    results={k:accept(paths[k],run,commit,scope) for k in sorted(paths)}
+    results={k:accept(paths[k],run,commit,fixture_scope(k.removeprefix("local-")) if novel else scope) for k in sorted(paths)}
     if any(v["model_receipt_verified"]!=(k!="off-legacy") for k,v in results.items()):raise ValueError("Unexpected model receipt")
-    if event=="pull_request" and not results["local-objective"].get("supervisor_recovery_sha256"):raise ValueError("Missing native interrupted-supervisor proof")
+    if event=="pull_request" and not novel and not results["local-objective"].get("supervisor_recovery_sha256"):raise ValueError("Missing native interrupted-supervisor proof")
     row={"schema":"plenum-fresh-runner-acceptance-v1","run_id":run,"commit":commit,"accepted":results,
          "fresh_runner_independent_acceptance":True,"native_board_restored":False,"provider_calls_replayed":0,"model_calls_replayed":0,"paid_inference":False}
-    if event=="pull_request":row["consecutive_queue"]=accept_queue(paths["local-budget"])
+    if event=="pull_request" and not novel:row["consecutive_queue"]=accept_queue(paths["local-budget"])
     exclusive(out,row)
     print(json.dumps(row,sort_keys=True))
 if __name__=="__main__":main()

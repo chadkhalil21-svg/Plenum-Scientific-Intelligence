@@ -58,15 +58,37 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ISSUE: ${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number }}
         run: PYTHONPATH=src python3 integrations/paperclip/event_gate.py --issue "$ISSUE"
+  qualification-suite:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      suite: ${{ steps.select.outputs.suite }}
+      matrix: ${{ steps.select.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - id: select
+        run: |
+          set -eu
+          if git diff --name-only HEAD^1 HEAD | grep -Eq '^integrations/paperclip/(pipeline_fixtures|pipeline_smoke|public_handoff|public_handoff_smoke)\.py$'; then
+            echo 'suite=multidisciplinary' >> "$GITHUB_OUTPUT"
+            echo 'matrix=[{"mode":"local","kind":"scientific"},{"mode":"local","kind":"engineering"},{"mode":"local","kind":"commercial"}]' >> "$GITHUB_OUTPUT"
+          else
+            echo 'suite=original' >> "$GITHUB_OUTPUT"
+            echo 'matrix=[{"mode":"off","kind":"legacy"},{"mode":"local","kind":"legacy"},{"mode":"local","kind":"budget"},{"mode":"local","kind":"objective"}]' >> "$GITHUB_OUTPUT"
+          fi
   native-integration:
-    needs: authorize
-    if: ${{ !cancelled() && (github.event_name == 'pull_request' || needs.authorize.outputs.authorized == 'true') }}
+    needs: [authorize, qualification-suite]
+    if: ${{ !cancelled() && ((github.event_name == 'pull_request' && needs.qualification-suite.result == 'success') || needs.authorize.outputs.authorized == 'true') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(github.event_name == 'pull_request' && '[{"mode":"off","kind":"legacy"},{"mode":"local","kind":"legacy"},{"mode":"local","kind":"budget"},{"mode":"local","kind":"objective"}]' || '[{"mode":"local","kind":"event"}]') }}
+        include: ${{ fromJSON(github.event_name == 'pull_request' && needs.qualification-suite.outputs.matrix || '[{"mode":"local","kind":"event"}]') }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -126,6 +148,7 @@ jobs:
             legacy) scope='{"kind":"coastal"}' ;;
             budget) scope='{"kind":"bibliography_budget","dois":["10.1145/3442188.3445922"],"budget":{"model":"@cf/zai-org/glm-4.7-flash","neurons_used_today":100,"neurons_reserved":200,"input_tokens_upper_bound":3000,"output_tokens_upper_bound":1000}}' ;;
             objective) scope='{"kind":"public_objective","objective":"Find the words common to both delivery summaries and the middle value after sorting the observations.","dois":["10.1007/s10791-026-10743-4","10.1016/j.jss.2026.113142"],"inputs":{"documents":["supplier delivery quality","delivery supplier testing"],"samples":[17,-3,8,42,12,19]},"operation_commitment":"b06f527ce3646bcbc14a7970066456b64e9396c24e7a6102beefcf6340985428"}' ;;
+            scientific|engineering|commercial) scope=$(PYTHONPATH=src python3 integrations/paperclip/pipeline_fixtures.py "$KIND") ;;
             event) scope="$EVENT_SCOPE"; test -n "$scope" ;;
             *) exit 1 ;;
           esac
@@ -208,13 +231,15 @@ jobs:
           docker volume rm plenum-paperclip-test-volume 2>/dev/null || true
           docker volume rm plenum-paperclip-qwen-cache 2>/dev/null || true
   fresh-runner-acceptance:
-    needs: [authorize, native-integration]
+    needs: [authorize, qualification-suite, native-integration]
     if: ${{ !cancelled() && needs.native-integration.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: read
       actions: read
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -228,6 +253,7 @@ jobs:
           PYTHONPATH: src
           EXPECTED_SCOPE: ${{ needs.authorize.outputs.scope }}
           EVENT: ${{ github.event_name }}
+          QUALIFICATION_SUITE: ${{ needs.qualification-suite.outputs.suite }}
         run: python3 integrations/paperclip/fresh_runner_acceptance.py reports/fresh-runner-input reports/fresh-runner-result.json
       - uses: actions/upload-artifact@v4
         with:
@@ -235,6 +261,62 @@ jobs:
           path: reports/fresh-runner-result.json
           if-no-files-found: error
           retention-days: 7
+      - name: Materialize accepted public mission memory
+        if: needs.qualification-suite.outputs.suite == 'multidisciplinary'
+        env:
+          PYTHONPATH: src
+        run: python3 integrations/paperclip/public_handoff.py make reports/fresh-runner-input reports/fresh-runner-result.json reports/public-mission-memory.json
+      - name: Sign exact public memory with upstream GitHub Sigstore provenance
+        if: needs.qualification-suite.outputs.suite == 'multidisciplinary'
+        id: sign-memory
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: reports/public-mission-memory.json
+      - uses: actions/upload-artifact@v4
+        if: needs.qualification-suite.outputs.suite == 'multidisciplinary'
+        with:
+          name: paperclip-signed-public-mission-memory
+          path: |
+            reports/public-mission-memory.json
+            ${{ steps.sign-memory.outputs.bundle-path }}
+          if-no-files-found: error
+          retention-days: 90
+  memory-continuation:
+    needs: [qualification-suite, fresh-runner-acceptance]
+    if: needs.qualification-suite.outputs.suite == 'multidisciplinary' && needs.fresh-runner-acceptance.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+      attestations: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: paperclip-signed-public-mission-memory
+          path: reports/memory-input
+      - name: Authenticate source, exact commit and signer before new offline continuation
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PYTHONPATH: src
+        run: |
+          set -eu
+          memory=$(find reports/memory-input -type f -name public-mission-memory.json)
+          test -f "$memory"
+          gh attestation verify "$memory" --repo "$GITHUB_REPOSITORY" --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/paperclip-native-integration.yml" --source-digest "$GITHUB_SHA" --source-ref "$GITHUB_REF" --deny-self-hosted-runners --format json > reports/memory-provenance-verification.json
+          sha=$(sha256sum "$memory" | cut -d' ' -f1)
+          python3 integrations/paperclip/public_handoff.py consume "$memory" reports/memory-continuation.json "$GITHUB_RUN_ID" "$GITHUB_SHA" "$sha"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: paperclip-cross-environment-continuation
+          path: |
+            reports/memory-provenance-verification.json
+            reports/memory-continuation.json
+          if-no-files-found: error
+          retention-days: 90
   terminal-receipt:
     needs: [authorize, native-integration, fresh-runner-acceptance]
     if: always() && github.event_name != 'pull_request' && needs.authorize.outputs.authorized == 'true'

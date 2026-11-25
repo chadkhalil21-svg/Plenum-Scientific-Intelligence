@@ -1,0 +1,76 @@
+name: Paperclip verified public memory continuation
+on:
+  workflow_dispatch:
+    inputs:
+      source_run:
+        description: Original signed memory workflow run ID
+        required: true
+        type: string
+      source_commit:
+        description: Exact qualified source commit
+        required: true
+        type: string
+      source_ref:
+        description: Exact attested source ref
+        required: true
+        type: string
+      memory_sha256:
+        description: Independently recorded public memory file SHA256
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+  attestations: read
+jobs:
+  continue:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate exact source identifiers
+        env:
+          SOURCE_RUN: ${{ inputs.source_run }}
+          SOURCE_COMMIT: ${{ inputs.source_commit }}
+          SOURCE_REF: ${{ inputs.source_ref }}
+          MEMORY_SHA256: ${{ inputs.memory_sha256 }}
+        run: |
+          python3 - <<'PY'
+          import os,re
+          assert re.fullmatch(r"[1-9][0-9]{0,15}",os.environ["SOURCE_RUN"])
+          assert re.fullmatch(r"[0-9a-f]{40}",os.environ["SOURCE_COMMIT"])
+          assert re.fullmatch(r"refs/(heads/main|pull/[1-9][0-9]*/merge)",os.environ["SOURCE_REF"])
+          assert re.fullmatch(r"[0-9a-f]{64}",os.environ["MEMORY_SHA256"])
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          name: paperclip-signed-public-mission-memory
+          path: reports/memory-input
+          run-id: ${{ inputs.source_run }}
+          github-token: ${{ github.token }}
+      - name: Verify prior signed bytes and execute only the new offline continuation
+        env:
+          SOURCE_RUN: ${{ inputs.source_run }}
+          SOURCE_COMMIT: ${{ inputs.source_commit }}
+          SOURCE_REF: ${{ inputs.source_ref }}
+          MEMORY_SHA256: ${{ inputs.memory_sha256 }}
+          GH_TOKEN: ${{ github.token }}
+          PYTHONPATH: src
+        run: |
+          set -eu
+          memory=$(find reports/memory-input -type f -name public-mission-memory.json)
+          test -f "$memory"
+          test "$(sha256sum "$memory" | cut -d' ' -f1)" = "$MEMORY_SHA256"
+          gh attestation verify "$memory" --repo "$GITHUB_REPOSITORY" --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/paperclip-native-integration.yml" --source-digest "$SOURCE_COMMIT" --source-ref "$SOURCE_REF" --deny-self-hosted-runners --format json > reports/memory-provenance-verification.json
+          python3 integrations/paperclip/public_handoff.py consume "$memory" reports/memory-continuation.json "$SOURCE_RUN" "$SOURCE_COMMIT" "$MEMORY_SHA256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: paperclip-cross-environment-continuation
+          path: |
+            reports/memory-provenance-verification.json
+            reports/memory-continuation.json
+          if-no-files-found: error
+          retention-days: 90

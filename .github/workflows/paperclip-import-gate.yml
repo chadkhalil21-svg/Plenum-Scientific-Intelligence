@@ -75,3 +75,10 @@ jobs:
         run: python integrations/paperclip/supervisor_resume_smoke.py
       - name: Exact checkpoint CAS acknowledgment and readback transport regressions
         run: python integrations/paperclip/runtime_checkpoint_smoke.py
+
+      - name: Novel typed graphs and authenticated public handoff regressions
+        env:
+          PYTHONPATH: src
+        run: |
+          python integrations/paperclip/pipeline_smoke.py
+          python integrations/paperclip/public_handoff_smoke.py
