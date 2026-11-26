@@ -17,7 +17,43 @@ def chief_receipt(scope, plan):
     return receipt("chief",scope,plan,{"native_parent":plan["parent"],
         "ordered_assignments":[{"division":r,"issue":plan["tasks"][r]} for r in plan["order"]]})
 
+def variable_profiles(role,scope,prior,result,directory):
+    from native_variable import context,collect,ORDER,partition
+    root,dispatch,plan=context(directory,scope)
+    groups=partition(plan)
+    roles=ORDER if role=="verification" else ORDER[:ORDER.index(role)+1]
+    products,values,hashes=collect(root,dispatch,plan,roles)
+    inputs={"prior":{k:hash_value(v) for k,v in prior.items()},"result":hash_value(result)}
+    out={}
+    def add(profile,work):
+        if PROFILE_DIVISIONS[profile]!=role:raise ValueError("Wrong variable profile division")
+        out[profile]=receipt(profile,scope,inputs,work)
+    def work(names):
+        selected=[n for n in names if n in hashes]
+        return {"selected_contracts":selected,"contract_receipts":{n:hashes[n] for n in selected},
+                "scope_review_only":not bool(selected),"unrequested_work_executed":False}
+    if role=="intelligence":
+        add("browser",{**work(groups[role]),"transport":"approved public provider API","interactive_browser_executed":False})
+    elif role=="research":
+        add("research",{**work(groups[role]),"full_text_validation":False})
+    elif role=="engineering":
+        add("coding",{**work(["station_validation"]),"deployed":False})
+        add("simulation",{**work(["cooling_solution","cooling_readback"]),"physical_validation":False})
+    elif role=="commercial":
+        add("operations",{**work(groups[role]),"next_action":"Review selected evidence report before external decision","external_write":False})
+        add("creative",{"format":"unpublished evidence storyboard","panels":[scope["mission"]["objective"],"Reviewed selected contracts: "+", ".join(hashes),"Independent review required"],"rendered_media":False})
+        add("marketing",{"draft_only":True,"hypothesis":"Review interest in the requested public evidence","campaign_launched":False,"evidence_sha256":hash_value(values["evidence_report"])})
+        add("support",{"draft":"The requested public evidence report is prepared for independent review. No external decision or commitment is implied.","sent":False,"evidence_sha256":hash_value(values["evidence_report"])})
+    elif role=="verification":
+        add("verification",{"independent_actual_input_test":result["independent_actual_input_test"],"verified_contracts":result["verified_contracts"],"provider_replay":False})
+        add("business_advisor",{"recommendation":"Independent evidence review only","report_sha256":result["report_sha256"],"financial_commitment":False})
+    else:raise ValueError("Unknown variable profile division")
+    if set(out)!={p for p,r in PROFILE_DIVISIONS.items() if r==role}:raise ValueError("Variable profile coverage mismatch")
+    return out
+
 def division_receipts(role, scope, prior, result, directory):
+    if scope["kind"]=="variable_graph":
+        return variable_profiles(role,scope,prior,result,directory)
     budget=scope["kind"]=="bibliography_budget"
     dataset=scope["kind"]=="public_dataset"
     objective=scope["kind"]=="public_objective"
