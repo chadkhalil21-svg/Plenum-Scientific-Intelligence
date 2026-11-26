@@ -154,9 +154,7 @@ def diagnose(pr, n, run, jobs):
     """
     if not eligible_run(pr, n, run) or not isinstance(jobs, list):
         return {"status": "INELIGIBLE"}
-    if run["conclusion"] == "success":
-        return {"status": "AWAIT_INDEPENDENT_EVIDENCE"}
-    if run["conclusion"] != "failure":
+    if run["conclusion"] not in ("success", "failure"):
         return {"status": "STOP_NON_SUCCESS"}
     _, _, name = registry()[n]
     matches = [j for j in jobs if isinstance(j, dict) and j.get("name") == name]
@@ -165,8 +163,15 @@ def diagnose(pr, n, run, jobs):
     job = matches[0]
     steps = job.get("steps")
     if (job.get("run_id") != run["id"] or job.get("head_sha") != run["head_sha"]
-            or job.get("conclusion") != "failure" or not number(job.get("id"))
-            or not isinstance(steps, list) or not steps):
+            or not number(job.get("id")) or not isinstance(steps, list) or not steps
+            or not all(isinstance(s, dict) for s in steps)):
+        return {"status": "BLOCKED_JOB_IDENTITY"}
+    if run["conclusion"] == "success":
+        # A skipped or unrelated approved job cannot enter evidence review.
+        if job.get("conclusion") != "success":
+            return {"status": "BLOCKED_APPROVED_JOB_NOT_SUCCESS"}
+        return {"status": "AWAIT_INDEPENDENT_EVIDENCE"}
+    if job.get("conclusion") != "failure":
         return {"status": "BLOCKED_JOB_IDENTITY"}
     failed = [s for s in steps if s.get("conclusion") == "failure"]
     # Exact original speech fixture reached inference; the observed failure

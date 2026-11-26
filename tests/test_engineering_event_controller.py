@@ -47,8 +47,23 @@ class EngineeringGateTests(unittest.TestCase):
 
     def test_success_does_not_authorize_merge(self):
         self.run["conclusion"] = "success"
-        self.assertEqual(c.diagnose(self.pr, self.n, self.run, []),
+        self.job["conclusion"] = "success"
+        self.job["steps"] = [{"name": "Test", "conclusion": "success"}]
+        self.assertEqual(c.diagnose(self.pr, self.n, self.run, [self.job]),
                          {"status": "AWAIT_INDEPENDENT_EVIDENCE"})
+
+    def test_success_requires_exact_approved_job(self):
+        self.run["conclusion"] = "success"
+        for jobs in ([], [self.job, self.job], [dict(self.job, run_id=101)],
+                     [dict(self.job, head_sha="b"*40)], [dict(self.job, steps=[None])]):
+            with self.subTest(jobs=jobs):
+                self.assertEqual(c.diagnose(self.pr, self.n, self.run, jobs)["status"],
+                                 "BLOCKED_JOB_IDENTITY")
+        for conclusion in ("skipped", "cancelled", "failure", None):
+            with self.subTest(conclusion=conclusion):
+                self.assertEqual(c.diagnose(self.pr, self.n, self.run,
+                                           [dict(self.job, conclusion=conclusion)])["status"],
+                                 "BLOCKED_APPROVED_JOB_NOT_SUCCESS")
 
     def test_wrong_job_identity(self):
         self.job["run_id"] = 101
