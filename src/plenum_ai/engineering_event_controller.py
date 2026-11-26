@@ -26,6 +26,10 @@ REGISTERED = {
           "Prometheus | Pinned local speech recognition qualification", "synthetic-speech"),
     929: ("prometheus-blender-scientific-render",
           "Prometheus | Blender concept geometry qualification", "original-concept"),
+    935: ("prometheus-hyperframes-local-qualification",
+          "Prometheus | HyperFrames local motion qualification", "local-motion"),
+    936: ("prometheus-accepted-upstream-evidence-registry",
+          "Prometheus upstream skill supply-chain qualification", "static-review"),
 }
 SHA = re.compile(r"^[a-f0-9]{40}$")
 MARKER = "<!-- plenum-engineering-controller-v1:"
@@ -244,10 +248,26 @@ def wake_authorized(event):
     )
 
 
+def fallback_authorized(event, now=None):
+    import time
+    now = int(time.time() * 1000) if now is None else now
+    if not isinstance(event, dict):
+        return False
+    payload = event.get("client_payload")
+    if not isinstance(payload, dict) or set(payload) != {"slot"}:
+        return False
+    slot = payload["slot"]
+    return (event.get("action") == "plenum_engineering_backlog_tick_v1"
+            and (event.get("repository") or {}).get("full_name") == REPO
+            and (event.get("sender") or {}).get("login") == OWNER
+            and type(slot) is int and slot > 0 and slot % 300000 == 0
+            and 0 <= now - slot < 300000)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--event", required=True)
-    parser.add_argument("--kind", choices=("workflow_run", "schedule", "workflow_dispatch", "issues"), required=True)
+    parser.add_argument("--kind", choices=("workflow_run", "schedule", "workflow_dispatch", "issues", "repository_dispatch"), required=True)
     args = parser.parse_args()
     if os.getenv("GITHUB_REPOSITORY") != REPO:
         raise PermissionError("Wrong repository")
@@ -262,6 +282,10 @@ def main():
         # A registered completion also drains any older eligible backlog.
         # The exact-head, terminal, bot receipt, and no-replay gates remain.
         results = [process(n, run["id"] if n in numbers else None) for n in REGISTERED]
+    elif args.kind == "repository_dispatch":
+        if not fallback_authorized(event):
+            raise PermissionError("Not a current authorized engineering fallback")
+        results = [process(n) for n in REGISTERED]
     elif args.kind == "issues":
         if not wake_authorized(event):
             raise PermissionError("Not an authorized engineering wake")
