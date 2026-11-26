@@ -2,6 +2,7 @@ import copy
 import unittest
 from unittest.mock import patch
 from plenum_ai import engineering_event_controller as c
+from plenum_ai import whisper_repair_candidate as repair
 
 
 class EngineeringGateTests(unittest.TestCase):
@@ -107,6 +108,20 @@ class EngineeringGateTests(unittest.TestCase):
         self.job["steps"][0]["conclusion"] = "skipped"
         self.assertEqual(c.diagnose(self.pr,n,self.run,[self.job])["status"],
                          "BLOCKED_NEEDS_CORRECTION")
+
+    def test_exact_candidate_transform(self):
+        original = (b"Verify official MIT tiny English model\n"
+                    b"/ggml-tiny.en.bin\n" + repair.OLD_SHA.encode() + b"\n")
+        with patch.object(repair, "ORIGINAL_BLOB", repair.git_blob(original)):
+            revised = repair.candidate(original)
+            self.assertEqual(revised, original.replace(b"tiny English model", b"base English model")
+                             .replace(b"/ggml-tiny.en.bin", b"/ggml-base.en.bin")
+                             .replace(repair.OLD_SHA.encode(), repair.NEW_SHA.encode()))
+            with self.assertRaises(ValueError):
+                repair.candidate(original + b"unauthorized change")
+        with patch.object(repair, "ORIGINAL_BLOB", repair.git_blob(original + original)):
+            with self.assertRaises(ValueError):
+                repair.candidate(original + original)
 
     def test_unregistered_or_closed(self):
         self.assertFalse(c.authorized_pr(self.pr, 926))
