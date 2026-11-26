@@ -2,6 +2,7 @@ import copy
 import unittest
 from unittest.mock import patch
 from plenum_ai import engineering_event_controller as c
+from plenum_ai import whisper_repair_candidate as repair
 
 
 class EngineeringGateTests(unittest.TestCase):
@@ -85,6 +86,42 @@ class EngineeringGateTests(unittest.TestCase):
         self.assertEqual(calls.count(("/actions/jobs/200/rerun", "POST")), 1)
         self.assertEqual(calls.count(("/issues/432/comments", "POST")), 1)
         self.assertFalse(any(path.startswith("/issues/925/comments") for path, _ in calls))
+
+    def test_one_exact_speech_repair(self):
+        n = 928
+        branch, workflow, name = c.REGISTERED[n]
+        self.pr["number"] = n
+        self.pr["head"].update(ref=branch, sha=c.WHISPER_REPAIR_HEAD)
+        self.run.update(id=c.WHISPER_REPAIR_RUN, head_branch=branch,
+                        head_sha=c.WHISPER_REPAIR_HEAD, name=workflow)
+        self.job.update(id=c.WHISPER_REPAIR_JOB, run_id=c.WHISPER_REPAIR_RUN,
+                        head_sha=c.WHISPER_REPAIR_HEAD, name=name, steps=[
+            {"name":"Build exact official whisper.cpp release","conclusion":"success"},
+            {"name":"Verify official MIT tiny English model and create original synthetic test speech","conclusion":"success"},
+            {"name":"Qualify upstream CLI on public synthetic fixture in isolated network namespace","conclusion":"failure"}])
+        self.assertEqual(c.diagnose(self.pr,n,self.run,[self.job])["status"],
+                         "QUALIFY_PINNED_WHISPER_BASE_CORRECTION_ONCE")
+        self.run["run_attempt"] = 2
+        self.assertEqual(c.diagnose(self.pr,n,self.run,[self.job])["status"],
+                         "BLOCKED_NEEDS_CORRECTION")
+        self.run["run_attempt"] = 1
+        self.job["steps"][0]["conclusion"] = "skipped"
+        self.assertEqual(c.diagnose(self.pr,n,self.run,[self.job])["status"],
+                         "BLOCKED_NEEDS_CORRECTION")
+
+    def test_exact_candidate_transform(self):
+        original = (b"Verify official MIT tiny English model\n"
+                    b"/ggml-tiny.en.bin\n" + repair.OLD_SHA.encode() + b"\n")
+        with patch.object(repair, "ORIGINAL_BLOB", repair.git_blob(original)):
+            revised = repair.candidate(original)
+            self.assertEqual(revised, original.replace(b"tiny English model", b"base English model")
+                             .replace(b"/ggml-tiny.en.bin", b"/ggml-base.en.bin")
+                             .replace(repair.OLD_SHA.encode(), repair.NEW_SHA.encode()))
+            with self.assertRaises(ValueError):
+                repair.candidate(original + b"unauthorized change")
+        with patch.object(repair, "ORIGINAL_BLOB", repair.git_blob(original + original)):
+            with self.assertRaises(ValueError):
+                repair.candidate(original + original)
 
     def test_unregistered_or_closed(self):
         self.assertFalse(c.authorized_pr(self.pr, 926))

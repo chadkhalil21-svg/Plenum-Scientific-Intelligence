@@ -31,6 +31,10 @@ SHA = re.compile(r"^[a-f0-9]{40}$")
 MARKER = "<!-- plenum-engineering-controller-v1:"
 MAX_BYTES = 2_000_000
 RECEIPT_ISSUE = 432
+# One audited repair recipe, bound to original failed public development run.
+WHISPER_REPAIR_RUN = 45767285022
+WHISPER_REPAIR_HEAD = "a9ed286a49308fb5e01ed25a53c08f65e72445af"
+WHISPER_REPAIR_JOB = 139731117752
 
 
 def number(x):
@@ -93,6 +97,19 @@ def diagnose(pr, n, run, jobs):
             or not isinstance(steps, list) or not steps):
         return {"status": "BLOCKED_JOB_IDENTITY"}
     failed = [s for s in steps if s.get("conclusion") == "failure"]
+    # Exact original speech fixture reached inference; the observed failure
+    # was a transcript mismatch. Qualify a DIFFERENT pinned model once,
+    # not a retry of the rejected tiny.en inference or a relaxed gate.
+    if (n == 928 and run["id"] == WHISPER_REPAIR_RUN
+            and run["head_sha"] == WHISPER_REPAIR_HEAD
+            and run["run_attempt"] == 1 and job["id"] == WHISPER_REPAIR_JOB
+            and len(failed) == 1
+            and failed[0].get("name") == "Qualify upstream CLI on public synthetic fixture in isolated network namespace"
+            and all(any(s.get("name") == name and s.get("conclusion") == "success"
+                        for s in steps) for name in (
+                "Build exact official whisper.cpp release",
+                "Verify official MIT tiny English model and create original synthetic test speech"))):
+        return {"status": "QUALIFY_PINNED_WHISPER_BASE_CORRECTION_ONCE"}
     # Retry only if checkout, dependency installs and all substantive steps
     # were never started. No retry for failed validation or partial execution.
     if (run["run_attempt"] == 1 and len(failed) == 1
@@ -202,6 +219,9 @@ def process(n, run_id=None):
     if result["status"] == "RETRY_UNSTARTED_INFRASTRUCTURE_ONCE":
         request(f"/actions/jobs/{result['job_id']}/rerun", "POST", {})
         result["retry_requested"] = True
+    if result["status"] == "QUALIFY_PINNED_WHISPER_BASE_CORRECTION_ONCE":
+        # Only the newly posted canonical reservation can activate this job.
+        result["whisper_repair_reserved"] = True
     return result
 
 
@@ -221,6 +241,11 @@ def main():
         results = [process(n, run["id"]) for n in numbers]
     else:
         results = [process(n) for n in REGISTERED]
+    if any(x.get("whisper_repair_reserved") is True for x in results):
+        output = os.environ.get("GITHUB_OUTPUT")
+        if output:
+            with open(output, "a", encoding="utf-8") as handle:
+                handle.write("whisper_repair=true\n")
     print(json.dumps({"schema": "plenum-engineering-controller-v1", "results": results,
                       "paid_inference": False, "merge_authorized": False}, indent=2))
 
