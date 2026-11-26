@@ -1,0 +1,255 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "45900994006",
+  "source_revision": "51e6a0be910bf9d8d0567ab8032770c10cb39e4e",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-26T21:52:10.022898+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 29,
+    "sources_returning_records": 27,
+    "source_outages": [
+      "gdelt_headlines"
+    ],
+    "new_public_links_before_limit": 27,
+    "signals": [
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261126033031.htm",
+        "title_untrusted": "Common supplements rival antibiotics in treating severe gum disease",
+        "claimed_publication_date": "Thu, 26 Nov 2026 06:43:30 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/s41586-026-11475-7",
+        "title_untrusted": "Editorial Expression of Concern: Dual control of nuclear EIN3 by bifurcate MAPK cascades in C<sub>2</sub>H<sub>4</sub> signalling",
+        "claimed_publication_date": "2026-11-26",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.33160",
+        "title_untrusted": "Context Scaling: A New Frontier of AI Scaling",
+        "claimed_publication_date": "Thu, 26 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.33170",
+        "title_untrusted": "Halley's Comet Over New Zealand In 1910: An Overview Of A Spectacular Apparition",
+        "claimed_publication_date": "Thu, 26 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "software",
+        "publisher": "GitHub public repository index",
+        "source": "github_public_code",
+        "url": "https://github.com/AL-Imran0/AL-Imran0",
+        "title_untrusted": "AL-Imran0/AL-Imran0",
+        "claimed_publication_date": "2026-07-25T18:23:59Z",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75469761",
+        "title_untrusted": "M 2.4 - 14 km SW of Cayucos, CA",
+        "claimed_publication_date": "1795729494770",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261125045307.htm",
+        "title_untrusted": "This 345-million-year-old fossil had scientists fooled for decades",
+        "claimed_publication_date": "Thu, 26 Nov 2026 05:46:17 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-02752-6",
+        "title_untrusted": "Navigating grief in academia: ways to find balance",
+        "claimed_publication_date": "2026-11-26",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.33161",
+        "title_untrusted": "Constraint-Aware Test-Time Scoring for LLM and VLM Candidate Selection",
+        "claimed_publication_date": "Thu, 26 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.33221",
+        "title_untrusted": "Continuous Universal Fake Factors for jet-to-tau background estimation",
+        "claimed_publication_date": "Thu, 26 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026xlirbf",
+        "title_untrusted": "M 3.3 - 61 km SSW of Kaktovik, Alaska",
+        "claimed_publication_date": "1795729400452",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261125045306.htm",
+        "title_untrusted": "The surprising reason women seem better at multitasking than men",
+        "claimed_publication_date": "Thu, 26 Nov 2026 06:21:47 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03875-6",
+        "title_untrusted": "Has AI just cracked Internet encryption? Rumoured ‘bombshell’ stuns scientists",
+        "claimed_publication_date": "2026-11-26",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.33165",
+        "title_untrusted": "AutoformBench: A Lean Formalization Benchmark for Advanced Mathematics",
+        "claimed_publication_date": "Thu, 26 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.33222",
+        "title_untrusted": "Syringe reuse in HCV transmission among people who inject drugs: behavioral thresholds and optimal control",
+        "claimed_publication_date": "Thu, 26 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75469756",
+        "title_untrusted": "M 1.5 - 9 km ENE of Gilroy, CA",
+        "claimed_publication_date": "1795728974160",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "discoveries",
+        "publisher": "ScienceDaily science news (secondary reporting)",
+        "source": "sciencedaily_latest",
+        "url": "https://www.sciencedaily.com/releases/2026/11/261125045259.htm",
+        "title_untrusted": "Scientists discover mysterious lakes more than a mile beneath the Red Sea",
+        "claimed_publication_date": "Wed, 25 Nov 2026 21:42:37 EST",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "journals",
+        "publisher": "Nature Portfolio",
+        "source": "nature_journal_news",
+        "url": "https://www.nature.com/articles/d41586-026-03828-z",
+        "title_untrusted": "Orangutans face bleak future after Indonesia’s devastating wildfires",
+        "claimed_publication_date": "2026-11-26",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "artificial_intelligence",
+        "publisher": "arXiv Computer Science AI",
+        "source": "arxiv_ai_new_submissions",
+        "url": "https://arxiv.org/abs/2611.33190",
+        "title_untrusted": "General-Purpose Decision Models for AI Configuration Tuning",
+        "claimed_publication_date": "Thu, 26 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "physics",
+        "publisher": "arXiv Physics",
+        "source": "arxiv_physics_new_submissions",
+        "url": "https://arxiv.org/abs/2611.33223",
+        "title_untrusted": "CLEAR: A Contrastive-Masked Foundation Model for BESIII Event Understanding",
+        "claimed_publication_date": "Thu, 26 Nov 2026 00:00:00 -0500",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026xlifua",
+        "title_untrusted": "M 1.3 - 77 km SE of King Salmon, Alaska",
+        "claimed_publication_date": "1795728620192",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
