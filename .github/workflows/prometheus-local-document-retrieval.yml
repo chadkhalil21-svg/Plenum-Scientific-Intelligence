@@ -1,0 +1,79 @@
+name: Prometheus model-free document retrieval qualification
+on:
+  pull_request:
+    paths:
+      - 'src/plenum_ai/local_document_retrieval.py'
+      - '.github/workflows/prometheus-local-document-retrieval.yml'
+permissions:
+  contents: read
+jobs:
+  public-fixture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install reviewed exact upstream candidates
+        run: |
+          python -m pip install 'docling-slim[format-pdf-docling] @ git+https://github.com/docling-project/docling.git@33f33aafbdb5151dc795a042b964ff659c475218' 'llama-index-core @ git+https://github.com/run-llama/llama_index.git@40d4f79eb9d8f68430692d0cc156483ca2d7f4f6#subdirectory=llama-index-core' reportlab==4.4.5
+      - name: Test genuine model-free extraction and grounded retrieval on synthetic public PDFs
+        env:
+          PYTHONPATH: src
+          PLENUM_PUBLIC_DOCUMENT_FIXTURE: confirmed
+          HF_HUB_OFFLINE: '1'
+          TRANSFORMERS_OFFLINE: '1'
+          OPENAI_API_KEY: ''
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, pathlib, socket, tempfile
+          from reportlab.pdfgen.canvas import Canvas
+          from plenum_ai.local_document_retrieval import extract_pdf, retrieve
+          # After dependency installation, forbid Python network connections
+          # during the test; no credential-bearing input or remote inference.
+          def forbidden(*a, **k):
+              raise RuntimeError("Network disabled during document acceptance")
+          socket.socket.connect = forbidden
+          socket.create_connection = forbidden
+          with tempfile.TemporaryDirectory() as directory:
+              root = pathlib.Path(directory)
+              inputs = [
+                  ("cooling.pdf", "Thermal calibration report", "Zirconium cooling coefficient 0.071"),
+                  ("botany.pdf", "Botanical sample report", "Bahiagrass moisture observation 0.26")
+              ]
+              records = []
+              for name, title, line in inputs:
+                  path = root / name
+                  c = Canvas(str(path))
+                  c.drawString(72, 740, title)
+                  c.drawString(72, 700, line)
+                  c.showPage()
+                  c.save()
+                  receipt = extract_pdf(root, path)
+                  assert receipt["source_sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
+                  assert title in receipt["markdown"] and line in receipt["markdown"], receipt
+                  records.append(receipt)
+              hits = retrieve(records, "Zirconium cooling coefficient")
+              assert hits and hits[0]["source_sha256"] == records[0]["source_sha256"], hits
+              assert "0.071" in hits[0]["excerpt"]
+              assert all(h["paid_inference"] is False for h in hits)
+              try:
+                  extract_pdf(root, root / "not-a-pdf.txt")
+              except (FileNotFoundError, ValueError):
+                  pass
+              else:
+                  raise AssertionError("Unapproved input admitted")
+              pathlib.Path("document-acceptance.json").write_text(json.dumps({
+                  "public_synthetic_fixture": True, "model_free": True,
+                  "paid_inference": False, "records": records, "retrieval": hits
+              }, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prometheus-model-free-document-acceptance
+          path: document-acceptance.json
+          if-no-files-found: error
