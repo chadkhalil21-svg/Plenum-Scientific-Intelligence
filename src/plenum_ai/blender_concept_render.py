@@ -15,8 +15,8 @@ import sys
 def vector(value, lo, hi):
     if not isinstance(value, list) or len(value) != 3:
         raise ValueError("Expected a three-vector")
-    if any(type(v) not in (int, float) or not math.isfinite(v)
-           or not lo <= v <= hi for v in value):
+    if any(type(v) not in (int, float) or not lo <= v <= hi
+           or (type(v) is float and not math.isfinite(v)) for v in value):
         raise ValueError("Vector outside bounded scientific visualization scope")
     return tuple(value)
 
