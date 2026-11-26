@@ -1,0 +1,114 @@
+name: Prometheus upstream skill supply-chain qualification
+on:
+  pull_request:
+    paths:
+      - 'integrations/agent-catalog/prometheus-upstream-expansion.json'
+      - '.github/workflows/prometheus-upstream-skill-scan.yml'
+      - 'skills/plenum-skill-curation/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  static-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install pinned scanner with upstream locked dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install uv==0.9.18
+          scanner="$RUNNER_TEMP/skillspector"
+          git init "$scanner"
+          git -C "$scanner" fetch --depth=1 https://github.com/NVIDIA/SkillSpector.git 02894ec5b8a0a70637df5a6b45763de92940cedd
+          git -C "$scanner" checkout --detach FETCH_HEAD
+          test "$(git -C "$scanner" rev-parse HEAD)" = 02894ec5b8a0a70637df5a6b45763de92940cedd
+          cd "$scanner"
+          uv sync --locked --no-dev
+          .venv/bin/skillspector --version
+      - name: Fetch only pinned candidate skill directories as untrusted data
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/candidate-skills"
+          get_skill() {
+            local name="$1" repo="$2" sha="$3" path="$4"
+            local dir="$RUNNER_TEMP/candidate-skills/$name"
+            git init "$dir"
+            git -C "$dir" remote add origin "https://github.com/$repo.git"
+            git -C "$dir" sparse-checkout init --cone
+            git -C "$dir" sparse-checkout set "$path"
+            git -C "$dir" fetch --depth=1 --filter=blob:none origin "$sha"
+            git -C "$dir" checkout --detach FETCH_HEAD
+            test "$(git -C "$dir" rev-parse HEAD)" = "$sha"
+            test -f "$dir/$path/SKILL.md"
+          }
+          get_skill superpowers obra/superpowers 22f0b463e7a5e579904dd6211a520321035526f7 skills/verification-before-completion
+          get_skill gstack garrytan/gstack e6dd567349e85506127c2f4cf69a0392923c032c review
+          get_skill impeccable pbakaus/impeccable 2fc5e1459efbbf06d92c7306517c286bf12490cf .hermes/skills/impeccable
+          get_skill last30days mvanhorn/last30days-skill ed7ec6752b766ea3eb62239b374900764e9b5453 skills/last30days
+      - name: Review original skills with no LLM or provider credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, pathlib, subprocess
+          root = pathlib.Path(os.environ["RUNNER_TEMP"])
+          output = pathlib.Path("upstream-review")
+          output.mkdir()
+          scanner = root / "skillspector/.venv/bin/skillspector"
+          candidates = root / "candidate-skills"
+          paths = {
+              "plenum-curation": pathlib.Path("skills/plenum-skill-curation").resolve(),
+              "superpowers": candidates / "superpowers/skills/verification-before-completion",
+              "gstack": candidates / "gstack/review",
+              "impeccable": candidates / "impeccable/.hermes/skills/impeccable",
+              "last30days": candidates / "last30days/skills/last30days",
+          }
+          results = []
+          for name, path in paths.items():
+              destination = (output / (name + ".json")).resolve()
+              # Do not execute candidate scripts, install hooks, or pass tokens.
+              env = {key: os.environ[key] for key in ("PATH", "LANG", "LC_ALL", "TMPDIR") if key in os.environ}
+              home = root / "scanner-home"
+              home.mkdir(exist_ok=True)
+              env["HOME"] = str(home)
+              try:
+                  run = subprocess.run([str(scanner), "scan", "--no-llm", "--fail-on-incomplete",
+                      "--format", "json", "--output", str(destination), "--", str(path)],
+                      env=env, cwd=home, timeout=120, capture_output=True, text=True)
+                  report = json.loads(destination.read_text())
+                  meta = report.get("metadata", {})
+                  risk = report.get("risk_assessment", {})
+                  complete = report.get("analysis_completeness", {}).get("is_complete") is True
+                  static = meta.get("llm_requested") is False and not meta.get("inference_usage")
+                  executed = report.get("execution_successful") is True and run.returncode in (0, 1)
+                  results.append({"name": name, "scan_completed": executed, "coverage_complete": complete,
+                      "no_llm": static, "exit_code": run.returncode, "recommendation": risk.get("recommendation"),
+                      "risk_score": risk.get("score"), "issues": len(report.get("issues", [])),
+                      "activation_authorized": False})
+              except (OSError, ValueError, subprocess.TimeoutExpired) as error:
+                  results.append({"name": name, "scan_completed": False, "error": type(error).__name__,
+                      "activation_authorized": False})
+          (output / "summary.json").write_text(json.dumps({
+              "schema": "plenum-static-skill-review-v1", "paid_inference": False,
+              "candidate_code_executed": False, "activation_authorized": False,
+              "results": results}, indent=2))
+          # A successful scan is evidence, not admission. Any incomplete or
+          # failed scan blocks this qualification; all candidates stay quarantined.
+          if not all(x.get("scan_completed") and x.get("coverage_complete") and x.get("no_llm")
+                     for x in results):
+              raise SystemExit("Incomplete static scan; no candidate admitted")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prometheus-upstream-static-review
+          path: upstream-review/
+          if-no-files-found: error
