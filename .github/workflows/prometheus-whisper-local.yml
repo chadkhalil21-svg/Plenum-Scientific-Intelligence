@@ -1,0 +1,70 @@
+name: Prometheus | Pinned local speech recognition qualification
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/prometheus-whisper-local.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-speech:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build exact official whisper.cpp release
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/whisper-qualification"
+          mkdir -p "$root"
+          git init "$root/upstream"
+          git -C "$root/upstream" fetch --depth=1 https://github.com/ggml-org/whisper.cpp.git refs/tags/v1.9.6
+          git -C "$root/upstream" checkout --detach FETCH_HEAD
+          test "$(git -C "$root/upstream" rev-parse HEAD)" = 96ec4d9823e9d0211944172da35f9f29134af990
+          cmake -S "$root/upstream" -B "$root/build" -DCMAKE_BUILD_TYPE=Release -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_EXAMPLES=ON -DGGML_NATIVE=OFF
+          cmake --build "$root/build" --target whisper-cli --parallel 2
+      - name: Verify official MIT tiny English model and create original synthetic test speech
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/whisper-qualification"
+          curl --fail --location --silent --show-error --max-time 180 'https://huggingface.co/ggerganov/whisper.cpp/resolve/fb5ed9369c26eaf08392504d8446da431e0fffb9/ggml-tiny.en.bin' -o "$root/model.bin"
+          echo "921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f  $root/model.bin" | sha256sum --check
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends espeak-ng ffmpeg
+          espeak-ng -v en-us -s 140 -w "$root/synthetic.wav" "The quick brown fox jumps over the lazy dog."
+          ffmpeg -hide_banner -loglevel error -i "$root/synthetic.wav" -ac 1 -ar 16000 -c:a pcm_s16le "$root/audio.wav"
+      - name: Qualify upstream CLI on public synthetic fixture in isolated network namespace
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/whisper-qualification"
+          # Deliberately do not modify the adapter or authorize CI for real media.
+          # This isolated child executes only the fixed repository-generated WAV.
+          test -f "$root/audio.wav"
+          test -f "$root/model.bin"
+          sudo --preserve-env=PATH unshare --net -- env -i HOME="$root" PATH="$root/build/bin:/usr/bin:/bin" "$root/build/bin/whisper-cli" -m "$root/model.bin" -f "$root/audio.wav" -t 2 -otxt -of "$root/transcript"
+          python - "$root" <<'PY'
+          import hashlib, json, pathlib, re, sys
+          root = pathlib.Path(sys.argv[1])
+          transcript = (root / "transcript.txt").read_text().strip()
+          tokens = re.findall(r"[a-z]+", transcript.lower())
+          expected = "the quick brown fox jumps over the lazy dog".split()
+          # A bounded useful speech-recognition acceptance, not a general WER benchmark.
+          if tokens != expected:
+              raise SystemExit("Synthetic fixture transcript did not exactly match: " + repr(transcript))
+          digest = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
+          report = {"schema":"plenum-whisper-public-fixture-v1",
+                    "upstream_commit":"96ec4d9823e9d0211944172da35f9f29134af990",
+                    "model_sha256":digest(root/"model.bin"),
+                    "audio_sha256":digest(root/"audio.wav"),
+                    "transcript":transcript, "exact_words":True,
+                    "public_synthetic_fixture":True, "paid_inference":False,
+                    "private_media_processed":False, "owner_runtime_verified":False}
+          pathlib.Path("whisper-acceptance.json").write_text(json.dumps(report, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prometheus-whisper-local-acceptance
+          path: whisper-acceptance.json
+          if-no-files-found: error
