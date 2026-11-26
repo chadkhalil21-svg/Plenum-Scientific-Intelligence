@@ -46,6 +46,19 @@ PLENUM_ENGINEERING_FALLBACK_ENABLED = "true"
 # Cloudflare Workers Builds uses `wrangler preview` from the repository root.
 # Preview bindings and vars do not inherit production settings. Deliberately
 # configure NO preview DO, AI, service or secret bindings; keep routes isolated.
+# Temporary production cron diagnosis: custom status logs only, no request
+# invocation logs or traces. No new provider, token, or replay reservation.
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[observability.logs]
+enabled = true
+invocation_logs = false
+
+[observability.traces]
+enabled = false
+
 [previews.vars]
 PLENUM_PREVIEW_ONLY = "true"
 PLENUM_FREE_AI_ENABLED = "false"
