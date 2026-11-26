@@ -22,6 +22,10 @@ REGISTERED = {
           "Prometheus upstream skill supply-chain qualification", "static-review"),
     925: ("prometheus-local-document-retrieval",
           "Prometheus model-free document retrieval qualification", "public-fixture"),
+    928: ("prometheus-whisper-local-qualification",
+          "Prometheus | Pinned local speech recognition qualification", "synthetic-speech"),
+    929: ("prometheus-blender-scientific-render",
+          "Prometheus | Blender concept geometry qualification", "original-concept"),
 }
 SHA = re.compile(r"^[a-f0-9]{40}$")
 MARKER = "<!-- plenum-engineering-controller-v1:"
