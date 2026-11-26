@@ -20,6 +20,10 @@ on:
       - 'src/plenum_ai/engineering_event_controller.py'
       - 'src/plenum_ai/whisper_repair_candidate.py'
       - 'tests/test_engineering_event_controller.py'
+      - 'integrations/cloudflare/plenum-engineering-fallback*.mjs'
+      - 'integrations/cloudflare/plenum-github-wake-worker*.mjs'
+      - 'wrangler.toml'
+      - 'integrations/cloudflare/wrangler.toml'
       - '.github/workflows/prometheus-engineering-event-controller.yml'
 permissions:
   contents: read
@@ -38,6 +42,7 @@ jobs:
         with:
           persist-credentials: false
       - run: PYTHONPATH=src python3 -m unittest discover -s tests -p test_engineering_event_controller.py -v
+      - run: node --test integrations/cloudflare/plenum-engineering-fallback.test.mjs integrations/cloudflare/plenum-github-wake-worker.test.mjs
   observe-and-recover:
     if: >-
       github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
