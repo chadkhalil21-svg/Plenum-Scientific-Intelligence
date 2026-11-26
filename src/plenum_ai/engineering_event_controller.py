@@ -26,6 +26,7 @@ REGISTERED = {
 SHA = re.compile(r"^[a-f0-9]{40}$")
 MARKER = "<!-- plenum-engineering-controller-v1:"
 MAX_BYTES = 2_000_000
+RECEIPT_ISSUE = 432
 
 
 def number(x):
@@ -152,12 +153,22 @@ def process(n, run_id=None):
     if result["status"] == "INELIGIBLE":
         return result
     receipt = marker(n, run, result["status"])
+    # Use the original master issue, not a PR comment requiring broader rights.
     # Fixed per-run receipt; only a genuine Actions bot receipt counts as a
     # prior reservation. Bound pagination rather than silently ignoring old
     # reservations. Fail closed if the limit is exceeded.
+    from datetime import datetime, timezone
+    from urllib.parse import urlencode
+    created = run.get("created_at")
+    if not isinstance(created, str):
+        raise ValueError("Missing original run creation time")
+    started = datetime.fromisoformat(created.replace("Z", "+00:00"))
+    if started.tzinfo is None or started > datetime.now(timezone.utc):
+        raise ValueError("Invalid run creation time")
     comments = []
     for page in range(1, 6):
-        rows = request(f"/issues/{n}/comments?per_page=100&page={page}")
+        query = urlencode({"per_page": 100, "page": page, "since": created})
+        rows = request(f"/issues/{RECEIPT_ISSUE}/comments?{query}")
         if not isinstance(rows, list):
             raise RuntimeError("Invalid comment list")
         comments.extend(rows)
@@ -181,7 +192,7 @@ def process(n, run_id=None):
         f"Run {run['id']}, exact head {sha}. No paid inference or merge authorization."
     )
     # Reserve before any retry. Ambiguous reservations never replay.
-    posted = request(f"/issues/{n}/comments", "POST", {"body": body})
+    posted = request(f"/issues/{RECEIPT_ISSUE}/comments", "POST", {"body": body})
     if (posted.get("user") or {}).get("login") != "github-actions[bot]" or posted.get("body") != body:
         raise RuntimeError("Reservation identity not confirmed")
     if result["status"] == "RETRY_UNSTARTED_INFRASTRUCTURE_ONCE":
