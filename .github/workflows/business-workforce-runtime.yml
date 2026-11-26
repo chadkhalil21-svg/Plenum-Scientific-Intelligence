@@ -97,9 +97,13 @@ jobs:
             --event "$GITHUB_EVENT_PATH" --out reports/openhands-agent-preflight.json
           python - <<'PY' >> "$GITHUB_OUTPUT"
           import json
-          engine=json.load(open('reports/openhands-agent-preflight.json')).get('engine','openhands')
+          data=json.load(open('reports/openhands-agent-preflight.json'))
+          engine=data.get('engine','openhands')
           assert engine in ('openhands','aider_local_ollama')
           print('engine='+engine)
+          model=data.get('local_model','qwen2.5-coder:7b')
+          assert model in ('qwen2.5-coder:7b','qwen3.5:9b-q4_K_M')
+          print('local_model='+model)
           PY
       - name: Reserve actual original coding execution before any model or provider access
         id: coding-reservation
@@ -219,14 +223,26 @@ jobs:
         run: |
           docker exec plenum-temporary-ollama ollama pull qwen3:1.7b
           docker exec plenum-temporary-ollama ollama list
-      - name: Download verified free coding model and pinned Aider before isolating their network
+      - name: Download verified free coding model and pinned isolated client before isolating their network
         if: steps.coding-reservation.outputs.authorized == 'true' && steps.owner-preflight.outputs.engine == 'aider_local_ollama'
+        env:
+          PLENUM_LOCAL_MODEL: ${{ steps.owner-preflight.outputs.local_model }}
         run: |
           set -euo pipefail
-          docker exec plenum-temporary-ollama ollama pull qwen2.5-coder:7b
+          case "$PLENUM_LOCAL_MODEL" in
+            qwen2.5-coder:7b) expected=dae161e27b0e ;;
+            qwen3.5:9b-q4_K_M) expected=56671c2ab938 ;;
+            *) exit 1 ;;
+          esac
+          # Verify actual free-runner headroom before a larger model pull.
+          if [ "$PLENUM_LOCAL_MODEL" = "qwen3.5:9b-q4_K_M" ]; then
+            test "$(df --output=avail -B1 / | tail -1 | tr -d ' ')" -ge 9000000000
+            test "$(awk '/MemTotal/ {print $2}' /proc/meminfo)" -ge 14000000
+          fi
+          docker exec plenum-temporary-ollama ollama pull "$PLENUM_LOCAL_MODEL"
           docker exec plenum-temporary-ollama ollama list
-          digest=$(docker exec plenum-temporary-ollama ollama list | awk '$1=="qwen2.5-coder:7b" {print $2}')
-          test "$digest" = dae161e27b0e
+          digest=$(docker exec plenum-temporary-ollama ollama list | awk -v model="$PLENUM_LOCAL_MODEL" '$1==model {print $2}')
+          test "$digest" = "$expected"
           image=$(PYTHONPATH=src python -c 'from plenum_ai.openhands_coding_agent import AIDER_IMAGE; print(AIDER_IMAGE)')
           docker pull "$image"
           docker network create --internal plenum-coding-isolated
@@ -265,10 +281,18 @@ jobs:
           PY
       - name: Reuse original focused Python tests on model patch in offline restricted Docker sandbox
         if: github.event_name == 'issues'
+        env:
+          PYTHONPATH: src
+          PLENUM_SELECTED_CODING_ENGINE: ${{ steps.owner-preflight.outputs.engine }}
+          PLENUM_ORIGINAL_CODING_RESERVED: ${{ steps.coding-reservation.outputs.authorized }}
         run: |
+          args=()
+          if [ "$PLENUM_SELECTED_CODING_ENGINE" = "aider_local_ollama" ] && [ "$PLENUM_ORIGINAL_CODING_RESERVED" = "true" ]; then
+            args+=(--recover-local-event "$GITHUB_EVENT_PATH")
+          fi
           python tools/verify_original_openhands_candidate.py \
             --report reports/openhands-agent-review.json \
-            --verdict reports/openhands-sandbox-verdict.json
+            --verdict reports/openhands-sandbox-verdict.json "${args[@]}"
       - name: Examine only the saved interrupted original patch without replaying the model
         if: >-
           always() && github.event_name == 'issues' && steps.coding-reservation.outputs.authorized == 'true' &&
@@ -382,11 +406,17 @@ jobs:
                       and all(assessment.get(key) is False for key in ('model_run_completed','independent_semantic_approval','automatically_merged','production_written','external_accounts_changed'))):
                       sandbox_state='INTERRUPTED_FOCUSED_TESTS_PASS_REVIEW_STILL_REQUIRED'
               elif (assessment.get('status')=='FOCUSED_TESTS_PASS_REVIEW_STILL_REQUIRED'
-                    and assessment.get("existing_focused_tests_passed") is True):
+                    and assessment.get("existing_focused_tests_passed") is True
+                    and assessment.get("task_acceptance_passed") is not False
+                    and assessment.get("candidate_artifact_sha256")==digest):
                   status="REVIEW_ONLY_EXISTING_TESTS_PASS_SEMANTIC_REVIEW_REQUIRED"
                   sandbox_state='FOCUSED_TESTS_PASS_REVIEW_STILL_REQUIRED'
               elif status=="REVIEW_ONLY_PATCH_READY_NOT_MERGED":
-                  status="BLOCKED_EXISTING_SOURCE_TESTS"
+                  if assessment.get("task_acceptance_passed") is False:
+                      status="BLOCKED_TASK_BEHAVIOR_ACCEPTANCE"
+                      sandbox_state=assessment.get("status","BLOCKED_TASK_ACCEPTANCE")
+                  else:
+                      status="BLOCKED_EXISTING_SOURCE_TESTS"
           goldfish=Path("reports/openhands-goldfish-review.json")
           reviewer_state="NOT_RUN"
           reviewer_blocker_count=0

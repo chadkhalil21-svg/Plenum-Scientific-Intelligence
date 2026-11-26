@@ -1,0 +1,55 @@
+name: Prometheus | Protected accepted promotion
+on:
+  workflow_run:
+    workflows:
+      - Prometheus | Accepted speech correction promotion
+      - Paperclip import and entrypoint gate
+      - Browser progress ledger guard
+    types: [completed]
+  schedule:
+    - cron: '3-58/5 * * * *'
+  pull_request:
+    paths:
+      - 'src/plenum_ai/accepted_engineering_promotion.py'
+      - 'tests/test_accepted_engineering_promotion.py'
+      - '.github/workflows/prometheus-protected-promotion.yml'
+permissions:
+  contents: read
+concurrency:
+  group: prometheus-protected-promotion-${{ github.event_name == 'pull_request' && github.ref || 'trusted' }}
+  cancel-in-progress: false
+jobs:
+  policy-tests:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: PYTHONPATH=src python -m unittest discover -s tests -p test_accepted_engineering_promotion.py -v
+  promote:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'schedule' ||
+       (github.event_name == 'workflow_run' &&
+        github.event.workflow_run.head_branch == 'prometheus-whisper-local-qualification' &&
+        github.event.workflow_run.event == 'pull_request' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    permissions:
+      contents: write
+      pull-requests: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Enforce exact independently accepted promotion without bypass
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PYTHONPATH: src
+        run: python -m plenum_ai.accepted_engineering_promotion

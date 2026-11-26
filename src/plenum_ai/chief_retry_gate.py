@@ -38,6 +38,48 @@ def eligible_run(event: object) -> int | None:
     return w["id"]
 
 
+def retryable_paper_outage(root, goal, entry):
+    """Only a recorded transient outage of the approved paper provider.
+    
+    No retry of a valid empty response, a schema failure, or untrusted
+    instructions. The original artifact must still match the checkpoint.
+    """
+    from .world_horizon import paper_survey_subject
+    transient={"TimeoutError","ConnectionError","ConnectionResetError",
+               "ConnectionRefusedError","URLError","RemoteDisconnected"}
+    if (not paper_survey_subject(goal) or not isinstance(entry,dict)
+            or entry.get("status")!="BLOCKED_NO_SOURCE_EVIDENCE"
+            or entry.get("verified") is not False or type(entry.get("attempt")) is not int
+            or entry["attempt"]!=1):
+        return False
+    rel=entry.get("artifact_path")
+    if (not isinstance(rel,str) or not rel.startswith("workers/public_research/")
+            or not artifact_digest(root,rel) or artifact_digest(root,rel)!=entry.get("sha256")):
+        return False
+    try:
+        p=root/rel
+        if not p.is_file() or p.stat().st_size>200000:
+            return False
+        data=json.loads(p.read_text("utf-8"))
+        if (data.get("schema")!="plenum-public-horizon-snapshot-v1" or data.get("topic")!=goal
+                or data.get("category")!="journals" or data.get("records")!=[]
+                or data.get("independent_breakthrough_verified") is not False
+                or data.get("AGI_achieved") is not False):
+            return False
+        providers=data.get("providers")
+        if not isinstance(providers,list) or len(providers)!=1:
+            return False
+        final=providers[0]
+        initial=final.get("first_attempt")
+        return (final.get("query_strategy")=="bibliographic_recovery"
+                and all(isinstance(item,dict) and item.get("source")=="crossref_journals"
+                    and item.get("status")=="unavailable" and item.get("records")==[]
+                    and item.get("error_type") in transient for item in (initial,final)))
+    except (OSError,ValueError,TypeError,AttributeError,KeyError):
+        return False
+
+
+
 def inspect_retry(event: object, root: Path, issue: object) -> dict:
     """Retain verified siblings; allow one failed or interrupted first attempt."""
     run_id = eligible_run(event)
@@ -94,6 +136,24 @@ def inspect_retry(event: object, root: Path, issue: object) -> dict:
         return {"status": "BLOCKED_UNRELATED_OR_COMPLETED_WORK"}
     if original_task.get("data_mission"):
         return inspect_data_retry(root, original_task, results, report, run_id)
+    planned_goals={}
+    if original_task.get("model_team_mission"):
+        from hashlib import sha256
+        from .chief_team_mission import validate_team_receipt
+        rejected={"status":"BLOCKED_UNSAFE_RETRY_HISTORY"}
+        path=root/f"chief-team-plan-{number}.json"
+        try:
+            if not path.is_file() or path.is_symlink() or path.stat().st_size>8000:
+                return rejected
+            receipt=json.loads(path.read_text("utf-8"))
+            validate_team_receipt(original_task,receipt)
+            plan_hash=sha256(json.dumps(receipt,sort_keys=True).encode()).hexdigest()
+            if any(not isinstance(entry,dict) or entry.get("plan_sha256")!=plan_hash for entry in results.values()):
+                return rejected
+            team=[step["kind"] for step in receipt["plan"]["steps"]]
+            planned_goals={step["kind"]:step["objective"] for step in receipt["plan"]["steps"]}
+        except (OSError,ValueError,TypeError,KeyError,UnicodeError,PermissionError):
+            return rejected
     if report["status"] == "SOURCE_READY_NOT_EXECUTED":
         # A terminated first run leaves the ORIGINAL preflight report and a
         # sequential checkpoint prefix. No speculative/unstarted work is proof.
@@ -108,7 +168,7 @@ def inspect_retry(event: object, root: Path, issue: object) -> dict:
                 return {"status": "BLOCKED_UNSAFE_RETRY_HISTORY"}
         interrupted = results[team[count - 1]]
         if (not isinstance(interrupted, dict)
-                or set(interrupted) != {"attempt", "status", "verified"}
+                or set(interrupted) != ({"attempt", "status", "verified", "plan_sha256"} if original_task.get("model_team_mission") else {"attempt", "status", "verified"})
                 or type(interrupted.get("attempt")) is not int
                 or interrupted["attempt"] != 1
                 or interrupted.get("status") != "RUNNING"
@@ -123,10 +183,14 @@ def inspect_retry(event: object, root: Path, issue: object) -> dict:
         entry = results[kind]
         if verified_previous_result(root, kind, entry) is not None:
             done += 1
+        elif (kind=="public_research" and planned_goals.get(kind)
+              and retryable_paper_outage(root,planned_goals[kind],entry)):
+            unfinished += 1
         elif (not isinstance(entry, dict)
               or entry.get("status") not in {
                   "BLOCKED_WORKER_OR_VERIFICATION", "BLOCKED_ARTIFACT_NOT_PRESERVED"}
-              or entry.get("verified") is True or entry.get("attempt") != 1):
+              or entry.get("verified") is not False
+              or type(entry.get("attempt")) is not int or entry["attempt"] != 1):
             return {"status": "BLOCKED_UNSAFE_RETRY_HISTORY"}
         else:
             unfinished += 1
@@ -165,7 +229,10 @@ def inspect_contract_retry(root, task, cp, report, run_id):
         plan_hash=sha256(json.dumps(receipt,sort_keys=True).encode()).hexdigest()
         order=[step['tool'] for step in receipt['plan']['steps']]
         count=len(results)
-        if count<2 or set(results)!=set(order[:count]):return rejected
+        # The fixed contract workers are read-only or local numerical work.
+        # A first-worker interruption is safe to retry once even before any
+        # sibling has completed; retain the exact immutable plan/attempt gate.
+        if count<1 or set(results)!=set(order[:count]):return rejected
         completed_keys={'attempt','status','verified','worker','artifact_path','output_artifact','sha256','plan_sha256'}
         for tool in order[:count-1]:
             entry=results[tool];relative=f'workers/{tool}/result.json'

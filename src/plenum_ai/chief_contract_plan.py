@@ -22,7 +22,48 @@ MAGIC = 'PLENUM_CHIEF_PUBLIC_CONTRACT_MISSION_V1'
 DOI_RE = re.compile(r'(?<![\w/])(10\.[0-9]{4,9}/[A-Za-z0-9][A-Za-z0-9.()/_+-]{0,100})(?![\w/])')
 TOOLS = {'noaa_metadata':'research-specialist','station_validation':'coding-specialist',
          'crossref_metadata':'research-specialist','bibliography_readback':'verification-specialist',
-         'cooling_solution':'scientific-specialist','cooling_readback':'verification-specialist'}
+         'cooling_solution':'scientific-specialist','cooling_readback':'verification-specialist',
+         'evidence_report':'chief-evidence-assembly',
+         'business_readback':'commercial-operations-specialist',
+         'business_review':'verification-specialist',
+         'paper_discovery':'research-specialist','paper_readback':'verification-specialist'}
+
+
+DEPENDENCIES = {'station_validation':'noaa_metadata',
+                'bibliography_readback':'crossref_metadata',
+                'cooling_readback':'cooling_solution', 'business_review':'business_readback', 'paper_readback':'paper_discovery'}
+ACCEPTANCE = {'noaa_metadata':'exact_station_identity_and_coordinates',
+              'station_validation':'exact_input_structural_validation',
+              'crossref_metadata':'exact_doi_and_required_metadata',
+              'bibliography_readback':'same_provider_metadata_agreement',
+              'cooling_solution':'finite_temperature_within_analytic_tolerance',
+              'cooling_readback':'independent_analytic_temperature_agreement',
+              'evidence_report':'complete_source_bound_evidence_report',
+              'business_readback':'all_original_public_targets_checked_with_bounded_attempts',
+              'business_review':'exact_business_status_readback_without_readiness_claim',
+              'paper_discovery':'bounded_topic_matched_doi_discovery',
+              'paper_readback':'artifact_selected_doi_identity_title_publisher_year'}
+
+
+def contract_dependencies(tool, scope):
+    if tool == 'evidence_report':
+        return [name for name in required_tools(scope) if name != tool]
+    return [DEPENDENCIES[tool]] if tool in DEPENDENCIES else []
+
+
+def contract_goal_graph(plan, scope):
+    """Derive the trusted goal criteria from the original authorized contracts."""
+    from .chief_team_mission import validate_specialist_graph
+    checked = validate_plan(plan, scope)
+    approved = {tool: {'specialist': TOOLS[tool],
+                       'depends_on': contract_dependencies(tool, scope),
+                       'acceptance': ACCEPTANCE[tool]}
+                for tool in required_tools(scope)}
+    proposed = [{'id': step['tool'], 'specialist': TOOLS[step['tool']],
+                 'depends_on': contract_dependencies(step['tool'], scope),
+                 'acceptance': ACCEPTANCE[step['tool']]}
+                for step in checked['steps']]
+    return validate_specialist_graph(proposed, approved)
 
 
 def fetch_noaa_metadata(station):
@@ -49,16 +90,50 @@ def parse_contract_mission(event):
     cooling=dict(zip(('initial_kelvin','ambient_kelvin','rate','duration'),map(float,match.groups()))) if match else None
     if cooling and not (0 < cooling['initial_kelvin'] <= 2000 and 0 < cooling['ambient_kelvin'] <= 2000 and 0 < cooling['rate'] <= 10 and 0 < cooling['duration'] <= 10000):
         raise ValueError('Cooling parameters outside bounded physical contract')
-    if not dois and not stations and not cooling or len(dois)>2 or len(stations)>3:
+    business_scope=objective.startswith('Evidence report ') and 'American Rider public health' in objective[len('Evidence report '):].split(' and ')
+    from .world_horizon import paper_survey_subject
+    paper_clauses=[clause for clause in objective[len('Evidence report '):].split(' and ')
+                   if paper_survey_subject(clause)] if objective.startswith('Evidence report ') else []
+    if len(paper_clauses)>1:
+        raise ValueError('Only one explicit topic survey per report')
+    if (not dois and not stations and not cooling and not business_scope and not paper_clauses) or len(dois)>2 or len(stations)>3:
         raise ValueError('Require explicit bounded NOAA station or DOI identifiers')
     scope={'station_ids':stations,'dois':dois,'cooling':cooling}
+    if business_scope:
+        scope['business']=True
+    if paper_clauses:
+        scope['paper_survey']=paper_clauses[0]
+    # The complete deliverable is independently gradeable only under this
+    # exact, fully consumed report grammar. Other goals retain legacy scope.
+    if objective.startswith('Evidence report '):
+        clauses=objective[len('Evidence report '):].split(' and ')
+        kinds=[]
+        for clause in clauses:
+            if re.fullmatch(r'NOAA [0-9]{7}(?: [0-9]{7}){0,2}',clause):
+                kinds.append('station_ids')
+            elif re.fullmatch(r'DOI '+DOI_RE.pattern+r'(?: '+DOI_RE.pattern+r')?',clause):
+                kinds.append('dois')
+            elif re.fullmatch(r'cooling initial [0-9]+(?:\.[0-9]+)? K ambient [0-9]+(?:\.[0-9]+)? K rate [0-9]+(?:\.[0-9]+)? time [0-9]+(?:\.[0-9]+)?',clause):
+                kinds.append('cooling')
+            elif clause=='American Rider public health':
+                kinds.append('business')
+            elif paper_survey_subject(clause):
+                kinds.append('paper_survey')
+            else:
+                raise ValueError('Unsupported evidence report clause')
+        if len(kinds)!=len(set(kinds)) or set(kinds)!={k for k,v in scope.items() if v}:
+            raise ValueError('Repeated or unparsed evidence report clause')
+        scope['evidence_report']=True
     return {**task,'team':tuple(required_tools(scope)), 'scope':scope,'contract_mission':True}
 
 
 def required_tools(scope):
     return (['noaa_metadata','station_validation'] if scope['station_ids'] else []) + (
         ['crossref_metadata','bibliography_readback'] if scope['dois'] else []) + (
-        ['cooling_solution','cooling_readback'] if scope.get('cooling') else [])
+        ['cooling_solution','cooling_readback'] if scope.get('cooling') else []) + (
+        ['business_readback','business_review'] if scope.get('business') else []) + (
+        ['paper_discovery','paper_readback'] if scope.get('paper_survey') else []) + (
+        ['evidence_report'] if scope.get('evidence_report') else [])
 
 
 def validate_plan(plan,scope):
@@ -73,9 +148,10 @@ def validate_plan(plan,scope):
         raise ValueError('Unknown, omitted or duplicate contract')
     for step in steps:
         tool=step['tool']
-        dependency={'station_validation':'noaa_metadata','bibliography_readback':'crossref_metadata','cooling_readback':'cooling_solution'}.get(tool)
-        if dependency:
-            if step!={'tool':tool,'input_from':dependency} or names.index(dependency)>names.index(tool):
+        dependencies=contract_dependencies(tool,scope)
+        if dependencies:
+            input_from=dependencies if tool=='evidence_report' else dependencies[0]
+            if step!={'tool':tool,'input_from':input_from} or any(names.index(dep)>names.index(tool) for dep in dependencies):
                 raise ValueError('Missing or reversed actual-data dependency')
         elif step!={'tool':tool}:
             raise ValueError('Model cannot supply URLs, identifiers or executable code')
@@ -127,6 +203,8 @@ def model_plan(objective,scope):
     # Strict validate_plan below still rejects duplicates and bad dependencies.
     expected=required_tools(scope)
     allowed=set(expected)
+    if scope.get('evidence_report'):
+        raise PlanningFailure('MODEL_CONFIGURATION','EXPLICIT_REPORT_REQUIRES_DETERMINISTIC_GRAPH')
     choices=[]
     for source,check in (('noaa_metadata','station_validation'),
                          ('crossref_metadata','bibliography_readback'),
@@ -200,14 +278,203 @@ def run_contract(tool,scope,prior):
         solution=solve_ivp(lambda t,y:(-p['rate']*(y[0]-p['ambient_kelvin']),),
                            (0,p['duration']),[p['initial_kelvin']],method='RK45',
                            rtol=1e-10,atol=1e-12,max_step=p['duration']/20)
-        if not solution.success:raise ValueError('Existing SciPy solver failed')
+        if not solution.success:raise RuntimeError('Existing SciPy solver failed')
         return {'observed_kelvin':float(solution.y[0,-1]),'library':'SciPy solve_ivp','method':'RK45','parameters':p}
     if tool=='cooling_readback':
         p=scope['cooling'];expected=p['ambient_kelvin']+(p['initial_kelvin']-p['ambient_kelvin'])*math.exp(-p['rate']*p['duration'])
         error=abs(prior['cooling_solution']['observed_kelvin']-expected)
         if not math.isfinite(error) or error>1e-6:raise ValueError('Independent analytic cooling readback disagrees')
         return {'analytic_kelvin':expected,'absolute_error_kelvin':error,'experimental_validation':False}
+    if tool=='business_readback':
+        from .business_public_watch import run
+        return run()
+    if tool=='business_review':
+        return review_business_status(prior['business_readback'])
+    if tool=='paper_discovery':
+        from .world_horizon import scan_horizon
+        return scan_horizon(scope['paper_survey'],category='journals',online=True)
+    if tool=='paper_readback':
+        selected=selected_paper_ids(scope,prior['paper_discovery'])
+        return {doi:read_crossref(doi,approved_dois=frozenset(selected)) for doi in selected}
+    if tool=='evidence_report':
+        return build_evidence_report(scope, prior)
     raise ValueError('Unknown contract')
+
+
+def review_business_status(report):
+    """Validate the real original monitor's receipt, not a new network request.
+
+    An unavailable endpoint is a valid finding, never a green availability
+    claim. All three original endpoint observations must be accounted for.
+    """
+    from .business_public_watch import TARGETS
+    from datetime import datetime
+    if (not isinstance(report,dict)
+            or report.get('schema')!='plenum-public-business-readback-v1'
+            or report.get('scope')!='public_https_read_only'
+            or report.get('total')!=len(TARGETS)
+            or any(report.get(k) is not False for k in
+                   ('asserts_commercial_readiness','asserts_transaction_success','requires_production_credentials'))):
+        raise ValueError('Invalid public business monitor receipt')
+    stamp=datetime.fromisoformat(report['checked_at_utc'])
+    if stamp.tzinfo is None:
+        raise ValueError('Business observation time must be timezone aware')
+    rows=report.get('reports')
+    if (not isinstance(rows,list) or len(rows)!=len(TARGETS)
+            or any(not isinstance(row,dict) for row in rows)
+            or [row.get('service') for row in rows]!=[target.name for target in TARGETS]):
+        raise ValueError('Business monitor did not account for every original target')
+    good=0
+    for row in rows:
+        attempts=row.get('attempts')
+        if type(attempts) is not int or not 1<=attempts<=6 or row.get('external_actions_executed') is not False:
+            raise ValueError('Unsafe public business observation')
+        if row.get('status')=='PUBLIC_HTTP_VERIFIED':
+            if row.get('independent_gets')!=2 or attempts<2 or row.get('http')!=200:
+                raise ValueError('Missing double readback evidence')
+            good+=1
+        elif row.get('status')=='UNVERIFIED':
+            if row.get('phase') not in ('initial','readback') or not isinstance(row.get('reason'),str):
+                raise ValueError('Missing failed observation evidence')
+        else:
+            raise ValueError('Unrecognized business observation state')
+    if type(report.get('verified')) is not int or report['verified']!=good:
+        raise ValueError('Business monitor counts disagree')
+    return {'all_targets_accounted_for':True,'verified_endpoints':good,
+            'unverified_endpoints':len(TARGETS)-good,'all_endpoints_verified':good==len(TARGETS),
+            'commercial_readiness_verified':False,'transactions_verified':False}
+
+
+def selected_paper_ids(scope, report):
+    """Only actual bounded, topic-matched deposited DOI records authorize readback."""
+    from .world_horizon import paper_survey_subject,paper_title_matches
+    subject=paper_survey_subject(scope['paper_survey'])
+    if (not subject or not isinstance(report,dict)
+            or report.get('schema')!='plenum-public-horizon-snapshot-v1'
+            or report.get('topic')!=scope['paper_survey'] or report.get('category')!='journals'
+            or report.get('independent_breakthrough_verified') is not False):
+        raise ValueError('Invalid topic discovery artifact')
+    rows=report.get('records')
+    if not isinstance(rows,list) or not 1<=len(rows)<=4:
+        raise ValueError('Missing bounded paper discovery')
+    selected=[]
+    for row in rows:
+        if (not isinstance(row,dict) or row.get('source')!='crossref_journals'
+                or row.get('category')!='journals'
+                or row.get('independent_fact_check_complete') is not False
+                or not paper_title_matches(subject,row.get('title'))
+                or not isinstance(row.get('url'),str)
+                or not row['url'].startswith('https://doi.org/')):
+            raise ValueError('Untrusted or irrelevant discovered paper')
+        doi=row['url'][len('https://doi.org/'):].lower()
+        if not DOI_RE.fullmatch(doi) or doi in selected:
+            raise ValueError('Invalid or duplicate discovered DOI')
+        selected.append(doi)
+    return selected[:2]
+
+
+def verify_paper_readback(scope, discovery, result):
+    from .world_horizon import paper_survey_subject,paper_title_matches
+    try:
+        selected=selected_paper_ids(scope,discovery)
+        rows={r['url'][len('https://doi.org/'):].lower():r for r in discovery['records']}
+        subject=paper_survey_subject(scope['paper_survey'])
+        return (isinstance(result,dict) and set(result)==set(selected)
+                and all(isinstance(record,dict) and record.get('doi')==doi
+                        and record.get('title')==rows[doi]['title']
+                        and paper_title_matches(subject,record['title'])
+                        and type(record.get('year')) is int and 1900<=record['year']<=2100
+                        and isinstance(record.get('publisher'),str) and bool(record['publisher'].strip())
+                        for doi,record in result.items()))
+    except (ValueError,TypeError,KeyError,AttributeError):
+        return False
+
+
+def build_evidence_report(scope, inputs):
+    """Engineering handoff: a compact, useful report from actual producer bytes."""
+    from .chief_team_mission import _station_rows
+    report={'schema':'plenum-source-bound-evidence-report-v1','sections':{}}
+    if scope['station_ids']:
+        rows=_station_rows(inputs['noaa_metadata'],tuple(scope['station_ids']))
+        report['sections']['stations']={
+            'records':[{key:row.get(key) for key in ('id','name','lat','lng')} for row in rows],
+            'validation':inputs['station_validation'],
+            'source':'NOAA CO-OPS station metadata',
+            'limitation':'Structural metadata only; no datum or instrument accuracy verification'}
+    if scope['dois']:
+        report['sections']['bibliography']={
+            'records':[inputs['crossref_metadata'][doi] for doi in scope['dois']],
+            'readback':inputs['bibliography_readback'],
+            'limitation':'Crossref deposited metadata and same-provider readback; not paper-content verification'}
+    if scope.get('cooling'):
+        report['sections']['cooling']={
+            'solution':inputs['cooling_solution'],'readback':inputs['cooling_readback'],
+            'limitation':'Analytic and numerical model only; no experimental validation'}
+    if scope.get('business'):
+        report['sections']['business']={
+            'observation':inputs['business_readback'],'review':inputs['business_review'],
+            'limitation':'Public HTTP availability only; no transaction or commercial readiness verification'}
+    if scope.get('paper_survey'):
+        report['sections']['papers']={'discovery':inputs['paper_discovery'],
+            'readback':inputs['paper_readback'],
+            'limitation':'Topic-matched discovery and separate Crossref metadata readback only; no full paper or scientific claim verification'}
+    return report
+
+
+def verify_evidence_report(scope, inputs, report):
+    """Independently check completeness and each section against source outputs."""
+    if not isinstance(report,dict) or set(report)!={'schema','sections'} or report['schema']!='plenum-source-bound-evidence-report-v1':
+        return False
+    sections=report['sections']
+    expected=set()
+    if scope['station_ids']: expected.add('stations')
+    if scope['dois']: expected.add('bibliography')
+    if scope.get('cooling'): expected.add('cooling')
+    if scope.get('business'): expected.add('business')
+    if scope.get('paper_survey'): expected.add('papers')
+    if not isinstance(sections,dict) or set(sections)!=expected:
+        return False
+    try:
+        if 'stations' in sections:
+            from .chief_team_mission import _station_rows
+            section=sections['stations']
+            if set(section)!={'records','validation','source','limitation'} or section['source']!='NOAA CO-OPS station metadata' or section['limitation']!='Structural metadata only; no datum or instrument accuracy verification':
+                return False
+            rows=_station_rows(inputs['noaa_metadata'],tuple(scope['station_ids']))
+            if len(section['records'])!=len(rows) or section['validation']!=_validator(rows):
+                return False
+            for observed, original in zip(section['records'],rows):
+                if set(observed)!={'id','name','lat','lng'} or any(observed[k]!=original.get(k) for k in observed):
+                    return False
+        if 'bibliography' in sections:
+            section=sections['bibliography']
+            if set(section)!={'records','readback','limitation'} or section['limitation']!='Crossref deposited metadata and same-provider readback; not paper-content verification':
+                return False
+            if section['records']!=[inputs['crossref_metadata'][doi] for doi in scope['dois']] or section['readback']!=inputs['bibliography_readback']:
+                return False
+        if 'cooling' in sections:
+            section=sections['cooling']
+            if set(section)!={'solution','readback','limitation'} or section['limitation']!='Analytic and numerical model only; no experimental validation':
+                return False
+            if section['solution']!=inputs['cooling_solution'] or section['readback']!=inputs['cooling_readback']:
+                return False
+        if 'business' in sections:
+            section=sections['business']
+            if set(section)!={'observation','review','limitation'} or section['limitation']!='Public HTTP availability only; no transaction or commercial readiness verification':
+                return False
+            if section['observation']!=inputs['business_readback'] or section['review']!=review_business_status(inputs['business_readback']) or section['review']!=inputs['business_review']:
+                return False
+        if 'papers' in sections:
+            section=sections['papers']
+            if (set(section)!={'discovery','readback','limitation'}
+                    or section['limitation']!='Topic-matched discovery and separate Crossref metadata readback only; no full paper or scientific claim verification'
+                    or section['discovery']!=inputs['paper_discovery']
+                    or section['readback']!=inputs['paper_readback']
+                    or not verify_paper_readback(scope,section['discovery'],section['readback'])):
+                return False
+        return True
+    except (ValueError,TypeError,KeyError,AttributeError):
+        return False
 
 
 def verify_results(scope,results):
@@ -231,6 +498,12 @@ def verify_results(scope,results):
                 or results['cooling_readback'].get('analytic_kelvin')!=reference
                 or results['cooling_readback'].get('absolute_error_kelvin')!=abs(observed-reference)):
             return False
+    if scope.get('business') and results['business_review']!=review_business_status(results['business_readback']):
+        return False
+    if scope.get('paper_survey') and not verify_paper_readback(scope,results['paper_discovery'],results['paper_readback']):
+        return False
+    if scope.get('evidence_report') and not verify_evidence_report(scope,results,results['evidence_report']):
+        return False
     return True
 
 
@@ -253,18 +526,113 @@ def deterministic_scope_plan(scope):
     fixed and validated: a model cannot improve this exact scope decision.
     This ONLY handles founder-whitelisted identifiers and source/readback pairs.
     """
-    dependencies={'station_validation':'noaa_metadata',
-                  'bibliography_readback':'crossref_metadata',
-                  'cooling_readback':'cooling_solution'}
-    steps=[({'tool':tool,'input_from':dependencies[tool]}
-            if tool in dependencies else {'tool':tool})
-           for tool in required_tools(scope)]
+    steps=[]
+    for tool in required_tools(scope):
+        dependencies=contract_dependencies(tool,scope)
+        step={'tool':tool}
+        if dependencies:
+            step['input_from']=dependencies if tool=='evidence_report' else dependencies[0]
+        steps.append(step)
     return validate_plan({'steps':steps},scope)
 
 
 def deterministic_pair_plan(scope):
     """Legacy public scope helper preserved for existing call sites."""
     return deterministic_scope_plan(scope)
+
+
+CONTRACT_ARTIFACT_SCHEMA = 'plenum-chief-contract-result-v2'
+
+
+def read_contract_artifact(root, tool, entry, plan_hash):
+    relative = f'workers/{tool}/result.json'
+    if (entry.get('artifact_path') != relative or entry.get('output_artifact') != relative
+            or verified_previous_result(root, tool, entry) is None):
+        raise ValueError('Consumed artifact changed')
+    record = json.loads((root / relative).read_text('utf-8'))
+    if (not isinstance(record, dict) or record.get('plan_sha256') != plan_hash
+            or 'result' not in record
+            or ('schema' in record and record['schema'] != CONTRACT_ARTIFACT_SCHEMA)):
+        raise ValueError('Artifact plan binding changed')
+    return record
+
+
+def cooling_matrix_solution(parameters):
+    """Propagate the temperature deviation with a matrix exponential on recovery."""
+    from scipy.linalg import expm
+    exponent = -parameters['rate'] * parameters['duration']
+    factor = float(expm([[exponent]])[0, 0])
+    ambient = parameters['ambient_kelvin']
+    temperature = ambient + (parameters['initial_kelvin'] - ambient) * factor
+    return {'observed_kelvin': temperature, 'library': 'SciPy linalg.expm',
+            'method': 'expm', 'parameters': parameters}
+
+
+class CoolingQualityFailure(RuntimeError):
+    """A producer returned an invalid result, not merely a transport failure."""
+
+
+def check_cooling_producer(parameters, result):
+    """Check correctness before reserving a verified producer receipt."""
+    reference = parameters['ambient_kelvin'] + (
+        parameters['initial_kelvin'] - parameters['ambient_kelvin']
+    ) * math.exp(-parameters['rate'] * parameters['duration'])
+    observed = result.get('observed_kelvin') if isinstance(result, dict) else None
+    if (not isinstance(observed, (float, int)) or isinstance(observed, bool)
+            or not math.isfinite(observed) or abs(observed - reference) > 1e-6
+            or result.get('parameters') != parameters):
+        raise CoolingQualityFailure('Cooling producer failed analytic acceptance')
+
+
+def check_contract_result(tool, scope, inputs, result):
+    """Apply each node's trusted quality criterion before accepting its artifact."""
+    from .chief_team_mission import _station_rows
+    if tool == 'cooling_solution':
+        check_cooling_producer(scope['cooling'], result)
+        return
+    if tool == 'noaa_metadata':
+        _station_rows(result, tuple(scope['station_ids']))
+        return
+    if tool == 'station_validation':
+        if result == _validator(_station_rows(inputs['noaa_metadata'], tuple(scope['station_ids']))):
+            return
+    elif tool == 'crossref_metadata':
+        if (isinstance(result, dict) and set(result) == set(scope['dois'])
+                and all(isinstance(record, dict) and record.get('doi') == doi
+                        and isinstance(record.get('title'), str) and bool(record['title'].strip())
+                        and type(record.get('year')) is int
+                        and isinstance(record.get('publisher'), str) and bool(record['publisher'].strip())
+                        for doi, record in result.items())):
+            return
+    elif tool == 'bibliography_readback':
+        if result == {'same_provider_readback_agrees':True,
+                      'records':len(inputs['crossref_metadata']),
+                      'full_paper_or_second_provider_verified':False}:
+            return
+    elif tool == 'cooling_readback':
+        p = scope['cooling']
+        reference = p['ambient_kelvin'] + (p['initial_kelvin'] - p['ambient_kelvin']) * math.exp(-p['rate'] * p['duration'])
+        error = abs(inputs['cooling_solution']['observed_kelvin'] - reference)
+        if (math.isfinite(error) and error <= 1e-6
+                and result == {'analytic_kelvin':reference, 'absolute_error_kelvin':error,
+                               'experimental_validation':False}):
+            return
+    elif tool == 'business_readback':
+        review_business_status(result)
+        return
+    elif tool == 'business_review':
+        if result==review_business_status(inputs['business_readback']):
+            return
+    elif tool == 'paper_discovery':
+        selected_paper_ids(scope,result)
+        return
+    elif tool == 'paper_readback':
+        if verify_paper_readback(scope,inputs['paper_discovery'],result):
+            return
+    elif tool == 'evidence_report':
+        if verify_evidence_report(scope,inputs,result):
+            return
+    raise ValueError('Specialist result failed its trusted acceptance criterion')
 
 
 def execute_contract_mission(event,*,output_dir,planner=None):
@@ -298,29 +666,95 @@ def execute_contract_mission(event,*,output_dir,planner=None):
         if temporary.is_symlink():raise ValueError('Unsafe temporary plan')
         temporary.write_text(json.dumps(receipt,sort_keys=True),'utf-8');temporary.replace(path);called=False
     plan_hash=sha256(json.dumps(receipt,sort_keys=True).encode()).hexdigest()
-    results={};invoked=0
-    for step in plan['steps']:
-        tool=step['tool'];relative=f'workers/{tool}/result.json';artifact=output_dir/relative;saved=progress.get(tool)
-        if saved is not None and (not isinstance(saved,dict) or saved.get('plan_sha256')!=plan_hash):raise ValueError('Changed checkpoint plan')
+    graph = contract_goal_graph(plan, scope)
+    results = {}
+    invoked = 0
+    reused = 0
+    for node in graph:
+        tool = node['id']
+        dependencies = node['depends_on']
+        relative = f'workers/{tool}/result.json'
+        artifact = output_dir / relative
+        saved = progress.get(tool)
+        if saved is not None and (not isinstance(saved, dict) or saved.get('plan_sha256') != plan_hash):
+            raise ValueError('Changed checkpoint plan')
+
+        # Re-open the producer's durable bytes at the consumer boundary.
+        inputs = {}
+        input_digests = {}
+        sources = {}
+        for dependency in dependencies:
+            source = read_contract_artifact(output_dir, dependency, progress[dependency], plan_hash)
+            sources[dependency] = source
+            inputs[dependency] = source['result']
+            input_digests[dependency] = progress[dependency]['sha256']
+
         if saved and saved.get('verified'):
-            if saved.get('artifact_path')!=relative or saved.get('output_artifact')!=relative or verified_previous_result(output_dir,tool,saved) is None:
-                raise ValueError('Consumed artifact changed')
-            restored=json.loads(artifact.read_text('utf-8'))
-            if restored.get('plan_sha256')!=plan_hash:raise ValueError('Artifact plan binding changed')
-            results[tool]=restored['result'];continue
-        attempt=int(saved.get('attempt',0))+1 if isinstance(saved,dict) else 1
-        if attempt>2:raise ValueError('Two-attempt ceiling reached')
-        progress[tool]={'attempt':attempt,'status':'RUNNING','verified':False,'plan_sha256':plan_hash}
-        save_checkpoint(output_dir,issue=task['issue_number'],objective=task['objective'],team=team,results=progress)
-        invoked+=1;result=run_contract(tool,scope,results)
-        if artifact.is_symlink() or not artifact.resolve().is_relative_to(output_dir.resolve()):raise ValueError('Unsafe result path')
-        artifact.parent.mkdir(parents=True,exist_ok=True)
-        artifact.write_text(json.dumps({'plan_sha256':plan_hash,'result':result},sort_keys=True),'utf-8')
-        progress[tool]={'attempt':attempt,'status':'DRAFT_READY_FOR_FOUNDER','verified':True,'worker':TOOLS[tool],
-                        'artifact_path':relative,'output_artifact':relative,'sha256':artifact_digest(output_dir,relative),'plan_sha256':plan_hash}
-        save_checkpoint(output_dir,issue=task['issue_number'],objective=task['objective'],team=team,results=progress)
-        results[tool]=result
+            restored = read_contract_artifact(output_dir, tool, saved, plan_hash)
+            if tool == 'evidence_report':
+                if restored.get('input_digests') != input_digests:
+                    raise ValueError('Consumed dependency digests changed')
+            elif dependencies and (sources[dependencies[0]].get('schema') == CONTRACT_ARTIFACT_SCHEMA
+                               or 'schema' in restored or 'input_sha256' in restored):
+                if restored.get('input_sha256') != input_digests[dependencies[0]]:
+                    raise ValueError('Consumed dependency digest changed')
+            if ('acceptance_criterion' in restored and restored['acceptance_criterion'] != node['acceptance']):
+                raise ValueError('Stored acceptance criterion changed')
+            check_contract_result(tool, scope, inputs, restored['result'])
+            results[tool] = restored['result']
+            reused += 1
+            continue
+
+        if saved and (type(saved.get('attempt')) is not int or saved.get('status') != 'RUNNING'
+                      or saved.get('verified') is not False):
+            raise ValueError('Invalid prior attempt')
+        attempt = saved['attempt'] + 1 if saved else 1
+        recovery_reason = 'interrupted_attempt' if saved else None
+        if not 1 <= attempt <= 2:
+            raise ValueError('Two-attempt ceiling reached')
+        while True:
+            progress[tool] = {'attempt': attempt, 'status': 'RUNNING', 'verified': False,
+                              'plan_sha256': plan_hash}
+            save_checkpoint(output_dir, issue=task['issue_number'], objective=task['objective'],
+                            team=team, results=progress)
+            invoked += 1
+            try:
+                if tool == 'cooling_solution' and attempt == 2:
+                    result = cooling_matrix_solution(scope['cooling'])
+                else:
+                    result = run_contract(tool, scope, inputs)
+                check_contract_result(tool, scope, inputs, result)
+                break
+            except (OSError, RuntimeError) as failure:
+                if tool != 'cooling_solution' or attempt != 1:
+                    raise
+                recovery_reason = type(failure).__name__
+                attempt += 1
+
+        if artifact.is_symlink() or not artifact.resolve().is_relative_to(output_dir.resolve()):
+            raise ValueError('Unsafe result path')
+        artifact.parent.mkdir(parents=True, exist_ok=True)
+        record = {'schema': CONTRACT_ARTIFACT_SCHEMA, 'plan_sha256': plan_hash,
+                  'acceptance_criterion': node['acceptance'], 'result': result}
+        if tool == 'cooling_solution' and attempt == 2:
+            record['recovery'] = {'previous_method': 'RK45', 'method': 'expm',
+                                  'reason': recovery_reason}
+        if tool == 'evidence_report':
+            record['input_digests'] = input_digests
+        elif dependencies:
+            record['input_sha256'] = input_digests[dependencies[0]]
+        artifact.write_text(json.dumps(record, sort_keys=True), 'utf-8')
+        digest = artifact_digest(output_dir, relative)
+        if not digest:
+            raise ValueError('Missing or unsafe result artifact')
+        progress[tool] = {'attempt': attempt, 'status': 'DRAFT_READY_FOR_FOUNDER',
+                          'verified': True, 'worker': TOOLS[tool], 'artifact_path': relative,
+                          'output_artifact': relative, 'sha256': digest, 'plan_sha256': plan_hash}
+        save_checkpoint(output_dir, issue=task['issue_number'], objective=task['objective'],
+                        team=team, results=progress)
+        results[tool] = result
     valid=verify_results(scope,results)
+    report_verified=bool(valid and scope.get('evidence_report'))
     return {'schema':'plenum-chief-founder-team-v2','mode':'multi','issue_number':task['issue_number'],
             'status':'VERIFIED_BOUNDED_CONTRACT_MISSION' if valid else 'BLOCKED_CONTRACT_INTEGRITY',
             'dispatcher':(('original_chief_deterministic_public_contract_pair' if len(team)==2
@@ -329,12 +763,15 @@ def execute_contract_mission(event,*,output_dir,planner=None):
                           else 'original_chief_local_model_public_contract_composition'),
             'model_called':called,'chief_model_delegated':called,'inference_provenance':receipt['inference'],
             'expected_team':list(team),'bounded_contracts_verified':valid,
-            'founder_objective_verified':False,'objective_review_required':True,'independent_verified':valid,
+            'founder_objective_verified':report_verified,'objective_review_required':not report_verified,'independent_verified':valid,
             'worker_artifacts_technically_verified':valid,'tool_outputs_verified':valid,
-            'executed_workers':len(results),'new_worker_invocations':invoked,'reused_prior_verified_workers':len(results)-invoked,
+            'executed_workers':len(results),'new_worker_invocations':invoked,'reused_prior_verified_workers':reused,
             'specialists':[TOOLS[x['tool']] for x in plan['steps']], 'contract_results':results,
             'worker_results':[{'kind':x['tool'],'worker':TOOLS[x['tool']],'status':'DRAFT_READY_FOR_FOUNDER','output_artifact':f"workers/{x['tool']}/result.json",'verified_scope':'explicit public identifier contract only'} for x in plan['steps']],
-            'plan_artifact':path.name,'plan_sha256':plan_hash,'paid_api_used':False,'external_account_changes':False,
-            'bounded_founder_goal_evidence':{'status':'VERIFIED_PUBLIC_CONTRACTS_NOT_FREEFORM_OBJECTIVE' if valid else 'NOT_VERIFIED'},
-            'founder_review_required':True,'new_general_agent_capability_claimed':False,
+            'plan_artifact':path.name,'plan_sha256':plan_hash,'goal_graph':graph,
+            'objective':task['objective'],
+            'paid_api_used':False,'external_account_changes':False,
+            'bounded_founder_goal_evidence':{'status':('VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE' if report_verified else 'VERIFIED_PUBLIC_CONTRACTS_NOT_FREEFORM_OBJECTIVE' if valid else 'NOT_VERIFIED'),
+                'report_artifact':'workers/evidence_report/result.json' if report_verified else None},
+            'founder_review_required':not report_verified,'new_general_agent_capability_claimed':False,
             'limitations':['Freeform objective requires independent review','Crossref uses same-provider metadata readback, not full paper review','NOAA datum and instrument accuracy not checked']}

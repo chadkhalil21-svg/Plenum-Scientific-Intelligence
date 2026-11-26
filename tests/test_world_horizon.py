@@ -162,5 +162,70 @@ class WorldHorizonTests(unittest.TestCase):
                             opener=lambda *a,**kw:1/0)
         self.assertEqual(len(offline["records"]),0)
 
+
+    def test_official_grant_search_subject_filters_before_truncation_and_never_records_token(self):
+        query="Survey public agricultural funding sources"
+        response={"errorcode":0,"token":"not-persisted",
+                  "data":{"oppHits":[
+                      {"id":str(i),"title":"Physics opportunity","agencyName":"NSF","oppStatus":"posted"} for i in range(1,8)
+                  ]+[
+                      {"id":"99","title":"Agricultural research program","agencyName":"USDA","oppStatus":"posted","closeDate":"01/30/2027"},
+                      {"id":"100","title":"Agriculture closed grant","agencyName":"USDA","oppStatus":"closed"},
+                      {"id":"../101","title":"Agriculture fake grant","agencyName":"USDA","oppStatus":"posted"}]}}
+        requests=[]
+        def opener(req,timeout):
+            requests.append(req)
+            if req.full_url=="https://api.grants.gov/v1/api/search2":
+                self.assertEqual(req.get_method(),"POST")
+                self.assertEqual(json.loads(req.data),{"rows":25,"keyword":"agriculture","oppStatuses":"posted|forecasted"})
+                self.assertIsNone(req.get_header("Authorization"))
+                return Stream(json.dumps(response).encode())
+            return Stream(RSS)
+        report=scan_horizon(query,category="funding",online=True,opener=opener)
+        self.assertEqual(len(report["records"]),1)
+        self.assertEqual(report["records"][0]["url"],"https://www.grants.gov/search-results-detail/99")
+        self.assertEqual(report["records"][0]["title"],"Agricultural research program")
+        self.assertNotIn("not-persisted",json.dumps(report))
+        self.assertFalse(report["records"][0]["primary_source_verified"])
+        self.assertFalse(report["records"][0]["independent_fact_check_complete"])
+        self.assertEqual(len(requests),2)
+
+
+    def test_paper_survey_uses_topic_not_instruction_and_filters_before_limit(self):
+        from urllib.parse import parse_qs
+        calls=[]
+        def opener(req,timeout):
+            calls.append(req.full_url)
+            query=parse_qs(urlsplit(req.full_url).query)
+            self.assertEqual(query["query.title"],["photonic computing"])
+            self.assertEqual(query["rows"],["20"])
+            rows=[{"title":["Unrelated survey of papers"],"DOI":"10.1000/wrong"+str(i)} for i in range(5)]
+            rows += [{"title":["Photonic computation architectures"],"DOI":"10.1000/right"},
+                     {"title":["Photonic computing"],"DOI":"invalid"}]
+            return Stream(json.dumps({"message":{"items":rows}}).encode())
+        report=scan_horizon("Survey public photonic computing papers",category="journals",online=True,opener=opener)
+        self.assertEqual(len(calls),1)
+        self.assertEqual([r["url"] for r in report["records"]],["https://doi.org/10.1000/right"])
+        self.assertFalse(report["records"][0]["independent_fact_check_complete"])
+
+    def test_paper_search_changes_strategy_once_when_first_results_are_irrelevant(self):
+        from urllib.parse import parse_qs
+        calls=[]
+        def opener(req,timeout):
+            q=parse_qs(urlsplit(req.full_url).query)
+            calls.append(q)
+            rows=[{"title":["Unrelated survey"],"DOI":"10.1000/irrelevant"}]
+            if "query.bibliographic" in q:
+                rows.append({"title":["Photonic computation architecture"],"DOI":"10.1000/recovered"})
+            return Stream(json.dumps({"message":{"items":rows}}).encode())
+        report=scan_horizon("Survey public photonic computing papers",category="journals",online=True,opener=opener)
+        self.assertEqual(len(calls),2)
+        self.assertEqual(calls[0]["query.title"],["photonic computing"])
+        self.assertEqual(calls[1]["query.bibliographic"],["photonic computing"])
+        self.assertEqual([r["url"] for r in report["records"]],["https://doi.org/10.1000/recovered"])
+        self.assertEqual(report["providers"][0]["first_attempt"]["records"],[])
+        self.assertEqual(report["providers"][0]["query_strategy"],"bibliographic_recovery")
+
+
 if __name__=="__main__":
     unittest.main()

@@ -298,6 +298,215 @@ class ChiefTeamMissionTests(TestCase):
         self.assertFalse(independently_accept_team(expected,{**ok,"public_creative":{**ok["public_creative"],"verified":False}}))
 
 
+class ExtractiveTeamPlanTests(TestCase):
+    objective="Plan Create a public numeric validator program and draw an original SVG geometry diagram"
+    plan={"steps":[{"kind":"public_program","objective":"Create a public numeric validator program"},
+                   {"kind":"public_creative","objective":"draw an original SVG geometry diagram"}]}
+
+    def test_compact_boundary_selection_preserves_exact_text_and_rejects_wrong_roles(self):
+        from plenum_ai.chief_team_mission import materialize_boundary_plan
+        task=parse_mission(mission(self.objective))
+        choice={"boundaries":[0],"roles":["public_program","public_creative"]}
+        self.assertEqual(materialize_boundary_plan(task,choice),self.plan)
+        for bad in ({"boundaries":[True],"roles":choice["roles"]},
+                    {"boundaries":[1],"roles":choice["roles"]},
+                    {"boundaries":[0],"roles":list(reversed(choice["roles"]))},
+                    {"boundaries":[0],"roles":["public_program","public_program"]},
+                    {**choice,"new_goal":"unapproved"}):
+            with self.subTest(bad=bad),self.assertRaises(ValueError):
+                materialize_boundary_plan(task,bad)
+
+    def test_immutable_plan_rejects_scope_expansion_omission_and_wrong_roles(self):
+        from plenum_ai.chief_team_mission import validate_team_plan
+        task=parse_mission(mission(self.objective))
+        self.assertTrue(preflight(mission(self.objective))["planned_model_team_mission"])
+        self.assertEqual(validate_team_plan(task,self.plan),self.plan)
+        for candidate in (
+            {"steps":[{**self.plan["steps"][0],"objective":"Create a different numeric validator program"},self.plan["steps"][1]]},
+            {"steps":[{**self.plan["steps"][0],"kind":"public_creative"},self.plan["steps"][1]]},
+            {"steps":self.plan["steps"][:1]},
+        ):
+            with self.subTest(candidate=candidate),self.assertRaises(ValueError):
+                validate_team_plan(task,candidate)
+        with self.assertRaises(ValueError):
+            parse_mission(mission(self.objective.replace(" and "," then ")))
+
+    def test_actual_original_workers_receive_distinct_subgoals_and_preserve_plan(self):
+        import json
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            with patch("plenum_ai.chief_team_mission.plan_independent_team",return_value=self.plan) as model:
+                result=execute(mission(self.objective),output_dir=root)
+            model.assert_called_once()
+            self.assertTrue(result["chief_model_delegated"])
+            self.assertTrue(result["independent_verified"])
+            self.assertFalse(result["founder_objective_verified"])
+            self.assertEqual(result["specialist_assignments"],self.plan["steps"])
+            self.assertEqual(result["new_worker_invocations"],2)
+            cp=json.loads((root/"chief-checkpoint-1001.json").read_text())
+            self.assertTrue(all(entry["plan_sha256"]==result["plan_sha256"] for entry in cp["results"].values()))
+            with patch("plenum_ai.chief_team_mission.plan_independent_team",side_effect=AssertionError("replanning")),patch("plenum_ai.chief_team_mission.run_issue",side_effect=AssertionError("repeating accepted work")):
+                resumed=execute(mission(self.objective),output_dir=root)
+            self.assertTrue(resumed["independent_verified"])
+            self.assertEqual(resumed["new_worker_invocations"],0)
+            self.assertEqual(resumed["reused_prior_verified_workers"],2)
+            self.assertFalse(resumed["model_called"])
+
+    def test_model_failure_uses_unique_extractive_strategy_not_fake_model_success(self):
+        with tempfile.TemporaryDirectory() as folder,patch("plenum_ai.chief_team_mission.plan_independent_team",side_effect=RuntimeError("fixture failure")):
+            result=execute(mission(self.objective),output_dir=Path(folder))
+        self.assertTrue(result["independent_verified"])
+        self.assertFalse(result["chief_model_delegated"])
+        self.assertEqual(result["planning_provenance"],"deterministic_extractive_recovery")
+        self.assertEqual(result["specialist_assignments"],self.plan["steps"])
+
+
+class PlannedDeliverableAcceptanceTests(TestCase):
+    objective="Plan Survey public photonic computing papers and create a Cloudflare neuron budget validator program"
+    plan={"steps":[{"kind":"public_research","objective":"Survey public photonic computing papers"},
+                   {"kind":"public_program","objective":"create a Cloudflare neuron budget validator program"}]}
+
+    def test_real_program_and_source_metadata_are_graded_then_read_back_separately(self):
+        import json
+        from plenum_ai.workforce_public_inbox import run_issue
+        from plenum_ai.ambient_quality_insights import verify_planned_mission_artifacts
+        from plenum_ai.mission_checkpoint import artifact_digest
+        class Done:
+            returncode=0
+        def provider(cmd,**kwargs):
+            Path(cmd[-1]).write_text(json.dumps({
+                "schema":"plenum-public-horizon-snapshot-v1",
+                "topic":self.plan["steps"][0]["objective"],"category":"journals",
+                "independent_breakthrough_verified":False,"AGI_achieved":False,
+                "records":[{"source":"crossref_journals","category":"journals",
+                    "title":"Photonic computation architectures","url":"https://doi.org/10.1000/fixture",
+                    "independent_fact_check_complete":False}]}))
+            return Done()
+        def worker(event,output_dir):
+            return run_issue(event,output_dir=output_dir,runner=provider)
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            with patch("plenum_ai.chief_team_mission.plan_independent_team",return_value=self.plan),patch(
+                "plenum_ai.chief_team_mission.run_issue",side_effect=worker):
+                result=execute(mission(self.objective),output_dir=root)
+            self.assertTrue(result["founder_objective_verified"])
+            proof=result["bounded_founder_goal_evidence"]
+            self.assertEqual(len(proof["deliverables"]),2)
+            self.assertFalse(proof["general_autonomy_proved"])
+            self.assertTrue(verify_planned_mission_artifacts(result,root))
+            with patch("plenum_ai.chief_team_mission.run_issue",side_effect=AssertionError("repeated work")):
+                restored=execute(mission(self.objective),output_dir=root)
+            self.assertEqual(restored["new_worker_invocations"],0)
+            self.assertTrue(verify_planned_mission_artifacts(restored,root))
+            # Even a rehashed but unrelated paper cannot pass the separate evaluator.
+            rel=proof["deliverables"][0]["artifact"]
+            path=root/rel
+            raw=json.loads(path.read_text())
+            raw["records"][0]["title"]="Unrelated vegetation survey"
+            path.write_text(json.dumps(raw))
+            checkpoint=root/"chief-checkpoint-1001.json"
+            cp=json.loads(checkpoint.read_text())
+            cp["results"]["public_research"]["sha256"]=artifact_digest(root,rel)
+            checkpoint.write_text(json.dumps(cp))
+            self.assertFalse(verify_planned_mission_artifacts(result,root))
+            with patch("plenum_ai.chief_team_mission.run_issue",side_effect=AssertionError("repeated work")):
+                rejected=execute(mission(self.objective),output_dir=root)
+            self.assertFalse(rejected["founder_objective_verified"])
+
+
+
+    def test_unaccepted_clause_is_not_checkpointed_as_success_and_retry_preserves_sibling(self):
+        import json
+        from plenum_ai.workforce_public_inbox import run_issue
+        attempts=[]
+        def worker(event,output_dir):
+            if "photonic computing" not in event["issue"]["body"]:
+                return run_issue(event,output_dir=output_dir)
+            attempts.append(1)
+            output_dir.mkdir(parents=True,exist_ok=True)
+            report={"schema":"plenum-public-horizon-snapshot-v1","topic":self.plan["steps"][0]["objective"],
+                    "category":"journals","independent_breakthrough_verified":False,
+                    "records":[{"source":"crossref_journals","category":"journals",
+                        "title":"Unrelated survey" if len(attempts)==1 else "Photonic computing architectures",
+                        "url":"https://doi.org/10.1000/fixture","independent_fact_check_complete":False}]}
+            (output_dir/"paper.json").write_text(json.dumps(report))
+            return {"status":"DRAFT_READY_FOR_FOUNDER","verified":True,"worker":"original_research",
+                    "output_artifact":"paper.json"}
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            with patch("plenum_ai.chief_team_mission.plan_independent_team",return_value=self.plan),patch(
+                    "plenum_ai.chief_team_mission.run_issue",side_effect=worker):
+                first=execute(mission(self.objective),output_dir=root)
+                self.assertEqual(first["status"],"BLOCKED_PARTIAL_TEAM")
+                self.assertFalse(first["founder_objective_verified"])
+                cp=json.loads((root/"chief-checkpoint-1001.json").read_text())
+                self.assertFalse(cp["results"]["public_research"]["verified"])
+                self.assertTrue(cp["results"]["public_program"]["verified"])
+                second=execute(mission(self.objective),output_dir=root)
+            self.assertTrue(second["founder_objective_verified"])
+            self.assertEqual(second["new_worker_invocations"],1)
+            self.assertEqual(second["reused_prior_verified_workers"],1)
+            self.assertEqual(len(attempts),2)
+            self.assertIn("Unrelated survey",(root/"workers/public_research/paper.json").read_text())
+
+
+
+class AutomaticPartialRecoveryTests(TestCase):
+    def test_transient_failure_resumes_only_incomplete_worker(self):
+        import json
+        from plenum_ai.chief_team_mission import execute_with_recovery
+        from plenum_ai.workforce_public_inbox import run_issue
+        objective = "Plan Survey public photonic computing papers and create a Cloudflare neuron budget validator program"
+        plan = {"steps": [
+            {"kind": "public_research", "objective": "Survey public photonic computing papers"},
+            {"kind": "public_program", "objective": "create a Cloudflare neuron budget validator program"}]}
+        calls = []
+        def worker(event, output_dir):
+            kind = parse_public_issue(event)["kind"]
+            calls.append(kind)
+            if kind == "public_program":
+                return run_issue(event, output_dir=output_dir)
+            if calls.count(kind) == 1:
+                import subprocess
+                def interrupted_runner(*args, **kwargs):
+                    raise subprocess.TimeoutExpired("original research worker", 360)
+                return run_issue(event, output_dir=output_dir, runner=interrupted_runner)
+            output_dir.mkdir(parents=True, exist_ok=True)
+            (output_dir / "paper.json").write_text(json.dumps({
+                "schema": "plenum-public-horizon-snapshot-v1",
+                "topic": plan["steps"][0]["objective"], "category": "journals",
+                "independent_breakthrough_verified": False,
+                "records": [{"source": "crossref_journals", "category": "journals",
+                    "title": "Photonic computing architectures",
+                    "url": "https://doi.org/10.1000/fixture", "independent_fact_check_complete": False}]}))
+            return {"status": "DRAFT_READY_FOR_FOUNDER", "verified": True,
+                    "worker": "original_research", "output_artifact": "paper.json"}
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            with patch("plenum_ai.chief_team_mission.plan_independent_team", return_value=plan) as model, patch(
+                "plenum_ai.chief_team_mission.run_issue", side_effect=worker):
+                result = execute_with_recovery(mission(objective), output_dir=root)
+            model.assert_called_once()
+            self.assertEqual(calls, ["public_research", "public_program", "public_research"])
+            self.assertTrue(result["founder_objective_verified"])
+            self.assertEqual(result["automatic_partial_recovery"]["completed_workers_not_replayed"], 1)
+            first = json.loads((root / "chief-recovery-1001.json").read_text())
+            self.assertFalse(first["founder_objective_verified"])
+            self.assertEqual(first["plan_sha256"], result["plan_sha256"])
+            from plenum_ai.ambient_quality_insights import verify_planned_mission_artifacts
+            self.assertTrue(verify_planned_mission_artifacts(result, root))
+
+    def test_invalid_input_is_not_retried(self):
+        from plenum_ai.chief_team_mission import execute_with_recovery
+        with tempfile.TemporaryDirectory() as folder, patch(
+            "plenum_ai.chief_team_mission.run_issue", side_effect=ValueError("bad input")) as worker:
+            result = execute_with_recovery(mission(), output_dir=Path(folder))
+            self.assertEqual(worker.call_count, 2)
+            self.assertFalse(result["independent_verified"])
+            self.assertNotIn("automatic_partial_recovery", result)
+            self.assertFalse((Path(folder) / "chief-recovery-1001.json").exists())
+
+
 if __name__ == "__main__":
     import unittest
     unittest.main()

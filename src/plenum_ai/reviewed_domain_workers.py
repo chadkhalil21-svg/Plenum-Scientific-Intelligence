@@ -20,6 +20,14 @@ from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[2]
 DOMAIN_SOURCES = {
+    "usda_agricultural_funding_directory": (
+        ("USDA NIFA competitive funding opportunities", "USDA NIFA",
+         "https://www.nifa.usda.gov/grants/funding-opportunities"),
+        ("USDA NIFA AFRI notices of funding opportunity", "USDA NIFA",
+         "https://www.nifa.usda.gov/grants/programs/agriculture-food-research-initiative/afri-request-applications"),
+        ("USDA NIFA competitive agricultural grant programs", "USDA NIFA",
+         "https://www.nifa.usda.gov/grants/programs/competitive-AFRI-nonAFRI"),
+    ),
     "cloudflare_workers_ai_free": (
         ("Cloudflare Workers AI neuron pricing", "Cloudflare",
          "https://developers.cloudflare.com/workers-ai/platform/pricing/"),

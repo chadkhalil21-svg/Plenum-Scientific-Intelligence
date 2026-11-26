@@ -152,19 +152,33 @@ def build_graph(checkpointer=None):
     graph.add_edge("independent_verifier", END)
     return graph.compile(checkpointer=checkpointer)
 
-def run_network(question, tool_keys=None, offline=True, optimize=True, graph=None, invoke_config=None):
+def network_request(question, tool_keys=None, offline=True, optimize=True):
+    """Return normalized, explicitly authorized inputs for initial or resumed work."""
     if not isinstance(question, str) or not 1 <= len(question.strip()) <= 600:
         raise ValueError("Public research question must have 1..600 characters")
     default = ("scipy.orbit", "scipy.thermal", "scipy.kinetics", "rdkit.molecule")
     keys = approve_request(default if tool_keys is None else tool_keys)
     if optimize and "scipy.thermal" not in keys:
         raise ValueError("Dependent OpenMDAO cooling optimization requires scipy.thermal")
+    return {"question": question, "tool_keys": keys,
+            "offline": bool(offline), "enable_optimization": bool(optimize)}
+
+
+def run_network(question, tool_keys=None, offline=True, optimize=True, graph=None, invoke_config=None):
+    request = network_request(question, tool_keys, offline, optimize)
     workflow = graph if graph is not None else build_graph()
-    result = workflow.invoke({
-        "question": question, "tool_keys": keys,
-        "offline": bool(offline), "enable_optimization": bool(optimize),
-        "results": [],
-    }, config={**{"max_concurrency": 5, "recursion_limit": 12}, **(invoke_config or {})})
+    result = workflow.invoke({**request, "results": []},
+        config={**{"max_concurrency": 5, "recursion_limit": 12}, **(invoke_config or {})})
+    return summarize_network(result, request)
+
+
+def summarize_network(result, request):
+    """Use the original verification/summary for new or natively resumed output."""
+    if any(result.get(k) != v for k, v in request.items()):
+        raise ValueError("Scientific graph result changed the authorized request")
+    keys = request["tool_keys"]
+    question = request["question"]
+    optimize = request["enable_optimization"]
     order = {key: index for index, key in enumerate(keys)}
     results = sorted(result["results"], key=lambda row: order.get(row["tool"], 100))
     registry = get_registry()

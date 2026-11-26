@@ -95,10 +95,12 @@ jobs:
           # Original explicitly scoped contract pairs (NOAA / DOI / cooling)
           # already have independently validated deterministic dependencies.
           # Do not install or pull Qwen when no planner can be necessary.
-          needs_model=(data.get('planned_data_mission') is True
-                       and data.get('planned_contract_mission') is not True)
+          needs_model=(data.get('planned_model_team_mission') is True or
+                       (data.get('planned_data_mission') is True
+                        and data.get('planned_contract_mission') is not True))
           with open(os.environ['GITHUB_OUTPUT'],'a') as out:
               out.write('needs_local_model='+str(needs_model).lower()+'\n')
+              out.write('team_planner='+str(data.get('planned_model_team_mission') is True).lower()+'\n')
           if needs_model:
               subprocess.check_call([sys.executable,'-m','pip','install','-e','.[chief_of_staff]'])
           extras=original_chief_worker_extras(data)
@@ -126,20 +128,33 @@ jobs:
       - name: Start existing bounded Qwen only for a new data plan
         id: data_model
         if: steps.native-reservation.outputs.authorized == 'true' && steps.scope.outputs.needs_local_model == 'true'
+        env:
+          PLENUM_TEAM_PLANNER: ${{ steps.scope.outputs.team_planner }}
         run: |
-          if find reports/workforce-chief -maxdepth 1 \( -name 'chief-data-plan-*.json' -o -name 'chief-contract-plan-*.json' \) -print -quit | read -r saved; then
+          if find reports/workforce-chief -maxdepth 1 \( -name 'chief-data-plan-*.json' -o -name 'chief-contract-plan-*.json' -o -name 'chief-team-plan-*.json' \) -print -quit | read -r saved; then
             echo 'Saved immutable plan will be validated and reused; no model started'
             exit 0
+          fi
+          model=qwen3:1.7b
+          memory=5g
+          if [ "$PLENUM_TEAM_PLANNER" = "true" ]; then
+            model=qwen3.5:4b
+            memory=8g
           fi
           docker pull ollama/ollama:latest
           docker run -d --rm --name plenum-chief-data-qwen \
             -p 127.0.0.1:11434:11434 -e OLLAMA_CONTEXT_LENGTH=2048 \
-            -e OLLAMA_NUM_PARALLEL=1 --memory=5g --cpus=3 ollama/ollama:latest
+            -e OLLAMA_NUM_PARALLEL=1 --memory="$memory" --cpus=3 ollama/ollama:latest
           for i in $(seq 1 45); do
             if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
             sleep 2
           done
-          docker exec plenum-chief-data-qwen ollama pull qwen3:1.7b
+          docker exec plenum-chief-data-qwen ollama pull "$model"
+          docker exec plenum-chief-data-qwen ollama list
+          if [ "$PLENUM_TEAM_PLANNER" = "true" ]; then
+            digest=$(docker exec plenum-chief-data-qwen ollama list | awk '$1=="qwen3.5:4b" {print $2}')
+            test "$digest" = d8b0f5e9760c
+          fi
       - name: Dispatch original specialists within validated task scope
         if: steps.native-reservation.outputs.authorized == 'true'
         env:
@@ -204,6 +219,25 @@ jobs:
                   quality.get('schema')=='plenum-chief-offline-ambient-quality-v1'):
                   lines.append('Independent offline task-outcome gate: '+
                                str(quality.get('disposition','UNVERIFIED'))[:90])
+          # Planned full-objective claims require the separate artifact reader.
+          if (p.is_file() and item.get('dispatcher')=='original_chief_extractive_team_plan'
+                  and item.get('founder_objective_verified') is True):
+              accepted=(q.is_file() and not q.is_symlink()
+                        and quality.get('original_issue_number')==issue
+                        and quality.get('independent_planned_artifact_readback_passed') is True)
+              if not accepted:
+                  status='BLOCKED_OBJECTIVE_RELEVANCE'
+                  lines[0]=lines[0].replace('founder_objective_verified=True','founder_objective_verified=False')
+                  lines.append('Independent planned artifact readback did not pass')
+          if (p.is_file() and item.get('status')=='VERIFIED_BOUNDED_CONTRACT_MISSION'
+                  and item.get('founder_objective_verified') is True):
+              accepted=(q.is_file() and not q.is_symlink()
+                        and quality.get('original_issue_number')==issue
+                        and quality.get('independent_contract_artifact_readback_passed') is True)
+              if not accepted:
+                  status='BLOCKED_CONTRACT_INTEGRITY'
+                  lines[0]=lines[0].replace('founder_objective_verified=True','founder_objective_verified=False')
+                  lines.append('Independent contract artifact readback did not pass')
           attempt=os.environ.get('GITHUB_RUN_ATTEMPT','1')
           if not attempt.isdecimal() or len(attempt)>3:
               raise ValueError('Invalid original GitHub run attempt')
@@ -262,6 +296,8 @@ jobs:
             reports/workforce-chief/chief-checkpoint-*.json
             reports/workforce-chief/chief-data-plan-*.json
             reports/workforce-chief/chief-contract-plan-*.json
+            reports/workforce-chief/chief-team-plan-*.json
+            reports/workforce-chief/chief-recovery-*.json
             reports/workforce-chief/ambient-quality-*.json
             reports/workforce-chief/workers/**
           overwrite: true

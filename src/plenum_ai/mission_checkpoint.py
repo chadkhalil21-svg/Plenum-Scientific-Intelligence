@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import tempfile
 from pathlib import Path, PurePosixPath
 
 MAX_FILES = 60
@@ -43,14 +44,19 @@ def artifact_digest(root: Path, name: str) -> str | None:
     if not isinstance(name, str) or not (1 <= len(name) <= 300) or "\\" in name:
         return None
     rel = PurePosixPath(name)
-    if rel.is_absolute() or any(x in ("", ".", "..") for x in rel.parts):
+    if rel.is_absolute() or rel.as_posix() != name or any(x in ("", ".", "..") for x in rel.parts):
         return None
     if not str(rel).startswith("workers/"):
         return None
     path = root / Path(*rel.parts)
     try:
         resolved_root = root.resolve()
+        # A symlink in an intermediate worker directory can alias another task.
+        if any((root / Path(*rel.parts[:i])).is_symlink() for i in range(1, len(rel.parts) + 1)):
+            return None
         if not path.exists() or path.is_symlink() or not path.resolve().is_relative_to(resolved_root):
+            return None
+        if not (path.is_file() or path.is_dir()):
             return None
         files = _bounded_artifact_entries(path)
         if not files:
@@ -61,8 +67,10 @@ def artifact_digest(root: Path, name: str) -> str | None:
         for item in files:
             if item.is_symlink():
                 return None
-            if not item.is_file():
+            if item.is_dir():
                 continue
+            if not item.is_file():
+                return None
             if not item.resolve().is_relative_to(resolved_root):
                 return None
             remaining = MAX_BYTES - size
@@ -90,18 +98,30 @@ def checkpoint_path(root: Path, issue: int) -> Path:
 def load_checkpoint(root: Path, *, issue: int, objective: str,
                     team: tuple[str, ...]) -> dict:
     path = checkpoint_path(root, issue)
-    if not path.is_file():
-        return {}
-    if path.stat().st_size > 200_000 or path.is_symlink():
+    if path.is_symlink():
         raise ValueError("Unsafe original checkpoint")
-    data = json.loads(path.read_text(encoding="utf-8"))
+    if not path.exists():
+        return {}
+    if not path.is_file() or path.stat().st_size > 200_000:
+        raise ValueError("Unsafe original checkpoint")
+    with path.open("rb") as stream:
+        raw = stream.read(200_001)
+    if len(raw) > 200_000:
+        raise ValueError("Unsafe original checkpoint")
+    data = json.loads(raw.decode("utf-8"))
     if (not isinstance(data, dict)
             or data.get("schema") != "plenum-chief-restart-v1"
             or data.get("issue_number") != issue
             or data.get("objective_sha256") != objective_digest(objective)
             or data.get("team") != list(team)
+            or data.get("only_original_public_workers") is not True
+            or data.get("owner_private_accounts_used") is not False
             or not isinstance(data.get("results"), dict)
-            or set(data["results"]) - set(team)):
+            or set(data["results"]) - set(team)
+            or any(not isinstance(entry, dict)
+                   or type(entry.get("attempt")) is not int
+                   or entry["attempt"] not in (1, 2)
+                   for entry in data["results"].values())):
         raise ValueError("Checkpoint belongs to a different or untrusted mission")
     return data["results"]
 
@@ -119,15 +139,33 @@ def save_checkpoint(root: Path, *, issue: int, objective: str,
         "only_original_public_workers": True,
         "owner_private_accounts_used": False,
     }
-    temporary = path.with_suffix(".json.tmp")
-    temporary.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    temporary.replace(path)
+    if path.is_symlink() or (path.exists() and not path.is_file()):
+        raise ValueError("Unsafe original checkpoint")
+    raw = (json.dumps(data, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    if len(raw) > 200_000:
+        raise ValueError("Unsafe original checkpoint")
+    # Exclusive random temporary file avoids pre-existing aliases and stale
+    # temp filenames; replacement preserves the previous complete checkpoint.
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=root, prefix=path.name + ".",
+                                         suffix=".tmp", delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(raw)
+            stream.flush()
+            os.fsync(stream.fileno())
+        temporary.replace(path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 def verified_previous_result(root: Path, kind: str, entry: object) -> dict | None:
     if not isinstance(entry, dict) or entry.get("status") != "DRAFT_READY_FOR_FOUNDER":
         return None
     if entry.get("verified") is not True:
+        return None
+    if type(entry.get("attempt")) is not int or entry["attempt"] not in (1, 2):
         return None
     artifact = entry.get("artifact_path")
     if (not isinstance(artifact, str)

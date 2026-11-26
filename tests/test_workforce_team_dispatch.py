@@ -149,5 +149,25 @@ class TeamDispatchIntegration(unittest.TestCase):
         self.assertEqual(t["worker"],"existing_plenum_world_horizon")
 
 
+    def test_science_dispatch_uses_only_one_bounded_continuation(self):
+        objective="Run known orbital and thermal science fixtures"
+        saved={"finished":False,"workers_recorded":2,"question":objective,
+               "requested_tools":["scipy.orbit","scipy.thermal"]}
+        complete={**saved,"finished":True}
+        evidence={"status":"executed_and_checkpointed","resumed_unfinished_graph":True,
+                  "result":{"known_model_integration_passed":True}}
+        with tempfile.TemporaryDirectory() as folder, patch(
+            "plenum_ai.durable_graph.run_persistent",
+            side_effect=[RuntimeError("interruption"),evidence]
+        ) as run, patch(
+            "plenum_ai.durable_graph.inspect_persistent", side_effect=[saved,complete]
+        ):
+            result=run_issue(event("public_science",objective),output_dir=Path(folder))
+            self.assertTrue(result["verified"])
+            self.assertTrue(result["continued_unfinished_graph"])
+            self.assertEqual(run.call_count,2)
+            self.assertEqual(run.call_args_list[0],run.call_args_list[1])
+
+
 if __name__=="__main__":
     unittest.main()

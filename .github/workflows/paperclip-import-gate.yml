@@ -1,0 +1,122 @@
+name: Paperclip import and entrypoint gate
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  paperclip-import-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Import all five divisions, exercise eleven role profiles and memory boundary
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/import_smoke.py
+      - name: Test bounded checkpoint and failure recovery
+        run: python integrations/paperclip/checkpoint_smoke.py
+      - name: Verify isolated runtime checkpoint authorization and CAS
+        run: node --test integrations/cloudflare/plenum-paperclip-checkpoint.test.mjs integrations/cloudflare/plenum-private-continuity.test.mjs
+      - name: Minister task discovery and sanitized failure-artifact regressions
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/minister_smoke.py
+      - name: Bounded local-model plan and immutable receipt regressions
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/model_plan_smoke.py
+      - name: Native public mission event gate and replay regressions
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/event_gate_smoke.py
+      - name: Typed public scope and independent original domain program qualification
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/typed_scope_smoke.py
+      - name: Persistent mission UUID isolation and distinct profile output regressions
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/profile_lifecycle_smoke.py
+      - name: Staged persistent activation, exact private grant and single-flight lock
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/production_wiring_smoke.py
+      - name: Persistent model authorization, generic mission and recovery trace
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/persistent_autonomy_smoke.py
+      - name: Composable objective routing and fail-closed alternative replan
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/objective_replan_smoke.py
+      - name: Live verifier signed fixtures and persistent queue isolation
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/live_queue_smoke.py
+      - name: Owner preflight and exact five-slot remote activation fixtures
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/live_preflight_smoke.py
+      - name: Event objective mode and fresh-runner evidence regressions
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/fresh_runner_smoke.py
+      - name: Acknowledged native supervisor recovery, strict checkpoint and exact engineering regressions
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/supervisor_resume_smoke.py
+      - name: Exact checkpoint CAS acknowledgment and readback transport regressions
+        run: python integrations/paperclip/runtime_checkpoint_smoke.py
+
+      - name: Multidisciplinary dependency and attested memory scope regressions
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/pipeline_smoke.py
+
+      - name: Exact separate-workflow source and continuation regressions
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/cross_run_memory_smoke.py
+
+      - name: Independent compositional grammar and held-out calculation checks
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/composition_smoke.py
+
+      - name: Separate-process private local volume grant and restoration fixture
+        run: python integrations/paperclip/private_volume_smoke.py
+
+      - name: Bounded original-model registry startup recovery
+        run: python integrations/paperclip/model_pull_smoke.py
+
+      - name: Grounded non-arithmetic synthesis and contradiction fixtures
+        env:
+          PYTHONPATH: src
+        run: |
+          python integrations/paperclip/synthesis_smoke.py
+          python integrations/paperclip/synthesis_receipt_smoke.py
+
+      - name: Outcome-dependent local model turn receipts and zero replay regressions
+        env:
+          PYTHONPATH: src
+        run: python integrations/paperclip/adaptive_turns_smoke.py
+
+      - name: Owner same-volume restart fail-closed offline fixtures
+        run: python integrations/paperclip/owner_restart_smoke.py
+
+      - name: Real SQLite backup and immutable cross-runner restore fixtures
+        env:
+          PYTHONPATH: src
+        run: |
+          python integrations/prometheus_oss/snapshot_smoke.py
+          python integrations/prometheus_oss/native_scope.py oss-review >/dev/null
+          python integrations/prometheus_oss/native_scope.py oss-defer >/dev/null
+          bash -n integrations/prometheus_oss/native_restore.sh

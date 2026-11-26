@@ -25,9 +25,14 @@ storage = "sqlite"
 [ai]
 binding = "AI"
 
+[triggers]
+crons = ["*/5 * * * *"]
+
 [vars]
 PLENUM_FREE_AI_ENABLED = "true"
+PLENUM_ENGINEERING_FALLBACK_ENABLED = "true"
 
 [previews.vars]
 PLENUM_PREVIEW_ONLY = "true"
 PLENUM_FREE_AI_ENABLED = "false"
+PLENUM_ENGINEERING_FALLBACK_ENABLED = "false"

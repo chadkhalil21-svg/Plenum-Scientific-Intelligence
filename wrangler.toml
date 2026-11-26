@@ -36,8 +36,12 @@ binding = "AI"
 
 # Only signed original founder issue workflow can reach this route.
 # Historical provider UI recorded Workers Free; no paid inference fallback.
+[triggers]
+crons = ["*/5 * * * *"]
+
 [vars]
 PLENUM_FREE_AI_ENABLED = "true"
+PLENUM_ENGINEERING_FALLBACK_ENABLED = "true"
 
 # Cloudflare Workers Builds uses `wrangler preview` from the repository root.
 # Preview bindings and vars do not inherit production settings. Deliberately
@@ -45,4 +49,5 @@ PLENUM_FREE_AI_ENABLED = "true"
 [previews.vars]
 PLENUM_PREVIEW_ONLY = "true"
 PLENUM_FREE_AI_ENABLED = "false"
+PLENUM_ENGINEERING_FALLBACK_ENABLED = "false"
 

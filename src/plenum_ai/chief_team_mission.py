@@ -16,7 +16,7 @@ import re
 
 from .chief_workforce_command import (
     CHIEF_MAGIC, CHIEF_TITLE, HINTS, KIND_TO_AGENT,
-    parse_founder_chief, worker_event,
+    parse_founder_chief, worker_event, independent_expected_kind,
 )
 from .workforce_public_inbox import run_issue
 from .agent_library import suggest_sources
@@ -58,8 +58,238 @@ def parse_mission(event: dict) -> dict:
             raise ValueError("Data mission requires one to three explicit seven-digit NOAA station IDs")
         return {**checked, "team": ("public_research", "public_program"),
                 "original": original, "data_mission": True, "station_ids": ids}
-    return {**checked, "team": independent_expected_team(checked["objective"]),
+    objective = checked["objective"]
+    if objective.startswith("Plan "):
+        # This mode is deliberately confined to independent public assignments.
+        # Real data dependencies use the existing contract mission graph.
+        content = objective[5:]
+        if re.search(r"\b(?:then|after|before|combine|integrate|depend|dependency|depends)\b", content, re.I) or re.search(r"\b(?:using|from|with)\s+(?:its|their|the previous|the resulting)\b", content, re.I):
+            raise ValueError("Dependent goals require the original typed contract route")
+        return {**checked, "team": independent_expected_team(content),
+                "original": original, "model_team_mission": True}
+    return {**checked, "team": independent_expected_team(objective),
             "original": original}
+
+
+def validate_specialist_graph(nodes: list, approved: dict) -> list:
+    """Order only approved goal nodes with explicit, trusted acceptance criteria.
+
+    The owner-scoped caller supplies the approved capability manifest. A proposed
+    graph cannot add a worker, input, acceptance rule or dependency. Preserve
+    the proposed order among ready nodes for existing checkpoint compatibility.
+    """
+    from graphlib import CycleError, TopologicalSorter
+
+    if not isinstance(nodes, list) or not approved or len(nodes) != len(approved):
+        raise ValueError("Graph must contain every approved specialist subgoal once")
+    by_id = {}
+    for node in nodes:
+        if (not isinstance(node, dict)
+                or set(node) != {"id", "specialist", "depends_on", "acceptance"}):
+            raise ValueError("Invalid specialist graph node")
+        key = node["id"]
+        if not isinstance(key, str) or key not in approved or key in by_id:
+            raise ValueError("Unknown or duplicate specialist graph node")
+        expected = approved[key]
+        deps = node["depends_on"]
+        if (not isinstance(deps, list) or any(not isinstance(x, str) for x in deps)
+                or len(deps) != len(set(deps)) or set(deps) != set(expected["depends_on"])
+                or not set(deps) <= set(approved)
+                or node["specialist"] != expected["specialist"]
+                or not isinstance(node["acceptance"], str) or not node["acceptance"]
+                or node["acceptance"] != expected["acceptance"]):
+            raise ValueError("Graph expands scope or changes trusted acceptance criteria")
+        by_id[key] = node
+    sorter = TopologicalSorter({key: node["depends_on"] for key, node in by_id.items()})
+    try:
+        sorter.prepare()
+    except CycleError as exc:
+        raise ValueError("Cyclic specialist dependency graph") from exc
+    ready = set(sorter.get_ready())
+    ordered = []
+    while ready:
+        key = next(key for key in by_id if key in ready)
+        ready.remove(key)
+        ordered.append(by_id[key])
+        sorter.done(key)
+        ready.update(sorter.get_ready())
+    if len(ordered) != len(nodes):
+        raise ValueError("Incomplete specialist graph")
+    return ordered
+
+
+def validate_team_plan(task, plan):
+    """Model may extract distinct exact founder clauses, never invent inputs."""
+    if not task.get("model_team_mission") or not isinstance(plan,dict) or set(plan)!={"steps"}:
+        raise ValueError("Expected original planned team scope")
+    steps=plan["steps"]
+    if not isinstance(steps,list) or len(steps)!=len(task["team"]):
+        raise ValueError("Missing or repeated specialist goal")
+    remaining=task["objective"][5:]
+    seen=set()
+    for index, step in enumerate(steps):
+        if not isinstance(step,dict) or set(step)!={"kind","objective"}:
+            raise ValueError("Invalid specialist assignment")
+        kind=step["kind"]
+        goal=step["objective"]
+        if (not isinstance(kind,str) or kind not in task["team"] or kind in seen
+                or not isinstance(goal,str) or not goal or goal!=goal.strip()
+                or not remaining.startswith(goal)):
+            raise ValueError("Assignment is not an exact owner objective span")
+        # Revalidate each extracted clause with the same original owner and worker gates.
+        subevent={**task["original"],"issue":{**task["original"]["issue"],
+                    "body":CHIEF_MAGIC+"\nobjective: "+goal}}
+        parse_founder_chief(subevent)
+        if independent_expected_kind(goal)!=kind:
+            raise ValueError("Assignment does not match its specialist")
+        worker_event(subevent,kind)
+        seen.add(kind)
+        remaining=remaining[len(goal):]
+        if index<len(steps)-1:
+            separator=re.match(r"(?:, and | and |, )",remaining)
+            if not separator:
+                raise ValueError("Unconsumed founder requirement")
+            remaining=remaining[separator.end():]
+    if remaining or seen!=set(task["team"]):
+        raise ValueError("Unconsumed founder requirement")
+    return plan
+
+
+TEAM_PLANNER_MODEL = "qwen3.5:4b"
+
+
+def materialize_boundary_plan(task, choice):
+    """The model selects boundaries and roles; the host preserves exact text."""
+    content=task["objective"][5:]
+    separators=list(re.finditer(r", and | and |, ",content))
+    if len(separators)>20 or not isinstance(choice,dict) or set(choice)!={"boundaries","roles"}:
+        raise ValueError("Invalid compact plan")
+    boundaries, roles=choice["boundaries"],choice["roles"]
+    count=len(task["team"])
+    if (not isinstance(boundaries,list) or len(boundaries)!=count-1
+            or any(type(i) is not int or not 0<=i<len(separators) for i in boundaries)
+            or boundaries!=sorted(set(boundaries))
+            or not isinstance(roles,list) or len(roles)!=count
+            or any(not isinstance(role,str) for role in roles)):
+        raise ValueError("Invalid compact boundary selection")
+    spans=[]
+    cursor=0
+    for i in boundaries:
+        separator=separators[i]
+        spans.append(content[cursor:separator.start()])
+        cursor=separator.end()
+    spans.append(content[cursor:])
+    return validate_team_plan(task,{"steps":[{"kind":kind,"objective":goal}
+                 for kind,goal in zip(roles,spans)]})
+
+
+def plan_independent_team(task):
+    """One compact structured inference with the existing isolated local runner."""
+    import os
+    from .chief_workforce_command import MODEL_URL
+    if (os.environ.get("PLENUM_EPHEMERAL_RUNNER")!="confirmed"
+            or os.environ.get("PLENUM_CHIEF_MODEL_URL")!=MODEL_URL):
+        raise PermissionError("Team planning requires the original isolated loopback model")
+    from langchain_ollama import ChatOllama
+    content=task["objective"][5:]
+    separators=list(re.finditer(r", and | and |, ",content))
+    count=len(task["team"])
+    if not count-1<=len(separators)<=20:
+        raise ValueError("Invalid available separators")
+    schema={"type":"object","additionalProperties":False,"required":["boundaries","roles"],
+            "properties":{"boundaries":{"type":"array","minItems":count-1,"maxItems":count-1,
+                        "items":{"type":"integer","enum":list(range(len(separators)))}},
+                        "roles":{"type":"array","minItems":count,"maxItems":count,
+                                 "items":{"enum":list(task["team"])}}}}
+    marked=content
+    for i in reversed(range(len(separators))):
+        m=separators[i]
+        marked=marked[:m.start()]+f" [SEP {i}] "+marked[m.end():]
+    model=ChatOllama(model=TEAM_PLANNER_MODEL,base_url=MODEL_URL,temperature=0,reasoning=False,
+                    format=schema,num_ctx=2048,num_predict=160)
+    response=model.invoke([("system","Select the separator indices that divide the instruction into independent assignments. "
+        "Return ordered boundaries and corresponding specialist roles as JSON. "
+        "Research retrieves sources; program creates review-only code; science runs known numerical tools; "
+        "creative creates drafts. Use each authorized role exactly once. No new instructions."),
+        ("human",json.dumps({"instruction":marked,"roles":list(task["team"])}))])
+    raw=getattr(response,"content",None)
+    if not isinstance(raw,str) or len(raw)>1000:
+        raise ValueError("Invalid bounded team plan")
+    return materialize_boundary_plan(task,json.loads(raw))
+
+
+def deterministic_team_recovery(task):
+    """Different, extractive strategy after a failed model plan, never broaden scope."""
+    from itertools import combinations
+    content=task["objective"][5:]
+    separators=list(re.finditer(r", and | and |, ",content))
+    if len(separators)>20:
+        raise ValueError("Ambiguous independent goal")
+    valid=[]
+    for selected in combinations(separators,len(task["team"])-1):
+        spans=[]
+        start=0
+        for sep in selected:
+            spans.append(content[start:sep.start()])
+            start=sep.end()
+        spans.append(content[start:])
+        try:
+            plan={"steps":[{"kind":independent_expected_kind(goal),"objective":goal} for goal in spans]}
+            valid.append(validate_team_plan(task,plan))
+        except (ValueError,PermissionError,TypeError,KeyError):
+            continue
+    if len(valid)!=1:
+        raise ValueError("No unique authorized team decomposition")
+    return valid[0]
+
+
+def team_plan_receipt(task, output_dir, progress):
+    """Bind all subgoals to the original immutable founder issue and restart state."""
+    from hashlib import sha256
+    from .mission_checkpoint import objective_digest
+    import tempfile
+    path=output_dir/f"chief-team-plan-{task['issue_number']}.json"
+    if path.is_symlink() or (path.exists() and (not path.is_file() or path.stat().st_size>8000)):
+        raise ValueError("Unsafe original team plan")
+    called=False
+    if path.exists():
+        receipt=json.loads(path.read_text("utf-8"))
+        validate_team_receipt(task,receipt)
+    else:
+        if progress:
+            raise ValueError("Existing team checkpoint cannot be replanned")
+        called=True
+        try:
+            plan=plan_independent_team(task)
+            provenance="local_ollama"
+        except PermissionError:
+            raise
+        except (ValueError,RuntimeError,OSError,ImportError,TypeError,KeyError):
+            plan=deterministic_team_recovery(task)
+            provenance="deterministic_extractive_recovery"
+        receipt={"issue":task["issue_number"],"objective_sha256":objective_digest(task["objective"]),
+                 "plan":plan,"provenance":provenance}
+        validate_team_receipt(task,receipt)
+        output_dir.mkdir(parents=True,exist_ok=True)
+        with tempfile.NamedTemporaryFile(dir=output_dir,mode="w",encoding="utf-8",delete=False) as temp:
+            json.dump(receipt,temp,sort_keys=True)
+            temp_path=Path(temp.name)
+        try:
+            temp_path.replace(path)
+        finally:
+            temp_path.unlink(missing_ok=True)
+    digest=sha256(json.dumps(receipt,sort_keys=True).encode()).hexdigest()
+    return receipt,digest,called
+
+
+def validate_team_receipt(task,receipt):
+    from .mission_checkpoint import objective_digest
+    if (not isinstance(receipt,dict) or set(receipt)!={"issue","objective_sha256","plan","provenance"}
+            or type(receipt["issue"]) is not int or receipt["issue"]!=task["issue_number"]
+            or receipt["objective_sha256"]!=objective_digest(task["objective"])
+            or receipt["provenance"] not in ("local_ollama","deterministic_extractive_recovery")):
+        raise ValueError("Team plan receipt binding changed")
+    return validate_team_plan(task,receipt["plan"])
 
 
 def preflight(event: dict) -> dict:
@@ -71,6 +301,7 @@ def preflight(event: dict) -> dict:
         "mode": "multi",
         "planned_data_mission": task.get("data_mission", False) or (task.get("contract_mission", False) and len(task["team"]) > 2),
         "planned_contract_mission": task.get("contract_mission", False),
+        "planned_model_team_mission": task.get("model_team_mission", False),
         "requires_numerical": bool(task.get("scope", {}).get("cooling")),
         "station_ids": list(task.get("station_ids", ())),
         "dispatcher": "deterministic_existing_chief_scope_gate",
@@ -265,6 +496,168 @@ def grade_complete_bounded_public_goal(objective: str, team: tuple[str, ...],
 
 
 
+def _planned_cooling_parameters(goal):
+    match = re.fullmatch(r"cooling initial ([0-9]+(?:\.[0-9]+)?) K ambient ([0-9]+(?:\.[0-9]+)?) K rate ([0-9]+(?:\.[0-9]+)?) time ([0-9]+(?:\.[0-9]+)?)", goal, re.I)
+    if not match:
+        return None
+    p = dict(zip(("initial_kelvin", "ambient_kelvin", "rate", "duration"), map(float, match.groups())))
+    if not (0 < p["initial_kelvin"] <= 2000 and 0 < p["ambient_kelvin"] <= 2000
+            and 0 < p["rate"] <= 10 and 0 < p["duration"] <= 10000):
+        raise ValueError("Invalid original cooling parameters")
+    return p
+
+
+def _grade_planned_cooling(goal, path, relative, digest):
+    """Independently recompute exact requested numerical outcome from saved bytes."""
+    import math
+    p = _planned_cooling_parameters(goal)
+    receipt = path / "cooling.json"
+    if receipt.is_symlink() or not receipt.is_file() or not 0 < receipt.stat().st_size <= 20000:
+        return False
+    report = json.loads(receipt.read_text("utf-8"))
+    if not isinstance(report, dict) or set(report) != {"cooling_solution", "cooling_readback"}:
+        return False
+    solution, readback = report["cooling_solution"], report["cooling_readback"]
+    if not isinstance(solution, dict) or not isinstance(readback, dict):
+        return False
+    actual = solution.get("observed_kelvin")
+    if (type(actual) not in (int, float) or not math.isfinite(actual)
+            or solution.get("parameters") != p
+            or (solution.get("library"), solution.get("method")) not in
+               (("SciPy solve_ivp", "RK45"), ("SciPy linalg.expm", "expm"))):
+        return False
+    expected = p["ambient_kelvin"] + (p["initial_kelvin"] - p["ambient_kelvin"]) * math.exp(-p["rate"] * p["duration"])
+    error = abs(actual - expected)
+    if (error > 1e-6 or readback != {"analytic_kelvin": expected, "absolute_error_kelvin": error,
+                                    "experimental_validation": False}
+            or readback.get("experimental_validation") is not False):
+        return False
+    return {"kind": "public_science", "objective": goal, "artifact": relative, "sha256": digest,
+            "acceptance": "exact requested cooling inputs and independently recomputed numerical agreement",
+            "observed_kelvin": actual, "analytic_kelvin": expected, "absolute_error_kelvin": error,
+            "experimental_validation": False}
+
+
+def grade_planned_clause(step, worker, root):
+    """Read actual bytes; None means no trusted criterion yet, False means failed."""
+    from hashlib import sha256
+    from .world_horizon import paper_survey_subject, paper_title_matches
+    from .reviewed_domain_workers import DOMAIN_FILES, _original_functional_test
+    kind,goal=step["kind"],step["objective"]
+    if kind=="public_research":
+        if not paper_survey_subject(goal):
+            return None
+    elif kind=="public_program":
+        if not re.fullmatch(r"(?:create|prepare|provide) (?:a |the )?(?:existing )?(cloudflare neuron budget|noaa station metadata) validator program",goal.lower()):
+            return None
+    elif kind=="public_science":
+        try:
+            if _planned_cooling_parameters(goal) is None:
+                return None
+        except ValueError:
+            return False
+    else:
+        return None
+    if (worker.get("status")!="DRAFT_READY_FOR_FOUNDER" or worker.get("verified") is not True):
+        return False
+    try:
+        relative=worker.get("_artifact_path")
+        if not isinstance(relative,str) or not relative.startswith("workers/"+kind+"/"):
+            return False
+        digest=artifact_digest(root,relative)
+        if not digest:
+            return False
+        path=root/relative
+        if kind=="public_science":
+            return _grade_planned_cooling(goal, path, relative, digest)
+        if kind=="public_research":
+            subject=paper_survey_subject(goal)
+            if not subject or not path.is_file() or path.stat().st_size>200000:
+                return False
+            report=json.loads(path.read_text("utf-8"))
+            records=report.get("records")
+            if (report.get("schema")!="plenum-public-horizon-snapshot-v1"
+                    or report.get("topic")!=goal or report.get("category")!="journals"
+                    or report.get("independent_breakthrough_verified") is not False
+                    or not isinstance(records,list) or not 1<=len(records)<=4
+                    or any(not isinstance(r,dict) or r.get("source")!="crossref_journals"
+                           or r.get("category")!="journals"
+                           or not isinstance(r.get("url"),str)
+                           or not re.fullmatch(r"https://doi\.org/10\.[0-9]{4,9}/[^\s?#]+",r["url"])
+                           or not paper_title_matches(subject,r.get("title"))
+                           or r.get("independent_fact_check_complete") is not False
+                           for r in records)
+                    or len({r["url"].lower() for r in records})!=len(records)):
+                return False
+            return {"kind":kind,"objective":goal,"artifact":relative,"sha256":digest,
+                "acceptance":"distinct topic-matched Crossref DOI metadata",
+                "records":[{"title":r["title"],"url":r["url"]} for r in records],
+                "paper_content_verified":False}
+        elif kind=="public_program":
+            # Accept only explicit requests for the reviewed existing tools;
+            # no generic starter or extra features can inherit this credit.
+            normalized=goal.lower()
+            match=re.fullmatch(r"(?:create|prepare|provide) (?:a |the )?(?:existing )?(cloudflare neuron budget|noaa station metadata) validator program",normalized)
+            if not match or worker.get("actual_offline_functional_test_passed") is not True:
+                return False
+            capability={"cloudflare neuron budget":"cloudflare_workers_ai_free",
+                        "noaa station metadata":"noaa_water_station_metadata"}[match.group(1)]
+            code_dir=path/"code"
+            paths=[code_dir/"manifest.json",code_dir/"main.py",code_dir/"test_generated.py"]
+            if any(p.is_symlink() or not p.is_file() or p.stat().st_size>40000 for p in paths):
+                return False
+            manifest=json.loads(paths[0].read_text("utf-8"))
+            code=paths[1].read_bytes()
+            if (code!=DOMAIN_FILES[capability].read_bytes()
+                    or paths[2].read_text("utf-8")!=_original_functional_test(capability)
+                    or manifest.get("schema")!="plenum-reviewable-program-v1"
+                    or manifest.get("kind")!=capability or manifest.get("public_topic")!=goal
+                    or manifest.get("main_sha256")!=sha256(code).hexdigest()
+                    or manifest.get("functional_verifier_executed_and_passed") is not True
+                    or manifest.get("generated_program_has_not_been_deployed") is not True
+                    or manifest.get("human_code_review_required") is not True):
+                return False
+            return {"kind":kind,"objective":goal,"artifact":relative,"sha256":digest,
+                "acceptance":"exact reviewed original source and functional test receipt",
+                "program_sha256":sha256(code).hexdigest(),"new_program_invented":False}
+        else:
+            return False
+
+    except (OSError,ValueError,TypeError,KeyError,AttributeError,UnicodeError):
+        return False
+
+
+def grade_planned_deliverables(task, plan, observed, root):
+    """Grade every supported requested deliverable from actual saved bytes.
+
+    Unknown requirements remain open; a worker's generic green receipt alone
+    never certifies the objective. This is bounded metadata and tool reuse,
+    not general research or novel autonomous software engineering.
+    """
+    from hashlib import sha256
+    from .world_horizon import paper_survey_subject, paper_title_matches
+    from .reviewed_domain_workers import DOMAIN_FILES, _original_functional_test
+    rejected={"status":"NOT_A_FULLY_GRADED_GOAL","scope":"explicit paper metadata survey and reviewed validator reuse only"}
+    try:
+        validate_team_plan(task,plan)
+        if not independently_accept_team(task["team"],observed):
+            return rejected
+        deliverables=[]
+        for step in plan["steps"]:
+            proof=grade_planned_clause(step,observed[step["kind"]],root)
+            if not isinstance(proof,dict):
+                return rejected
+            deliverables.append(proof)
+        if len(deliverables)!=len(plan["steps"]):
+            return rejected
+        return {"status":"VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE",
+                "scope":(rejected["scope"]+"; explicit parameterized numerical cooling" if any(d["kind"]=="public_science" for d in deliverables) else rejected["scope"]),"deliverables":deliverables,
+                "all_requested_clauses_accepted":True,"general_autonomy_proved":False}
+    except (OSError,ValueError,TypeError,KeyError,AttributeError,UnicodeError):
+        return rejected
+
+
+
 def execute(event: dict, *, output_dir: Path) -> dict:
     task = parse_mission(event)
     if task.get("contract_mission"):
@@ -297,11 +690,21 @@ def execute(event: dict, *, output_dir: Path) -> dict:
         output_dir, issue=task["issue_number"],
         objective=task["objective"], team=task["team"],
     )
+    plan_hash=None
+    if task.get("model_team_mission"):
+        receipt,plan_hash,called=team_plan_receipt(task,output_dir,progress)
+        assignments={step["kind"]:step["objective"] for step in receipt["plan"]["steps"]}
+        order=tuple(assignments)
+    else:
+        assignments={kind:task["objective"] for kind in task["team"]}
+        order=task["team"]
     observed = {}
     resumed = 0
     executed = 0
-    for kind in task["team"]:
+    for kind in order:
         saved = progress.get(kind)
+        if plan_hash and saved is not None and (not isinstance(saved,dict) or saved.get("plan_sha256")!=plan_hash):
+            raise ValueError("Checkpoint is bound to a different team plan")
         recovered = verified_previous_result(output_dir, kind, saved)
         if recovered is not None:
             observed[kind] = recovered
@@ -314,12 +717,16 @@ def execute(event: dict, *, output_dir: Path) -> dict:
                 "failure_type": "PreviouslyAttemptedTwice",
             }
             continue
-        original_event = worker_event(task["original"], kind)
+        source_event={**task["original"],"issue":{**task["original"]["issue"],
+                      "body":CHIEF_MAGIC+"\nobjective: "+assignments[kind]}}
+        original_event = worker_event(source_event, kind)
         base = output_dir / "workers" / kind
         worker_dir = base if attempt == 1 else base / "retry-2"
         # Reserve this attempt atomically BEFORE a worker can be interrupted.
         # A restored RUNNING entry is unverified and consumes the same budget.
         progress[kind] = {"attempt": attempt, "status": "RUNNING", "verified": False}
+        if plan_hash:
+            progress[kind]["plan_sha256"]=plan_hash
         save_checkpoint(
             output_dir, issue=task["issue_number"],
             objective=task["objective"], team=task["team"], results=progress,
@@ -351,6 +758,14 @@ def execute(event: dict, *, output_dir: Path) -> dict:
             }
         if fingerprint:
             result["_artifact_path"] = relative
+        # A green worker flag cannot reserve acceptance when an independently
+        # gradeable requested clause fails. Preserve the rejected bytes and
+        # leave only this worker eligible for the existing bounded retry gate.
+        if plan_hash and result.get("verified") is True:
+            proof=grade_planned_clause({"kind":kind,"objective":assignments[kind]},result,output_dir)
+            if proof is False:
+                result={**result,"status":"BLOCKED_WORKER_OR_VERIFICATION",
+                        "verified":False,"failure_type":"IndependentClauseAcceptanceFailed"}
         observed[kind] = result
         progress[kind] = {
             "attempt": attempt,
@@ -365,6 +780,8 @@ def execute(event: dict, *, output_dir: Path) -> dict:
             "artifact_path": relative if fingerprint else None,
             "sha256": fingerprint,
         }
+        if plan_hash:
+            progress[kind]["plan_sha256"]=plan_hash
         # Atomic checkpoint after EACH original specialist, even on failure.
         save_checkpoint(
             output_dir, issue=task["issue_number"],
@@ -372,9 +789,17 @@ def execute(event: dict, *, output_dir: Path) -> dict:
             results=progress,
         )
     technical_verified = independently_accept_team(task["team"], observed)
-    relevance = (named_entity_evidence_gate(
-        task["objective"], task["team"], observed, output_dir
-    ) if technical_verified else {"status": "NOT_RUN", "irrelevant_kinds": []})
+    if plan_hash and technical_verified:
+        failures=[]
+        for kind in order:
+            scoped=named_entity_evidence_gate(assignments[kind],(kind,),observed,output_dir)
+            failures.extend(scoped["irrelevant_kinds"])
+        relevance={"status":"BLOCKED_NAMED_SOURCE_MISMATCH" if failures else "NAME_MENTION_ONLY_NOT_FULL_OBJECTIVE_PROOF",
+                   "irrelevant_kinds":failures}
+    else:
+        relevance = (named_entity_evidence_gate(
+            task["objective"], task["team"], observed, output_dir
+        ) if technical_verified else {"status": "NOT_RUN", "irrelevant_kinds": []})
     verified = technical_verified and not relevance["irrelevant_kinds"]
     goal_proof = grade_complete_bounded_public_goal(
         task["objective"], task["team"], observed, output_dir,
@@ -423,6 +848,20 @@ def execute(event: dict, *, output_dir: Path) -> dict:
         "external_account_changes": False,
         "paid_api_used": False,
     })
+    if plan_hash:
+        planned_proof=grade_planned_deliverables(task,receipt["plan"],observed,output_dir)
+        full=verified and planned_proof["status"]=="VERIFIED_FULL_BOUNDED_PUBLIC_OBJECTIVE"
+        report.update({"dispatcher":"original_chief_extractive_team_plan",
+                       "model_called":(False if not called else True if receipt["provenance"]=="local_ollama" else None),
+                       "new_model_plan_attempted":called,
+                       "chief_model_delegated":called and receipt["provenance"]=="local_ollama",
+                       "planning_provenance":receipt["provenance"],"plan_sha256":plan_hash,
+                       "plan_artifact":f"chief-team-plan-{task['issue_number']}.json",
+                       "specialist_assignments":receipt["plan"]["steps"],
+                       "objective":task["objective"],
+                       "bounded_founder_goal_evidence":planned_proof,
+                       "founder_objective_verified":full,
+                       "founder_review_required":True})
     return report
 
 
@@ -638,6 +1077,45 @@ def execute_data_mission(event: dict, *, output_dir: Path, planner=None) -> dict
     return report
 
 
+
+def execute_with_recovery(event: dict, *, output_dir: Path) -> dict:
+    """Resume one eligible interrupted public team without a new founder prompt."""
+    task = parse_mission(event)
+    first = execute(event, output_dir=output_dir)
+    if (task.get("contract_mission") or task.get("data_mission")
+            or first.get("status") != "BLOCKED_PARTIAL_TEAM"):
+        return first
+    progress = load_checkpoint(output_dir, issue=task["issue_number"],
+                               objective=task["objective"], team=task["team"])
+    # Only retry a single bounded transient worker failure, never invalid
+    # inputs, missing evidence, permission errors, or exhausted attempts.
+    retryable = {"TimeoutExpired", "TimeoutError", "ConnectionError", "HTTPError", "URLError", "OSError"}
+    failed = [row for row in first["worker_results"]
+              if row["status"] != "DRAFT_READY_FOR_FOUNDER"]
+    if (len(failed) != 1 or set(progress) != set(task["team"])
+            or any(row.get("failure_type") not in retryable
+                   or progress[row["kind"]].get("attempt") != 1
+                   for row in failed)
+            or any(verified_previous_result(output_dir, k, progress[k]) is None
+                   for k in task["team"] if k not in {row["kind"] for row in failed})):
+        return first
+    receipt = output_dir / f"chief-recovery-{task['issue_number']}.json"
+    # Exclusive preservation of the original negative outcome before retry.
+    with receipt.open("x", encoding="utf-8") as stream:
+        json.dump(first, stream, indent=2, sort_keys=True)
+    second = execute(event, output_dir=output_dir)
+    second["automatic_partial_recovery"] = {
+        "initial_report": receipt.name,
+        "retry_worker_kinds": [row["kind"] for row in failed],
+        "first_new_worker_invocations": first["new_worker_invocations"],
+        "first_model_plan_attempted": first.get("new_model_plan_attempted", False),
+        "initial_plan_sha256": first.get("plan_sha256"),
+        "completed_workers_not_replayed": second["reused_prior_verified_workers"],
+        "retry_new_worker_invocations": second["new_worker_invocations"],
+    }
+    return second
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--event", required=True)
@@ -648,7 +1126,7 @@ def main() -> None:
     if out.is_absolute() or ".." in out.parts or not out.parts or out.parts[0] != "reports":
         parser.error("Only relative reports/ paths accepted")
     event = json.loads(Path(args.event).read_text(encoding="utf-8"))
-    report = execute(event, output_dir=out) if args.execute else preflight(event)
+    report = execute_with_recovery(event, output_dir=out) if args.execute else preflight(event)
     out.mkdir(parents=True, exist_ok=True)
     (out / ("chief-result-" + str(report["issue_number"]) + ".json")).write_text(
         json.dumps(report, indent=2) + "\n", encoding="utf-8"

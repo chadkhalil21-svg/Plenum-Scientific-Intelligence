@@ -19,6 +19,8 @@ from .workforce_public_inbox import REPO, OWNER, parse_public_issue, run_issue
 from .chief_team_mission import MISSION_TITLE, parse_mission, preflight, execute as execute_original_team
 from .mission_checkpoint import load_checkpoint, verified_previous_result
 
+PAPERCLIP_PUBLIC_TITLE = "[Plenum Paperclip] public coastal qualification"
+PAPERCLIP_EVIDENCE_TITLE = "[Plenum Paperclip] public evidence mission"
 MAX_ISSUE = 10 ** 9
 BASE = "https://api.github.com/repos/" + REPO + "/issues/"
 
@@ -163,6 +165,24 @@ def one_original_local_repair_warranted(event: dict, output_dir: Path,
     The original executor independently verifies that sibling's actual SHA-256
     bytes before treating it as reusable. Never re-execute all specialists.
     """
+    if outcome.get("status") == "BLOCKED_CONTRACT_EXECUTION":
+        # The same original contract gate validates the immutable plan,
+        # exact prefix and artifact hashes, and permits only attempt one.
+        from .chief_retry_gate import inspect_contract_retry
+        task = parse_mission(event)
+        if not task.get("contract_mission"):
+            return False
+        try:
+            checkpoint = output_dir / f"chief-checkpoint-{task['issue_number']}.json"
+            if not checkpoint.is_file() or checkpoint.is_symlink() or checkpoint.stat().st_size > 120_000:
+                return False
+            state = json.loads(checkpoint.read_text("utf-8"))
+            if not isinstance(state, dict):
+                return False
+            verdict = inspect_contract_retry(output_dir, task, state, outcome, 1)
+            return verdict.get("status") == "ELIGIBLE_NATIVE_RETRY_ONCE"
+        except (OSError, ValueError, TypeError, KeyError):
+            return False
     if (outcome.get("status") != "BLOCKED_PARTIAL_TEAM"
             or outcome.get("independent_verified") is not False):
         return False
@@ -250,6 +270,9 @@ def process(number: int, token: str, output_dir: Path, *,
     number = checked_issue_number(number)
     path = BASE + str(number)
     original, comments = _read_original_wake_issue(path, number, token)
+    if original.get("title") in (PAPERCLIP_PUBLIC_TITLE,PAPERCLIP_EVIDENCE_TITLE):
+        return {"status":"ROUTED_TO_NATIVE_PAPERCLIP", "issue_number":number,
+                "worker_reexecuted":False}
     if require_founder_approval:
         # Use the SAME original scheduled Minister reservation marker.
         # GitHub issue_comment can be edited repeatedly, so an ambiguous
@@ -266,7 +289,7 @@ def process(number: int, token: str, output_dir: Path, *,
     expected_team_status = None
     if mission:
         scope = preflight(event)
-        if scope.get("planned_data_mission") and not scope.get("planned_contract_mission"):
+        if scope.get("planned_model_team_mission") or (scope.get("planned_data_mission") and not scope.get("planned_contract_mission")):
             # Legacy DATA needs the native isolated model setup. The wake
             # has no authorized model host; don't consume execution reservation.
             raise PermissionError("BLOCKED_LEGACY_DATA_REQUIRES_ORIGINAL_NATIVE_MODEL_ROUTE")

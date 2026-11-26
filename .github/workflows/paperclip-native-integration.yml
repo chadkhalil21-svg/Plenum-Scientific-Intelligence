@@ -1,0 +1,471 @@
+name: Paperclip native workforce integration
+on:
+  workflow_call:
+    inputs:
+      pipeline_stage:
+        required: true
+        type: string
+      cross_run_case:
+        required: false
+        type: string
+        default: ''
+  issues:
+    types: [opened]
+  issue_comment:
+    types: [created]
+  repository_dispatch:
+    types: [plenum_public_issue_wakeup]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Existing owner-created public Paperclip qualification issue
+        required: true
+        type: string
+  pull_request:
+    paths:
+      - 'integrations/prometheus_durability/**'
+      - '.github/workflows/prometheus-upstream-durability.yml'
+      - 'integrations/paperclip/**'
+      - 'integrations/prometheus_oss/**'
+      - 'src/plenum_ai/chief_domain_transfer.py'
+      - 'src/plenum_ai/chief_contract_plan.py'
+      - 'tests/test_chief_domain_transfer.py'
+      - '.github/workflows/paperclip-native-integration.yml'
+permissions:
+  contents: read
+concurrency:
+  group: paperclip-mission-${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number || github.ref }}${{ inputs.pipeline_stage != '' && format('-pipeline-{0}', inputs.pipeline_stage) || '' }}
+  cancel-in-progress: false
+jobs:
+  authorize:
+    if: >-
+      inputs.pipeline_stage == '' && github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      ((github.event_name == 'issues' &&
+        (github.event.issue.title == '[Plenum Paperclip] public coastal qualification' || github.event.issue.title == '[Plenum Paperclip] public evidence mission') &&
+        github.event.issue.user.login == 'chadkhalil21-svg' &&
+        github.event.sender.login == 'chadkhalil21-svg') ||
+       (github.event_name == 'issue_comment' &&
+        (github.event.issue.title == '[Plenum Paperclip] public coastal qualification' || github.event.issue.title == '[Plenum Paperclip] public evidence mission') &&
+        github.event.issue.user.login == 'chadkhalil21-svg' &&
+        github.event.comment.user.login == 'chadkhalil21-svg' &&
+        github.event.comment.body == '<!-- plenum-paperclip-recovery-v1 -->') ||
+       github.event_name == 'repository_dispatch' ||
+       (github.event_name == 'workflow_dispatch' && github.actor == 'chadkhalil21-svg' && github.ref == 'refs/heads/main'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      issues: write
+    outputs:
+      authorized: ${{ steps.gate.outputs.authorized }}
+      created_at: ${{ steps.gate.outputs.created_at }}
+      scope: ${{ steps.gate.outputs.scope }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - id: gate
+        name: Reserve original public qualification once before model startup
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number }}
+        run: PYTHONPATH=src python3 integrations/paperclip/event_gate.py --issue "$ISSUE"
+  prepare-pipeline:
+    if: >-
+      inputs.pipeline_stage != '' && github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.actor == 'chadkhalil21-svg' && github.run_attempt == 1 &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository &&
+        (inputs.cross_run_case == '' || (inputs.pipeline_stage == 'commercial' && inputs.cross_run_case == 'pr'))) ||
+       (github.event_name == 'issues' && github.ref == 'refs/heads/main' && inputs.pipeline_stage == 'commercial' &&
+        inputs.cross_run_case == 'live' && github.event.action == 'opened' &&
+        github.event.issue.user.login == 'chadkhalil21-svg' && github.event.sender.login == 'chadkhalil21-svg' &&
+        github.event.issue.title == '[Plenum Paperclip] signed cross-run continuation' &&
+        github.event.issue.body == 'PLENUM_PUBLIC_CROSS_RUN_V1:45549381583:14993446038'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+      attestations: read
+    outputs:
+      scope: ${{ steps.prepare.outputs.scope }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - id: prior
+        env:
+          STAGE: ${{ inputs.pipeline_stage }}
+        run: |
+          case "$STAGE" in
+            science) previous=none ;;
+            engineering) previous=science ;;
+            commercial) previous=engineering ;;
+            *) exit 1 ;;
+          esac
+          echo "stage=$previous" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        if: steps.prior.outputs.stage != 'none' && inputs.cross_run_case == ''
+        with:
+          name: paperclip-pipeline-memory-${{ steps.prior.outputs.stage }}
+          path: reports/prior-memory
+      - name: Verify signed predecessor provenance before any new model or worker call
+        if: steps.prior.outputs.stage != 'none' && inputs.cross_run_case == ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh attestation verify reports/prior-memory/memory.json --repo "$GITHUB_REPOSITORY" --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/paperclip-native-integration.yml" --source-digest "$GITHUB_SHA" --source-ref "$GITHUB_REF" --deny-self-hosted-runners
+      - name: Verify original successful run and exact artifact metadata
+        if: inputs.cross_run_case != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PYTHONPATH: src
+        run: |
+          set -eu
+          mkdir -p reports/cross-run-source
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/45549381583" > reports/cross-run-source/run.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/14993446038" > reports/cross-run-source/artifact.json
+          python3 integrations/paperclip/cross_run_memory.py metadata reports/cross-run-source/run.json reports/cross-run-source/artifact.json
+      - uses: actions/download-artifact@v4
+        if: inputs.cross_run_case != ''
+        with:
+          name: paperclip-pipeline-memory-engineering
+          path: reports/prior-memory
+          run-id: 45549381583
+          github-token: ${{ github.token }}
+      - name: Verify exact predecessor bytes and original signed provenance
+        if: inputs.cross_run_case != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          test "$(sha256sum reports/prior-memory/memory.json | cut -d' ' -f1)" = 62ad650fa46a14976be18238822a73c5fde3301e978650d6828e01f84e16c676
+          gh attestation verify reports/prior-memory/memory.json --repo "$GITHUB_REPOSITORY" --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/paperclip-native-integration.yml" --source-digest 16738e2e366e9078701a1209adbc73209684231d --source-ref refs/pull/906/merge --deny-self-hosted-runners --format json > reports/cross-run-source/attestation.json
+          cp reports/prior-memory/memory.json reports/cross-run-source/memory.json
+      - id: prepare
+        env:
+          STAGE: ${{ inputs.pipeline_stage }}
+          CROSS_RUN_CASE: ${{ inputs.cross_run_case }}
+          PYTHONPATH: src
+        run: |
+          set -eu
+          if [ -n "$CROSS_RUN_CASE" ]; then
+            python3 integrations/paperclip/cross_run_memory.py prepare reports/prior-memory/memory.json "$CROSS_RUN_CASE"
+          else
+            python3 integrations/paperclip/pipeline_memory.py prepare "$STAGE" reports/prior-memory/memory.json
+          fi
+      - uses: actions/upload-artifact@v4
+        if: inputs.cross_run_case != ''
+        with:
+          name: paperclip-cross-run-source
+          path: reports/cross-run-source/
+          if-no-files-found: error
+          retention-days: 90
+  native-integration:
+    needs: [authorize, prepare-pipeline]
+    if: ${{ !cancelled() && ((inputs.pipeline_stage != '' && needs.prepare-pipeline.result == 'success') || (inputs.pipeline_stage == '' && (github.event_name == 'pull_request' || needs.authorize.outputs.authorized == 'true'))) }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(inputs.pipeline_stage != '' && '[{"mode":"local","kind":"pipeline"}]' || github.event_name == 'pull_request' && '[{"mode":"off","kind":"legacy"},{"mode":"local","kind":"legacy"},{"mode":"local","kind":"budget"},{"mode":"local","kind":"objective"},{"mode":"local","kind":"composition-logistics"},{"mode":"local","kind":"composition-energy"},{"mode":"local","kind":"synthesis"},{"mode":"local","kind":"adaptive-review"},{"mode":"local","kind":"adaptive-defer"},{"mode":"local","kind":"oss-review"},{"mode":"local","kind":"oss-defer"},{"mode":"local","kind":"variable-science"},{"mode":"local","kind":"variable-engineering"},{"mode":"local","kind":"variable-commercial"}]' || '[{"mode":"local","kind":"event"}]') }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - id: startup
+        name: Start upstream release on isolated loopback, no provider credentials
+        run: |
+          set -eu
+          image=ghcr.io/paperclipai/paperclip:2026.1106.0
+          docker pull "$image"
+          revision=$(docker image inspect "$image" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')
+          test "$revision" = d69631b01b9c658f80bf8bed389863dce82643e1
+          docker run -d --name plenum-paperclip-integration \
+            -e GITHUB_ACTIONS=true -e HOST=127.0.0.1 -e PAPERCLIP_BIND=loopback -e PAPERCLIP_HOME=/paperclip \
+            -e PAPERCLIP_DEPLOYMENT_MODE=local_trusted \
+            -e PAPERCLIP_DEPLOYMENT_EXPOSURE=private \
+            -e PAPERCLIP_PUBLIC_URL=http://localhost:3100 \
+            -e BETTER_AUTH_SECRET="$(openssl rand -hex 32)" \
+            -e PAPERCLIP_TOOL_ACTION_SIGNING_SECRET="$(openssl rand -hex 32)" \
+            --mount "type=volume,src=plenum-paperclip-test-volume,dst=/paperclip" \
+            --mount "type=volume,src=plenum-paperclip-private-proof,dst=/plenum-private-proof" \
+            --mount "type=bind,src=$GITHUB_WORKSPACE,dst=/plenum,readonly" \
+            "$image"
+          for i in $(seq 1 90); do
+            if docker exec plenum-paperclip-integration curl --fail --silent http://127.0.0.1:3100/api/health >/dev/null; then exit 0; fi
+            sleep 2
+          done
+          exit 1
+      - uses: actions/setup-python@v5
+        if: startsWith(matrix.kind, 'oss-')
+        with:
+          python-version: '3.13'
+      - name: Install pinned open-source harness into the synthetic native board
+        if: startsWith(matrix.kind, 'oss-')
+        run: |
+          set -eu
+          test "$(docker exec plenum-paperclip-integration python3 -c 'import sys;print(str(sys.version_info.major)+"."+str(sys.version_info.minor))')" = 3.13
+          python -m pip install --disable-pip-version-check --only-binary=:all: --target "$RUNNER_TEMP/plenum-oss-deps" -r integrations/prometheus_oss/requirements.txt
+          docker cp "$RUNNER_TEMP/plenum-oss-deps" plenum-paperclip-integration:/opt/plenum-oss-deps
+          docker exec --user node -e PYTHONPATH=/opt/plenum-oss-deps plenum-paperclip-integration python3 -c 'import deepagents,langgraph;from langgraph.checkpoint.sqlite import SqliteSaver'
+      - uses: actions/setup-python@v5
+        if: ${{ startsWith(matrix.kind, 'variable-') || (matrix.kind == 'event' && fromJSON(needs.authorize.outputs.scope || '{}').kind == 'variable_graph') }}
+        with:
+          python-version: '3.13'
+      - name: Provision reviewed numerical solver in isolated native board
+        if: ${{ startsWith(matrix.kind, 'variable-') || (matrix.kind == 'event' && fromJSON(needs.authorize.outputs.scope || '{}').kind == 'variable_graph') }}
+        run: |
+          set -eu
+          test "$(docker exec plenum-paperclip-integration python3 -c 'import sys;print(str(sys.version_info.major)+"."+str(sys.version_info.minor))')" = 3.13
+          python -m pip install --disable-pip-version-check --only-binary=:all: --no-deps --target "$RUNNER_TEMP/plenum-numerical-deps" 'numpy==2.2.6' 'scipy==1.15.3'
+          docker cp "$RUNNER_TEMP/plenum-numerical-deps" plenum-paperclip-integration:/opt/plenum-numerical-deps
+          docker exec --user root plenum-paperclip-integration python3 -c 'import site,pathlib; pathlib.Path(site.getsitepackages()[0],"plenum_numerical.pth").write_text("/opt/plenum-numerical-deps"+chr(10))'
+          docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 -c 'import numpy,scipy;from scipy.integrate import solve_ivp;assert numpy.__version__=="2.2.6" and scipy.__version__=="1.15.3";assert callable(solve_ivp)'
+      - name: Offline native variable graph security boundaries
+        if: ${{ startsWith(matrix.kind, 'variable-') || (matrix.kind == 'event' && fromJSON(needs.authorize.outputs.scope || '{}').kind == 'variable_graph') }}
+        run: docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/native_variable_smoke.py
+      - id: checkpoint
+        name: Runtime-volume checkpoint qualification (injected provider failures)
+        run: docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/checkpoint_smoke.py --root /paperclip/plenum-mission-evidence
+      - name: Start original local Qwen on private shared loopback
+        if: matrix.mode == 'local'
+        run: |
+          set -eu
+          docker pull ollama/ollama:latest
+          docker run -d --name plenum-paperclip-qwen --network container:plenum-paperclip-integration \
+            -e OLLAMA_HOST=127.0.0.1:11434 -e OLLAMA_CONTEXT_LENGTH=${{ startsWith(matrix.kind, 'oss-') && '8192' || '2048' }} -e OLLAMA_NUM_PARALLEL=1 \
+            --memory=8g --cpus=3 --mount type=volume,src=plenum-paperclip-qwen-cache,dst=/root/.ollama ollama/ollama:latest
+          for i in $(seq 1 45); do
+            if docker exec plenum-paperclip-integration curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
+            sleep 2
+          done
+          bash integrations/paperclip/pull_original_qwen.sh
+          digest=$(docker exec plenum-paperclip-qwen ollama list | awk '$1=="qwen3.5:4b" {print $2}')
+          test "$digest" = d8b0f5e9760c
+          echo "Original Qwen model digest prefix verified: $digest"
+      - id: mission
+        name: Native Minister assigns sequential five-division mission
+        env:
+          MODE: ${{ matrix.mode }}
+          ISSUE_CREATED: ${{ needs.authorize.outputs.created_at }}
+          EVENT_SCOPE: ${{ needs.authorize.outputs.scope }}
+          KIND: ${{ matrix.kind }}
+          PIPELINE_SCOPE: ${{ needs.prepare-pipeline.outputs.scope }}
+        run: |
+          set -eu
+          case "$KIND" in
+            legacy) scope='{"kind":"coastal"}' ;;
+            budget) scope='{"kind":"bibliography_budget","dois":["10.1145/3442188.3445922"],"budget":{"model":"@cf/zai-org/glm-4.7-flash","neurons_used_today":100,"neurons_reserved":200,"input_tokens_upper_bound":3000,"output_tokens_upper_bound":1000}}' ;;
+            objective) scope='{"kind":"public_objective","objective":"Find the words common to both delivery summaries and the middle value after sorting the observations.","dois":["10.1007/s10791-026-10743-4","10.1016/j.jss.2026.113142"],"inputs":{"documents":["supplier delivery quality","delivery supplier testing"],"samples":[17,-3,8,42,12,19]},"operation_commitment":"b06f527ce3646bcbc14a7970066456b64e9396c24e7a6102beefcf6340985428"}' ;;
+            composition-logistics|composition-energy) scope=$(PYTHONPATH=src python3 integrations/paperclip/composition_smoke.py "$KIND") ;;
+            synthesis) scope=$(PYTHONPATH=src python3 integrations/paperclip/synthesis_smoke.py scope) ;;
+            adaptive-review|adaptive-defer) scope=$(PYTHONPATH=src python3 integrations/paperclip/adaptive_turns_smoke.py "$KIND") ;;
+            oss-review|oss-defer) scope=$(PYTHONPATH=src python3 integrations/prometheus_oss/native_scope.py "$KIND") ;;
+            variable-science|variable-engineering|variable-commercial) scope=$(PYTHONPATH=src:integrations/paperclip python3 -c 'import json,sys;from native_variable import fixture;print(json.dumps(fixture(sys.argv[1])))' "${KIND#variable-}") ;;
+            event) scope="$EVENT_SCOPE"; test -n "$scope" ;;
+            pipeline) scope="$PIPELINE_SCOPE"; test -n "$scope" ;;
+            *) exit 1 ;;
+          esac
+          if [ "$KIND" = objective ]; then
+            docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_CI_SUPERVISOR_PROOF=confirmed -e PLENUM_MISSION_SCOPE="$scope" -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/supervise_native.py event
+            docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/event_native.py resume
+          else
+            docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_MISSION_SCOPE="$scope" -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/supervise_native.py event
+          fi
+      - name: Qualify consecutive persistent model-directed missions and bounded recovery
+        if: matrix.mode == 'local' && matrix.kind == 'budget'
+        run: python3 integrations/paperclip/persistent_native_smoke.py local
+      - name: Remove local model before independent restart readback
+        if: matrix.mode == 'local' && matrix.kind != 'budget'
+        run: docker rm -fv plenum-paperclip-qwen
+      - id: restart
+        name: Restart same upstream server and independently reread evidence without external provider calls
+        run: |
+          set -eu
+          docker restart plenum-paperclip-integration
+          for i in $(seq 1 90); do
+            if docker exec plenum-paperclip-integration curl --fail --silent http://127.0.0.1:3100/api/health >/dev/null; then
+              docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/event_native.py readback
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+      - name: Qualify two consecutive persistent missions and both restart readbacks
+        if: matrix.mode == 'off'
+        run: python3 integrations/paperclip/persistent_native_smoke.py
+      - name: Restore actual synthetic native evidence from a separate private volume across container restart
+        if: matrix.kind == 'composition-energy'
+        run: |
+          set -eu
+          docker exec --user root plenum-paperclip-integration sh -c 'chown node:node /plenum-private-proof && chmod 700 /plenum-private-proof'
+          docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/private_volume_native_smoke.py seal
+          docker restart plenum-paperclip-integration
+          for i in $(seq 1 90); do
+            if docker exec plenum-paperclip-integration curl --fail --silent http://127.0.0.1:3100/api/health >/dev/null; then
+              docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/private_volume_native_smoke.py restore
+              docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/event_native.py readback
+              docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/private_volume_native_smoke.py finish
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+      - name: Restore actual cold synthetic native database into a distinct ephemeral volume
+        if: matrix.kind == 'oss-review'
+        run: bash integrations/prometheus_oss/native_restore.sh
+      - name: Collect only public task evidence
+        if: always()
+        env:
+          STARTUP: ${{ steps.startup.outcome }}
+          CHECKPOINT: ${{ steps.checkpoint.outcome }}
+          MISSION: ${{ steps.mission.outcome }}
+          RESTART: ${{ steps.restart.outcome }}
+        run: |
+          mkdir -p reports/paperclip-native
+          if docker cp plenum-paperclip-integration:/paperclip/plenum-mission-evidence/. reports/paperclip-native/; then
+            export EVIDENCE_COPY=success
+          else
+            export EVIDENCE_COPY=unavailable
+          fi
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          root=Path("reports/paperclip-native")
+          data={"schema":"plenum-paperclip-ci-diagnostic-v1","run_id":os.environ["GITHUB_RUN_ID"],
+                "commit":os.environ["GITHUB_SHA"],"startup":os.environ["STARTUP"],
+                "checkpoint":os.environ["CHECKPOINT"],"mission":os.environ["MISSION"],
+                "restart":os.environ["RESTART"],"evidence_copy":os.environ["EVIDENCE_COPY"],
+                "qualification_present":(root/"qualification.json").is_file() or (root/"event-native-mission.json").is_file(),
+                "failure_receipts":len(list(root.glob("failure-*.json")))}
+          (root/"ci-diagnostic.json").write_text(json.dumps(data,indent=2)+"\n")
+          print(json.dumps(data))
+          if all(data[k]=="success" for k in ("startup","checkpoint","mission","restart")):
+              marker=root/"event-native-mission.json"
+              directory=root
+              if marker.is_file():
+                  from uuid import UUID
+                  row=json.loads(marker.read_text())
+                  assert all(str(UUID(row[k]))==row[k] for k in ("company","mission"))
+                  directory=root/row["company"]/row["mission"]
+              assert all((directory/name).is_file() for name in ("qualification.json","event-timing.json","restart-timing.json")), "Missing actual qualification artifact"
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ inputs.pipeline_stage != '' && format('paperclip-pipeline-native-{0}', inputs.pipeline_stage) || format('paperclip-native-public-evidence-{0}-{1}', matrix.mode, matrix.kind) }}
+          path: reports/paperclip-native/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Remove isolated instance and test database
+        if: always()
+        run: |
+          docker rm -fv plenum-paperclip-qwen 2>/dev/null || true
+          docker rm -fv plenum-paperclip-integration 2>/dev/null || true
+          docker volume rm plenum-paperclip-private-proof plenum-paperclip-test-volume 2>/dev/null || true
+          docker volume rm plenum-paperclip-qwen-cache 2>/dev/null || true
+  fresh-runner-acceptance:
+    needs: [authorize, native-integration]
+    if: ${{ !cancelled() && inputs.pipeline_stage == '' && needs.native-integration.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: paperclip-native-public-evidence-*
+          path: reports/fresh-runner-input
+      - uses: actions/setup-python@v5
+        if: github.event_name == 'pull_request'
+        with:
+          python-version: '3.13'
+      - name: Install the open-source verifier for native OSS cases
+        if: github.event_name == 'pull_request'
+        run: |
+          python -m pip install --disable-pip-version-check --only-binary=:all: -r integrations/prometheus_oss/requirements.txt
+          python -m pip check
+      - name: Finish independent acceptance on a new runner without model, provider calls or board credentials
+        env:
+          PYTHONPATH: src
+          EXPECTED_SCOPE: ${{ needs.authorize.outputs.scope }}
+          EVENT: ${{ github.event_name }}
+        run: python3 integrations/paperclip/fresh_runner_acceptance.py reports/fresh-runner-input reports/fresh-runner-result.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: paperclip-fresh-runner-acceptance
+          path: reports/fresh-runner-result.json
+          if-no-files-found: error
+          retention-days: 7
+  pipeline-memory-acceptance:
+    needs: [prepare-pipeline, native-integration]
+    if: ${{ !cancelled() && inputs.pipeline_stage != '' && needs.prepare-pipeline.result == 'success' && needs.native-integration.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: paperclip-pipeline-native-${{ inputs.pipeline_stage }}
+          path: reports/pipeline-native
+      - name: Independently verify all native producer, profile, model, dependency and restart receipts
+        env:
+          PYTHONPATH: src
+          EXPECTED_SCOPE: ${{ needs.prepare-pipeline.outputs.scope }}
+        run: |
+          mkdir -p reports/pipeline-memory
+          python3 integrations/paperclip/pipeline_memory.py export reports/pipeline-native reports/pipeline-memory/memory.json
+      - name: Attest accepted public mission memory
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: reports/pipeline-memory/memory.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: paperclip-pipeline-memory-${{ inputs.pipeline_stage }}
+          path: reports/pipeline-memory/memory.json
+          if-no-files-found: error
+          retention-days: 90
+  terminal-receipt:
+    needs: [authorize, native-integration, fresh-runner-acceptance]
+    if: always() && inputs.pipeline_stage == '' && github.event_name != 'pull_request' && needs.authorize.outputs.authorized == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      issues: write
+    steps:
+      - name: Record bounded outcome without redispatch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number || github.event.client_payload.issue_number || inputs.issue_number }}
+          NATIVE_RESULT: ${{ needs.native-integration.result }}
+          ACCEPTANCE_RESULT: ${{ needs.fresh-runner-acceptance.result }}
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request
+          issue=int(os.environ["ISSUE"])
+          native=os.environ["NATIVE_RESULT"]
+          acceptance=os.environ["ACCEPTANCE_RESULT"]
+          result="success" if native==acceptance=="success" else "failure"
+          assert 0<issue<10**9 and result in ("success","failure","cancelled","skipped")
+          run=os.environ["GITHUB_RUN_ID"]
+          body={"body":f"<!-- plenum-public-workforce-run:{run}:terminal -->\nNative bounded Paperclip qualification and fresh-runner acceptance: {result} (native={native}, independent={acceptance}). See https://github.com/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{run}. No automatic redispatch."}
+          url=f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/issues/{issue}/comments"
+          req=urllib.request.Request(url,data=json.dumps(body).encode(),headers={"Authorization":"Bearer "+os.environ["GH_TOKEN"],"Content-Type":"application/json","User-Agent":"PlenumPaperclipQualification/1"})
+          with urllib.request.urlopen(req,timeout=15) as res:
+              assert res.status==201
+          PY

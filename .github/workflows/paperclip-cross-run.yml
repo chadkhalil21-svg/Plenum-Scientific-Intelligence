@@ -1,0 +1,34 @@
+name: Paperclip separate workflow continuation
+on:
+  pull_request:
+    paths:
+      - 'integrations/paperclip/cross_run_memory*.py'
+      - '.github/workflows/paperclip-cross-run.yml'
+  issues:
+    types: [opened]
+permissions:
+  contents: read
+concurrency:
+  group: paperclip-cross-run-${{ github.event.issue.number || github.ref }}
+  cancel-in-progress: false
+jobs:
+  continue:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' &&
+      github.run_attempt == 1 &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) ||
+       (github.event_name == 'issues' && github.ref == 'refs/heads/main' &&
+        github.event.issue.user.login == 'chadkhalil21-svg' && github.event.sender.login == 'chadkhalil21-svg' &&
+        github.event.issue.title == '[Plenum Paperclip] signed cross-run continuation' &&
+        github.event.issue.body == 'PLENUM_PUBLIC_CROSS_RUN_V1:45549381583:14993446038'))
+    uses: ./.github/workflows/paperclip-native-integration.yml
+    with:
+      pipeline_stage: commercial
+      cross_run_case: ${{ github.event_name == 'pull_request' && 'pr' || 'live' }}
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+      attestations: write
+      # Permission ceiling for skipped legacy issue jobs only.
+      issues: write

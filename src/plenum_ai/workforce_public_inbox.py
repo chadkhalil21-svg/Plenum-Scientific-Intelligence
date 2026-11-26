@@ -29,6 +29,9 @@ TOPIC = re.compile(r"^[\w\s,\-.()/+]{20,120}$", re.UNICODE)
 
 def original_source_category(objective: str) -> str:
     """Choose an EXISTING World Horizon category, never invent a new provider."""
+    from .world_horizon import paper_survey_subject
+    if paper_survey_subject(objective):
+        return "journals"
     return ("funding" if re.search(
         r"\b(?:funding|grants?|solicitations?)\b", objective, re.I,
     ) else "all")
@@ -174,8 +177,9 @@ def run_issue(event: dict, *, output_dir: Path, runner=subprocess.run) -> dict:
     try:
         result = runner(command, timeout=360, cwd=str(Path(__file__).resolve().parents[2]),
                         env=safe_env, capture_output=True, text=True, check=False)
-    except (subprocess.TimeoutExpired, OSError):
+    except (subprocess.TimeoutExpired, OSError) as exc:
         return {**task, "status": "BLOCKED_WORKER_UNAVAILABLE", "verified": False,
+                "failure_type": type(exc).__name__,
                 "reason": "Existing worker did not finish within bounded runtime",
                 "output_artifact": None}
     if result.returncode != 0:
@@ -188,10 +192,89 @@ def run_issue(event: dict, *, output_dir: Path, runner=subprocess.run) -> dict:
         return {**task, "status": "BLOCKED_VERIFICATION", "verified": False,
                 "reason": "Original report failed independent schema check",
                 "output_artifact": None}
+    # A broad source survey can be completed with an official agency directory
+    # even when the original opportunity search returns no matching titles.
+    # This does NOT accept an eligibility, deadline or specific grant request.
+    if checked["source_linked_records"] == 0 and re.fullmatch(
+            r"(?:Survey|Review) public (?:agricultural|agriculture) funding sources",
+            task["objective"], re.I):
+        from .reviewed_domain_workers import DOMAIN_SOURCES
+        capability = "usda_agricultural_funding_directory"
+        expected = {(title, organization, url)
+                    for title, organization, url in DOMAIN_SOURCES[capability]}
+        try:
+            records = official_source_records(
+                capability, opener=build_opener(NoRedirects).open)
+            identities = {(row.get("title"), row.get("source"), row.get("url"))
+                          for row in records}
+            if (len(records) >= 2 and len(identities) == len(records)
+                    and identities <= expected
+                    and all(row.get("http_status") == 200
+                            and row.get("independently_quoted_page_text") is False
+                            for row in records)):
+                original = json.loads(output.read_text("utf-8"))
+                if original["records"]:
+                    raise ValueError("Fallback requires no original records")
+                original["funding_recovery"] = {
+                    "strategy": "reviewed_official_agency_directory",
+                    "prior_source_linked_records": 0,
+                    "original_provider_diagnostics_preserved": True,
+                    "opportunity_eligibility_or_deadline_verified": False,
+                }
+                original["records"] = [{**row, "category": "funding"} for row in records]
+                output.write_text(json.dumps(original, indent=2) + "\n", encoding="utf-8")
+                accepted = validate_original_report(output, task["objective"])
+                return {**task, **accepted,
+                        "status": "DRAFT_READY_FOR_FOUNDER", "verified": True,
+                        "output_artifact": output.name,
+                        "quality": "OFFICIAL_FUNDING_SOURCE_DIRECTORY_VERIFIED",
+                        "funding_source_directory_verified": True,
+                        "funding_subject_relevance_independently_verified": False,
+                        "verified_scope": "reviewed official agricultural funding directory HTTP 200 metadata only; eligibility and deadlines not independently audited",
+                        "no_money_spent_by_worker": True,
+                        "completed_at_utc": datetime.now(timezone.utc).isoformat()}
+        except (OSError, ValueError, TypeError, KeyError, AttributeError):
+            pass
     if checked["source_linked_records"] == 0:
         return {**task, **checked, "status": "BLOCKED_NO_SOURCE_EVIDENCE",
                 "verified": False, "output_artifact": output.name}
+    from .world_horizon import paper_survey_subject, paper_title_matches
+    subject=paper_survey_subject(task["objective"])
+    if subject:
+        rows=json.loads(output.read_text("utf-8"))["records"]
+        matched=bool(rows) and all(
+            row.get("source")=="crossref_journals"
+            and row.get("category")=="journals"
+            and re.fullmatch(r"https://doi\.org/10\.[0-9]{4,9}/[^\s?#]+",row.get("url",""))
+            and paper_title_matches(subject,row.get("title"))
+            for row in rows)
+        return {**task,**checked,
+                "status":"DRAFT_READY_FOR_FOUNDER" if matched else "BLOCKED_PAPER_TOPIC_RELEVANCE",
+                "verified":matched,"output_artifact":output.name,
+                "paper_title_match_verified":matched,
+                "individual_papers_independently_validated":False,
+                "verified_scope":"topic-matched Crossref journal metadata only; paper contents and scientific claims not audited",
+                "no_money_spent_by_worker":True,
+                "completed_at_utc":datetime.now(timezone.utc).isoformat()}
     if original_source_category(task["objective"]) == "funding":
+        from .world_horizon import funding_survey_subject, funding_title_matches
+        subject=funding_survey_subject(task["objective"])
+        if subject:
+            report=json.loads(output.read_text("utf-8"))
+            rows=report["records"]
+            if (rows and all(row.get("source")=="grants_gov_search"
+                    and re.fullmatch(r"https://www\.grants\.gov/search-results-detail/[1-9][0-9]{0,11}",row.get("url",""))
+                    and funding_title_matches(subject,row.get("title"))
+                    and str(row.get("metadata_note","")).startswith(("posted;","forecasted;"))
+                    for row in rows)):
+                return {**task,**checked,"status":"DRAFT_READY_FOR_FOUNDER","verified":True,
+                        "output_artifact":output.name,
+                        "quality":"PUBLIC_FUNDING_TITLE_MATCHED_SOURCE_SURVEY_ONLY",
+                        "funding_title_match_verified":True,
+                        "funding_subject_relevance_independently_verified":False,
+                        "verified_scope":"official public funding search metadata and explicit title matches only; eligibility and deadlines not independently audited",
+                        "no_money_spent_by_worker":True,
+                        "completed_at_utc":datetime.now(timezone.utc).isoformat()}
         # Original mission #708 retrieved genuine funding-category records
         # unrelated to the founder's photonics objective. A real provider URL
         # and category tag do NOT independently establish program fit.

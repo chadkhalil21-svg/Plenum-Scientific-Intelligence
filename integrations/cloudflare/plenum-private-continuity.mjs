@@ -53,12 +53,52 @@ export async function verifyPrivateRequest(request, secret, raw, now = Date.now(
   return crypto.subtle.verify("HMAC",key,bytes,encoder.encode(message));
 }
 
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const ROLES = new Set(["intelligence","research","engineering","commercial","verification"]);
+const DIGEST = /^[0-9a-f]{64}$/;
+function checkpointValid(body) {
+  return body && typeof body === "object" && !Array.isArray(body)
+    && Object.keys(body).sort().join(",")==="attempt,expected_revision,issue,sha256,state"
+    && UUID.test(body.issue) && Number.isInteger(body.attempt) && body.attempt>=1 && body.attempt<=2
+    && Number.isInteger(body.expected_revision) && body.expected_revision>=0 && body.expected_revision<=4
+    && ((body.state==="reserved" && body.sha256===null) ||
+        (body.state==="completed" && typeof body.sha256==="string" && DIGEST.test(body.sha256)));
+}
+function checkpointTransition(current, body) {
+  if (!current) return body.state==="reserved" && body.attempt===1;
+  if (current.issue!==body.issue || current.state==="completed") return false;
+  return (body.state==="completed" && body.attempt===current.attempt) ||
+    (body.state==="reserved" && current.attempt===1 && body.attempt===2);
+}
+
 // This is a new namespace on the ALREADY DEPLOYED Cloudflare Worker, not a
 // new resident server. The original public replay-guard namespace is untouched.
 export class PrivateContinuityMemory {
   constructor(ctx) { this.ctx=ctx; }
   async fetch(request) {
     const url = new URL(request.url);
+    const checkpointRole = url.pathname.match(/^\/checkpoint\/([a-z]+)$/)?.[1];
+    if (checkpointRole && ROLES.has(checkpointRole)) {
+      const key="checkpoint:"+checkpointRole;
+      if (request.method==="GET") {
+        const row=await this.ctx.storage.get(key);
+        return row ? json(200,row) : json(404,{error:"not_found"});
+      }
+      if (request.method!=="POST") return json(405,{error:"method_not_allowed"});
+      let body;
+      try {body=await request.json();} catch {return json(400,{error:"invalid_checkpoint"});}
+      if(!checkpointValid(body))return json(400,{error:"invalid_checkpoint"});
+      return this.ctx.storage.transaction(async tx=>{
+        const current=await tx.get(key);
+        const revision=current?.revision||0;
+        if(body.expected_revision!==revision)return json(409,{error:"stale_revision",current_revision:revision});
+        if(!checkpointTransition(current,body))return json(409,{error:"invalid_transition"});
+        const next={issue:body.issue,attempt:body.attempt,state:body.state,sha256:body.sha256,revision:revision+1};
+        await tx.put(key,next);
+        return json(200,next);
+      });
+    }
     if (request.method === "POST" && url.pathname === "/put") {
       let data;
       try { data=await request.json(); } catch { return json(400,{error:"invalid_record"}); }
@@ -121,4 +161,54 @@ export async function handlePrivateMemory(request, env) {
   }catch {
     return json(503,{error:"private_storage_unavailable"});
   }
+}
+
+/* Separate runtime-only capability: no owner memory key, arbitrary text, private
+ * records, list, dispatch, inference, or cross-mission access. Same DO binding,
+ * separate instance; the runtime must be provisioned outside public CI. */
+export async function handlePaperclipCheckpoint(request,env) {
+  const url=new URL(request.url);
+  const parts=url.pathname.split("/");
+  const [,prefix,company,mission,role]=parts;
+  if(parts.length!==5 || prefix!=="paperclip-checkpoints" || !UUID.test(company||"")
+     || !UUID.test(mission||"") || !ROLES.has(role) || url.search
+     || !["GET","POST"].includes(request.method))return json(404,{error:"route_not_found"});
+  const secret=env?.PLENUM_PAPERCLIP_CHECKPOINT_HMAC_SECRET;
+  if(!env?.PLENUM_PRIVATE_MEMORY || typeof secret!=="string" || secret.length<32
+     || secret===env.PLENUM_PRIVATE_MEMORY_HMAC_SECRET
+     || secret===env.PLENUM_WEBHOOK_HMAC_SECRET
+     || env.PLENUM_PAPERCLIP_CHECKPOINT_SCOPE!==company+"/"+mission)
+    return json(403,{error:"checkpoint_scope_unavailable"});
+  if(Number(request.headers.get("content-length")||"0")>1024)return json(413,{error:"record_too_large"});
+  // Stream with a hard byte cap even for chunked requests.
+  let raw="";
+  if(request.body){
+    const reader=request.body.getReader();
+    const chunks=[]; let size=0;
+    try {
+      while(true){
+        const {done,value}=await reader.read();
+        if(done)break;
+        size+=value.byteLength;
+        if(size>1024){void reader.cancel().catch(()=>{});return json(413,{error:"record_too_large"});}
+        chunks.push(value);
+      }
+      const bytes=new Uint8Array(size);let offset=0;
+      for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
+      raw=new TextDecoder("utf-8",{fatal:true}).decode(bytes);
+    }catch{return json(400,{error:"invalid_checkpoint"});}
+    finally{reader.releaseLock();}
+  }
+  if(!await verifyPrivateRequest(request,secret,raw))return json(403,{error:"unauthorized_or_stale"});
+  if(request.method==="GET" && raw!=="")return json(400,{error:"invalid_checkpoint"});
+  if(request.method==="POST"){
+    let body;
+    try{body=JSON.parse(raw);}catch{return json(400,{error:"invalid_checkpoint"});}
+    if(!checkpointValid(body))return json(400,{error:"invalid_checkpoint"});
+  }
+  try{
+    const object=env.PLENUM_PRIVATE_MEMORY.getByName("plenum-paperclip:"+company+":"+mission);
+    return await object.fetch("https://continuity.internal/checkpoint/"+role,
+       {method:request.method,...(request.method==="POST"?{headers:{"Content-Type":"application/json"},body:raw}:{})});
+  }catch{return json(503,{error:"checkpoint_storage_unavailable"});}
 }

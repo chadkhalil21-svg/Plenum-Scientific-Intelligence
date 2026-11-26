@@ -75,6 +75,33 @@ class CrossDomainContracts(unittest.TestCase):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 x.read_crossref(x.DOI, opener=Malformed(value))
 
+    def test_rolling_citation_year_accepts_next_year_but_rejects_far_future(self):
+        from datetime import datetime, timezone
+        current_year = datetime.now(timezone.utc).year
+
+        class CitationYear(Client):
+            def __init__(self, year):
+                super().__init__()
+                self.year = year
+
+            def open(self, *args, **kwargs):
+                year = self.year
+
+                class YearResponse(Response):
+                    def read(self, n):
+                        record = json.loads(super().read(n))
+                        record["message"]["published"]["date-parts"] = [[year]]
+                        return json.dumps(record).encode()
+
+                return YearResponse()
+
+        for year in (current_year, current_year + 1):
+            with self.subTest(year=year):
+                self.assertEqual(x.read_crossref(x.DOI, opener=CitationYear(year))["year"], year)
+        for year in (1899, current_year + 2, 2101):
+            with self.subTest(year=year), self.assertRaises(ValueError):
+                x.read_crossref(x.DOI, opener=CitationYear(year))
+
     def test_untrusted_response_fails_identity_validation(self):
         class Wrong(Response):
             def read(self,n):

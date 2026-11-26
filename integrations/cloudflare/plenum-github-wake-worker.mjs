@@ -1,6 +1,7 @@
-import {handlePrivateMemory, PrivateContinuityMemory} from "./plenum-private-continuity.mjs";
+import {handlePrivateMemory, handlePaperclipCheckpoint, PrivateContinuityMemory} from "./plenum-private-continuity.mjs";
 import {ownerMemoryCheckPage, ownerMemoryCheckScript} from "./plenum-private-memory-check.mjs";
 import {handleFreeCodingAI} from "./plenum-free-coding-ai.mjs";
+import {engineeringFallback, eligibleTick, engineeringCadenceProof, eligibleCadenceSlot, CADENCE_START, CADENCE_END} from "./plenum-engineering-fallback.mjs";
 export {PrivateContinuityMemory};
 /*
  * Plenum no-new-charge *event-driven wake* (SOURCE TEMPLATE ONLY).
@@ -97,6 +98,39 @@ export class PublicWakeReplayGuard {
   // avoids requiring a Cloudflare-only runtime import in Node source tests.
   async fetch(request) {
     const path=new URL(request.url).pathname;
+    if (request.method === "POST" && path === "/claim-cadence-proof") {
+      try {
+        const body = await request.json();
+        if (!body || Object.keys(body).length !== 1 || !eligibleCadenceSlot(body.slot))
+          return new Response(null,{status:403});
+        const admitted=await this.ctx.storage.transaction(async tx=>{
+          const {slot}=body;
+          if (!eligibleCadenceSlot(slot)) return false;
+          const prior=await tx.get("engineering-cadence-proof-v1");
+          if (prior!==undefined && (!prior || !Number.isSafeInteger(prior.count) ||
+              prior.count<1 || prior.count>=2 || !Number.isSafeInteger(prior.last) ||
+              prior.last<CADENCE_START || prior.last>=CADENCE_END ||
+              prior.last%300000!==0 || prior.last>=slot)) return false;
+          await tx.put("engineering-cadence-proof-v1",{count:(prior?.count??0)+1,last:slot});
+          return true;
+        });
+        return new Response(null,{status:admitted?204:409});
+      } catch {return new Response(null,{status:503});}
+    }
+    if (request.method === "POST" && path === "/claim-engineering-tick") {
+      try {
+        const {slot} = await request.json();
+        const admitted = await this.ctx.storage.transaction(async (tx) => {
+          if (!eligibleTick(slot)) return false;
+          const previous = await tx.get("engineering-last-slot");
+          if (previous !== undefined && (!Number.isSafeInteger(previous) || previous >= slot))
+            return false;
+          await tx.put("engineering-last-slot", slot);
+          return true;
+        });
+        return new Response(null,{status:admitted?204:409});
+      } catch { return new Response(null,{status:503}); }
+    }
     if (request.method === "POST" && path === "/claim-ai") {
       try {
         const {day,reserve,maximum}=await request.json();
@@ -144,6 +178,13 @@ export class PublicWakeReplayGuard {
 }
 
 export default {
+  async scheduled(controller, env) {
+    controller.noRetry();
+    const status = await engineeringFallback(controller, env);
+    console.log("Plenum bounded engineering fallback:", status);
+    const proof=await engineeringCadenceProof(controller,env,status);
+    if (proof!=="CADENCE_NOT_ELIGIBLE") console.log("Plenum cadence qualification:",proof);
+  },
   async fetch(request, env) {
     const pathname = new URL(request.url).pathname;
     // Public branch previews must never reach owner memory, AI or dispatch,
@@ -158,6 +199,8 @@ export default {
       return ownerMemoryCheckPage();
     if (pathname === "/memory-check.js" && request.method === "GET")
       return ownerMemoryCheckScript();
+    if (pathname.startsWith("/paperclip-checkpoints/"))
+      return handlePaperclipCheckpoint(request, env);
     if (pathname === "/memory" || pathname.startsWith("/memory/"))
       return handlePrivateMemory(request, env);
     if (pathname === "/health" && request.method === "GET")

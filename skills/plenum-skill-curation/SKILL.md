@@ -25,3 +25,6 @@ Skill | Repository SHA/license | Role | Permissions | Risk review | Host require
 
 ## Shared constraints
 Use public sources for public GitHub jobs. Private financial information, credentials, patents, customer records, and external actions require an independently authorized private integration. A skill file is portable instructions, not a running model, installed third-party integration, paid resource, or proof of completing a real task.
+
+## Founder-authorized upstream expansion (25 November 2026)
+Use `integrations/agent-catalog/prometheus-upstream-expansion.json` for the ten exact reviewed upstream commits and license blobs. `.github/workflows/prometheus-upstream-skill-scan.yml` runs the original pinned NVIDIA SkillSpector with locked dependencies and `--no-llm` against quarantined candidate skill directories. Read original scan JSON, completeness and findings before admitting any skill. A successful scan is not approval to execute candidate instructions, hooks, external dependencies or arbitrary commands. Any incomplete scan, unknown dependency, ambiguous license or unreviewed executable remains quarantined. Reuse the original role-scoped router and tool gates; no new credentials, paid model, permanent server or private content in CI. This development workflow is not a production mission executor.
