@@ -23,24 +23,24 @@ jobs:
           root="$RUNNER_TEMP/hf-qualification"
           mkdir "$root"
           cd "$root"
-          npm view '@hyperframes/cli@0.9.97' --json > metadata.json
+          npm view 'hyperframes@0.9.97' --json > metadata.json
           node --input-type=module - <<'JS'
           import fs from 'node:fs';
           const p=JSON.parse(fs.readFileSync('metadata.json','utf8'));
-          if(p.name!=='@hyperframes/cli'||p.version!=='0.9.97'||p.license!=='Apache-2.0'||
+          if(p.name!=='hyperframes'||p.version!=='0.9.97'||p.license!=='Apache-2.0'||
              !/github\.com\/heygen-com\/hyperframes(?:\.git)?$/.test(p.repository?.url||'')||
              p.gitHead!=='c6ff4a31f240f6051836136577f51045c6da15c5'||
              !/^sha512-[A-Za-z0-9+/=]+$/.test(p.dist?.integrity||'')||
-             !p.dist?.tarball?.startsWith('https://registry.npmjs.org/@hyperframes/cli/'))
+             !p.dist?.tarball?.startsWith('https://registry.npmjs.org/hyperframes/-/'))
              throw new Error('Package release provenance not established');
-          fs.writeFileSync('package.json',JSON.stringify({private:true,dependencies:{'@hyperframes/cli':'0.9.97','gsap':'3.14.2'}}));
+          fs.writeFileSync('package.json',JSON.stringify({private:true,dependencies:{'hyperframes':'0.9.97','gsap':'3.14.2'}}));
           JS
           npm install --ignore-scripts --no-audit --no-fund
           node --input-type=module - <<'JS'
           import fs from 'node:fs';
           const m=JSON.parse(fs.readFileSync('metadata.json','utf8'));
           const lock=JSON.parse(fs.readFileSync('package-lock.json','utf8'));
-          if(lock.packages['node_modules/@hyperframes/cli'].integrity!==m.dist.integrity)
+          if(lock.packages['node_modules/hyperframes'].integrity!==m.dist.integrity)
              throw new Error('Installed package integrity differs');
           JS
           sudo apt-get update -qq
