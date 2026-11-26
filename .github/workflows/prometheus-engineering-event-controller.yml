@@ -12,7 +12,7 @@ on:
     - cron: '3-58/5 * * * *'
   workflow_dispatch:
   repository_dispatch:
-    types: [plenum_engineering_backlog_tick_v1]
+    types: [plenum_engineering_backlog_tick_v1, plenum_engineering_cadence_proof_v1]
   issues:
     types: [opened]
   pull_request:
@@ -43,6 +43,44 @@ jobs:
           persist-credentials: false
       - run: PYTHONPATH=src python3 -m unittest discover -s tests -p test_engineering_event_controller.py -v
       - run: node --test integrations/cloudflare/plenum-engineering-fallback.test.mjs integrations/cloudflare/plenum-github-wake-worker.test.mjs
+  verify-cadence:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'repository_dispatch' &&
+      github.event.sender.login == 'chadkhalil21-svg' &&
+      github.event.action == 'plenum_engineering_cadence_proof_v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+    steps:
+      - name: Authenticate and record bounded scheduler receipt only
+        env:
+          PLENUM_WEBHOOK_HMAC_SECRET: ${{ secrets.PLENUM_WEBHOOK_HMAC_SECRET }}
+        run: |
+          python3 - <<'PY'
+          import datetime, hashlib, hmac, json, os, re, time
+          event=json.load(open(os.environ["GITHUB_EVENT_PATH"]))
+          payload=event.get("client_payload")
+          assert event.get("action")=="plenum_engineering_cadence_proof_v1"
+          assert event.get("repository",{}).get("full_name")=="chadkhalil21-svg/Plenum-Scientific-Intelligence"
+          assert event.get("sender",{}).get("login")=="chadkhalil21-svg"
+          assert isinstance(payload,dict) and set(payload)=={"slot","scope","signature"}
+          slot=payload["slot"]
+          start=int(datetime.datetime(2026,11,26,8,tzinfo=datetime.timezone.utc).timestamp()*1000)
+          end=int(datetime.datetime(2026,11,27,5,tzinfo=datetime.timezone.utc).timestamp()*1000)
+          assert type(slot) is int and start<=slot<end and slot%300000==0
+          assert 0<=int(time.time()*1000)-slot<1800000
+          assert payload["scope"]=="cron_observation_only"
+          signature=payload["signature"]
+          key=os.environ["PLENUM_WEBHOOK_HMAC_SECRET"]
+          assert len(key)>=32 and isinstance(signature,str) and re.fullmatch(r"[0-9a-f]{64}",signature)
+          expected=hmac.new(key.encode(),f"plenum-engineering-cadence-v1.{slot}.cron_observation_only".encode(),hashlib.sha256).hexdigest()
+          assert hmac.compare_digest(signature,expected), "Invalid cadence attestation"
+          print(json.dumps({"schema":"plenum-cadence-proof-v1","scheduled_slot_ms":slot,
+                            "authenticated":True,"paid_inference":False,"work_dispatched":False}))
+          PY
   observe-and-recover:
     if: >-
       github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
