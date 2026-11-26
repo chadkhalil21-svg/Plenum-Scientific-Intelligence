@@ -212,6 +212,9 @@ jobs:
           python -m pip install --disable-pip-version-check --only-binary=:all: --target "$RUNNER_TEMP/plenum-oss-deps" -r integrations/prometheus_oss/requirements.txt
           docker cp "$RUNNER_TEMP/plenum-oss-deps" plenum-paperclip-integration:/opt/plenum-oss-deps
           docker exec --user node -e PYTHONPATH=/opt/plenum-oss-deps plenum-paperclip-integration python3 -c 'import deepagents,langgraph;from langgraph.checkpoint.sqlite import SqliteSaver'
+      - name: Offline native variable graph security boundaries
+        if: startsWith(matrix.kind, 'variable-')
+        run: docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/native_variable_smoke.py
       - id: checkpoint
         name: Runtime-volume checkpoint qualification (injected provider failures)
         run: docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/checkpoint_smoke.py --root /paperclip/plenum-mission-evidence
