@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {engineeringFallback,CRON,SLOT_MS} from "./plenum-engineering-fallback.mjs";
+import {webcrypto,createHmac} from "node:crypto";
+if (!globalThis.crypto) globalThis.crypto=webcrypto;
+import {engineeringFallback,engineeringCadenceProof,eligibleCadenceSlot,CADENCE_START,CADENCE_END,CRON,SLOT_MS} from "./plenum-engineering-fallback.mjs";
 import {PublicWakeReplayGuard} from "./plenum-github-wake-worker.mjs";
 const repo="chadkhalil21-svg/Plenum-Scientific-Intelligence";
 const slot=Math.floor(Date.now()/SLOT_MS)*SLOT_MS;
@@ -54,4 +56,49 @@ test("preview, stale slot and unavailable reads fail closed",async()=>{
   const g=fixture({unavailable:true});
   assert.equal(await engineeringFallback(event,g.env,{fetcher:g.fetcher}),"READ_UNAVAILABLE");
   assert.equal(g.claims.length,0);
+});
+
+test("two authenticated cadence receipts only, including ambiguous failure; never repeat",async()=>{
+  const old=Date.now;
+  let now=CADENCE_START+SLOT_MS;
+  Date.now=()=>now;
+  try {
+    const f=fixture({closed:true,dispatchStatus:502});
+    const secret="test-only-cadence-secret-not-production-123456";
+    f.env.PLENUM_WEBHOOK_HMAC_SECRET=secret;
+    const tick=()=>({cron:CRON,scheduledTime:now});
+    assert.equal(await engineeringCadenceProof(tick(),f.env,"NO_APPROVED_BACKLOG",{fetcher:f.fetcher}),"CADENCE_DISPATCH_UNAVAILABLE");
+    assert.equal(await engineeringCadenceProof(tick(),f.env,"NO_APPROVED_BACKLOG",{fetcher:f.fetcher}),"CADENCE_NOT_RESERVED");
+    now+=SLOT_MS;
+    assert.equal(await engineeringCadenceProof(tick(),f.env,"NO_APPROVED_BACKLOG",{fetcher:f.fetcher}),"CADENCE_DISPATCH_UNAVAILABLE");
+    now+=SLOT_MS;
+    assert.equal(await engineeringCadenceProof(tick(),f.env,"NO_APPROVED_BACKLOG",{fetcher:f.fetcher}),"CADENCE_NOT_RESERVED");
+    assert.equal(f.calls.length,2);
+    for (const [i,call] of f.calls.entries()) {
+      const slot=CADENCE_START+(i+1)*SLOT_MS;
+      assert.deepEqual(JSON.parse(call.body),{event_type:"plenum_engineering_cadence_proof_v1",
+        client_payload:{slot,scope:"cron_observation_only",signature:createHmac("sha256",secret)
+          .update("plenum-engineering-cadence-v1."+slot+".cron_observation_only").digest("hex")}});
+      assert.equal(call.body.includes(secret),false);
+    }
+  } finally {Date.now=old;}
+});
+test("cadence observation disabled in previews, outside window or when approved work exists",async()=>{
+  const old=Date.now;
+  let now=CADENCE_START+SLOT_MS;
+  Date.now=()=>now;
+  try {
+    const f=fixture({closed:true});
+    f.env.PLENUM_WEBHOOK_HMAC_SECRET="test-only-cadence-secret-not-production-123456";
+    const tick=()=>({cron:CRON,scheduledTime:now});
+    for (const env of [{...f.env,PLENUM_PREVIEW_ONLY:"true"},{...f.env,PLENUM_WEBHOOK_HMAC_SECRET:""},{...f.env,PLENUM_ENGINEERING_FALLBACK_ENABLED:"false"}])
+      assert.equal(await engineeringCadenceProof(tick(),env,"NO_APPROVED_BACKLOG",{fetcher:f.fetcher}),"CADENCE_NOT_ELIGIBLE");
+    assert.equal(await engineeringCadenceProof(tick(),f.env,"DISPATCH_ACCEPTED_NOT_COMPLETED",{fetcher:f.fetcher}),"CADENCE_NOT_ELIGIBLE");
+    assert.equal(await engineeringCadenceProof({cron:CRON,scheduledTime:now-SLOT_MS},f.env,"NO_APPROVED_BACKLOG",{fetcher:f.fetcher}),"CADENCE_NOT_ELIGIBLE");
+    now=CADENCE_END;
+    assert.equal(eligibleCadenceSlot(now),false);
+    assert.equal(await engineeringCadenceProof(tick(),f.env,"NO_APPROVED_BACKLOG",{fetcher:f.fetcher}),"CADENCE_NOT_ELIGIBLE");
+    assert.equal(f.claims.length,0);
+    assert.equal(f.calls.length,0);
+  } finally {Date.now=old;}
 });
