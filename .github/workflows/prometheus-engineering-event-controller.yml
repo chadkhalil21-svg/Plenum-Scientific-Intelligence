@@ -4,6 +4,8 @@ on:
     workflows:
       - Prometheus upstream skill supply-chain qualification
       - Prometheus model-free document retrieval qualification
+      - Prometheus | Pinned local speech recognition qualification
+      - Prometheus | Blender concept geometry qualification
     types: [completed]
   schedule:
     - cron: '3-58/5 * * * *'
