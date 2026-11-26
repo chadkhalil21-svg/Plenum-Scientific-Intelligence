@@ -31,6 +31,8 @@ SHA = re.compile(r"^[a-f0-9]{40}$")
 MARKER = "<!-- plenum-engineering-controller-v1:"
 MAX_BYTES = 2_000_000
 RECEIPT_ISSUE = 432
+WAKE_TITLE = "[Plenum Engineering] approved backlog wake"
+WAKE_BODY = "PLENUM_ENGINEERING_WAKE_V1"
 # One audited repair recipe, bound to original failed public development run.
 WHISPER_REPAIR_RUN = 45767285022
 WHISPER_REPAIR_HEAD = "a9ed286a49308fb5e01ed25a53c08f65e72445af"
@@ -225,10 +227,27 @@ def process(n, run_id=None):
     return result
 
 
+def wake_authorized(event):
+    if not isinstance(event, dict):
+        return False
+    issue = event.get("issue") or {}
+    return (
+        event.get("action") == "opened"
+        and (event.get("repository") or {}).get("full_name") == REPO
+        and (event.get("sender") or {}).get("login") == OWNER
+        and (issue.get("user") or {}).get("login") == OWNER
+        and number(issue.get("number"))
+        and issue.get("state") == "open"
+        and "pull_request" not in issue
+        and issue.get("title") == WAKE_TITLE
+        and issue.get("body") == WAKE_BODY
+    )
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--event", required=True)
-    parser.add_argument("--kind", choices=("workflow_run", "schedule", "workflow_dispatch"), required=True)
+    parser.add_argument("--kind", choices=("workflow_run", "schedule", "workflow_dispatch", "issues"), required=True)
     args = parser.parse_args()
     if os.getenv("GITHUB_REPOSITORY") != REPO:
         raise PermissionError("Wrong repository")
@@ -238,7 +257,15 @@ def main():
         if not number(run.get("id")) or (run.get("repository") or {}).get("full_name") != REPO:
             return
         numbers = [n for n, row in REGISTERED.items() if row[1] == run.get("name") and row[0] == run.get("head_branch")]
-        results = [process(n, run["id"]) for n in numbers]
+        if not numbers:
+            return
+        # A registered completion also drains any older eligible backlog.
+        # The exact-head, terminal, bot receipt, and no-replay gates remain.
+        results = [process(n, run["id"] if n in numbers else None) for n in REGISTERED]
+    elif args.kind == "issues":
+        if not wake_authorized(event):
+            raise PermissionError("Not an authorized engineering wake")
+        results = [process(n) for n in REGISTERED]
     else:
         results = [process(n) for n in REGISTERED]
     if any(x.get("whisper_repair_reserved") is True for x in results):
