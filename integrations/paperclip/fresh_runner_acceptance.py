@@ -70,7 +70,16 @@ def accept_mission(directory,timing_root,summary,cid,mid,expected_scope=None):
     if len(profiles)!=11 or profiles!=summary["profile_receipt_sha256"] or evidence!=summary["evidence"]:raise ValueError("Qualification evidence mismatch")
     actual=verify({k:v for k,v in prior.items() if k!="verification"},directory,functional_test=True,scope=scope)
     if actual!=prior["verification"]["result"] or actual!=summary["independent_verification"]:raise ValueError("Fresh functional verification mismatch")
-    if summary.get("minister_model_executed") is True:
+    if scope["kind"]=="variable_graph":
+        from native_variable import load,evidence_root
+        from model_plan import MODEL
+        variable_plan=load(directory,scope,cid,mid)
+        receipt=read(evidence_root(directory)/"model-response.json")
+        if (summary.get("minister_model_executed") is not True or summary.get("model")!=MODEL
+            or summary.get("model_digest")!=variable_plan["model_digest"] or summary.get("model_receipt_sha256")!=digest(receipt)
+            or summary.get("model_eval_count")!=receipt["eval_count"] or "model_receipt_sha256" in plan):
+            raise ValueError("Variable model proof mismatch")
+    elif summary.get("minister_model_executed") is True:
         receipt=read(directory/"minister-model-plan.json")
         if digest(receipt)!=summary["model_receipt_sha256"] or digest(receipt)!=plan["model_receipt_sha256"] or validate_receipt(receipt,cid,mid,goals=goal_texts(scope),**planning_kwargs(scope))!=list(MISSION_ORDER):raise ValueError("Original model proof mismatch")
         verify_classification_attempts(directory,receipt,planning_kwargs(scope)["operation_policy"])
