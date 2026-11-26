@@ -163,3 +163,43 @@ class EngineeringGateTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class DynamicEngineeringQueueTests(unittest.TestCase):
+    def setUp(self):
+        self.n=12345
+        self.pr={"number":self.n,"state":"open","draft":False,"user":{"login":c.OWNER},
+                 "head":{"ref":"prometheus-new-work","sha":"a"*40,"repo":{"full_name":c.REPO}},
+                 "base":{"ref":"main","repo":{"full_name":c.REPO}},
+                 "body":"<!-- plenum-engineering-observe-v1:"+"a"*40+":New native check:qualification -->"}
+    def approval(self):
+        return {"body":self.pr["body"],"user":{"login":c.OWNER,"id":251133044},
+                "author_association":"OWNER","created_at":"2026-11-26T00:00:00Z","updated_at":"2026-11-26T00:00:00Z"}
+    def test_discovery_and_head_bound_revalidation(self):
+        with patch.object(c,"DYNAMIC",{}),patch.object(c,"request",side_effect=[[self.pr],[self.approval()]]):
+            c.discover()
+            self.assertTrue(c.authorized_pr(self.pr,self.n))
+            self.assertEqual(c.registry()[self.n],("prometheus-new-work","New native check","qualification"))
+            for changed in ("head","body","user","draft"):
+                bad=copy.deepcopy(self.pr)
+                if changed=="head":bad["head"]["sha"]="b"*40
+                elif changed=="body":bad["body"]+="\n"+bad["body"]
+                elif changed=="user":bad["user"]["login"]="outsider"
+                else:bad["draft"]=True
+                self.assertFalse(c.authorized_pr(bad,self.n))
+    def test_no_unapproved_or_unbounded_discovery(self):
+        with patch.object(c,"DYNAMIC",{}),patch.object(c,"request",return_value=[{}]*100):
+            with self.assertRaises(RuntimeError):c.discover()
+        with patch.object(c,"DYNAMIC",{}),patch.object(c,"request",side_effect=[[self.pr,self.pr],[self.approval()],[self.approval()]]):
+            with self.assertRaises(RuntimeError):c.discover()
+        with patch.object(c,"DYNAMIC",{}),patch.object(c,"request",return_value=[dict(self.pr,body="arbitrary instructions")]):
+            c.discover()
+            self.assertNotIn(self.n,c.registry())
+
+    def test_owner_comment_required_and_unedited(self):
+        approval=self.approval()
+        for comments in ([],[dict(approval,updated_at="2026-11-26T00:01:00Z")],
+                         [dict(approval,user={"login":c.OWNER,"id":999})],
+                         [dict(approval,author_association="COLLABORATOR")],[approval,approval]):
+            with patch.object(c,"DYNAMIC",{}),patch.object(c,"request",side_effect=[[self.pr],comments]):
+                c.discover()
+                self.assertNotIn(self.n,c.registry())

@@ -6,6 +6,20 @@ export const CRON = "*/5 * * * *";
 const REGISTERED = [[935,"prometheus-hyperframes-local-qualification"],
                     [936,"prometheus-accepted-upstream-evidence-registry"]];
 export const SLOT_MS = 300_000;
+const MAX_DYNAMIC = 12;
+export function dynamicEntry(pr) {
+  if (!pr || !Number.isSafeInteger(pr.number) || pr.number<=0 ||
+      REGISTERED.some(([n])=>n===pr.number) || pr.state!=="open" || pr.draft!==false ||
+      pr.user?.login!=="chadkhalil21-svg" || pr.head?.repo?.full_name!==REPO ||
+      pr.base?.repo?.full_name!==REPO || pr.base?.ref!=="main" ||
+      typeof pr.head?.ref!=="string" || !/^prometheus-[a-z0-9][a-z0-9-]{0,100}$/.test(pr.head.ref) ||
+      typeof pr.body!=="string") return null;
+  const lines=pr.body.split(/\r?\n/).filter(x=>x.includes("plenum-engineering-observe-v1:"));
+  if(lines.length!==1)return null;
+  const m=/^<!-- plenum-engineering-observe-v1:([a-f0-9]{40}):([A-Za-z0-9 ._|-]{1,100}):([A-Za-z0-9 ._|-]{1,100}) -->$/.exec(lines[0]);
+  if(!m || m[1]!==pr.head.sha)return null;
+  return {number:pr.number,head:m[1],marker:lines[0]};
+}
 
 export function eligibleTick(scheduledTime, now = Date.now()) {
   return Number.isSafeInteger(scheduledTime) && scheduledTime > 0 &&
@@ -59,6 +73,27 @@ export async function engineeringFallback(controller, env, {fetcher=fetch, clock
       if (!res.ok) return "READ_UNAVAILABLE";
       const body = await res.json();
       if (isRegisteredOpen(body, number, branch)) open = true;
+    }
+    // Discover new, explicitly admitted exact-head PRs without another code change.
+    // Do not use body text as instructions or allow any caller-supplied endpoint.
+    if (!open) {
+      const res=await fetcher(API+"/pulls?state=open&base=main&per_page=100",{headers,redirect:"manual",signal:AbortSignal.timeout(8000)});
+      if(!res.ok)return "READ_UNAVAILABLE";
+      const rows=await res.json();
+      if(!Array.isArray(rows)||rows.length>=100)return "READ_UNAVAILABLE";
+      const entries=rows.map(dynamicEntry).filter(Boolean);
+      if(entries.length>MAX_DYNAMIC||new Set(entries.map(x=>x.number)).size!==entries.length)return "READ_UNAVAILABLE";
+      for(const entry of entries){
+        const reply=await fetcher(API+"/issues/"+entry.number+"/comments?per_page=100",{headers,redirect:"manual",signal:AbortSignal.timeout(8000)});
+        if(!reply.ok)return "READ_UNAVAILABLE";
+        const comments=await reply.json();
+        if(!Array.isArray(comments)||comments.length>=100)return "READ_UNAVAILABLE";
+        const matches=comments.filter(c=>c?.body===entry.marker &&
+          c.user?.login==="chadkhalil21-svg" && c.user?.id===251133044 &&
+          c.author_association==="OWNER" && typeof c.created_at==="string" &&
+          c.created_at===c.updated_at);
+        if(matches.length===1)open=true;
+      }
     }
     if (!open) return "NO_APPROVED_BACKLOG";
     if (!eligibleTick(slot,clock())) return "INVALID_OR_STALE_TICK";
