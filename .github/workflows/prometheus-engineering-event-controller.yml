@@ -10,6 +10,8 @@ on:
   schedule:
     - cron: '3-58/5 * * * *'
   workflow_dispatch:
+  issues:
+    types: [opened]
   pull_request:
     paths:
       - 'src/plenum_ai/engineering_event_controller.py'
@@ -38,7 +40,11 @@ jobs:
       github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
       github.ref == 'refs/heads/main' &&
       (github.event_name == 'workflow_run' || github.event_name == 'schedule' ||
-       (github.event_name == 'workflow_dispatch' && github.actor == 'chadkhalil21-svg'))
+       (github.event_name == 'workflow_dispatch' && github.actor == 'chadkhalil21-svg') ||
+       (github.event_name == 'issues' && github.event.issue.user.login == 'chadkhalil21-svg' &&
+        github.event.sender.login == 'chadkhalil21-svg' &&
+        github.event.issue.title == '[Plenum Engineering] approved backlog wake' &&
+        github.event.issue.body == 'PLENUM_ENGINEERING_WAKE_V1'))
     runs-on: ubuntu-latest
     timeout-minutes: 4
     permissions:
