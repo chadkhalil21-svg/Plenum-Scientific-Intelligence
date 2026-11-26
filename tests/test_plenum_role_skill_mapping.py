@@ -24,6 +24,7 @@ class PlenumSkillContract(unittest.TestCase):
                     self.assertIn("name: "+slug,content)
         advisor=next(a for a in x["roles"] if a["name"]=="business_advisor")
         self.assertIn("plenum-business-advisor",advisor["skill_ids"])
+        self.assertEqual([role["name"] for role in x["roles"] if "plenum-coding-superpowers" in role["skill_ids"]],["coding"])
 
     def test_preview_soul_includes_skills_without_creating_gateway(self):
         module_path=ROOT/"integrations/hermes/provision_profiles.py"
