@@ -26,11 +26,13 @@ def extract_pdf(workspace: Path, source: Path) -> dict:
     if not 0 < path.stat().st_size <= 20 * 1024 * 1024:
         raise ValueError("PDF size outside approved bounds")
     original = path.read_bytes()
-    from docling.datamodel.base_models import InputFormat
+    from docling.datamodel.base_models import InputFormat, ConversionStatus
     from docling.document_converter import DocumentConverter, NativePdfFormatOption
     converter = DocumentConverter(allowed_formats=[InputFormat.PDF],
                                   format_options={InputFormat.PDF: NativePdfFormatOption()})
     result = converter.convert(path, max_num_pages=30, max_file_size=20 * 1024 * 1024)
+    if result.status != ConversionStatus.SUCCESS:
+        raise ValueError("Incomplete PDF conversion")
     markdown = result.document.export_to_markdown()
     if not markdown.strip() or len(markdown) > 500000:
         raise ValueError("Missing or oversized extracted text")
@@ -47,7 +49,9 @@ def retrieve(records: list[dict], query: str) -> list[dict]:
     from llama_index.core import Document, SimpleKeywordTableIndex
     from llama_index.core.llms import MockLLM
     from llama_index.core.embeddings import MockEmbedding
-    # Explicitly prevent default hosted embedding or LLM configuration.
+    # This adapter is intended for a dedicated worker process, not shared
+    # global Settings in an existing in-process agent. Explicitly prevent
+    # default hosted embedding or LLM configuration.
     from llama_index.core import Settings
     Settings.llm = MockLLM()
     Settings.embed_model = MockEmbedding(embed_dim=8)
