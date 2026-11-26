@@ -1,0 +1,121 @@
+{
+  "schema": "plenum-upstream-expansion-v1",
+  "baseline": "0cd1796d1c051bcd81a906c25505f92a07f04f57",
+  "founder_authorized": true,
+  "paid_inference": false,
+  "automatic_activation": false,
+  "permanent_server": false,
+  "entries": [
+    {
+      "id": "skillspector",
+      "repository": "NVIDIA/SkillSpector",
+      "commit": "02894ec5b8a0a70637df5a6b45763de92940cedd",
+      "license": "Apache-2.0",
+      "license_blob": "48afca9e235dc4e1c05cf1aca7b111328ce6fa86",
+      "role": "verification",
+      "acceptance": "static scanner with no LLM; complete JSON report and manual findings adjudication",
+      "state": "qualification_candidate"
+    },
+    {
+      "id": "docling",
+      "repository": "docling-project/docling",
+      "commit": "33f33aafbdb5151dc795a042b964ff659c475218",
+      "license": "MIT",
+      "license_blob": "6684a401bf0f700fd37104ab7c8da340036f7166",
+      "role": "research",
+      "acceptance": "CPU document conversion; public fixture PDF table/text checked against source; separate model license review",
+      "state": "candidate"
+    },
+    {
+      "id": "last30days",
+      "repository": "mvanhorn/last30days-skill",
+      "commit": "ed7ec6752b766ea3eb62239b374900764e9b5453",
+      "license": "MIT",
+      "license_blob": "c7d2838bcc549a5cda7b7a3556a422e0074e56a5",
+      "role": "research",
+      "acceptance": "only reviewed keyless read-only sources; original provenance and dated findings; no social sessions or paid backend",
+      "state": "quarantined_skill"
+    },
+    {
+      "id": "superpowers",
+      "repository": "obra/superpowers",
+      "commit": "22f0b463e7a5e579904dd6211a520321035526f7",
+      "license": "MIT",
+      "license_blob": "abf0390320aa14406af7a520b9b0739fdda9bf08",
+      "role": "coding",
+      "acceptance": "reuse existing coding delivery; verification-before-completion skill review, not a new agent",
+      "state": "quarantined_skill"
+    },
+    {
+      "id": "gstack",
+      "repository": "garrytan/gstack",
+      "commit": "e6dd567349e85506127c2f4cf69a0392923c032c",
+      "license": "MIT",
+      "license_blob": "35029511144443297cad2d26e4bac17d0e352f93",
+      "role": "coding",
+      "acceptance": "select incremental review methods only; do not execute auto-install or tool hooks",
+      "state": "quarantined_skill"
+    },
+    {
+      "id": "impeccable",
+      "repository": "pbakaus/impeccable",
+      "commit": "2fc5e1459efbbf06d92c7306517c286bf12490cf",
+      "license": "Apache-2.0",
+      "license_blob": "bb3f6d23b1f8025514a62a12b51b47d73e3c9aa9",
+      "role": "creative",
+      "acceptance": "existing design audit; review scope and actual render; no hooks or auto-downloaded engine",
+      "state": "quarantined_skill"
+    },
+    {
+      "id": "whisper.cpp",
+      "repository": "ggml-org/whisper.cpp",
+      "commit": "868e55578ea5f69550c046da22aefe11dc6e04c0",
+      "license": "MIT",
+      "license_blob": "e7dca554bcb802f98408383a864404e3aa4eacca",
+      "role": "research",
+      "acceptance": "reuse existing private local adapter; only licensed model and owner-approved audio; public synthetic development fixture only in CI",
+      "state": "existing_adapter_runtime_unverified"
+    },
+    {
+      "id": "llamaindex",
+      "repository": "run-llama/llama_index",
+      "commit": "40d4f79eb9d8f68430692d0cc156483ca2d7f4f6",
+      "license": "MIT",
+      "license_blob": "e6074042d0391061b7d7d45d21e6693ae108daec",
+      "role": "research",
+      "acceptance": "explicit offline retrieval, no default OpenAI LLM or embeddings; document-grounded answer evidence",
+      "state": "candidate"
+    },
+    {
+      "id": "hyperframes",
+      "repository": "heygen-com/hyperframes",
+      "commit": "c143250d6d3155389ec06671cb86d78baef2f108",
+      "license": "Apache-2.0",
+      "license_blob": "ae06b37e1c5116ccfaa615ac25ec1aabf5658d8c",
+      "role": "creative",
+      "acceptance": "local CLI only, no HeyGen credits/cloud; synthetic motion fixture and independently checked frame/duration",
+      "state": "candidate"
+    },
+    {
+      "id": "blender",
+      "repository": "blender/blender",
+      "commit": "a3e76444050d38f47aaa443e00d2f9192eaeea8b",
+      "license": "GPL",
+      "license_blob": "3be7c91320a650eb99fc4ebda1f5fab48c7dbea2",
+      "role": "simulation",
+      "acceptance": "separate supported executable, GPL distribution obligations; bounded local scientific visualization and verified render",
+      "state": "candidate"
+    }
+  ],
+  "conditional": [
+    "autoresearch methodology: use existing continuous-improvement skill, no GPU training",
+    "evaluation rubric and build loop: existing independent verification and engineering delivery; only incremental improvements",
+    "Hermes Jarvis/Kanban: existing Minister and Paperclip; no second supervisor or always-on host",
+    "Graft and Freebuff: only demonstrated incremental benefit vs existing OpenHands",
+    "Airbyte/ClickHouse: only if approved real data volume requires them",
+    "ComfyUI/InvokeAI/FLUX/Ultimate Vocal Remover: only verified local compute and compatible model license",
+    "Remotion: commercial license verification before use; prefer HyperFrames",
+    "Divergence/F Cancer Skill: exact upstream identity and permissions not established"
+  ],
+  "policy": "No candidate may grant tool permissions or run automatically. Pinned source and a scanner report are not runtime adoption. Retain original role router and live mission gates. Public GitHub jobs only eligible development/testing; never private data or unrestricted commercial inference."
+}
