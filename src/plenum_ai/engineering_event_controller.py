@@ -191,7 +191,11 @@ def diagnose(pr, n, run, jobs):
     # were never started. No retry for failed validation or partial execution.
     if (run["run_attempt"] == 1 and len(failed) == 1
             and failed[0].get("name") == "Set up job"
-            and all(s is failed[0] or s.get("conclusion") in ("skipped", None)
+            and all(s is failed[0] or (
+                        s.get("conclusion") in ("skipped", None)
+                        and (s.get("conclusion") == "skipped" or (
+                            s.get("started_at") is None
+                            and s.get("status") not in ("in_progress", "completed"))))
                     for s in steps)):
         return {"status": "RETRY_UNSTARTED_INFRASTRUCTURE_ONCE", "job_id": job["id"]}
     return {"status": "BLOCKED_NEEDS_CORRECTION"}
