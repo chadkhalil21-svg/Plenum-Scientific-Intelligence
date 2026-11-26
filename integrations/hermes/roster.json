@@ -71,7 +71,8 @@
         "plenum-skill-curation",
         "plenum-platform-adoption",
         "plenum-continuous-improvement",
-        "plenum-free-local-tools"
+        "plenum-free-local-tools",
+        "plenum-coding-superpowers"
       ],
       "load_skills_on_demand": true
     },
