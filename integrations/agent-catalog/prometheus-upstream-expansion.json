@@ -51,6 +51,23 @@
       "state": "existing_reviewed_method_raw_skill_quarantined",
       "acceptance_evidence": {
         "scope": "existing keyless public recency research method; scanner timed out; raw package not admitted"
+      },
+      "independent_static_review": {
+        "pr": 924,
+        "run": 45764947109,
+        "artifact": 15091742421,
+        "archive_sha256": "ebf0eb197749eb09d4bc6c8d997c3877b7394589536a93dce42c107ca8e2281b",
+        "archive_crc_verified": true,
+        "paid_inference": false,
+        "raw_activation_authorized": false,
+        "scope": "skills/last30days directory",
+        "scanner_result": "TimeoutExpired",
+        "coverage_complete": false
+      },
+      "curated_method_integration": {
+        "pr": 954,
+        "merge": "dd2c0745c6c0943dec22e7fe401e8a6c8c4aaf07",
+        "scope": "reviewed non-executable portions in existing specialist skill; runtime use unverified"
       }
     },
     {
@@ -64,6 +81,27 @@
       "state": "existing_reviewed_method_raw_skill_quarantined",
       "acceptance_evidence": {
         "scope": "existing coding-delivery method; raw package not admitted"
+      },
+      "independent_static_review": {
+        "pr": 924,
+        "run": 45764947109,
+        "artifact": 15091742421,
+        "archive_sha256": "ebf0eb197749eb09d4bc6c8d997c3877b7394589536a93dce42c107ca8e2281b",
+        "archive_crc_verified": true,
+        "paid_inference": false,
+        "raw_activation_authorized": false,
+        "scope": "skills/verification-before-completion only",
+        "scanner_recommendation": "SAFE",
+        "components_scanned": 1,
+        "components_total": 1,
+        "high_findings": 0,
+        "medium_findings": 1,
+        "adjudication": "The sole finding flags a passage forbidding unsupported completion claims; no blanket package admission. Reviewed adaptation only."
+      },
+      "curated_method_integration": {
+        "pr": 954,
+        "merge": "dd2c0745c6c0943dec22e7fe401e8a6c8c4aaf07",
+        "scope": "reviewed non-executable portions in existing specialist skill; runtime use unverified"
       }
     },
     {
@@ -77,6 +115,26 @@
       "state": "raw_skill_denied",
       "acceptance_evidence": {
         "scope": "scanner incomplete and DO_NOT_INSTALL; existing coding review only"
+      },
+      "independent_static_review": {
+        "pr": 924,
+        "run": 45764947109,
+        "artifact": 15091742421,
+        "archive_sha256": "ebf0eb197749eb09d4bc6c8d997c3877b7394589536a93dce42c107ca8e2281b",
+        "archive_crc_verified": true,
+        "paid_inference": false,
+        "raw_activation_authorized": false,
+        "scope": "review skill directory only",
+        "scanner_recommendation": "DO_NOT_INSTALL",
+        "components_scanned": 25,
+        "components_total": 27,
+        "high_findings": 6,
+        "medium_findings": 6
+      },
+      "curated_method_integration": {
+        "pr": 954,
+        "merge": "dd2c0745c6c0943dec22e7fe401e8a6c8c4aaf07",
+        "scope": "reviewed non-executable portions in existing specialist skill; runtime use unverified"
       }
     },
     {
@@ -90,6 +148,26 @@
       "state": "raw_skill_denied",
       "acceptance_evidence": {
         "scope": "scanner incomplete and DO_NOT_INSTALL; existing design audit only"
+      },
+      "independent_static_review": {
+        "pr": 924,
+        "run": 45764947109,
+        "artifact": 15091742421,
+        "archive_sha256": "ebf0eb197749eb09d4bc6c8d997c3877b7394589536a93dce42c107ca8e2281b",
+        "archive_crc_verified": true,
+        "paid_inference": false,
+        "raw_activation_authorized": false,
+        "scope": ".hermes/skills/impeccable only",
+        "scanner_recommendation": "DO_NOT_INSTALL",
+        "components_scanned": 57,
+        "components_total": 63,
+        "high_findings": 13,
+        "medium_findings": 37
+      },
+      "curated_method_integration": {
+        "pr": 954,
+        "merge": "dd2c0745c6c0943dec22e7fe401e8a6c8c4aaf07",
+        "scope": "reviewed non-executable portions in existing specialist skill; runtime use unverified"
       }
     },
     {

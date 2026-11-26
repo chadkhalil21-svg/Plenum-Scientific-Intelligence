@@ -203,3 +203,27 @@ class DynamicEngineeringQueueTests(unittest.TestCase):
             with patch.object(c,"DYNAMIC",{}),patch.object(c,"request",side_effect=[[self.pr],comments]):
                 c.discover()
                 self.assertNotIn(self.n,c.registry())
+
+class ImmediateApprovalWakeTests(unittest.TestCase):
+    def test_owner_event_only_and_exact_shape(self):
+        marker="<!-- plenum-engineering-observe-v1:"+"a"*40+":Example check:qualification -->"
+        owner={"login":c.OWNER,"id":251133044}
+        event={"action":"created","repository":{"full_name":c.REPO},"sender":owner,
+               "issue":{"number":12345,"state":"open","pull_request":{},"user":owner},
+               "comment":{"user":owner,"body":marker,"author_association":"OWNER",
+                          "created_at":"2026-11-26T00:00:00Z","updated_at":"2026-11-26T00:00:00Z"}}
+        self.assertEqual(c.approval_event_number(event),12345)
+        for path,value in ((("action",),"edited"),(("sender","id"),1),
+                           (("comment","user","id"),1),
+                           (("comment","body"),marker+"\nextra"),
+                           (("comment","author_association"),"COLLABORATOR"),
+                           (("comment","updated_at"),"2026-11-26T00:01:00Z"),
+                           (("issue","state"),"closed")):
+            bad=copy.deepcopy(event)
+            target=bad
+            for key in path[:-1]:target=target[key]
+            target[path[-1]]=value
+            self.assertIsNone(c.approval_event_number(bad))
+        bad=copy.deepcopy(event)
+        del bad["issue"]["pull_request"]
+        self.assertIsNone(c.approval_event_number(bad))
