@@ -60,7 +60,7 @@ def digest(scope):
     return sha256(encoded(validate_scope(scope))).hexdigest()
 
 
-def parse_body(body):
+def parse_body(body, *, allow_variable=False):
     if not isinstance(body,str) or len(body)>1800:raise ValueError("Bounded public envelope required")
     prefix=MAGIC+"\n"
     if not body.startswith(prefix):raise ValueError("Unknown mission envelope")
@@ -72,7 +72,7 @@ def parse_body(body):
         return result
     value=validate_scope(json.loads(body[len(prefix):],object_pairs_hook=pairs))
     if value==LEGACY:raise ValueError("Legacy mission requires original envelope")
-    if value["kind"]=="variable_graph":raise PermissionError("Variable graph remains isolated CI candidate")
+    if value["kind"]=="variable_graph" and allow_variable is not True:raise PermissionError("Variable graph requires the owner-authorized event gate")
     return value
 
 

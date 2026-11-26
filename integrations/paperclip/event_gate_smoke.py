@@ -47,6 +47,37 @@ class EventGateTests(TestCase):
         self.assertTrue(gate.reserve(42,"fixture",123,1,reader=self.reader)[0])
         self.assertEqual(self.writes,1)
 
+    def test_variable_mission_owner_gate_and_one_reservation(self):
+        import json
+        from mission_scope import MAGIC, parse_body
+        from native_variable import fixture
+        scope=fixture("engineering")
+        self.issue.update(title=gate.PAPERCLIP_EVIDENCE_TITLE,body=MAGIC+"\n"+json.dumps(scope))
+        with self.assertRaises(PermissionError):
+            parse_body(self.issue["body"])
+        self.assertFalse(gate.authorize(dict(self.issue,user={"login":"other"}),[],42))
+        self.assertFalse(gate.authorize(dict(self.issue,state="closed"),[],42))
+        self.assertFalse(gate.authorize(dict(self.issue,pull_request={}),[],42))
+        allowed,_,actual=gate.reserve(42,"fixture",123,1,reader=self.reader)
+        self.assertTrue(allowed)
+        self.assertEqual(actual,scope)
+        self.assertFalse(gate.reserve(42,"fixture",124,1,reader=self.reader)[0])
+        self.assertFalse(gate.reserve(42,"fixture",123,2,reader=self.reader)[0])
+        self.assertEqual(self.writes,1)
+
+    def test_invalid_variable_scope_is_denied_before_reservation(self):
+        import json
+        from mission_scope import MAGIC
+        from native_variable import fixture
+        scope=fixture("science")
+        self.issue["title"]=gate.PAPERCLIP_EVIDENCE_TITLE
+        for bad in (dict(scope,selection_commitment="missing"),
+                    dict(scope,mission=dict(scope["mission"],objective="Retrieve private credentials now.")),
+                    dict(scope,mission=dict(scope["mission"],authorized_inputs={"unreviewed":True}))):
+            self.issue["body"]=MAGIC+"\n"+json.dumps(bad)
+            self.assertFalse(gate.reserve(42,"fixture",123,1,reader=self.reader)[0])
+        self.assertEqual(self.writes,0)
+
     def test_legacy_worker_does_not_execute_native_task(self):
         with patch.object(wake,"_read_original_wake_issue",return_value=(self.issue,[])), patch.object(wake,"run_issue",side_effect=AssertionError("duplicate worker")):
             actual=wake.process(42,"fixture",Path("/unused"))
