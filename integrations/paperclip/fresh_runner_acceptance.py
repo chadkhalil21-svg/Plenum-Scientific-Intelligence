@@ -70,7 +70,16 @@ def accept_mission(directory,timing_root,summary,cid,mid,expected_scope=None):
     if len(profiles)!=11 or profiles!=summary["profile_receipt_sha256"] or evidence!=summary["evidence"]:raise ValueError("Qualification evidence mismatch")
     actual=verify({k:v for k,v in prior.items() if k!="verification"},directory,functional_test=True,scope=scope)
     if actual!=prior["verification"]["result"] or actual!=summary["independent_verification"]:raise ValueError("Fresh functional verification mismatch")
-    if summary.get("minister_model_executed") is True:
+    if scope["kind"]=="variable_graph":
+        from native_variable import load,evidence_root
+        from model_plan import MODEL
+        variable_plan=load(directory,scope,cid,mid)
+        receipt=read(evidence_root(directory)/"model-response.json")
+        if (summary.get("minister_model_executed") is not True or summary.get("model")!=MODEL
+            or summary.get("model_digest")!=variable_plan["model_digest"] or summary.get("model_receipt_sha256")!=digest(receipt)
+            or summary.get("model_eval_count")!=receipt["eval_count"] or "model_receipt_sha256" in plan):
+            raise ValueError("Variable model proof mismatch")
+    elif summary.get("minister_model_executed") is True:
         receipt=read(directory/"minister-model-plan.json")
         if digest(receipt)!=summary["model_receipt_sha256"] or digest(receipt)!=plan["model_receipt_sha256"] or validate_receipt(receipt,cid,mid,goals=goal_texts(scope),**planning_kwargs(scope))!=list(MISSION_ORDER):raise ValueError("Original model proof mismatch")
         verify_classification_attempts(directory,receipt,planning_kwargs(scope)["operation_policy"])
@@ -148,13 +157,24 @@ def accept_queue(root):
 def main():
     base=Path(sys.argv[1]);out=Path(sys.argv[2])
     event=os.environ["EVENT"];run=os.environ["GITHUB_RUN_ID"];commit=os.environ["GITHUB_SHA"]
-    expected_names={"off-legacy","local-legacy","local-budget","local-objective","local-composition-logistics","local-composition-energy","local-synthesis","local-adaptive-review","local-adaptive-defer","local-oss-review","local-oss-defer"} if event=="pull_request" else {"local-event"}
+    expected_names={"off-legacy","local-legacy","local-budget","local-objective","local-composition-logistics","local-composition-energy","local-synthesis","local-adaptive-review","local-adaptive-defer","local-oss-review","local-oss-defer","local-variable-science","local-variable-engineering","local-variable-commercial"} if event=="pull_request" else {"local-event"}
     paths={p.name.removeprefix("paperclip-native-public-evidence-"):p for p in base.iterdir()}
     if set(paths)!=expected_names:raise ValueError("Missing or unexpected native evidence archives")
     scope=None if event=="pull_request" else validate_scope(json.loads(os.environ["EXPECTED_SCOPE"]))
     results={k:accept(paths[k],run,commit,scope) for k in sorted(paths)}
     if any(v["model_receipt_verified"]!=(k!="off-legacy") for k,v in results.items()):raise ValueError("Unexpected model receipt")
     if event=="pull_request":
+        from native_variable import fixture as variable_fixture
+        for case,count in (("science",5),("engineering",3),("commercial",3)):
+            key="local-variable-"+case
+            accepted=accept(paths[key],run,commit,variable_fixture(case))
+            if accepted!=results[key]:raise ValueError("Variable independent acceptance mismatch")
+            q=read(paths[key]/accepted["company"]/accepted["mission"]/"qualification.json")
+            proof=q["independent_verification"]
+            if proof.get("native_variable_graph_verified") is not True or proof.get("verified_contracts")!=count:
+                raise ValueError("Missing native variable graph work")
+            if proof.get("model_calls_replayed")!=0 or proof.get("provider_calls_replayed")!=0:
+                raise ValueError("Variable replay detected")
         from synthesis_smoke import scope as expected_synthesis_scope
         accepted=accept(paths["local-synthesis"],run,commit,expected_synthesis_scope())
         if accepted!=results["local-synthesis"]:raise ValueError("Synthesis independent acceptance mismatch")

@@ -116,6 +116,10 @@ def run_assigned(role, *, mission_worker=None, specs=SPECS, description=DESCRIPT
         binding=json.loads((directory/"mission-scope.json").read_text())
         if validate_scope(binding["scope"])!=expected_scope or binding["scope_sha256"]!=digest(expected_scope):
             raise ValueError("Native scope receipt mismatch")
+        if expected_scope["kind"]=="variable_graph":
+            from checkpoint_store import checked
+            dispatch=checked(directory/"minister-plan.json",{"company":company,"parent":parent})
+            if dispatch["tasks"][role]!=task:raise PermissionError("Variable graph native assignment mismatch")
         original=api("/api/issues/"+parent,worker=True)
         if original.get("description")!=binding["parent_description"] or original.get("title")!=binding["parent_title"]:
             raise PermissionError("Native parent scope mismatch")
