@@ -32,6 +32,8 @@ FOCUSED_TESTS = {
 }
 
 TASK_ACCEPTANCE = {
+    ("src/plenum_ai/noaa_revision_agent.py", "Repair function parse_candidate. Reject oversized signed integer alpha or gain as invalid_parameters without exceptions. Preserve valid ranges and every existing validation gate."):
+        "noaa_numeric_proposal.py",
     ("src/plenum_ai/workforce_team_dispatch.py", "Repair function dispatch. For exact cooling initial K ambient K rate time, reuse run_contract for cooling_solution and cooling_readback. Save both keyed results in cooling.json. Reject invalid inputs."):
         "parameterized_science_worker.py",
     ("src/plenum_ai/mission_checkpoint.py", "Repair function load_checkpoint. Reject any saved result without exact integer attempt 1 or 2. Then repair function artifact_digest. Reject nonregular entries in artifact trees."):
