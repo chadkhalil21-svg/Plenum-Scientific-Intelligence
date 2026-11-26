@@ -20,7 +20,9 @@ BODY="PLENUM_PAPERCLIP_PUBLIC_QUALIFICATION_V1\nobjective: Execute the reviewed 
 def issue_scope(issue):
     if issue.get("title")==TITLE and issue.get("body")==BODY:return dict(LEGACY)
     if issue.get("title")==PAPERCLIP_EVIDENCE_TITLE:
-        scope=parse_body(issue.get("body"))
+        if (issue.get("user") or {}).get("login")!=OWNER or issue.get("state")!="open" or "pull_request" in issue:
+            raise PermissionError("Original open owner issue required")
+        scope=parse_body(issue.get("body"),allow_variable=True)
         if any(k in scope.get("inputs",{}) for k in ("pipeline","composition","synthesis")):
             raise ValueError("Pipeline continuation requires independently attested memory workflow")
         return scope
@@ -34,7 +36,7 @@ def authorize(issue, comments, number):
         or issue.get("title") not in (TITLE,PAPERCLIP_EVIDENCE_TITLE)):
         return False
     try:issue_scope(issue)
-    except (ValueError,TypeError):
+    except (ValueError,TypeError,PermissionError):
         return False
     if not isinstance(comments,list) or issue.get("comments")!=len(comments):
         raise ValueError("Incomplete or changed comment history")
