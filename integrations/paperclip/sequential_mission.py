@@ -53,6 +53,8 @@ def task_specs(scope):
         titles={"intelligence":"Retrieve approved public DOI metadata","research":"Independently reread public bibliography",
                 "engineering":"Execute reviewed generic numerical data analysis","commercial":"Prepare bounded data evidence brief",
                 "verification":"Independently verify numerical analysis and bibliography"}
+    elif scope["kind"]=="variable_graph":
+        titles={"intelligence":"Execute selected public source contracts","research":"Review selected scholarly contracts","engineering":"Execute selected reviewed engineering contracts","commercial":"Assemble selected public evidence contracts","verification":"Independently verify selected native contract graph"}
     else:
         titles={"intelligence":"Retrieve approved public DOI metadata","research":"Read back approved bibliography independently",
                 "engineering":"Execute reviewed offline AI budget validator","commercial":"Prepare evidence-bound budget review brief",
@@ -186,6 +188,9 @@ def verify(prior,directory,*,functional_test=False,scope=LEGACY):
         value=prior[role]
         if required(value,"input_sha256","producer_receipt")!=scope_inputs({k:prior[k] for k in expected[:i]}):
             raise ValueError("Dependency receipt hash mismatch")
+    if scope["kind"]=="variable_graph":
+        from native_variable import verify as verify_variable
+        return verify_variable(scope,prior,directory,functional_test=functional_test)
     if scope["kind"]=="public_objective":
         from objective_mission import verify as verify_objective
         return verify_objective(scope,prior,directory,functional_test=functional_test)
@@ -235,6 +240,10 @@ def verify(prior,directory,*,functional_test=False,scope=LEGACY):
 
 
 def original_mission_worker(role,prior,directory,scope=LEGACY):
+    if scope["kind"]=="variable_graph":
+        from native_variable import run
+        result=verify(prior,directory,functional_test=True,scope=scope) if role=="verification" else run(role,scope,prior,directory)
+        return {"input_sha256":scope_inputs(prior),"result":result}
     if scope["kind"]=="public_objective":
         from objective_mission import run
         result=verify(prior,directory,functional_test=True,scope=scope) if role=="verification" else run(role,scope,prior,directory)
@@ -316,7 +325,12 @@ def minister():
         from production_wiring import load_prepared
         model_mode=load_prepared(directory,cid,pid)["model_mode"]
     else:model_mode=os.getenv("PLENUM_PAPERCLIP_MODEL","off")
-    if model_mode=="local":
+    variable_plan=None
+    if scope["kind"]=="variable_graph":
+        if not persistent() or model_mode!="local":raise PermissionError("Variable graph requires persistent local model")
+        from native_variable import prepare
+        variable_plan=prepare(directory,scope,cid,pid)
+    elif model_mode=="local":
         from model_plan import model_plan
         from objective_mission import planning_kwargs
         roles,model_receipt=model_plan(directory,cid,pid,goals=goal_texts(scope),**planning_kwargs(scope))
@@ -343,6 +357,8 @@ def minister():
     if scope!=LEGACY:plan["scope_sha256"]=binding["scope_sha256"]
     if model_receipt is not None:
         plan["model_receipt_sha256"]=digest(model_receipt)
+    if variable_plan is not None:
+        plan["variable_graph_sha256"]=digest(variable_plan)
     if composition_receipt is not None:
         plan["composition_plan_sha256"]=digest(composition_receipt)
     if synthesis_receipt is not None:
@@ -385,7 +401,7 @@ def qualify_locked(action):
     else:scope=active_scope()
     binding=scope_binding(scope)
     specs=task_specs(scope)
-    if scope["kind"]=="public_objective":
+    if scope["kind"] in ("public_objective","variable_graph"):
         from production_wiring import load_prepared
         if not durable or (load_prepared(directory,cid,mid)["model_mode"] if action in ("activate","resume") else os.getenv("PLENUM_PAPERCLIP_MODEL","off"))!="local":
             raise PermissionError("Objective scope requires persistent local model approval")
@@ -596,7 +612,15 @@ def readback(cid,plan,expected_agents=None):
         raise ValueError("Independent verifier disagrees")
     model_executed=False
     model_info={}
-    if "model_receipt_sha256" in plan:
+    if scope["kind"]=="variable_graph":
+        from native_variable import load,evidence_root
+        from checkpoint_store import checked
+        from model_plan import MODEL
+        variable_plan=load(directory,scope,cid,plan["parent"])
+        receipt=checked(evidence_root(directory)/"model-response.json",{})
+        model_executed=True
+        model_info={"model":MODEL,"model_digest":variable_plan["model_digest"],"model_receipt_sha256":digest(receipt),"model_eval_count":receipt["eval_count"]}
+    elif "model_receipt_sha256" in plan:
         from model_plan import validate_receipt
         receipt=json.loads((directory/"minister-model-plan.json").read_text())
         from objective_mission import planning_kwargs
