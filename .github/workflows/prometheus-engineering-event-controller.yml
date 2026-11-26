@@ -13,6 +13,7 @@ on:
   pull_request:
     paths:
       - 'src/plenum_ai/engineering_event_controller.py'
+      - 'src/plenum_ai/whisper_repair_candidate.py'
       - 'tests/test_engineering_event_controller.py'
       - '.github/workflows/prometheus-engineering-event-controller.yml'
 permissions:
@@ -45,6 +46,8 @@ jobs:
       pull-requests: read
       issues: write
       actions: write
+    outputs:
+      whisper_repair: ${{ steps.controller.outputs.whisper_repair }}
     steps:
       # Never check out the originating run's head or execute its artifacts.
       - uses: actions/checkout@v4
@@ -52,7 +55,83 @@ jobs:
           ref: ${{ github.sha }}
           persist-credentials: false
       - name: Trusted default-branch controller (no model or candidate execution)
+        id: controller
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           PYTHONPATH=src python3 -m plenum_ai.engineering_event_controller --event "$GITHUB_EVENT_PATH" --kind "$GITHUB_EVENT_NAME"
+
+  repair-whisper:
+    needs: observe-and-recover
+    if: needs.observe-and-recover.outputs.whisper_repair == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Produce exact-source correction candidate, never execute candidate workflow
+        run: |
+          set -euo pipefail
+          git fetch --depth=1 origin a9ed286a49308fb5e01ed25a53c08f65e72445af
+          git show a9ed286a49308fb5e01ed25a53c08f65e72445af:.github/workflows/prometheus-whisper-local.yml > original.yml
+          python -m plenum_ai.whisper_repair_candidate --original original.yml --out candidate.yml
+        env:
+          PYTHONPATH: src
+      - name: Build reviewed public release and download distinct hash-pinned base model
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/whisper-repair"
+          mkdir -p "$root"
+          git init "$root/upstream"
+          git -C "$root/upstream" fetch --depth=1 https://github.com/ggml-org/whisper.cpp.git refs/tags/v1.9.6
+          git -C "$root/upstream" checkout --detach FETCH_HEAD
+          test "$(git -C "$root/upstream" rev-parse HEAD)" = 96ec4d9823e9d0211944172da35f9f29134af990
+          cmake -S "$root/upstream" -B "$root/build" -DCMAKE_BUILD_TYPE=Release -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_EXAMPLES=ON -DGGML_NATIVE=OFF
+          cmake --build "$root/build" --target whisper-cli --parallel 2
+          curl --fail --location --silent --show-error --max-time 180 'https://huggingface.co/ggerganov/whisper.cpp/resolve/fb5ed9369c26eaf08392504d8446da431e0fffb9/ggml-base.en.bin' -o "$root/model.bin"
+          echo "a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002  $root/model.bin" | sha256sum --check
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends espeak-ng ffmpeg
+          espeak-ng -v en-us -s 140 -w "$root/synthetic.wav" "The quick brown fox jumps over the lazy dog."
+          ffmpeg -hide_banner -loglevel error -i "$root/synthetic.wav" -ac 1 -ar 16000 -c:a pcm_s16le "$root/audio.wav"
+      - name: Execute one distinct corrected model offline, preserving the original accuracy gate
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/whisper-repair"
+          sudo --preserve-env=PATH unshare --net -- env -i HOME="$root" PATH="$root/build/bin:/usr/bin:/bin" "$root/build/bin/whisper-cli" -m "$root/model.bin" -f "$root/audio.wav" -t 2 -otxt -of "$root/transcript"
+          cp "$root/audio.wav" audio.wav
+          cp "$root/transcript.txt" transcript.txt
+          PYTHONPATH=src python -m plenum_ai.whisper_repair_candidate --receipt --original original.yml --out candidate.yml --audio audio.wav --transcript transcript.txt --model "$root/model.bin"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: whisper-repair-candidate
+          path: |
+            original.yml
+            candidate.yml
+            audio.wav
+            transcript.txt
+            repair-receipt.json
+          if-no-files-found: error
+          retention-days: 7
+  verify-whisper-repair:
+    needs: repair-whisper
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: whisper-repair-candidate
+          path: repair
+      - name: Independently check exact immutable original, permitted correction and transcript
+        run: |
+          PYTHONPATH=src python -m plenum_ai.whisper_repair_candidate --verify --original repair/original.yml --out repair/candidate.yml --audio repair/audio.wav --transcript repair/transcript.txt --receipt-file repair/repair-receipt.json
