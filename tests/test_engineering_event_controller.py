@@ -163,3 +163,31 @@ class EngineeringGateTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class DynamicEngineeringQueueTests(unittest.TestCase):
+    def setUp(self):
+        self.n=12345
+        self.pr={"number":self.n,"state":"open","draft":False,"user":{"login":c.OWNER},
+                 "head":{"ref":"prometheus-new-work","sha":"a"*40,"repo":{"full_name":c.REPO}},
+                 "base":{"ref":"main","repo":{"full_name":c.REPO}},
+                 "body":"<!-- plenum-engineering-observe-v1:"+"a"*40+":New native check:qualification -->"}
+    def test_discovery_and_head_bound_revalidation(self):
+        with patch.object(c,"DYNAMIC",{}),patch.object(c,"request",return_value=[self.pr]):
+            c.discover()
+            self.assertTrue(c.authorized_pr(self.pr,self.n))
+            self.assertEqual(c.registry()[self.n],("prometheus-new-work","New native check","qualification"))
+            for changed in ("head","body","user","draft"):
+                bad=copy.deepcopy(self.pr)
+                if changed=="head":bad["head"]["sha"]="b"*40
+                elif changed=="body":bad["body"]+="\n"+bad["body"]
+                elif changed=="user":bad["user"]["login"]="outsider"
+                else:bad["draft"]=True
+                self.assertFalse(c.authorized_pr(bad,self.n))
+    def test_no_unapproved_or_unbounded_discovery(self):
+        with patch.object(c,"DYNAMIC",{}),patch.object(c,"request",return_value=[{}]*100):
+            with self.assertRaises(RuntimeError):c.discover()
+        with patch.object(c,"DYNAMIC",{}),patch.object(c,"request",return_value=[self.pr,self.pr]):
+            with self.assertRaises(RuntimeError):c.discover()
+        with patch.object(c,"DYNAMIC",{}),patch.object(c,"request",return_value=[dict(self.pr,body="arbitrary instructions")]):
+            c.discover()
+            self.assertNotIn(self.n,c.registry())
