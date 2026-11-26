@@ -76,7 +76,7 @@ def manifest(mission, selection, model_digest):
             "request_sha256":digest(request(mission)),"selection":selection,"model_digest":model_digest,
             "scope":scope,"nodes":nodes,"paid_inference":False}
 
-def execute(mission, root):
+def execute(mission, root, commitment):
     validate(mission)
     if os.environ.get("GITHUB_ACTIONS")!="true" or os.environ.get("PLENUM_EPHEMERAL_RUNNER")!="confirmed":
         raise PermissionError("Only authorized ephemeral public development runner")
@@ -98,7 +98,13 @@ def execute(mission, root):
         if not isinstance(raw,str) or len(raw)>2000:raise ValueError("Invalid model content")
         selection=json.loads(raw)
         old=manifest(mission,selection,md)
+        n=response.get("eval_count"); p=response.get("prompt_eval_count")
+        if type(n) is not int or not 0<n<=128 or type(p) is not int or not 0<p<=2048:
+            raise ValueError("Incomplete inference counters")
+        exclusive(root/"model-response.json",{"request_sha256":digest(req),"selection_sha256":digest(selection),"model_digest":md,"eval_count":n,"prompt_eval_count":p,"paid_inference":False})
         exclusive(path,old)
+    validate_model_receipt(root,old)
+    require_commitment(old,commitment)
     results={}; hashes={}
     for node in old["nodes"]:
         name=node["id"]
@@ -121,15 +127,26 @@ def execute(mission, root):
         results[name]=row["result"];hashes[name]=digest(row)
     return results["evidence_report"]
 
+def require_commitment(plan, commitment):
+    if not isinstance(commitment,str) or not re.fullmatch(r"[0-9a-f]{64}",commitment) or digest(sorted(k for k,v in plan["selection"].items() if v))!=commitment:
+        raise ValueError("Independent objective commitment mismatch")
+
+def validate_model_receipt(root,plan):
+    expected={"request_sha256":plan["request_sha256"],"selection_sha256":digest(plan["selection"]),"model_digest":plan["model_digest"],"paid_inference":False}
+    row=checked(root/"model-response.json",expected)
+    if set(row)!=set(expected)|{"eval_count","prompt_eval_count"} or type(row["eval_count"]) is not int or not 0<row["eval_count"]<=128 or type(row["prompt_eval_count"]) is not int or not 0<row["prompt_eval_count"]<=2048:
+        raise ValueError("Invalid model response binding")
+    reserved={"request_sha256":plan["request_sha256"],"maximum":1,"model_digest":plan["model_digest"]}
+    if checked(root/"model-reservation.json",reserved)!=reserved:raise ValueError("Invalid model reservation")
+
 def verify(mission, root, commitment):
     """No inference or provider calls; re-open every receipt and grade independently."""
     old=checked(root/"plan.json",{})
     if old!=manifest(mission,old["selection"],old["model_digest"]):raise ValueError("Plan changed")
-    if digest(sorted(k for k,v in old["selection"].items() if v))!=commitment:
-        raise ValueError("Independent objective commitment mismatch")
-    checked(root/"model-reservation.json",{"request_sha256":old["request_sha256"],"maximum":1,"model_digest":old["model_digest"]})
+    require_commitment(old,commitment)
+    validate_model_receipt(root,old)
     results={};hashes={}
-    files={"plan.json","model-reservation.json"}
+    files={"plan.json","model-reservation.json","model-response.json"}
     for node in old["nodes"]:
         name=node["id"]; deps=node["depends_on"]
         identity={"plan_sha256":digest(old),"tool":name,"inputs":{k:hashes[k] for k in deps},"paid_inference":False}
@@ -163,12 +180,13 @@ def fixture(case):
 
 def main():
     phase,case,path=sys.argv[1:]
+    expected={"science":["bibliography","stations"],"engineering":["thermal"],"commercial":["commercial"]}
+    commitment=digest(expected[case])
     root=Path(path)
     if phase=="run":
         root.mkdir(parents=True,mode=0o700,exist_ok=False)
-        execute(fixture(case),root)
+        execute(fixture(case),root,commitment)
     elif phase=="verify":
-        expected={"science":["bibliography","stations"],"engineering":["thermal"],"commercial":["commercial"]}
-        print(json.dumps(verify(fixture(case),root,digest(expected[case])),sort_keys=True))
+        print(json.dumps(verify(fixture(case),root,commitment),sort_keys=True))
     else:raise ValueError("Unknown phase")
 if __name__=="__main__":main()

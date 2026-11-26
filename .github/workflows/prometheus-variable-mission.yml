@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'integrations/paperclip/variable_mission.py'
+      - 'integrations/paperclip/variable_mission_smoke.py'
       - '.github/workflows/prometheus-variable-mission.yml'
 permissions:
   contents: read
@@ -26,6 +27,8 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -e '.[numerical]'
+      - name: Offline scope and pre-execution commitment checks
+        run: python integrations/paperclip/variable_mission_smoke.py
       - name: Original pinned local inference
         run: |
           set -eu
