@@ -159,6 +159,24 @@ class PlanTests(unittest.TestCase):
                     self.assertFalse(cues["max_step_change"])
         self.assertTrue(all(not spans for spans in mp.semantic_evidence("Review the supplied public records",tuple(mp.OPERATION_CUES)).values()))
 
+    def test_strict_deliverables_not_extra_operations(self):
+        import objective_mission as om
+        scope={"kind":"public_objective","objective":"Report the population variance of the synthetic measurements.",
+               "dois":["10.1145/3442188.3445922"],
+               "inputs":{"samples":[13,5,8,21]},
+               "operation_commitment":mp.digest(["population_variance"])}
+        policy=om.operation_policy(scope)
+        group=policy["required_groups"][0]
+        req=mp.classification_request(om.goals(scope),group)
+        self.assertIn("intermediate computations",req["messages"][0]["content"])
+        self.assertIn("Default every field to false",req["messages"][0]["content"])
+        self.assertNotIn(scope["operation_commitment"],json.dumps(req))
+        chosen={op:op=="population_variance" for op in group}
+        self.assertEqual(mp.validate_operations(chosen,policy),["population_variance"])
+        with self.assertRaisesRegex(mp.PlanRejected,"OPERATION_ACCEPTANCE"):
+            mp.validate_operations(dict(chosen,mean=True),policy)
+        print("STRICT DELIVERABLE SCOPE PASS no implied intermediate output or acceptance key",flush=True)
+
     def test_rejection_diagnostic_keeps_only_reviewed_choices(self):
         policy={"allowed":("range","median","shared_terms"),
                 "required_groups":(("range","median"),("shared_terms",)),
