@@ -599,6 +599,8 @@ def structured_local_edit(task,scope,*,numbered=False):
 # behavioral acceptance suites. No failed candidate, test answers or logs enter
 # the next model prompt. A distinct edit format is used only once.
 STRUCTURED_RECOVERY_TASKS = {
+    ("src/plenum_ai/noaa_revision_agent.py", "Repair function parse_candidate. Reject oversized signed integer alpha or gain as invalid_parameters without exceptions. Preserve valid ranges and every existing validation gate."):
+        "noaa_numeric_proposal.py",
     ("src/plenum_ai/business_public_watch.py",
      "Repair function probe. Reject any target not in the existing TARGETS tuple before any HTTP request. Return False with a reason and None. Preserve all existing checks."):
         "probe_scope.py",
