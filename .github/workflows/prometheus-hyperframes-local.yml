@@ -9,7 +9,7 @@ permissions:
 jobs:
   local-motion:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
@@ -17,37 +17,31 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Resolve published release and validate package provenance before installation
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: '1.4.4'
+          no-cache: true
+      - name: Build the official immutable release from source instead of unverifiable npm metadata
         run: |
           set -euo pipefail
           root="$RUNNER_TEMP/hf-qualification"
-          mkdir "$root"
-          cd "$root"
-          npm view 'hyperframes@0.9.97' --json > metadata.json
-          node --input-type=module - <<'JS'
-          import fs from 'node:fs';
-          const p=JSON.parse(fs.readFileSync('metadata.json','utf8'));
-          if(p.name!=='hyperframes'||p.version!=='0.9.97'||p.license!=='Apache-2.0'||
-             !/github\.com\/heygen-com\/hyperframes(?:\.git)?$/.test(p.repository?.url||'')||
-             p.gitHead!=='c6ff4a31f240f6051836136577f51045c6da15c5'||
-             !/^sha512-[A-Za-z0-9+/=]+$/.test(p.dist?.integrity||'')||
-             !p.dist?.tarball?.startsWith('https://registry.npmjs.org/hyperframes/-/'))
-             throw new Error('Package release provenance not established');
-          fs.writeFileSync('package.json',JSON.stringify({private:true,dependencies:{'hyperframes':'0.9.97','gsap':'3.14.2'}}));
-          JS
-          npm install --ignore-scripts --no-audit --no-fund
-          node --input-type=module - <<'JS'
-          import fs from 'node:fs';
-          const m=JSON.parse(fs.readFileSync('metadata.json','utf8'));
-          const lock=JSON.parse(fs.readFileSync('package-lock.json','utf8'));
-          if(lock.packages['node_modules/hyperframes'].integrity!==m.dist.integrity)
-             throw new Error('Installed package integrity differs');
-          JS
+          mkdir -p "$root/home" "$root/project"
+          git init "$root/upstream"
+          git -C "$root/upstream" fetch --depth=1 https://github.com/heygen-com/hyperframes.git refs/tags/v0.9.97
+          git -C "$root/upstream" checkout --detach FETCH_HEAD
+          test "$(git -C "$root/upstream" rev-parse HEAD)" = c6ff4a31f240f6051836136577f51045c6da15c5
+          test "$(git -C "$root/upstream" rev-parse HEAD:LICENSE)" = ae06b37e1c5116ccfaa615ac25ec1aabf5658d8c
+          test "$(git -C "$root/upstream" rev-parse HEAD:bun.lock)" = 4f920799633fbacab10f73b73cc9dabb9b3cb0f0
+          cd "$root/upstream"
+          node -e 'const p=require("./packages/cli/package.json");if(p.version!=="0.9.97"||p.license!=="Apache-2.0")process.exit(1)'
+          bun install --frozen-lockfile --ignore-scripts
+          bun run build
+          sha256sum bun.lock > "$root/source-lock.sha256"
+          node --input-type=module -e 'import fs from "node:fs";import {createRequire} from "node:module";const r=createRequire(process.cwd()+"/packages/core/package.json");fs.copyFileSync(r.resolve("gsap/dist/gsap.min.js"),process.argv[1])' "$root/project/gsap.min.js"
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends ffmpeg iproute2
-          ./node_modules/.bin/hyperframes browser ensure
-          cp "$GITHUB_WORKSPACE/integrations/agent-catalog/fixtures/hyperframes/index.html" "$root/index.html"
-          cp "$root/node_modules/gsap/dist/gsap.min.js" "$root/gsap.min.js"
+          HOME="$root/home" HYPERFRAMES_NO_TELEMETRY=1 node packages/cli/bin/hyperframes.mjs browser ensure
+          cp "$GITHUB_WORKSPACE/integrations/agent-catalog/fixtures/hyperframes/index.html" "$root/project/index.html"
       - name: Render original local composition with network isolated and no hosted services
         run: |
           set -euo pipefail
@@ -55,11 +49,10 @@ jobs:
           sudo unshare --net -- bash -c '
             set -euo pipefail
             ip link set lo up
-            exec runuser -u "$1" -- env -i HOME="$2" PATH="$3" HYPERFRAMES_NO_TELEMETRY=1 CI=true "$2/node_modules/.bin/hyperframes" render "$2" --output "$2/output.mp4" --fps 24 --quality draft --workers 1 --no-browser-gpu
+            exec runuser -u "$1" -- env -i HOME="$2/home" PATH="$3" HYPERFRAMES_NO_TELEMETRY=1 CI=true node "$2/upstream/packages/cli/bin/hyperframes.mjs" render "$2/project" --output "$2/output.mp4" --fps 24 --quality draft --workers 1 --no-browser-gpu
           ' _ "$(id -un)" "$root" "$PATH"
           cp "$root/output.mp4" output.mp4
-          cp "$root/metadata.json" metadata.json
-          cp "$root/package-lock.json" package-lock.json
+          cp "$root/source-lock.sha256" source-lock.sha256
           python3 - <<'PY'
           import hashlib,json,pathlib,subprocess
           p=pathlib.Path('output.mp4')
@@ -73,7 +66,7 @@ jobs:
           assert len(a)==len(b)==640*360*3
           assert sum(abs(x-y) for x,y in zip(a,b))/len(a)>1.0, 'No meaningful motion'
           h=lambda name:hashlib.sha256(pathlib.Path(name).read_bytes()).hexdigest()
-          pathlib.Path('hyperframes-acceptance.json').write_text(json.dumps({'schema':'plenum-hyperframes-local-v1','version':'0.9.97','release_commit':'c6ff4a31f240f6051836136577f51045c6da15c5','video_sha256':h('output.mp4'),'lock_sha256':h('package-lock.json'),'frames':48,'duration_seconds':2,'original_fixture':True,'paid_inference':False,'owner_runtime_verified':False},indent=2))
+          pathlib.Path('hyperframes-acceptance.json').write_text(json.dumps({'schema':'plenum-hyperframes-local-v1','version':'0.9.97','release_commit':'c6ff4a31f240f6051836136577f51045c6da15c5','video_sha256':h('output.mp4'),'source_lock_receipt_sha256':h('source-lock.sha256'),'source_build':True,'frames':48,'duration_seconds':2,'original_fixture':True,'paid_inference':False,'owner_runtime_verified':False},indent=2))
           PY
       - uses: actions/upload-artifact@v4
         with:
@@ -81,7 +74,6 @@ jobs:
           path: |
             output.mp4
             hyperframes-acceptance.json
-            metadata.json
-            package-lock.json
+            source-lock.sha256
           if-no-files-found: error
           retention-days: 7
