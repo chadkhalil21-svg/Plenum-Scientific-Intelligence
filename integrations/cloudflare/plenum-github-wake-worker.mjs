@@ -1,7 +1,7 @@
 import {handlePrivateMemory, handlePaperclipCheckpoint, PrivateContinuityMemory} from "./plenum-private-continuity.mjs";
 import {ownerMemoryCheckPage, ownerMemoryCheckScript} from "./plenum-private-memory-check.mjs";
 import {handleFreeCodingAI} from "./plenum-free-coding-ai.mjs";
-import {engineeringFallback, eligibleTick, engineeringCadenceProof, eligibleCadenceSlot, CADENCE_START, CADENCE_END} from "./plenum-engineering-fallback.mjs";
+import {engineeringFallback, eligibleTick, engineeringCadenceProof, resolveScheduledTick, eligibleCadenceSlot, CADENCE_START, CADENCE_END} from "./plenum-engineering-fallback.mjs";
 export {PrivateContinuityMemory};
 /*
  * Plenum no-new-charge *event-driven wake* (SOURCE TEMPLATE ONLY).
@@ -182,6 +182,7 @@ export default {
     controller.noRetry();
     const status = await engineeringFallback(controller, env);
     console.log("Plenum bounded engineering fallback:", status);
+    console.log("Plenum native tick admission:",resolveScheduledTick(controller).reason);
     const proof=await engineeringCadenceProof(controller,env,status);
     console.log("Plenum cadence qualification:",proof);
   },

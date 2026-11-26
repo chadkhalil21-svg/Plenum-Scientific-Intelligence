@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {webcrypto,createHmac} from "node:crypto";
 if (!globalThis.crypto) globalThis.crypto=webcrypto;
-import {engineeringFallback,engineeringCadenceProof,eligibleCadenceSlot,CADENCE_START,CADENCE_END,CRON,SLOT_MS} from "./plenum-engineering-fallback.mjs";
+import {engineeringFallback,engineeringCadenceProof,eligibleCadenceSlot,resolveScheduledTick,CADENCE_START,CADENCE_END,CRON,SLOT_MS} from "./plenum-engineering-fallback.mjs";
 import {PublicWakeReplayGuard} from "./plenum-github-wake-worker.mjs";
 const repo="chadkhalil21-svg/Plenum-Scientific-Intelligence";
 const slot=Math.floor(Date.now()/SLOT_MS)*SLOT_MS;
@@ -100,5 +100,62 @@ test("cadence observation disabled in previews, outside window or when approved 
     assert.equal(await engineeringCadenceProof(tick(),f.env,"NO_APPROVED_BACKLOG",{fetcher:f.fetcher}),"CADENCE_NOT_ELIGIBLE");
     assert.equal(f.claims.length,0);
     assert.equal(f.calls.length,0);
+  } finally {Date.now=old;}
+});
+
+test("native timestamp seconds normalize only within the scheduled minute",()=>{
+  const start=CADENCE_START+SLOT_MS;
+  const tick=(raw,cron=CRON)=>({cron,scheduledTime:raw});
+  assert.deepEqual(resolveScheduledTick(tick(start+30_329),start+30_432),
+    {slot:start,reason:"NORMALIZED_SCHEDULED_MINUTE"});
+  assert.equal(resolveScheduledTick(tick(start+59_999),start+59_999).slot,start);
+  assert.equal(resolveScheduledTick(tick(start+60_000),start+60_000).slot,null);
+  assert.equal(resolveScheduledTick(tick(start+30_000),start+29_999).slot,null);
+  assert.equal(resolveScheduledTick(tick(start+30_000),start+SLOT_MS).slot,null);
+  assert.equal(resolveScheduledTick(tick(start+30_000,"* * * * *"),start+31_000).slot,null);
+  assert.equal(resolveScheduledTick(tick(String(start)),start+31_000).slot,null);
+  assert.equal(resolveScheduledTick(tick(NaN),start+31_000).slot,null);
+});
+test("jittered native events preserve one canonical reservation and never extend freshness",async()=>{
+  const old=Date.now;
+  const start=CADENCE_START+SLOT_MS;
+  let now=start+31_000;
+  Date.now=()=>now;
+  try {
+    const f=fixture();
+    const event=(offset)=>({cron:CRON,scheduledTime:start+offset});
+    assert.equal(await engineeringFallback(event(30_329),f.env,{fetcher:f.fetcher}),"DISPATCH_ACCEPTED_NOT_COMPLETED");
+    assert.equal(await engineeringFallback(event(30_432),f.env,{fetcher:f.fetcher}),"RESERVATION_REJECTED");
+    const writes=f.calls.filter(x=>x.method==="POST");
+    assert.equal(writes.length,1);
+    assert.equal(JSON.parse(writes[0].body).client_payload.slot,start);
+    now=start+SLOT_MS;
+    assert.equal(await engineeringFallback(event(30_329),f.env,{fetcher:f.fetcher}),"INVALID_OR_STALE_TICK");
+    assert.equal(f.calls.filter(x=>x.method==="POST").length,1);
+  } finally {Date.now=old;}
+});
+test("jittered cadence proof keeps original two reservations and canonical signed payload",async()=>{
+  const old=Date.now;
+  const start=CADENCE_START+SLOT_MS;
+  let now=start+31_000;
+  Date.now=()=>now;
+  try {
+    const f=fixture({closed:true});
+    const secret="test-only-cadence-secret-not-production-123456";
+    f.env.PLENUM_WEBHOOK_HMAC_SECRET=secret;
+    const proof=raw=>engineeringCadenceProof({cron:CRON,scheduledTime:raw},f.env,"NO_APPROVED_BACKLOG",{fetcher:f.fetcher});
+    assert.equal(await proof(start+30_329),"CADENCE_RECEIPT_DISPATCHED");
+    assert.equal(await proof(start+30_432),"CADENCE_NOT_RESERVED");
+    now+=SLOT_MS;
+    assert.equal(await proof(start+SLOT_MS+30_329),"CADENCE_RECEIPT_DISPATCHED");
+    now+=SLOT_MS;
+    assert.equal(await proof(start+2*SLOT_MS+30_329),"CADENCE_NOT_RESERVED");
+    assert.equal(f.calls.length,2);
+    for(const [i,call] of f.calls.entries()){
+      const slot=start+i*SLOT_MS;
+      assert.deepEqual(JSON.parse(call.body),{event_type:"plenum_engineering_cadence_proof_v1",
+        client_payload:{slot,scope:"cron_observation_only",signature:createHmac("sha256",secret)
+          .update("plenum-engineering-cadence-v1."+slot+".cron_observation_only").digest("hex")}});
+    }
   } finally {Date.now=old;}
 });
