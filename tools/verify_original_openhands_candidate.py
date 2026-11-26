@@ -31,6 +31,51 @@ FOCUSED_TESTS = {
     "src/plenum_ai/business_public_watch.py": "test_public_business_watch.py",
 }
 
+# NOAA's real numerical dependency is installed in a separate, source-free
+# trusted build. The candidate container stays networkless and read-only.
+NOAA_SOURCE = "src/plenum_ai/noaa_revision_agent.py"
+NOAA_IMAGE = "plenum-noaa-review:np-2.2.6-cp312"
+NOAA_NUMPY_SHA = "fd83c01228a688733f1ded5201c678f0c53ecc1006ffbc404db9f7a899ac6249"
+
+def prepare_sandbox_image(source):
+    if source != NOAA_SOURCE:
+        return "python:3.12-slim"
+    # Official PyPI CPython 3.12 Linux x86_64 wheel; no source build,
+    # transitive resolution, credentials, checkout or candidate in build context.
+    dockerfile = (
+        "FROM python:3.12-slim\n"
+        "RUN printf '%s\\n' 'numpy==2.2.6 --hash=sha256:" + NOAA_NUMPY_SHA +
+        "' > /tmp/plenum-locked.txt && python -m pip --isolated install "
+        "--index-url https://pypi.org/simple --no-deps --only-binary=:all: "
+        "--require-hashes --no-cache-dir -r /tmp/plenum-locked.txt && "
+        "rm /tmp/plenum-locked.txt\n"
+    )
+    with tempfile.TemporaryDirectory(prefix="plenum-trusted-image-") as empty:
+        result = subprocess.run(
+            ["docker", "build", "--platform=linux/amd64", "-t", NOAA_IMAGE, "-"],
+            input=dockerfile, cwd=empty, text=True, capture_output=True,
+            timeout=180, check=False,
+            env={"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": empty})
+    if result.returncode:
+        raise RuntimeError("Trusted numerical dependency preparation failed")
+    return NOAA_IMAGE
+
+
+def sandbox_command(isolated, image, tests_dir, pattern):
+    return [
+        "docker", "run", "--rm", "--pull=missing", "--network=none",
+        "--cap-drop=ALL", "--security-opt=no-new-privileges",
+        "--pids-limit=64", "--memory=768m", "--cpus=1",
+        "--read-only", "--user=65534:65534",
+        "--tmpfs=/tmp:rw,nosuid,nodev,size=64m,mode=1777",
+        "--mount", f"type=bind,src={isolated},dst=/work,readonly",
+        "-e", "PYTHONPATH=/work/src", "-e", "PYTHONDONTWRITEBYTECODE=1",
+        "-e", "OPENBLAS_NUM_THREADS=1", "-w", "/work", image,
+        "python", "-B", "-m", "unittest", "discover",
+        "-s", tests_dir, "-p", pattern, "-v",
+    ]
+
+
 TASK_ACCEPTANCE = {
     ("src/plenum_ai/noaa_revision_agent.py", "Repair function parse_candidate. Reject oversized signed integer alpha or gain as invalid_parameters without exceptions. Preserve valid ranges and every existing validation gate."):
         "noaa_numeric_proposal.py",
@@ -175,6 +220,10 @@ def verify(report_path: Path, verdict_path: Path, *, checkout: Path | None = Non
                            origin_issue_number=report["origin_issue_number"],
                            origin_run_id=report["origin_run_id"],
                            origin_run_attempt=report["origin_run_attempt"])
+        try:
+            image = prepare_sandbox_image(source)
+        except (OSError, RuntimeError, subprocess.TimeoutExpired):
+            return persist("BLOCKED_SANDBOX_UNAVAILABLE", "trusted_dependency_preparation_failed")
         with tempfile.TemporaryDirectory(prefix="plenum-review-only-") as folder:
             isolated = Path(folder)
             shutil.copytree(root / "src" / "plenum_ai", isolated / "src" / "plenum_ai")
@@ -198,18 +247,7 @@ def verify(report_path: Path, verdict_path: Path, *, checkout: Path | None = Non
                 return persist("BLOCKED_PATCH_DOES_NOT_APPLY", "candidate_digest_mismatch")
             # No GitHub tokens, OIDC credentials, live network, code-write mount,
             # privilege escalation, persistent home or host project filesystem.
-            command = [
-                "docker", "run", "--rm", "--pull=missing", "--network=none",
-                "--cap-drop=ALL", "--security-opt=no-new-privileges",
-                "--pids-limit=64", "--memory=768m", "--cpus=1",
-                "--read-only", "--user=65534:65534",
-                "--tmpfs=/tmp:rw,nosuid,nodev,size=64m,mode=1777",
-                "--mount", f"type=bind,src={isolated},dst=/work,readonly",
-                "-e", "PYTHONPATH=/work/src", "-e", "PYTHONDONTWRITEBYTECODE=1",
-                "-w", "/work", "python:3.12-slim",
-                "python", "-B", "-m", "unittest", "discover",
-                "-s", "/work/tests", "-p", tests.name, "-v",
-            ]
+            command = sandbox_command(isolated, image, "/work/tests", tests.name)
             try:
                 result = subprocess.run(command, capture_output=True, text=True,
                                         timeout=150, check=False, env={
@@ -229,8 +267,7 @@ def verify(report_path: Path, verdict_path: Path, *, checkout: Path | None = Non
                 test_path = isolated / "tests" / "acceptance" / acceptance
                 if not test_path.is_file() or test_path.is_symlink():
                     return persist("BLOCKED_TASK_ACCEPTANCE_MISSING", "trusted_task_test_missing")
-                task_command = command[:-5] + [
-                    "-s", "/work/tests/acceptance", "-p", acceptance, "-v"]
+                task_command = sandbox_command(isolated, image, "/work/tests/acceptance", acceptance)
                 verdict["task_acceptance_test"] = "tests/acceptance/" + acceptance
                 try:
                     accepted = subprocess.run(task_command, capture_output=True, text=True,

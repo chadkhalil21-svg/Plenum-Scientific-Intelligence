@@ -7,6 +7,9 @@ on:
       - 'tests/test_business_workforce_integration.py'
       - 'tests/test_openhands_bounded_repair.py'
       - 'tests/test_openhands_goldfish_review.py'
+      - 'tools/verify_original_openhands_candidate.py'
+      - 'src/plenum_ai/noaa_revision_agent.py'
+      - 'tests/acceptance/noaa_numeric_proposal.py'
       - 'integrations/n8n/plenum-business-workforce.json'
       - 'docs/BUSINESS_WORKFORCE.md'
       - '.github/workflows/business-workforce-ci.yml'
@@ -45,6 +48,35 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_openhands_bounded_repair.py' -v
       - name: Verify pinned Google Goldfish review of actual patch after sandbox functional gate
         run: python -m unittest discover -s tests -p 'test_openhands_goldfish_review.py' -v
+      - name: Qualify real NOAA regression and frozen acceptance in dependency-complete offline sandbox
+        run: |
+          python - <<'PY'
+          import os, runpy, shutil, subprocess, tempfile
+          from pathlib import Path
+          v = runpy.run_path("tools/verify_original_openhands_candidate.py")
+          image = v["prepare_sandbox_image"](v["NOAA_SOURCE"])
+          with tempfile.TemporaryDirectory(prefix="plenum-noaa-ci-") as tmp:
+              root = Path(tmp)
+              os.chmod(root, 0o755)
+              shutil.copytree("src/plenum_ai", root / "src/plenum_ai")
+              (root / "tests/acceptance").mkdir(parents=True)
+              shutil.copy2("tests/test_noaa_revision_agent.py", root / "tests")
+              shutil.copy2("tests/acceptance/noaa_numeric_proposal.py", root / "tests/acceptance")
+              for directory, pattern in (
+                  ("/work/tests", "test_noaa_revision_agent.py"),
+                  ("/work/tests/acceptance", "noaa_numeric_proposal.py"),
+              ):
+                  command = v["sandbox_command"](root, image, directory, pattern)
+                  result = subprocess.run(command, capture_output=True, text=True,
+                                          timeout=150, check=False,
+                                          env={"PATH": os.environ["PATH"], "HOME": "/tmp"})
+                  print(result.stderr)
+                  if result.returncode:
+                      raise SystemExit("NOAA offline regression or acceptance failed")
+                  if directory.endswith("/acceptance"):
+                      assert "Ran 2 tests" in result.stderr
+              print("PASS: actual NOAA offline focused and independent acceptance suites; no inference.")
+          PY
       - name: Validate Codespaces startup syntax and private Docker Compose
         env:
           N8N_ENCRYPTION_KEY: disposable-test-placeholder-not-a-production-secret
