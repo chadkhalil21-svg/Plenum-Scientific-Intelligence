@@ -1,0 +1,87 @@
+name: Prometheus | HyperFrames local motion qualification
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/prometheus-hyperframes-local.yml'
+      - 'integrations/agent-catalog/fixtures/hyperframes/**'
+permissions:
+  contents: read
+jobs:
+  local-motion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Resolve published release and validate package provenance before installation
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/hf-qualification"
+          mkdir "$root"
+          cd "$root"
+          npm view '@hyperframes/cli@0.9.97' --json > metadata.json
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          const p=JSON.parse(fs.readFileSync('metadata.json','utf8'));
+          if(p.name!=='@hyperframes/cli'||p.version!=='0.9.97'||p.license!=='Apache-2.0'||
+             !/github\.com\/heygen-com\/hyperframes(?:\.git)?$/.test(p.repository?.url||'')||
+             p.gitHead!=='c6ff4a31f240f6051836136577f51045c6da15c5'||
+             !/^sha512-[A-Za-z0-9+/=]+$/.test(p.dist?.integrity||'')||
+             !p.dist?.tarball?.startsWith('https://registry.npmjs.org/@hyperframes/cli/'))
+             throw new Error('Package release provenance not established');
+          fs.writeFileSync('package.json',JSON.stringify({private:true,dependencies:{'@hyperframes/cli':'0.9.97','gsap':'3.14.2'}}));
+          JS
+          npm install --ignore-scripts --no-audit --no-fund
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          const m=JSON.parse(fs.readFileSync('metadata.json','utf8'));
+          const lock=JSON.parse(fs.readFileSync('package-lock.json','utf8'));
+          if(lock.packages['node_modules/@hyperframes/cli'].integrity!==m.dist.integrity)
+             throw new Error('Installed package integrity differs');
+          JS
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends ffmpeg iproute2
+          ./node_modules/.bin/hyperframes browser ensure
+          cp "$GITHUB_WORKSPACE/integrations/agent-catalog/fixtures/hyperframes/index.html" "$root/index.html"
+          cp "$root/node_modules/gsap/dist/gsap.min.js" "$root/gsap.min.js"
+      - name: Render original local composition with network isolated and no hosted services
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/hf-qualification"
+          sudo unshare --net -- bash -c '
+            set -euo pipefail
+            ip link set lo up
+            exec runuser -u "$1" -- env -i HOME="$2" PATH="$3" HYPERFRAMES_NO_TELEMETRY=1 CI=true "$2/node_modules/.bin/hyperframes" render "$2" --output "$2/output.mp4" --fps 24 --quality draft --workers 1 --no-browser-gpu
+          ' _ "$(id -un)" "$root" "$PATH"
+          cp "$root/output.mp4" output.mp4
+          cp "$root/metadata.json" metadata.json
+          cp "$root/package-lock.json" package-lock.json
+          python3 - <<'PY'
+          import hashlib,json,pathlib,subprocess
+          p=pathlib.Path('output.mp4')
+          meta=json.loads(subprocess.check_output(['ffprobe','-v','error','-select_streams','v:0','-show_streams','-of','json',str(p)]))['streams'][0]
+          assert (meta['width'],meta['height'])==(640,360)
+          assert abs(float(meta['duration'])-2)<0.1
+          assert int(meta['nb_frames'])==48
+          def frame(t):
+              return subprocess.check_output(['ffmpeg','-v','error','-ss',str(t),'-i',str(p),'-frames:v','1','-f','rawvideo','-pix_fmt','rgb24','-'])
+          a,b=frame(0.2),frame(1.7)
+          assert len(a)==len(b)==640*360*3
+          assert sum(abs(x-y) for x,y in zip(a,b))/len(a)>1.0, 'No meaningful motion'
+          h=lambda name:hashlib.sha256(pathlib.Path(name).read_bytes()).hexdigest()
+          pathlib.Path('hyperframes-acceptance.json').write_text(json.dumps({'schema':'plenum-hyperframes-local-v1','version':'0.9.97','release_commit':'c6ff4a31f240f6051836136577f51045c6da15c5','video_sha256':h('output.mp4'),'lock_sha256':h('package-lock.json'),'frames':48,'duration_seconds':2,'original_fixture':True,'paid_inference':False,'owner_runtime_verified':False},indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hyperframes-local-acceptance
+          path: |
+            output.mp4
+            hyperframes-acceptance.json
+            metadata.json
+            package-lock.json
+          if-no-files-found: error
+          retention-days: 7
