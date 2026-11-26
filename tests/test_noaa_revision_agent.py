@@ -119,6 +119,26 @@ class NOAAResearchTests(unittest.TestCase):
                 self.assertIsNone(a.parse_candidate(json.dumps(raw))["candidate"])
         self.assertIsNone(a.parse_candidate("import os; os.system('rm -rf /')")["candidate"])
 
+    def test_duplicate_proposal_keys_fail_closed(self):
+        original = valid_response("test")
+        proposal = json.loads(original)
+        for key, value in proposal.items():
+            for duplicate in (value, None):
+                raw = original[:-1] + ", " + json.dumps(key) + ": " + json.dumps(duplicate) + "}"
+                for response in (raw, "```json\n" + raw + "\n```"):
+                    with self.subTest(key=key, duplicate=duplicate):
+                        self.assertEqual(a.parse_candidate(response),
+                                         {"status": "invalid_json", "candidate": None})
+        escaped = original[:-1] + ', "\\u0061lpha": 0.8}'
+        self.assertEqual(a.parse_candidate(escaped),
+                         {"status": "invalid_json", "candidate": None})
+
+    def test_unique_proposal_keys_preserve_normal_and_fenced_json(self):
+        raw = valid_response("test")
+        self.assertEqual(a.parse_candidate(raw)["status"], "valid")
+        self.assertEqual(a.parse_candidate(raw),
+                         a.parse_candidate("```json\n" + raw + "\n```"))
+
     def test_bad_source_question_and_model_version_rejected(self):
         with self.assertRaises(ValueError):
             a.propose("",valid_response,fetcher=fake_noaa)
