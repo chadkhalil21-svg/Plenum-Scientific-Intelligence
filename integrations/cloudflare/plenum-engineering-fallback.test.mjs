@@ -159,3 +159,50 @@ test("jittered cadence proof keeps original two reservations and canonical signe
     }
   } finally {Date.now=old;}
 });
+
+test("Workers-compatible redirect policy never follows an authenticated read redirect",async()=>{
+  const f=fixture();
+  const calls=[];
+  const fetcher=async(url,init)=>{
+    calls.push({url,init});
+    assert.equal(init.redirect,"manual");
+    return new Response(null,{status:302,headers:{Location:"https://example.invalid/"}});
+  };
+  assert.equal(await engineeringFallback(event,f.env,{fetcher}),"READ_UNAVAILABLE");
+  assert.equal(calls.length,1);
+  assert.equal(f.claims.length,0);
+});
+test("Workers-compatible dispatch redirect is rejected without retry or forwarding",async()=>{
+  const f=fixture();
+  const calls=[];
+  const fetcher=async(url,init)=>{
+    calls.push({url,init});
+    assert.equal(init.redirect,"manual");
+    if(init.method==="POST")return new Response(null,{status:307,headers:{Location:"https://example.invalid/"}});
+    return f.fetcher(url,init);
+  };
+  assert.equal(await engineeringFallback(event,f.env,{fetcher}),"DISPATCH_UNAVAILABLE");
+  assert.equal(await engineeringFallback(event,f.env,{fetcher}),"RESERVATION_REJECTED");
+  assert.equal(calls.filter(x=>x.init.method==="POST").length,1);
+  assert.ok(calls.every(x=>x.url.startsWith("https://api.github.com/repos/"+repo+"/")));
+});
+test("cadence dispatch rejects manual redirect and retains atomic reservation",async()=>{
+  const old=Date.now;
+  let now=CADENCE_START+SLOT_MS;
+  Date.now=()=>now;
+  try {
+    const f=fixture({closed:true});
+    f.env.PLENUM_WEBHOOK_HMAC_SECRET="test-only-cadence-secret-not-production-123456";
+    let writes=0;
+    const fetcher=async(url,init)=>{
+      assert.equal(init.redirect,"manual");
+      assert.equal(url,"https://api.github.com/repos/"+repo+"/dispatches");
+      writes++;
+      return new Response(null,{status:308,headers:{Location:"https://example.invalid/"}});
+    };
+    const event={cron:CRON,scheduledTime:now};
+    assert.equal(await engineeringCadenceProof(event,f.env,"NO_APPROVED_BACKLOG",{fetcher}),"CADENCE_DISPATCH_UNAVAILABLE");
+    assert.equal(await engineeringCadenceProof(event,f.env,"NO_APPROVED_BACKLOG",{fetcher}),"CADENCE_NOT_RESERVED");
+    assert.equal(writes,1);
+  } finally {Date.now=old;}
+});
