@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 import os
+import re
 
 
 def extract_pdf(workspace: Path, source: Path) -> dict:
@@ -46,16 +47,32 @@ def extract_pdf(workspace: Path, source: Path) -> dict:
 def retrieve(records: list[dict], query: str) -> list[dict]:
     if not 1 <= len(records) <= 20 or not 1 <= len(query) <= 300:
         raise ValueError("Bounded retrieval required")
-    from llama_index.core import Document, SimpleKeywordTableIndex
+    from llama_index.core import SimpleKeywordTableIndex
+    from llama_index.core.schema import TextNode
+    from llama_index.core.indices.keyword_table.retrievers import KeywordTableSimpleRetriever
+    from llama_index.core.indices.keyword_table.utils import simple_extract_keywords
     from llama_index.core.llms import MockLLM
     from llama_index.core.embeddings import MockEmbedding
     # This adapter is intended for a dedicated worker process, not shared
     # global Settings in an existing in-process agent. Explicitly prevent
     # default hosted embedding or LLM configuration.
     from llama_index.core import Settings
+    # Neither default tiktoken assets nor NLTK stopword downloads are allowed.
+    Settings.tokenizer = lambda text: re.findall(r'\w+|[^\w\s]', text)
+    Settings.transformations = []
     Settings.llm = MockLLM()
     Settings.embed_model = MockEmbedding(embed_dim=8)
-    docs = []
+    class OfflineIndex(SimpleKeywordTableIndex):
+        def _extract_keywords(self, text):
+            return simple_extract_keywords(text, self.max_keywords_per_chunk,
+                                           filter_stopwords=False)
+
+    class OfflineRetriever(KeywordTableSimpleRetriever):
+        def _get_keywords(self, query_str):
+            return list(simple_extract_keywords(query_str, self.max_keywords_per_query,
+                                                filter_stopwords=False))
+
+    nodes = []
     by_id = {}
     for record in records:
         if set(record) != {"source_sha256", "markdown", "paid_inference", "pipeline"}:
@@ -70,10 +87,15 @@ def retrieve(records: list[dict], query: str) -> list[dict]:
         if not isinstance(body, str) or not 0 < len(body) <= 500000:
             raise ValueError("Invalid extracted content")
         by_id[digest] = body
-        docs.append(Document(text=body, id_=digest, metadata={"source_sha256": digest}))
-    index = SimpleKeywordTableIndex.from_documents(docs, llm=MockLLM())
+        for offset in range(0, len(body), 1600):
+            excerpt = body[offset:offset + 2000]
+            nodes.append(TextNode(text=excerpt, id_=f"{digest}-{offset}",
+                                  metadata={"source_sha256": digest},
+                                  excluded_llm_metadata_keys=["source_sha256"],
+                                  excluded_embed_metadata_keys=["source_sha256"]))
+    index = OfflineIndex(nodes=nodes, llm=MockLLM(), max_keywords_per_chunk=256)
     out = []
-    for hit in index.as_retriever().retrieve(query)[:8]:
+    for hit in OfflineRetriever(index, num_chunks_per_query=8).retrieve(query):
         digest = hit.node.metadata["source_sha256"]
         text = hit.node.get_content()
         if digest not in by_id or text not in by_id[digest]:
