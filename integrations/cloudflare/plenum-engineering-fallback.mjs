@@ -12,6 +12,21 @@ export function eligibleTick(scheduledTime, now = Date.now()) {
     scheduledTime % SLOT_MS === 0 && now >= scheduledTime &&
     now - scheduledTime < SLOT_MS;
 }
+// The provider's native scheduled timestamp can carry seconds/milliseconds.
+// Canonicalize only the first minute of the exact configured five-minute slot.
+// Keep the original canonical-slot deadline, reject future timestamps, and
+// never derive the reservation from arrival time (which could replay old ticks).
+export function resolveScheduledTick(controller, now=Date.now()) {
+  if (controller?.cron !== CRON) return {slot:null,reason:"CRON_MISMATCH"};
+  const raw=controller.scheduledTime;
+  if (!Number.isSafeInteger(raw) || raw<=0 || !Number.isSafeInteger(now))
+    return {slot:null,reason:"INVALID_TIMESTAMP"};
+  if (raw>now) return {slot:null,reason:"FUTURE_TIMESTAMP"};
+  const slot=Math.floor(raw/SLOT_MS)*SLOT_MS;
+  if (raw-slot>=60_000) return {slot:null,reason:"OUTSIDE_SCHEDULED_MINUTE"};
+  if (!eligibleTick(slot,now)) return {slot:null,reason:"STALE_CANONICAL_SLOT"};
+  return {slot,reason:raw===slot?"EXACT_SLOT":"NORMALIZED_SCHEDULED_MINUTE"};
+}
 function isRegisteredOpen(pr, number, branch) {
   return pr?.number === number && pr.state === "open" &&
     pr.user?.login === "chadkhalil21-svg" &&
@@ -25,14 +40,13 @@ export async function engineeringFallback(controller, env, {fetcher=fetch, clock
   if (env?.PLENUM_PREVIEW_ONLY === "true" ||
       env?.PLENUM_ENGINEERING_FALLBACK_ENABLED !== "true")
     return "DISABLED";
-  if (controller?.cron !== CRON || !eligibleTick(controller.scheduledTime, clock()))
-    return "INVALID_OR_STALE_TICK";
+  const {slot}=resolveScheduledTick(controller,clock());
+  if (slot===null) return "INVALID_OR_STALE_TICK";
   if (!env.PLENUM_GITHUB_DISPATCH_TOKEN || !env.PLENUM_REPLAY_GUARD)
     return "MISSING_EXISTING_BINDINGS";
   const headers = {"Authorization":"Bearer "+env.PLENUM_GITHUB_DISPATCH_TOKEN,
     "Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2026-03-10",
     "User-Agent":"PlenumEngineeringFallback/1"};
-  const slot = controller.scheduledTime;
   try {
     // Two fixed public PRs only. When no approved work is open, do not
     // provision a GitHub runner. A failed provider read never dispatches.
@@ -76,7 +90,7 @@ export function eligibleCadenceSlot(slot, now=Date.now()) {
   return eligibleTick(slot,now) && slot>=CADENCE_START && slot<CADENCE_END;
 }
 export async function engineeringCadenceProof(controller,env,status,{fetcher=fetch,clock=Date.now}={}) {
-  const slot=controller?.scheduledTime;
+  const {slot}=resolveScheduledTick(controller,clock());
   if (env?.PLENUM_PREVIEW_ONLY === "true" ||
       env?.PLENUM_ENGINEERING_FALLBACK_ENABLED !== "true" ||
       controller?.cron!==CRON || status!=="NO_APPROVED_BACKLOG" ||
