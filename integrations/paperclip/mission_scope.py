@@ -49,6 +49,9 @@ def validate_scope(value):
     elif kind=="public_objective":
         from objective_mission import validate
         validate(value)
+    elif kind=="variable_graph":
+        from native_variable import validate
+        validate(value)
     else:raise ValueError("Unsupported mission kind")
     return json.loads(encoded(value))
 
@@ -69,6 +72,7 @@ def parse_body(body):
         return result
     value=validate_scope(json.loads(body[len(prefix):],object_pairs_hook=pairs))
     if value==LEGACY:raise ValueError("Legacy mission requires original envelope")
+    if value["kind"]=="variable_graph":raise PermissionError("Variable graph remains isolated CI candidate")
     return value
 
 
