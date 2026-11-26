@@ -135,10 +135,13 @@
       "license_blob": "ae06b37e1c5116ccfaa615ac25ec1aabf5658d8c",
       "role": "creative",
       "acceptance": "local CLI only, no HeyGen credits/cloud; synthetic motion fixture and independently checked frame/duration",
-      "state": "qualification_pending",
+      "state": "qualified_public_fixture",
       "acceptance_evidence": {
         "pr": 935,
-        "scope": "published package provenance and local synthetic motion qualification pending",
+        "run": 45777034607,
+        "artifact": 15095804086,
+        "scope": "Immutable Apache-2.0 release source built with verified lock; original two-second 48-frame local motion render, independent archive and video hash and frame inspection; no cloud render or owner runtime claim",
+        "runtime_release_commit": "c6ff4a31f240f6051836136577f51045c6da15c5",
         "owner_runtime_verified": false
       }
     },
@@ -170,6 +173,6 @@
     "Divergence/F Cancer Skill: exact upstream identity and permissions not established"
   ],
   "policy": "No candidate may grant tool permissions or run automatically. Pinned source and a scanner report are not runtime adoption. Retain original role router and live mission gates. Public GitHub jobs only eligible development/testing; never private data or unrestricted commercial inference.",
-  "evidence_baseline": "b536f4ff3e310f6a0d742eb662981aad4d5e4cb4",
+  "evidence_baseline": "17f3ed04af7ab08c9f5dc18aed850b13b2bc2f8f",
   "evidence_policy": "State records qualified scope only, never automatic activation or production runtime; evidence is historical and not permission to replay."
 }
