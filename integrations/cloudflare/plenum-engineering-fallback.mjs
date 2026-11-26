@@ -44,6 +44,8 @@ export async function engineeringFallback(controller, env, {fetcher=fetch, clock
   if (slot===null) return "INVALID_OR_STALE_TICK";
   if (!env.PLENUM_GITHUB_DISPATCH_TOKEN || !env.PLENUM_REPLAY_GUARD)
     return "MISSING_EXISTING_BINDINGS";
+  // Workers does not implement redirect:"error". Manual never follows a
+  // redirect, and the explicit status checks below reject all 3xx responses.
   const headers = {"Authorization":"Bearer "+env.PLENUM_GITHUB_DISPATCH_TOKEN,
     "Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2026-03-10",
     "User-Agent":"PlenumEngineeringFallback/1"};
@@ -52,7 +54,7 @@ export async function engineeringFallback(controller, env, {fetcher=fetch, clock
     // provision a GitHub runner. A failed provider read never dispatches.
     let open = false;
     for (const [number,branch] of REGISTERED) {
-      const res = await fetcher(API+"/pulls/"+number,{headers,redirect:"error",
+      const res = await fetcher(API+"/pulls/"+number,{headers,redirect:"manual",
         signal:AbortSignal.timeout(8000)});
       if (!res.ok) return "READ_UNAVAILABLE";
       const body = await res.json();
@@ -71,7 +73,7 @@ export async function engineeringFallback(controller, env, {fetcher=fetch, clock
     // a failed or ambiguous dispatch is never retried within the same slot.
     const result = await fetcher(API+"/dispatches",{
       method:"POST",headers:{...headers,"Content-Type":"application/json"},
-      redirect:"error",signal:AbortSignal.timeout(8000),
+      redirect:"manual",signal:AbortSignal.timeout(8000),
       body:JSON.stringify({event_type:"plenum_engineering_backlog_tick_v1",
         client_payload:{slot}})
     });
@@ -112,7 +114,7 @@ export async function engineeringCadenceProof(controller,env,status,{fetcher=fet
     const signature=Array.from(signed,v=>v.toString(16).padStart(2,"0")).join("");
     if (!eligibleCadenceSlot(slot,clock())) return "CADENCE_STALE_RESERVED";
     const response=await fetcher(API+"/dispatches",{
-      method:"POST",redirect:"error",signal:AbortSignal.timeout(8000),
+      method:"POST",redirect:"manual",signal:AbortSignal.timeout(8000),
       headers:{"Authorization":"Bearer "+env.PLENUM_GITHUB_DISPATCH_TOKEN,
         "Accept":"application/vnd.github+json","Content-Type":"application/json",
         "X-GitHub-Api-Version":"2026-03-10","User-Agent":"PlenumCadenceProof/1"},
