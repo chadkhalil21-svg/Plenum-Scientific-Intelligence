@@ -595,6 +595,19 @@ def structured_local_edit(task,scope,*,numbered=False):
         raise StructuredEditFailure("EDIT_VALIDATION") from exc
 
 
+# Recovery is limited to exact tasks already possessing independent, trusted
+# behavioral acceptance suites. No failed candidate, test answers or logs enter
+# the next model prompt. A distinct edit format is used only once.
+STRUCTURED_RECOVERY_TASKS = {
+    ("src/plenum_ai/business_public_watch.py",
+     "Repair function probe. Reject any target not in the existing TARGETS tuple before any HTTP request. Return False with a reason and None. Preserve all existing checks."):
+        "probe_scope.py",
+    ("src/plenum_ai/workforce_team_dispatch.py",
+     "Repair function dispatch. For exact cooling initial K ambient K rate time, reuse run_contract for cooling_solution and cooling_readback. Save both keyed results in cooling.json. Reject invalid inputs."):
+        "parameterized_science_worker.py",
+}
+
+
 def execute_local(task: str, *, source_file: str, candidate_out: str,
                   behavioral_recovery: bool = False) -> dict:
     """Run official Aider noninteractively, with only a public source copy mounted.
@@ -612,7 +625,20 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
     scope=None
     if requests:
         if behavioral_recovery:
-            raise PermissionError("Unapproved structured edit recovery")
+            if len(requests) != 1 or (source_file, task) not in STRUCTURED_RECOVERY_TASKS:
+                raise PermissionError("Unapproved structured edit recovery")
+            scope = local_function_scope(requests[0], original)
+            feedback = (" Independent behavioral acceptance rejected the first proposal. "
+                        "Reconsider the stated requirements from the original function. "
+                        "Preserve its signature and all unrelated behavior.")
+            # One different, numbered edit from the ORIGINAL source. Never
+            # replay the first prompt or grant a further retry on any failure.
+            raw = structured_local_edit(requests[0] + feedback, scope, numbered=True)
+            if raw == original or len(raw) > _candidate_byte_limit(original):
+                raise StructuredEditFailure("CANDIDATE_BOUND")
+            result["structured_edit_strategies"] = [
+                {"clause": 1, "strategy": "numbered", "behavioral_recovery": True}]
+            return _candidate_report(result, original, raw, source_file, artifact, 1)
         raw=original
         strategies=[]
         for index,clause in enumerate(requests,1):
