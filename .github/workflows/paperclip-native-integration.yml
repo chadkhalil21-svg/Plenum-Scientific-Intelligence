@@ -213,11 +213,11 @@ jobs:
           docker cp "$RUNNER_TEMP/plenum-oss-deps" plenum-paperclip-integration:/opt/plenum-oss-deps
           docker exec --user node -e PYTHONPATH=/opt/plenum-oss-deps plenum-paperclip-integration python3 -c 'import deepagents,langgraph;from langgraph.checkpoint.sqlite import SqliteSaver'
       - uses: actions/setup-python@v5
-        if: startsWith(matrix.kind, 'variable-')
+        if: ${{ startsWith(matrix.kind, 'variable-') || (matrix.kind == 'event' && fromJSON(needs.authorize.outputs.scope || '{}').kind == 'variable_graph') }}
         with:
           python-version: '3.13'
       - name: Provision reviewed numerical solver in isolated native board
-        if: startsWith(matrix.kind, 'variable-')
+        if: ${{ startsWith(matrix.kind, 'variable-') || (matrix.kind == 'event' && fromJSON(needs.authorize.outputs.scope || '{}').kind == 'variable_graph') }}
         run: |
           set -eu
           test "$(docker exec plenum-paperclip-integration python3 -c 'import sys;print(str(sys.version_info.major)+"."+str(sys.version_info.minor))')" = 3.13
@@ -226,7 +226,7 @@ jobs:
           docker exec --user root plenum-paperclip-integration python3 -c 'import site,pathlib; pathlib.Path(site.getsitepackages()[0],"plenum_numerical.pth").write_text("/opt/plenum-numerical-deps"+chr(10))'
           docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 -c 'import numpy,scipy;from scipy.integrate import solve_ivp;assert numpy.__version__=="2.2.6" and scipy.__version__=="1.15.3";assert callable(solve_ivp)'
       - name: Offline native variable graph security boundaries
-        if: startsWith(matrix.kind, 'variable-')
+        if: ${{ startsWith(matrix.kind, 'variable-') || (matrix.kind == 'event' && fromJSON(needs.authorize.outputs.scope || '{}').kind == 'variable_graph') }}
         run: docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/native_variable_smoke.py
       - id: checkpoint
         name: Runtime-volume checkpoint qualification (injected provider failures)
