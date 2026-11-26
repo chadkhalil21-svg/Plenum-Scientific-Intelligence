@@ -183,7 +183,7 @@ export default {
     const status = await engineeringFallback(controller, env);
     console.log("Plenum bounded engineering fallback:", status);
     const proof=await engineeringCadenceProof(controller,env,status);
-    if (proof!=="CADENCE_NOT_ELIGIBLE") console.log("Plenum cadence qualification:",proof);
+    console.log("Plenum cadence qualification:",proof);
   },
   async fetch(request, env) {
     const pathname = new URL(request.url).pathname;
