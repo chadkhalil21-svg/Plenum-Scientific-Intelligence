@@ -18,6 +18,15 @@ class TrustedRecoveryTests(unittest.TestCase):
     def test_only_original_failed_task_can_receive_one_corrective_attempt(self):
         source = "src/plenum_ai/business_public_watch.py"
         task = next(t for s,t in v.TASK_ACCEPTANCE if s==source and v.TASK_ACCEPTANCE[(s,t)]=="health_body_limit.py")
+        self._assert_single_recovery(source, task)
+
+    def test_registered_structured_task_preserves_first_evidence(self):
+        for (source, task), test in coder.STRUCTURED_RECOVERY_TASKS.items():
+            with self.subTest(source=source):
+                self.assertEqual(v.TASK_ACCEPTANCE[(source, task)], test)
+                self._assert_single_recovery(source, task)
+
+    def _assert_single_recovery(self, source, task):
         original = (ROOT / source).read_bytes()
         with tempfile.TemporaryDirectory() as tmp:
             previous = Path.cwd()
@@ -75,6 +84,34 @@ class TrustedRecoveryTests(unittest.TestCase):
                     self.assertEqual(run.call_count,1)
             finally:
                 os.chdir(previous)
+
+    def test_registered_structured_recovery_is_one_distinct_numbered_edit(self):
+        source, task = next(iter(coder.STRUCTURED_RECOVERY_TASKS))
+        original = (ROOT / source).read_bytes()
+        scope = coder.local_function_scope(task, original)
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact = Path(tmp) / "candidate.patch"
+            with patch.dict(os.environ, {"PLENUM_EPHEMERAL_RUNNER":"confirmed"}), \
+                 patch.object(coder, "_review_output_path", return_value=artifact), \
+                 patch.object(coder, "structured_local_edit", return_value=original+b"\n") as edit:
+                result = coder.execute_local(task, source_file=source,
+                                             candidate_out="unused", behavioral_recovery=True)
+                self.assertEqual(result["repair_passes"], 1)
+                self.assertEqual(edit.call_count, 1)
+                self.assertTrue(edit.call_args.kwargs["numbered"])
+                self.assertEqual(edit.call_args.args[1], scope)
+                self.assertIn("Independent behavioral acceptance rejected", edit.call_args.args[0])
+                self.assertEqual(result["structured_edit_strategies"][0]["behavioral_recovery"], True)
+                edit.reset_mock()
+                with self.assertRaises(PermissionError):
+                    coder.execute_local(task+" Extra.", source_file=source,
+                                        candidate_out="unused", behavioral_recovery=True)
+                edit.assert_not_called()
+                edit.side_effect = coder.StructuredEditFailure("EDIT_VALIDATION")
+                with self.assertRaises(coder.StructuredEditFailure):
+                    coder.execute_local(task, source_file=source,
+                                        candidate_out="unused", behavioral_recovery=True)
+                self.assertEqual(edit.call_count, 1)
 
     def test_function_scoped_edit_keeps_unrelated_bytes_and_signature(self):
         source=b"import math\n\ndef first(x: int) -> int:\n    return x+1\n\ndef second():\n    return 42\n"
