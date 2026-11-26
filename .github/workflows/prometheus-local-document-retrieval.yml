@@ -19,7 +19,7 @@ jobs:
           python-version: '3.11'
       - name: Install reviewed exact upstream candidates
         run: |
-          python -m pip install 'docling @ git+https://github.com/docling-project/docling.git@33f33aafbdb5151dc795a042b964ff659c475218' 'llama-index-core @ git+https://github.com/run-llama/llama_index.git@40d4f79eb9d8f68430692d0cc156483ca2d7f4f6#subdirectory=llama-index-core' reportlab==4.4.5
+          python -m pip install 'docling-slim @ git+https://github.com/docling-project/docling.git@33f33aafbdb5151dc795a042b964ff659c475218' 'llama-index-core @ git+https://github.com/run-llama/llama_index.git@40d4f79eb9d8f68430692d0cc156483ca2d7f4f6#subdirectory=llama-index-core' reportlab==4.4.5
       - name: Test genuine model-free extraction and grounded retrieval on synthetic public PDFs
         env:
           PYTHONPATH: src
