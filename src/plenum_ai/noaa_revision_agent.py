@@ -47,8 +47,16 @@ def parse_candidate(text):
     raw = text.strip()
     if raw.startswith(chr(96) * 3):
         raw = raw.strip(chr(96)).removeprefix("json").strip()
+    def reject_duplicate_keys(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("Duplicate JSON object key")
+            result[key] = value
+        return result
+
     try:
-        obj = json.loads(raw)
+        obj = json.loads(raw, object_pairs_hook=reject_duplicate_keys)
     except (ValueError, TypeError):
         return {"status": "invalid_json", "candidate": None}
     if not isinstance(obj, dict) or set(obj) != {
