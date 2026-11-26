@@ -123,6 +123,20 @@ class EngineeringGateTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 repair.candidate(original + original)
 
+    def test_owner_wake_exact_authorization(self):
+        event = {"action":"opened","repository":{"full_name":c.REPO},
+                 "sender":{"login":c.OWNER},"issue":{"number":123,"state":"open",
+                 "user":{"login":c.OWNER},"title":c.WAKE_TITLE,"body":c.WAKE_BODY}}
+        self.assertTrue(c.wake_authorized(event))
+        for key,value in [("body","PLENUM_ENGINEERING_WAKE_V1 extra"),
+                          ("title","different"),("user",{"login":"stranger"}),
+                          ("state","closed"),("pull_request",{})]:
+            other = copy.deepcopy(event)
+            other["issue"][key] = value
+            self.assertFalse(c.wake_authorized(other))
+        event["sender"]["login"] = "stranger"
+        self.assertFalse(c.wake_authorized(event))
+
     def test_unregistered_or_closed(self):
         self.assertFalse(c.authorized_pr(self.pr, 926))
         self.pr["state"] = "closed"
