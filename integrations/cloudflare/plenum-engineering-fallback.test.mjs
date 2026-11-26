@@ -218,8 +218,21 @@ test("new approved exact-head backlog is discovered; changed head and foreign PR
     [{...pr,user:{login:"other"}},"NO_APPROVED_BACKLOG"],
     [{...pr,body:pr.body+"\n"+pr.body},"NO_APPROVED_BACKLOG"]]){
     const f=fixture({closed:true});
-    const fetcher=async(url,init)=>url.includes("/pulls?")?Response.json([row]):f.fetcher(url,init);
+    const fetcher=async(url,init)=>url.includes("/pulls?")?Response.json([row]):
+      url.includes("/issues/12345/comments?")?Response.json([{body:pr.body,user:{login:"chadkhalil21-svg",id:251133044},author_association:"OWNER",created_at:"2026-11-26T00:00:00Z",updated_at:"2026-11-26T00:00:00Z"}]):f.fetcher(url,init);
     assert.equal(await engineeringFallback(event,f.env,{fetcher}),expected);
     assert.equal(f.claims.length,expected==="DISPATCH_ACCEPTED_NOT_COMPLETED"?1:0);
   }
+});
+
+test("a PR description alone never grants admission",async()=>{
+  const f=fixture({closed:true});
+  const pr={number:12345,state:"open",draft:false,user:{login:"chadkhalil21-svg"},
+    head:{ref:"prometheus-new-work",sha:"a".repeat(40),repo:{full_name:repo}},
+    base:{ref:"main",repo:{full_name:repo}},
+    body:"<!-- plenum-engineering-observe-v1:"+"a".repeat(40)+":New native check:qualification -->"};
+  const fetcher=async(url,init)=>url.includes("/pulls?")?Response.json([pr]):
+    url.includes("/issues/12345/comments?")?Response.json([]):f.fetcher(url,init);
+  assert.equal(await engineeringFallback(event,f.env,{fetcher}),"NO_APPROVED_BACKLOG");
+  assert.equal(f.claims.length,0);
 });
