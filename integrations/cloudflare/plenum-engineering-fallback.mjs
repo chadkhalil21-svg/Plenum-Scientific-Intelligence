@@ -66,3 +66,35 @@ export async function engineeringFallback(controller, env, {fetcher=fetch, clock
     return "PROVIDER_UNAVAILABLE";
   }
 }
+
+// A one-time operational qualification of the original deployed cron. No
+// work is fabricated and no idle recurring runner is enabled. At most two
+// receipts, across deployments, within the founder's current UTC window.
+export const CADENCE_START = Date.UTC(2026,10,26,8);
+export const CADENCE_END = Date.UTC(2026,10,27,5);
+export function eligibleCadenceSlot(slot, now=Date.now()) {
+  return eligibleTick(slot,now) && slot>=CADENCE_START && slot<CADENCE_END;
+}
+export async function engineeringCadenceProof(controller,env,status,{fetcher=fetch,clock=Date.now}={}) {
+  const slot=controller?.scheduledTime;
+  if (env?.PLENUM_PREVIEW_ONLY === "true" ||
+      env?.PLENUM_ENGINEERING_FALLBACK_ENABLED !== "true" ||
+      controller?.cron!==CRON || status!=="NO_APPROVED_BACKLOG" ||
+      !eligibleCadenceSlot(slot,clock()) || !env.PLENUM_REPLAY_GUARD ||
+      !env.PLENUM_GITHUB_DISPATCH_TOKEN) return "CADENCE_NOT_ELIGIBLE";
+  try {
+    const guard=env.PLENUM_REPLAY_GUARD.getByName("plenum-engineering-fallback");
+    const claim=await guard.fetch("https://replay-guard.internal/claim-cadence-proof",{
+      method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({slot})});
+    if (claim.status!==204) return "CADENCE_NOT_RESERVED";
+    if (!eligibleCadenceSlot(slot,clock())) return "CADENCE_STALE_RESERVED";
+    const response=await fetcher(API+"/dispatches",{
+      method:"POST",redirect:"error",signal:AbortSignal.timeout(8000),
+      headers:{"Authorization":"Bearer "+env.PLENUM_GITHUB_DISPATCH_TOKEN,
+        "Accept":"application/vnd.github+json","Content-Type":"application/json",
+        "X-GitHub-Api-Version":"2026-03-10","User-Agent":"PlenumCadenceProof/1"},
+      body:JSON.stringify({event_type:"plenum_engineering_cadence_proof_v1",
+        client_payload:{slot,scope:"cron_observation_only"}})});
+    return response.status===204?"CADENCE_RECEIPT_DISPATCHED":"CADENCE_DISPATCH_UNAVAILABLE";
+  } catch {return "CADENCE_UNAVAILABLE";}
+}
