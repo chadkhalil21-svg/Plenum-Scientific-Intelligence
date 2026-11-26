@@ -22,10 +22,21 @@ REGISTERED = {
           "Prometheus upstream skill supply-chain qualification", "static-review"),
     925: ("prometheus-local-document-retrieval",
           "Prometheus model-free document retrieval qualification", "public-fixture"),
+    928: ("prometheus-whisper-local-qualification",
+          "Prometheus | Pinned local speech recognition qualification", "synthetic-speech"),
+    929: ("prometheus-blender-scientific-render",
+          "Prometheus | Blender concept geometry qualification", "original-concept"),
 }
 SHA = re.compile(r"^[a-f0-9]{40}$")
 MARKER = "<!-- plenum-engineering-controller-v1:"
 MAX_BYTES = 2_000_000
+RECEIPT_ISSUE = 432
+WAKE_TITLE = "[Plenum Engineering] approved backlog wake"
+WAKE_BODY = "PLENUM_ENGINEERING_WAKE_V1"
+# One audited repair recipe, bound to original failed public development run.
+WHISPER_REPAIR_RUN = 45767285022
+WHISPER_REPAIR_HEAD = "a9ed286a49308fb5e01ed25a53c08f65e72445af"
+WHISPER_REPAIR_JOB = 139731117752
 
 
 def number(x):
@@ -88,6 +99,19 @@ def diagnose(pr, n, run, jobs):
             or not isinstance(steps, list) or not steps):
         return {"status": "BLOCKED_JOB_IDENTITY"}
     failed = [s for s in steps if s.get("conclusion") == "failure"]
+    # Exact original speech fixture reached inference; the observed failure
+    # was a transcript mismatch. Qualify a DIFFERENT pinned model once,
+    # not a retry of the rejected tiny.en inference or a relaxed gate.
+    if (n == 928 and run["id"] == WHISPER_REPAIR_RUN
+            and run["head_sha"] == WHISPER_REPAIR_HEAD
+            and run["run_attempt"] == 1 and job["id"] == WHISPER_REPAIR_JOB
+            and len(failed) == 1
+            and failed[0].get("name") == "Qualify upstream CLI on public synthetic fixture in isolated network namespace"
+            and all(any(s.get("name") == name and s.get("conclusion") == "success"
+                        for s in steps) for name in (
+                "Build exact official whisper.cpp release",
+                "Verify official MIT tiny English model and create original synthetic test speech"))):
+        return {"status": "QUALIFY_PINNED_WHISPER_BASE_CORRECTION_ONCE"}
     # Retry only if checkout, dependency installs and all substantive steps
     # were never started. No retry for failed validation or partial execution.
     if (run["run_attempt"] == 1 and len(failed) == 1
@@ -152,12 +176,22 @@ def process(n, run_id=None):
     if result["status"] == "INELIGIBLE":
         return result
     receipt = marker(n, run, result["status"])
+    # Use the original master issue, not a PR comment requiring broader rights.
     # Fixed per-run receipt; only a genuine Actions bot receipt counts as a
     # prior reservation. Bound pagination rather than silently ignoring old
     # reservations. Fail closed if the limit is exceeded.
+    from datetime import datetime, timezone
+    from urllib.parse import urlencode
+    created = run.get("created_at")
+    if not isinstance(created, str):
+        raise ValueError("Missing original run creation time")
+    started = datetime.fromisoformat(created.replace("Z", "+00:00"))
+    if started.tzinfo is None or started > datetime.now(timezone.utc):
+        raise ValueError("Invalid run creation time")
     comments = []
     for page in range(1, 6):
-        rows = request(f"/issues/{n}/comments?per_page=100&page={page}")
+        query = urlencode({"per_page": 100, "page": page, "since": created})
+        rows = request(f"/issues/{RECEIPT_ISSUE}/comments?{query}")
         if not isinstance(rows, list):
             raise RuntimeError("Invalid comment list")
         comments.extend(rows)
@@ -181,19 +215,39 @@ def process(n, run_id=None):
         f"Run {run['id']}, exact head {sha}. No paid inference or merge authorization."
     )
     # Reserve before any retry. Ambiguous reservations never replay.
-    posted = request(f"/issues/{n}/comments", "POST", {"body": body})
+    posted = request(f"/issues/{RECEIPT_ISSUE}/comments", "POST", {"body": body})
     if (posted.get("user") or {}).get("login") != "github-actions[bot]" or posted.get("body") != body:
         raise RuntimeError("Reservation identity not confirmed")
     if result["status"] == "RETRY_UNSTARTED_INFRASTRUCTURE_ONCE":
         request(f"/actions/jobs/{result['job_id']}/rerun", "POST", {})
         result["retry_requested"] = True
+    if result["status"] == "QUALIFY_PINNED_WHISPER_BASE_CORRECTION_ONCE":
+        # Only the newly posted canonical reservation can activate this job.
+        result["whisper_repair_reserved"] = True
     return result
+
+
+def wake_authorized(event):
+    if not isinstance(event, dict):
+        return False
+    issue = event.get("issue") or {}
+    return (
+        event.get("action") == "opened"
+        and (event.get("repository") or {}).get("full_name") == REPO
+        and (event.get("sender") or {}).get("login") == OWNER
+        and (issue.get("user") or {}).get("login") == OWNER
+        and number(issue.get("number"))
+        and issue.get("state") == "open"
+        and "pull_request" not in issue
+        and issue.get("title") == WAKE_TITLE
+        and issue.get("body") == WAKE_BODY
+    )
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--event", required=True)
-    parser.add_argument("--kind", choices=("workflow_run", "schedule", "workflow_dispatch"), required=True)
+    parser.add_argument("--kind", choices=("workflow_run", "schedule", "workflow_dispatch", "issues"), required=True)
     args = parser.parse_args()
     if os.getenv("GITHUB_REPOSITORY") != REPO:
         raise PermissionError("Wrong repository")
@@ -203,9 +257,22 @@ def main():
         if not number(run.get("id")) or (run.get("repository") or {}).get("full_name") != REPO:
             return
         numbers = [n for n, row in REGISTERED.items() if row[1] == run.get("name") and row[0] == run.get("head_branch")]
-        results = [process(n, run["id"]) for n in numbers]
+        if not numbers:
+            return
+        # A registered completion also drains any older eligible backlog.
+        # The exact-head, terminal, bot receipt, and no-replay gates remain.
+        results = [process(n, run["id"] if n in numbers else None) for n in REGISTERED]
+    elif args.kind == "issues":
+        if not wake_authorized(event):
+            raise PermissionError("Not an authorized engineering wake")
+        results = [process(n) for n in REGISTERED]
     else:
         results = [process(n) for n in REGISTERED]
+    if any(x.get("whisper_repair_reserved") is True for x in results):
+        output = os.environ.get("GITHUB_OUTPUT")
+        if output:
+            with open(output, "a", encoding="utf-8") as handle:
+                handle.write("whisper_repair=true\n")
     print(json.dumps({"schema": "plenum-engineering-controller-v1", "results": results,
                       "paid_inference": False, "merge_authorized": False}, indent=2))
 

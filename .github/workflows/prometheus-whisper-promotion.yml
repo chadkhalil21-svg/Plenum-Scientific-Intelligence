@@ -1,0 +1,36 @@
+name: Prometheus | Accepted speech correction promotion
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/prometheus-whisper-local.yml'
+      - '.github/workflows/prometheus-whisper-promotion.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  accepted-source:
+    if: github.event.pull_request.number == 928 && github.event.pull_request.user.login == 'chadkhalil21-svg' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: whisper-repair-candidate
+          run-id: 45773714957
+          github-token: ${{ github.token }}
+          path: accepted
+      - name: Read back independently accepted source and exact promotion, no inference
+        run: |
+          set -euo pipefail
+          PYTHONPATH=src python -m plenum_ai.whisper_repair_candidate --verify --original accepted/original.yml --out accepted/candidate.yml --audio accepted/audio.wav --transcript accepted/transcript.txt --receipt-file accepted/repair-receipt.json
+          python - <<'PY'
+          import hashlib, pathlib
+          candidate = pathlib.Path("accepted/candidate.yml").read_bytes()
+          assert hashlib.sha256(candidate).hexdigest() == "8e68d2b8e1330be4ed955f6fcad3346783932387d6d3e3fa85a1397a86cd7059"
+          expected = candidate.decode().replace("  pull_request:\n    paths:\n      - '.github/workflows/prometheus-whisper-local.yml'\n","").replace("  synthetic-speech:\n    runs-on:","  synthetic-speech:\n    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.ref == 'refs/heads/main'\n    runs-on:")
+          assert pathlib.Path(".github/workflows/prometheus-whisper-local.yml").read_text() == expected
+          print("Accepted corrected source promoted exactly; PR inference trigger disabled to avoid replay. No model executed.")
+          PY
