@@ -60,6 +60,23 @@ def dynamic_entry(pr):
         return None
     return (head["ref"], m[2], m[3], m[1])
 
+def owner_approval(pr, row):
+    # PR descriptions are editable by collaborators. Require the exact
+    # unedited owner-authored comment as separate admission evidence.
+    n = pr["number"]
+    rows = request(f"/issues/{n}/comments?per_page=100")
+    if not isinstance(rows, list) or len(rows) >= 100:
+        return False
+    expected = f"<!-- plenum-engineering-observe-v1:{row[3]}:{row[1]}:{row[2]} -->"
+    matches = [c for c in rows if isinstance(c, dict)
+               and c.get("body") == expected
+               and (c.get("user") or {}).get("login") == OWNER
+               and (c.get("user") or {}).get("id") == 251133044
+               and c.get("author_association") == "OWNER"
+               and isinstance(c.get("created_at"), str)
+               and c.get("created_at") == c.get("updated_at")]
+    return len(matches) == 1
+
 def registry():
     return {**REGISTERED, **{n: row[:3] for n, row in DYNAMIC.items()}}
 
@@ -70,7 +87,7 @@ def discover():
     found = {}
     for pr in rows:
         row = dynamic_entry(pr)
-        if row is not None:
+        if row is not None and owner_approval(pr, row):
             n = pr["number"]
             if n in found:
                 raise RuntimeError("Duplicate PR identity")
@@ -260,7 +277,9 @@ def process(n, run_id=None):
     # Re-read the owner PR and run before any side effect.
     fresh = request(f"/pulls/{n}")
     latest = request(f"/actions/runs/{run['id']}")
-    if not eligible_run(fresh, n, latest) or latest["run_attempt"] != run["run_attempt"] or latest["conclusion"] != run["conclusion"]:
+    if (not eligible_run(fresh, n, latest) or latest["run_attempt"] != run["run_attempt"]
+            or latest["conclusion"] != run["conclusion"]
+            or (n in DYNAMIC and not owner_approval(fresh, DYNAMIC[n]))):
         result["status"] = "SUPERSEDED"
         return result
     body = receipt + "\n" + (
