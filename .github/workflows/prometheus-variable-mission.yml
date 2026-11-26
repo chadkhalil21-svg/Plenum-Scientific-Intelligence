@@ -1,0 +1,82 @@
+name: Prometheus variable autonomous mission graph
+on:
+  pull_request:
+    paths:
+      - 'integrations/paperclip/variable_mission.py'
+      - '.github/workflows/prometheus-variable-mission.yml'
+permissions:
+  contents: read
+jobs:
+  execute:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        case: [science, engineering, commercial]
+    env:
+      PYTHONPATH: src:integrations/paperclip
+      PLENUM_EPHEMERAL_RUNNER: confirmed
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e '.[numerical]'
+      - name: Original pinned local inference
+        run: |
+          set -eu
+          docker pull ollama/ollama:latest
+          docker run -d --name plenum-paperclip-qwen -p 127.0.0.1:11434:11434 -e OLLAMA_CONTEXT_LENGTH=2048 -e OLLAMA_NUM_PARALLEL=1 --memory=8g --cpus=3 ollama/ollama:latest
+          for i in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
+            sleep 2
+          done
+          bash integrations/paperclip/pull_original_qwen.sh
+          test "$(docker exec plenum-paperclip-qwen ollama list | awk '$1=="qwen3.5:4b" {print $2}')" = d8b0f5e9760c
+      - name: Select and execute a variable dependency graph using original Chief workers
+        env:
+          CASE: ${{ matrix.case }}
+        run: python integrations/paperclip/variable_mission.py run "$CASE" "reports/$CASE"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: variable-mission-${{ matrix.case }}
+          path: reports/${{ matrix.case }}/
+          if-no-files-found: error
+          retention-days: 7
+      - if: always()
+        run: docker rm -fv plenum-paperclip-qwen 2>/dev/null || true
+  independent:
+    needs: execute
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      PYTHONPATH: src:integrations/paperclip
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e '.[numerical]'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: variable-mission-*
+          path: reports
+      - name: Independent held-out objective and receipt verification without model or provider calls
+        run: |
+          set -eu
+          mkdir -p accepted
+          for case in science engineering commercial; do
+            python integrations/paperclip/variable_mission.py verify "$case" "reports/variable-mission-$case" > "accepted/$case.json"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: variable-mission-independent
+          path: accepted/
+          if-no-files-found: error
+          retention-days: 7
