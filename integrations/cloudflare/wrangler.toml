@@ -32,14 +32,14 @@ crons = ["*/5 * * * *"]
 PLENUM_FREE_AI_ENABLED = "true"
 PLENUM_ENGINEERING_FALLBACK_ENABLED = "true"
 
-# Temporary production cron diagnosis: custom status logs only, no request
-# invocation logs or traces. No new provider, token, or replay reservation.
+# Temporary stored diagnostics closed following authenticated cadence acceptance.
+# Keep invocation logs and traces disabled; no change to execution or replay.
 [observability]
-enabled = true
+enabled = false
 head_sampling_rate = 1
 
 [observability.logs]
-enabled = true
+enabled = false
 invocation_logs = false
 
 [observability.traces]
