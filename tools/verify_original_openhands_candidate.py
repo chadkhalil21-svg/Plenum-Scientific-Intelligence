@@ -257,6 +257,7 @@ def recover_local_behavior(report_path: Path, verdict_path: Path, event_path: Pa
     """
     from plenum_ai.openhands_coding_agent import (
         LOCAL_ENGINE, parse_owner_repair_event, execute_local, local_plan,
+        STRUCTURED_RECOVERY_TASKS,
     )
     first = json.loads(report_path.read_text("utf-8"))
     verdict = json.loads(verdict_path.read_text("utf-8"))
@@ -281,7 +282,8 @@ def recover_local_behavior(report_path: Path, verdict_path: Path, event_path: Pa
     test = TASK_ACCEPTANCE.get((source, task))
     patch = Path("reports/openhands-review") / f"issue-{owner['issue_number']}.patch"
     if (owner.get("engine") != LOCAL_ENGINE or first.get("engine") != LOCAL_ENGINE
-            or first.get("repair_passes") != 0 or test != "health_body_limit.py"
+            or first.get("repair_passes") != 0 or test is None
+            or (test != "health_body_limit.py" and STRUCTURED_RECOVERY_TASKS.get((source, task)) != test)
             or first.get("source_file") != source or first.get("task") != task
             or first.get("source_sha256") != owner["source_sha256"]
             or first.get("status") != "PROPOSAL_AWAITING_REVIEW"
