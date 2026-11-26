@@ -223,7 +223,7 @@ jobs:
           test "$(docker exec plenum-paperclip-integration python3 -c 'import sys;print(str(sys.version_info.major)+"."+str(sys.version_info.minor))')" = 3.13
           python -m pip install --disable-pip-version-check --only-binary=:all: --no-deps --target "$RUNNER_TEMP/plenum-numerical-deps" 'numpy==2.2.6' 'scipy==1.15.3'
           docker cp "$RUNNER_TEMP/plenum-numerical-deps" plenum-paperclip-integration:/opt/plenum-numerical-deps
-          docker exec --user root plenum-paperclip-integration python3 -c 'import site,pathlib; pathlib.Path(site.getsitepackages()[0],"plenum_numerical.pth").write_text("/opt/plenum-numerical-deps\\n")'
+          docker exec --user root plenum-paperclip-integration python3 -c 'import site,pathlib; pathlib.Path(site.getsitepackages()[0],"plenum_numerical.pth").write_text("/opt/plenum-numerical-deps"+chr(10))'
           docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 -c 'import numpy,scipy;from scipy.integrate import solve_ivp;assert numpy.__version__=="2.2.6" and scipy.__version__=="1.15.3";assert callable(solve_ivp)'
       - name: Offline native variable graph security boundaries
         if: startsWith(matrix.kind, 'variable-')
