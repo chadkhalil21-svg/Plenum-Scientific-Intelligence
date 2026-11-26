@@ -23,3 +23,6 @@ Original gap | Minimal change | Version/license | Changed files | Focused verifi
 
 ## Shared constraints
 Use public sources for public GitHub jobs. Private financial information, credentials, patents, customer records, and external actions require an independently authorized private integration. A skill file is portable instructions, not a running model, installed third-party integration, paid resource, or proof of completing a real task.
+
+## Selected gstack engineering-review method
+Pinned MIT source: https://github.com/garrytan/gstack/blob/e6dd567349e85506127c2f4cf69a0392923c032c/plan-eng-review/SKILL.md (reviewed scope and engineering review description only). Before modifying a genuine assignment, fix the target scope; inspect architecture, data flow, edge cases, performance constraints and existing coverage. Identify one independently checkable failure condition and reuse existing tests where adequate. No upstream preamble, telemetry, shell loader, deployment hook or permission prompt is executed. Existing founder authorization and repository protection prevail; full raw gstack remains quarantined.

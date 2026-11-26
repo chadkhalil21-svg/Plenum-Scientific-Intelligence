@@ -48,7 +48,11 @@ class FiveWorkforceContractTests(TestCase):
         ])
         self.assertIn("explicitly retired", self.registry["hosting_candidate"])
         self.assertIn("No OCI provisioning", self.registry["rules"]["deployment"])
-        self.assertIn("#310 NOT PLANNED", self.registry["free_first_capability_registry"]["browser_tooling_note"])
+        browser = self.registry["free_first_capability_registry"]["browser_tooling_note"]
+        self.assertIn("reactivated original #310", browser)
+        self.assertIn("independent real owner-authorized session acceptance", browser)
+        self.assertIn("not a replacement host or vault", browser)
+        self.assertIn("existing credits", browser)
         self.assertIn("July 30 2026", self.registry["rules"]["free_provider"])
         self.assertIn("timed out", self.registry["rules"]["model"])
 
