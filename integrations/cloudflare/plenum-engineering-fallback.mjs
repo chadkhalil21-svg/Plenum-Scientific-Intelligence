@@ -18,7 +18,7 @@ export function dynamicEntry(pr) {
   if(lines.length!==1)return null;
   const m=/^<!-- plenum-engineering-observe-v1:([a-f0-9]{40}):([A-Za-z0-9 ._|-]{1,100}):([A-Za-z0-9 ._|-]{1,100}) -->$/.exec(lines[0]);
   if(!m || m[1]!==pr.head.sha)return null;
-  return {number:pr.number,head:m[1]};
+  return {number:pr.number,head:m[1],marker:lines[0]};
 }
 
 export function eligibleTick(scheduledTime, now = Date.now()) {
@@ -83,7 +83,17 @@ export async function engineeringFallback(controller, env, {fetcher=fetch, clock
       if(!Array.isArray(rows)||rows.length>=100)return "READ_UNAVAILABLE";
       const entries=rows.map(dynamicEntry).filter(Boolean);
       if(entries.length>MAX_DYNAMIC||new Set(entries.map(x=>x.number)).size!==entries.length)return "READ_UNAVAILABLE";
-      open=entries.length>0;
+      for(const entry of entries){
+        const reply=await fetcher(API+"/issues/"+entry.number+"/comments?per_page=100",{headers,redirect:"manual",signal:AbortSignal.timeout(8000)});
+        if(!reply.ok)return "READ_UNAVAILABLE";
+        const comments=await reply.json();
+        if(!Array.isArray(comments)||comments.length>=100)return "READ_UNAVAILABLE";
+        const matches=comments.filter(c=>c?.body===entry.marker &&
+          c.user?.login==="chadkhalil21-svg" && c.user?.id===251133044 &&
+          c.author_association==="OWNER" && typeof c.created_at==="string" &&
+          c.created_at===c.updated_at);
+        if(matches.length===1)open=true;
+      }
     }
     if (!open) return "NO_APPROVED_BACKLOG";
     if (!eligibleTick(slot,clock())) return "INVALID_OR_STALE_TICK";
