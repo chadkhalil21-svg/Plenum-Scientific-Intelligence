@@ -157,13 +157,24 @@ def accept_queue(root):
 def main():
     base=Path(sys.argv[1]);out=Path(sys.argv[2])
     event=os.environ["EVENT"];run=os.environ["GITHUB_RUN_ID"];commit=os.environ["GITHUB_SHA"]
-    expected_names={"off-legacy","local-legacy","local-budget","local-objective","local-composition-logistics","local-composition-energy","local-synthesis","local-adaptive-review","local-adaptive-defer","local-oss-review","local-oss-defer"} if event=="pull_request" else {"local-event"}
+    expected_names={"off-legacy","local-legacy","local-budget","local-objective","local-composition-logistics","local-composition-energy","local-synthesis","local-adaptive-review","local-adaptive-defer","local-oss-review","local-oss-defer","local-variable-science","local-variable-engineering","local-variable-commercial"} if event=="pull_request" else {"local-event"}
     paths={p.name.removeprefix("paperclip-native-public-evidence-"):p for p in base.iterdir()}
     if set(paths)!=expected_names:raise ValueError("Missing or unexpected native evidence archives")
     scope=None if event=="pull_request" else validate_scope(json.loads(os.environ["EXPECTED_SCOPE"]))
     results={k:accept(paths[k],run,commit,scope) for k in sorted(paths)}
     if any(v["model_receipt_verified"]!=(k!="off-legacy") for k,v in results.items()):raise ValueError("Unexpected model receipt")
     if event=="pull_request":
+        from native_variable import fixture as variable_fixture
+        for case,count in (("science",5),("engineering",3),("commercial",3)):
+            key="local-variable-"+case
+            accepted=accept(paths[key],run,commit,variable_fixture(case))
+            if accepted!=results[key]:raise ValueError("Variable independent acceptance mismatch")
+            q=read(paths[key]/accepted["company"]/accepted["mission"]/"qualification.json")
+            proof=q["independent_verification"]
+            if proof.get("native_variable_graph_verified") is not True or proof.get("verified_contracts")!=count:
+                raise ValueError("Missing native variable graph work")
+            if proof.get("model_calls_replayed")!=0 or proof.get("provider_calls_replayed")!=0:
+                raise ValueError("Variable replay detected")
         from synthesis_smoke import scope as expected_synthesis_scope
         accepted=accept(paths["local-synthesis"],run,commit,expected_synthesis_scope())
         if accepted!=results["local-synthesis"]:raise ValueError("Synthesis independent acceptance mismatch")
