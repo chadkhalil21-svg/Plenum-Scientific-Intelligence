@@ -9,7 +9,7 @@ import sequential_mission as native
 MARKER="event-native-mission.json"
 
 def persistent_required(scope):
-    return validate_scope(scope)["kind"]=="public_objective"
+    return validate_scope(scope)["kind"] in ("public_objective","variable_graph")
 
 def execute():
     scope=native.active_scope()
