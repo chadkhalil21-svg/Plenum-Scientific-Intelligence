@@ -32,6 +32,70 @@ REGISTERED = {
           "Prometheus upstream skill supply-chain qualification", "static-review"),
 }
 SHA = re.compile(r"^[a-f0-9]{40}$")
+# New work must have an explicit owner-approved, exact-head admission line.
+# This is observation and setup-only recovery, NEVER code or merge authority.
+APPROVAL = re.compile(r"^<!-- plenum-engineering-observe-v1:([a-f0-9]{40}):([A-Za-z0-9 ._|-]{1,100}):([A-Za-z0-9 ._|-]{1,100}) -->$", re.MULTILINE)
+BRANCH = re.compile(r"^prometheus-[a-z0-9][a-z0-9-]{0,100}$")
+MAX_DYNAMIC = 12
+DYNAMIC = {}
+
+def dynamic_entry(pr):
+    if not isinstance(pr, dict) or not number(pr.get("number")):
+        return None
+    n = pr["number"]
+    if n in REGISTERED or pr.get("state") != "open" or pr.get("draft") is not False:
+        return None
+    head, base = pr.get("head") or {}, pr.get("base") or {}
+    if ((pr.get("user") or {}).get("login") != OWNER
+            or (head.get("repo") or {}).get("full_name") != REPO
+            or (base.get("repo") or {}).get("full_name") != REPO
+            or base.get("ref") != "main" or not isinstance(head.get("ref"), str)
+            or not BRANCH.fullmatch(head["ref"]) or not isinstance(pr.get("body"), str)):
+        return None
+    lines = [line for line in pr["body"].splitlines() if "plenum-engineering-observe-v1:" in line]
+    if len(lines) != 1:
+        return None
+    m = APPROVAL.fullmatch(lines[0])
+    if m is None or m[1] != head.get("sha"):
+        return None
+    return (head["ref"], m[2], m[3], m[1])
+
+def owner_approval(pr, row):
+    # PR descriptions are editable by collaborators. Require the exact
+    # unedited owner-authored comment as separate admission evidence.
+    n = pr["number"]
+    rows = request(f"/issues/{n}/comments?per_page=100")
+    if not isinstance(rows, list) or len(rows) >= 100:
+        return False
+    expected = f"<!-- plenum-engineering-observe-v1:{row[3]}:{row[1]}:{row[2]} -->"
+    matches = [c for c in rows if isinstance(c, dict)
+               and c.get("body") == expected
+               and (c.get("user") or {}).get("login") == OWNER
+               and (c.get("user") or {}).get("id") == 251133044
+               and c.get("author_association") == "OWNER"
+               and isinstance(c.get("created_at"), str)
+               and c.get("created_at") == c.get("updated_at")]
+    return len(matches) == 1
+
+def registry():
+    return {**REGISTERED, **{n: row[:3] for n, row in DYNAMIC.items()}}
+
+def discover():
+    rows = request("/pulls?state=open&base=main&per_page=100")
+    if not isinstance(rows, list) or len(rows) >= 100:
+        raise RuntimeError("Open PR discovery exceeds bounded scope")
+    found = {}
+    for pr in rows:
+        row = dynamic_entry(pr)
+        if row is not None and owner_approval(pr, row):
+            n = pr["number"]
+            if n in found:
+                raise RuntimeError("Duplicate PR identity")
+            found[n] = row
+    if len(found) > MAX_DYNAMIC:
+        raise RuntimeError("Approved engineering queue exceeds bounded scope")
+    DYNAMIC.clear()
+    DYNAMIC.update(found)
 MARKER = "<!-- plenum-engineering-controller-v1:"
 MAX_BYTES = 2_000_000
 RECEIPT_ISSUE = 432
@@ -48,9 +112,11 @@ def number(x):
 
 
 def authorized_pr(pr, n):
-    if n not in REGISTERED or not isinstance(pr, dict):
+    if n not in registry() or not isinstance(pr, dict):
         return False
-    branch, _, _ = REGISTERED[n]
+    if n in DYNAMIC and dynamic_entry(pr) != DYNAMIC[n]:
+        return False
+    branch, _, _ = registry()[n]
     head, base = pr.get("head") or {}, pr.get("base") or {}
     return (
         pr.get("number") == n and pr.get("state") == "open"
@@ -65,7 +131,7 @@ def authorized_pr(pr, n):
 def eligible_run(pr, n, run):
     if not authorized_pr(pr, n) or not isinstance(run, dict):
         return False
-    branch, workflow, _ = REGISTERED[n]
+    branch, workflow, _ = registry()[n]
     return (
         number(run.get("id")) and run.get("name") == workflow
         and run.get("event") == "pull_request"
@@ -92,7 +158,7 @@ def diagnose(pr, n, run, jobs):
         return {"status": "AWAIT_INDEPENDENT_EVIDENCE"}
     if run["conclusion"] != "failure":
         return {"status": "STOP_NON_SUCCESS"}
-    _, _, name = REGISTERED[n]
+    _, _, name = registry()[n]
     matches = [j for j in jobs if isinstance(j, dict) and j.get("name") == name]
     if len(matches) != 1:
         return {"status": "BLOCKED_JOB_IDENTITY"}
@@ -211,7 +277,9 @@ def process(n, run_id=None):
     # Re-read the owner PR and run before any side effect.
     fresh = request(f"/pulls/{n}")
     latest = request(f"/actions/runs/{run['id']}")
-    if not eligible_run(fresh, n, latest) or latest["run_attempt"] != run["run_attempt"] or latest["conclusion"] != run["conclusion"]:
+    if (not eligible_run(fresh, n, latest) or latest["run_attempt"] != run["run_attempt"]
+            or latest["conclusion"] != run["conclusion"]
+            or (n in DYNAMIC and not owner_approval(fresh, DYNAMIC[n]))):
         result["status"] = "SUPERSEDED"
         return result
     body = receipt + "\n" + (
@@ -272,26 +340,27 @@ def main():
     if os.getenv("GITHUB_REPOSITORY") != REPO:
         raise PermissionError("Wrong repository")
     event = json.loads(Path(args.event).read_text())
+    discover()
     if args.kind == "workflow_run":
         run = event.get("workflow_run", {})
         if not number(run.get("id")) or (run.get("repository") or {}).get("full_name") != REPO:
             return
-        numbers = [n for n, row in REGISTERED.items() if row[1] == run.get("name") and row[0] == run.get("head_branch")]
+        numbers = [n for n, row in registry().items() if row[1] == run.get("name") and row[0] == run.get("head_branch")]
         if not numbers:
             return
         # A registered completion also drains any older eligible backlog.
         # The exact-head, terminal, bot receipt, and no-replay gates remain.
-        results = [process(n, run["id"] if n in numbers else None) for n in REGISTERED]
+        results = [process(n, run["id"] if n in numbers else None) for n in registry()]
     elif args.kind == "repository_dispatch":
         if not fallback_authorized(event):
             raise PermissionError("Not a current authorized engineering fallback")
-        results = [process(n) for n in REGISTERED]
+        results = [process(n) for n in registry()]
     elif args.kind == "issues":
         if not wake_authorized(event):
             raise PermissionError("Not an authorized engineering wake")
-        results = [process(n) for n in REGISTERED]
+        results = [process(n) for n in registry()]
     else:
-        results = [process(n) for n in REGISTERED]
+        results = [process(n) for n in registry()]
     if any(x.get("whisper_repair_reserved") is True for x in results):
         output = os.environ.get("GITHUB_OUTPUT")
         if output:

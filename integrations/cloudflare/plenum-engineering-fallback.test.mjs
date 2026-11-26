@@ -20,6 +20,7 @@ function fixture({closed=false,unavailable=false,dispatchStatus=204}={}) {
     calls.push({url,method:init.method,body:init.body});
     if(url.endsWith("/dispatches"))return new Response(null,{status:dispatchStatus});
     if(unavailable)return new Response(null,{status:503});
+    if(url.includes("/pulls?"))return Response.json([]);
     const n=Number(url.split("/").at(-1));
     return Response.json({number:n,state:closed?"closed":"open",user:{login:"chadkhalil21-svg"},
       head:{ref:n===935?"prometheus-hyperframes-local-qualification":"prometheus-accepted-upstream-evidence-registry",sha:"a".repeat(40),repo:{full_name:repo}},
@@ -45,7 +46,7 @@ test("approved open backlog dispatch is bounded",async()=>{
 test("closed approved backlog never provisions a runner",async()=>{
   const f=fixture({closed:true});
   assert.equal(await engineeringFallback(event,f.env,{fetcher:f.fetcher}),"NO_APPROVED_BACKLOG");
-  assert.equal(f.calls.length,2);
+  assert.equal(f.calls.length,3);
   assert.equal(f.claims.length,0);
 });
 test("preview, stale slot and unavailable reads fail closed",async()=>{
@@ -205,4 +206,33 @@ test("cadence dispatch rejects manual redirect and retains atomic reservation",a
     assert.equal(await engineeringCadenceProof(event,f.env,"NO_APPROVED_BACKLOG",{fetcher}),"CADENCE_NOT_RESERVED");
     assert.equal(writes,1);
   } finally {Date.now=old;}
+});
+
+test("new approved exact-head backlog is discovered; changed head and foreign PR cannot wake",async()=>{
+  const pr={number:12345,state:"open",draft:false,user:{login:"chadkhalil21-svg"},
+    head:{ref:"prometheus-new-work",sha:"a".repeat(40),repo:{full_name:repo}},
+    base:{ref:"main",repo:{full_name:repo}},
+    body:"<!-- plenum-engineering-observe-v1:"+"a".repeat(40)+":New native check:qualification -->"};
+  for(const [row,expected] of [[pr,"DISPATCH_ACCEPTED_NOT_COMPLETED"],
+    [{...pr,head:{...pr.head,sha:"b".repeat(40)}},"NO_APPROVED_BACKLOG"],
+    [{...pr,user:{login:"other"}},"NO_APPROVED_BACKLOG"],
+    [{...pr,body:pr.body+"\n"+pr.body},"NO_APPROVED_BACKLOG"]]){
+    const f=fixture({closed:true});
+    const fetcher=async(url,init)=>url.includes("/pulls?")?Response.json([row]):
+      url.includes("/issues/12345/comments?")?Response.json([{body:pr.body,user:{login:"chadkhalil21-svg",id:251133044},author_association:"OWNER",created_at:"2026-11-26T00:00:00Z",updated_at:"2026-11-26T00:00:00Z"}]):f.fetcher(url,init);
+    assert.equal(await engineeringFallback(event,f.env,{fetcher}),expected);
+    assert.equal(f.claims.length,expected==="DISPATCH_ACCEPTED_NOT_COMPLETED"?1:0);
+  }
+});
+
+test("a PR description alone never grants admission",async()=>{
+  const f=fixture({closed:true});
+  const pr={number:12345,state:"open",draft:false,user:{login:"chadkhalil21-svg"},
+    head:{ref:"prometheus-new-work",sha:"a".repeat(40),repo:{full_name:repo}},
+    base:{ref:"main",repo:{full_name:repo}},
+    body:"<!-- plenum-engineering-observe-v1:"+"a".repeat(40)+":New native check:qualification -->"};
+  const fetcher=async(url,init)=>url.includes("/pulls?")?Response.json([pr]):
+    url.includes("/issues/12345/comments?")?Response.json([]):f.fetcher(url,init);
+  assert.equal(await engineeringFallback(event,f.env,{fetcher}),"NO_APPROVED_BACKLOG");
+  assert.equal(f.claims.length,0);
 });
