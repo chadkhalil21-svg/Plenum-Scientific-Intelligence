@@ -32,6 +32,29 @@ class EngineeringGateTests(unittest.TestCase):
         self.assertEqual(c.diagnose(self.pr, self.n, self.run, [self.job])["status"],
                          "BLOCKED_NEEDS_CORRECTION")
 
+    def test_no_replay_when_null_conclusion_step_has_started(self):
+        # Independent acceptance for original local coding mission #960.
+        # A terminal workflow can contain incomplete step metadata; absence
+        # of a conclusion does not prove that substantive work never began.
+        for metadata in (
+            {"conclusion": None, "started_at": "2026-11-26T23:00:00Z"},
+            {"conclusion": None, "status": "in_progress"},
+            {"conclusion": None, "status": "in_progress",
+             "started_at": "2026-11-26T23:00:00Z"},
+        ):
+            with self.subTest(metadata=metadata):
+                job = copy.deepcopy(self.job)
+                job["steps"][1].update(metadata)
+                result = c.diagnose(self.pr, self.n, self.run, [job])
+                self.assertEqual(result["status"], "BLOCKED_NEEDS_CORRECTION")
+                self.assertNotIn("job_id", result)
+
+    def test_unstarted_null_conclusion_remains_eligible(self):
+        job = copy.deepcopy(self.job)
+        job["steps"][1].update(conclusion=None, status="queued", started_at=None)
+        self.assertEqual(c.diagnose(self.pr, self.n, self.run, [job]),
+                         {"status": "RETRY_UNSTARTED_INFRASTRUCTURE_ONCE", "job_id": 200})
+
     def test_second_attempt_never_retried(self):
         self.run["run_attempt"] = 2
         self.assertEqual(c.diagnose(self.pr, self.n, self.run, [self.job])["status"],
