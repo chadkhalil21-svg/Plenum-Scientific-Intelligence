@@ -18,6 +18,7 @@ MATCHES = {
     "plenum-research-youtube": ("youtube", "video", "research", "sources", "news", "recent", "search"),
     "plenum-science-evidence": ("paper", "journal", "experiment", "hypothesis", "citation", "science", "prior art"),
     "plenum-coding-delivery": ("code", "git", "program", "software", "bug", "test", "repository"),
+    "plenum-coding-superpowers": ("parallel", "parallel dispatch", "independent tasks", "code review", "debugging", "regression", "verification before completion", "superpowers"),
     "plenum-browser-operations": ("browser", "website", "page", "login", "navigation", "web"),
     "plenum-finance-operations": ("cash", "budget", "finance", "runway", "expense", "revenue", "pricing"),
     "plenum-growth-sales": ("sales", "customer", "market", "growth", "lead", "campaign"),
