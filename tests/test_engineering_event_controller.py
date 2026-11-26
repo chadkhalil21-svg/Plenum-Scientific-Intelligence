@@ -137,6 +137,24 @@ class EngineeringGateTests(unittest.TestCase):
         event["sender"]["login"] = "stranger"
         self.assertFalse(c.wake_authorized(event))
 
+    def test_cloudflare_fallback_fixed_scope(self):
+        slot = 1800000000000
+        event = {"action":"plenum_engineering_backlog_tick_v1",
+                 "repository":{"full_name":c.REPO},
+                 "sender":{"login":c.OWNER},"client_payload":{"slot":slot}}
+        self.assertTrue(c.fallback_authorized(event, slot+1000))
+        self.assertFalse(c.fallback_authorized(event, slot+300000))
+        self.assertFalse(c.fallback_authorized(event, slot-1))
+        for key,value in [("sender",{"login":"stranger"}),
+                          ("action","other"),
+                          ("client_payload",{"slot":slot,"task":"unapproved"}),
+                          ("client_payload",{"slot":slot+1}),
+                          ("client_payload",{"slot":True}),
+                          ("repository",{"full_name":"other/repo"})]:
+            other=copy.deepcopy(event)
+            other[key]=value
+            self.assertFalse(c.fallback_authorized(other,slot+1000))
+
     def test_unregistered_or_closed(self):
         self.assertFalse(c.authorized_pr(self.pr, 926))
         self.pr["state"] = "closed"

@@ -6,10 +6,13 @@ on:
       - Prometheus model-free document retrieval qualification
       - Prometheus | Pinned local speech recognition qualification
       - Prometheus | Blender concept geometry qualification
+      - Prometheus | HyperFrames local motion qualification
     types: [completed]
   schedule:
     - cron: '3-58/5 * * * *'
   workflow_dispatch:
+  repository_dispatch:
+    types: [plenum_engineering_backlog_tick_v1]
   issues:
     types: [opened]
   pull_request:
@@ -17,6 +20,10 @@ on:
       - 'src/plenum_ai/engineering_event_controller.py'
       - 'src/plenum_ai/whisper_repair_candidate.py'
       - 'tests/test_engineering_event_controller.py'
+      - 'integrations/cloudflare/plenum-engineering-fallback*.mjs'
+      - 'integrations/cloudflare/plenum-github-wake-worker*.mjs'
+      - 'wrangler.toml'
+      - 'integrations/cloudflare/wrangler.toml'
       - '.github/workflows/prometheus-engineering-event-controller.yml'
 permissions:
   contents: read
@@ -35,12 +42,14 @@ jobs:
         with:
           persist-credentials: false
       - run: PYTHONPATH=src python3 -m unittest discover -s tests -p test_engineering_event_controller.py -v
+      - run: node --test integrations/cloudflare/plenum-engineering-fallback.test.mjs integrations/cloudflare/plenum-github-wake-worker.test.mjs
   observe-and-recover:
     if: >-
       github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
       github.ref == 'refs/heads/main' &&
       (github.event_name == 'workflow_run' || github.event_name == 'schedule' ||
        (github.event_name == 'workflow_dispatch' && github.actor == 'chadkhalil21-svg') ||
+       (github.event_name == 'repository_dispatch' && github.event.sender.login == 'chadkhalil21-svg' && github.event.action == 'plenum_engineering_backlog_tick_v1') ||
        (github.event_name == 'issues' && github.event.issue.user.login == 'chadkhalil21-svg' &&
         github.event.sender.login == 'chadkhalil21-svg' &&
         github.event.issue.title == '[Plenum Engineering] approved backlog wake' &&

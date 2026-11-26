@@ -1,6 +1,7 @@
 import {handlePrivateMemory, handlePaperclipCheckpoint, PrivateContinuityMemory} from "./plenum-private-continuity.mjs";
 import {ownerMemoryCheckPage, ownerMemoryCheckScript} from "./plenum-private-memory-check.mjs";
 import {handleFreeCodingAI} from "./plenum-free-coding-ai.mjs";
+import {engineeringFallback, eligibleTick} from "./plenum-engineering-fallback.mjs";
 export {PrivateContinuityMemory};
 /*
  * Plenum no-new-charge *event-driven wake* (SOURCE TEMPLATE ONLY).
@@ -97,6 +98,20 @@ export class PublicWakeReplayGuard {
   // avoids requiring a Cloudflare-only runtime import in Node source tests.
   async fetch(request) {
     const path=new URL(request.url).pathname;
+    if (request.method === "POST" && path === "/claim-engineering-tick") {
+      try {
+        const {slot} = await request.json();
+        const admitted = await this.ctx.storage.transaction(async (tx) => {
+          if (!eligibleTick(slot)) return false;
+          const previous = await tx.get("engineering-last-slot");
+          if (previous !== undefined && (!Number.isSafeInteger(previous) || previous >= slot))
+            return false;
+          await tx.put("engineering-last-slot", slot);
+          return true;
+        });
+        return new Response(null,{status:admitted?204:409});
+      } catch { return new Response(null,{status:503}); }
+    }
     if (request.method === "POST" && path === "/claim-ai") {
       try {
         const {day,reserve,maximum}=await request.json();
@@ -144,6 +159,11 @@ export class PublicWakeReplayGuard {
 }
 
 export default {
+  async scheduled(controller, env) {
+    controller.noRetry();
+    const status = await engineeringFallback(controller, env);
+    console.log("Plenum bounded engineering fallback:", status);
+  },
   async fetch(request, env) {
     const pathname = new URL(request.url).pathname;
     // Public branch previews must never reach owner memory, AI or dispatch,
