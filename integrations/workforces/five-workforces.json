@@ -1,13 +1,13 @@
 {
   "schema": "plenum-five-workforce-registry-v1",
-  "updated_utc": "2026-11-15",
+  "updated_utc": "2026-11-26",
   "authority": "founder_approves_consequential_actions",
   "control_plane": "Minister of Operations (the original Plenum Chief of Staff), founder-authorized GitHub issue queue, five workforces, n8n nine departments, verifier council",
   "hosting_candidate": "NONE REQUIRED: existing scheduled/on-demand GitHub Actions and signed Cloudflare Workers Free event-driven runtime; historical Oracle VM explicitly retired, not provisioned",
   "default_cost_ceiling_usd": 0,
   "rules": {
     "public_github_only": "Never include private patents, credentials, customer records, or paid actions",
-    "deployment": "No OCI provisioning, new hosting, custom browser or billable account action. Original owner-approved GitHub Actions/Cloudflare event-driven runtime is canonical, and private account writes require separate scoped authorization.",
+    "deployment": "No OCI provisioning, new paid hosting or unauthorized billable account action. Original owner-approved GitHub Actions/Cloudflare event-driven runtime is canonical. Original browser #310 reactivated explicitly; reuse existing protected host and private vault, no second browser, and require scoped authorization for external writes.",
     "model": "Reuse existing on-demand verified specialist models only within accepted bounds. Local Qwen3:1.7b OpenHands real original coding #704 timed out before any patch; DO NOT blindly retry or mark that route an autonomous coder.",
     "verification": "No status VERIFIED without actual original worker evidence and separate readback",
     "promotion": "Import third-party persona prompt only by pinned immutable SHA, review source and rights, tool scope first",
@@ -120,12 +120,12 @@
     "infer_with_owned_local_model_when_needed": true,
     "free_cloud_hosted_inference": "existing_cloudflare_workers_ai_free_eligible_models_candidate_only_verify_token_usage_and_account_before_call",
     "no_silent_paid_api_or_model_provisioning": true,
-    "browser_tooling_note": "Founder retired original custom Plenum Browser #310 NOT PLANNED; do not revive its Playwright, Auth0, vault, Cloudflare browser features or tests. Real authorized website tasks use existing ChatGPT Work connected tools, or existing metered TinyFish only if justified, with no new top-up.",
+    "browser_tooling_note": "Founder reactivated original #310 on 26 November; complete existing protected browser with independent real owner-authorized session acceptance, not a replacement host or vault. Prefer existing connectors; TinyFish only where genuinely justified within existing credits.",
     "writing_quality_note": "Humanizer MIT skill reference and NVIDIA SkillSpector Apache security scanner are reviewed source candidates; founder private Plenum Editorial Council skill plugin saved separately, no account data or model fees.",
     "new_source_refs_executable": false
   },
   "minister_title": "Minister of Operations",
   "minister_technical_role": "existing Plenum Chief of Staff; one original supervisor, not an additional agent",
   "minister_canonical_queue": "#432",
-  "minister_mandate": "One EXISTING enabled six-hour Minister leads original FIVE workforces under founder master issue #432 and private Google Master Control Ledger. Execute real new approved public and provider-scoped tasks, reuse pinned free upstream before custom code, and independently verify useful outputs, idempotent recoveries and provider readbacks. Existing GitHub Actions plus signed Cloudflare Workers are the hosting decision; do not commission Oracle/second supervisor/Paperclip daemon or custom browser. Keep exact costs at zero without silent accounts. Rejected tiny-Qwen general Engineering #700/#702 and OpenHands CPU #704 are NOT working coding employees; route hard code through presently authorized stronger connected Minister/GitHub and independent CI, else BLOCKED. Preserve original n8n verified bounded tasks, research, verification and checkpoints. Never claim the army fully complete without demonstrated unattended safe recovery."
+  "minister_mandate": "One EXISTING enabled six-hour Minister leads original FIVE workforces under founder master issue #432 and private Google Master Control Ledger. Execute real new approved public and provider-scoped tasks, reuse pinned free upstream before custom code, and independently verify useful outputs, idempotent recoveries and provider readbacks. Existing GitHub Actions plus signed Cloudflare Workers are the hosting decision; do not commission Oracle/second supervisor/Paperclip daemon or replacement browser. Original #310 is reactivated; no extra paid infrastructure. Keep exact costs at zero without silent accounts. Rejected tiny-Qwen general Engineering #700/#702 and OpenHands CPU #704 are NOT working coding employees; route hard code through presently authorized stronger connected Minister/GitHub and independent CI, else BLOCKED. Preserve original n8n verified bounded tasks, research, verification and checkpoints. Never claim the army fully complete without demonstrated unattended safe recovery."
 }
