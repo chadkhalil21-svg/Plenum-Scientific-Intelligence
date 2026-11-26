@@ -316,6 +316,27 @@ def wake_authorized(event):
     )
 
 
+def approval_event_number(event):
+    """A new owner admission comment may wake only its exact approved PR."""
+    if not isinstance(event, dict) or event.get("action") != "created":
+        return None
+    issue, comment = event.get("issue") or {}, event.get("comment") or {}
+    sender, author = event.get("sender") or {}, comment.get("user") or {}
+    if ((event.get("repository") or {}).get("full_name") != REPO
+            or sender.get("login") != OWNER or sender.get("id") != 251133044
+            or author.get("login") != OWNER or author.get("id") != 251133044
+            or comment.get("author_association") != "OWNER"
+            or not isinstance(comment.get("created_at"), str)
+            or comment.get("created_at") != comment.get("updated_at")
+            or not isinstance(comment.get("body"), str)
+            or APPROVAL.fullmatch(comment["body"]) is None
+            or not number(issue.get("number")) or issue.get("state") != "open"
+            or "pull_request" not in issue
+            or (issue.get("user") or {}).get("login") != OWNER):
+        return None
+    return issue["number"]
+
+
 def fallback_authorized(event, now=None):
     import time
     now = int(time.time() * 1000) if now is None else now
@@ -335,13 +356,31 @@ def fallback_authorized(event, now=None):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--event", required=True)
-    parser.add_argument("--kind", choices=("workflow_run", "schedule", "workflow_dispatch", "issues", "repository_dispatch"), required=True)
+    parser.add_argument("--kind", choices=("workflow_run", "schedule", "workflow_dispatch", "issues", "issue_comment", "repository_dispatch"), required=True)
     args = parser.parse_args()
     if os.getenv("GITHUB_REPOSITORY") != REPO:
         raise PermissionError("Wrong repository")
     event = json.loads(Path(args.event).read_text())
-    discover()
-    if args.kind == "workflow_run":
+    if args.kind == "issue_comment":
+        n = approval_event_number(event)
+        if n is None:
+            raise PermissionError("Not an authorized new engineering approval")
+        # Re-read live PR and exact owner comment. An event alone cannot
+        # establish current scope or authorize a stale head.
+        pr = request(f"/pulls/{n}")
+        row = dynamic_entry(pr)
+        if (row is None or event["comment"]["body"] !=
+                f"<!-- plenum-engineering-observe-v1:{row[3]}:{row[1]}:{row[2]} -->"
+                or not owner_approval(pr, row)):
+            raise PermissionError("Engineering approval no longer current")
+        DYNAMIC.clear()
+        DYNAMIC[n] = row
+        results = [process(n)]
+    else:
+        discover()
+    if args.kind == "issue_comment":
+        pass  # Already scoped to the one approved task above.
+    elif args.kind == "workflow_run":
         run = event.get("workflow_run", {})
         if not number(run.get("id")) or (run.get("repository") or {}).get("full_name") != REPO:
             return
