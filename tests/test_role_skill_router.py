@@ -62,6 +62,16 @@ class PlenumRoleRoutingTests(unittest.TestCase):
                 pick(["plenum-business-advisor", "plenum-editorial-quality"],
                      "Write a public proposal")["selected_skills"])
 
+    def test_reviewed_superpowers_selected_for_independent_engineering_work(self):
+        d=route("coding","Coordinate parallel dispatch of independent tasks for code review and regression")
+        self.assertIn("plenum-coding-superpowers",d["selected_skills"])
+        self.assertFalse(d["authorizes_new_tools"])
+        self.assertFalse(d["model_or_agent_started"])
+        self.assertFalse(d["private_account_access_granted"])
+        self.assertNotIn("plenum-coding-superpowers",route("research","Review parallel dispatch and code review for research")["selected_skills"])
+        self.assertNotIn("plenum-coding-superpowers",route("coding","Inspect free local inference options")["selected_skills"])
+        self.assertLessEqual(len(d["selected_skills"]),3)
+
     def test_unauthorized_role_and_unbounded_objective_rejected(self):
         with self.assertRaises(PermissionError):
             route("unlisted_executor","Research professional sources")
