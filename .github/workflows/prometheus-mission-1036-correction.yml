@@ -1,0 +1,89 @@
+name: Original mission 1036 distinct corrective continuation
+on:
+  pull_request:
+    types: [synchronize]
+    paths:
+      - '.github/workflows/prometheus-mission-1036-correction.yml'
+      - 'tools/recover_checkpoint_mission_1036.py'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: original-mission-1036-corrective-continuation
+  cancel-in-progress: false
+jobs:
+  reserve:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.event.pull_request.number == 1037 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-checkpoint-mission-1036-acceptance' && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+    outputs:
+      reserved: ${{ steps.gate.outputs.reserved }}
+    steps:
+      - id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          api=https://api.github.com/repos/chadkhalil21-svg/Plenum-Scientific-Intelligence
+          gh api "$api/actions/runs/45990708690" | jq -e '.status=="completed" and .conclusion=="failure" and .run_attempt==1 and .event=="issues"' >/dev/null
+          gh api "$api/issues/1036" | jq -e '.user.login=="chadkhalil21-svg" and .state=="open"' >/dev/null
+          gh api --paginate "$api/issues/1036/comments?per_page=100" | jq -s 'add' > "$RUNNER_TEMP/comments.json"
+          jq -e 'any(.[]; .user.login=="github-actions[bot]" and (.body|contains("plenum-openhands-review:45990708690:attempt:1")) and (.body|contains("BLOCKED_EXISTING_SOURCE_TESTS")))' "$RUNNER_TEMP/comments.json" >/dev/null
+          if jq -e 'any(.[]; .body|contains("plenum-mission-1036-correction-reserved-v1"))' "$RUNNER_TEMP/comments.json" >/dev/null; then
+            echo reserved=false >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          gh api --method POST "$api/issues/1036/comments" -f body="<!-- plenum-mission-1036-correction-reserved-v1:$GITHUB_RUN_ID --> Distinct corrective continuation of original rejected run 45990708690; original patch not replayed. One reservation, original scope only." >/dev/null
+          echo reserved=true >> "$GITHUB_OUTPUT"
+  correct:
+    needs: reserve
+    if: needs.reserve.outputs.reserved == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 32
+    env:
+      PYTHONPATH: src
+      PLENUM_EPHEMERAL_RUNNER: confirmed
+      PLENUM_CORRECTION_RESERVED: "true"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Retrieve exact original failed archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          api=https://api.github.com/repos/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions
+          gh api "$api/runs/45990708690/artifacts?per_page=100" | jq -e 'any(.artifacts[]; .id==15193947757 and .digest=="sha256:caee163990f81659c62af9891ce3f4f82db2d8e643b6a4b187349f920396c9ab" and .expired==false)' >/dev/null
+          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 90 --max-filesize 2000000 -H "Authorization: Bearer $GH_TOKEN" "$api/artifacts/15193947757/zip" -o "$RUNNER_TEMP/original-1036.zip"
+          echo "caee163990f81659c62af9891ce3f4f82db2d8e643b6a4b187349f920396c9ab  $RUNNER_TEMP/original-1036.zip" | sha256sum -c -
+      - name: Start existing approved stronger local model and isolated network
+        run: |
+          set -euo pipefail
+          test "$(df --output=avail -B1 / | tail -1 | tr -d ' ')" -ge 9000000000
+          test "$(awk '/MemTotal/ {print $2}' /proc/meminfo)" -ge 14000000
+          docker run -d --rm --name plenum-temporary-ollama -p 127.0.0.1:11434:11434 -e OLLAMA_CONTEXT_LENGTH=8192 -e OLLAMA_NUM_PARALLEL=1 --memory=10g --cpus=3 ollama/ollama:latest
+          for i in $(seq 1 60); do curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null && break; sleep 2; done
+          docker exec plenum-temporary-ollama ollama pull qwen3.5:9b-q4_K_M
+          test "$(docker exec plenum-temporary-ollama ollama list | awk '$1=="qwen3.5:9b-q4_K_M" {print $2}')" = 56671c2ab938
+          image=$(python3 -c 'from plenum_ai.openhands_coding_agent import AIDER_IMAGE; print(AIDER_IMAGE)')
+          docker pull "$image"
+          docker pull python:3.12-slim
+          docker network create --internal plenum-coding-isolated
+          docker network connect plenum-coding-isolated plenum-temporary-ollama
+          docker network disconnect bridge plenum-temporary-ollama
+      - name: Diagnose rejected patch, generate distinct correction, retest
+        run: python3 tools/recover_checkpoint_mission_1036.py "$RUNNER_TEMP/original-1036.zip"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: original-mission-1036-corrective-evidence
+          path: |
+            reports/mission-1036-correction/
+            reports/openhands-review/issue-1036.patch
+          if-no-files-found: warn
+      - if: always()
+        run: docker rm -f plenum-temporary-ollama || true
