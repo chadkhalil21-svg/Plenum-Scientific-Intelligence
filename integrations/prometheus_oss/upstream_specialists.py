@@ -146,11 +146,11 @@ def verify_bound(root,mission,commitment,identity):
     seen=set()
     for name in ("specialist","peer"):
         req=vm.request(mission) if name=="specialist" else peer_request(mission,choices["specialist"])
-        identity={"stage":name,"request_sha256":mp.digest(req),"model_digest":md,"paid_inference":False}
-        if identity["request_sha256"] in seen or checked(root/(name+".reserved.json"),identity)!=identity:raise ValueError("Reservation changed")
-        seen.add(identity["request_sha256"])
-        row=checked(root/(name+".result.json"),identity)
-        if set(row)!=set(identity)|{"answer","eval_count","prompt_eval_count"} or type(row["eval_count"]) is not int or not 0<row["eval_count"]<=128 or type(row["prompt_eval_count"]) is not int or not 0<row["prompt_eval_count"]<=2048:raise ValueError("Response changed")
+        receipt_identity={"stage":name,"request_sha256":mp.digest(req),"model_digest":md,"paid_inference":False}
+        if receipt_identity["request_sha256"] in seen or checked(root/(name+".reserved.json"),receipt_identity)!=receipt_identity:raise ValueError("Reservation changed")
+        seen.add(receipt_identity["request_sha256"])
+        row=checked(root/(name+".result.json"),receipt_identity)
+        if set(row)!=set(receipt_identity)|{"answer","eval_count","prompt_eval_count"} or type(row["eval_count"]) is not int or not 0<row["eval_count"]<=128 or type(row["prompt_eval_count"]) is not int or not 0<row["prompt_eval_count"]<=2048:raise ValueError("Response changed")
         choices[name]=validate_selection(mission,row["answer"])
     final=choices["peer"]
     if mp.digest(sorted(k for k,v in final.items() if v))!=commitment:raise ValueError("Independent selection commitment mismatch")
