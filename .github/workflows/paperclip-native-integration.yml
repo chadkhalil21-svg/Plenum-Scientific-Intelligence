@@ -180,7 +180,7 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35 # Bounded 19-minute Minister plus setup, workers and readback
     strategy:
       fail-fast: false
       matrix:
