@@ -1,0 +1,24 @@
+name: Original 1048 offline grader regression
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - '.github/workflows/prometheus-1048-offline-grader.yml'
+      - 'tests/test_prospective_1048_grader.py'
+      - 'tools/verify_original_openhands_candidate.py'
+permissions:
+  contents: read
+jobs:
+  offline:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-1048-independent-grader-correction'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Run exact checked-in regression against original verifier
+        env:
+          PYTHONPATH: src:tools
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -B -m unittest discover -s tests -p test_prospective_1048_grader.py -v
