@@ -104,7 +104,7 @@ def original_workspace():
             if not name.isidentifier():
                 raise PermissionError("Unexpected focused test dependency")
             p = Path("tests/acceptance") / (name + ".py")
-            if p.name != ACCEPTANCE and p not in files:
+            if p not in files:
                 files.append(p)
     buffer = io.BytesIO()
     with tarfile.open(fileobj=buffer,mode="w") as archive:
