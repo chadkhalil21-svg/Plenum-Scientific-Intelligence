@@ -35,7 +35,24 @@ class TrustedRecoveryTests(unittest.TestCase):
                 self.assertEqual(v.TASK_ACCEPTANCE[(source, task)], test)
                 self._assert_single_recovery(source, task)
 
-    def _assert_single_recovery(self, source, task):
+    def test_confirmed_regression_preserves_first_evidence(self):
+        for source, task in coder.STRUCTURED_RECOVERY_TASKS:
+            with self.subTest(source=source):
+                self._assert_single_recovery(source, task, regression=True)
+
+    def test_completed_unittest_diagnostic_rejects_infrastructure_failure(self):
+        import subprocess
+        failure="\nRan 14 tests in 0.120s\n\nFAILED (failures=1, errors=2)\n"
+        success="\nRan 14 tests in 0.120s\n\nOK\n"
+        self.assertTrue(v.completed_unittest(subprocess.CompletedProcess([],1,stderr=failure),failed=True))
+        self.assertTrue(v.completed_unittest(subprocess.CompletedProcess([],0,stderr=success),failed=False))
+        for code, stderr in ((125,failure),(137,failure),(1,"Docker unavailable"),
+                             (1,"Ran 0 tests in 0.1s\nFAILED (errors=1)\n"),
+                             (1,success),(0,failure)):
+            self.assertFalse(v.completed_unittest(subprocess.CompletedProcess([],code,stderr=stderr),failed=True))
+        self.assertFalse(v.completed_unittest(subprocess.CompletedProcess([],0,stderr="Ran 0 tests in 0.1s\nOK\n"),failed=False))
+
+    def _assert_single_recovery(self, source, task, regression=False):
         original = (ROOT / source).read_bytes()
         with tempfile.TemporaryDirectory() as tmp:
             previous = Path.cwd()
@@ -60,6 +77,11 @@ class TrustedRecoveryTests(unittest.TestCase):
                     "existing_focused_tests_passed":True,"network_disabled_for_candidate":True,
                     "source_file":source,"task_acceptance_test":"tests/acceptance/"+v.TASK_ACCEPTANCE[(source,task)],
                     "candidate_artifact_sha256":digest}
+                if regression:
+                    original_verdict.update(status="BLOCKED_EXISTING_FOCUSED_TESTS",
+                        existing_focused_tests_passed=False, regression_recovery_eligible=True,
+                        original_focused_baseline_passed=True,
+                        test_file="tests/"+v.FOCUSED_TESTS.get(source,"test_"+Path(source).stem+".py"))
                 report.write_text(json.dumps(original_report))
                 verdict.write_text(json.dumps(original_verdict))
                 env={"GITHUB_ACTIONS":"true","GITHUB_EVENT_NAME":"issues","GITHUB_REPOSITORY":coder.REPO,
@@ -68,6 +90,7 @@ class TrustedRecoveryTests(unittest.TestCase):
                      "GITHUB_EVENT_PATH":str(event)}
                 def corrected(*args,**kwargs):
                     self.assertTrue(kwargs["behavioral_recovery"])
+                    self.assertIs(kwargs["regression_recovery"],regression)
                     self.assertEqual(args[0],task)
                     self.assertEqual((candidate.parent/"first-attempt"/candidate.name).read_bytes(),b"first rejected candidate")
                     candidate.write_bytes(b"second review-only candidate")
@@ -76,6 +99,13 @@ class TrustedRecoveryTests(unittest.TestCase):
                     with patch.dict(os.environ,{"PLENUM_ORIGINAL_CODING_RESERVED":"false"}):
                         self.assertEqual(v.recover_local_behavior(report,verdict,event),original_verdict)
                         run.assert_not_called()
+                    if regression:
+                        for invalid in ({"original_focused_baseline_passed":False},
+                                        {"regression_recovery_eligible":False},
+                                        {"test_file":"tests/unapproved.py"}):
+                            verdict.write_text(json.dumps({**original_verdict,**invalid}))
+                            v.recover_local_behavior(report,verdict,event)
+                            run.assert_not_called()
                     verdict.write_text(json.dumps({**original_verdict,"candidate_artifact_sha256":"0"*64}))
                     v.recover_local_behavior(report,verdict,event)
                     run.assert_not_called()
@@ -88,6 +118,7 @@ class TrustedRecoveryTests(unittest.TestCase):
                     self.assertEqual(json.loads((saved/verdict.name).read_text()),original_verdict)
                     self.assertEqual(json.loads((saved/report.name).read_text()),original_report)
                     self.assertEqual(json.loads((saved/"reservation.json").read_text())["original_patch_sha256"],digest)
+                    self.assertEqual(json.loads((saved/"reservation.json").read_text())["diagnosis"],"existing_regression" if regression else "task_acceptance")
                     verdict.write_text(json.dumps(original_verdict))
                     v.recover_local_behavior(report,verdict,event)
                     self.assertEqual(run.call_count,1)
