@@ -1,0 +1,57 @@
+name: Original mission 1036 independent behavioral acceptance
+on:
+  pull_request:
+    paths:
+      - 'tools/verify_checkpoint_mission_1036.py'
+      - 'tests/acceptance/checkpoint_mission_1036.py'
+      - '.github/workflows/prometheus-mission-1036-acceptance.yml'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: original-mission-1036-independent-acceptance
+  cancel-in-progress: false
+jobs:
+  independent-acceptance:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-checkpoint-mission-1036-acceptance'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Read original run terminal evidence (read-only, no redispatch)
+        id: original
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          api=https://api.github.com/repos/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/runs/45990708690
+          for attempt in $(seq 1 48); do
+            curl --fail --silent --show-error --proto '=https' --max-time 20 -H "Authorization: Bearer $GH_TOKEN" "$api" -o "$RUNNER_TEMP/original-1036-run.json"
+            jq -e '.id == 45990708690 and .event == "issues" and .run_attempt == 1 and .head_branch == "main"' "$RUNNER_TEMP/original-1036-run.json" >/dev/null
+            if [ "$(jq -r .status "$RUNNER_TEMP/original-1036-run.json")" = completed ]; then break; fi
+            sleep 30
+          done
+          test "$(jq -r .status "$RUNNER_TEMP/original-1036-run.json")" = completed
+          curl --fail --silent --show-error --proto '=https' --max-time 20 -H "Authorization: Bearer $GH_TOKEN" "$api/artifacts?per_page=100" -o "$RUNNER_TEMP/original-1036-artifacts.json"
+          jq -e '[.artifacts[] | select(.name == "openhands-original-review-1036-run-45990708690-attempt-1" and .expired == false)] | length == 1' "$RUNNER_TEMP/original-1036-artifacts.json" >/dev/null
+          id=$(jq -r '.artifacts[] | select(.name == "openhands-original-review-1036-run-45990708690-attempt-1") | .id' "$RUNNER_TEMP/original-1036-artifacts.json")
+          digest=$(jq -r '.artifacts[] | select(.name == "openhands-original-review-1036-run-45990708690-attempt-1") | .digest' "$RUNNER_TEMP/original-1036-artifacts.json")
+          [[ "$id" =~ ^[0-9]+$ && "$digest" =~ ^sha256:[a-f0-9]{64}$ ]]
+          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 90 --max-filesize 2000000 -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/repos/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/artifacts/$id/zip" -o "$RUNNER_TEMP/original-1036.zip"
+          echo "${digest#sha256:}  $RUNNER_TEMP/original-1036.zip" | sha256sum -c -
+          echo "digest=${digest#sha256:}" >> "$GITHUB_OUTPUT"
+          echo "original artifact $id, terminal status $(jq -r .conclusion "$RUNNER_TEMP/original-1036-run.json")"
+      - name: Grade original patch in existing networkless sandbox
+        env:
+          PYTHONPATH: src
+          ORIGINAL_DIGEST: ${{ steps.original.outputs.digest }}
+        run: |
+          python3 tools/verify_checkpoint_mission_1036.py "$RUNNER_TEMP/original-1036.zip" "$ORIGINAL_DIGEST"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: original-mission-1036-independent-verdict
+          path: reports/checkpoint-mission-1036-verdict.json
+          if-no-files-found: warn
