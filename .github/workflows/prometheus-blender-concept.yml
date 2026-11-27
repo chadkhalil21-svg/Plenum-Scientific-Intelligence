@@ -4,6 +4,7 @@ on:
     paths:
       - 'src/plenum_ai/blender_concept_render.py'
       - '.github/workflows/prometheus-blender-concept.yml'
+      - 'docs/checkpoint-maintainer-guide/scene.json'
   workflow_dispatch:
 permissions:
   contents: read
@@ -21,14 +22,12 @@ jobs:
           sudo apt-get install -y --no-install-recommends blender python3-pil
           blender --version
           dpkg-query -W -f='${Package} ${Version}\n' blender blender-data > blender-package.txt
-      - name: Render a fixed original public concept offline
+      - name: Render the fixed public checkpoint maintainer concept offline
         run: |
           set -euo pipefail
           root="$RUNNER_TEMP/concept-fixture"
           mkdir "$root"
-          cat > "$root/scene.json" <<'JSON'
-          {"schema":"plenum-concept-geometry-v1","concept":true,"objects":[{"shape":"cube","position":[0,0,0],"size":[2,1,1],"color":[0.18,0.45,0.85]},{"shape":"sphere","position":[-1.5,0,0.65],"size":[0.7,0.7,0.7],"color":[0.9,0.35,0.1]},{"shape":"sphere","position":[1.5,0,0.65],"size":[0.7,0.7,0.7],"color":[0.1,0.8,0.45]}]}
-          JSON
+          cp "$GITHUB_WORKSPACE/docs/checkpoint-maintainer-guide/scene.json" "$root/scene.json"
           sudo unshare --net -- env -i HOME="$root" PATH=/usr/bin:/bin GITHUB_ACTIONS=true PLENUM_PUBLIC_GEOMETRY_FIXTURE=confirmed blender --background --factory-startup --disable-autoexec --python-exit-code 1 --python "$GITHUB_WORKSPACE/src/plenum_ai/blender_concept_render.py" -- "$root/scene.json" "$root/concept.png"
           cp "$root/concept.png" concept.png
           /usr/bin/python3 - "$root" <<'PY'
@@ -43,14 +42,15 @@ jobs:
             "schema":"plenum-blender-concept-acceptance-v1",
             "source_sha256":digest(root/"scene.json"),"render_sha256":digest("concept.png"),
             "width":512,"height":320,"package":pathlib.Path("blender-package.txt").read_text(),
-            "paid_inference":False,"public_synthetic_fixture":True,"concept_only":True,
+            "paid_inference":False,"public_repository_documentation":True,"concept_only":True,
             "owner_runtime_verified":False},indent=2))
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: prometheus-blender-concept-acceptance
+          name: prometheus-checkpoint-maintainer-static
           path: |
             concept.png
             blender-acceptance.json
             blender-package.txt
+            docs/checkpoint-maintainer-guide/scene.json
           if-no-files-found: error
