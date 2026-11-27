@@ -406,6 +406,46 @@ def local_function_scope(task: str, original: bytes):
     return b"".join(lines[:start]), b"".join(lines[start:end]), b"".join(lines[end:])
 
 
+class EarlyLocalReadError(ValueError):
+    """New compiler-visible early local read; no model replay is authorized."""
+
+
+def _early_local_reads(source: bytes) -> set[str]:
+    """Conservative, compile-only review gate, not complete dataflow analysis.
+
+    Identify function-local reads occurring before any corresponding store
+    in compiler instruction order. Compare to the unchanged original so
+    established constructs are not retroactively rejected. Never execute
+    the compiled code; independent behavioral tests remain mandatory.
+    """
+    import dis
+    import inspect
+    from types import CodeType
+
+    module = compile(source.decode("utf-8"), "<review-only>", "exec",
+                     dont_inherit=True)
+    functions = [value for value in module.co_consts if isinstance(value, CodeType)]
+    if len(functions) != 1:
+        raise ValueError("Expected a single compiled review function")
+    function = functions[0]
+    count = function.co_argcount + function.co_kwonlyargcount
+    count += bool(function.co_flags & inspect.CO_VARARGS)
+    count += bool(function.co_flags & inspect.CO_VARKEYWORDS)
+    seen = set(function.co_varnames[:count])
+    locals_ = set(function.co_varnames) | set(function.co_cellvars)
+    early = set()
+    for instruction in dis.get_instructions(function):
+        name = instruction.argval
+        if not isinstance(name, str) or name not in locals_:
+            continue
+        if instruction.opname in ("STORE_FAST", "STORE_DEREF"):
+            seen.add(name)
+        elif instruction.opname in ("LOAD_FAST", "LOAD_FAST_CHECK", "LOAD_DEREF"):
+            if name not in seen:
+                early.add(name)
+    return early
+
+
 def restore_function_scope(scope, edited: bytes) -> bytes:
     if scope is None:
         return edited
@@ -418,6 +458,8 @@ def restore_function_scope(scope, edited: bytes) -> bytes:
             or (ast.dump(nodes[0].returns) if nodes[0].returns else None)
                 != (ast.dump(before.returns) if before.returns else None)):
         raise ValueError("Candidate changed function signature or escaped exact function scope")
+    if _early_local_reads(edited) - _early_local_reads(original):
+        raise EarlyLocalReadError("New local read precedes its first compiler-visible store")
     result = prefix + edited.rstrip(b"\r\n") + b"\n" + suffix
     ast.parse(result.decode("utf-8"))
     return result
@@ -533,7 +575,7 @@ def structured_local_edit(task,scope,*,numbered=False):
         "options":{"temperature":0,"num_ctx":4096,"num_predict":700},
         "messages":[{"role":"system","content":"Return one small Python edit as JSON old and new strings. "
             "Copy old exactly once from the provided function, including whitespace. "
-            "Replace only the minimum necessary text in its body. Keep signature, imports and unrelated behavior. "
+            "Replace only the minimum necessary text in its body. Keep signature, imports and unrelated behavior. Use local variables only after their initialization. "
             "Do not include markdown, commands, explanations or tests."},
             {"role":"user","content":json.dumps({"objective":task,"function":scope[1].decode("utf-8")})}]}
     if numbered:
@@ -547,7 +589,7 @@ def structured_local_edit(task,scope,*,numbered=False):
             "Return a JSON edit selecting 1-based inclusive start and end line numbers. "
             "Replace the smallest necessary range of function BODY lines. "
             "Replacement must contain complete Python lines with original indentation, "
-            "without line numbers. Preserve signature, docstring and unrelated behavior. "
+            "without line numbers. Preserve signature, docstring and unrelated behavior. Use local variables only after their initialization. "
             "For insertion, replace one existing body line with itself plus new code. "
             "No markdown, commands, tests or explanations."},
             {"role":"user","content":json.dumps({"objective":task,
@@ -591,6 +633,10 @@ def structured_local_edit(task,scope,*,numbered=False):
         raise StructuredEditFailure("RESPONSE_SCHEMA") from exc
     try:
         return apply_numbered_edit(scope,choice) if numbered else apply_structured_edit(scope,choice)
+    except EarlyLocalReadError as exc:
+        # A known substantive defect is not an ambiguous edit-format failure.
+        # Do not consume the alternate-format model invocation.
+        raise StructuredEditFailure("EARLY_LOCAL_READ") from exc
     except (ValueError,SyntaxError,TypeError,UnicodeError) as exc:
         raise StructuredEditFailure("EDIT_VALIDATION") from exc
 
