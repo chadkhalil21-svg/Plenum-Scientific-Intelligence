@@ -60,7 +60,7 @@ def scopes():
         original={"scene":scene,"science":science}[key]
         if any(line not in original for line in lines):raise ValueError("Source excerpt changed")
     wanted=[{"type":"extract","citations":[x]} for x in ("scene_1","scene_2","science_2")]
-    synthesis={"kind":"public_objective","objective":"Extract the Terra efficacy claim restriction, the required independent primary paper review, and the separate founder publication authorization.",
+    synthesis={"kind":"public_objective","objective":"Extract Terra efficacy claim restriction, independent primary paper review requirement, and founder publication authorization. Check every sentence and include all relevant evidence. Retain relevant selections on correction.",
        "dois":DOIS,"inputs":{"synthesis":{"documents":{k:" ".join(v) for k,v in excerpts.items()}}},
        "result_commitment":digest(sorted(wanted,key=encoded))}
     return {"terra-timing":arithmetic,"terra-release":synthesis}
