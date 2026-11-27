@@ -14,6 +14,8 @@ from pathlib import Path
 import subprocess
 import tarfile
 import time
+import zipfile
+import re
 
 from minisweagent import __version__
 from minisweagent.agents.default import DefaultAgent
@@ -36,6 +38,8 @@ OUT = Path("reports/miniswe-1040")
 PATCH = Path("reports/openhands-review/issue-1040.patch")
 ACCEPTANCE = "mission_root_alias.py"
 TEST = "test_mission_checkpoint.py"
+PRIOR_REQUESTS = set()
+CONTINUATION = None
 
 def configure_event(event_path):
     """Reuse the original owner scope and reviewed public test closure."""
@@ -62,6 +66,49 @@ def configure_event(event_path):
 def sha(data):
     return hashlib.sha256(data).hexdigest()
 
+def configure_continuation(archive):
+    """Consume exact archived terminal no-edit failure, not a fresh replay."""
+    global OUT, PRIOR_REQUESTS, CONTINUATION
+    expected = "a4190790a727d212d305a5eceebf670fea64a17f6de817ee046a8679c84399a3"
+    if (ISSUE != 1040 or os.getenv("PLENUM_MINISWE_CONTINUATION_RESERVED") != "true"
+            or archive.is_symlink() or not archive.is_file()
+            or not 0 < archive.stat().st_size <= 2_000_000 or sha(archive.read_bytes()) != expected):
+        raise PermissionError("Exact original reserved continuation required")
+    with zipfile.ZipFile(archive) as z:
+        names = z.namelist()
+        if (len(names) != len(set(names)) or sum(x.file_size for x in z.infolist()) > 4_000_000
+                or z.testzip() is not None):
+            raise ValueError("Invalid original evidence")
+        result = json.loads(z.read("miniswe-1040/native-result.json"))
+        trajectory = json.loads(z.read("miniswe-1040/trajectory.json"))
+        reservations = [json.loads(x) for x in z.read("miniswe-1040/model-reservations.jsonl").splitlines()]
+        responses = [json.loads(x) for x in z.read("miniswe-1040/model-responses.jsonl").splitlines()]
+    original = Path(SOURCE).read_bytes()
+    commands = [a["command"] for m in trajectory["messages"] if m.get("role")=="assistant"
+                for a in m.get("extra",{}).get("actions",[])]
+    # Bind the exact actual observed failure: no source-changing action or
+    # submission, twelve distinct answered requests, intact original source.
+    if (result.get("issue") != 1040 or result.get("exit_status") != "LimitsExceeded"
+            or result.get("native_agent_calls") != 12 or result.get("reserved_model_calls") != 12
+            or result.get("model_digest") != DIGEST or result.get("paid_inference") is not False
+            or result.get("original_source_sha256") != sha(original)
+            or result.get("baseline_passed") is not True or len(commands) != 12
+            or not all(re.match(r"^(find |pwd && ls |cat )", x) and not re.search(r"[;>\\n]|\\$\\(",x)
+                       for x in commands)
+            or len(reservations)!=12 or len(responses)!=12):
+        raise ValueError("Not the original terminal inspection-only failure")
+    prior = {x["request_sha256"] for x in reservations}
+    if (len(prior)!=12 or {x["request_sha256"] for x in responses}!=prior
+            or not all(re.fullmatch(r"[0-9a-f]{64}",x) for x in prior)):
+        raise ValueError("Original request receipts do not bind")
+    PRIOR_REQUESTS = prior
+    OUT = Path("reports/miniswe-1040-continuation")
+    CONTINUATION = {"original_run":46065445035,"original_archive_sha256":expected,
+                    "prior_calls":12,"prior_inspection_only":True,
+                    "strategy":"complete source context plus explicit execution-first correction",
+                    "original_calls_replayed":False}
+    return CONTINUATION
+
 class LocalOnlyModel(LitellmModel):
     """Reuse upstream toolcall parsing, feedback and serialization, no cloud fallback."""
     def __init__(self):
@@ -75,7 +122,7 @@ class LocalOnlyModel(LitellmModel):
     def _query(self, messages, **kwargs):
         body = json.dumps(messages, sort_keys=True, separators=(",", ":")).encode()
         key = sha(body)
-        if key in self.requests or len(self.requests) >= 12 or len(body) > 100_000:
+        if key in self.requests or key in PRIOR_REQUESTS or len(self.requests) >= 12 or len(body) > 100_000:
             raise RuntimeError("Duplicate or unbounded native request")
         self.requests.add(key)
         with (OUT / "model-reservations.jsonl").open("a", encoding="utf-8") as f:
@@ -121,17 +168,24 @@ def original_workspace():
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--event", type=Path)
+    parser.add_argument("--continuation", type=Path)
     args = parser.parse_args()
     if (__version__ != "2.4.6" or os.getenv("PLENUM_MINISWE_RESERVED") != "true"
             or os.getenv("GITHUB_ACTIONS") != "true" or os.getenv("GITHUB_REPOSITORY") != "chadkhalil21-svg/Plenum-Scientific-Intelligence"):
         raise PermissionError("Original reserved public CI only")
+    if args.event and args.continuation:
+        raise PermissionError("One original authorization mode")
     if args.event:
         configure_event(args.event)
+    if args.continuation:
+        configure_continuation(args.continuation)
     tags = httpx.get("http://127.0.0.1:11434/api/tags",trust_env=False,timeout=10).json()
     if not any(x.get("name")==MODEL and x.get("digest")==DIGEST for x in tags["models"]):
         raise ValueError("Local model digest mismatch")
     OUT.mkdir(parents=True,exist_ok=False)
     original = Path(SOURCE).read_bytes()
+    if CONTINUATION:
+        (OUT/"continuation-binding.json").write_text(json.dumps(CONTINUATION,indent=2))
     env = DockerEnvironment(image="python:3.12-slim", cwd="/work", timeout=30,
         run_args=["--rm","--pull=never","--network=none","--cap-drop=ALL",
                   "--security-opt=no-new-privileges","--read-only","--user=65534:65534",
@@ -148,19 +202,33 @@ def main():
         baseline = env.execute({"command":"python -B -m unittest discover -s tests -p " + TEST})
         if baseline["returncode"] != 0:
             raise RuntimeError("Unmodified public regression baseline failed")
+        # Avoid spending another mission budget rediscovering source that the
+        # first native trajectory already inspected. This supplies context,
+        # not a solution, hidden test or model-generated instruction.
+        native_task = TASK
+        if CONTINUATION:
+            native_task += ("\nThe previous native attempt exhausted twelve calls inspecting files without editing. "
+                "The existing regression baseline passes. The independent objective test fails on unchanged source. "
+                "The working directory is /work. The entire original editable source follows. "
+                "Use your first tool call to reproduce the defect or make a scoped edit, not list files. "
+                "Reserve remaining calls for implementation, running tests, fixing failures and submission. "
+                "Do not reread the already supplied source or existing test files unless a specific test fails. "
+                "Keep each command focused and preserve unrelated functionality.\n\nOriginal source:\n"
+                + original.decode("utf-8"))
         agent = DefaultAgent(model,env,step_limit=12,cost_limit=0,wall_time_limit_seconds=1050,
             max_consecutive_format_errors=2,
             system_template="You are the original Plenum engineering specialist. Solve the authorized public code issue in the isolated workspace. Use bash tools for actual inspection, edits and tests. No external services. Preserve existing interfaces. Each reply must call bash. Work from observed test output, diagnose failures and revise your solution.",
             instance_template="Objective: {{task}}\nThe editable module is " + SOURCE + ". Existing tests: python -B -m unittest discover -s tests -p " + TEST + ". Inspect relevant code, independently reproduce the problem with your own tests, implement a minimal fix, run tests and correct failures. Do not modify existing tests. When satisfied, execute exactly: echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT",
             output_path=OUT/"trajectory.json")
         started = time.monotonic()
-        result = agent.run(TASK)
+        result = agent.run(native_task)
         summary = {"issue":ISSUE,"upstream":"SWE-agent/mini-swe-agent","version":__version__,
             "model":MODEL,"model_digest":DIGEST,"native_agent_calls":agent.n_calls,
             "reserved_model_calls":len(model.requests),"exit_status":result.get("exit_status"),
             "elapsed_seconds":time.monotonic()-started,"paid_inference":False,
             "original_source_sha256":sha(original),"baseline_passed":True,
-            "production_written":False,"host_execution_of_candidate":False}
+            "production_written":False,"host_execution_of_candidate":False,
+            "continuation":CONTINUATION}
         (OUT/"native-result.json").write_text(json.dumps(summary,indent=2))
         if result.get("exit_status")!="Submitted" or not model.requests:
             raise RuntimeError("Native agent did not submit completed solution")
