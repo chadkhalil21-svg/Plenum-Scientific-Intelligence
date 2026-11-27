@@ -685,6 +685,8 @@ def structured_local_edit(task,scope,*,numbered=False):
 # behavioral acceptance suites. No failed candidate, test answers or logs enter
 # the next model prompt. A distinct edit format is used only once.
 TASK_ACCEPTANCE = {
+    ("src/plenum_ai/mission_checkpoint.py", "Repair function save_checkpoint. Validate the issue identifier before creating any directories. Preserve valid atomic checkpoint writes and all existing checks."):
+        "checkpoint_write_prevalidation.py",
     ("src/plenum_ai/mission_checkpoint.py", "Repair function load_checkpoint. Reject duplicate JSON object keys at every nesting level with ValueError. Preserve all valid checkpoint loading and existing checks."):
         "checkpoint_duplicate_keys.py",
     ("src/plenum_ai/business_public_watch.py", "Repair function probe. Require exact application/json for health and text/html for HTML, ignoring case and parameters. Reject other media types and preserve all other checks."):
