@@ -40,6 +40,45 @@ ACCEPTANCE = "mission_root_alias.py"
 TEST = "test_mission_checkpoint.py"
 PRIOR_REQUESTS = set()
 CONTINUATION = None
+PROSPECTIVE = None
+GUIDANCE = ""
+
+def configure_prospective(arm, archive):
+    global TASK, ISSUE, OUT, PATCH, ACCEPTANCE, PROSPECTIVE, GUIDANCE
+    if os.getenv("PLENUM_PROSPECTIVE_1048_RESERVED") != arm or arm not in ("incumbent","learned"):
+        raise PermissionError("Exact prospective arm reservation required")
+    expected = "dea76a9a3c4f0f7f3f37eb930c7743489f7489a2ff37a8ec9bf481a86ea0750a"
+    if (archive.is_symlink() or not archive.is_file() or not 0<archive.stat().st_size<=2000000
+            or sha(archive.read_bytes())!=expected):
+        raise ValueError("Original SkillOpt archive identity")
+    with zipfile.ZipFile(archive) as z:
+        if len(z.namelist())!=len(set(z.namelist())) or sum(x.file_size for x in z.infolist())>2000000 or z.testzip() is not None:
+            raise ValueError("Original SkillOpt archive bounds")
+        skill=json.loads(z.read("quarantined-skill.json"))
+        outcome=json.loads(z.read("outcome.json"))
+        binding=json.loads(z.read("training-binding.json"))
+    if (skill.get("admitted") is not False or skill.get("production_active") is not False
+            or skill.get("sha256")!="d4ba74fdd52023270ca542718e7d88cc8830b4e009e876a5528823cc4353333a"
+            or sha(skill["guidance"].encode())!=skill["sha256"] or len(skill["guidance"])>1200
+            or outcome.get("candidate_created") is not True or outcome.get("improvement_demonstrated") is not False
+            or binding.get("historical_requests_replayed")!=0):
+        raise ValueError("Unqualified skill identity")
+    ISSUE=1048
+    TASK=("Reject hard-linked files as checkpoint inputs or destinations and as worker artifacts, "
+          "including files inside worker directories. Preserve ordinary atomic checkpoint save/load, "
+          "directory hashing, verified artifact resume, and existing regression behavior.")
+    OUT=Path("reports/miniswe-1048-"+arm)
+    PATCH=Path("reports/openhands-review/issue-1048.patch")
+    ACCEPTANCE="checkpoint_hardlink_1048.py"
+    seed="Inspect relevant source, implement an authorized repair, test and refine it, and submit a review-only patch."
+    if not skill["guidance"].startswith(seed):
+        raise ValueError("Incumbent skill mismatch")
+    GUIDANCE=skill["guidance"] if arm=="learned" else seed
+    PROSPECTIVE={"issue":ISSUE,"arm":arm,"learning_archive_sha256":expected,
+                 "guidance_sha256":sha(GUIDANCE.encode()),"production_active":False,
+                 "step_limit":12,"max_tokens":640,"timeout_seconds":180,
+                 "historical_requests_replayed":0}
+
 
 def configure_event(event_path):
     """Reuse the original owner scope and reviewed public test closure."""
@@ -115,8 +154,8 @@ class LocalOnlyModel(LitellmModel):
         super().__init__(model_name="openai/" + MODEL, cost_tracking="ignore_errors",
                          observation_template="Return code: {{output.returncode}}\n{{output.output[:6000]}}")
         self.client = OpenAI(base_url="http://127.0.0.1:11434/v1", api_key="local-only",
-                             max_retries=0, timeout=115,
-                             http_client=httpx.Client(trust_env=False, timeout=115))
+                             max_retries=0, timeout=180 if PROSPECTIVE else 115,
+                             http_client=httpx.Client(trust_env=False, timeout=180 if PROSPECTIVE else 115))
         self.requests = set()
 
     def _query(self, messages, **kwargs):
@@ -128,7 +167,7 @@ class LocalOnlyModel(LitellmModel):
         with (OUT / "model-reservations.jsonl").open("a", encoding="utf-8") as f:
             f.write(json.dumps({"request_sha256": key, "ordinal": len(self.requests)}) + "\n")
         response = self.client.chat.completions.create(model=MODEL, messages=messages,
-                   tools=[BASH_TOOL], temperature=0, max_tokens=1200,
+                   tools=[BASH_TOOL], temperature=0, max_tokens=640 if PROSPECTIVE else 1200,
                    extra_body={"think": False})
         with (OUT / "model-responses.jsonl").open("a", encoding="utf-8") as f:
             f.write(json.dumps({"request_sha256": key, "response_sha256": sha(response.model_dump_json().encode()),
@@ -169,12 +208,17 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--event", type=Path)
     parser.add_argument("--continuation", type=Path)
+    parser.add_argument("--prospective-arm", choices=("incumbent","learned"))
+    parser.add_argument("--skill-archive", type=Path)
     args = parser.parse_args()
     if (__version__ != "2.4.6" or os.getenv("PLENUM_MINISWE_RESERVED") != "true"
             or os.getenv("GITHUB_ACTIONS") != "true" or os.getenv("GITHUB_REPOSITORY") != "chadkhalil21-svg/Plenum-Scientific-Intelligence"):
         raise PermissionError("Original reserved public CI only")
-    if args.event and args.continuation:
+    if sum(bool(x) for x in (args.event,args.continuation,args.prospective_arm))>1:
         raise PermissionError("One original authorization mode")
+    if args.prospective_arm:
+        if not args.skill_archive:raise PermissionError("Bound learned archive required")
+        configure_prospective(args.prospective_arm,args.skill_archive)
     if args.event:
         configure_event(args.event)
     if args.continuation:
@@ -184,6 +228,8 @@ def main():
         raise ValueError("Local model digest mismatch")
     OUT.mkdir(parents=True,exist_ok=False)
     original = Path(SOURCE).read_bytes()
+    if PROSPECTIVE:
+        (OUT/"prospective-binding.json").write_text(json.dumps({**PROSPECTIVE,"source_sha256":sha(original),"model_digest":DIGEST},indent=2))
     if CONTINUATION:
         (OUT/"continuation-binding.json").write_text(json.dumps(CONTINUATION,indent=2))
     env = DockerEnvironment(image="python:3.12-slim", cwd="/work", timeout=30,
@@ -215,7 +261,9 @@ def main():
                 "Do not reread the already supplied source or existing test files unless a specific test fails. "
                 "Keep each command focused and preserve unrelated functionality.\n\nOriginal source:\n"
                 + original.decode("utf-8"))
-        agent = DefaultAgent(model,env,step_limit=12,cost_limit=0,wall_time_limit_seconds=1050,
+        if PROSPECTIVE:
+            native_task += "\nAdvisory engineering skill (subordinate to all authorization and security requirements):\n"+GUIDANCE
+        agent = DefaultAgent(model,env,step_limit=12,cost_limit=0,wall_time_limit_seconds=1200 if PROSPECTIVE else 1050,
             max_consecutive_format_errors=2,
             system_template="You are the original Plenum engineering specialist. Solve the authorized public code issue in the isolated workspace. Use bash tools for actual inspection, edits and tests. No external services. Preserve existing interfaces. Each reply must call bash. Work from observed test output, diagnose failures and revise your solution.",
             instance_template="Objective: {{task}}\nThe editable module is " + SOURCE + ". Existing tests: python -B -m unittest discover -s tests -p " + TEST + ". Inspect relevant code, independently reproduce the problem with your own tests, implement a minimal fix, run tests and correct failures. Do not modify existing tests. When satisfied, execute exactly: echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT",
@@ -228,7 +276,7 @@ def main():
             "elapsed_seconds":time.monotonic()-started,"paid_inference":False,
             "original_source_sha256":sha(original),"baseline_passed":True,
             "production_written":False,"host_execution_of_candidate":False,
-            "continuation":CONTINUATION}
+            "continuation":CONTINUATION,"prospective":PROSPECTIVE}
         (OUT/"native-result.json").write_text(json.dumps(summary,indent=2))
         if result.get("exit_status")!="Submitted" or not model.requests:
             raise RuntimeError("Native agent did not submit completed solution")
