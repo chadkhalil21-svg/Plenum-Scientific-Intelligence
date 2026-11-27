@@ -604,6 +604,35 @@ def qualify_locked(action):
                     d["categories"]=[x for x in ("HTTPError","PermissionError","ValueError","RuntimeError","ModuleNotFoundError",
                         "KeyError","FileNotFoundError","Terminal specialist failure","Task assignment") if x in raw]
                 except Exception as exc: d["log_error"]=type(exc).__name__
+                # Preserve only allowlisted native startup facts, never raw logs,
+                # tokens, context, provider responses or authorization to replay.
+                if row.get("status")=="failed" and row.get("errorCode")=="setup_failed":
+                    recovery={"kind":None,"provider_work_started":None,
+                              "identity_matches":None,"observed_run_matches":None,
+                              "finished":None,"detail_error":False}
+                    try:
+                        run=api("/api/heartbeat-runs/"+canonical(row["id"]))
+                        context=run.get("contextSnapshot") or {}
+                        execution=(run.get("resultJson") or {}).get("executionRecovery") or {}
+                        kind=execution.get("kind")
+                        recovery["kind"]="bootstrap" if kind=="bootstrap" else ("other" if kind is not None else None)
+                        started=execution.get("providerWorkStarted")
+                        recovery["provider_work_started"]=started if type(started) is bool else None
+                        recovery["finished"]=bool(run.get("finishedAt"))
+                        if key in agents and plan_path.is_file():
+                            bound=__import__("checkpoint_store").checked(plan_path,{"company":cid,"parent":parent_id,"order":list(MISSION_ORDER)})
+                            iid=canonical(bound["tasks"][key])
+                            task=api("/api/issues/"+iid)
+                            recovery["identity_matches"]=(run.get("id")==row["id"] and
+                                run.get("companyId")==cid and run.get("agentId")==aid and
+                                context.get("issueId")==iid and task.get("id")==iid and
+                                task.get("companyId")==cid and task.get("parentId")==parent_id and
+                                task.get("assigneeAgentId")==aid)
+                            observed=(task.get("interruption") or {}).get("observedRunId")
+                            recovery["observed_run_matches"]=(observed==row["id"]) if observed is not None else None
+                    except Exception:
+                        recovery["detail_error"]=True
+                    d["native_recovery"]=recovery
                 diagnostic={"division":key,"diagnostic":d}
                 diagnostics.append(diagnostic)
                 print(json.dumps(diagnostic),flush=True)
