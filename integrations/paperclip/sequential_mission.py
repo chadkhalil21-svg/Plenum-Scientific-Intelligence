@@ -516,6 +516,7 @@ def qualify_locked(action):
                 break
         time.sleep(3)
     else:
+        diagnostics=[]
         for key,aid in {"minister":leader,**agents}.items():
             rows=api(route+"/heartbeat-runs?"+urlencode({"agentId":aid,"limit":10}))
             for row in rows[:3]:
@@ -525,7 +526,13 @@ def qualify_locked(action):
                     d["categories"]=[x for x in ("HTTPError","PermissionError","ValueError","RuntimeError","ModuleNotFoundError",
                         "KeyError","FileNotFoundError","Terminal specialist failure","Task assignment") if x in raw]
                 except Exception as exc: d["log_error"]=type(exc).__name__
-                print(json.dumps({"division":key,"diagnostic":d}),flush=True)
+                diagnostic={"division":key,"diagnostic":d}
+                diagnostics.append(diagnostic)
+                print(json.dumps(diagnostic),flush=True)
+        # Keep an evidence-bound handoff for the next supervisor/operator.
+        # This is diagnostic only: never wake, reassign, or replay a task here.
+        from failure_handoff import publish
+        publish(directory,cid,parent_id,scope_digest(scope),diagnostics)
         raise RuntimeError("Native Minister sequential mission did not finish within deadline")
     summary=readback(cid,plan,expected_agents=agents)
     required_model=__import__("production_wiring").load_prepared(directory,cid,parent_id)["model_mode"] if durable else os.getenv("PLENUM_PAPERCLIP_MODEL","off")

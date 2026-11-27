@@ -28,9 +28,10 @@ OWNERS = {
 
 def validate(scope):
     fields = {"kind", "mission", "selection_commitment"}
-    if (not isinstance(scope, dict) or set(scope) not in (fields, fields | {"planning_recovery"})
+    if (not isinstance(scope, dict) or set(scope) not in (fields, fields | {"planning_recovery"}, fields | {"planning_engine"})
             or scope["kind"] != "variable_graph"
-            or ("planning_recovery" in scope and scope["planning_recovery"] is not True)):
+            or ("planning_recovery" in scope and scope["planning_recovery"] is not True)
+            or ("planning_engine" in scope and scope["planning_engine"]!="upstream-peer-v1")):
         raise ValueError("Exact variable graph scope required")
     vm.validate(scope["mission"])
     if not isinstance(scope["selection_commitment"], str) or not re.fullmatch(r"[0-9a-f]{64}", scope["selection_commitment"]):
@@ -151,6 +152,35 @@ def verify_recovery(root, scope, plan):
         rejected = row["selection"]
     raise ValueError("No accepted planning attempt")
 
+def upstream_module():
+    import sys
+    deps=Path("/opt/plenum-upstream-specialists")
+    if deps.is_dir():sys.path.insert(0,str(deps))
+    sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"prometheus_oss"))
+    import upstream_specialists
+    return upstream_specialists
+
+def upstream_identity(scope,company,mission):
+    return {"case":"native","company":company,"native_mission":mission,"scope_sha256":digest(scope)}
+
+def upstream_plan(root,scope,company,mission,*,execute=False):
+    u=upstream_module()
+    sub=root/"upstream-planner"
+    identity=upstream_identity(scope,company,mission)
+    args=(sub,scope["mission"],scope["selection_commitment"],identity)
+    proof=u.execute_bound(*args) if execute else u.verify_bound(*args)
+    row=checked(sub/"peer.result.json",{"answer":proof["selection"],"paid_inference":False})
+    plan={**vm.manifest(scope["mission"],proof["selection"],row["model_digest"]),"request_sha256":row["request_sha256"]}
+    expected={"request_sha256":plan["request_sha256"],"selection_sha256":digest(plan["selection"]),
+              "model_digest":plan["model_digest"],"eval_count":row["eval_count"],"prompt_eval_count":row["prompt_eval_count"],"paid_inference":False}
+    if execute:
+        exclusive(root/"model-reservation.json",{"request_sha256":plan["request_sha256"],"maximum":1,"model_digest":plan["model_digest"]})
+        exclusive(root/"model-response.json",expected)
+        exclusive(root/"plan.json",plan)
+    elif checked(root/"model-response.json",expected)!=expected:
+        raise ValueError("Upstream accepted model receipt changed")
+    return plan,proof
+
 def prepare(directory, scope, company, mission):
     validate(scope)
     if os.getenv("GITHUB_ACTIONS") != "true":
@@ -167,7 +197,9 @@ def prepare(directory, scope, company, mission):
     else:
         exclusive(binding, identity)
     path = root / "plan.json"
-    if not path.exists() and scope.get("planning_recovery") is True:
+    if not path.exists() and scope.get("planning_engine")=="upstream-peer-v1":
+        upstream_plan(root,scope,company,mission,execute=True)
+    elif not path.exists() and scope.get("planning_recovery") is True:
         prepare_recovery(root, scope)
     elif not path.exists():
         md = check_local_model()
@@ -204,7 +236,9 @@ def load(directory, scope, company, mission, *, require_dispatch=True):
     if checked(root / "native-binding.json", identity) != identity:
         raise ValueError("Variable native identity changed")
     plan = checked(root / "plan.json", {})
-    if scope.get("planning_recovery") is True:
+    if scope.get("planning_engine")=="upstream-peer-v1":
+        if plan!=upstream_plan(root,scope,company,mission)[0]:raise ValueError("Upstream native plan changed")
+    elif scope.get("planning_recovery") is True:
         verify_recovery(root,scope,plan)
     elif plan != vm.manifest(scope["mission"], plan["selection"], plan["model_digest"]):
         raise ValueError("Variable graph changed")
@@ -288,12 +322,18 @@ def verify(scope, prior, directory, *, functional_test):
     expected = {"native-binding.json","plan.json","model-reservation.json","model-response.json"}
     if scope.get("planning_recovery") is True:
         expected.update(verify_recovery(root,scope,plan))
+    if scope.get("planning_engine")=="upstream-peer-v1":
+        expected.add("upstream-planner")
     for name in hashes:
         expected.update({name+".reserved.json",name+".result.json"})
     if {p.name for p in root.iterdir()} != expected:
         raise ValueError("Unexpected variable graph evidence")
     recovery = ({"planning_attempts":len(list(root.glob("planning-attempt-*.json"))),
                  "planning_recovery_verified":True} if scope.get("planning_recovery") is True else {})
+    if scope.get("planning_engine")=="upstream-peer-v1":
+        proof=upstream_plan(root,scope,dispatch["company"],dispatch["parent"])[1]
+        recovery.update({"upstream_planning_verified":True,"upstream_planning_proof_sha256":digest(proof),
+                         "upstream_model_calls":proof["model_calls"],"upstream_peer_changed_selection":proof["peer_changed_selection"]})
     return {**recovery,"verified_producers":4, "independent_actual_input_test":functional_test,
             "native_variable_graph_verified":True, "verified_contracts":len(hashes),
             "active_contract_divisions":[r for r in ORDER if not products[r]["scope_review_only"]],
