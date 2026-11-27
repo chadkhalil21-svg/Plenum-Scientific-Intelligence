@@ -87,6 +87,17 @@ class EventGateTests(TestCase):
         approved=scopes()
         arithmetic=approved["terra-timing"]
         accept_choice(arithmetic,{"narration_minutes":"words/words_per_minute","pause_minutes":"film_minutes-narration_minutes"})
+        exposure=approved["terra-study-exposure"]
+        accept_choice(exposure,{"roque_animal_days":"roque_animals*roque_days",
+            "cowley_animal_days":"cowley_animals*cowley_days",
+            "combined_animal_days":"roque_animal_days+cowley_animal_days",
+            "cowley_per_group":"cowley_animals/cowley_groups"})
+        from composition_contract import request_for
+        for i in (1,2,3):
+            feedback=None if i==1 else {"category":"Independent actual and held-out answer commitment mismatch","previous_expressions":None}
+            request=request_for(exposure,i,feedback)
+            self.assertNotIn("result_commitment",json.dumps(request))
+        self.assertLessEqual(len(MAGIC+"\n"+json.dumps(exposure)),1800)
         synthesis=approved["terra-release"]
         opts=candidates(index(synthesis["inputs"]["synthesis"]["documents"]))
         accept_synthesis(synthesis,{k:k in ("extract_scene_1","extract_scene_2","extract_science_2") for k in opts})
