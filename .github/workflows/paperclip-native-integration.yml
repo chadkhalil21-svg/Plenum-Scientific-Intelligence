@@ -9,6 +9,10 @@ on:
         required: false
         type: string
         default: ''
+      authorized_cross_run_scope:
+        required: false
+        type: string
+        default: ''
   issues:
     types: [opened]
   issue_comment:
@@ -80,7 +84,13 @@ jobs:
         inputs.cross_run_case == 'live' && github.event.action == 'opened' &&
         github.event.issue.user.login == 'chadkhalil21-svg' && github.event.sender.login == 'chadkhalil21-svg' &&
         github.event.issue.title == '[Plenum Paperclip] signed cross-run continuation' &&
-        github.event.issue.body == 'PLENUM_PUBLIC_CROSS_RUN_V1:45549381583:14993446038'))
+        github.event.issue.body == 'PLENUM_PUBLIC_CROSS_RUN_V1:45549381583:14993446038') ||
+       (github.event_name == 'issues' && github.ref == 'refs/heads/main' &&
+        github.workflow_ref == 'chadkhalil21-svg/Plenum-Scientific-Intelligence/.github/workflows/paperclip-cross-run.yml@refs/heads/main' &&
+        inputs.pipeline_stage != 'science' && inputs.cross_run_case == 'authorized' &&
+        inputs.authorized_cross_run_scope != '' && github.event.action == 'opened' &&
+        github.event.issue.user.login == 'chadkhalil21-svg' && github.event.sender.login == 'chadkhalil21-svg' &&
+        github.event.issue.title == '[Plenum Paperclip] authorized cross-run continuation'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -116,7 +126,7 @@ jobs:
         run: |
           gh attestation verify reports/prior-memory/memory.json --repo "$GITHUB_REPOSITORY" --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/paperclip-native-integration.yml" --source-digest "$GITHUB_SHA" --source-ref "$GITHUB_REF" --deny-self-hosted-runners
       - name: Verify original successful run and exact artifact metadata
-        if: inputs.cross_run_case != ''
+        if: inputs.cross_run_case != '' && inputs.cross_run_case != 'authorized'
         env:
           GH_TOKEN: ${{ github.token }}
           PYTHONPATH: src
@@ -127,14 +137,14 @@ jobs:
           gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/14993446038" > reports/cross-run-source/artifact.json
           python3 integrations/paperclip/cross_run_memory.py metadata reports/cross-run-source/run.json reports/cross-run-source/artifact.json
       - uses: actions/download-artifact@v4
-        if: inputs.cross_run_case != ''
+        if: inputs.cross_run_case != '' && inputs.cross_run_case != 'authorized'
         with:
           name: paperclip-pipeline-memory-engineering
           path: reports/prior-memory
           run-id: 45549381583
           github-token: ${{ github.token }}
       - name: Verify exact predecessor bytes and original signed provenance
-        if: inputs.cross_run_case != ''
+        if: inputs.cross_run_case != '' && inputs.cross_run_case != 'authorized'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -146,16 +156,19 @@ jobs:
         env:
           STAGE: ${{ inputs.pipeline_stage }}
           CROSS_RUN_CASE: ${{ inputs.cross_run_case }}
+          AUTHORIZED_SCOPE: ${{ inputs.authorized_cross_run_scope }}
           PYTHONPATH: src
         run: |
           set -eu
-          if [ -n "$CROSS_RUN_CASE" ]; then
+          if [ "$CROSS_RUN_CASE" = authorized ]; then
+            python3 integrations/paperclip/cross_run_authorized.py check-scope
+          elif [ -n "$CROSS_RUN_CASE" ]; then
             python3 integrations/paperclip/cross_run_memory.py prepare reports/prior-memory/memory.json "$CROSS_RUN_CASE"
           else
             python3 integrations/paperclip/pipeline_memory.py prepare "$STAGE" reports/prior-memory/memory.json
           fi
       - uses: actions/upload-artifact@v4
-        if: inputs.cross_run_case != ''
+        if: inputs.cross_run_case != '' && inputs.cross_run_case != 'authorized'
         with:
           name: paperclip-cross-run-source
           path: reports/cross-run-source/
