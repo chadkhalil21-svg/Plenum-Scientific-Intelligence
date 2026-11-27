@@ -8,6 +8,7 @@ import json
 import re
 import shlex
 from pathlib import Path
+from memento_recovery_adapter import NativeRecovery
 
 MAX_SOURCE = 12000
 MAX_FRAGMENT = 6000
@@ -40,6 +41,7 @@ class StagedInterface:
         self.passed=False
         self.actions=0
         self.original_sha=hashlib.sha256(original).hexdigest()
+        self.recovery=NativeRecovery()
 
     def __getattr__(self,name):
         return getattr(self.env,name)
@@ -54,6 +56,14 @@ class StagedInterface:
         return {"returncode":1,"output":why,"exception_info":""}
 
     def execute(self,action,**kwargs):
+        result=self._execute(action,**kwargs)
+        result,categories=self.recovery.observe(action,result,self.edits,self.actions)
+        if categories:
+            with self.receipt.with_name('memento-recovery.jsonl').open('a',encoding='utf-8') as f:
+                f.write(json.dumps({'ordinal':self.actions,'diagnostics':categories,'upstream':'Memento-Skills v0.4.0'})+'\n')
+        return result
+
+    def _execute(self,action,**kwargs):
         self.actions+=1
         if self.actions>12:
             return self._reject("Action budget exhausted.")
