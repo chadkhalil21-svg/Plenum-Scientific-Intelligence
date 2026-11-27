@@ -110,7 +110,15 @@ def load_checkpoint(root: Path, *, issue: int, objective: str,
         raw = stream.read(200_001)
     if len(raw) > 200_000:
         raise ValueError("Unsafe original checkpoint")
-    data = json.loads(raw.decode("utf-8"))
+    def unique_object(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("Duplicate checkpoint object key")
+            result[key] = value
+        return result
+
+    data = json.loads(raw.decode("utf-8"), object_pairs_hook=unique_object)
     if (not isinstance(data, dict)
             or data.get("schema") != "plenum-chief-restart-v1"
             or type(data.get("issue_number")) is not int
