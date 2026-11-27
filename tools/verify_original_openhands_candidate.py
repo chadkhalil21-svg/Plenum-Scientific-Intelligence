@@ -122,6 +122,23 @@ def _bound_interrupted_origin(report: dict, root: Path) -> bool:
             and report.get("no_paid_fallback") is True)
 
 
+def completed_unittest(result, *, failed):
+    """Classify only bounded completed unittest outcomes, not runtime failures.
+
+    Candidate text is never trusted as semantic approval or prompt content.
+    A negative report can at most request the already authorized correction.
+    """
+    if result.returncode != (1 if failed else 0) or not isinstance(result.stderr, str):
+        return False
+    tail = result.stderr[-4096:]
+    summary = re.search(r"(?m)^Ran ([1-9][0-9]*) tests? in [0-9.]+s$", tail)
+    if not summary:
+        return False
+    if failed:
+        return bool(re.search(r"(?m)^FAILED \((?:failures|errors)=[1-9][0-9]*(?:, (?:failures|errors|skipped|expected failures|unexpected successes)=[0-9]+)*\)\s*\Z", tail))
+    return bool(re.search(r"(?m)^OK(?: \(skipped=[0-9]+\))?\s*\Z", tail))
+
+
 def verify(report_path: Path, verdict_path: Path, *, checkout: Path | None = None) -> dict:
     """Fail closed unless the original candidate passes EXISTING focused tests."""
     root = (checkout or Path.cwd()).resolve()
@@ -244,6 +261,25 @@ def verify(report_path: Path, verdict_path: Path, *, checkout: Path | None = Non
             except OSError:
                 return persist("BLOCKED_SANDBOX_UNAVAILABLE", "no_disposable_networkless_container")
             if result.returncode:
+                from plenum_ai.openhands_coding_agent import STRUCTURED_RECOVERY_TASKS
+                acceptance = STRUCTURED_RECOVERY_TASKS.get((source, report.get("task")))
+                if (not interrupted and acceptance and completed_unittest(result, failed=True)
+                        and (isolated / "tests" / "acceptance" / acceptance).is_file()
+                        and not (isolated / "tests" / "acceptance" / acceptance).is_symlink()):
+                    # Establish that the unchanged source passes the very same
+                    # trusted suite. No candidate bytes remain in this copy.
+                    source_copy.write_bytes(original)
+                    try:
+                        baseline = subprocess.run(command, capture_output=True, text=True,
+                            timeout=150, check=False, env={
+                                "PATH": os.environ.get("PATH", "/usr/bin:/bin"), "HOME": "/tmp"})
+                    except (OSError, subprocess.TimeoutExpired):
+                        baseline = None
+                    if baseline is not None and completed_unittest(baseline, failed=False):
+                        verdict.update(regression_recovery_eligible=True,
+                            original_focused_baseline_passed=True,
+                            task_acceptance_test="tests/acceptance/" + acceptance,
+                            task_acceptance_passed=False)
                 return persist("BLOCKED_EXISTING_FOCUSED_TESTS", "existing_source_regressions_failed")
             verdict["existing_focused_tests_passed"] = True
             acceptance = TASK_ACCEPTANCE.get((source, report.get("task")))
@@ -285,9 +321,14 @@ def recover_local_behavior(report_path: Path, verdict_path: Path, event_path: Pa
     )
     first = json.loads(report_path.read_text("utf-8"))
     verdict = json.loads(verdict_path.read_text("utf-8"))
-    if (verdict.get("status") != "BLOCKED_TASK_ACCEPTANCE"
+    task_failure = (verdict.get("status") == "BLOCKED_TASK_ACCEPTANCE"
+                    and verdict.get("existing_focused_tests_passed") is True)
+    regression_failure = (verdict.get("status") == "BLOCKED_EXISTING_FOCUSED_TESTS"
+                          and verdict.get("existing_focused_tests_passed") is False
+                          and verdict.get("regression_recovery_eligible") is True
+                          and verdict.get("original_focused_baseline_passed") is True)
+    if (not (task_failure or regression_failure)
             or verdict.get("task_acceptance_passed") is not False
-            or verdict.get("existing_focused_tests_passed") is not True
             or verdict.get("network_disabled_for_candidate") is not True):
         return verdict
     if (os.getenv("GITHUB_ACTIONS") != "true"
@@ -308,6 +349,8 @@ def recover_local_behavior(report_path: Path, verdict_path: Path, event_path: Pa
     if (owner.get("engine") != LOCAL_ENGINE or first.get("engine") != LOCAL_ENGINE
             or first.get("repair_passes") != 0 or test is None
             or (test != "health_body_limit.py" and STRUCTURED_RECOVERY_TASKS.get((source, task)) != test)
+            or (regression_failure and (STRUCTURED_RECOVERY_TASKS.get((source, task)) != test
+                or verdict.get("test_file") != "tests/" + FOCUSED_TESTS.get(source, "test_" + Path(source).stem + ".py")))
             or first.get("source_file") != source or first.get("task") != task
             or first.get("source_sha256") != owner["source_sha256"]
             or first.get("status") != "PROPOSAL_AWAITING_REVIEW"
@@ -332,13 +375,14 @@ def recover_local_behavior(report_path: Path, verdict_path: Path, event_path: Pa
     reservation = {"schema": "plenum-local-behavior-recovery-v1",
                    "issue": owner["issue_number"], "run": os.environ["GITHUB_RUN_ID"],
                    "original_patch_sha256": digest, "source_sha256": owner["source_sha256"],
-                   "trusted_test": test, "max_corrective_attempts": 1}
+                   "trusted_test": test, "max_corrective_attempts": 1,
+                   "diagnosis": "existing_regression" if regression_failure else "task_acceptance"}
     (archive / "reservation.json").write_text(json.dumps(reservation, indent=2) + "\n")
     for p in (report_path, verdict_path, patch):
         p.rename(archive / p.name)
     try:
         second = execute_local(task, source_file=source, candidate_out=patch.as_posix(),
-                               behavioral_recovery=True)
+                               behavioral_recovery=True, regression_recovery=regression_failure)
     except Exception as exc:
         second = {**local_plan(task, source_file=source),
                   "status": "BLOCKED_LOCAL_CODER_NO_REVIEWABLE_PATCH",
@@ -355,7 +399,7 @@ def main() -> int:
     parser.add_argument("--recover-local-event", type=Path)
     args = parser.parse_args()
     result = verify(args.report, args.verdict)
-    if args.recover_local_event and result["status"] == "BLOCKED_TASK_ACCEPTANCE":
+    if args.recover_local_event and result["status"] in ("BLOCKED_TASK_ACCEPTANCE", "BLOCKED_EXISTING_FOCUSED_TESTS"):
         result = recover_local_behavior(args.report, args.verdict, args.recover_local_event)
     print("Original networkless focused source gate:", result["status"])
     return 0 if result["existing_focused_tests_passed"] and result.get("task_acceptance_passed") is not False and not result["status"].startswith("BLOCKED") else 2
