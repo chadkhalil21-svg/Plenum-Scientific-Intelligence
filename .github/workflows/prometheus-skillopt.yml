@@ -1,0 +1,56 @@
+name: Prometheus upstream SkillOpt learning
+on:
+  pull_request:
+    paths:
+      - 'integrations/prometheus_skillopt/**'
+      - '.github/workflows/prometheus-skillopt.yml'
+permissions:
+  contents: read
+jobs:
+  qualify:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONPATH: src
+      SKILLOPT_SLEEP_WORKERS: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install exact Microsoft SkillOpt release
+        run: |
+          set -eu
+          python -m pip download --no-deps --only-binary=:all: skillopt==0.2.0 -d /tmp/skillopt-wheel
+          echo '818db802507c6f82553fd24c75aa70c953ab0a712647f60e68e4595052c4b150  /tmp/skillopt-wheel/skillopt-0.2.0-py3-none-any.whl' | sha256sum -c -
+          python -m pip install --only-binary=:all: /tmp/skillopt-wheel/skillopt-0.2.0-py3-none-any.whl
+          python -m pip check
+          python -m py_compile integrations/prometheus_skillopt/optimize.py
+          PYTHONPATH=src:integrations/prometheus_skillopt python -c 'from optimize import tasks; assert len(tasks()) == 10'
+      - name: Reuse original free local model
+        run: |
+          set -eu
+          docker pull ollama/ollama:latest
+          docker run -d --name plenum-paperclip-qwen --network host -e OLLAMA_HOST=127.0.0.1:11434 -e OLLAMA_CONTEXT_LENGTH=4096 -e OLLAMA_NUM_PARALLEL=1 --memory=8g --cpus=3 ollama/ollama:latest
+          for i in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
+            sleep 2
+          done
+          bash integrations/paperclip/pull_original_qwen.sh
+          test "$(docker exec plenum-paperclip-qwen ollama list | awk '$1=="qwen3.5:4b" {print $2}')" = d8b0f5e9760c
+      - name: Execute actual SkillOpt learning and withheld evaluation
+        run: |
+          mkdir -p reports
+          python integrations/prometheus_skillopt/optimize.py reports/skillopt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prometheus-skillopt-learning-evidence
+          path: reports/skillopt
+          if-no-files-found: warn
+      - name: Remove local model
+        if: always()
+        run: docker rm -f plenum-paperclip-qwen || true
