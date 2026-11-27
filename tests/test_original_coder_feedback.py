@@ -255,6 +255,29 @@ class TrustedRecoveryTests(unittest.TestCase):
 
 
 
+    def test_requested_helper_not_yet_referenced_is_readonly_context(self):
+        source=b"from transport import NoRedirects\nLIMIT=10\nUNRELATED=99\n\ndef target(x):\n    return min(LIMIT,x)\n"
+        task="Repair function target. Use NoRedirects and preserve the limit."
+        scope=coder.local_function_scope(task,source)
+        view=coder.readonly_dependency_view(scope,task)
+        self.assertEqual(view,["LIMIT=10","from transport import NoRedirects"])
+        self.assertNotIn("UNRELATED","".join(view))
+        self.assertEqual(coder.readonly_dependency_view(scope, "Use NoRedirectsExtra."),["LIMIT=10"])
+        with self.assertRaises(ValueError):
+            coder.apply_structured_edit(scope,{"old":"from transport import NoRedirects","new":"import transport"})
+
+    def test_requested_helper_context_preserves_existing_bounds(self):
+        source=("LIMIT=10\n" + "\n".join("HELPER_%d=%r"%(i,"x"*350) for i in range(12)) +
+                "\n\ndef target(x):\n    return min(LIMIT,x)\n").encode()
+        task="Repair function target. Use " + " ".join("HELPER_%d"%i for i in range(12))
+        scope=coder.local_function_scope(task,source)
+        view=coder.readonly_dependency_view(scope,task)
+        self.assertEqual(view[0],"LIMIT=10")
+        self.assertLessEqual(len(view),8)
+        self.assertLessEqual(sum(map(len,view)),2000)
+
+
+
 class ScopedModuleBudgetTests(unittest.TestCase):
     def test_large_original_module_allows_only_small_named_function(self):
         original = b"PAD = " + repr("x" * 13000).encode() + b"\n\ndef target():\n    return 1\n"
