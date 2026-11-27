@@ -13,6 +13,7 @@ from plenum_ai.chief_contract_plan import (
 DOMAINS = {
     "stations": ("station_ids", "NOAA station metadata and structural validation"),
     "bibliography": ("dois", "Scholarly DOI metadata and separate provider readback"),
+    "literature_discovery": ("paper_survey", "Discover relevant public scholarly papers from the authorized topic without pre-supplied DOIs, then independently read back selected DOI metadata"),
     "thermal": ("cooling", "Newton cooling simulation and independent analytic check"),
     "commercial": ("business", "Approved public American Rider endpoint availability and review"),
 }
@@ -35,6 +36,10 @@ def validate(mission):
         elif k == "bibliography":
             if not isinstance(v, list) or not 1 <= len(v) <= 2 or any(type(x) is not str or not re.fullmatch(r"10\.[0-9]{4,9}/[a-z0-9][a-z0-9.()/_+-]{0,100}", x) for x in v) or len(set(v)) != len(v):
                 raise ValueError("DOI scope")
+        elif k == "literature_discovery":
+            from plenum_ai.world_horizon import paper_survey_subject
+            if not isinstance(v,str) or not paper_survey_subject(v) or FORBIDDEN.search(v):
+                raise ValueError("Bounded public scholarly topic required")
         elif k == "thermal":
             bounds = {"initial_kelvin": 2000, "ambient_kelvin": 2000, "rate": 10, "duration": 10000}
             if not isinstance(v, dict) or set(v) != set(bounds) or any(type(v[n]) not in (int,float) or not math.isfinite(v[n]) or not 0 < v[n] <= hi for n, hi in bounds.items()):
