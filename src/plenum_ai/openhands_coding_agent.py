@@ -594,7 +594,7 @@ def readonly_dependency_view(scope, task=""):
     return context
 
 
-def structured_local_edit(task,scope,*,numbered=False):
+def structured_local_edit(task,scope,*,numbered=False,reasoning=False):
     """Reuse the existing internal Ollama network, no agent shell or mounted source."""
     schema={"type":"object","additionalProperties":False,"required":["old","new"],
             "properties":{"old":{"type":"string"},"new":{"type":"string"}}}
@@ -642,12 +642,27 @@ def structured_local_edit(task,scope,*,numbered=False):
         user=json.loads(payload["messages"][1]["content"])
         user["readonly_dependencies"]=dependencies
         payload["messages"][1]["content"]=json.dumps(user)
+    # Use the already approved 9B model's native reasoning capability only for
+    # a distinct corrective call, after independent behavioral rejection.
+    # The final structured edit is the only output consumed; the separate
+    # thinking field is never saved, executed, or forwarded to another agent.
+    if reasoning:
+        if not numbered:
+            raise ValueError("Reasoning mode requires the authorized corrective edit format")
+        payload["think"]=True
+        payload["options"].update(num_ctx=6144,num_predict=1536)
+        payload["messages"][0]["content"] += (
+            " Before finalizing the edit, reason about the failing control-flow path "
+            "and compare at least two possible corrections. Check the chosen correction "
+            "against every explicit requirement and preserved behavior. Keep the "
+            "final JSON edit concise and leave enough output budget to complete it.")
     script=("import json,sys,urllib.request; "
             "raw=sys.stdin.buffer.read(64001); assert len(raw)<=64000; "
             "req=urllib.request.Request('http://plenum-temporary-ollama:11434/api/chat',data=raw,"
             "headers={'Content-Type':'application/json'},method='POST'); "
             "client=urllib.request.build_opener(urllib.request.ProxyHandler({})); "
-            "response=client.open(req,timeout=240); "
+            ("response=client.open(req,timeout=480); " if reasoning else "response=client.open(req,timeout=240); ")
+            +
             "assert response.geturl()==req.full_url; "
             "out=response.read(32001); assert len(out)<=32000; "
             "sys.stdout.buffer.write(out)")
@@ -657,7 +672,7 @@ def structured_local_edit(task,scope,*,numbered=False):
         "--entrypoint=python",AIDER_IMAGE,"-c",script]
     try:
         reply=subprocess.run(command,input=json.dumps(payload).encode("utf-8"),capture_output=True,
-            check=True,timeout=260,env={"PATH":os.environ.get("PATH","/usr/bin:/bin")})
+            check=True,timeout=500 if reasoning else 260,env={"PATH":os.environ.get("PATH","/usr/bin:/bin")})
     except (OSError,subprocess.SubprocessError) as exc:
         raise StructuredEditFailure("TRANSPORT") from exc
     if len(reply.stdout)>32000:
@@ -666,6 +681,8 @@ def structured_local_edit(task,scope,*,numbered=False):
         data=json.loads(reply.stdout)
         if data.get("done") is not True or data.get("done_reason")!="stop" or data.get("model")!=STRUCTURED_EDIT_MODEL:
             raise StructuredEditFailure("INCOMPLETE_MODEL_RESPONSE")
+        if reasoning and (not isinstance(data.get("message",{}).get("thinking"),str) or not data["message"]["thinking"].strip()):
+            raise StructuredEditFailure("REASONING_OUTPUT_MISSING")
         choice=json.loads(data["message"]["content"])
     except (ValueError,TypeError,KeyError,AttributeError) as exc:
         if isinstance(exc,StructuredEditFailure):
@@ -761,11 +778,11 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
                         "Preserve its signature and all unrelated behavior.")
             # One different, numbered edit from the ORIGINAL source. Never
             # replay the first prompt or grant a further retry on any failure.
-            raw = structured_local_edit(requests[0] + feedback, scope, numbered=True)
+            raw = structured_local_edit(requests[0] + feedback, scope, numbered=True, reasoning=True)
             if raw == original or len(raw) > _candidate_byte_limit(original):
                 raise StructuredEditFailure("CANDIDATE_BOUND")
             result["structured_edit_strategies"] = [
-                {"clause": 1, "strategy": "numbered", "behavioral_recovery": True}]
+                {"clause": 1, "strategy": "numbered", "behavioral_recovery": True, "native_reasoning": True}]
             return _candidate_report(result, original, raw, source_file, artifact, 1)
         raw=original
         strategies=[]
