@@ -23,15 +23,15 @@ INPUTS = {"stations": ["8723214"], "bibliography": ["10.1145/3442188.3445922"],
           "commercial": True}
 # New disjoint synthetic cases, not the SkillOpt corpus or owner assignments.
 CASES = (
-    ("train", "a", "Estimate the temperature after cooling and confirm the DOI record.", ["thermal","bibliography"]),
-    ("train", "b", "Check the station identifier and whether the public American Rider site responds.", ["stations","commercial"]),
-    ("train", "c", "Establish the literature metadata alone, without a numerical forecast.", ["bibliography"]),
-    ("val", "d", "Determine the NOAA station coordinates and predict the final cooling temperature.", ["stations","thermal"]),
-    ("val", "e", "Assess the public endpoint and identify the cited scholarly publication.", ["commercial","bibliography"]),
-    ("val", "f", "Calculate only the final temperature and independently check the calculation.", ["thermal"]),
-    ("test", "g", "Confirm the station location and the published citation, with no website assessment.", ["stations","bibliography"]),
-    ("test", "h", "Prepare a brief about public service availability and the projected temperature.", ["commercial","thermal"]),
-    ("test", "i", "Identify only the NOAA station metadata and confirm it independently.", ["stations"]),
+    ("train", "a", "Calculate the thermal estimate and check the scholarly citation metadata.", ["thermal","bibliography"]),
+    ("train", "b", "Identify the coastal station and assess public American Rider service availability.", ["stations","commercial"]),
+    ("train", "c", "Return just the publication metadata and independently confirm its record.", ["bibliography"]),
+    ("val", "d", "Find the NOAA station location and compute the expected cooled temperature.", ["stations","thermal"]),
+    ("val", "e", "Verify the service response and establish the publication details.", ["commercial","bibliography"]),
+    ("val", "f", "Compute and independently validate only the cooling result.", ["thermal"]),
+    ("test", "g", "Confirm both coastal station coordinates and scholarly metadata, omit endpoint testing.", ["stations","bibliography"]),
+    ("test", "h", "Assess the public site response and the cooling prediction in one verified brief.", ["commercial","thermal"]),
+    ("test", "i", "Report only station identity and coordinates with independent confirmation.", ["stations"]),
 )
 
 def corpus():
@@ -94,6 +94,10 @@ class Local:
         return self.infer(req, "reflection")
 
 class Adapter:
+    # GEPA 0.1.4 reads this optional protocol member directly.
+    # None selects the official upstream reflection proposal path.
+    propose_new_texts = None
+
     def __init__(self, local):
         self.local = local
 
@@ -164,6 +168,8 @@ def main():
               "candidate_changed": best != SEED, "model_calls": local.calls,
               "reflection_calls": local.reflections, "model_calls_replayed": 0, "paid_inference": False,
               "automatic_adoption": False, "general_autonomy_verified": False})
+    if local.reflections == 0 and total(base_val) < len(groups["val"]):
+        raise RuntimeError("No actual upstream reflection on imperfect baseline")
     if improved:
         exclusive(root / "candidate.json", best)
 
