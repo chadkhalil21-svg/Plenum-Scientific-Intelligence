@@ -36,7 +36,9 @@ jobs:
           gh api "repos/$repo/actions/runs/46066850718" | jq -e '.status=="completed" and .conclusion=="failure" and .run_attempt==1' >/dev/null
           gh api "repos/$repo/actions/jobs/140734156840" | jq -e '.run_id==46066850718 and .conclusion=="failure"' >/dev/null
           gh api "repos/$repo/actions/runs/46066850718/artifacts" | jq -e '.total_count==0' >/dev/null
-          gh api "repos/$repo/actions/jobs/140734156840/logs" > "$RUNNER_TEMP/preflight-failure.log"
+          # Capture ANSI-bearing authenticated log into a file, never the terminal.
+          gh api --allow-escape-sequences "repos/$repo/actions/jobs/140734156840/logs" > "$RUNNER_TEMP/preflight-failure.log"
+          test "$(wc -c < "$RUNNER_TEMP/preflight-failure.log")" -le 4000000
           grep -F 'configure_continuation(args.continuation)' "$RUNNER_TEMP/preflight-failure.log" >/dev/null
           grep -F 're.PatternError: missing ), unterminated subpattern at position 13' "$RUNNER_TEMP/preflight-failure.log" >/dev/null
           if jq -e 'any(.[]; .body|contains("plenum-native-miniswe-1040-preflight-resume-v1"))' "$RUNNER_TEMP/mission-comments.json" >/dev/null; then
