@@ -111,6 +111,7 @@ def load_checkpoint(root: Path, *, issue: int, objective: str,
     data = json.loads(raw.decode("utf-8"))
     if (not isinstance(data, dict)
             or data.get("schema") != "plenum-chief-restart-v1"
+            or type(data.get("issue_number")) is not int
             or data.get("issue_number") != issue
             or data.get("objective_sha256") != objective_digest(objective)
             or data.get("team") != list(team)
