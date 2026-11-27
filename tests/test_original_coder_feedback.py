@@ -138,6 +138,98 @@ class TrustedRecoveryTests(unittest.TestCase):
             finally:
                 os.chdir(previous)
 
+    def test_unregistered_confirmed_regression_triggers_distinct_correction_once(self):
+        source = "src/plenum_ai/mission_checkpoint.py"
+        task = "Improve handling of malformed checkpoint result envelopes without breaking valid resume."
+        original = (ROOT / source).read_bytes()
+        self.assertNotIn((source, task), coder.TASK_ACCEPTANCE)
+        with tempfile.TemporaryDirectory() as tmp:
+            previous = Path.cwd()
+            try:
+                os.chdir(tmp)
+                Path(source).parent.mkdir(parents=True)
+                Path(source).write_bytes(original)
+                candidate = Path("reports/openhands-review/issue-123.patch")
+                candidate.parent.mkdir(parents=True)
+                candidate.write_bytes(b"original failed patch")
+                digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
+                report = Path("reports/openhands-agent-review.json")
+                verdict = Path("reports/openhands-sandbox-verdict.json")
+                event = Path(tmp)/"event.json"
+                event.write_text(json.dumps({"action":"opened","repository":{"full_name":coder.REPO},
+                    "issue":{"number":123,"user":{"login":coder.OWNER},"title":coder.REPAIR_TITLE,
+                    "body":coder.LOCAL_REPAIR_MARKER+"\nfile: "+source+"\nobjective: "+task}}))
+                first = {**coder.local_plan(task,source_file=source),
+                    "status":"PROPOSAL_AWAITING_REVIEW","repair_passes":0,
+                    "candidate_artifact":candidate.as_posix(),"candidate_artifact_sha256":digest}
+                failed = {"status":"BLOCKED_EXISTING_FOCUSED_TESTS","task_acceptance_passed":None,
+                    "existing_focused_tests_passed":False,"network_disabled_for_candidate":True,
+                    "source_file":source,"test_file":"tests/test_mission_checkpoint.py",
+                    "candidate_artifact_sha256":digest,"regression_recovery_eligible":True,
+                    "generic_regression_recovery_eligible":True,"original_focused_baseline_passed":True}
+                report.write_text(json.dumps(first))
+                env={"GITHUB_ACTIONS":"true","GITHUB_EVENT_NAME":"issues","GITHUB_REPOSITORY":coder.REPO,
+                     "GITHUB_RUN_ATTEMPT":"1","GITHUB_RUN_ID":"123456",
+                     "PLENUM_EPHEMERAL_RUNNER":"confirmed","PLENUM_ORIGINAL_CODING_RESERVED":"true",
+                     "GITHUB_EVENT_PATH":str(event)}
+                def corrected(*args,**kwargs):
+                    self.assertEqual(args,(task,))
+                    self.assertTrue(kwargs["generic_regression"])
+                    self.assertTrue(kwargs["behavioral_recovery"])
+                    self.assertEqual((candidate.parent/"first-attempt"/candidate.name).read_bytes(),
+                                     b"original failed patch")
+                    candidate.write_bytes(b"different candidate")
+                    return {**first,"repair_passes":1}
+                with patch.dict(os.environ,env),patch.object(coder,"execute_local",side_effect=corrected) as run,patch.object(v,"verify",return_value={"status":"REVIEW_ONLY"}) as grade:
+                    for invalid in ({"original_focused_baseline_passed":False},
+                                    {"generic_regression_recovery_eligible":False},
+                                    {"test_file":"tests/other.py"},
+                                    {"candidate_artifact_sha256":"0"*64}):
+                        verdict.write_text(json.dumps({**failed,**invalid}))
+                        v.recover_local_behavior(report,verdict,event)
+                    run.assert_not_called()
+                    verdict.write_text(json.dumps(failed))
+                    self.assertEqual(v.recover_local_behavior(report,verdict,event),{"status":"REVIEW_ONLY"})
+                    run.assert_called_once()
+                    grade.assert_called_once()
+                    saved=candidate.parent/"first-attempt"
+                    self.assertEqual(json.loads((saved/"reservation.json").read_text())["diagnosis"],
+                                     "generic_existing_regression")
+                    verdict.write_text(json.dumps(failed))
+                    v.recover_local_behavior(report,verdict,event)
+                    run.assert_called_once()
+            finally:
+                os.chdir(previous)
+
+    def test_generic_correction_preserves_public_interfaces_and_uses_native_diff(self):
+        import subprocess
+        original = b"def needed():\n    return 1\n\ndef other():\n    return 2\n"
+        task = "Improve the first result while preserving all unrelated behavior."
+        source = "src/plenum_ai/mission_checkpoint.py"
+        env={"GITHUB_ACTIONS":"true","PLENUM_EPHEMERAL_RUNNER":"confirmed",
+             "PLENUM_ORIGINAL_CODING_RESERVED":"true"}
+        def fake_native(command, **kwargs):
+            self.assertEqual(command[command.index("--edit-format")+1],"diff")
+            self.assertIn("--no-auto-test",command)
+            self.assertIn("--network=plenum-coding-isolated",command)
+            p=Path(kwargs["cwd"])/"proposal.py"
+            self.assertEqual(p.read_bytes(),original)
+            p.write_bytes(original.replace(b"return 1",b"return 3"))
+            return subprocess.CompletedProcess(command,0)
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ,env), \
+             patch.object(coder,"_public_source",return_value=(original,hashlib.sha256(original).hexdigest())), \
+             patch.object(coder,"_review_output_path",return_value=Path(tmp)/"correction.patch"), \
+             patch.object(coder.subprocess,"run",side_effect=fake_native) as native:
+            result=coder.execute_local(task,source_file=source,candidate_out="unused",
+                                       behavioral_recovery=True,generic_regression=True)
+            self.assertEqual(result["repair_passes"],1)
+            self.assertEqual(result["local_edit_strategy"],"native_aider_distinct_diff_correction")
+            native.assert_called_once()
+            with patch.dict(os.environ,{"PLENUM_ORIGINAL_CODING_RESERVED":"false"}),self.assertRaises(PermissionError):
+                coder.execute_local(task,source_file=source,candidate_out="unused",
+                                    behavioral_recovery=True,generic_regression=True)
+            native.assert_called_once()
+
     def test_registered_structured_recovery_is_one_distinct_numbered_edit(self):
         source, task = next(iter(coder.STRUCTURED_RECOVERY_TASKS))
         original = (ROOT / source).read_bytes()
