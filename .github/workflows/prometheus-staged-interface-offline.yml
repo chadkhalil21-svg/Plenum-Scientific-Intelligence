@@ -1,0 +1,28 @@
+name: Prometheus staged native interface offline
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - '.github/workflows/prometheus-staged-interface-offline.yml'
+      - 'tools/miniswe_staged_interface.py'
+      - 'tools/run_native_miniswe_mission.py'
+      - 'tests/test_miniswe_staged_interface.py'
+permissions:
+  contents: read
+jobs:
+  offline:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-staged-native-edit-interface'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check actual native runner syntax and interface regression
+        env:
+          PYTHONPATH: src:tools
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 -m py_compile tools/run_native_miniswe_mission.py tools/miniswe_staged_interface.py
+          python3 -B -m unittest discover -s tests -p test_miniswe_staged_interface.py -v
+          python3 -B -m unittest discover -s tests -p test_prospective_1048_grader.py -v
