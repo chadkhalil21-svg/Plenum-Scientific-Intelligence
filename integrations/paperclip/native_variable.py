@@ -18,6 +18,8 @@ OWNERS = {
     "noaa_metadata": "intelligence",
     "crossref_metadata": "intelligence",
     "bibliography_readback": "research",
+    "paper_discovery": "intelligence",
+    "paper_readback": "research",
     "station_validation": "engineering",
     "cooling_solution": "engineering",
     "cooling_readback": "engineering",
@@ -39,6 +41,13 @@ def validate(scope):
     return scope
 
 def fixture(case):
+    if case=="discovery":
+        mission={"objective":"Find public concrete corrosion papers, independently check the discovered scholarly records, and solve and verify the illustrative thermal cooling model.",
+                 "authorized_inputs":{"literature_discovery":"Survey public concrete corrosion papers",
+                                      "thermal":{"initial_kelvin":350,"ambient_kelvin":300,"rate":0.05,"duration":20},
+                                      "commercial":True}}
+        return {"kind":"variable_graph","mission":mission,"selection_commitment":digest(["literature_discovery","thermal"]),
+                "planning_engine":"upstream-peer-v1"}
     chosen = {"science":["bibliography","stations"], "engineering":["thermal"], "commercial":["commercial"]}
     return {"kind":"variable_graph", "mission":vm.fixture(case), "selection_commitment":digest(sorted(chosen[case]))}
 
