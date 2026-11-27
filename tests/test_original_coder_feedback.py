@@ -23,7 +23,8 @@ class TrustedRecoveryTests(unittest.TestCase):
     def test_single_trusted_registry_preserves_recovery_boundaries(self):
         self.assertIs(v.TASK_ACCEPTANCE, coder.TASK_ACCEPTANCE)
         for (source, task), test in v.TASK_ACCEPTANCE.items():
-            eligible = task.startswith("Repair function ") and " Then repair function " not in task
+            eligible = (task.startswith("Repair function ") and " Then repair function " not in task
+                        and (source, task) not in coder.SCOPED_AIDER_TASKS)
             self.assertEqual((source, task) in coder.STRUCTURED_RECOVERY_TASKS, eligible)
             self.assertNotIn((source, task + " Extra."), coder.STRUCTURED_RECOVERY_TASKS)
             self.assertTrue((ROOT / "tests" / "acceptance" / test).is_file())
@@ -362,6 +363,38 @@ class ScopedModuleBudgetTests(unittest.TestCase):
         scope = coder.local_function_scope("Repair function target. Return two.", original)
         candidate = coder.apply_structured_edit(scope, {"old":"return 1", "new":"return 2"})
         self.assertEqual(candidate, original.replace(b"return 1", b"return 2"))
+
+    def test_native_scoped_aider_routes_only_registered_task(self):
+        source, task = next(iter(coder.SCOPED_AIDER_TASKS))
+        original = (ROOT / source).read_bytes()
+        scope = coder.local_function_scope(task, original)
+        self.assertEqual(coder.local_plan(task, source_file=source)["local_model"], coder.LOCAL_MODEL)
+        self.assertEqual(coder.local_plan(task, source_file=source)["local_edit_strategy"], "native_aider_whole_function")
+        self.assertNotIn((source, task), coder.STRUCTURED_RECOVERY_TASKS)
+        self.assertEqual(coder.local_plan(task + " Extra.", source_file=source)["local_model"], coder.STRUCTURED_EDIT_MODEL)
+        import subprocess
+        def fake_native(command, **kwargs):
+            self.assertIn(coder.AIDER_IMAGE, command)
+            self.assertIn("ollama_chat/" + coder.LOCAL_MODEL, command)
+            self.assertIn("--network=plenum-coding-isolated", command)
+            self.assertIn("--read-only", command)
+            self.assertIn("--no-auto-test", command)
+            candidate = Path(kwargs["cwd"]) / "proposal.py"
+            self.assertEqual(candidate.read_bytes(), scope[1])
+            candidate.write_bytes(scope[1].replace(b"return data[", b"return dict(data)["))
+            return subprocess.CompletedProcess(command, 0)
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, {"PLENUM_EPHEMERAL_RUNNER":"confirmed"}), \
+             patch.object(coder, "_review_output_path", return_value=Path(tmp)/"candidate.patch"), \
+             patch.object(coder, "structured_local_edit") as structured, \
+             patch.object(coder.subprocess, "run", side_effect=fake_native) as native:
+            result = coder.execute_local(task, source_file=source, candidate_out="unused")
+            self.assertEqual(result["editing_scope"], "owner_named_function_only")
+            self.assertEqual(result["repair_passes"], 0)
+            native.assert_called_once()
+            structured.assert_not_called()
+            with self.assertRaises(PermissionError):
+                coder.execute_local(task, source_file=source, candidate_out="unused", behavioral_recovery=True)
+            native.assert_called_once()
 
     def test_large_named_function_remains_blocked(self):
         original = b"def target():\n    return " + repr("x" * 13000).encode() + b"\n"
