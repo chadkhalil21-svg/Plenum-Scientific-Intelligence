@@ -157,7 +157,7 @@ def accept_queue(root):
 def main():
     base=Path(sys.argv[1]);out=Path(sys.argv[2])
     event=os.environ["EVENT"];run=os.environ["GITHUB_RUN_ID"];commit=os.environ["GITHUB_SHA"]
-    expected_names={"off-legacy","local-legacy","local-budget","local-objective","local-composition-logistics","local-composition-energy","local-synthesis","local-adaptive-review","local-adaptive-defer","local-oss-review","local-oss-defer","local-variable-science","local-variable-engineering","local-variable-commercial","local-variable-upstream"} if event=="pull_request" else {"local-event"}
+    expected_names={"off-legacy","local-legacy","local-budget","local-objective","local-composition-logistics","local-composition-energy","local-synthesis","local-adaptive-review","local-adaptive-defer","local-oss-review","local-oss-defer","local-variable-science","local-variable-engineering","local-variable-commercial","local-variable-upstream","local-variable-discovery"} if event=="pull_request" else {"local-event"}
     paths={p.name.removeprefix("paperclip-native-public-evidence-"):p for p in base.iterdir()}
     if set(paths)!=expected_names:raise ValueError("Missing or unexpected native evidence archives")
     scope=None if event=="pull_request" else validate_scope(json.loads(os.environ["EXPECTED_SCOPE"]))
@@ -183,6 +183,18 @@ def main():
         proof=q["independent_verification"]
         if proof.get("upstream_planning_verified") is not True or proof.get("upstream_model_calls") not in (2,3) or proof.get("verified_contracts")!=5:
             raise ValueError("Missing upstream native planning and execution evidence")
+        discovery_key="local-variable-discovery"
+        accepted=accept(paths[discovery_key],run,commit,variable_fixture("discovery"))
+        if accepted!=results[discovery_key]:raise ValueError("Discovery independent acceptance mismatch")
+        directory=paths[discovery_key]/accepted["company"]/accepted["mission"]
+        proof=read(directory/"qualification.json")["independent_verification"]
+        if proof.get("upstream_planning_verified") is not True or proof.get("verified_contracts")!=5:
+            raise ValueError("Missing discovery and numerical contracts")
+        if set(proof["active_contract_divisions"])!={"intelligence","research","engineering","commercial"}:
+            raise ValueError("Incomplete discovery workforce")
+        report=read(directory/"variable-graph"/"evidence_report.result.json")["result"]
+        if set(report["sections"])!={"papers","cooling"} or not report["sections"]["papers"]["readback"]:
+            raise ValueError("Missing discovered and verified records")
         from synthesis_smoke import scope as expected_synthesis_scope
         accepted=accept(paths["local-synthesis"],run,commit,expected_synthesis_scope())
         if accepted!=results["local-synthesis"]:raise ValueError("Synthesis independent acceptance mismatch")
