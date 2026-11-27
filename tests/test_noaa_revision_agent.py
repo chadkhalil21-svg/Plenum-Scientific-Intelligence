@@ -163,3 +163,6 @@ class NOAAResearchTests(unittest.TestCase):
 
 if __name__=="__main__":
     unittest.main()
+
+# Reuse the frozen independent acceptance without changing its test bytes.
+from acceptance.noaa_nested_response import NestedResponseAcceptance
