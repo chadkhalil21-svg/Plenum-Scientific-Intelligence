@@ -230,6 +230,24 @@ class TrustedRecoveryTests(unittest.TestCase):
                                     behavioral_recovery=True,generic_regression=True)
             native.assert_called_once()
 
+    def test_native_miniswe_uses_original_exact_owner_public_contract(self):
+        event={"action":"opened","repository":{"full_name":coder.REPO},
+               "issue":{"number":124,"user":{"login":coder.OWNER},"title":coder.REPAIR_TITLE,
+                        "body":coder.MINISWE_REPAIR_MARKER+"\nfile: src/plenum_ai/mission_checkpoint.py\nobjective: Preserve existing checkpoint behavior and reject malformed inputs."}}
+        contract=coder.parse_owner_repair_event(event)
+        self.assertEqual(contract["engine"],coder.MINISWE_ENGINE)
+        self.assertEqual(contract["issue_number"],124)
+        self.assertFalse(contract["auto_merge"])
+        self.assertFalse(contract["paid_api_authorized"])
+        for body in (event["issue"]["body"].replace(coder.MINISWE_REPAIR_MARKER,coder.MINISWE_REPAIR_MARKER+"x"),
+                     event["issue"]["body"].replace("mission_checkpoint.py","browser.py"),
+                     event["issue"]["body"]+"\nextra"):
+            bad={**event,"issue":{**event["issue"],"body":body}}
+            with self.assertRaises((PermissionError,ValueError)):
+                coder.parse_owner_repair_event(bad)
+        self.assertEqual(coder.parse_owner_repair_event({**event,"issue":{**event["issue"],"body":
+                        event["issue"]["body"].replace(coder.MINISWE_REPAIR_MARKER,coder.LOCAL_REPAIR_MARKER)}})["engine"],coder.LOCAL_ENGINE)
+
     def test_registered_structured_recovery_is_one_distinct_numbered_edit(self):
         source, task = next(iter(coder.STRUCTURED_RECOVERY_TASKS))
         original = (ROOT / source).read_bytes()
