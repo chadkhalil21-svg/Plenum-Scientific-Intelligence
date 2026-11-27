@@ -1,0 +1,74 @@
+name: Prometheus independent discovery archive readback
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/prometheus-discovery-evidence.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify-original:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 595e7c4af9089d5f6a7e41f3253685868e674bfd
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install original independent verifier dependencies
+        run: |
+          python -m pip install --disable-pip-version-check --only-binary=:all: -r integrations/prometheus_oss/upstream-specialists-requirements.txt 'numpy==2.2.6' 'scipy==1.15.3'
+          python -m pip check
+      - name: Retrieve exact previously completed discovery archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          mkdir -p "$RUNNER_TEMP/discovery-archive"
+          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 90 --max-filesize 20000000 -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' 'https://api.github.com/repos/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/artifacts/15187808969/zip' -o "$RUNNER_TEMP/discovery-archive.zip"
+          echo "3c25129f5e46b646e5be95caba3008597ce925b075e2007f4bfbfcbda392f6d0  $RUNNER_TEMP/discovery-archive.zip" | sha256sum -c -
+          python - <<'PY'
+          import os, stat, zipfile
+          from pathlib import Path, PurePosixPath
+          root=Path(os.environ["RUNNER_TEMP"])
+          with zipfile.ZipFile(root/"discovery-archive.zip") as z:
+              rows=z.infolist()
+              names=[r.filename for r in rows]
+              assert len(rows)<=500 and len(set(names))==len(names)
+              assert sum(r.file_size for r in rows)<=20_000_000
+              for r in rows:
+                  p=PurePosixPath(r.filename)
+                  assert not p.is_absolute() and ".." not in p.parts and "\\" not in r.filename
+                  assert not stat.S_ISLNK(r.external_attr >> 16)
+              assert z.testzip() is None
+              z.extractall(root/"discovery-archive")
+          PY
+      - name: Execute original exact-scope verifier without network or model
+        run: |
+          set -eu
+          mkdir -p "$RUNNER_TEMP/discovery-result"
+          PYTHON="$(command -v python)"
+          sudo unshare --net -- env -i PATH="$PATH" PYTHONPATH="$PWD/src:$PWD/integrations/paperclip" "$PYTHON" - "$RUNNER_TEMP/discovery-archive" "$RUNNER_TEMP/discovery-result/acceptance.json" <<'PY'
+          import json, sys
+          from pathlib import Path
+          from fresh_runner_acceptance import accept
+          from native_variable import fixture
+          root=Path(sys.argv[1])
+          proof=accept(root,"45978263108","595e7c4af9089d5f6a7e41f3253685868e674bfd",fixture("discovery"))
+          assert proof["verified_divisions"]==5 and proof["verified_profile_work_products"]==11
+          assert proof["independent_actual_input_test"] is True and proof["model_receipt_verified"] is True
+          assert proof["provider_calls_replayed"]==proof["model_calls_replayed"]==0 and proof["paid_inference"] is False
+          receipt={**proof,"source_artifact":15187808969,"source_archive_sha256":"3c25129f5e46b646e5be95caba3008597ce925b075e2007f4bfbfcbda392f6d0","network_isolated":True,"original_source_commit":"595e7c4af9089d5f6a7e41f3253685868e674bfd","whole_matrix_accepted":False,"general_autonomy_verified":False}
+          Path(sys.argv[2]).write_text(json.dumps(receipt,sort_keys=True)+"\n")
+          print(json.dumps(receipt,sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prometheus-discovery-independent-acceptance
+          path: ${{ runner.temp }}/discovery-result/acceptance.json
+          if-no-files-found: error
+          retention-days: 90
