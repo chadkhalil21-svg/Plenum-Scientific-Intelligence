@@ -23,15 +23,15 @@ INPUTS = {"stations": ["8723214"], "bibliography": ["10.1145/3442188.3445922"],
           "commercial": True}
 # New disjoint synthetic cases, not the SkillOpt corpus or owner assignments.
 CASES = (
-    ("train", "a", "Calculate the thermal estimate and check the scholarly citation metadata.", ["thermal","bibliography"]),
-    ("train", "b", "Identify the coastal station and assess public American Rider service availability.", ["stations","commercial"]),
-    ("train", "c", "Return just the publication metadata and independently confirm its record.", ["bibliography"]),
-    ("val", "d", "Find the NOAA station location and compute the expected cooled temperature.", ["stations","thermal"]),
-    ("val", "e", "Verify the service response and establish the publication details.", ["commercial","bibliography"]),
-    ("val", "f", "Compute and independently validate only the cooling result.", ["thermal"]),
-    ("test", "g", "Confirm both coastal station coordinates and scholarly metadata, omit endpoint testing.", ["stations","bibliography"]),
-    ("test", "h", "Assess the public site response and the cooling prediction in one verified brief.", ["commercial","thermal"]),
-    ("test", "i", "Report only station identity and coordinates with independent confirmation.", ["stations"]),
+    ("train", "a", "Confirm whether the American Rider public service responds and identify the journal citation.", ["commercial","bibliography"]),
+    ("train", "b", "Compute the temperature after cooling and check public American Rider endpoint availability.", ["thermal","commercial"]),
+    ("train", "c", "Find the NOAA station metadata only, omitting the American Rider endpoint and cooling calculation.", ["stations"]),
+    ("val", "d", "Determine the NOAA station coordinates and verify the temperature estimate.", ["stations","thermal"]),
+    ("val", "e", "Establish the scholarly publication metadata together with American Rider public endpoint reachability.", ["commercial","bibliography"]),
+    ("val", "f", "Perform only the thermal cooling calculation with independent verification.", ["thermal"]),
+    ("test", "g", "Validate NOAA station identity and the journal publication record, no other capability is requested.", ["stations","bibliography"]),
+    ("test", "h", "Evaluate the cooling forecast and verify whether the public American Rider service is available.", ["commercial","thermal"]),
+    ("test", "i", "Identify only the coastal station location and independently check the metadata.", ["stations"]),
 )
 
 def corpus():
@@ -143,12 +143,13 @@ def main():
     md = mp.check_local_model()
     exclusive(root / "binding.json", {"model_digest": md, "gepa": VERSION,
               "corpus_sha256": mp.digest(groups), "paid_inference": False,
-              "synthetic_development_only": True})
+              "synthetic_development_only": True, "skip_perfect_score": False})
     local = Local(root, md)
     adapter = Adapter(local)
     result = optimize(seed_candidate=SEED, trainset=groups["train"], valset=groups["val"],
                       adapter=adapter, reflection_lm=local.reflect,
-                      max_metric_calls=18, reflection_minibatch_size=2,
+                      max_metric_calls=18, reflection_minibatch_size=3,
+                      skip_perfect_score=False,
                       use_merge=False, seed=0, raise_on_exception=True)
     best = result.best_candidate
     def grade(split, candidate):
