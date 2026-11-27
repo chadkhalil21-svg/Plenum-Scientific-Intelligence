@@ -1,3 +1,9 @@
+# 26 NOVEMBER 2026 — LATEST FOUNDER OVERRIDE: PAUSE BROWSER; COMPLETE AUTONOMOUS WORKFORCE
+
+The Founder has paused the original browser (#310). Do not develop, deploy, test, authenticate, repair or commission browser work until explicit resumption. Preserve source, existing service, vault and verified historical evidence. Browser acceptance is not a prerequisite for completing the original Minister, five divisions and eleven specialists. Use already authorized connectors for useful tasks. Focus on general authorized engineering, independent diagnosis/correction/retest, reviewed skill qualification and genuine unfamiliar objectives with durable continuity, safe recovery and independent verification. Preserve $0 incremental spend, exact approvals, no replay and no uncontrolled authority. This supersedes browser-completion requirements below; do not claim full workforce acceptance until useful end-to-end evidence supports it.
+
+---
+
 # 26 NOVEMBER 2026 FOUNDER OVERRIDE — COMPLETE ORIGINAL BROWSER AND ADVANCE PROMETHEUS
 
 The Founder has explicitly resumed the ORIGINAL Plenum Computer Browser (#310 reopened), superseding the 14 November stop-work instruction. Complete the existing Chromium/Playwright/Browser Use, Auth0, encrypted origin-bound session vault and authorized private relay; no duplicate browser, credential store, new paid host, private secrets in public CI, or bypass of login/MFA/approval. Reuse existing authenticated connectors and official upstream; verify quota and consent before live private inference. Public development checks alone are not owner-session acceptance.
