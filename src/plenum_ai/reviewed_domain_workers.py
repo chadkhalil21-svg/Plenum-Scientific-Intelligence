@@ -168,11 +168,15 @@ def official_source_records(capability: str, *, opener=urlopen) -> list[dict]:
     """Bounded live read-only GET of ONLY vetted first-party primary sources."""
     if capability not in DOMAIN_SOURCES:
         raise ValueError("Unknown reviewed domain reference set")
+    # Refuse redirects before contacting a destination outside the fixed source set.
+    from urllib.request import build_opener
+    from .chief_of_staff_pilot import NoRedirects
+    client = build_opener(NoRedirects).open if opener is urlopen else opener
     records = []
     for title, organization, url in DOMAIN_SOURCES[capability]:
         request = Request(url, headers={"User-Agent": "PlenumOriginalMinisterPublicResearch/1"})
         try:
-            with opener(request, timeout=15) as response:
+            with client(request, timeout=15) as response:
                 redirected = response.geturl()
                 status = response.status
                 # Never include HTML/page content in machine instructions,
