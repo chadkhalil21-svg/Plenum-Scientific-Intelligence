@@ -248,6 +248,8 @@ jobs:
       - name: Offline native variable graph security boundaries
         if: ${{ startsWith(matrix.kind, 'variable-') || (matrix.kind == 'event' && fromJSON(needs.authorize.outputs.scope || '{}').kind == 'variable_graph') }}
         run: docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/native_variable_smoke.py
+      - name: Offline structured session handoff boundary
+        run: docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/failure_handoff_smoke.py
       - id: checkpoint
         name: Runtime-volume checkpoint qualification (injected provider failures)
         run: docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/checkpoint_smoke.py --root /paperclip/plenum-mission-evidence
