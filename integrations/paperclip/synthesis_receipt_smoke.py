@@ -5,7 +5,7 @@ import sys
 import tempfile
 from types import SimpleNamespace
 from unittest.mock import patch
-from synthesis_contract import plan,receipt,digest,encoded
+from synthesis_contract import plan,receipt,digest,encoded,request_for,request_v1
 from synthesis_smoke import scope,fixture_selection
 
 
@@ -32,6 +32,29 @@ def main():
         accepted=plan(d,s,company,parent);assert accepted['attempts']==2 and len(calls)==2 and digest(calls[0])!=digest(calls[1])
         assert receipt(d,s,company,parent)==accepted and plan(d,s,company,parent)==accepted and len(calls)==2
         assert all('result_commitment' not in json.loads(r['messages'][1]['content']) for r in calls)
+        for i,r in enumerate(calls,1):
+            payload=json.loads(r['messages'][1]['content'])
+            assert len(payload['candidate_reviews'])==len(selected)
+            assert {v['key'] for v in payload['candidate_reviews']}==set(selected)
+            assert all(v['evidence'] for v in payload['candidate_reviews'])
+            assert all(('previous_decision' in v)==(i==2) for v in payload['candidate_reviews'])
+            assert json.loads((d/f'synthesis-attempt-{i}.json').read_text())['request_version']==2
+        # Historic receipts must reconstruct the original requests without inference.
+        saved={p:p.read_bytes() for p in d.glob('synthesis-attempt-*.json')}
+        rejection=d/'synthesis-rejection-1.json';saved[rejection]=rejection.read_bytes()
+        for p,raw in saved.items():
+            row=json.loads(raw);i=row['index'];row.pop('request_version')
+            row['request_sha256']=digest(request_v1(s,i,None if i==1 else rejected))
+            p.write_bytes(encoded(row))
+        assert receipt(d,s,company,parent)==accepted and len(calls)==2
+        for p,raw in saved.items():p.write_bytes(raw)
+        # Unknown or mixed request versions must fail closed.
+        p=d/'synthesis-attempt-2.json';old=p.read_bytes()
+        bad=json.loads(old);bad['request_version']=1;p.write_bytes(encoded(bad))
+        try:receipt(d,s,company,parent)
+        except ValueError:pass
+        else:raise AssertionError('Mixed request versions accepted')
+        p.write_bytes(old)
         p=d/'synthesis-rejection-1.json';old=p.read_bytes();tampered=json.loads(old);tampered['request_sha256']='b'*64;p.write_bytes(encoded(tampered))
         try:receipt(d,s,company,parent)
         except ValueError:pass
