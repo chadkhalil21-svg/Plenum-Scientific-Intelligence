@@ -27,7 +27,7 @@ jobs:
           python -m pip install --disable-pip-version-check --only-binary=:all: -r integrations/prometheus_magentic/requirements.txt
           python -m pip check
           python -m py_compile integrations/prometheus_magentic/planner.py
-          python -c 'from agent_framework.orchestrations import MagenticBuilder; from agent_framework.openai import OpenAIChatClient'
+          python -c 'from agent_framework.orchestrations import MagenticBuilder; from agent_framework.openai import OpenAIChatCompletionClient'
       - name: Reuse the original free stronger engineering model resource gate
         run: |
           set -eu
