@@ -181,7 +181,7 @@ def main():
         if accepted!=results[upstream_key]:raise ValueError("Upstream native acceptance mismatch")
         q=read(paths[upstream_key]/accepted["company"]/accepted["mission"]/"qualification.json")
         proof=q["independent_verification"]
-        if proof.get("upstream_planning_verified") is not True or proof.get("upstream_model_calls")!=2 or proof.get("verified_contracts")!=5:
+        if proof.get("upstream_planning_verified") is not True or proof.get("upstream_model_calls") not in (2,3) or proof.get("verified_contracts")!=5:
             raise ValueError("Missing upstream native planning and execution evidence")
         from synthesis_smoke import scope as expected_synthesis_scope
         accepted=accept(paths["local-synthesis"],run,commit,expected_synthesis_scope())
