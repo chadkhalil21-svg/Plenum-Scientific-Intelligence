@@ -45,6 +45,13 @@ def publish(directory,company,mission,scope_sha256,diagnostics):
         if role not in ("minister",*ROLES):raise ValueError("Unknown diagnostic division")
         item={"division":role,"run":canonical(d["id"]),"status":str(d.get("status"))[:32],
               "error_code":str(d.get("errorCode"))[:64],"exit_code":d.get("exitCode")}
+        recovery=d.get("native_recovery")
+        if isinstance(recovery,dict):
+            kind=recovery.get("kind")
+            item["native_recovery"]={"kind":kind if kind in ("bootstrap","other") else None}
+            for field in ("provider_work_started","identity_matches","observed_run_matches","finished","detail_error"):
+                value=recovery.get(field)
+                item["native_recovery"][field]=value if type(value) is bool else None
         safe.append(item)
     if len(safe)>18:raise ValueError("Diagnostic bound")
     result={"schema":"plenum-native-failure-handoff-v1","company":company,"mission":mission,
