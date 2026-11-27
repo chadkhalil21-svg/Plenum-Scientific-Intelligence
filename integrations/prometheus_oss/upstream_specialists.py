@@ -87,6 +87,13 @@ def inference(root,name,request,md):
                 "eval_count":n,"prompt_eval_count":p,"thinking_observed":True,
                 "final_content_observed":True})
         raise ValueError("Invalid final structured answer") from None
+    allowed=set(json.loads(request["messages"][1]["content"])["available_capabilities"])
+    if not isinstance(answer,dict) or set(answer)!=allowed or any(type(v) is not bool for v in answer.values()) or not any(answer.values()):
+        if thinking:
+            exclusive(root/(name+".diagnostic.json"),{**identity,"reason":"INVALID_FINAL_SELECTION",
+                "eval_count":n,"prompt_eval_count":p,"thinking_observed":True,
+                "final_content_observed":True})
+        raise ValueError("Invalid final selection")
     extra={"native_thinking_observed":True} if thinking else {}
     exclusive(root/(name+".result.json"),{**identity,"answer":answer,"eval_count":n,"prompt_eval_count":p,**extra})
     return answer
