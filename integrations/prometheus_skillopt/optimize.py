@@ -23,14 +23,14 @@ INPUTS={"stations":["8723214"],"bibliography":["10.1371/journal.pone.0247820"],
 # enter the target request or optimizer's validation/test prompts.
 CASES=[
  ("tr1","Find the NOAA station location and verify its metadata, not the commercial service.",["stations"],"train"),
- ("tr2","Calculate temperature after cooling and verify the numerical model; no bibliography is needed.",["thermal"],"train"),
+ ("tr2","Calculate temperature after cooling and verify the numerical model, no bibliography is needed.",["thermal"],"train"),
  ("tr3","Retrieve scholarly metadata and calculate the cooling result with independent checks.",["bibliography","thermal"],"train"),
  ("tr4","Review public endpoint availability only, with the required independent review.",["commercial"],"train"),
  ("v1","Identify the publication and station records for a verified evidence brief.",["bibliography","stations"],"val"),
  ("v2","Assess public service availability and verify a cooling estimate.",["commercial","thermal"],"val"),
- ("v3","Prepare a bibliography record and its readback; omit the station and temperature.",["bibliography"],"val"),
+ ("v3","Prepare a bibliography record and its readback, omit the station and temperature.",["bibliography"],"val"),
  ("t1","Compare the station metadata and thermal calculation using their independent checks.",["stations","thermal"],"test"),
- ("t2","Review the publication metadata and public service status; no simulation is requested.",["bibliography","commercial"],"test"),
+ ("t2","Review the publication metadata and public service status, no simulation is requested.",["bibliography","commercial"],"test"),
  ("t3","Only estimate the final cooling temperature and independently confirm it.",["thermal"],"test"),
 ]
 
