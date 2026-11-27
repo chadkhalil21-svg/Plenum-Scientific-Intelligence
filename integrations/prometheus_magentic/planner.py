@@ -115,7 +115,7 @@ async def plan(root, mission, commitment):
     vm.validate(mission)
     from agent_framework import Agent
     from agent_framework.orchestrations import MagenticBuilder
-    from agent_framework.openai import OpenAIChatClient
+    from agent_framework.openai import OpenAIChatCompletionClient
     from openai import AsyncOpenAI
     md = model_digest()
     root.mkdir(mode=0o700, parents=False, exist_ok=False)
@@ -126,7 +126,7 @@ async def plan(root, mission, commitment):
                                  timeout=90, transport=guard) as transport:
         async with AsyncOpenAI(base_url=BASE, api_key="local-no-secret", max_retries=0,
                                http_client=transport) as sdk:
-            client = OpenAIChatClient(model=MODEL, async_client=sdk)
+            client = OpenAIChatCompletionClient(model=MODEL, async_client=sdk)
             researcher = Agent(client=client, name="research",
                 description="Reviews source and evidence requirements.",
                 instructions="Identify all required evidence capabilities and their dependencies. No external calls or invented facts.")
