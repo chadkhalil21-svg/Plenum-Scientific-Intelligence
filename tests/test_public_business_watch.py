@@ -3,6 +3,7 @@ import unittest
 # Reuse the frozen independent acceptance cases in ordinary regression CI.
 from acceptance.health_body_limit import HealthBodyAcceptance
 from acceptance.probe_scope import ProbeScopeAcceptance
+from acceptance.public_media_types import PublicMediaTypeAcceptance
 from plenum_ai.business_public_watch import TARGETS, NoRedirects, inspect_target, run
 
 class BusinessPublicWatchTests(unittest.TestCase):
