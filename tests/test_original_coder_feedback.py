@@ -20,6 +20,15 @@ class TrustedRecoveryTests(unittest.TestCase):
         task = next(t for s,t in v.TASK_ACCEPTANCE if s==source and v.TASK_ACCEPTANCE[(s,t)]=="health_body_limit.py")
         self._assert_single_recovery(source, task)
 
+    def test_single_trusted_registry_preserves_recovery_boundaries(self):
+        self.assertIs(v.TASK_ACCEPTANCE, coder.TASK_ACCEPTANCE)
+        for (source, task), test in v.TASK_ACCEPTANCE.items():
+            eligible = task.startswith("Repair function ") and " Then repair function " not in task
+            self.assertEqual((source, task) in coder.STRUCTURED_RECOVERY_TASKS, eligible)
+            self.assertNotIn((source, task + " Extra."), coder.STRUCTURED_RECOVERY_TASKS)
+            self.assertTrue((ROOT / "tests" / "acceptance" / test).is_file())
+        self.assertIn("checkpoint_exact_issue_identity.py", coder.STRUCTURED_RECOVERY_TASKS.values())
+
     def test_registered_structured_task_preserves_first_evidence(self):
         for (source, task), test in coder.STRUCTURED_RECOVERY_TASKS.items():
             with self.subTest(source=source):
