@@ -16,6 +16,25 @@ class Tests(unittest.TestCase):
             with self.assertRaises(ValueError):c.validate_source(bad,ART)
         for bad in (dict(ART,expired=True),dict(ART,digest="sha256:"+"b"*64),dict(ART,id=123),dict(ART,workflow_run={"id":123})):
             with self.assertRaises(ValueError):c.validate_source(RUN,bad)
+    def test_distinct_predecessor_metadata_and_memory_pin(self):
+        prior={**PRIOR,"run_id":"123456","commit":"a"*40}
+        pin={**c.source_pin(),"run_id":"123456","artifact_id":123,
+             "commit":"a"*40,"head_sha":"b"*40,"ref":"refs/pull/42/merge",
+             "memory_sha256":hashlib.sha256(encoded(prior)).hexdigest()}
+        run={**RUN,"id":123456,"head_sha":"b"*40}
+        art={**ART,"id":123,"workflow_run":{"id":123456}}
+        c.validate_pinned_source(run,art,pin)
+        self.assertEqual(c.validate_pinned_memory(prior,pin,"999","c"*40),prior)
+        for bad in (dict(pin,artifact_id=True),dict(pin,ref="refs/heads/main"),
+                    dict(pin,stage="commercial"),dict(pin,memory_sha256="bad")):
+            with self.assertRaises(ValueError):c.validate_pin(bad)
+        for bad in (dict(run,conclusion="failure"),dict(run,path="other.yml")):
+            with self.assertRaises(ValueError):c.validate_pinned_source(bad,art,pin)
+        with self.assertRaises(ValueError):c.validate_pinned_source(run,dict(art,expired=True),pin)
+        with self.assertRaises(ValueError):c.validate_pinned_memory(prior,pin,"123456","c"*40)
+        with self.assertRaises(ValueError):c.validate_pinned_memory(dict(prior,paid_inference=True),pin,"999","c"*40)
+        with self.assertRaises(ValueError):c.validate_pinned_memory(dict(prior,qualification_sha256="d"*64),pin,"999","c"*40)
+
     def test_actual_prior_and_new_cases(self):
         with tempfile.TemporaryDirectory() as tmp:
             p=Path(tmp)/"memory.json";p.write_bytes(encoded(PRIOR))
