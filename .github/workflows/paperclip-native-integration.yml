@@ -184,7 +184,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(inputs.pipeline_stage != '' && '[{"mode":"local","kind":"pipeline"}]' || github.event_name == 'pull_request' && '[{"mode":"off","kind":"legacy"},{"mode":"local","kind":"legacy"},{"mode":"local","kind":"budget"},{"mode":"local","kind":"objective"},{"mode":"local","kind":"composition-logistics"},{"mode":"local","kind":"composition-energy"},{"mode":"local","kind":"synthesis"},{"mode":"local","kind":"adaptive-review"},{"mode":"local","kind":"adaptive-defer"},{"mode":"local","kind":"oss-review"},{"mode":"local","kind":"oss-defer"},{"mode":"local","kind":"variable-science"},{"mode":"local","kind":"variable-engineering"},{"mode":"local","kind":"variable-commercial"}]' || '[{"mode":"local","kind":"event"}]') }}
+        include: ${{ fromJSON(inputs.pipeline_stage != '' && '[{"mode":"local","kind":"pipeline"}]' || github.event_name == 'pull_request' && '[{"mode":"off","kind":"legacy"},{"mode":"local","kind":"legacy"},{"mode":"local","kind":"budget"},{"mode":"local","kind":"objective"},{"mode":"local","kind":"composition-logistics"},{"mode":"local","kind":"composition-energy"},{"mode":"local","kind":"synthesis"},{"mode":"local","kind":"adaptive-review"},{"mode":"local","kind":"adaptive-defer"},{"mode":"local","kind":"oss-review"},{"mode":"local","kind":"oss-defer"},{"mode":"local","kind":"variable-science"},{"mode":"local","kind":"variable-engineering"},{"mode":"local","kind":"variable-commercial"},{"mode":"local","kind":"variable-upstream"}]' || '[{"mode":"local","kind":"event"}]') }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -238,6 +238,13 @@ jobs:
           docker cp "$RUNNER_TEMP/plenum-numerical-deps" plenum-paperclip-integration:/opt/plenum-numerical-deps
           docker exec --user root plenum-paperclip-integration python3 -c 'import site,pathlib; pathlib.Path(site.getsitepackages()[0],"plenum_numerical.pth").write_text("/opt/plenum-numerical-deps"+chr(10))'
           docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 -c 'import numpy,scipy;from scipy.integrate import solve_ivp;assert numpy.__version__=="2.2.6" and scipy.__version__=="1.15.3";assert callable(solve_ivp)'
+      - name: Install actual upstream specialist frameworks in native board
+        if: ${{ matrix.kind == 'variable-upstream' || (matrix.kind == 'event' && fromJSON(needs.authorize.outputs.scope || '{}').planning_engine == 'upstream-peer-v1') }}
+        run: |
+          set -eu
+          python -m pip install --disable-pip-version-check --only-binary=:all: --target "$RUNNER_TEMP/plenum-upstream-specialists" -r integrations/prometheus_oss/upstream-specialists-requirements.txt
+          docker cp "$RUNNER_TEMP/plenum-upstream-specialists" plenum-paperclip-integration:/opt/plenum-upstream-specialists
+          docker exec --user node -e PYTHONPATH=/opt/plenum-upstream-specialists plenum-paperclip-integration python3 -c 'import smolagents,autogen,agent_framework'
       - name: Offline native variable graph security boundaries
         if: ${{ startsWith(matrix.kind, 'variable-') || (matrix.kind == 'event' && fromJSON(needs.authorize.outputs.scope || '{}').kind == 'variable_graph') }}
         run: docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/native_variable_smoke.py
@@ -279,6 +286,7 @@ jobs:
             adaptive-review|adaptive-defer) scope=$(PYTHONPATH=src python3 integrations/paperclip/adaptive_turns_smoke.py "$KIND") ;;
             oss-review|oss-defer) scope=$(PYTHONPATH=src python3 integrations/prometheus_oss/native_scope.py "$KIND") ;;
             variable-science|variable-engineering|variable-commercial) scope=$(PYTHONPATH=src:integrations/paperclip python3 -c 'import json,sys;from native_variable import fixture;print(json.dumps(fixture(sys.argv[1])))' "${KIND#variable-}") ;;
+            variable-upstream) scope=$(PYTHONPATH=src:integrations/paperclip python3 -c 'import json;from native_variable import fixture;print(json.dumps(dict(fixture("science"),planning_engine="upstream-peer-v1")))') ;;
             event) scope="$EVENT_SCOPE"; test -n "$scope" ;;
             pipeline) scope="$PIPELINE_SCOPE"; test -n "$scope" ;;
             *) exit 1 ;;
@@ -405,6 +413,15 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           python -m pip install --disable-pip-version-check --only-binary=:all: -r integrations/prometheus_oss/requirements.txt
+          python -m pip check
+      - uses: actions/setup-python@v5
+        if: ${{ github.event_name != 'pull_request' && fromJSON(needs.authorize.outputs.scope || '{}').planning_engine == 'upstream-peer-v1' }}
+        with:
+          python-version: '3.13'
+      - name: Install actual upstream specialist verifier on fresh runner
+        if: ${{ github.event_name == 'pull_request' || fromJSON(needs.authorize.outputs.scope || '{}').planning_engine == 'upstream-peer-v1' }}
+        run: |
+          python -m pip install --disable-pip-version-check --only-binary=:all: -r integrations/prometheus_oss/upstream-specialists-requirements.txt
           python -m pip check
       - name: Finish independent acceptance on a new runner without model, provider calls or board credentials
         env:
