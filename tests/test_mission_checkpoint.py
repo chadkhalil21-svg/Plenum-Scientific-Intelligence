@@ -12,6 +12,7 @@ from acceptance.checkpoint_exact_issue_identity import ExactCheckpointIssueAccep
 from acceptance.checkpoint_path_identity import CheckpointPathIdentityAcceptance
 from acceptance.checkpoint_duplicate_keys import CheckpointDuplicateKeysAcceptance
 from acceptance.checkpoint_write_prevalidation import CheckpointWritePrevalidationAcceptance
+from acceptance.checkpoint_nested_json import CheckpointNestedJSONAcceptance
 
 
 class MissionCheckpointLimitsTests(TestCase):
