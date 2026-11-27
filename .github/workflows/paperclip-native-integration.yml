@@ -180,11 +180,11 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: ${{ matrix.kind == 'variable-magentic' && 35 || 20 }}
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(inputs.pipeline_stage != '' && '[{"mode":"local","kind":"pipeline"}]' || github.event_name == 'pull_request' && '[{"mode":"off","kind":"legacy"},{"mode":"local","kind":"legacy"},{"mode":"local","kind":"budget"},{"mode":"local","kind":"objective"},{"mode":"local","kind":"composition-logistics"},{"mode":"local","kind":"composition-energy"},{"mode":"local","kind":"synthesis"},{"mode":"local","kind":"adaptive-review"},{"mode":"local","kind":"adaptive-defer"},{"mode":"local","kind":"oss-review"},{"mode":"local","kind":"oss-defer"},{"mode":"local","kind":"variable-science"},{"mode":"local","kind":"variable-engineering"},{"mode":"local","kind":"variable-commercial"},{"mode":"local","kind":"variable-upstream"}]' || '[{"mode":"local","kind":"event"}]') }}
+        include: ${{ fromJSON(inputs.pipeline_stage != '' && '[{"mode":"local","kind":"pipeline"}]' || github.event_name == 'pull_request' && '[{"mode":"off","kind":"legacy"},{"mode":"local","kind":"legacy"},{"mode":"local","kind":"budget"},{"mode":"local","kind":"objective"},{"mode":"local","kind":"composition-logistics"},{"mode":"local","kind":"composition-energy"},{"mode":"local","kind":"synthesis"},{"mode":"local","kind":"adaptive-review"},{"mode":"local","kind":"adaptive-defer"},{"mode":"local","kind":"oss-review"},{"mode":"local","kind":"oss-defer"},{"mode":"local","kind":"variable-science"},{"mode":"local","kind":"variable-engineering"},{"mode":"local","kind":"variable-commercial"},{"mode":"local","kind":"variable-upstream"},{"mode":"local","kind":"variable-magentic"}]' || '[{"mode":"local","kind":"event"}]') }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -198,6 +198,7 @@ jobs:
           revision=$(docker image inspect "$image" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')
           test "$revision" = d69631b01b9c658f80bf8bed389863dce82643e1
           docker run -d --name plenum-paperclip-integration \
+            -e PLENUM_CI_MAGENTIC_NATIVE=${{ matrix.kind == 'variable-magentic' && 'confirmed' || 'off' }} \
             -e GITHUB_ACTIONS=true -e HOST=127.0.0.1 -e PAPERCLIP_BIND=loopback -e PAPERCLIP_HOME=/paperclip \
             -e PAPERCLIP_DEPLOYMENT_MODE=local_trusted \
             -e PAPERCLIP_DEPLOYMENT_EXPOSURE=private \
@@ -245,6 +246,15 @@ jobs:
           python -m pip install --disable-pip-version-check --only-binary=:all: --target "$RUNNER_TEMP/plenum-upstream-specialists" -r integrations/prometheus_oss/upstream-specialists-requirements.txt
           docker cp "$RUNNER_TEMP/plenum-upstream-specialists" plenum-paperclip-integration:/opt/plenum-upstream-specialists
           docker exec --user node -e PYTHONPATH=/opt/plenum-upstream-specialists plenum-paperclip-integration python3 -c 'import smolagents,autogen,agent_framework'
+      - name: Install exact Magentic planner dependencies on isolated native board
+        if: matrix.kind == 'variable-magentic'
+        run: |
+          set -eu
+          test "$(docker exec plenum-paperclip-integration python3 -c 'import sys;print(str(sys.version_info.major)+"."+str(sys.version_info.minor))')" = 3.13
+          python -m pip install --disable-pip-version-check --only-binary=:all: --target "$RUNNER_TEMP/plenum-magentic-deps" -r integrations/prometheus_magentic/requirements.txt
+          docker cp "$RUNNER_TEMP/plenum-magentic-deps" plenum-paperclip-integration:/opt/plenum-magentic-deps
+          docker exec --user root plenum-paperclip-integration python3 -c 'import site,pathlib; pathlib.Path(site.getsitepackages()[0],"plenum_magentic.pth").write_text("/opt/plenum-magentic-deps"+chr(10))'
+          docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 -c 'import sys;sys.path.insert(0,"/plenum/integrations/prometheus_magentic");import planner;planner.strict()'
       - name: Offline native variable graph security boundaries
         if: ${{ startsWith(matrix.kind, 'variable-') || (matrix.kind == 'event' && fromJSON(needs.authorize.outputs.scope || '{}').kind == 'variable_graph') }}
         run: docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/native_variable_smoke.py
@@ -254,7 +264,7 @@ jobs:
         name: Runtime-volume checkpoint qualification (injected provider failures)
         run: docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/checkpoint_smoke.py --root /paperclip/plenum-mission-evidence
       - name: Start original local Qwen on private shared loopback
-        if: matrix.mode == 'local'
+        if: matrix.mode == 'local' && matrix.kind != 'variable-magentic'
         run: |
           set -eu
           docker pull ollama/ollama:latest
@@ -269,6 +279,21 @@ jobs:
           digest=$(docker exec plenum-paperclip-qwen ollama list | awk '$1=="qwen3.5:4b" {print $2}')
           test "$digest" = d8b0f5e9760c
           echo "Original Qwen model digest prefix verified: $digest"
+      - name: Start original pinned stronger Qwen on private native loopback
+        if: matrix.kind == 'variable-magentic'
+        run: |
+          set -eu
+          test "$(df --output=avail -B1 / | tail -1 | tr -d ' ')" -ge 9000000000
+          test "$(awk '/MemTotal/ {print $2}' /proc/meminfo)" -ge 14000000
+          test "$(awk '/MemAvailable/ {print $2}' /proc/meminfo)" -ge 11000000
+          docker pull ollama/ollama:latest
+          docker run -d --name plenum-paperclip-qwen --network container:plenum-paperclip-integration -e OLLAMA_HOST=127.0.0.1:11434 -e OLLAMA_CONTEXT_LENGTH=8192 -e OLLAMA_NUM_PARALLEL=1 --memory=10g --cpus=3 --mount type=volume,src=plenum-paperclip-qwen-cache,dst=/root/.ollama ollama/ollama:latest
+          for i in $(seq 1 60); do
+            if docker exec plenum-paperclip-integration curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
+            sleep 2
+          done
+          timeout 300 docker exec plenum-paperclip-qwen ollama pull qwen3.5:9b-q4_K_M
+          test "$(docker exec plenum-paperclip-qwen ollama list | awk '$1=="qwen3.5:9b-q4_K_M" {print $2}')" = 56671c2ab938
       - id: mission
         name: Native Minister assigns sequential five-division mission
         env:
@@ -289,6 +314,7 @@ jobs:
             oss-review|oss-defer) scope=$(PYTHONPATH=src python3 integrations/prometheus_oss/native_scope.py "$KIND") ;;
             variable-science|variable-engineering|variable-commercial) scope=$(PYTHONPATH=src:integrations/paperclip python3 -c 'import json,sys;from native_variable import fixture;print(json.dumps(fixture(sys.argv[1])))' "${KIND#variable-}") ;;
             variable-upstream) scope=$(PYTHONPATH=src:integrations/paperclip python3 -c 'import json;from native_variable import fixture;print(json.dumps(dict(fixture("science"),planning_engine="upstream-peer-v1")))') ;;
+            variable-magentic) scope=$(PYTHONPATH=src:integrations/paperclip python3 -c 'import json;from native_variable import magentic_fixture;print(json.dumps(magentic_fixture()))') ;;
             event) scope="$EVENT_SCOPE"; test -n "$scope" ;;
             pipeline) scope="$PIPELINE_SCOPE"; test -n "$scope" ;;
             *) exit 1 ;;
