@@ -322,6 +322,48 @@ class EncryptedReadTests(unittest.TestCase):
                 asyncio.run(read_saved_batch(site=SITE, owner=OWNER,
                     path="/secure", additional_paths=["/logout"]))
 
+    def test_inventory_has_distinct_one_time_consent_and_no_plaintext(self):
+        from services.computer_browser import owner_sealed_inventory as inventory
+        from services.computer_browser import owner_saved_session as saved
+        priv, pub = new_keypair()
+        blob = AtomicBlob()
+        store = MagicMock()
+        store.bucket.blob.return_value = blob
+        row = {"origin": SITE, "encrypted_profile_exists": True,
+               "website_login_verified": False}
+        with patch.object(inventory, "_store", return_value=store), \
+             patch.object(saved, "owner_session_metadata",
+                          return_value={"sites": [row]}) as metadata:
+            with self.assertRaises(PermissionError):
+                inventory.consume_inventory()
+            inventory.approve_inventory(OWNER, recipient_public_key=pub)
+            self.assertNotIn(OWNER.encode(), blob.data)
+            record = inventory.consume_inventory()
+            store.bucket.blob.assert_called_with(inventory.APPROVAL_BLOB)
+            self.assertNotEqual(inventory.APPROVAL_BLOB, sealed.APPROVAL_BLOB)
+            with self.assertRaises(PermissionError):
+                inventory.consume_inventory()
+            envelope = inventory.seal_inventory(record)
+            metadata.assert_called_once_with(OWNER)
+            self.assertNotIn(SITE, json.dumps(envelope))
+            self.assertFalse(envelope["plaintext_in_github"])
+            b64 = lambda value: base64.urlsafe_b64decode(value+"="*(-len(value)%4))
+            from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
+            peer = X25519PublicKey.from_public_bytes(b64(envelope["ephemeral_public_key"]))
+            key = HKDF(algorithm=hashes.SHA256(), length=32,
+                       salt=b64(envelope["salt"]), info=sealed.HKDF_INFO).derive(priv.exchange(peer))
+            decoded = json.loads(AESGCM(key).decrypt(
+                b64(envelope["nonce"]), b64(envelope["ciphertext"]), sealed.AAD))
+            self.assertEqual(decoded["sites"], [row])
+            self.assertNotIn(OWNER, json.dumps(decoded))
+            self.assertFalse(decoded["decrypted_storage_exposed"])
+            metadata.return_value = {"sites": [{**row, "cookie": "never-export"}]}
+            with self.assertRaises(PermissionError):
+                inventory.seal_inventory(record)
+            inventory.approve_inventory(OWNER, recipient_public_key=pub, now=int(time.time())-650)
+            with self.assertRaises(PermissionError):
+                inventory.consume_inventory()
+
     def test_disabled_service_is_denied_without_vault_access(self):
         for change in [{sealed.FLAG:"false"},
                        {"K_SERVICE":"plenum-computer-browser"},
@@ -345,6 +387,26 @@ class AuthenticatedOwnerHttpTests(unittest.TestCase):
         self.owner_dep=require_verified_owner
         self.app.dependency_overrides[self.owner_dep]=lambda:{"private_owner_id":OWNER}
         self.client=TestClient(self.app)
+
+    def test_inventory_bridge_requires_owner_confirmation_and_signed_oidc(self):
+        from services.computer_browser import owner_sealed_relay as relay
+        from services.computer_browser.owner_saved_session import _owner_form_token
+        _, pub = new_keypair()
+        data = {"recipient_public_key":pub, "confirmation":"APPROVE",
+                "csrf_token":_owner_form_token(OWNER,"https://example.com","sealed_inventory")}
+        with patch.object(relay, "approve_inventory") as approve:
+            self.assertEqual(self.client.post("/owner/chat-inventory-approval",
+                data={**data,"confirmation":""}).status_code,403)
+            approve.assert_not_called()
+            self.assertEqual(self.client.post("/owner/chat-inventory-approval",
+                data=data).status_code,200)
+            approve.assert_called_once_with(OWNER, recipient_public_key=pub)
+        with patch.object(relay,"consume_inventory") as consume:
+            self.assertEqual(self.client.post("/internal/chat-sealed-read",
+                headers={"X-Plenum-Action":"inventory-read-v1"}).status_code,401)
+            consume.assert_not_called()
+        self.app.dependency_overrides.clear()
+        self.assertEqual(self.client.get("/owner/chat-inventory-approval").status_code,401)
 
     def test_owner_approval_exact_path_and_separately_signed_csrf(self):
         from services.computer_browser import owner_sealed_relay

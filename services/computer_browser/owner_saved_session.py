@@ -73,7 +73,7 @@ def _owner_form_mac(owner_id, site, action, issued_hex, nonce):
 
 def _owner_form_token(owner_id, site, action):
     """Short-lived exact-owner/site/action CSRF token; no account data inside."""
-    if action not in ("preview","browse","revoke","demo_refresh","chat_demo_read","sealed_read","adaptive_revoke","exact_form_post","exact_form_revoke","site_register","site_revoke","site_preview","navigate","agent_read"):
+    if action not in ("preview","browse","revoke","demo_refresh","chat_demo_read","sealed_read","adaptive_revoke","exact_form_post","exact_form_revoke","site_register","site_revoke","site_preview","navigate","agent_read","sealed_inventory"):
         raise ValueError("Unrecognized owner form action")
     issued=f"{int(time.time()):08x}"
     nonce=secrets.token_hex(8)
@@ -442,54 +442,53 @@ async def _refresh_and_verify_public_demo(owner):
     return "saved_but_not_restored"
 
 
+def owner_session_metadata(owner_id):
+    """Read only the existing vault's origin and profile-existence metadata."""
+    from .runtime_site_grants import enabled as site_grants_enabled, OwnerSiteGrantStore
+    origins = set(allowed_origins())
+    if site_grants_enabled():
+        try:
+            registered = OwnerSiteGrantStore.from_environment().list_active(
+                owner=owner_id)
+            origins.update(row["origin"] for row in registered)
+        except Exception as exc:
+            raise HTTPException(status_code=503,
+                                detail="Owner site registry unavailable") from exc
+    if (not os.environ.get("BROWSER_PROFILE_BUCKET")
+            or not os.environ.get("BROWSER_SESSION_KEY")):
+        raise HTTPException(status_code=503,
+                            detail="Private session inventory unavailable")
+    if len(origins) > 100:
+        raise HTTPException(status_code=503,
+                            detail="Owner site registry exceeds bounded inventory")
+    store = BrowserProfileStore.from_environment()
+    sites = []
+    for origin in sorted(origins):
+        try:
+            exists = store.status(owner=owner_id, origin=origin)["profile_exists"]
+            if type(exists) is not bool:
+                exists = None
+        except Exception:
+            exists = None
+        sites.append({
+            "origin": origin,
+            "encrypted_profile_exists": exists,
+            "website_login_verified": False,
+        })
+    return {
+        "schema": "plenum-owner-session-metadata-v1",
+        "sites": sites,
+        "owner_authentication_required": True,
+        "decrypted_storage_exposed": False,
+        "session_exists_does_not_prove_active_login": True,
+    }
+
+
 def mount_owner_saved_session(app):
     @app.get("/owner/sessions/inventory", response_class=JSONResponse)
     async def owner_session_inventory(_owner=Depends(require_verified_owner)):
-        """Owner-only safe vault inventory for the EXISTING session broker.
-
-        This NEVER returns cookies, access tokens, browser storage, private
-        page text or a claim that the third-party account is signed in.
-        Inventory lists ONLY origins already granted to this owner.
-        """
-        from .runtime_site_grants import enabled as site_grants_enabled, OwnerSiteGrantStore
-        origins = set(allowed_origins())
-        if site_grants_enabled():
-            try:
-                registered = OwnerSiteGrantStore.from_environment().list_active(
-                    owner=_owner["private_owner_id"])
-                origins.update(row["origin"] for row in registered)
-            except Exception as exc:
-                raise HTTPException(status_code=503,
-                                    detail="Owner site registry unavailable") from exc
-        if (not os.environ.get("BROWSER_PROFILE_BUCKET")
-                or not os.environ.get("BROWSER_SESSION_KEY")):
-            raise HTTPException(status_code=503,
-                                detail="Private session inventory unavailable")
-        if len(origins) > 100:
-            raise HTTPException(status_code=503,
-                                detail="Owner site registry exceeds bounded inventory")
-        store = BrowserProfileStore.from_environment()
-        sites = []
-        for origin in sorted(origins):
-            try:
-                exists = bool(store.status(
-                    owner=_owner["private_owner_id"], origin=origin
-                )["profile_exists"])
-            except Exception:
-                exists = None
-            sites.append({
-                "origin": origin,
-                "encrypted_profile_exists": exists,
-                "website_login_verified": False,
-            })
         return JSONResponse(
-            {
-                "schema": "plenum-owner-session-metadata-v1",
-                "sites": sites,
-                "owner_authentication_required": True,
-                "decrypted_storage_exposed": False,
-                "session_exists_does_not_prove_active_login": True,
-            },
+            owner_session_metadata(_owner["private_owner_id"]),
             headers={"Cache-Control": "no-store",
                      "X-Content-Type-Options": "nosniff",
                      "Referrer-Policy": "no-referrer"},
