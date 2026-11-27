@@ -42,6 +42,14 @@ def fixture(case):
     chosen = {"science":["bibliography","stations"], "engineering":["thermal"], "commercial":["commercial"]}
     return {"kind":"variable_graph", "mission":vm.fixture(case), "selection_commitment":digest(sorted(chosen[case]))}
 
+def magentic_fixture():
+    # Distinct multidisciplinary public assignment for the native 9B route.
+    objective={"objective":"Determine coastal NOAA station coordinates and calculate the temperature after cooling. Independently verify both results.",
+               "authorized_inputs":{"stations":["8720218"],"bibliography":["10.1371/journal.pone.0247820"],
+                                    "thermal":{"initial_kelvin":342,"ambient_kelvin":296,"rate":0.045,"duration":23}}}
+    return {"kind":"variable_graph","mission":vm.validate(objective),
+            "selection_commitment":digest(["stations","thermal"]),"planning_engine":"magentic-native-v1"}
+
 def partition(plan):
     groups = {r: [] for r in ORDER}
     seen = set()
@@ -191,6 +199,8 @@ def magentic_plan(root, scope, company, mission, *, execute=False):
               "paid_inference":False}
     args=(sub,scope["mission"],scope["selection_commitment"],identity)
     if execute:
+        if os.getenv("GITHUB_ACTIONS")!="true" or os.getenv("PLENUM_CI_MAGENTIC_NATIVE")!="confirmed":
+            raise PermissionError("Magentic native execution requires isolated qualified CI board")
         from planner import execute_native_plan
         proof=execute_native_plan(*args)
     else:
