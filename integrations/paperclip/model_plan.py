@@ -234,7 +234,7 @@ def classify_group(directory,company,parent,goals,group,index,model_digest):
     return receipt
 
 
-def validate_classifications(receipt,goals,policy):
+def validate_first_classifications(receipt,goals,policy):
     classifications=receipt["operation_classifications"]
     groups=policy["required_groups"]
     if not isinstance(classifications,list) or len(classifications)!=len(groups):raise ValueError("Classification count")
@@ -252,6 +252,93 @@ def validate_classifications(receipt,goals,policy):
             raise ValueError("Classification counters")
         if set(selected)&set(combined):raise ValueError("Overlapping operation groups")
         combined.update(selected)
+    return combined
+
+
+def correction_request(goals,policy,previous):
+    # Only already-reviewed numeric/text operation choices may be reconsidered.
+    # No commitments, expected results, new capabilities, or private inputs.
+    if not set(policy["allowed"]) <= set(OPERATION_CUES):
+        raise PermissionError("No semantic correction for this contract")
+    request=classification_request(goals,policy["allowed"])
+    request["messages"][0]["content"] += (
+        " This is the single authorized corrective request. The completed prior selection "
+        "failed independent deliverable acceptance. Reconsider every requested output and "
+        "any unnecessary output using the original question. Do not repeat the prior "
+        "selection. No additional capability is authorized.")
+    payload=json.loads(request["messages"][1]["content"])
+    payload["previous_rejected_selection"]=previous
+    payload["feedback"]="OPERATION_ACCEPTANCE"
+    request["messages"][1]["content"]=json.dumps(payload,sort_keys=True)
+    return request
+
+
+def correction_context(receipt,goals,policy,previous):
+    try:
+        validate_operations(previous,policy)
+    except PlanRejected as exc:
+        if exc.code!="OPERATION_ACCEPTANCE":raise
+    else:
+        raise ValueError("Correction cannot follow an accepted selection")
+    request=correction_request(goals,policy,previous)
+    return {"company":receipt["company"],"parent":receipt["parent"],
+            "goals_sha256":digest(goals),"first_classifications_sha256":digest(receipt["operation_classifications"]),
+            "previous_selection":previous,"reason":"OPERATION_ACCEPTANCE",
+            "request_sha256":digest(request),"maximum":1,
+            "model_digest":receipt["model_digest"],"paid_inference":False}
+
+
+def validate_correction(receipt,goals,policy,previous):
+    context=correction_context(receipt,goals,policy,previous)
+    row=receipt["operation_correction"]
+    fields=set(context)|{"selection","selection_sha256","eval_count","prompt_eval_count"}
+    if not isinstance(row,dict) or set(row)!=fields or any(row[k]!=v for k,v in context.items()):
+        raise ValueError("Correction binding")
+    if (row["selection_sha256"]!=digest(row["selection"]) or
+        row["selection"]==previous or type(row["eval_count"]) is not int or
+        not 0<row["eval_count"]<=128 or type(row["prompt_eval_count"]) is not int or
+        not 0<row["prompt_eval_count"]<=2048):
+        raise ValueError("Correction response")
+    validate_operations(row["selection"],policy)
+    return context
+
+
+def correct_selection(directory,receipt,goals,policy,previous):
+    # Validate every original classification and its reservation BEFORE making
+    # the distinct corrective request. Exclusive records prevent blind replay.
+    if validate_first_classifications(receipt,goals,policy)!=previous:
+        raise ValueError("Original classification changed")
+    verify_classification_attempts(directory,receipt,policy)
+    context=correction_context(receipt,goals,policy,previous)
+    exclusive(directory/"minister-correction-rejection.json",context)
+    exclusive(directory/"minister-correction-attempt.json",context)
+    reply=read_json("/api/chat",correction_request(goals,policy,previous),timeout=35)
+    if not isinstance(reply,dict) or reply.get("model")!=MODEL or reply.get("done") is not True:
+        raise PlanRejected("OPERATION_INFERENCE")
+    raw=reply.get("message",{}).get("content")
+    if not isinstance(raw,str) or len(raw)>2000:raise PlanRejected("OPERATION_CONTENT")
+    def unique(items):
+        obj={}
+        for k,v in items:
+            if k in obj:raise ValueError("Duplicate correction key")
+            obj[k]=v
+        return obj
+    try:selection=json.loads(raw,object_pairs_hook=unique)
+    except (ValueError,TypeError):raise PlanRejected("OPERATION_JSON") from None
+    if not isinstance(selection,dict) or set(selection)!=set(policy["allowed"]) or any(type(v) is not bool for v in selection.values()):
+        raise PlanRejected("OPERATION_SCOPE")
+    row={**context,"selection":selection,"selection_sha256":digest(selection),
+         "eval_count":reply.get("eval_count"),"prompt_eval_count":reply.get("prompt_eval_count")}
+    exclusive(directory/"minister-correction-result.json",row)
+    validate_correction({**receipt,"operation_correction":row},goals,policy,previous)
+    return row
+
+
+def validate_classifications(receipt,goals,policy):
+    combined=validate_first_classifications(receipt,goals,policy)
+    if "operation_correction" in receipt:
+        validate_correction(receipt,goals,policy,combined)
+        combined=receipt["operation_correction"]["selection"]
     if combined!=receipt["response"]["step_3"]["operations"]:raise ValueError("Classification result changed")
     route={k:dict(v) for k,v in receipt["response"].items()}
     route["step_3"].pop("operations")
@@ -267,12 +354,22 @@ def verify_classification_attempts(directory,receipt,policy):
             raise ValueError("Classification reservation changed")
     if len(list(directory.glob("minister-operation-*.attempt.json")))!=len(policy["required_groups"]):
         raise ValueError("Unexpected classification reservation")
+    paths=[directory/("minister-correction-"+name+".json") for name in ("rejection","attempt","result")]
+    if "operation_correction" in receipt:
+        row=receipt["operation_correction"]
+        context={k:v for k,v in row.items() if k not in ("selection","selection_sha256","eval_count","prompt_eval_count")}
+        if checked(paths[0],context)!=context or checked(paths[1],context)!=context or checked(paths[2],row)!=row:
+            raise ValueError("Correction evidence changed")
+    elif any(p.exists() or p.is_symlink() for p in paths):
+        raise ValueError("Unexpected correction evidence")
 
 
 def validate_receipt(receipt, company, parent, *, goals=GOALS, tools=None, operation_policy=None):
     validate_goals(goals)
     fields={"company","parent","model","model_digest","goals_sha256","response","response_sha256","eval_count","prompt_eval_count","paid_inference"}
     if operation_policy is not None:fields|={"operation_classifications","routing_response_sha256"}
+    if operation_policy is not None and isinstance(receipt,dict) and "operation_correction" in receipt:
+        fields.add("operation_correction")
     if not isinstance(receipt,dict) or set(receipt)!=fields:
         raise ValueError("Invalid local model receipt")
     if (receipt["company"]!=company or receipt["parent"]!=parent or receipt["model"]!=MODEL
@@ -347,6 +444,18 @@ def model_plan(directory, company, parent, *, goals=GOALS, tools=None, operation
                   for i,group in enumerate(operation_policy["required_groups"],1)]
             choice["step_3"]["operations"]={k:v for row in rows for k,v in row["selection"].items()}
             extra={"operation_classifications":rows,"routing_response_sha256":route_digest}
+            try:
+                validate_operations(choice["step_3"]["operations"],operation_policy)
+            except PlanRejected as exc:
+                if exc.code!="OPERATION_ACCEPTANCE" or not set(operation_policy["allowed"])<=set(OPERATION_CUES):
+                    raise
+                if (type(reply.get("eval_count")) is not int or not 0<reply["eval_count"]<=256 or
+                    type(reply.get("prompt_eval_count")) is not int or not 0<reply["prompt_eval_count"]<=2048):
+                    raise PlanRejected("RECEIPT_BINDING")
+                original={**extra,"company":company,"parent":parent,"model_digest":model_digest}
+                correction=correct_selection(directory,original,goals,operation_policy,choice["step_3"]["operations"])
+                choice["step_3"]["operations"]=correction["selection"]
+                extra["operation_correction"]=correction
         except PlanRejected as exc:
             rejected_choice(directory,company,parent,choice,exc.code,operation_policy)
             raise
