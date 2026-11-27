@@ -182,6 +182,53 @@ class PlanTests(unittest.TestCase):
         self.assertNotIn("commitment", payload)
         self.assertTrue(all(span in question for spans in hints.values() for span in spans))
 
+    def test_distinct_correction_after_complete_semantic_rejection(self):
+        import objective_mission as om
+        scope={"kind":"public_objective",
+               "objective":"Find the average, global range and greatest adjacent change in the public readings.",
+               "dois":["10.1145/3442188.3445922"],"inputs":{"samples":[7,2,10,4]},
+               "operation_commitment":mp.digest(["max_step_change","mean","range"])}
+        kwargs=om.planning_kwargs(scope)
+        group=kwargs["operation_policy"]["allowed"]
+        first={op:op in ("mean","max_step_change") for op in group}
+        final=dict(first,range=True)
+        route=valid_plan();route["step_3"]["tool"]="stream"
+        tag={"models":[{"name":mp.MODEL,"digest":mp.MODEL_DIGEST+"a"*52}]}
+        def reply(value):
+            return {"model":mp.MODEL,"done":True,"message":{"content":json.dumps(value)},
+                    "eval_count":40,"prompt_eval_count":250}
+        cid,pid=str(uuid4()),str(uuid4())
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ,{"PLENUM_EPHEMERAL_RUNNER":"confirmed","PLENUM_PAPERCLIP_MODEL":"local"}):
+            directory=Path(tmp)
+            with patch.object(mp,"read_json",side_effect=[tag,reply(route),reply(first),reply(final)]) as model:
+                result=mp.model_plan(directory,cid,pid,goals=om.goals(scope),**kwargs)
+                self.assertEqual(model.call_count,4)
+                first_request=model.call_args_list[2].args[1]
+                correction_request=model.call_args_list[3].args[1]
+                self.assertNotEqual(mp.digest(first_request),mp.digest(correction_request))
+                self.assertNotIn(scope["operation_commitment"],json.dumps(correction_request))
+                self.assertEqual(json.loads(correction_request["messages"][1]["content"])["previous_rejected_selection"],first)
+            receipt=result[1]
+            self.assertEqual(receipt["response"]["step_3"]["operations"],final)
+            self.assertEqual(receipt["operation_classifications"][0]["selection"],first)
+            self.assertEqual(receipt["operation_correction"]["selection"],final)
+            with patch.object(mp,"read_json",side_effect=AssertionError("no replay")):
+                self.assertEqual(mp.model_plan(directory,cid,pid,goals=om.goals(scope),**kwargs),result)
+                (directory/"minister-correction-attempt.json").unlink()
+                with self.assertRaises(ValueError):
+                    mp.model_plan(directory,cid,pid,goals=om.goals(scope),**kwargs)
+        with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ,{"PLENUM_EPHEMERAL_RUNNER":"confirmed","PLENUM_PAPERCLIP_MODEL":"local"}):
+            directory=Path(tmp)
+            with patch.object(mp,"read_json",side_effect=[tag,reply(route),reply(first),reply(first)]) as model:
+                with self.assertRaises(ValueError):
+                    mp.model_plan(directory,cid,pid,goals=om.goals(scope),**kwargs)
+                with self.assertRaises(FileExistsError):
+                    mp.model_plan(directory,cid,pid,goals=om.goals(scope),**kwargs)
+                self.assertEqual(model.call_count,4)
+            self.assertFalse((directory/"minister-model-plan.json").exists())
+            self.assertTrue((directory/"minister-correction-result.json").exists())
+        print("DISTINCT CORRECTION PASS exact rejection, hidden acceptance, immutable attempt, no replay",flush=True)
+
     def test_strict_deliverables_not_extra_operations(self):
         import objective_mission as om
         scope={"kind":"public_objective","objective":"Report the population variance of the synthetic measurements.",
