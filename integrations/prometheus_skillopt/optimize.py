@@ -21,18 +21,40 @@ INPUTS={"stations":["8723214"],"bibliography":["10.1371/journal.pone.0247820"],
         "commercial":True}
 # Disjoint synthetic development examples. Independent expected choices never
 # enter the target request or optimizer's validation/test prompts.
+# Former held-out observations are now training only. The original archive is
+# immutable: run 45981480956, artifact 15190141010, exact SHA256 below.
+# The original raw Boolean content was recovered by enumerating the finite
+# answer space and matching the archived response hashes, not by new inference.
+ARCHIVE_SHA256="494837bc2e558c8c7c93a400eefb4d2e3eea07735a460ef8a2878934fa587080"
+ARCHIVE_MODEL="d8b0f5e9760cd1682034f292d7ef72ec46f432149be0df7574bf2d6e92e38c04"
+ARCHIVED={
+ "old_v1":("0eace987d5534f2093034ac71e410860c16484523b48e61a32a0364afe7a0f14","cd872214a6f61c3a2956cd84b9a490c6aa702b708a193841a86e53695707f1f3",[]),
+ "old_v2":("457f4fdacd909634566ed35964e2e673e9e0dbd8150fc7fb89d50ea499d4fa16","cd872214a6f61c3a2956cd84b9a490c6aa702b708a193841a86e53695707f1f3",[]),
+ "old_v3":("29f4b8b8fd3296960835c684d18397ff474637e48d38e6915f9fef512ebd1080","d8176ab997ed47dd617dd1bccdcc28e774df231d47ed03a767fea78f2c136d02",["bibliography"]),
+ "old_t2":("07d52bb0c74e04cb4a01bc7e2492644cdf4e9d717498c7aae6ffa61924aac589","cd872214a6f61c3a2956cd84b9a490c6aa702b708a193841a86e53695707f1f3",[]),
+}
 CASES=[
- ("tr1","Find the NOAA station location and verify its metadata, not the commercial service.",["stations"],"train"),
- ("tr2","Calculate temperature after cooling and verify the numerical model, no bibliography is needed.",["thermal"],"train"),
- ("tr3","Retrieve scholarly metadata and calculate the cooling result with independent checks.",["bibliography","thermal"],"train"),
- ("tr4","Review public endpoint availability only, with the required independent review.",["commercial"],"train"),
- ("v1","Identify the publication and station records for a verified evidence brief.",["bibliography","stations"],"val"),
- ("v2","Assess public service availability and verify a cooling estimate.",["commercial","thermal"],"val"),
- ("v3","Prepare a bibliography record and its readback, omit the station and temperature.",["bibliography"],"val"),
- ("t1","Compare the station metadata and thermal calculation using their independent checks.",["stations","thermal"],"test"),
- ("t2","Review the publication metadata and public service status, no simulation is requested.",["bibliography","commercial"],"test"),
- ("t3","Only estimate the final cooling temperature and independently confirm it.",["thermal"],"test"),
+ ("old_v1","Identify the publication and station records for a verified evidence brief.",["bibliography","stations"],"train"),
+ ("old_v2","Assess public service availability and verify a cooling estimate.",["commercial","thermal"],"train"),
+ ("old_v3","Prepare a bibliography record and its readback, omit the station and temperature.",["bibliography"],"train"),
+ ("old_t2","Review the publication metadata and public service status, no simulation is requested.",["bibliography","commercial"],"train"),
+ ("v4","For the evidence brief establish the station coordinates and verify the public endpoint status.",["stations","commercial"],"val"),
+ ("v5","Review publication details, predict the cooling temperature and verify the service availability.",["bibliography","commercial","thermal"],"val"),
+ ("v6","Establish the scholarly record and its independent confirmation without undertaking other work.",["bibliography"],"val"),
+ ("t4","Prepare a verified brief covering station identity, literature metadata and the thermal estimate.",["bibliography","stations","thermal"],"test"),
+ ("t5","Determine whether the public service is reachable and establish its independent review.",["commercial"],"test"),
+ ("t6","Report the cooling prediction and the public station identity, with independent confirmation of both.",["stations","thermal"],"test"),
 ]
+
+def archived_response(task,req,md):
+    expected=ARCHIVED.get(task.id)
+    if expected is None:return None
+    request_hash,response_hash,selected=expected
+    raw=json.dumps({k:k in selected for k in sorted(INPUTS)})
+    if md.removeprefix("sha256:")!=ARCHIVE_MODEL or mp.digest(req)!=request_hash or mp.digest(raw)!=response_hash:
+        raise ValueError("Archived training evidence mismatch")
+    return raw,request_hash,response_hash
+
 
 def tasks():
     result=[]
@@ -49,7 +71,7 @@ class LocalBackend(CliBackend):
     """Only transport and original task adapter are local; learning loop is upstream."""
     def __init__(self,root,md):
         super().__init__(model=mp.MODEL)
-        self.root=root;self.md=md;self.seen={}
+        self.root=root;self.md=md;self.seen={};self.restored=set()
     def infer(self,req,stage):
         digest=mp.digest(req)
         if digest in self.seen:return self.seen[digest]
@@ -69,6 +91,15 @@ class LocalBackend(CliBackend):
         if memory or sample_id!=0:raise PermissionError("No memory evolution or repeated sampling")
         if not isinstance(skill,str) or len(skill)>4000:raise ValueError("Skill bound")
         mission=json.loads(task.context_excerpt);req=vm.request(mission)
+        if skill==SEED and task.id in ARCHIVED:
+            raw,request_hash,response_hash=archived_response(task,req,self.md)
+            if task.id not in self.restored:
+                exclusive(self.root/(task.id+".archive-readback.json"),
+                    {"source_artifact":15190141010,"archive_sha256":ARCHIVE_SHA256,
+                     "task":task.id,"request_sha256":request_hash,"response_sha256":response_hash,
+                     "model_digest":self.md,"new_inference":False})
+                self.restored.add(task.id)
+            return raw
         if skill!=SEED:
             req["messages"][0]["content"]+=" Additional non-authoritative planning guidance: "+skill
         return self.infer(req,"target")
@@ -117,8 +148,11 @@ def main():
     exclusive(root/"outcome.json",{"upstream_gate_accepted":result.accepted,
         "validation_baseline":result.baseline_score,"validation_candidate":result.candidate_score,
         "test_baseline":baseline,"test_candidate":candidate,"candidate_improved":improved,
-        "model_calls":len(backend.seen),"model_calls_replayed":0,"paid_inference":False,
+        "model_calls":len(backend.seen),"archived_training_readbacks":len(backend.restored),
+        "optimizer_model_calls":sum(1 for p in root.glob("call-*.result.json") if json.loads(p.read_text())["stage"]=="upstream-reflection"),
+        "model_calls_replayed":0,"paid_inference":False,
         "automatic_adoption":False,"general_autonomy_verified":False})
+    if len(backend.restored)!=len(ARCHIVED):raise ValueError("Incomplete archived training evidence")
     if improved:
         (root/"candidate_skill.md").write_text(result.new_skill,encoding="utf-8")
 
