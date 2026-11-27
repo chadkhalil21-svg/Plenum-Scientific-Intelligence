@@ -18,6 +18,8 @@ OWNERS = {
     "noaa_metadata": "intelligence",
     "crossref_metadata": "intelligence",
     "bibliography_readback": "research",
+    "paper_discovery": "intelligence",
+    "paper_readback": "research",
     "station_validation": "engineering",
     "cooling_solution": "engineering",
     "cooling_readback": "engineering",
