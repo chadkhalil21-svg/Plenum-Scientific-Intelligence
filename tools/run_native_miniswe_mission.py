@@ -103,6 +103,30 @@ def configure_event(event_path):
     PATCH = Path(f"reports/openhands-review/issue-{ISSUE}.patch")
     return contract
 
+def configure_staged_1055(issue_path):
+    """Exact founder-owned held-out assignment, never a replay of 1048."""
+    global SOURCE, TASK, ISSUE, OUT, PATCH, ACCEPTANCE, TEST
+    if (os.getenv("PLENUM_STAGED_1055_RESERVED") != "true"
+            or issue_path.is_symlink() or not issue_path.is_file()
+            or not 0 < issue_path.stat().st_size <= 1000000):
+        raise PermissionError("Exact reserved issue required")
+    issue = json.loads(issue_path.read_text("utf-8"))
+    if (issue.get("number") != 1055 or issue.get("state") != "open"
+            or (issue.get("user") or {}).get("login") != "chadkhalil21-svg"
+            or issue.get("title") != "[Plenum Prometheus] Independent staged engineering assignment: bounded public readback"
+            or issue.get("body") != "Canonical #432 continuation. Fresh independent public engineering objective, not a repeat of #1048. Scope: src/plenum_ai/business_public_watch.py only. Require inspect_target to reject non-exact integer max_attempts outside 1..3 with ValueError and reject targets outside TARGETS with ValueError before invoking the probe or sleep callback. Preserve valid two-pass readback, retry behavior, and existing focused regressions. All tests offline with synthetic public targets and callbacks. One reserved local native staged executor run, no historical replay, no paid fallback, review-only patch, no account mutation. Freeze independent acceptance before inference; no automatic production merge."):
+        raise PermissionError("Issue identity or objective changed")
+    SOURCE = "src/plenum_ai/business_public_watch.py"
+    TASK = ("Require inspect_target to reject non-exact integer max_attempts outside 1..3 with ValueError "
+            "and reject targets outside TARGETS with ValueError before invoking the probe or sleep callback. "
+            "Preserve valid two-pass readback, retry behavior, and existing focused regressions.")
+    ISSUE = 1055
+    OUT = Path("reports/miniswe-1055")
+    PATCH = Path("reports/openhands-review/issue-1055.patch")
+    ACCEPTANCE = "staged_readback_1055.py"
+    TEST = "test_public_business_watch.py"
+
+
 def sha(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -212,14 +236,18 @@ def main():
     parser.add_argument("--prospective-arm", choices=("incumbent","learned"))
     parser.add_argument("--skill-archive", type=Path)
     parser.add_argument("--staged", action="store_true")
+    parser.add_argument("--staged-1055", type=Path)
     args = parser.parse_args()
-    if args.staged and (not args.event or os.getenv("PLENUM_MINISWE_STAGED") != "confirmed"):
+    if args.staged and (not (args.event or args.staged_1055) or os.getenv("PLENUM_MINISWE_STAGED") != "confirmed"):
         raise PermissionError("Staged action interface requires a fresh reserved owner event")
     if (__version__ != "2.4.6" or os.getenv("PLENUM_MINISWE_RESERVED") != "true"
             or os.getenv("GITHUB_ACTIONS") != "true" or os.getenv("GITHUB_REPOSITORY") != "chadkhalil21-svg/Plenum-Scientific-Intelligence"):
         raise PermissionError("Original reserved public CI only")
-    if sum(bool(x) for x in (args.event,args.continuation,args.prospective_arm))>1:
+    if sum(bool(x) for x in (args.event,args.continuation,args.prospective_arm,args.staged_1055))>1:
         raise PermissionError("One original authorization mode")
+    if args.staged_1055:
+        if not args.staged: raise PermissionError("Staged interface required")
+        configure_staged_1055(args.staged_1055)
     if args.prospective_arm:
         if not args.skill_archive:raise PermissionError("Bound learned archive required")
         configure_prospective(args.prospective_arm,args.skill_archive)
