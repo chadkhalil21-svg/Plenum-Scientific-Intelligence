@@ -26,6 +26,7 @@ from openai import OpenAI
 import httpx
 from verify_original_openhands_candidate import verify, TASK_ACCEPTANCE, FOCUSED_TESTS
 from plenum_ai.openhands_coding_agent import parse_owner_repair_event, MINISWE_ENGINE
+from miniswe_staged_interface import StagedInterface, staged_task
 
 SOURCE = "src/plenum_ai/mission_checkpoint.py"
 TASK = ("Prevent checkpoint persistence and worker artifact verification from accepting a symlinked mission root "
@@ -210,7 +211,10 @@ def main():
     parser.add_argument("--continuation", type=Path)
     parser.add_argument("--prospective-arm", choices=("incumbent","learned"))
     parser.add_argument("--skill-archive", type=Path)
+    parser.add_argument("--staged", action="store_true")
     args = parser.parse_args()
+    if args.staged and (not args.event or os.getenv("PLENUM_MINISWE_STAGED") != "confirmed"):
+        raise PermissionError("Staged action interface requires a fresh reserved owner event")
     if (__version__ != "2.4.6" or os.getenv("PLENUM_MINISWE_RESERVED") != "true"
             or os.getenv("GITHUB_ACTIONS") != "true" or os.getenv("GITHUB_REPOSITORY") != "chadkhalil21-svg/Plenum-Scientific-Intelligence"):
         raise PermissionError("Original reserved public CI only")
@@ -263,10 +267,13 @@ def main():
                 + original.decode("utf-8"))
         if PROSPECTIVE:
             native_task += "\nAdvisory engineering skill (subordinate to all authorization and security requirements):\n"+GUIDANCE
-        agent = DefaultAgent(model,env,step_limit=12,cost_limit=0,wall_time_limit_seconds=1200 if PROSPECTIVE else 1050,
+        agent_env = StagedInterface(env,SOURCE,TEST,original,OUT/"staged-actions.jsonl") if args.staged else env
+        if args.staged:
+            native_task = staged_task(native_task, original)
+        agent = DefaultAgent(model,agent_env,step_limit=12,cost_limit=0,wall_time_limit_seconds=1200 if PROSPECTIVE else 1050,
             max_consecutive_format_errors=2,
             system_template="You are the original Plenum engineering specialist. Solve the authorized public code issue in the isolated workspace. Use bash tools for actual inspection, edits and tests. No external services. Preserve existing interfaces. Each reply must call bash. Work from observed test output, diagnose failures and revise your solution.",
-            instance_template="Objective: {{task}}\nThe editable module is " + SOURCE + ". Existing tests: python -B -m unittest discover -s tests -p " + TEST + ". Inspect relevant code, independently reproduce the problem with your own tests, implement a minimal fix, run tests and correct failures. Do not modify existing tests. When satisfied, execute exactly: echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT",
+            instance_template=("Objective: {{task}}\nUse the structured action interface exactly as specified above; do not send shell commands." if args.staged else "Objective: {{task}}\nThe editable module is " + SOURCE + ". Existing tests: python -B -m unittest discover -s tests -p " + TEST + ". Inspect relevant code, independently reproduce the problem with your own tests, implement a minimal fix, run tests and correct failures. Do not modify existing tests. When satisfied, execute exactly: echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT"),
             output_path=OUT/"trajectory.json")
         started = time.monotonic()
         result = agent.run(native_task)
@@ -276,7 +283,8 @@ def main():
             "elapsed_seconds":time.monotonic()-started,"paid_inference":False,
             "original_source_sha256":sha(original),"baseline_passed":True,
             "production_written":False,"host_execution_of_candidate":False,
-            "continuation":CONTINUATION,"prospective":PROSPECTIVE}
+            "continuation":CONTINUATION,"prospective":PROSPECTIVE,
+            "staged_interface":args.staged}
         (OUT/"native-result.json").write_text(json.dumps(summary,indent=2))
         if result.get("exit_status")!="Submitted" or not model.requests:
             raise RuntimeError("Native agent did not submit completed solution")
