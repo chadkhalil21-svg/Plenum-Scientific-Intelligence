@@ -162,7 +162,7 @@ OPERATION_CUES={
               r"\b(?:sort(?:ed|ing)?|order(?:ed|ing)?)\b.{0,65}\b(?:middle|central)\b"),
     "range":(r"\b(?:range|extreme-value spread)\b",
              r"\b(?:maximum|max|largest|highest|greatest)\b.{0,40}\b(?:minus|less|subtract|difference)\b.{0,40}\b(?:minimum|min|smallest|lowest|least)\b",
-             r"\bdifference between\b.{0,40}\b(?:maximum|max|largest|highest|greatest)\b.{0,30}\b(?:minimum|min|smallest|lowest|least)\b"),
+             r"\bdifference between\b.{0,40}\b(?:maximum|max|largest|highest|greatest|longest)\b.{0,30}\b(?:minimum|min|smallest|lowest|least|shortest)\b"),
     "population_variance":(r"\b(?:population variance|variance)\b",r"\b(?:average|mean)\b.{0,35}\bsquared deviations?\b"),
     "least_squares_slope":(r"\b(?:least.squares|linear trend|regression slope|slope)\b",),
     "max_step_change":(r"\b(?:step change|successive changes?|adjacent differences?)\b",
