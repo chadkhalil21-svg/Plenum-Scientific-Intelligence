@@ -76,22 +76,7 @@ def sandbox_command(isolated, image, tests_dir, pattern):
     ]
 
 
-TASK_ACCEPTANCE = {
-    ("src/plenum_ai/noaa_revision_agent.py", "Repair function parse_candidate. Reject oversized signed integer alpha or gain as invalid_parameters without exceptions. Preserve valid ranges and every existing validation gate."):
-        "noaa_numeric_proposal.py",
-    ("src/plenum_ai/workforce_team_dispatch.py", "Repair function dispatch. For exact cooling initial K ambient K rate time, reuse run_contract for cooling_solution and cooling_readback. Save both keyed results in cooling.json. Reject invalid inputs."):
-        "parameterized_science_worker.py",
-    ("src/plenum_ai/mission_checkpoint.py", "Repair function load_checkpoint. Reject any saved result without exact integer attempt 1 or 2. Then repair function artifact_digest. Reject nonregular entries in artifact trees."):
-        "checkpoint_tree_invariants.py",
-    ("src/plenum_ai/mission_checkpoint.py", "Repair function load_checkpoint. Require only_original_public_workers to be true. Then repair function verified_previous_result. Require attempt to be integer 1 or 2."):
-        "checkpoint_scope_attempt.py",
-    ("src/plenum_ai/business_public_watch.py", "Repair function probe. Reject any target not in the existing TARGETS tuple before any HTTP request. Return False with a reason and None. Preserve all existing checks."):
-        "probe_scope.py",
-    ("src/plenum_ai/business_public_watch.py", "Reject health JSON bodies exceeding 65536 bytes even if their first bytes form valid JSON. Preserve fixed targets and ordinary successful and failed response behavior."):
-        "health_body_limit.py",
-    ("src/plenum_ai/business_public_watch.py", "Fix health JSON byte limit. The prior patch counted dictionary keys, not bytes. Read at most 65537 raw bytes, reject length above 65536 before decoding, and preserve existing checks."):
-        "health_body_limit.py",
-}
+from plenum_ai.openhands_coding_agent import TASK_ACCEPTANCE
 
 
 
