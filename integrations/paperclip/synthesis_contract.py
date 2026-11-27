@@ -143,7 +143,16 @@ def request_v1(scope,index_number,previous=None):
                         {'role':'user','content':json.dumps(prompt,sort_keys=True)}]}
 
 
-def request_for(scope,index_number,previous=None,version=2):
+def request_version(scope):
+    # Preserve the previously qualified comparison route. Candidate-by-candidate
+    # review is for pure extraction only; comparison groups require deduplication
+    # across sources, not independent yes/no decisions.
+    options=candidates(index(scope['inputs']['synthesis']['documents']))
+    return 1 if any(v['type']=='compare' for v in options.values()) else 2
+
+
+def request_for(scope,index_number,previous=None,version=None):
+    if version is None:version=request_version(scope)
     if version==1:return request_v1(scope,index_number,previous)
     if version!=2:raise ValueError('Unknown synthesis request version')
     validate(scope);records=index(scope['inputs']['synthesis']['documents']);options=candidates(records)
@@ -209,7 +218,7 @@ def plan(directory,scope,company,parent):
     checked(directory/'activation.json',{'company':company,'mission':parent,'scope_sha256':expected['scope_sha256'],'model_mode':'local'})
     if (directory/'synthesis-plan.json').exists():return receipt(directory,scope,company,parent)
     if list(directory.glob('synthesis-attempt-*.json')):raise PermissionError('Ambiguous synthesis inference')
-    model_digest=check_local_model();previous=None;hashes=set()
+    model_digest=check_local_model();previous=None;hashes=set();version=request_version(scope)
     def unique(pairs):
         out={}
         for k,v in pairs:
@@ -217,9 +226,10 @@ def plan(directory,scope,company,parent):
             out[k]=v
         return out
     for i in (1,2):
-        request=request_for(scope,i,previous);h=digest(request)
+        request=request_for(scope,i,previous,version);h=digest(request)
         if h in hashes:raise PermissionError('Repeated synthesis request')
-        hashes.add(h);attempt={**expected,'index':i,'maximum':2,'request_sha256':h,'request_version':2}
+        hashes.add(h);attempt={**expected,'index':i,'maximum':2,'request_sha256':h}
+        if version==2:attempt['request_version']=2
         exclusive(directory/f'synthesis-attempt-{i}.json',attempt)
         reply=read_json('/api/chat',request,timeout=120);raw=reply.get('message',{}).get('content');n=reply.get('eval_count')
         if reply.get('done') is not True or reply.get('model')!=MODEL or not isinstance(raw,str) or len(raw)>2000 or type(n) is not int or not 0<n<=384:raise ValueError('Synthesis model response')
