@@ -57,7 +57,7 @@ def probe(target: Target, *, opener=None, timeout: int = 12) -> tuple[bool, str,
         return False, "non_200_http", int(exc.code)
     except (URLError, TimeoutError, ConnectionError, OSError):
         return False, "network_unverified", None
-    except (ValueError, UnicodeError, TypeError):
+    except (ValueError, UnicodeError, TypeError, RecursionError):
         return False, "unexpected_content", None
 
 def inspect_target(target: Target, *, probe_fn=probe, sleep_fn=time.sleep,
