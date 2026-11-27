@@ -3,7 +3,6 @@
 Inspired by SWE-agent's structured editing and independent evaluation. No new
 model, service, agent, shell authority or historical inference replay.
 """
-import ast
 import hashlib
 import json
 import re
@@ -84,7 +83,7 @@ class StagedInterface:
                 self.edits+=1
                 self.views=0
                 self.passed=False
-                checked=self.env.execute({"command":"python -B -m unittest discover -s tests -p "+self.test})
+                checked=self.env.execute({"command":"printf 'Focused regression\\n'; python -B -m unittest discover -s tests -p "+self.test})
                 self.passed=checked["returncode"]==0
                 result={"returncode":checked["returncode"],"output":result["output"]+"\nAutomatic focused regression:\n"+checked["output"],"exception_info":checked.get("exception_info","")}
         elif op=="submit" and set(d)=={"op"}:
@@ -98,9 +97,9 @@ class StagedInterface:
         return result
 
 def staged_task(task,original):
-    return (task+"\nThe original editable source is supplied below. Your bash tool's command argument now accepts ONLY "
-        "a JSON string encoding one action: {\\\"op\\\":\\\"replace\\\",\\\"old\\\":\\\"exact unique source fragment\\\",\\\"new\\\":\\\"replacement\\\"}, "
-        "{\\\"op\\\":\\\"view\\\",\\\"start\\\":1,\\\"end\\\":30}, or {\\\"op\\\":\\\"submit\\\"}. "
+    return (task+"\nThe original editable source is supplied below. Your bash tool command argument accepts ONLY "
+        'a JSON string encoding one action: {"op":"replace","old":"exact unique source fragment","new":"replacement"}, '
+        '{"op":"view","start":1,"end":30}, or {"op":"submit"}. '
         "Use replace promptly; every successful replacement automatically runs existing focused regressions and returns feedback. "
         "At most two views between edits. Submit only after passing regression. Independent hidden acceptance still applies.\n\n"
         "Original source:\n"+original.decode("utf-8"))
