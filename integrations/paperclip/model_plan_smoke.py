@@ -159,6 +159,29 @@ class PlanTests(unittest.TestCase):
                     self.assertFalse(cues["max_step_change"])
         self.assertTrue(all(not spans for spans in mp.semantic_evidence("Review the supplied public records",tuple(mp.OPERATION_CUES)).values()))
 
+    def test_observed_1003_global_extrema_and_adjacent_change(self):
+        # The original #1003 response omitted range. A missing lexical hint
+        # does not authorize adding the answer or replaying its reservation.
+        question = ("Determine the average narration word count per scene, the "
+                    "difference between longest and shortest scenes, and the largest "
+                    "word count change between consecutive scenes for the revised Terra documentary.")
+        group = ("mean", "median", "range", "population_variance",
+                 "least_squares_slope", "max_step_change")
+        hints = mp.semantic_evidence(question, group)
+        self.assertIn("difference between longest and shortest", hints["range"])
+        self.assertTrue(hints["mean"])
+        self.assertTrue(hints["max_step_change"])
+        self.assertFalse(hints["median"])
+        self.assertFalse(mp.semantic_evidence("Find the longest scene only", group)["range"])
+        self.assertFalse(mp.semantic_evidence("Find changes between consecutive scenes", group)["range"])
+        goals = dict(mp.GOALS, B="Select operations; objective: " + question)
+        req = mp.classification_request(goals, group)
+        payload = json.loads(req["messages"][1]["content"])
+        self.assertEqual(payload["question"], question)
+        self.assertEqual(payload["source_phrase_cues"], hints)
+        self.assertNotIn("commitment", payload)
+        self.assertTrue(all(span in question for spans in hints.values() for span in spans))
+
     def test_strict_deliverables_not_extra_operations(self):
         import objective_mission as om
         scope={"kind":"public_objective","objective":"Report the population variance of the synthetic measurements.",
