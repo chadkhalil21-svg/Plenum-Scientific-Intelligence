@@ -15,6 +15,7 @@ def main():
     assert u.mp.valid_digest(md)
     for label,answers,accepted in (("first-pass",[good,good],True),
                                    ("recovered",[bad,bad,good],True),
+                                   ("peer-regressed",[good,bad,good],True),
                                    ("rejected",[bad,bad,bad],False)):
         requests=[u.vm.request(mission),u.peer_request(mission,answers[0],reasoning=not u.selection_matches(answers[0],commitment))]
         if len(answers)==3:requests.append(u.correction_request(mission,answers[0],answers[1]))
@@ -36,7 +37,8 @@ def main():
                     proof=u.execute_bound(root,mission,commitment,identity)
                     assert proof["selection"]==good and proof["model_calls"]==len(answers)
                     assert proof.get("independent_rejection_recovered",False)==(len(answers)==3)
-                    assert proof.get("native_thinking_stages",[])==(["peer","correction"] if len(answers)==3 else [])
+                    expected_thinking=(["peer"] if not u.selection_matches(answers[0],commitment) else [])+(["correction"] if len(answers)==3 else [])
+                    assert proof.get("native_thinking_stages",[])==expected_thinking
                     assert proof["review_policy"]==u.REVIEW_POLICY
                     assert all("Mock deliberation" not in p.read_text() for p in root.glob("*.json"))
                 else:
