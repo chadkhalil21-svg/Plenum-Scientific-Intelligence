@@ -1,0 +1,52 @@
+name: Prometheus upstream GEPA planner optimization
+on:
+  pull_request:
+    paths:
+      - 'integrations/prometheus_gepa/**'
+      - '.github/workflows/prometheus-gepa.yml'
+permissions:
+  contents: read
+jobs:
+  qualify:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install exact upstream GEPA release and validate corpus
+        run: |
+          python -m pip install --disable-pip-version-check --only-binary=:all: gepa==0.1.4
+          python -m pip check
+          python -m py_compile integrations/prometheus_gepa/optimize_planner.py
+          PYTHONPATH=src:integrations/prometheus_gepa python -c 'from optimize_planner import corpus; assert all(len(x)==3 for x in corpus().values())'
+      - name: Reuse original free local model
+        run: |
+          set -eu
+          docker pull ollama/ollama:latest
+          docker run -d --name plenum-paperclip-qwen --network host -e OLLAMA_HOST=127.0.0.1:11434 -e OLLAMA_CONTEXT_LENGTH=4096 -e OLLAMA_NUM_PARALLEL=1 --memory=8g --cpus=3 ollama/ollama:latest
+          for i in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
+            sleep 2
+          done
+          bash integrations/paperclip/pull_original_qwen.sh
+          test "$(docker exec plenum-paperclip-qwen ollama list | awk '$1=="qwen3.5:4b" {print $2}')" = d8b0f5e9760c
+      - name: Run real upstream optimization and sealed withheld scoring
+        run: |
+          mkdir -p reports
+          python integrations/prometheus_gepa/optimize_planner.py reports/gepa
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prometheus-gepa-qualification
+          path: reports/gepa
+          if-no-files-found: warn
+      - name: Remove disposable model
+        if: always()
+        run: docker rm -f plenum-paperclip-qwen || true
