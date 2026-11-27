@@ -41,6 +41,8 @@ REPAIR_TITLE = "[Plenum OpenHands] public repair"
 REPAIR_MARKER = "PLENUM_OPENHANDS_PUBLIC_REPAIR_V1"
 LOCAL_REPAIR_MARKER = "PLENUM_AIDER_LOCAL_PUBLIC_REPAIR_V1"
 LOCAL_ENGINE = "aider_local_ollama"
+MINISWE_REPAIR_MARKER = "PLENUM_MINISWE_LOCAL_PUBLIC_REPAIR_V1"
+MINISWE_ENGINE = "mini_swe_agent_local"
 # Official amd64 v0.86.0 image manifest (not a mutable latest tag).
 AIDER_IMAGE = "paulgauthier/aider@sha256:cfdc43ebd4ff163f7ef5f1803b069fa80abbd95e981d165495d459d3edcc356c"
 LOCAL_MODEL = "qwen2.5-coder:7b"
@@ -101,7 +103,7 @@ def parse_owner_repair_event(event: dict) -> dict:
         raise PermissionError("Only original owner public repair issues")
     body = issue.get("body")
     lines = body.splitlines() if isinstance(body, str) else []
-    if (len(lines) != 3 or lines[0] not in (REPAIR_MARKER, LOCAL_REPAIR_MARKER)
+    if (len(lines) != 3 or lines[0] not in (REPAIR_MARKER, LOCAL_REPAIR_MARKER, MINISWE_REPAIR_MARKER)
             or not lines[1].startswith("file: ")
             or not lines[2].startswith("objective: ")):
         raise ValueError("Exact three-line original public repair contract required")
@@ -116,7 +118,8 @@ def parse_owner_repair_event(event: dict) -> dict:
     return {"issue_number": issue["number"], "task": objective,
             "source_file": source_file, "source_sha256": sha,
             "review_only": True, "auto_merge": False, "paid_api_authorized": False,
-            **({"engine": LOCAL_ENGINE} if lines[0] == LOCAL_REPAIR_MARKER else {})}
+            **({"engine": MINISWE_ENGINE} if lines[0] == MINISWE_REPAIR_MARKER else
+               {"engine": LOCAL_ENGINE} if lines[0] == LOCAL_REPAIR_MARKER else {})}
 
 
 def _review_output_path(value: str, *, source_file: str | None) -> Path:
