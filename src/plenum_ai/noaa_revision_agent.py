@@ -57,7 +57,7 @@ def parse_candidate(text):
 
     try:
         obj = json.loads(raw, object_pairs_hook=reject_duplicate_keys)
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, RecursionError):
         return {"status": "invalid_json", "candidate": None}
     if not isinstance(obj, dict) or set(obj) != {
             "alpha", "gain", "hypothesis", "falsifier"}:
