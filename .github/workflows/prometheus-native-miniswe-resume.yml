@@ -1,0 +1,122 @@
+name: Resume original 1040 continuation after verified pre-inference failure
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'tools/run_native_miniswe_mission.py'
+      - 'tests/acceptance/mission_root_alias.py'
+      - '.github/workflows/prometheus-native-miniswe-resume.yml'
+permissions:
+  contents: read
+concurrency:
+  group: original-prometheus-miniswe-1040-continuation
+  cancel-in-progress: false
+jobs:
+  reserve:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-miniswe-1040-resume-preflight' && github.event.pull_request.base.ref == 'prometheus-miniswe-native-current-main' && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      actions: read
+    outputs:
+      reserved: ${{ steps.reserve.outputs.reserved }}
+    steps:
+      - id: reserve
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          repo=chadkhalil21-svg/Plenum-Scientific-Intelligence
+          gh api "repos/$repo/issues/1040" | jq -e '.user.login=="chadkhalil21-svg" and .state=="open" and .title=="[Plenum Prometheus] Native mini-SWE-agent engineering mission" and (.body|contains("Prevent checkpoint persistence and worker artifact verification from accepting a symlinked mission root") or contains("prevent checkpoint persistence and worker artifact verification from accepting a symlinked mission root"))' >/dev/null
+          gh api --paginate "repos/$repo/issues/1040/comments?per_page=100" | jq -s 'add' > "$RUNNER_TEMP/mission-comments.json"
+          gh api "repos/$repo/actions/runs/46065445035" | jq -e '.status=="completed" and .conclusion=="failure" and .run_attempt==1' >/dev/null
+          jq -e 'any(.[]; .user.login=="github-actions[bot]" and (.body|contains("plenum-native-miniswe-1040-reserved-v1:46065445035")))' "$RUNNER_TEMP/mission-comments.json" >/dev/null
+          jq -e 'any(.[]; .user.login=="github-actions[bot]" and (.body|contains("plenum-native-miniswe-1040-continuation-reserved-v1:46066850718")))' "$RUNNER_TEMP/mission-comments.json" >/dev/null
+          gh api "repos/$repo/actions/runs/46066850718" | jq -e '.status=="completed" and .conclusion=="failure" and .run_attempt==1' >/dev/null
+          gh api "repos/$repo/actions/jobs/140734156840" | jq -e '.run_id==46066850718 and .conclusion=="failure"' >/dev/null
+          gh api "repos/$repo/actions/runs/46066850718/artifacts" | jq -e '.total_count==0' >/dev/null
+          # Capture ANSI-bearing authenticated log into a file, never the terminal.
+          gh api --allow-escape-sequences "repos/$repo/actions/jobs/140734156840/logs" > "$RUNNER_TEMP/preflight-failure.log"
+          test "$(wc -c < "$RUNNER_TEMP/preflight-failure.log")" -le 4000000
+          grep -F 'configure_continuation(args.continuation)' "$RUNNER_TEMP/preflight-failure.log" >/dev/null
+          grep -F 're.PatternError: missing ), unterminated subpattern at position 13' "$RUNNER_TEMP/preflight-failure.log" >/dev/null
+          if jq -e 'any(.[]; .body|contains("plenum-native-miniswe-1040-preflight-resume-v1"))' "$RUNNER_TEMP/mission-comments.json" >/dev/null; then
+            echo reserved=false >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          gh api --method POST "repos/$repo/issues/1040/comments" -f body="<!-- plenum-native-miniswe-1040-preflight-resume-v1:$GITHUB_RUN_ID --> Resume the existing continuation reservation after exact pre-inference exception in 46066850718. No repeat of any model call." >/dev/null
+          echo reserved=true >> "$GITHUB_OUTPUT"
+  native-engineering:
+    needs: reserve
+    if: needs.reserve.outputs.reserved == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Retrieve exact terminal original evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          api=https://api.github.com/repos/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions
+          gh api "$api/runs/46065445035/artifacts?per_page=100" | jq -e 'any(.artifacts[]; .id==15230648247 and .digest=="sha256:a4190790a727d212d305a5eceebf670fea64a17f6de817ee046a8679c84399a3" and .expired==false)' >/dev/null
+          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 90 --max-filesize 2000000 -H "Authorization: Bearer $GH_TOKEN" "$api/artifacts/15230648247/zip" -o "$RUNNER_TEMP/native-first.zip"
+          echo "a4190790a727d212d305a5eceebf670fea64a17f6de817ee046a8679c84399a3  $RUNNER_TEMP/native-first.zip" | sha256sum -c -
+      - name: Install released upstream agent in dedicated environment
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/mini-venv"
+          "$RUNNER_TEMP/mini-venv/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: 'mini-swe-agent==2.4.6' 'litellm!=1.82.7,!=1.82.8'
+          "$RUNNER_TEMP/mini-venv/bin/python" -m pip check
+          "$RUNNER_TEMP/mini-venv/bin/python" -m pip freeze > "$RUNNER_TEMP/mini-dependencies.txt"
+          docker pull python:3.12-slim
+          test "$(df --output=avail -B1 / | tail -1 | tr -d ' ')" -ge 9000000000
+          test "$(awk '/MemTotal/ {print $2}' /proc/meminfo)" -ge 14000000
+      - name: Original public behavioral defect baseline
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, pathlib, subprocess, sys
+          sys.path.insert(0, "src")
+          sys.path.insert(0, "tools")
+          from verify_original_openhands_candidate import sandbox_command, completed_unittest
+          result = subprocess.run(sandbox_command(pathlib.Path.cwd(),"python:3.12-slim","/work/tests/acceptance","mission_root_alias.py"),capture_output=True,text=True,timeout=150)
+          if not completed_unittest(result, failed=True) or "Ran 2 tests" not in result.stderr:
+              raise SystemExit("Original behavior failure not independently reproduced")
+          print("Original independent acceptance fails as expected; no model call yet.")
+          PY
+      - name: Verify corrected original archive binding before starting model
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/mini-home"
+          env -i PATH="$RUNNER_TEMP/mini-venv/bin:/usr/bin:/bin" HOME="$RUNNER_TEMP/mini-home" PYTHONPATH=src:tools MSWEA_SILENT_STARTUP=1 PLENUM_MINISWE_CONTINUATION_RESERVED=true "$RUNNER_TEMP/mini-venv/bin/python" -c 'import sys; from pathlib import Path; from run_native_miniswe_mission import configure_continuation; print(configure_continuation(Path(sys.argv[1])))' "$RUNNER_TEMP/native-first.zip"
+      - name: Start previously approved free local inference
+        run: |
+          set -euo pipefail
+          docker run -d --rm --name plenum-miniswe-ollama -p 127.0.0.1:11434:11434 -e OLLAMA_CONTEXT_LENGTH=8192 -e OLLAMA_NUM_PARALLEL=1 -e OLLAMA_NO_CLOUD=1 --memory=10g --cpus=3 ollama/ollama:latest
+          for i in $(seq 1 60); do curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null && break; sleep 2; done
+          docker exec plenum-miniswe-ollama ollama pull qwen3.5:9b-q4_K_M
+          test "$(docker exec plenum-miniswe-ollama ollama list | awk '$1=="qwen3.5:9b-q4_K_M" {print $2}')" = 56671c2ab938
+      - name: Execute original upstream agent, inspect and revise via sandbox tools, grade independently
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/mini-home"
+          env -i PATH="$RUNNER_TEMP/mini-venv/bin:/usr/bin:/bin" HOME="$RUNNER_TEMP/mini-home" PYTHONPATH=src GITHUB_ACTIONS=true GITHUB_REPOSITORY=chadkhalil21-svg/Plenum-Scientific-Intelligence PLENUM_MINISWE_RESERVED=true PLENUM_MINISWE_CONTINUATION_RESERVED=true MSWEA_SILENT_STARTUP=1 MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT=1 LITELLM_LOCAL_MODEL_COST_MAP=True LITELLM_LOG=ERROR DO_NOT_TRACK=1 "$RUNNER_TEMP/mini-venv/bin/python" tools/run_native_miniswe_mission.py --continuation "$RUNNER_TEMP/native-first.zip"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: original-native-miniswe-1040-resumed-continuation-evidence
+          path: |
+            reports/miniswe-1040-continuation/
+            reports/openhands-review/issue-1040.patch
+          if-no-files-found: warn
+      - if: always()
+        run: |
+          docker rm -f plenum-miniswe-ollama || true
+          docker ps -aq --filter label=plenum-miniswe-1040 | xargs -r docker rm -f
