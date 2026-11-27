@@ -40,9 +40,9 @@ def probe(target: Target, *, opener=None, timeout: int = 12) -> tuple[bool, str,
             code = resp.status
             if code != 200:
                 return False, "non_200_http", code
-            ct = resp.headers.get("Content-Type", "").lower()
+            ct = resp.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
             if target.kind == "health":
-                if "json" not in ct:
+                if ct != "application/json":
                     return False, "unexpected_content_type", code
                 raw = resp.read(65537)
                 if len(raw) > 65536:
@@ -50,7 +50,7 @@ def probe(target: Target, *, opener=None, timeout: int = 12) -> tuple[bool, str,
                 data = json.loads(raw)
                 if not isinstance(data, dict) or data.get("service") != "american-rider-server":
                     return False, "unexpected_service", code
-            elif "html" not in ct:
+            elif ct != "text/html":
                 return False, "unexpected_content_type", code
             return True, "verified_read", code
     except HTTPError as exc:
