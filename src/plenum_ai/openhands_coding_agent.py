@@ -620,7 +620,12 @@ def structured_local_edit(task,scope,*,numbered=False):
         "Exact types, subclass membership, numeric equality and coercion are distinct; "
         "bool is a subclass of int. When validating inputs, check admissible types "
         "before comparisons or arithmetic, and preserve subclass acceptance where "
-        "the stated contract allows it. Consider boundary values and invalid types.")
+        "the stated contract allows it. Consider boundary values and invalid types. "
+        "Trace normal and exceptional control flow separately: an exception can occur "
+        "before assignment completes, so a handler must not assume that result exists. "
+        "Preserve unrelated exception behavior and verify that every required return "
+        "path returns the specified result. If an invariant must hold across runtimes, "
+        "enforce it explicitly rather than relying on incidental library behavior.")
     dependencies=readonly_dependency_view(scope, task)
     if dependencies:
         payload["messages"][0]["content"] += (

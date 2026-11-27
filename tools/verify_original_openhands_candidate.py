@@ -317,7 +317,7 @@ def recover_local_behavior(report_path: Path, verdict_path: Path, event_path: Pa
     """
     from plenum_ai.openhands_coding_agent import (
         LOCAL_ENGINE, parse_owner_repair_event, execute_local, local_plan,
-        STRUCTURED_RECOVERY_TASKS,
+        STRUCTURED_RECOVERY_TASKS, StructuredEditFailure,
     )
     first = json.loads(report_path.read_text("utf-8"))
     verdict = json.loads(verdict_path.read_text("utf-8"))
@@ -387,6 +387,9 @@ def recover_local_behavior(report_path: Path, verdict_path: Path, event_path: Pa
         second = {**local_plan(task, source_file=source),
                   "status": "BLOCKED_LOCAL_CODER_NO_REVIEWABLE_PATCH",
                   "failure_category": type(exc).__name__, "repair_passes": 1}
+        if isinstance(exc, StructuredEditFailure):
+            second["structured_failure_stage"] = exc.stage
+            second["structured_failure_clause"] = exc.clause
     second["behavioral_recovery"] = reservation
     report_path.write_text(json.dumps(second, indent=2) + "\n", encoding="utf-8")
     return verify(report_path, verdict_path)
