@@ -31,7 +31,7 @@ def validate(scope):
     if (not isinstance(scope, dict) or set(scope) not in (fields, fields | {"planning_recovery"}, fields | {"planning_engine"})
             or scope["kind"] != "variable_graph"
             or ("planning_recovery" in scope and scope["planning_recovery"] is not True)
-            or ("planning_engine" in scope and scope["planning_engine"]!="upstream-peer-v1")):
+            or ("planning_engine" in scope and scope["planning_engine"] not in ("upstream-peer-v1","magentic-native-v1"))):
         raise ValueError("Exact variable graph scope required")
     vm.validate(scope["mission"])
     if not isinstance(scope["selection_commitment"], str) or not re.fullmatch(r"[0-9a-f]{64}", scope["selection_commitment"]):
@@ -41,6 +41,14 @@ def validate(scope):
 def fixture(case):
     chosen = {"science":["bibliography","stations"], "engineering":["thermal"], "commercial":["commercial"]}
     return {"kind":"variable_graph", "mission":vm.fixture(case), "selection_commitment":digest(sorted(chosen[case]))}
+
+def magentic_fixture():
+    # Distinct multidisciplinary public assignment for the native 9B route.
+    objective={"objective":"Determine coastal NOAA station coordinates and calculate the temperature after cooling. Independently verify both results.",
+               "authorized_inputs":{"stations":["8720218"],"bibliography":["10.1371/journal.pone.0247820"],
+                                    "thermal":{"initial_kelvin":342,"ambient_kelvin":296,"rate":0.045,"duration":23}}}
+    return {"kind":"variable_graph","mission":vm.validate(objective),
+            "selection_commitment":digest(["stations","thermal"]),"planning_engine":"magentic-native-v1"}
 
 def partition(plan):
     groups = {r: [] for r in ORDER}
@@ -182,6 +190,31 @@ def upstream_plan(root,scope,company,mission,*,execute=False):
         raise ValueError("Upstream accepted model receipt changed")
     return plan,proof
 
+def magentic_plan(root, scope, company, mission, *, execute=False):
+    import sys
+    sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"prometheus_magentic"))
+    from native_proof import verify_native_plan
+    sub=root/"magentic-planner"
+    identity={"company":company,"mission":mission,"scope_sha256":digest(scope),
+              "paid_inference":False}
+    args=(sub,scope["mission"],scope["selection_commitment"],identity)
+    if execute:
+        if os.getenv("GITHUB_ACTIONS")!="true" or os.getenv("PLENUM_CI_MAGENTIC_NATIVE")!="confirmed":
+            raise PermissionError("Magentic native execution requires isolated qualified CI board")
+        from planner import execute_native_plan
+        proof=execute_native_plan(*args)
+    else:
+        proof=verify_native_plan(*args)
+    selected=proof["selection"]
+    approved,nodes=vm.graph(scope["mission"],selected)
+    plan={"schema":"plenum-variable-mission-magentic-v1",
+          "mission_sha256":digest(scope["mission"]),"selection":selected,
+          "model_digest":proof["model_digest"],"planning_proof_sha256":digest(proof),
+          "scope":approved,"nodes":nodes,"paid_inference":False}
+    if execute:
+        exclusive(root/"plan.json",plan)
+    return plan,proof
+
 def prepare(directory, scope, company, mission):
     validate(scope)
     if os.getenv("GITHUB_ACTIONS") != "true":
@@ -198,7 +231,9 @@ def prepare(directory, scope, company, mission):
     else:
         exclusive(binding, identity)
     path = root / "plan.json"
-    if not path.exists() and scope.get("planning_engine")=="upstream-peer-v1":
+    if not path.exists() and scope.get("planning_engine")=="magentic-native-v1":
+        magentic_plan(root,scope,company,mission,execute=True)
+    elif not path.exists() and scope.get("planning_engine")=="upstream-peer-v1":
         upstream_plan(root,scope,company,mission,execute=True)
     elif not path.exists() and scope.get("planning_recovery") is True:
         prepare_recovery(root, scope)
@@ -237,14 +272,17 @@ def load(directory, scope, company, mission, *, require_dispatch=True):
     if checked(root / "native-binding.json", identity) != identity:
         raise ValueError("Variable native identity changed")
     plan = checked(root / "plan.json", {})
-    if scope.get("planning_engine")=="upstream-peer-v1":
+    if scope.get("planning_engine")=="magentic-native-v1":
+        if plan!=magentic_plan(root,scope,company,mission)[0]:raise ValueError("Magentic native plan changed")
+    elif scope.get("planning_engine")=="upstream-peer-v1":
         if plan!=upstream_plan(root,scope,company,mission)[0]:raise ValueError("Upstream native plan changed")
     elif scope.get("planning_recovery") is True:
         verify_recovery(root,scope,plan)
     elif plan != vm.manifest(scope["mission"], plan["selection"], plan["model_digest"]):
         raise ValueError("Variable graph changed")
     vm.require_commitment(plan, scope["selection_commitment"])
-    vm.validate_model_receipt(root, plan)
+    if scope.get("planning_engine")!="magentic-native-v1":
+        vm.validate_model_receipt(root, plan)
     partition(plan)
     if require_dispatch:
         dispatch = checked(Path(directory) / "minister-plan.json", {"company":company, "parent":mission, "variable_graph_sha256":digest(plan)})
@@ -321,6 +359,8 @@ def verify(scope, prior, directory, *, functional_test):
     if set(prior) != set(products) or any(prior[k]["result"] != v for k,v in products.items()):
         raise ValueError("Native division results changed")
     expected = {"native-binding.json","plan.json","model-reservation.json","model-response.json"}
+    if scope.get("planning_engine")=="magentic-native-v1":
+        expected={"native-binding.json","plan.json","magentic-planner"}
     if scope.get("planning_recovery") is True:
         expected.update(verify_recovery(root,scope,plan))
     if scope.get("planning_engine")=="upstream-peer-v1":
@@ -335,6 +375,10 @@ def verify(scope, prior, directory, *, functional_test):
         proof=upstream_plan(root,scope,dispatch["company"],dispatch["parent"])[1]
         recovery.update({"upstream_planning_verified":True,"upstream_planning_proof_sha256":digest(proof),
                          "upstream_model_calls":proof["model_calls"],"upstream_peer_changed_selection":proof["peer_changed_selection"]})
+    if scope.get("planning_engine")=="magentic-native-v1":
+        proof=magentic_plan(root,scope,dispatch["company"],dispatch["parent"])[1]
+        recovery.update({"magentic_planning_verified":True,"magentic_planning_proof_sha256":digest(proof),
+                         "magentic_model_calls":proof["model_calls"]})
     return {**recovery,"verified_producers":4, "independent_actual_input_test":functional_test,
             "native_variable_graph_verified":True, "verified_contracts":len(hashes),
             "active_contract_divisions":[r for r in ORDER if not products[r]["scope_review_only"]],

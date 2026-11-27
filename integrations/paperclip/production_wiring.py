@@ -88,6 +88,24 @@ def preflight(directory,company,mission):
     else:raise ValueError("Wrong scope was not rejected")
     return True
 
+def check_activation_model(row,binding):
+    """Validate only the selected exact local model before assigning any work."""
+    scope=binding.get("scope",{})
+    if scope.get("planning_engine")=="magentic-native-v1":
+        from mission_scope import validate_scope,digest as scope_digest
+        if (os.getenv("GITHUB_ACTIONS")!="true" or os.getenv("PLENUM_CI_MAGENTIC_NATIVE")!="confirmed"
+                or row["checkpoint_mode"]!="local" or scope.get("kind")!="variable_graph"
+                or scope_digest(validate_scope(scope))!=row["scope_sha256"]):
+            raise PermissionError("Magentic activation requires exact isolated local CI scope")
+        import sys
+        sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"prometheus_magentic"))
+        from planner import strict,model_digest
+        strict()
+        return model_digest()
+    from model_plan import check_local_model
+    return check_local_model()
+
+
 def authorize_activation(api,directory,company,mission,leader,binding):
     row=load_prepared(directory,company,mission)
     if row["scope_sha256"]!=binding["scope_sha256"]:raise ValueError("Prepared scope changed")
@@ -100,8 +118,8 @@ def authorize_activation(api,directory,company,mission,leader,binding):
     # signed remote GET. Never fall back to local when remote was requested.
     remote=preflight(directory,company,mission)
     if row["model_mode"]=="local":
-        from model_plan import check_local_model
-        check_local_model()
+        check_activation_model(row,binding)
+
     exclusive(Path(directory)/"activation.json",{"company":company,"mission":mission,
         "minister":leader,"scope_sha256":row["scope_sha256"],"remote_checkpoint_preflight":remote,"model_mode":row["model_mode"]})
     api("/api/issues/"+mission,"PATCH",{"assigneeAgentId":leader})

@@ -49,8 +49,10 @@ PERSISTENT_ENTRYPOINT="/plenum/integrations/paperclip/persistent_entrypoint.py"
 def persistent_adapter(role):
     if role not in ("minister","intelligence","research","engineering","commercial","verification"):
         raise ValueError("Unknown persistent role")
+    # Longer minister budget is restricted to a disposable, explicitly scoped CI board.
+    magentic_ci=(os.getenv("GITHUB_ACTIONS")=="true" and os.getenv("PLENUM_CI_MAGENTIC_NATIVE")=="confirmed")
     return {"command":"python3","args":[PERSISTENT_ENTRYPOINT,role],
-            "cwd":"/plenum","timeoutSec":150 if role=="minister" else 480 if role=="commercial" else 120,"env":{}}
+            "cwd":"/plenum","timeoutSec":(900 if magentic_ci else 150) if role=="minister" else 480 if role=="commercial" else 120,"env":{}}
 
 def validate_roster(rows, company, specs):
     if not isinstance(rows,list) or any(not isinstance(r,dict) for r in rows):

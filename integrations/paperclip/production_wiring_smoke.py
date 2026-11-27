@@ -67,4 +67,38 @@ class Tests(unittest.TestCase):
         with w.company_lock(self.root,self.c):
             with self.assertRaises(BlockingIOError):
                 with w.company_lock(self.root,self.c):pass
+
+    def test_magentic_activation_checks_selected_model_and_denies_unapproved_scope(self):
+        import sys
+        from types import SimpleNamespace
+        from native_variable import magentic_fixture
+        from mission_scope import digest as scope_digest
+        scope=magentic_fixture()
+        tag=scope_digest(scope)
+        binding={**self.binding,"scope":scope,"scope_sha256":tag}
+        w.prepared(self.root,self.c,self.m,tag,"local","local")
+        api=Mock(return_value=self.task)
+        checker=Mock(return_value="56671c2ab938"+"a"*52)
+        planner=SimpleNamespace(strict=Mock(),model_digest=checker)
+        with patch.dict(sys.modules,{"planner":planner}),patch("model_plan.check_local_model") as old:
+            with patch.dict(os.environ,{"GITHUB_ACTIONS":"true","PLENUM_CI_MAGENTIC_NATIVE":"off"}):
+                with self.assertRaises(PermissionError):
+                    w.authorize_activation(api,self.root,self.c,self.m,self.leader,binding)
+            self.assertFalse((self.root/"activation.json").exists())
+            checker.assert_not_called()
+            with patch.dict(os.environ,{"GITHUB_ACTIONS":"true","PLENUM_CI_MAGENTIC_NATIVE":"confirmed"}):
+                checker.side_effect=ValueError("Wrong model")
+                with self.assertRaises(ValueError):
+                    w.authorize_activation(api,self.root,self.c,self.m,self.leader,binding)
+                self.assertFalse((self.root/"activation.json").exists())
+                checker.side_effect=None
+                self.assertFalse(w.authorize_activation(api,self.root,self.c,self.m,self.leader,binding))
+                self.assertEqual(api.call_args.args,("/api/issues/"+self.m,"PATCH",{"assigneeAgentId":self.leader}))
+            self.assertEqual(checker.call_count,2)
+            old.assert_not_called()
+    def test_original_activation_preserves_4b_check(self):
+        with patch("model_plan.check_local_model",return_value="original") as checker:
+            self.assertEqual(w.check_activation_model({"checkpoint_mode":"local"},self.binding),"original")
+            checker.assert_called_once_with()
+
 if __name__=="__main__":unittest.main(verbosity=2)

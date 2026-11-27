@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "paperclip"))
 import model_plan as mp
 import variable_mission as vm
 from checkpoint_store import exclusive
+from native_proof import verify_native_plan
 from plenum_ai.chief_contract_plan import run_contract, check_contract_result
 
 MODEL = "qwen3.5:9b-q4_K_M"
@@ -109,7 +110,7 @@ def parse_selection(text, mission):
     return selection
 
 
-async def plan(root, mission, commitment):
+async def plan(root, mission, commitment, native_identity=None):
     """Official MagenticBuilder chooses specialists, maintains progress and replans."""
     strict()
     vm.validate(mission)
@@ -120,7 +121,8 @@ async def plan(root, mission, commitment):
     md = model_digest()
     root.mkdir(mode=0o700, parents=False, exist_ok=False)
     exclusive(root / "binding.json", {"mission_sha256":mp.digest(mission),
-        "model_digest":md, "versions":VERSIONS, "paid_inference":False})
+        "model_digest":md, "versions":VERSIONS, "paid_inference":False,
+        **({"native_identity":native_identity} if native_identity is not None else {})})
     guard = Guard(root, md)
     async with httpx.AsyncClient(trust_env=False, follow_redirects=False,
                                  timeout=httpx.Timeout(240.0, connect=10.0), transport=guard) as transport:
@@ -157,6 +159,11 @@ async def plan(root, mission, commitment):
         "model_calls":len(guard.seen), "model_calls_replayed":0,
         "paid_inference":False, "model_digest":md})
     return selection
+
+
+def execute_native_plan(root, mission, commitment, identity):
+    asyncio.run(plan(root, mission, commitment, native_identity=identity))
+    return verify_native_plan(root, mission, commitment, identity)
 
 
 def execute(root, mission, commitment):

@@ -500,7 +500,8 @@ def qualify_locked(action):
     # Native graph work shares CPU inference with the prior verified adaptive
     # turns; keep a bounded mission deadline long enough for the worker cap.
     graph_scope=scope.get("inputs",{}).get("synthesis",{}).get("followup",{}).get("engine")=="deepagents"
-    deadline=time.monotonic()+(720 if graph_scope else 360)
+    magentic_scope=(scope.get("planning_engine")=="magentic-native-v1" and os.getenv("GITHUB_ACTIONS")=="true" and os.getenv("PLENUM_CI_MAGENTIC_NATIVE")=="confirmed")
+    deadline=time.monotonic()+(1080 if magentic_scope else 720 if graph_scope else 360)
     plan_path=directory/"minister-plan.json"
     while time.monotonic()<deadline:
         # The adapter writes a safe failure receipt before a nonzero exit.
@@ -624,9 +625,15 @@ def readback(cid,plan,expected_agents=None):
         from checkpoint_store import checked
         from model_plan import MODEL
         variable_plan=load(directory,scope,cid,plan["parent"])
-        receipt=checked(evidence_root(directory)/"model-response.json",{})
         model_executed=True
-        model_info={"model":MODEL,"model_digest":variable_plan["model_digest"],"model_receipt_sha256":digest(receipt),"model_eval_count":receipt["eval_count"]}
+        if scope.get("planning_engine")=="magentic-native-v1":
+            from native_variable import magentic_plan
+            _,receipt=magentic_plan(evidence_root(directory),scope,cid,plan["parent"])
+            model_info={"model":"qwen3.5:9b-q4_K_M","model_digest":variable_plan["model_digest"],
+                        "model_receipt_sha256":digest(receipt),"model_calls":receipt["model_calls"]}
+        else:
+            receipt=checked(evidence_root(directory)/"model-response.json",{})
+            model_info={"model":MODEL,"model_digest":variable_plan["model_digest"],"model_receipt_sha256":digest(receipt),"model_eval_count":receipt["eval_count"]}
     elif "model_receipt_sha256" in plan:
         from model_plan import validate_receipt
         receipt=json.loads((directory/"minister-model-plan.json").read_text())
