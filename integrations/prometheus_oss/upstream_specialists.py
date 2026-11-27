@@ -25,18 +25,22 @@ def strict():
 
 def deliberate(request):
     # Native thinking of the already-pinned local 4B model, not a new agent.
-    # Preserve the existing 2048-token context and keep one inference per stage.
+    # Original live receipt: 1024 generated tokens, 312 prompt tokens,
+    # native thinking present but final content absent. Do not replay the
+    # rejected request. Follow publisher repetition-control guidance while
+    # keeping inference local, bounded, and single-call per stage.
     request["think"]=True
-    request["options"]["num_predict"]=1024
+    request["options"].update(num_ctx=4096,num_predict=3072,temperature=1.0,
+        top_p=0.95,top_k=20,min_p=0.0,presence_penalty=1.5,repeat_penalty=1.0)
     # Known upstream interaction: reasoning and constrained JSON generation
     # may interfere. Keep the identical exact schema as instructions; apply
     # the strict host validator to final content before persisting a selection.
     schema=request.pop("format")
     request["messages"][0]["content"] += " Final content must be exactly one JSON object matching "+json.dumps(schema,sort_keys=True)+"."
     request["messages"][0]["content"] += (
-        " Think briefly about required deliverables, omissions and unauthorized extras. "
-        "Limit deliberation to 250 words, then finish with the exact JSON object; "
-        "no Markdown fences or prose in final content.")
+        " Check each available capability once against the objective, then finish. "
+        "Do not repeat a settled decision. Final content is the exact JSON object; "
+        "no Markdown fences or prose.")
     return request
 
 def validate_counts(row,request):
@@ -50,7 +54,7 @@ def inference(root,name,request,md):
         raise PermissionError("Duplicate model request")
     exclusive(root/(name+".reserved.json"),identity)
     thinking=request.get("think") is True
-    reply=mp.read_json("/api/chat",request,timeout=360 if thinking else 120)
+    reply=mp.read_json("/api/chat",request,timeout=480 if thinking else 120)
     n,p=reply.get("eval_count"),reply.get("prompt_eval_count")
     if reply.get("model")!=mp.MODEL or reply.get("done") is not True:
         raise ValueError("Incomplete model response")
