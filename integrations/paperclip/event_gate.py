@@ -23,8 +23,12 @@ def issue_scope(issue):
         if (issue.get("user") or {}).get("login")!=OWNER or issue.get("state")!="open" or "pull_request" in issue:
             raise PermissionError("Original open owner issue required")
         scope=parse_body(issue.get("body"),allow_variable=True)
-        if any(k in scope.get("inputs",{}) for k in ("pipeline","composition","synthesis")):
+        inputs=scope.get("inputs",{})
+        if "pipeline" in inputs:
             raise ValueError("Pipeline continuation requires independently attested memory workflow")
+        if any(k in inputs for k in ("composition","synthesis")):
+            from reviewed_public_scopes import require
+            require(scope)
         return scope
     raise ValueError("Unapproved public mission envelope")
 
