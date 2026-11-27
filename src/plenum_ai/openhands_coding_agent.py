@@ -746,7 +746,8 @@ STRUCTURED_RECOVERY_TASKS = {
 
 
 def execute_local(task: str, *, source_file: str, candidate_out: str,
-                  behavioral_recovery: bool = False, regression_recovery: bool = False) -> dict:
+                  behavioral_recovery: bool = False, regression_recovery: bool = False,
+                  generic_regression: bool = False) -> dict:
     """Run official Aider noninteractively, with only a public source copy mounted.
 
     The existing Actions job supplies an internal Docker network connected only
@@ -761,6 +762,11 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
     requests=local_edit_requests(task,original)
     if regression_recovery and (not behavioral_recovery or len(requests) != 1 or (source_file, task) not in STRUCTURED_RECOVERY_TASKS):
         raise PermissionError("Unapproved regression recovery")
+    if generic_regression and (not behavioral_recovery or regression_recovery or requests
+            or (source_file, task) in TASK_ACCEPTANCE
+            or os.getenv("GITHUB_ACTIONS") != "true"
+            or os.getenv("PLENUM_ORIGINAL_CODING_RESERVED") != "true"):
+        raise PermissionError("General correction requires an original reserved whole-file local task")
     scope=None
     native_scoped = (source_file, task) in SCOPED_AIDER_TASKS
     if native_scoped:
@@ -817,7 +823,15 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
         if dependencies:
             feedback += " Read-only declarations for context, not editable code: " + json.dumps(dependencies)
         feedback += " Return the complete original named function with only the requested change; preserve all valid behavior, signature and imports."
-    if behavioral_recovery:
+    if generic_regression:
+        feedback += (" Independent focused regression tests rejected the previous proposal, "
+                     "whereas the original source passed. Start from the original file. "
+                     "Diagnose why the requested behavior could break existing behavior. "
+                     "Use minimal SEARCH/REPLACE edits, preserve all existing top-level function "
+                     "and class declarations, their signatures, existing imports and unrelated code. "
+                     "Check the complete requested objective before finishing. "
+                     "Do not reproduce the previous whole-file rewriting strategy.")
+    elif behavioral_recovery:
         # Only the pre-reviewed public health-monitor task has a trusted
         # behavioral diagnostic. No test stdout, model text or external data
         # is ever recycled as an instruction.
@@ -842,7 +856,7 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
             "--weak-model", "ollama_chat/" + LOCAL_MODEL,
             # #755's 1.5B model emitted an unterminated SEARCH block; use
             # Aider's documented whole-file format for the single copied file.
-            "--edit-format", "whole", "--no-git", "--no-auto-commits",
+            "--edit-format", "diff" if generic_regression else "whole", "--no-git", "--no-auto-commits",
             "--no-auto-lint", "--no-auto-test", "--no-suggest-shell-commands",
             "--no-detect-urls", "--no-analytics", "--no-check-update",
             "--no-show-release-notes", "--no-fancy-input", "--no-stream", "--yes-always", "--map-tokens", "0",
@@ -860,6 +874,23 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
         ast.parse(raw.decode("utf-8"), filename="proposal.py")
         if len(raw) > _candidate_byte_limit(original):
             raise ValueError("Restored candidate exceeds original bound")
+        if generic_regression:
+            # A generic repair must not silently drop existing public module interfaces.
+            def declarations(data):
+                nodes = ast.parse(data.decode("utf-8")).body
+                found = {}
+                for node in nodes:
+                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                        key = (type(node).__name__, node.name)
+                        if key in found:
+                            raise ValueError("Ambiguous top-level interface")
+                        found[key] = (ast.dump(node.args) if hasattr(node, "args")
+                                      else tuple(ast.dump(base) for base in node.bases))
+                return found
+            before, after = declarations(original), declarations(raw)
+            if any(after.get(key) != value for key, value in before.items()):
+                raise NoReviewableProposalError("Corrective candidate changed an existing top-level interface")
+            result["local_edit_strategy"] = "native_aider_distinct_diff_correction"
         if scope:
             result["editing_scope"]="owner_named_function_only"
         return _candidate_report(result, original, raw, source_file, artifact, int(behavioral_recovery))

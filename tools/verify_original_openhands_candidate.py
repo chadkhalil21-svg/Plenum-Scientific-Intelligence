@@ -261,11 +261,18 @@ def verify(report_path: Path, verdict_path: Path, *, checkout: Path | None = Non
             except OSError:
                 return persist("BLOCKED_SANDBOX_UNAVAILABLE", "no_disposable_networkless_container")
             if result.returncode:
-                from plenum_ai.openhands_coding_agent import STRUCTURED_RECOVERY_TASKS
-                acceptance = STRUCTURED_RECOVERY_TASKS.get((source, report.get("task")))
-                if (not interrupted and acceptance and completed_unittest(result, failed=True)
-                        and (isolated / "tests" / "acceptance" / acceptance).is_file()
-                        and not (isolated / "tests" / "acceptance" / acceptance).is_symlink()):
+                from plenum_ai.openhands_coding_agent import (
+                    STRUCTURED_RECOVERY_TASKS, LOCAL_ENGINE, local_edit_requests,
+                )
+                task = report.get("task")
+                acceptance = STRUCTURED_RECOVERY_TASKS.get((source, task))
+                generic = (not interrupted and report.get("engine") == LOCAL_ENGINE
+                           and report.get("repair_passes") == 0
+                           and isinstance(task, str) and (source, task) not in TASK_ACCEPTANCE
+                           and not local_edit_requests(task, original))
+                registered = (acceptance and (isolated / "tests" / "acceptance" / acceptance).is_file()
+                              and not (isolated / "tests" / "acceptance" / acceptance).is_symlink())
+                if (not interrupted and (registered or generic) and completed_unittest(result, failed=True)):
                     # Establish that the unchanged source passes the very same
                     # trusted suite. No candidate bytes remain in this copy.
                     source_copy.write_bytes(original)
@@ -277,9 +284,13 @@ def verify(report_path: Path, verdict_path: Path, *, checkout: Path | None = Non
                         baseline = None
                     if baseline is not None and completed_unittest(baseline, failed=False):
                         verdict.update(regression_recovery_eligible=True,
-                            original_focused_baseline_passed=True,
-                            task_acceptance_test="tests/acceptance/" + acceptance,
-                            task_acceptance_passed=False)
+                            original_focused_baseline_passed=True)
+                        if registered:
+                            verdict.update(task_acceptance_test="tests/acceptance/" + acceptance,
+                                           task_acceptance_passed=False)
+                        else:
+                            verdict.update(generic_regression_recovery_eligible=True,
+                                           task_acceptance_passed=None)
                 return persist("BLOCKED_EXISTING_FOCUSED_TESTS", "existing_source_regressions_failed")
             verdict["existing_focused_tests_passed"] = True
             acceptance = TASK_ACCEPTANCE.get((source, report.get("task")))
@@ -317,7 +328,7 @@ def recover_local_behavior(report_path: Path, verdict_path: Path, event_path: Pa
     """
     from plenum_ai.openhands_coding_agent import (
         LOCAL_ENGINE, parse_owner_repair_event, execute_local, local_plan,
-        STRUCTURED_RECOVERY_TASKS, StructuredEditFailure,
+        STRUCTURED_RECOVERY_TASKS, StructuredEditFailure, local_edit_requests,
     )
     first = json.loads(report_path.read_text("utf-8"))
     verdict = json.loads(verdict_path.read_text("utf-8"))
@@ -327,8 +338,11 @@ def recover_local_behavior(report_path: Path, verdict_path: Path, event_path: Pa
                           and verdict.get("existing_focused_tests_passed") is False
                           and verdict.get("regression_recovery_eligible") is True
                           and verdict.get("original_focused_baseline_passed") is True)
+    generic_regression = (regression_failure
+                          and verdict.get("generic_regression_recovery_eligible") is True
+                          and verdict.get("task_acceptance_passed") is None)
     if (not (task_failure or regression_failure)
-            or verdict.get("task_acceptance_passed") is not False
+            or (not generic_regression and verdict.get("task_acceptance_passed") is not False)
             or verdict.get("network_disabled_for_candidate") is not True):
         return verdict
     if (os.getenv("GITHUB_ACTIONS") != "true"
@@ -347,16 +361,20 @@ def recover_local_behavior(report_path: Path, verdict_path: Path, event_path: Pa
     test = TASK_ACCEPTANCE.get((source, task))
     patch = Path("reports/openhands-review") / f"issue-{owner['issue_number']}.patch"
     if (owner.get("engine") != LOCAL_ENGINE or first.get("engine") != LOCAL_ENGINE
-            or first.get("repair_passes") != 0 or test is None
-            or (test != "health_body_limit.py" and STRUCTURED_RECOVERY_TASKS.get((source, task)) != test)
-            or (regression_failure and (STRUCTURED_RECOVERY_TASKS.get((source, task)) != test
+            or first.get("repair_passes") != 0
+            or (generic_regression and (test is not None
+                or local_edit_requests(task, Path(source).read_bytes())))
+            or (not generic_regression and (test is None
+                or (test != "health_body_limit.py" and STRUCTURED_RECOVERY_TASKS.get((source, task)) != test)))
+            or (regression_failure and ((not generic_regression
+                and STRUCTURED_RECOVERY_TASKS.get((source, task)) != test)
                 or verdict.get("test_file") != "tests/" + FOCUSED_TESTS.get(source, "test_" + Path(source).stem + ".py")))
             or first.get("source_file") != source or first.get("task") != task
             or first.get("source_sha256") != owner["source_sha256"]
             or first.get("status") != "PROPOSAL_AWAITING_REVIEW"
             or first.get("candidate_artifact") != patch.as_posix()
             or verdict.get("source_file") != source
-            or verdict.get("task_acceptance_test") != "tests/acceptance/" + test
+            or (not generic_regression and verdict.get("task_acceptance_test") != "tests/acceptance/" + test)
             or report_path != Path("reports/openhands-agent-review.json")
             or verdict_path != Path("reports/openhands-sandbox-verdict.json")
             or any(p.is_symlink() or not p.is_file() or not 0 < p.stat().st_size <= 80_000
@@ -376,13 +394,18 @@ def recover_local_behavior(report_path: Path, verdict_path: Path, event_path: Pa
                    "issue": owner["issue_number"], "run": os.environ["GITHUB_RUN_ID"],
                    "original_patch_sha256": digest, "source_sha256": owner["source_sha256"],
                    "trusted_test": test, "max_corrective_attempts": 1,
-                   "diagnosis": "existing_regression" if regression_failure else "task_acceptance"}
+                   "diagnosis": ("generic_existing_regression" if generic_regression else
+                                 "existing_regression" if regression_failure else "task_acceptance")}
     (archive / "reservation.json").write_text(json.dumps(reservation, indent=2) + "\n")
     for p in (report_path, verdict_path, patch):
         p.rename(archive / p.name)
     try:
-        second = execute_local(task, source_file=source, candidate_out=patch.as_posix(),
-                               behavioral_recovery=True, regression_recovery=regression_failure)
+        if generic_regression:
+            second = execute_local(task, source_file=source, candidate_out=patch.as_posix(),
+                                   behavioral_recovery=True, generic_regression=True)
+        else:
+            second = execute_local(task, source_file=source, candidate_out=patch.as_posix(),
+                                   behavioral_recovery=True, regression_recovery=regression_failure)
     except Exception as exc:
         second = {**local_plan(task, source_file=source),
                   "status": "BLOCKED_LOCAL_CODER_NO_REVIEWABLE_PATCH",
