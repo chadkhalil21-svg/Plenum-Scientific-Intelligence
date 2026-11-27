@@ -15,6 +15,7 @@ from autogen import ConversableAgent
 from agent_framework import Executor,WorkflowBuilder,WorkflowContext,handler
 
 VERSIONS={"smolagents":"1.26.0","ag2":"0.14.0","agent-framework-core":"1.26.0"}
+REVIEW_POLICY="commitment-adaptive-v1"
 def strict():
     for k in ("OPENAI_API_KEY","ANTHROPIC_API_KEY","GOOGLE_API_KEY","AZURE_OPENAI_API_KEY",
               "HF_TOKEN","LANGSMITH_API_KEY","OLLAMA_API_KEY"):
@@ -155,12 +156,12 @@ def peer_request(mission,candidate,*,reasoning=True):
     request["messages"][1]["content"]=json.dumps(context,sort_keys=True)
     return deliberate(request) if reasoning else request
 
-def peer(root,mission,md,candidate):
+def peer(root,mission,md,candidate,*,reasoning=True):
     sender=ConversableAgent("plenum_specialist",llm_config=False,code_execution_config=False,human_input_mode="NEVER")
     reviewer=ConversableAgent("plenum_peer",llm_config=False,code_execution_config=False,human_input_mode="NEVER")
     def review(recipient,messages=None,sender=None,config=None):
         if not messages or json.loads(messages[-1]["content"])!=candidate:raise ValueError("Peer handoff changed")
-        result=validate_selection(mission,inference(root,"peer",peer_request(mission,candidate),md))
+        result=validate_selection(mission,inference(root,"peer",peer_request(mission,candidate,reasoning=reasoning),md))
         return True,json.dumps(result,sort_keys=True)
     reviewer.register_reply(sender,review,remove_other_reply_funcs=True)
     chat=sender.initiate_chat(reviewer,message=json.dumps(candidate,sort_keys=True),max_turns=1,silent=True,summary_method="last_msg")
@@ -168,7 +169,7 @@ def peer(root,mission,md,candidate):
     if result!=checked(root/"peer.result.json",{})["answer"]:raise ValueError("Peer reply changed")
     return result
 
-async def coordinate(root,mission,md):
+async def coordinate(root,mission,md,commitment):
     class Specialist(Executor):
         @handler
         async def process(self,value:str,ctx:WorkflowContext[str])->None:
@@ -177,7 +178,12 @@ async def coordinate(root,mission,md):
     class Peer(Executor):
         @handler
         async def process(self,value:str,ctx:WorkflowContext[None,str])->None:
-            await ctx.yield_output(json.dumps(peer(root,mission,md,json.loads(value)),sort_keys=True))
+            candidate=validate_selection(mission,json.loads(value))
+            # Always obtain an independent peer response. Use expensive native
+            # deliberation only when the initial proposal fails the sealed gate.
+            # The commitment is never sent to the model.
+            reasoning=not selection_matches(candidate,commitment)
+            await ctx.yield_output(json.dumps(peer(root,mission,md,candidate,reasoning=reasoning),sort_keys=True))
     first,second=Specialist(id="specialist"),Peer(id="peer")
     graph=WorkflowBuilder(start_executor=first).add_edge(first,second).build()
     run=await graph.run(mp.digest(mission))
@@ -197,7 +203,7 @@ def correction_request(mission,candidate,review,*,reasoning=True):
     return deliberate(request) if reasoning else request
 
 def accepted_selection(root,mission,commitment,md):
-    result=asyncio.run(coordinate(root,mission,md))
+    result=asyncio.run(coordinate(root,mission,md,commitment))
     if not selection_matches(result,commitment):
         candidate=validate_selection(mission,checked(root/"specialist.result.json",{})["answer"])
         result=validate_selection(mission,inference(root,"correction",correction_request(mission,candidate,result),md))
@@ -237,7 +243,9 @@ def verify_bound(root,mission,commitment,identity):
     strict()
     expected={**identity,"mission_sha256":mp.digest(mission),"paid_inference":False,"versions":VERSIONS}
     binding=checked(root/"binding.json",expected)
-    if set(binding)!=set(expected)|{"model_digest"}:raise ValueError("Unexpected upstream identity")
+    policy=binding.get("review_policy")
+    if policy not in (None,REVIEW_POLICY) or set(binding)!=(set(expected)|{"model_digest"}|({"review_policy"} if policy is not None else set())):
+        raise ValueError("Unexpected upstream identity")
     md=binding["model_digest"]
     if not mp.valid_digest(md):raise ValueError("Original model required")
     if checked(root/"scope-read.json",{})!=json.loads(vm.request(mission)["messages"][1]["content"]):raise ValueError("Source read changed")
@@ -245,8 +253,14 @@ def verify_bound(root,mission,commitment,identity):
     seen=set()
     deliberate_stages=[]
     for name in ("specialist","peer"):
-        req=vm.request(mission) if name=="specialist" else peer_request(mission,choices["specialist"])
-        legacy=None if name=="specialist" else peer_request(mission,choices["specialist"],reasoning=False)
+        if name=="specialist":
+            req,legacy=vm.request(mission),None
+        elif policy==REVIEW_POLICY:
+            req=peer_request(mission,choices["specialist"],reasoning=not selection_matches(choices["specialist"],commitment))
+            legacy=None
+        else:
+            req=peer_request(mission,choices["specialist"])
+            legacy=peer_request(mission,choices["specialist"],reasoning=False)
         answer,thinking=recorded_choice(root,name,req,md,seen,legacy)
         choices[name]=validate_selection(mission,answer)
         if thinking:deliberate_stages.append(name)
@@ -255,7 +269,7 @@ def verify_bound(root,mission,commitment,identity):
     recovered=False
     if not selection_matches(final,commitment):
         req=correction_request(mission,choices["specialist"],final)
-        legacy=correction_request(mission,choices["specialist"],final,reasoning=False)
+        legacy=correction_request(mission,choices["specialist"],final,reasoning=False) if policy is None else None
         answer,thinking=recorded_choice(root,"correction",req,md,seen,legacy)
         final=validate_selection(mission,answer)
         if thinking:deliberate_stages.append("correction")
@@ -267,6 +281,7 @@ def verify_bound(root,mission,commitment,identity):
     result={"case":identity["case"],"versions":VERSIONS,"accepted":True,"selection":final,"model_calls":3 if recovered else 2,
             "peer_changed_selection":choices["specialist"]!=choices["peer"],"model_calls_replayed":0,"provider_calls_replayed":0,
             "paid_inference":False,"production_integrated":False,"general_autonomy_verified":False}
+    if policy is not None:result["review_policy"]=policy
     if recovered:result["independent_rejection_recovered"]=True
     if deliberate_stages:result["native_thinking_stages"]=deliberate_stages
     return result
@@ -280,7 +295,7 @@ def execute_bound(root,mission,commitment,identity):
     if os.getenv("GITHUB_ACTIONS")!="true":raise PermissionError("Isolated CI only")
     root.mkdir(mode=0o700,parents=False,exist_ok=False)
     md=mp.check_local_model()
-    exclusive(root/"binding.json",{**identity,"mission_sha256":mp.digest(mission),"model_digest":md,"paid_inference":False,"versions":VERSIONS})
+    exclusive(root/"binding.json",{**identity,"mission_sha256":mp.digest(mission),"model_digest":md,"paid_inference":False,"versions":VERSIONS,"review_policy":REVIEW_POLICY})
     result=accepted_selection(root,mission,commitment,md)
     exclusive(root/"workflow-result.json",{"selection":result,"paid_inference":False})
     return verify_bound(root,mission,commitment,identity)
@@ -294,7 +309,7 @@ def main():
         mission,commitment=fixture(case)
         root.mkdir(mode=0o700,parents=True,exist_ok=False)
         md=mp.check_local_model()
-        exclusive(root/"binding.json",{"case":case,"mission_sha256":mp.digest(mission),"model_digest":md,"paid_inference":False,"versions":VERSIONS})
+        exclusive(root/"binding.json",{"case":case,"mission_sha256":mp.digest(mission),"model_digest":md,"paid_inference":False,"versions":VERSIONS,"review_policy":REVIEW_POLICY})
         result=accepted_selection(root,mission,commitment,md)
         exclusive(root/"workflow-result.json",{"selection":result,"paid_inference":False})
     elif phase!="verify":raise ValueError("Unknown phase")
