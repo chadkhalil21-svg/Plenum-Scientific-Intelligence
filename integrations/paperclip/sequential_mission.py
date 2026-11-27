@@ -297,6 +297,7 @@ def minister():
     scope=assigned_scope(api,ROOT,"minister") if persistent() else active_scope()
     binding=scope_binding(scope)
     specs=task_specs(scope)
+    extended_minister=scope.get("planning_engine")=="upstream-peer-v1"
     aid=env_id("PAPERCLIP_AGENT_ID")
     cid=env_id("PAPERCLIP_COMPANY_ID")
     identity=api("/api/agents/me",worker=True)
@@ -432,7 +433,7 @@ def qualify_locked(action):
         return str(UUID(required(api(route+"/agents","POST",fields),"id","created_agent")))
     roster=api(route+"/agents") if durable else []
     if roster:
-        ids=validate_roster(roster,cid,specs)
+        ids=validate_roster(roster,cid,specs,require_extended_minister=extended_minister)
         # Existing boards must already have the immutable original roster proof.
         if not (ROOT/cid/"persistent-roster.json").is_file():
             raise ValueError("Existing persistent roster has no original continuity receipt")
@@ -444,7 +445,7 @@ def qualify_locked(action):
         leader=hire("Minister of Operations","ceo","minister")
         agents={key:hire(name,"engineer" if key=="engineering" else "general",key,leader) for key,(name,_) in specs.items()}
         if durable:
-            ids=validate_roster(api(route+"/agents"),cid,specs)
+            ids=validate_roster(api(route+"/agents"),cid,specs,require_extended_minister=extended_minister)
             if ids!={"minister":leader,**agents}:raise ValueError("Created roster identity mismatch")
             bind_roster(ROOT,cid,ids)
     from production_wiring import prepared, authorize_activation
@@ -500,7 +501,7 @@ def qualify_locked(action):
     # Native graph work shares CPU inference with the prior verified adaptive
     # turns; keep a bounded mission deadline long enough for the worker cap.
     graph_scope=scope.get("inputs",{}).get("synthesis",{}).get("followup",{}).get("engine")=="deepagents"
-    deadline=time.monotonic()+(720 if graph_scope else 360)
+    deadline=time.monotonic()+(1740 if extended_minister else 720 if graph_scope else 360)
     plan_path=directory/"minister-plan.json"
     while time.monotonic()<deadline:
         # The adapter writes a safe failure receipt before a nonzero exit.
