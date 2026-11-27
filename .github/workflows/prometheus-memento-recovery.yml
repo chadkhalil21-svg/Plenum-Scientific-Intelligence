@@ -1,0 +1,31 @@
+name: Prometheus native Memento recovery
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - '.github/workflows/prometheus-memento-recovery.yml'
+      - 'tools/vendor/memento_recovery/**'
+      - 'tools/memento_recovery_adapter.py'
+      - 'tools/miniswe_staged_interface.py'
+      - 'tests/test_memento_recovery_adapter.py'
+permissions:
+  contents: read
+jobs:
+  offline:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-native-memento-recovery'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify actual unmodified upstream error detector and original staged contracts
+        env:
+          PYTHONPATH: src:tools
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          test "$(git hash-object tools/vendor/memento_recovery/error_recovery.py)" = e654343068a00bfafbe68065ac83c826eb993a2d
+          test "$(git hash-object tools/vendor/memento_recovery/LICENSE)" = 261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64
+          python3 -B -m unittest discover -s tests -p test_memento_recovery_adapter.py -v
+          python3 -B -m unittest discover -s tests -p test_miniswe_staged_interface.py -v
+          python3 -B -m unittest discover -s tests -p test_prospective_1048_grader.py -v
