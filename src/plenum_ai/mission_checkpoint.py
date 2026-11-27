@@ -139,8 +139,9 @@ def load_checkpoint(root: Path, *, issue: int, objective: str,
 
 def save_checkpoint(root: Path, *, issue: int, objective: str,
                     team: tuple[str, ...], results: dict) -> None:
-    root.mkdir(parents=True, exist_ok=True)
+    # Validate issue identifier before creating any directories
     path = checkpoint_path(root, issue)
+    root.mkdir(parents=True, exist_ok=True)
     data = {
         "schema": "plenum-chief-restart-v1",
         "issue_number": issue,
