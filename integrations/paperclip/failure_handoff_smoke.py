@@ -24,6 +24,22 @@ class HandoffTest(unittest.TestCase):
             self.assertFalse(proof["mission_accepted"])
             self.assertFalse(proof["automatic_replay_authorized"])
             with self.assertRaises(FileExistsError):publish(p,c,m,"a"*64,[])
+    def test_native_recovery_retains_only_typed_facts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p=Path(tmp);c,m=str(uuid4()),str(uuid4())
+            diagnostic={"division":"verification","diagnostic":{
+                "id":str(uuid4()),"status":"failed","errorCode":"setup_failed",
+                "exitCode":None,"native_recovery":{"kind":"bootstrap",
+                "provider_work_started":False,"identity_matches":True,
+                "observed_run_matches":"false","finished":True,"detail_error":False,
+                "raw_context":"must-not-be-retained"}}}
+            proof=publish(p,c,m,"a"*64,[diagnostic])
+            self.assertEqual(proof["diagnostics"][0]["native_recovery"],{
+                "kind":"bootstrap","provider_work_started":False,
+                "identity_matches":True,"observed_run_matches":None,
+                "finished":True,"detail_error":False})
+            self.assertFalse(proof["automatic_replay_authorized"])
+            self.assertFalse(proof["mission_accepted"])
     def test_rejects_corrupt_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:
             p=Path(tmp);c,m=str(uuid4()),str(uuid4());tasks={r:str(uuid4()) for r in ROLES}
