@@ -8,7 +8,7 @@ import upstream_specialists as u
 def main():
     mission,commitment=u.fixture("science")
     identity={"case":"offline-recovery"}
-    md="d"*64
+    md=u.mp.MODEL_DIGEST+"0"*52
     good={k:k in ("bibliography","stations") for k in mission["authorized_inputs"]}
     bad={k:k=="stations" for k in good}
     assert u.selection_matches(good,commitment) and not u.selection_matches(bad,commitment)
