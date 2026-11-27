@@ -1,0 +1,62 @@
+name: Prometheus paired local model routing qualification
+on:
+  pull_request:
+    paths:
+      - 'integrations/prometheus_routing/**'
+      - '.github/workflows/prometheus-paired-routing.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  paired:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install smallest upstream routing dependency and original corpus loader
+        run: |
+          python -m pip install --disable-pip-version-check --only-binary=:all: 'gepa==0.1.4' 'scikit-learn==1.6.1'
+          python -m pip check
+      - name: Recover exact prior 4B evidence, not model inference
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 90 --max-filesize 20000000 -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' 'https://api.github.com/repos/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/artifacts/15191547610/zip' -o "$RUNNER_TEMP/original-gepa.zip"
+          echo "f6571bb878ecb45cf3fd52f13d0a16c3e98df5ebc91653d66d32b471d090fd9f  $RUNNER_TEMP/original-gepa.zip" | sha256sum -c -
+          PYTHONPATH=src:integrations/prometheus_routing python -c 'import sys; from pathlib import Path; from paired import prior,corpus; print("Verified prior cases:",sorted(prior(Path(sys.argv[1]),corpus())))' "$RUNNER_TEMP/original-gepa.zip"
+      - name: Start exact stronger model on isolated loopback
+        run: |
+          set -eu
+          test "$(awk '/MemTotal/ {print $2}' /proc/meminfo)" -ge 14000000
+          test "$(awk '/MemAvailable/ {print $2}' /proc/meminfo)" -ge 11000000
+          test "$(df --output=avail -B1 / | tail -1 | tr -d ' ')" -ge 9000000000
+          docker pull ollama/ollama:latest
+          docker run -d --name plenum-routing-qwen --network host -e OLLAMA_HOST=127.0.0.1:11434 -e OLLAMA_CONTEXT_LENGTH=4096 -e OLLAMA_NUM_PARALLEL=1 --memory=10g --cpus=3 ollama/ollama:latest
+          for i in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
+            sleep 2
+          done
+          timeout 300 docker exec plenum-routing-qwen ollama pull qwen3.5:9b-q4_K_M
+          test "$(docker exec plenum-routing-qwen ollama list | awk '$1=="qwen3.5:9b-q4_K_M" {print $2}')" = 56671c2ab938
+      - name: Obtain new paired 9B measurements and evaluate held-out routing
+        run: |
+          mkdir -p reports
+          python integrations/prometheus_routing/paired.py "$RUNNER_TEMP/original-gepa.zip" reports/paired-routing
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prometheus-paired-routing-evidence
+          path: reports/paired-routing
+          if-no-files-found: warn
+      - name: Remove disposable model
+        if: always()
+        run: docker rm -f plenum-routing-qwen || true
