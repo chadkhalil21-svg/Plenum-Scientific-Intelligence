@@ -27,11 +27,16 @@ def deliberate(request):
     # Native thinking of the already-pinned local 4B model, not a new agent.
     # Preserve the existing 2048-token context and keep one inference per stage.
     request["think"]=True
-    request["options"]["num_predict"]=768
+    request["options"]["num_predict"]=1024
+    # Known upstream interaction: reasoning and constrained JSON generation
+    # may interfere. Keep the identical exact schema as instructions; apply
+    # the strict host validator to final content before persisting a selection.
+    schema=request.pop("format")
+    request["messages"][0]["content"] += " Final content must be exactly one JSON object matching "+json.dumps(schema,sort_keys=True)+"."
     request["messages"][0]["content"] += (
-        " Before the final Boolean response, reason through each requested deliverable "
-        "and its dependencies. Check omissions, unauthorized extras, and any disagreement "
-        "with the prior proposal. Finish with the required JSON before the token limit.")
+        " Think briefly about required deliverables, omissions and unauthorized extras. "
+        "Limit deliberation to 250 words, then finish with the exact JSON object; "
+        "no Markdown fences or prose in final content.")
     return request
 
 def validate_counts(row,request):
@@ -50,11 +55,23 @@ def inference(root,name,request,md):
     if reply.get("model")!=mp.MODEL or reply.get("done") is not True:
         raise ValueError("Incomplete model response")
     validate_counts(reply,request)
-    if thinking and (reply.get("done_reason")!="stop"
-            or not isinstance(reply.get("message",{}).get("thinking"),str)
-            or not reply["message"]["thinking"].strip()):
-        raise ValueError("Incomplete deliberative response")
-    raw=reply.get("message",{}).get("content")
+    message=reply.get("message")
+    if not isinstance(message,dict):
+        raise ValueError("Invalid message envelope")
+    raw=message.get("content")
+    if thinking:
+        finish=reply.get("done_reason")
+        observed=isinstance(message.get("thinking"),str) and bool(message["thinking"].strip())
+        reason=("TOKEN_BUDGET_EXHAUSTED" if finish=="length" else
+                "UNEXPECTED_FINISH" if finish!="stop" else
+                "MISSING_THINKING" if not observed else
+                "MISSING_FINAL_CONTENT" if not isinstance(raw,str) or not raw.strip() else None)
+        if reason:
+            # Record only non-sensitive bounded metadata, not model prose.
+            exclusive(root/(name+".diagnostic.json"),{**identity,"reason":reason,
+                "eval_count":n,"prompt_eval_count":p,"thinking_observed":observed,
+                "final_content_observed":isinstance(raw,str) and bool(raw.strip())})
+            raise ValueError("Deliberative response: "+reason)
     if not isinstance(raw,str) or len(raw)>2000:raise ValueError("Invalid response")
     def unique(items):
         row={}
@@ -62,7 +79,14 @@ def inference(root,name,request,md):
             if k in row:raise ValueError("Duplicate response field")
             row[k]=v
         return row
-    answer=json.loads(raw,object_pairs_hook=unique)
+    try:
+        answer=json.loads(raw,object_pairs_hook=unique)
+    except (ValueError,TypeError):
+        if thinking:
+            exclusive(root/(name+".diagnostic.json"),{**identity,"reason":"INVALID_FINAL_JSON",
+                "eval_count":n,"prompt_eval_count":p,"thinking_observed":True,
+                "final_content_observed":True})
+        raise ValueError("Invalid final structured answer") from None
     extra={"native_thinking_observed":True} if thinking else {}
     exclusive(root/(name+".result.json"),{**identity,"answer":answer,"eval_count":n,"prompt_eval_count":p,**extra})
     return answer
