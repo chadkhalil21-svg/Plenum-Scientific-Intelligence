@@ -16,7 +16,7 @@ def main():
     for label,answers,accepted in (("first-pass",[good,good],True),
                                    ("recovered",[bad,bad,good],True),
                                    ("rejected",[bad,bad,bad],False)):
-        requests=[u.vm.request(mission),u.peer_request(mission,answers[0])]
+        requests=[u.vm.request(mission),u.peer_request(mission,answers[0],reasoning=not u.selection_matches(answers[0],commitment))]
         if len(answers)==3:requests.append(u.correction_request(mission,answers[0],answers[1]))
         calls=[]
         def fake(path,request,timeout):
@@ -36,7 +36,8 @@ def main():
                     proof=u.execute_bound(root,mission,commitment,identity)
                     assert proof["selection"]==good and proof["model_calls"]==len(answers)
                     assert proof.get("independent_rejection_recovered",False)==(len(answers)==3)
-                    assert proof["native_thinking_stages"]==(["peer","correction"] if len(answers)==3 else ["peer"])
+                    assert proof.get("native_thinking_stages",[])==(["peer","correction"] if len(answers)==3 else [])
+                    assert proof["review_policy"]==u.REVIEW_POLICY
                     assert all("Mock deliberation" not in p.read_text() for p in root.glob("*.json"))
                 else:
                     try:u.execute_bound(root,mission,commitment,identity)
@@ -48,6 +49,8 @@ def main():
                 if accepted:
                     assert u.verify_bound(root,mission,commitment,identity)==proof
                     # Demonstrate old archives are still verified from exact legacy digests.
+                    binding=root/"binding.json"
+                    old_binding=json.loads(binding.read_text());old_binding.pop("review_policy");binding.write_text(json.dumps(old_binding))
                     old_req=u.peer_request(mission,answers[0],reasoning=False)
                     for suffix in ("reserved","result"):
                         f=root/("peer."+suffix+".json")
