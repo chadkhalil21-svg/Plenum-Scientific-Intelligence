@@ -35,6 +35,21 @@ class Tests(unittest.TestCase):
         with self.assertRaises(ValueError):c.validate_pinned_memory(dict(prior,paid_inference=True),pin,"999","c"*40)
         with self.assertRaises(ValueError):c.validate_pinned_memory(dict(prior,qualification_sha256="d"*64),pin,"999","c"*40)
 
+    def test_live_engineering_predecessor_requires_exact_owner_origin(self):
+        pin={**c.source_pin(),"ref":"refs/heads/main","commit":"a"*40,"head_sha":"a"*40}
+        run={**RUN,"head_sha":"a"*40,"head_branch":"main","event":"issues",
+             "path":".github/workflows/paperclip-cross-run.yml","head_repository":{"full_name":c.REPO},
+             "actor":{"login":"chadkhalil21-svg"},"run_attempt":1}
+        self.assertEqual(c.validate_pin(pin),pin)
+        c.validate_pinned_source(run,ART,pin)
+        for bad in (dict(run,actor={"login":"other"}),dict(run,run_attempt=2),
+                    dict(run,run_attempt=True),dict(run,head_branch="other"),
+                    dict(run,event="workflow_dispatch"),dict(run,path=".github/workflows/paperclip-multidisciplinary.yml"),
+                    dict(run,head_repository={"full_name":"other/repo"})):
+            with self.assertRaises(ValueError):c.validate_pinned_source(bad,ART,pin)
+        for bad in (dict(pin,head_sha="b"*40),dict(pin,stage="science")):
+            with self.assertRaises(ValueError):c.validate_pin(bad)
+
     def test_actual_prior_and_new_cases(self):
         with tempfile.TemporaryDirectory() as tmp:
             p=Path(tmp)/"memory.json";p.write_bytes(encoded(PRIOR))
