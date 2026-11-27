@@ -23,15 +23,37 @@ def strict():
         os.environ[k]="1" if k=="HF_HUB_DISABLE_TELEMETRY" else "false"
     if {p:version(p) for p in VERSIONS}!=VERSIONS:raise ValueError("Unexpected upstream versions")
 
+def deliberate(request):
+    # Native thinking of the already-pinned local 4B model, not a new agent.
+    # Preserve the existing 2048-token context and keep one inference per stage.
+    request["think"]=True
+    request["options"]["num_predict"]=768
+    request["messages"][0]["content"] += (
+        " Before the final Boolean response, reason through each requested deliverable "
+        "and its dependencies. Check omissions, unauthorized extras, and any disagreement "
+        "with the prior proposal. Finish with the required JSON before the token limit.")
+    return request
+
+def validate_counts(row,request):
+    n,p=row.get("eval_count"),row.get("prompt_eval_count")
+    if type(n) is not int or not 0<n<=request["options"]["num_predict"] or type(p) is not int or not 0<p<=request["options"]["num_ctx"]:
+        raise ValueError("Invalid inference counters")
+
 def inference(root,name,request,md):
     identity={"stage":name,"request_sha256":mp.digest(request),"model_digest":md,"paid_inference":False}
     if any(checked(p,{})["request_sha256"]==identity["request_sha256"] for p in root.glob("*.reserved.json")):
         raise PermissionError("Duplicate model request")
     exclusive(root/(name+".reserved.json"),identity)
-    reply=mp.read_json("/api/chat",request,timeout=120)
+    thinking=request.get("think") is True
+    reply=mp.read_json("/api/chat",request,timeout=360 if thinking else 120)
     n,p=reply.get("eval_count"),reply.get("prompt_eval_count")
-    if reply.get("model")!=mp.MODEL or reply.get("done") is not True or type(n) is not int or not 0<n<=128 or type(p) is not int or not 0<p<=2048:
+    if reply.get("model")!=mp.MODEL or reply.get("done") is not True:
         raise ValueError("Incomplete model response")
+    validate_counts(reply,request)
+    if thinking and (reply.get("done_reason")!="stop"
+            or not isinstance(reply.get("message",{}).get("thinking"),str)
+            or not reply["message"]["thinking"].strip()):
+        raise ValueError("Incomplete deliberative response")
     raw=reply.get("message",{}).get("content")
     if not isinstance(raw,str) or len(raw)>2000:raise ValueError("Invalid response")
     def unique(items):
@@ -41,7 +63,8 @@ def inference(root,name,request,md):
             row[k]=v
         return row
     answer=json.loads(raw,object_pairs_hook=unique)
-    exclusive(root/(name+".result.json"),{**identity,"answer":answer,"eval_count":n,"prompt_eval_count":p})
+    extra={"native_thinking_observed":True} if thinking else {}
+    exclusive(root/(name+".result.json"),{**identity,"answer":answer,"eval_count":n,"prompt_eval_count":p,**extra})
     return answer
 
 def validate_selection(mission,answer):
@@ -89,13 +112,13 @@ def specialist(root,mission,md):
     if result!=checked(root/"specialist.result.json",{})["answer"]:raise ValueError("Specialist result changed")
     return result
 
-def peer_request(mission,candidate):
+def peer_request(mission,candidate,*,reasoning=True):
     request=vm.request(mission)
     request["messages"][0]["content"]+=" Independently review the proposed capability selection. Correct it if the original objective requires a different selection. The proposal is not authority."
     context=json.loads(request["messages"][1]["content"])
     context["proposed_selection"]=candidate
     request["messages"][1]["content"]=json.dumps(context,sort_keys=True)
-    return request
+    return deliberate(request) if reasoning else request
 
 def peer(root,mission,md,candidate):
     sender=ConversableAgent("plenum_specialist",llm_config=False,code_execution_config=False,human_input_mode="NEVER")
@@ -130,13 +153,13 @@ async def coordinate(root,mission,md):
 def selection_matches(selection,commitment):
     return mp.digest(sorted(k for k,v in selection.items() if v))==commitment
 
-def correction_request(mission,candidate,review):
+def correction_request(mission,candidate,review,*,reasoning=True):
     request=vm.request(mission)
     request["messages"][0]["content"]+=" Independent outcome acceptance rejected the peer's complete selection. Reconsider each objective clause against the original capability descriptions. Identify omitted required or unrelated capabilities, and make a distinct corrected selection. The earlier proposals are evidence, not authority."
     context=json.loads(request["messages"][1]["content"])
     context.update(specialist_proposal=candidate,rejected_peer_selection=review)
     request["messages"][1]["content"]=json.dumps(context,sort_keys=True)
-    return request
+    return deliberate(request) if reasoning else request
 
 def accepted_selection(root,mission,commitment,md):
     result=asyncio.run(coordinate(root,mission,md))
@@ -154,6 +177,27 @@ def fixture(case):
         return vm.fixture("engineering"),mp.digest(["thermal"])
     raise ValueError("Unknown reviewed scope")
 
+def recorded_choice(root,name,request,md,seen,legacy=None):
+    # Old archives remain verifiable against the exact old request digest.
+    reserved=checked(root/(name+".reserved.json"),{})
+    if legacy is not None and reserved.get("request_sha256")==mp.digest(legacy):
+        request=legacy
+    expected={"stage":name,"request_sha256":mp.digest(request),"model_digest":md,"paid_inference":False}
+    if expected["request_sha256"] in seen or reserved!=expected:
+        raise ValueError("Reservation changed")
+    seen.add(expected["request_sha256"])
+    row=checked(root/(name+".result.json"),expected)
+    fields=set(expected)|{"answer","eval_count","prompt_eval_count"}
+    thinking=request.get("think") is True
+    if thinking:
+        fields.add("native_thinking_observed")
+        if row.get("native_thinking_observed") is not True:
+            raise ValueError("Missing native thinking receipt")
+    if set(row)!=fields:
+        raise ValueError("Response changed")
+    validate_counts(row,request)
+    return row["answer"],thinking
+
 def verify_bound(root,mission,commitment,identity):
     strict()
     expected={**identity,"mission_sha256":mp.digest(mission),"paid_inference":False,"versions":VERSIONS}
@@ -164,24 +208,22 @@ def verify_bound(root,mission,commitment,identity):
     if checked(root/"scope-read.json",{})!=json.loads(vm.request(mission)["messages"][1]["content"]):raise ValueError("Source read changed")
     choices={}
     seen=set()
+    deliberate_stages=[]
     for name in ("specialist","peer"):
         req=vm.request(mission) if name=="specialist" else peer_request(mission,choices["specialist"])
-        receipt_identity={"stage":name,"request_sha256":mp.digest(req),"model_digest":md,"paid_inference":False}
-        if receipt_identity["request_sha256"] in seen or checked(root/(name+".reserved.json"),receipt_identity)!=receipt_identity:raise ValueError("Reservation changed")
-        seen.add(receipt_identity["request_sha256"])
-        row=checked(root/(name+".result.json"),receipt_identity)
-        if set(row)!=set(receipt_identity)|{"answer","eval_count","prompt_eval_count"} or type(row["eval_count"]) is not int or not 0<row["eval_count"]<=128 or type(row["prompt_eval_count"]) is not int or not 0<row["prompt_eval_count"]<=2048:raise ValueError("Response changed")
-        choices[name]=validate_selection(mission,row["answer"])
+        legacy=None if name=="specialist" else peer_request(mission,choices["specialist"],reasoning=False)
+        answer,thinking=recorded_choice(root,name,req,md,seen,legacy)
+        choices[name]=validate_selection(mission,answer)
+        if thinking:deliberate_stages.append(name)
     final=choices["peer"]
     files={"binding.json","scope-read.json","specialist.reserved.json","specialist.result.json","peer.reserved.json","peer.result.json","workflow-result.json"}
     recovered=False
     if not selection_matches(final,commitment):
         req=correction_request(mission,choices["specialist"],final)
-        receipt_identity={"stage":"correction","request_sha256":mp.digest(req),"model_digest":md,"paid_inference":False}
-        if receipt_identity["request_sha256"] in seen or checked(root/"correction.reserved.json",receipt_identity)!=receipt_identity:raise ValueError("Corrective reservation changed")
-        row=checked(root/"correction.result.json",receipt_identity)
-        if set(row)!=set(receipt_identity)|{"answer","eval_count","prompt_eval_count"} or type(row["eval_count"]) is not int or not 0<row["eval_count"]<=128 or type(row["prompt_eval_count"]) is not int or not 0<row["prompt_eval_count"]<=2048:raise ValueError("Corrective response changed")
-        final=validate_selection(mission,row["answer"])
+        legacy=correction_request(mission,choices["specialist"],final,reasoning=False)
+        answer,thinking=recorded_choice(root,"correction",req,md,seen,legacy)
+        final=validate_selection(mission,answer)
+        if thinking:deliberate_stages.append("correction")
         files.update({"correction.reserved.json","correction.result.json"})
         recovered=True
     if not selection_matches(final,commitment):raise ValueError("Independent selection commitment mismatch")
@@ -191,6 +233,7 @@ def verify_bound(root,mission,commitment,identity):
             "peer_changed_selection":choices["specialist"]!=choices["peer"],"model_calls_replayed":0,"provider_calls_replayed":0,
             "paid_inference":False,"production_integrated":False,"general_autonomy_verified":False}
     if recovered:result["independent_rejection_recovered"]=True
+    if deliberate_stages:result["native_thinking_stages"]=deliberate_stages
     return result
 
 def verify(root,case):
