@@ -152,6 +152,7 @@ class TrustedRecoveryTests(unittest.TestCase):
                 self.assertEqual(result["repair_passes"], 1)
                 self.assertEqual(edit.call_count, 1)
                 self.assertTrue(edit.call_args.kwargs["numbered"])
+                self.assertIs(edit.call_args.kwargs["reasoning"],True)
                 self.assertEqual(edit.call_args.args[1], scope)
                 self.assertIn("Independent behavioral acceptance rejected", edit.call_args.args[0])
                 self.assertEqual(result["structured_edit_strategies"][0]["behavioral_recovery"], True)
@@ -165,6 +166,33 @@ class TrustedRecoveryTests(unittest.TestCase):
                     coder.execute_local(task, source_file=source,
                                         candidate_out="unused", behavioral_recovery=True)
                 self.assertEqual(edit.call_count, 1)
+
+    def test_corrective_reasoning_uses_existing_model_and_consumes_only_final_edit(self):
+        import subprocess
+        source=b"def first():\n    return 1\n"
+        scope=coder.local_function_scope("Repair function first. Correct result.",source)
+        choice={"start":2,"end":2,"replacement":"    return 2"}
+        response={"model":coder.STRUCTURED_EDIT_MODEL,"done":True,"done_reason":"stop",
+                  "message":{"content":json.dumps(choice),"thinking":"Mock reasoning field"}}
+        completed=subprocess.CompletedProcess([],0,stdout=json.dumps(response).encode())
+        with patch.object(coder.subprocess,"run",return_value=completed) as run:
+            actual=coder.structured_local_edit("Repair function first. Correct result.",scope,numbered=True,reasoning=True)
+            self.assertEqual(actual,source.replace(b"return 1",b"return 2"))
+            payload=json.loads(run.call_args.kwargs["input"])
+            self.assertIs(payload["think"],True)
+            self.assertEqual(payload["options"]["num_predict"],1536)
+            self.assertEqual(payload["model"],coder.STRUCTURED_EDIT_MODEL)
+            self.assertEqual(run.call_count,1)
+            self.assertNotIn(b"Mock reasoning field",actual)
+        response["message"].pop("thinking")
+        with patch.object(coder.subprocess,"run",return_value=subprocess.CompletedProcess([],0,stdout=json.dumps(response).encode())) as run:
+            with self.assertRaisesRegex(coder.StructuredEditFailure,"REASONING_OUTPUT_MISSING"):
+                coder.structured_local_edit("Repair function first. Correct result.",scope,numbered=True,reasoning=True)
+            self.assertEqual(run.call_count,1)
+        with patch.object(coder.subprocess,"run") as run:
+            with self.assertRaises(ValueError):
+                coder.structured_local_edit("Repair function first. Correct result.",scope,reasoning=True)
+            run.assert_not_called()
 
     def test_function_scoped_edit_keeps_unrelated_bytes_and_signature(self):
         source=b"import math\n\ndef first(x: int) -> int:\n    return x+1\n\ndef second():\n    return 42\n"
