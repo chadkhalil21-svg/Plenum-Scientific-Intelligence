@@ -93,8 +93,8 @@ def configure_continuation(archive):
             or result.get("model_digest") != DIGEST or result.get("paid_inference") is not False
             or result.get("original_source_sha256") != sha(original)
             or result.get("baseline_passed") is not True or len(commands) != 12
-            or not all(re.match(r"^(find |pwd && ls |cat )", x) and not re.search(r"[;>\\n]|\\$\\(",x)
-                       for x in commands)
+            or sha(json.dumps(commands, ensure_ascii=True, separators=(",", ":")).encode())
+                != "aaefa76db6028a95deb37e7f6becc8c761e1e04c66f1d7133d745ef86d15b819"
             or len(reservations)!=12 or len(responses)!=12):
         raise ValueError("Not the original terminal inspection-only failure")
     prior = {x["request_sha256"] for x in reservations}
