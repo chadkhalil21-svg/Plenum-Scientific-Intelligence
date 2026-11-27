@@ -1,0 +1,53 @@
+name: Prometheus GEPA evidence selection
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - '.github/workflows/prometheus-gepa-evidence-selection.yml'
+      - 'tools/gepa_evidence_selection.py'
+      - 'tools/vendor/gepa_selection/**'
+permissions:
+  contents: read
+jobs:
+  select:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-gepa-evidence-selection'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Retrieve existing immutable evidence, never replay inference
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for id in 15234595248 15234462855 15234663733 15235357004; do
+            curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 60 --max-filesize 2000000 -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/repos/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/artifacts/$id/zip" -o "$RUNNER_TEMP/$id.zip"
+          done
+      - name: Use actual upstream GEPA selection with strict independent acceptance
+        run: |
+          set -euo pipefail
+          test "$(git hash-object tools/vendor/gepa_selection/gepa_utils.py)" = 05567c8b3f69209acebfb1bb460fc4b445006851
+          test "$(git hash-object tools/vendor/gepa_selection/LICENSE)" = a2d71aed19ccc43d94b9c3afe6430da9b2277f32
+          mkdir -p reports/gepa-evidence
+          python3 -B tools/gepa_evidence_selection.py \
+            --evidence "$RUNNER_TEMP/15234595248.zip" f6f3f9129138233cd342cb8f69ca076c8d179a6766653ed1c5553f852f22785e \
+            --evidence "$RUNNER_TEMP/15234462855.zip" 855bbfc1f8f9e7980dafab84a0be0cc9bb77e3d503dbae333aa279245381989d \
+            --evidence "$RUNNER_TEMP/15234663733.zip" 92dbcf9e24e462706685d702ebd5f398a1f081812d87ba8bdf20d28ec6b0ecd3 \
+            --evidence "$RUNNER_TEMP/15235357004.zip" 48cf3c705cdc9c9a0aabe3606139b8d3e7555b41b0dc0d693b2cd2dff289d137 | tee reports/gepa-evidence/result.json
+          jq -e '.status=="NO_ELIGIBLE_CANDIDATE" and .selected==null and .production_admitted==false and (.records|length==4)' reports/gepa-evidence/result.json
+          PYTHONPATH=tools python3 -B - <<'PY'
+          from gepa_evidence_selection import select
+          binding=(1,"fixture","public.py","source","test")
+          rows=[dict(archive_sha256=str(i),eligible=True,binding=binding,patch_sha256=str(i),calls=c,elapsed=t) for i,c,t in [(0,8,20),(1,4,10)]]
+          result=select(rows)
+          assert result["selected"]=="1" and result["upstream_called"] and not result["production_admitted"]
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gepa-existing-evidence-selection
+          path: reports/gepa-evidence/result.json
