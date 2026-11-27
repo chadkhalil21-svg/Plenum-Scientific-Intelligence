@@ -74,11 +74,19 @@ def accept_mission(directory,timing_root,summary,cid,mid,expected_scope=None):
         from native_variable import load,evidence_root
         from model_plan import MODEL
         variable_plan=load(directory,scope,cid,mid)
-        receipt=read(evidence_root(directory)/"model-response.json")
-        if (summary.get("minister_model_executed") is not True or summary.get("model")!=MODEL
-            or summary.get("model_digest")!=variable_plan["model_digest"] or summary.get("model_receipt_sha256")!=digest(receipt)
-            or summary.get("model_eval_count")!=receipt["eval_count"] or "model_receipt_sha256" in plan):
-            raise ValueError("Variable model proof mismatch")
+        if scope.get("planning_engine")=="magentic-native-v1":
+            from native_variable import magentic_plan
+            _,receipt=magentic_plan(evidence_root(directory),scope,cid,mid)
+            if (summary.get("minister_model_executed") is not True or summary.get("model")!="qwen3.5:9b-q4_K_M"
+                or summary.get("model_digest")!=variable_plan["model_digest"] or summary.get("model_receipt_sha256")!=digest(receipt)
+                or summary.get("model_calls")!=receipt["model_calls"] or "model_receipt_sha256" in plan or "model_eval_count" in summary):
+                raise ValueError("Magentic native model proof mismatch")
+        else:
+            receipt=read(evidence_root(directory)/"model-response.json")
+            if (summary.get("minister_model_executed") is not True or summary.get("model")!=MODEL
+                or summary.get("model_digest")!=variable_plan["model_digest"] or summary.get("model_receipt_sha256")!=digest(receipt)
+                or summary.get("model_eval_count")!=receipt["eval_count"] or "model_receipt_sha256" in plan):
+                raise ValueError("Variable model proof mismatch")
     elif summary.get("minister_model_executed") is True:
         receipt=read(directory/"minister-model-plan.json")
         if digest(receipt)!=summary["model_receipt_sha256"] or digest(receipt)!=plan["model_receipt_sha256"] or validate_receipt(receipt,cid,mid,goals=goal_texts(scope),**planning_kwargs(scope))!=list(MISSION_ORDER):raise ValueError("Original model proof mismatch")
