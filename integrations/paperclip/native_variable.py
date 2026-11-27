@@ -27,7 +27,10 @@ OWNERS = {
 }
 
 def validate(scope):
-    if not isinstance(scope, dict) or set(scope) != {"kind", "mission", "selection_commitment"} or scope["kind"] != "variable_graph":
+    fields = {"kind", "mission", "selection_commitment"}
+    if (not isinstance(scope, dict) or set(scope) not in (fields, fields | {"planning_recovery"})
+            or scope["kind"] != "variable_graph"
+            or ("planning_recovery" in scope and scope["planning_recovery"] is not True)):
         raise ValueError("Exact variable graph scope required")
     vm.validate(scope["mission"])
     if not isinstance(scope["selection_commitment"], str) or not re.fullmatch(r"[0-9a-f]{64}", scope["selection_commitment"]):
@@ -60,6 +63,94 @@ def evidence_root(directory):
         raise ValueError("Unsafe variable graph evidence directory")
     return root
 
+def recovery_request(scope, rejected=None):
+    request = vm.request(scope["mission"])
+    if rejected is not None:
+        # Only validated Boolean selections from the original capability set.
+        vm.graph(scope["mission"], rejected)
+        message = json.loads(request["messages"][1]["content"])
+        message.update(previous_rejected_selection=rejected,
+            correction="Independent acceptance rejected this selection. Re-read every objective clause and independently decide each available capability. Choose a different selection, omit unrelated capabilities, include all explicitly required capabilities.")
+        request["messages"][1]["content"] = json.dumps(message, sort_keys=True)
+    return request
+
+def recovery_plan(scope, selection, md, request):
+    return {**vm.manifest(scope["mission"], selection, md), "request_sha256":digest(request)}
+
+def recovery_result(scope, identity, selection, n, p):
+    if type(n) is not int or not 0 < n <= 128 or type(p) is not int or not 0 < p <= 2048:
+        raise ValueError("Incomplete inference counters")
+    vm.graph(scope["mission"], selection)
+    accepted = digest(sorted(k for k,v in selection.items() if v)) == scope["selection_commitment"]
+    return {**identity, "selection":selection, "selection_sha256":digest(selection),
+            "eval_count":n, "prompt_eval_count":p, "accepted":accepted}
+
+def prepare_recovery(root, scope):
+    """One new corrective request, only after a complete, known wrong selection."""
+    md = check_local_model()
+    rejected = None
+    for i in (1, 2):
+        req = recovery_request(scope, rejected)
+        identity = {"index":i,"maximum":2,"scope_sha256":digest(scope),
+                    "request_sha256":digest(req),"model_digest":md,"paid_inference":False}
+        # Exclusive reservation: a crash or ambiguous response is never replayed.
+        exclusive(root / ("planning-attempt-%d.json" % i), identity)
+        response = read_json("/api/chat", req, timeout=90)
+        if response.get("model") != MODEL or response.get("done") is not True:
+            raise ValueError("Incomplete local model response")
+        raw = response.get("message", {}).get("content")
+        if not isinstance(raw, str) or len(raw) > 2000:
+            raise ValueError("Invalid local model content")
+        def unique(pairs):
+            row = {}
+            for k,v in pairs:
+                if k in row:raise ValueError("Duplicate capability selection")
+                row[k] = v
+            return row
+        selection = json.loads(raw, object_pairs_hook=unique)
+        receipt = recovery_result(scope, identity, selection, response.get("eval_count"), response.get("prompt_eval_count"))
+        exclusive(root / ("planning-response-%d.json" % i), receipt)
+        if receipt["accepted"]:
+            plan = recovery_plan(scope, selection, md, req)
+            exclusive(root / "model-reservation.json", {"request_sha256":digest(req),"maximum":1,"model_digest":md})
+            exclusive(root / "model-response.json", {"request_sha256":digest(req),"selection_sha256":digest(selection),
+                       "model_digest":md,"eval_count":receipt["eval_count"],"prompt_eval_count":receipt["prompt_eval_count"],"paid_inference":False})
+            exclusive(root / "plan.json", plan)
+            return
+        if selection == rejected:raise ValueError("Repeated rejected capability selection")
+        rejected = selection
+    raise ValueError("Independent objective commitment mismatch after bounded correction")
+
+def verify_recovery(root, scope, plan):
+    """Reconstruct every attempted request; no model or provider invocation."""
+    rejected = None
+    names = set()
+    requests = set()
+    for i in (1, 2):
+        req = recovery_request(scope, rejected)
+        identity = {"index":i,"maximum":2,"scope_sha256":digest(scope),
+                    "request_sha256":digest(req),"model_digest":plan["model_digest"],"paid_inference":False}
+        if identity["request_sha256"] in requests:raise ValueError("Repeated planning request")
+        requests.add(identity["request_sha256"])
+        attempt, response = ("planning-attempt-%d.json" % i, "planning-response-%d.json" % i)
+        names.update((attempt,response))
+        if checked(root / attempt, identity) != identity:raise ValueError("Planning reservation changed")
+        row = checked(root / response, identity)
+        expected = recovery_result(scope,identity,row["selection"],row["eval_count"],row["prompt_eval_count"])
+        if row != expected:raise ValueError("Planning receipt changed")
+        if row["accepted"]:
+            if plan != recovery_plan(scope,row["selection"],plan["model_digest"],req):
+                raise ValueError("Corrected plan changed")
+            final = checked(root / "model-response.json", {})
+            if final["eval_count"] != row["eval_count"] or final["prompt_eval_count"] != row["prompt_eval_count"]:
+                raise ValueError("Accepted inference counters changed")
+            if {p.name for p in root.glob("planning-*.json")} != names:
+                raise ValueError("Unexpected planning history")
+            return names
+        if row["selection"] == rejected:raise ValueError("Repeated rejected capability selection")
+        rejected = row["selection"]
+    raise ValueError("No accepted planning attempt")
+
 def prepare(directory, scope, company, mission):
     validate(scope)
     if os.getenv("GITHUB_ACTIONS") != "true":
@@ -76,7 +167,9 @@ def prepare(directory, scope, company, mission):
     else:
         exclusive(binding, identity)
     path = root / "plan.json"
-    if not path.exists():
+    if not path.exists() and scope.get("planning_recovery") is True:
+        prepare_recovery(root, scope)
+    elif not path.exists():
         md = check_local_model()
         req = vm.request(scope["mission"])
         exclusive(root / "model-reservation.json", {"request_sha256":digest(req),"maximum":1,"model_digest":md})
@@ -111,7 +204,9 @@ def load(directory, scope, company, mission, *, require_dispatch=True):
     if checked(root / "native-binding.json", identity) != identity:
         raise ValueError("Variable native identity changed")
     plan = checked(root / "plan.json", {})
-    if plan != vm.manifest(scope["mission"], plan["selection"], plan["model_digest"]):
+    if scope.get("planning_recovery") is True:
+        verify_recovery(root,scope,plan)
+    elif plan != vm.manifest(scope["mission"], plan["selection"], plan["model_digest"]):
         raise ValueError("Variable graph changed")
     vm.require_commitment(plan, scope["selection_commitment"])
     vm.validate_model_receipt(root, plan)
@@ -191,11 +286,15 @@ def verify(scope, prior, directory, *, functional_test):
     if set(prior) != set(products) or any(prior[k]["result"] != v for k,v in products.items()):
         raise ValueError("Native division results changed")
     expected = {"native-binding.json","plan.json","model-reservation.json","model-response.json"}
+    if scope.get("planning_recovery") is True:
+        expected.update(verify_recovery(root,scope,plan))
     for name in hashes:
         expected.update({name+".reserved.json",name+".result.json"})
     if {p.name for p in root.iterdir()} != expected:
         raise ValueError("Unexpected variable graph evidence")
-    return {"verified_producers":4, "independent_actual_input_test":functional_test,
+    recovery = ({"planning_attempts":len(list(root.glob("planning-attempt-*.json"))),
+                 "planning_recovery_verified":True} if scope.get("planning_recovery") is True else {})
+    return {**recovery,"verified_producers":4, "independent_actual_input_test":functional_test,
             "native_variable_graph_verified":True, "verified_contracts":len(hashes),
             "active_contract_divisions":[r for r in ORDER if not products[r]["scope_review_only"]],
             "plan_sha256":digest(plan), "contract_receipt_sha256":hashes,
