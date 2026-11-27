@@ -378,6 +378,66 @@ def minister():
     print(json.dumps({"minister_dispatch":True,"plan_sha256":digest(plan),"tasks":tasks}),flush=True)
 
 
+def retry_unstarted_verifier(api,directory,cid,mid,plan,agents,scope):
+    """Reuse pinned Paperclip's native idempotent task retry, never a new task.
+    Disposable CI only; absence of a local receipt alone is not proof of no work.
+    """
+    if os.getenv("GITHUB_ACTIONS")!="true" or os.getenv("PLENUM_EPHEMERAL_RUNNER")!="confirmed":
+        return False
+    from checkpoint_store import checked
+    from production_wiring import load_prepared
+    if load_prepared(directory,cid,mid)["checkpoint_mode"]!="local":return False
+    marker=directory/"verification-setup-retry.json"
+    if marker.exists() or marker.is_symlink():return False
+    if any((directory/n).exists() or (directory/n).is_symlink() for n in
+           ("verification.json","verification.attempt-1","verification.attempt-2","qualification.json")):
+        return False
+    if plan!=checked(directory/"minister-plan.json",{"company":cid,"parent":mid,
+                    "scope_sha256":scope_digest(scope),"order":list(MISSION_ORDER)}):
+        raise ValueError("Changed verifier recovery plan")
+    prior={}
+    for role in MISSION_ORDER[:-1]:
+        iid=canonical(plan["tasks"][role])
+        task=api("/api/issues/"+iid)
+        if (task.get("id")!=iid or task.get("companyId")!=cid or task.get("parentId")!=mid
+                or task.get("assigneeAgentId")!=agents[role] or task.get("status")!="done"):
+            return False
+        row=checked(directory/(role+".json"),{"company":cid,"issue":iid,"role":role})
+        if row["sha256"]!=digest(row["result"]) or row["result"]["input_sha256"]!=scope_inputs(prior):
+            raise ValueError("Changed prerequisite evidence")
+        prior[role]=row["result"]
+    iid=canonical(plan["tasks"]["verification"])
+    aid=canonical(agents["verification"])
+    task=api("/api/issues/"+iid)
+    if (task.get("id")!=iid or task.get("companyId")!=cid or task.get("parentId")!=mid
+            or task.get("assigneeAgentId")!=aid or task.get("status") not in ("todo","in_progress")):
+        return False
+    observed=(task.get("interruption") or {}).get("observedRunId")
+    if not observed:return False
+    runid=canonical(observed)
+    run=api("/api/heartbeat-runs/"+runid)
+    context=run.get("contextSnapshot") or {}
+    execution=(run.get("resultJson") or {}).get("executionRecovery") or {}
+    if (run.get("id")!=runid or run.get("companyId")!=cid or run.get("agentId")!=aid
+            or context.get("issueId")!=iid or run.get("status")!="failed"
+            or run.get("errorCode")!="setup_failed" or run.get("exitCode") is not None
+            or not run.get("finishedAt") or execution.get("kind")!="bootstrap"
+            or execution.get("providerWorkStarted") is not False):
+        return False
+    # Upstream checks that observedRunId is still latest under its issue lock.
+    # One reserved request only. Lost response remains unresolved; never replay.
+    key=str(uuid4())
+    exclusive(marker,{"schema":"plenum-verifier-setup-retry-v1","company":cid,"mission":mid,
+        "issue":iid,"run":runid,"idempotency_key":key,"prior_sha256":digest(prior),
+        "provider_work_started":False,"paid_inference":False})
+    reply=api("/api/issues/"+iid+"/retry","POST",{"observedRunId":runid,"idempotencyKey":key})
+    if reply.get("accepted") is not True or reply.get("stale") is not False:
+        raise RuntimeError("Native setup retry not accepted; no further dispatch")
+    exclusive(directory/"verification-setup-retry-accepted.json",{"company":cid,"mission":mid,
+        "issue":iid,"request":canonical(reply["requestId"]),"run":runid,"paid_inference":False})
+    return True
+
+
 def qualify(action="qualify"):
     from production_wiring import company_lock
     if persistent():
@@ -514,6 +574,9 @@ def qualify_locked(action):
                 raise ValueError("Minister plan not bound to mission")
             if all(required(api("/api/issues/"+iid),"status","child_readback")=="done" for iid in plan["tasks"].values()):
                 break
+            if durable and scope.get("kind")!="coastal" and retry_unstarted_verifier(api,directory,cid,parent_id,plan,agents,scope):
+                # Allow only the existing native verifier to finish its first work.
+                deadline=max(deadline,time.monotonic()+150)
         time.sleep(3)
     else:
         diagnostics=[]
