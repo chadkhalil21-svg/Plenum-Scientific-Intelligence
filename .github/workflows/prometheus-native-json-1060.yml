@@ -91,7 +91,7 @@ jobs:
         run: |
           set -euo pipefail
           PYTHONPATH=src:tools PLENUM_STAGED_1060_RESERVED=true PLENUM_STAGED_1060_NATIVE_JSON=confirmed "$RUNNER_TEMP/mini-venv/bin/python" -c 'import sys; from pathlib import Path; import run_native_miniswe_mission as m; m.configure_staged_1060(Path(sys.argv[1])); m.bind_native_json_1060(Path(sys.argv[2])); assert len(m.PRIOR_REQUESTS)==4' "$RUNNER_TEMP/issue1060.json" "$RUNNER_TEMP/1060.zip"
-          PYTHONPATH=tools "$RUNNER_TEMP/mini-venv/bin/python" -c 'from miniswe_native_json import request,response; from minisweagent.models.utils.actions_toolcall import parse_toolcall_actions; q=request([{"role":"user","content":"test"}],"local"); assert q["think"] is False and q["format"]["required"]==["op"]; a=response({"model":"local","done":True,"message":{"content":"{\\"op\\":\\"submit\\"}"}},"local",1); assert parse_toolcall_actions(a.choices[0].message.tool_calls,format_error_template="{{ error }}")[0]["command"]=="{\\"op\\":\\"submit\\"}"'
+          PYTHONPATH=tools "$RUNNER_TEMP/mini-venv/bin/python" -c 'import json; from miniswe_native_json import request,response; from minisweagent.models.utils.actions_toolcall import parse_toolcall_actions; q=request([{"role":"user","content":"test"}],"local"); assert q["think"] is False and q["format"]["required"]==["op"]; command=json.dumps({"op":"submit"}); a=response({"model":"local","done":True,"message":{"content":command}},"local",1); assert parse_toolcall_actions(a.choices[0].message.tool_calls,format_error_template="{{ error }}")[0]["command"]==command'
       - name: Start original free local inference
         run: |
           set -euo pipefail
