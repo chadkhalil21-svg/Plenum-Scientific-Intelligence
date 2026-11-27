@@ -127,6 +127,35 @@ def configure_staged_1055(issue_path):
     TEST = "test_public_business_watch.py"
 
 
+def bind_staged_timeout(archive):
+    """Consume the original ambiguous timed-out request; never replay it."""
+    global PRIOR_REQUESTS, CONTINUATION
+    expected = "92dbcf9e24e462706685d702ebd5f398a1f081812d87ba8bdf20d28ec6b0ecd3"
+    if (ISSUE != 1055 or os.getenv("PLENUM_STAGED_1055_RECOVERY") != "confirmed"
+            or archive.is_symlink() or not archive.is_file()
+            or archive.stat().st_size != 5492 or sha(archive.read_bytes()) != expected):
+        raise PermissionError("Exact reserved timeout archive required")
+    with zipfile.ZipFile(archive) as z:
+        if (set(z.namelist()) != {"miniswe-1055/model-reservations.jsonl","miniswe-1055/trajectory.json"}
+                or len(z.namelist()) != 2 or sum(x.file_size for x in z.infolist()) > 100000
+                or z.testzip() is not None):
+            raise ValueError("Unexpected timeout archive")
+        reservation = [json.loads(x) for x in z.read("miniswe-1055/model-reservations.jsonl").splitlines()]
+        trajectory = json.loads(z.read("miniswe-1055/trajectory.json"))
+    prior = "e9fc186eb9fdd7b4c7b9835e48da1443e08b7461e599e23563bebc2df0230ce7"
+    if (reservation != [{"request_sha256":prior,"ordinal":1}]
+            or trajectory["info"]["exit_status"] != "APITimeoutError"
+            or trajectory["info"]["model_stats"]["api_calls"] != 1
+            or trajectory["info"].get("submission") != ""
+            or [m.get("role") for m in trajectory["messages"]] != ["system","user","exit"]):
+        raise ValueError("Original timeout identity mismatch")
+    PRIOR_REQUESTS = {prior}
+    CONTINUATION = {"original_run":46075544961,"original_archive_sha256":expected,
+                    "prior_calls":1,"prior_response_received":False,
+                    "historical_requests_replayed":0,
+                    "strategy":"new compact staged request with bounded CPU generation budget"}
+
+
 def sha(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -179,8 +208,8 @@ class LocalOnlyModel(LitellmModel):
         super().__init__(model_name="openai/" + MODEL, cost_tracking="ignore_errors",
                          observation_template="Return code: {{output.returncode}}\n{{output.output[:6000]}}")
         self.client = OpenAI(base_url="http://127.0.0.1:11434/v1", api_key="local-only",
-                             max_retries=0, timeout=180 if PROSPECTIVE else 115,
-                             http_client=httpx.Client(trust_env=False, timeout=180 if PROSPECTIVE else 115))
+                             max_retries=0, timeout=240 if ISSUE == 1055 and CONTINUATION else (180 if PROSPECTIVE else 115),
+                             http_client=httpx.Client(trust_env=False, timeout=240 if ISSUE == 1055 and CONTINUATION else (180 if PROSPECTIVE else 115)))
         self.requests = set()
 
     def _query(self, messages, **kwargs):
@@ -192,7 +221,7 @@ class LocalOnlyModel(LitellmModel):
         with (OUT / "model-reservations.jsonl").open("a", encoding="utf-8") as f:
             f.write(json.dumps({"request_sha256": key, "ordinal": len(self.requests)}) + "\n")
         response = self.client.chat.completions.create(model=MODEL, messages=messages,
-                   tools=[BASH_TOOL], temperature=0, max_tokens=640 if PROSPECTIVE else 1200,
+                   tools=[BASH_TOOL], temperature=0, max_tokens=640 if PROSPECTIVE or (ISSUE == 1055 and CONTINUATION) else 1200,
                    extra_body={"think": False})
         with (OUT / "model-responses.jsonl").open("a", encoding="utf-8") as f:
             f.write(json.dumps({"request_sha256": key, "response_sha256": sha(response.model_dump_json().encode()),
@@ -237,6 +266,7 @@ def main():
     parser.add_argument("--skill-archive", type=Path)
     parser.add_argument("--staged", action="store_true")
     parser.add_argument("--staged-1055", type=Path)
+    parser.add_argument("--staged-timeout-archive", type=Path)
     args = parser.parse_args()
     if args.staged and (not (args.event or args.staged_1055) or os.getenv("PLENUM_MINISWE_STAGED") != "confirmed"):
         raise PermissionError("Staged action interface requires a fresh reserved owner event")
@@ -248,6 +278,10 @@ def main():
     if args.staged_1055:
         if not args.staged: raise PermissionError("Staged interface required")
         configure_staged_1055(args.staged_1055)
+        if args.staged_timeout_archive:
+            bind_staged_timeout(args.staged_timeout_archive)
+    elif args.staged_timeout_archive:
+        raise PermissionError("Original staged scope required")
     if args.prospective_arm:
         if not args.skill_archive:raise PermissionError("Bound learned archive required")
         configure_prospective(args.prospective_arm,args.skill_archive)
@@ -284,7 +318,7 @@ def main():
         # first native trajectory already inspected. This supplies context,
         # not a solution, hidden test or model-generated instruction.
         native_task = TASK
-        if CONTINUATION:
+        if CONTINUATION and ISSUE == 1040:
             native_task += ("\nThe previous native attempt exhausted twelve calls inspecting files without editing. "
                 "The existing regression baseline passes. The independent objective test fails on unchanged source. "
                 "The working directory is /work. The entire original editable source follows. "
@@ -298,9 +332,11 @@ def main():
         agent_env = StagedInterface(env,SOURCE,TEST,original,OUT/"staged-actions.jsonl") if args.staged else env
         if args.staged:
             native_task = staged_task(native_task, original)
+            if ISSUE == 1055 and CONTINUATION:
+                native_task += "\nPrior request timed out without a response. This is a new action request, not a replay. Keep the first replacement small and focused; return only a tool call, no exploratory prose."
         agent = DefaultAgent(model,agent_env,step_limit=12,cost_limit=0,wall_time_limit_seconds=1200 if PROSPECTIVE else 1050,
             max_consecutive_format_errors=2,
-            system_template="You are the original Plenum engineering specialist. Solve the authorized public code issue in the isolated workspace. Use bash tools for actual inspection, edits and tests. No external services. Preserve existing interfaces. Each reply must call bash. Work from observed test output, diagnose failures and revise your solution.",
+            system_template=("You are the original Plenum engineering specialist. Use only the structured JSON action vocabulary carried by the bash tool. Make small exact edits, use automatic test feedback, and submit only after regression passes. No external services." if args.staged else "You are the original Plenum engineering specialist. Solve the authorized public code issue in the isolated workspace. Use bash tools for actual inspection, edits and tests. No external services. Preserve existing interfaces. Each reply must call bash. Work from observed test output, diagnose failures and revise your solution."),
             instance_template=("Objective: {{task}}\nUse the structured action interface exactly as specified above; do not send shell commands." if args.staged else "Objective: {{task}}\nThe editable module is " + SOURCE + ". Existing tests: python -B -m unittest discover -s tests -p " + TEST + ". Inspect relevant code, independently reproduce the problem with your own tests, implement a minimal fix, run tests and correct failures. Do not modify existing tests. When satisfied, execute exactly: echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT"),
             output_path=OUT/"trajectory.json")
         started = time.monotonic()
