@@ -36,8 +36,11 @@ def validate_pin(pin):
         or type(pin["artifact_id"]) is not int or not 0<pin["artifact_id"]<10**14
         or any(not isinstance(pin[k],str) or not re.fullmatch(r"[0-9a-f]{40}",pin[k]) for k in ("head_sha","commit"))
         or any(not isinstance(pin[k],str) or not re.fullmatch(r"[0-9a-f]{64}",pin[k]) for k in ("zip_sha256","memory_sha256","qualification_sha256"))
-        or not isinstance(pin["ref"],str) or not re.fullmatch(r"refs/pull/[1-9][0-9]{0,8}/merge",pin["ref"])
-        or pin["stage"] not in ("science","engineering")):
+        or not isinstance(pin["ref"],str)
+        or (pin["ref"]!="refs/heads/main" and not re.fullmatch(r"refs/pull/[1-9][0-9]{0,8}/merge",pin["ref"]))
+        or pin["stage"] not in ("science","engineering")
+        or (pin["ref"]=="refs/heads/main" and
+            (pin["head_sha"]!=pin["commit"] or pin["stage"]!="engineering"))):
         raise ValueError("Invalid exact public predecessor pin")
     return pin
 
@@ -45,9 +48,18 @@ def validate_pinned_source(run,artifact,pin):
     """Verify metadata for an exact pin; cryptographic attestation is separate."""
     pin=validate_pin(pin)
     if (str(run.get("id"))!=pin["run_id"] or run.get("status")!="completed" or run.get("conclusion")!="success"
-        or run.get("event")!="pull_request" or run.get("head_sha")!=pin["head_sha"]
-        or run.get("path")!=".github/workflows/paperclip-multidisciplinary.yml"
+        or run.get("head_sha")!=pin["head_sha"]
         or run.get("repository",{}).get("full_name")!=REPO):
+        raise ValueError("Wrong original accepted workflow")
+    if pin["ref"]=="refs/heads/main":
+        if (run.get("event")!="issues" or run.get("head_branch")!="main"
+            or run.get("path")!=".github/workflows/paperclip-cross-run.yml"
+            or run.get("head_repository",{}).get("full_name")!=REPO
+            or run.get("actor",{}).get("login")!="chadkhalil21-svg"
+            or type(run.get("run_attempt")) is not int or run["run_attempt"]!=1):
+            raise ValueError("Wrong live continuation origin")
+    elif (run.get("event")!="pull_request"
+        or run.get("path")!=".github/workflows/paperclip-multidisciplinary.yml"):
         raise ValueError("Wrong original accepted workflow")
     if (type(artifact.get("id")) is not int or artifact["id"]!=pin["artifact_id"]
         or artifact.get("name")!="paperclip-pipeline-memory-"+pin["stage"]
