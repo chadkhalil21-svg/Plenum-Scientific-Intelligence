@@ -1,0 +1,104 @@
+name: Prometheus staged held-out assignment 1055
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - '.github/workflows/prometheus-staged-readback-1055.yml'
+permissions:
+  contents: read
+concurrency:
+  group: plenum-original-staged-1055
+  cancel-in-progress: false
+jobs:
+  reserve:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-staged-readback-1055' && github.event.pull_request.base.ref == 'prometheus-staged-native-edit-interface' && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    outputs:
+      reserved: ${{ steps.reserve.outputs.reserved }}
+    steps:
+      - id: reserve
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          repo=chadkhalil21-svg/Plenum-Scientific-Intelligence
+          gh api "repos/$repo/issues/1055" | jq -e '.user.login=="chadkhalil21-svg" and .state=="open" and .title=="[Plenum Prometheus] Independent staged engineering assignment: bounded public readback"' >/dev/null
+          gh api --paginate "repos/$repo/issues/1055/comments?per_page=100" | jq -s add | jq -e 'all(.[]; (.body|contains("plenum-staged-1055-reserved-v1")|not))' >/dev/null
+          gh api --method POST "repos/$repo/issues/1055/comments" -f body="<!-- plenum-staged-1055-reserved-v1:$GITHUB_RUN_ID --> One original free local staged execution, no replay." >/dev/null
+          echo reserved=true >> "$GITHUB_OUTPUT"
+  engineering:
+    needs: reserve
+    if: needs.reserve.outputs.reserved == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      issues: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify frozen source and independent acceptance identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git hash-object src/plenum_ai/business_public_watch.py)" = 9e0eb29087a67c802f8746fbb0ee2307fc41f848
+          test "$(git hash-object tests/acceptance/staged_readback_1055.py)" = 2b1019c07b9000cd7028c5eecb85b240fa816d79
+          gh api repos/chadkhalil21-svg/Plenum-Scientific-Intelligence/issues/1055 > "$RUNNER_TEMP/issue1055.json"
+      - name: Install existing upstream native executor
+        run: |
+          set -euo pipefail
+          python -m venv "$RUNNER_TEMP/mini-venv"
+          "$RUNNER_TEMP/mini-venv/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: 'mini-swe-agent==2.4.6' 'litellm!=1.82.7,!=1.82.8'
+          "$RUNNER_TEMP/mini-venv/bin/python" -m pip check
+          "$RUNNER_TEMP/mini-venv/bin/python" -m py_compile tools/run_native_miniswe_mission.py
+          docker pull python:3.12-slim
+          test "$(df --output=avail -B1 / | tail -1 | tr -d ' ')" -ge 9000000000
+          test "$(awk '/MemTotal/ {print $2}' /proc/meminfo)" -ge 14000000
+      - name: Qualify interface and independently demonstrate original defect
+        run: |
+          set -euo pipefail
+          PYTHONPATH=src:tools python -B -m unittest discover -s tests -p test_miniswe_staged_interface.py -v
+          PYTHONPATH=src:tools python - <<'PY'
+          import pathlib,subprocess
+          from verify_original_openhands_candidate import sandbox_command,completed_unittest
+          result=subprocess.run(sandbox_command(pathlib.Path.cwd(),"python:3.12-slim","/work/tests/acceptance","staged_readback_1055.py"),capture_output=True,text=True,timeout=150)
+          if not completed_unittest(result,failed=True) or "Ran 2 tests" not in result.stderr:
+              raise SystemExit("Original behavior defect not independently established")
+          print("Original held-out defect independently established.")
+          PY
+      - name: Verify exact issue binding before model startup
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/mini-home"
+          env -i PATH="$RUNNER_TEMP/mini-venv/bin:/usr/bin:/bin" HOME="$RUNNER_TEMP/mini-home" PYTHONPATH=src:tools MSWEA_SILENT_STARTUP=1 PLENUM_STAGED_1055_RESERVED=true "$RUNNER_TEMP/mini-venv/bin/python" -c 'import sys; from pathlib import Path; import run_native_miniswe_mission as m; m.configure_staged_1055(Path(sys.argv[1])); print(m.ISSUE,m.SOURCE,m.ACCEPTANCE)' "$RUNNER_TEMP/issue1055.json"
+      - name: Start original free local inference
+        run: |
+          set -euo pipefail
+          docker run -d --rm --name plenum-miniswe-ollama -p 127.0.0.1:11434:11434 -e OLLAMA_CONTEXT_LENGTH=8192 -e OLLAMA_NUM_PARALLEL=1 -e OLLAMA_NO_CLOUD=1 --memory=10g --cpus=3 ollama/ollama:latest
+          for i in $(seq 1 60); do curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null && break; sleep 2; done
+          docker exec plenum-miniswe-ollama ollama pull qwen3.5:9b-q4_K_M
+          test "$(docker exec plenum-miniswe-ollama ollama list | awk '$1=="qwen3.5:9b-q4_K_M" {print $2}')" = 56671c2ab938
+      - name: Run original native agent with staged action feedback and independent grader
+        run: |
+          set -euo pipefail
+          env -i PATH="$RUNNER_TEMP/mini-venv/bin:/usr/bin:/bin" HOME="$RUNNER_TEMP/mini-home" PYTHONPATH=src GITHUB_ACTIONS=true GITHUB_REPOSITORY=chadkhalil21-svg/Plenum-Scientific-Intelligence PLENUM_MINISWE_RESERVED=true PLENUM_MINISWE_STAGED=confirmed PLENUM_STAGED_1055_RESERVED=true MSWEA_SILENT_STARTUP=1 MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT=1 LITELLM_LOCAL_MODEL_COST_MAP=True LITELLM_LOG=ERROR DO_NOT_TRACK=1 "$RUNNER_TEMP/mini-venv/bin/python" tools/run_native_miniswe_mission.py --staged --staged-1055 "$RUNNER_TEMP/issue1055.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: original-staged-1055
+          path: |
+            reports/miniswe-1055/
+            reports/openhands-review/issue-1055.patch
+          if-no-files-found: warn
+      - if: always()
+        run: |
+          docker rm -f plenum-miniswe-ollama || true
+          docker ps -aq --filter label=plenum-miniswe-1055 | xargs -r docker rm -f
