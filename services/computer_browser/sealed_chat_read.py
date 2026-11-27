@@ -270,12 +270,22 @@ def seal_result(record: dict, result: dict):
             "read_only": True,
             "requires_new_owner_approval_per_page": False,
         }
+    return _seal_document(record["recipient_public_key"], document)
+
+
+def _seal_document(recipient_public_key, document):
+    """Internal bounded envelope encryption; callers validate their own schema."""
+    from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+    from cryptography.hazmat.primitives import serialization, hashes
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+
     plaintext = json.dumps(document, separators=(",", ":"),
                            ensure_ascii=True).encode("utf-8")
     if len(plaintext) > 4800:
         raise PermissionError("Private result payload exceeds limit")
     eph = X25519PrivateKey.generate()
-    shared = eph.exchange(parse_recipient(record["recipient_public_key"]))
+    shared = eph.exchange(parse_recipient(recipient_public_key))
     salt, nonce = secrets.token_bytes(16), secrets.token_bytes(12)
     key = HKDF(algorithm=hashes.SHA256(), length=32,
                salt=salt, info=HKDF_INFO).derive(shared)

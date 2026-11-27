@@ -16,6 +16,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from .engine import allowed_origins
 from .github_oidc_read_policy import GitHubOIDCTokenVerifier, GitHubRelayIdentity
 from .owner_console import require_verified_owner
+from .owner_sealed_inventory import approve_inventory, consume_inventory, seal_inventory, ACTION as INVENTORY_ACTION
 from .owner_saved_session import (
     _owner_form_token, _verify_owner_form, _require_allowed_origin,
     _page, read_saved_site, read_saved_batch,
@@ -45,6 +46,42 @@ def mount_owner_sealed_relay(app):
     if (os.environ.get("K_SERVICE") != "plenum-browser-owner-auth0"
             or os.environ.get(FLAG) != "true"):
         return
+
+    @app.get("/owner/chat-inventory-approval", response_class=HTMLResponse)
+    async def inventory_approval(_owner=Depends(require_verified_owner)):
+        token = escape(_owner_form_token(_owner["private_owner_id"],
+                                         "https://example.com", "sealed_inventory"), quote=True)
+        return _page("Approve encrypted session inventory",
+            "<article>Share only approved website origins and saved-profile existence "
+            "with Computer once. No cookies, account contents or active-login proof. "
+            "<form method='post' action='/owner/chat-inventory-approval'>"
+            "<input type='hidden' name='csrf_token' value='" + token + "'>"
+            "<label>Computer's ephemeral public key "
+            "<input name='recipient_public_key' maxlength='43' required></label>"
+            "<label>Type APPROVE <input name='confirmation' maxlength='7' required></label>"
+            "<button type='submit'>Approve one encrypted inventory read</button>"
+            "</form></article>")
+
+    @app.post("/owner/chat-inventory-approval", response_class=HTMLResponse)
+    async def inventory_approval_post(
+        request: Request, recipient_public_key: str = Form(),
+        csrf_token: str = Form(default=""), confirmation: str = Form(default=""),
+        _owner=Depends(require_verified_owner),
+    ):
+        _verify_owner_form(request, _owner["private_owner_id"],
+                           "https://example.com", "sealed_inventory", csrf_token)
+        if confirmation != "APPROVE":
+            raise HTTPException(status_code=403, detail="Explicit inventory approval required")
+        try:
+            await asyncio.to_thread(approve_inventory, _owner["private_owner_id"],
+                                    recipient_public_key=recipient_public_key)
+        except (ValueError, PermissionError) as exc:
+            raise HTTPException(status_code=403, detail="Inventory approval denied") from exc
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="Inventory approval unavailable") from exc
+        return _page("One encrypted inventory read authorized",
+                     "<article>One signed request permitted within ten minutes. "
+                     "No website actions are authorized.</article>")
 
     @app.get("/owner/chat-sealed-approval", response_class=HTMLResponse)
     async def approve_page(_owner=Depends(require_verified_owner)):
@@ -357,6 +394,18 @@ def mount_owner_sealed_relay(app):
         except Exception as exc:
             raise HTTPException(status_code=401,
                                 detail="Signed founder workflow required") from exc
+        if action == INVENTORY_ACTION:
+            if navigation is not None:
+                raise HTTPException(status_code=403, detail="Inventory cannot navigate")
+            try:
+                consent = await asyncio.to_thread(consume_inventory)
+            except Exception as exc:
+                raise HTTPException(status_code=403, detail="Inventory consent absent") from exc
+            try:
+                encrypted = await asyncio.wait_for(asyncio.to_thread(seal_inventory, consent), timeout=35)
+                return JSONResponse(encrypted, headers=_HEADERS)
+            except Exception as exc:
+                raise HTTPException(status_code=503, detail="Encrypted inventory unavailable") from exc
         if action is not None:
             # Original signed GitHub OIDC, separate exact owner-reviewed plan.
             if navigation is not None or action != "exact-form-post-v1":
