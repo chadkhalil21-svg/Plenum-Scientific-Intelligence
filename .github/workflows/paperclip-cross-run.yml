@@ -32,3 +32,72 @@ jobs:
       attestations: write
       # Permission ceiling for skipped legacy issue jobs only.
       issues: write
+
+  reserve-authorized:
+    if: >-
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.actor == 'chadkhalil21-svg' && github.run_attempt == 1 &&
+      github.event_name == 'issues' && github.ref == 'refs/heads/main' &&
+      github.event.action == 'opened' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.sender.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == '[Plenum Paperclip] authorized cross-run continuation'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+      attestations: read
+      issues: write
+    outputs:
+      stage: ${{ steps.prepare.outputs.stage }}
+      scope: ${{ steps.prepare.outputs.scope }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - id: prepare
+        name: Reserve once and verify exact original signed predecessor
+        env:
+          PYTHONPATH: src
+          GH_TOKEN: ${{ github.token }}
+        run: python3 integrations/paperclip/cross_run_authorized.py prepare
+      - uses: actions/upload-artifact@v4
+        with:
+          name: paperclip-cross-run-authorized-source
+          path: reports/authorized-cross-run/
+          if-no-files-found: error
+          retention-days: 90
+  authorized-continuation:
+    needs: reserve-authorized
+    if: needs.reserve-authorized.result == 'success'
+    uses: ./.github/workflows/paperclip-native-integration.yml
+    with:
+      pipeline_stage: ${{ needs.reserve-authorized.outputs.stage }}
+      cross_run_case: authorized
+      authorized_cross_run_scope: ${{ needs.reserve-authorized.outputs.scope }}
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+      attestations: write
+      issues: write
+  authorized-terminal:
+    needs: [reserve-authorized, authorized-continuation]
+    if: always() && needs.reserve-authorized.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      issues: write
+    steps:
+      - name: Record original continuation outcome without redispatch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          RESULT: ${{ needs.authorized-continuation.result }}
+        run: |
+          set -eu
+          [[ "$ISSUE" =~ ^[1-9][0-9]{0,8}$ ]]
+          [[ "$GITHUB_RUN_ID" =~ ^[1-9][0-9]{0,12}$ ]]
+          [[ "$RESULT" =~ ^(success|failure|cancelled|skipped)$ ]]
+          gh api "repos/$GITHUB_REPOSITORY/issues/$ISSUE/comments" -f body="<!-- plenum-public-workforce-run:$GITHUB_RUN_ID:terminal --> Signed continuation result: $RESULT. No automatic redispatch."
