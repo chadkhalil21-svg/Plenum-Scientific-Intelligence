@@ -677,6 +677,8 @@ def structured_local_edit(task,scope,*,numbered=False):
 # behavioral acceptance suites. No failed candidate, test answers or logs enter
 # the next model prompt. A distinct edit format is used only once.
 TASK_ACCEPTANCE = {
+    ("src/plenum_ai/business_public_watch.py", "Repair function probe. Require exact application/json for health and text/html for HTML, ignoring case and parameters. Reject other media types and preserve all other checks."):
+        "public_media_types.py",
     ("src/plenum_ai/noaa_revision_agent.py", "Repair function parse_candidate. Reject excessively nested JSON responses as invalid_json without raising exceptions. Preserve valid proposals and all existing validation gates."):
         "noaa_nested_response.py",
     ("src/plenum_ai/mission_checkpoint.py", "Repair function checkpoint_path. Require an exact integer issue identifier from 1 through 999999999. Reject invalid values with ValueError. Preserve valid path names."):
