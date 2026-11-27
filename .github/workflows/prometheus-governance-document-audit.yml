@@ -1,0 +1,35 @@
+name: Prometheus | Real repository document audit
+on:
+  pull_request:
+    paths:
+      - 'tools/prometheus_governance_document_audit.py'
+      - '.github/workflows/prometheus-governance-document-audit.yml'
+permissions:
+  contents: read
+jobs:
+  historical-source-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Reuse existing reviewed exact document dependencies
+        run: |
+          python -m pip install 'docling-slim[format-pdf-docling] @ git+https://github.com/docling-project/docling.git@33f33aafbdb5151dc795a042b964ff659c475218' 'llama-index-core @ git+https://github.com/run-llama/llama_index.git@40d4f79eb9d8f68430692d0cc156483ca2d7f4f6#subdirectory=llama-index-core' reportlab==4.4.5
+      - name: Audit two real historical public source passages using original model-free adapters
+        env:
+          PYTHONPATH: src
+          PLENUM_PUBLIC_DOCUMENT_FIXTURE: confirmed
+          HF_HUB_OFFLINE: '1'
+          TRANSFORMERS_OFFLINE: '1'
+          OPENAI_API_KEY: ''
+        run: python tools/prometheus_governance_document_audit.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prometheus-governance-document-audit
+          path: governance-document-audit.json
+          if-no-files-found: error
