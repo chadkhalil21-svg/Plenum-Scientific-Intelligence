@@ -293,6 +293,9 @@ class TrustedRecoveryTests(unittest.TestCase):
                 system=payload["messages"][0]["content"]
                 self.assertIn("bool is a subclass of int",system)
                 self.assertIn("preserve subclass acceptance",system)
+                self.assertIn("normal and exceptional control flow separately",system)
+                self.assertIn("before assignment completes",system)
+                self.assertIn("enforce it explicitly",system)
                 self.assertEqual(json.loads(payload["messages"][1]["content"])["objective"],task)
                 self.assertNotIn("checkpoint_path",system)
                 self.assertNotIn("tests/acceptance",system)
