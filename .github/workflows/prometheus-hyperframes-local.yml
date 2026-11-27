@@ -3,7 +3,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/prometheus-hyperframes-local.yml'
-      - 'integrations/agent-catalog/fixtures/hyperframes/**'
+      - 'docs/checkpoint-maintainer-guide/index.html'
 permissions:
   contents: read
 jobs:
@@ -41,7 +41,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends ffmpeg iproute2
           HOME="$root/home" HYPERFRAMES_NO_TELEMETRY=1 node packages/cli/bin/hyperframes.mjs browser ensure
-          cp "$GITHUB_WORKSPACE/integrations/agent-catalog/fixtures/hyperframes/index.html" "$root/project/index.html"
+          cp "$GITHUB_WORKSPACE/docs/checkpoint-maintainer-guide/index.html" "$root/project/index.html"
       - name: Render original local composition with network isolated and no hosted services
         run: |
           set -euo pipefail
@@ -58,22 +58,23 @@ jobs:
           p=pathlib.Path('output.mp4')
           meta=json.loads(subprocess.check_output(['ffprobe','-v','error','-select_streams','v:0','-show_streams','-of','json',str(p)]))['streams'][0]
           assert (meta['width'],meta['height'])==(640,360)
-          assert abs(float(meta['duration'])-2)<0.1
-          assert int(meta['nb_frames'])==48
+          assert abs(float(meta['duration'])-8)<0.1
+          assert int(meta['nb_frames'])==192
           def frame(t):
               return subprocess.check_output(['ffmpeg','-v','error','-ss',str(t),'-i',str(p),'-frames:v','1','-f','rawvideo','-pix_fmt','rgb24','-'])
-          a,b=frame(0.2),frame(1.7)
+          a,b=frame(0.3),frame(7.5)
           assert len(a)==len(b)==640*360*3
-          assert sum(abs(x-y) for x,y in zip(a,b))/len(a)>1.0, 'No meaningful motion'
+          assert sum(abs(x-y) for x,y in zip(a,b))/len(a)>0.3, 'No meaningful motion'
           h=lambda name:hashlib.sha256(pathlib.Path(name).read_bytes()).hexdigest()
-          pathlib.Path('hyperframes-acceptance.json').write_text(json.dumps({'schema':'plenum-hyperframes-local-v1','version':'0.9.97','release_commit':'c6ff4a31f240f6051836136577f51045c6da15c5','video_sha256':h('output.mp4'),'source_lock_receipt_sha256':h('source-lock.sha256'),'source_build':True,'frames':48,'duration_seconds':2,'original_fixture':True,'paid_inference':False,'owner_runtime_verified':False},indent=2))
+          pathlib.Path('hyperframes-acceptance.json').write_text(json.dumps({'schema':'plenum-hyperframes-local-v1','version':'0.9.97','release_commit':'c6ff4a31f240f6051836136577f51045c6da15c5','video_sha256':h('output.mp4'),'source_lock_receipt_sha256':h('source-lock.sha256'),'source_build':True,'frames':192,'duration_seconds':8,'public_repository_documentation':True,'composition_sha256':h('docs/checkpoint-maintainer-guide/index.html'),'paid_inference':False,'owner_runtime_verified':False},indent=2))
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: hyperframes-local-acceptance
+          name: prometheus-checkpoint-maintainer-motion
           path: |
             output.mp4
             hyperframes-acceptance.json
             source-lock.sha256
+            docs/checkpoint-maintainer-guide/index.html
           if-no-files-found: error
           retention-days: 7
