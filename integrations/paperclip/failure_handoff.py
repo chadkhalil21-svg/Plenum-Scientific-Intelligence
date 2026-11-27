@@ -10,6 +10,42 @@ from checkpoint_store import checked,encoded,exclusive
 from lifecycle import canonical
 
 ROLES=("intelligence","research","engineering","commercial","verification")
+def native_recovery_facts(api,row,company,mission,agent,issue=None):
+    """Read-only evidence. Unknown or inconsistent facts never authorize retry."""
+    facts={"kind":None,"provider_work_started":None,"identity_matches":None,
+           "observed_run_matches":None,"finished":None,"detail_error":False}
+    try:
+        rid=canonical(row["id"])
+        run=api("/api/heartbeat-runs/"+rid)
+        if (run.get("id")!=rid or run.get("companyId")!=company
+                or run.get("agentId")!=agent or run.get("status")!="failed"
+                or run.get("errorCode")!="setup_failed" or run.get("exitCode") is not None):
+            facts["identity_matches"]=False
+            return facts
+        context=run.get("contextSnapshot") or {}
+        execution=(run.get("resultJson") or {}).get("executionRecovery") or {}
+        kind=execution.get("kind")
+        facts["kind"]="bootstrap" if kind=="bootstrap" else ("other" if kind is not None else None)
+        started=execution.get("providerWorkStarted")
+        facts["provider_work_started"]=started if type(started) is bool else None
+        finished=run.get("finishedAt")
+        facts["finished"]=bool(finished) if isinstance(finished,str) else None
+        if issue is not None:
+            iid=canonical(issue)
+            task=api("/api/issues/"+iid)
+            facts["identity_matches"]=(context.get("issueId")==iid and
+                task.get("id")==iid and task.get("companyId")==company and
+                task.get("parentId")==mission and task.get("assigneeAgentId")==agent)
+            observed=(task.get("interruption") or {}).get("observedRunId")
+            facts["observed_run_matches"]=(observed==rid) if observed is not None else None
+    except Exception as exc:
+        facts["detail_error"]=True
+        from urllib.error import HTTPError
+        if isinstance(exc,HTTPError) and type(exc.code) is int and 400<=exc.code<=599:
+            facts["detail_http_status"]=exc.code
+    return facts
+
+
 def publish(directory,company,mission,scope_sha256,diagnostics):
     root=Path(directory)
     if root.is_symlink() or not root.is_dir():raise ValueError("Unsafe handoff directory")
@@ -45,6 +81,15 @@ def publish(directory,company,mission,scope_sha256,diagnostics):
         if role not in ("minister",*ROLES):raise ValueError("Unknown diagnostic division")
         item={"division":role,"run":canonical(d["id"]),"status":str(d.get("status"))[:32],
               "error_code":str(d.get("errorCode"))[:64],"exit_code":d.get("exitCode")}
+        recovery=d.get("native_recovery")
+        if isinstance(recovery,dict):
+            kind=recovery.get("kind")
+            item["native_recovery"]={"kind":kind if kind in ("bootstrap","other") else None}
+            for field in ("provider_work_started","identity_matches","observed_run_matches","finished","detail_error"):
+                value=recovery.get(field)
+                item["native_recovery"][field]=value if type(value) is bool else None
+            code=recovery.get("detail_http_status")
+            if type(code) is int and 400<=code<=599:item["native_recovery"]["detail_http_status"]=code
         safe.append(item)
     if len(safe)>18:raise ValueError("Diagnostic bound")
     result={"schema":"plenum-native-failure-handoff-v1","company":company,"mission":mission,

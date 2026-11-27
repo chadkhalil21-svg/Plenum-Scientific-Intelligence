@@ -604,6 +604,17 @@ def qualify_locked(action):
                     d["categories"]=[x for x in ("HTTPError","PermissionError","ValueError","RuntimeError","ModuleNotFoundError",
                         "KeyError","FileNotFoundError","Terminal specialist failure","Task assignment") if x in raw]
                 except Exception as exc: d["log_error"]=type(exc).__name__
+                # Read only bounded, identity-bound native startup facts.
+                if row.get("status")=="failed" and row.get("errorCode")=="setup_failed":
+                    from failure_handoff import native_recovery_facts
+                    issue=None
+                    if key in agents and plan_path.is_file():
+                        try:
+                            bound=__import__("checkpoint_store").checked(plan_path,{"company":cid,"parent":parent_id,"order":list(MISSION_ORDER)})
+                            issue=canonical(bound["tasks"][key])
+                        except (ValueError,KeyError,OSError):
+                            pass
+                    d["native_recovery"]=native_recovery_facts(api,row,cid,parent_id,aid,issue)
                 diagnostic={"division":key,"diagnostic":d}
                 diagnostics.append(diagnostic)
                 print(json.dumps(diagnostic),flush=True)

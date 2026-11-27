@@ -297,7 +297,11 @@ jobs:
             docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_CI_SUPERVISOR_PROOF=confirmed -e PLENUM_MISSION_SCOPE="$scope" -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/supervise_native.py event
             docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/event_native.py resume
           else
-            docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_MISSION_SCOPE="$scope" -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/supervise_native.py event
+            if [ "$KIND" = variable-upstream ]; then
+              docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_EPHEMERAL_RUNNER=confirmed -e PLENUM_MISSION_SCOPE="$scope" -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/supervise_native.py event
+            else
+              docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_MISSION_SCOPE="$scope" -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/supervise_native.py event
+            fi
           fi
       - name: Qualify consecutive persistent model-directed missions and bounded recovery
         if: matrix.mode == 'local' && matrix.kind == 'budget'
