@@ -64,4 +64,24 @@ def main():
                     except ValueError:pass
                     else:raise AssertionError("Unexpected or altered evidence accepted")
             print(label,"PASS (mock model transport only)")
+    for label,finish,message in (
+        ("TOKEN_BUDGET_EXHAUSTED","length",{"thinking":"private mock","content":""}),
+        ("MISSING_THINKING","stop",{"content":json.dumps(good)}),
+        ("MISSING_FINAL_CONTENT","stop",{"thinking":"private mock","content":""}),
+        ("INVALID_FINAL_JSON","stop",{"thinking":"private mock","content":"not JSON"}),
+        ("INVALID_FINAL_SELECTION","stop",{"thinking":"private mock","content":json.dumps({"stations":True})}),
+    ):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            reply={"model":u.mp.MODEL,"done":True,"done_reason":finish,"eval_count":20,
+                   "prompt_eval_count":100,"message":message}
+            with patch.object(u.mp,"read_json",return_value=reply) as transport:
+                try:u.inference(root,"peer",u.peer_request(mission,good),md)
+                except ValueError:pass
+                else:raise AssertionError("Incomplete model response accepted")
+                assert transport.call_count==1
+                assert not (root/"peer.result.json").exists()
+                diagnostic=json.loads((root/"peer.diagnostic.json").read_text())
+                assert diagnostic["reason"]==label
+                assert "private mock" not in json.dumps(diagnostic)
 if __name__=="__main__":main()
