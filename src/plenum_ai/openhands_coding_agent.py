@@ -613,6 +613,14 @@ def structured_local_edit(task,scope,*,numbered=False):
             "No markdown, commands, tests or explanations."},
             {"role":"user","content":json.dumps({"objective":task,
                 "numbered_function":[f"{i+1}: {line}" for i,line in enumerate(lines)]})}]
+    # General Python runtime semantics, independent of any mission or hidden
+    # acceptance fixture. Both edit strategies receive the same language facts.
+    payload["messages"][0]["content"] += (
+        " Python type annotations do not enforce runtime input types. "
+        "Exact types, subclass membership, numeric equality and coercion are distinct; "
+        "bool is a subclass of int. When validating inputs, check admissible types "
+        "before comparisons or arithmetic, and preserve subclass acceptance where "
+        "the stated contract allows it. Consider boundary values and invalid types.")
     dependencies=readonly_dependency_view(scope, task)
     if dependencies:
         payload["messages"][0]["content"] += (
