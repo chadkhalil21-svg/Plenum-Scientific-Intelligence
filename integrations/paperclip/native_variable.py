@@ -42,7 +42,7 @@ def validate(scope):
 
 def fixture(case):
     if case=="discovery":
-        mission={"objective":"Find recent public concrete corrosion papers, independently check the discovered scholarly records, and solve and verify the illustrative thermal cooling model.",
+        mission={"objective":"Find public concrete corrosion papers, independently check the discovered scholarly records, and solve and verify the illustrative thermal cooling model.",
                  "authorized_inputs":{"literature_discovery":"Survey public concrete corrosion papers",
                                       "thermal":{"initial_kelvin":350,"ambient_kelvin":300,"rate":0.05,"duration":20},
                                       "commercial":True}}
