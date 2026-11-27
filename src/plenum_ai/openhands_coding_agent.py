@@ -691,7 +691,7 @@ STRUCTURED_RECOVERY_TASKS = {
 
 
 def execute_local(task: str, *, source_file: str, candidate_out: str,
-                  behavioral_recovery: bool = False) -> dict:
+                  behavioral_recovery: bool = False, regression_recovery: bool = False) -> dict:
     """Run official Aider noninteractively, with only a public source copy mounted.
 
     The existing Actions job supplies an internal Docker network connected only
@@ -704,14 +704,17 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
         raise RuntimeError("Run only in a separately isolated ephemeral runner")
     original, _ = _public_source(source_file)
     requests=local_edit_requests(task,original)
+    if regression_recovery and (not behavioral_recovery or len(requests) != 1 or (source_file, task) not in STRUCTURED_RECOVERY_TASKS):
+        raise PermissionError("Unapproved regression recovery")
     scope=None
     if requests:
         if behavioral_recovery:
             if len(requests) != 1 or (source_file, task) not in STRUCTURED_RECOVERY_TASKS:
                 raise PermissionError("Unapproved structured edit recovery")
             scope = local_function_scope(requests[0], original)
-            feedback = (" Independent behavioral acceptance rejected the first proposal. "
-                        "Reconsider the stated requirements from the original function. "
+            feedback = ((" Existing focused regressions rejected the first proposal; the unchanged source passed. "
+                         if regression_recovery else " Independent behavioral acceptance rejected the first proposal. ")
+                        + "Reconsider the stated requirements from the original function. "
                         "Preserve its signature and all unrelated behavior.")
             # One different, numbered edit from the ORIGINAL source. Never
             # replay the first prompt or grant a further retry on any failure.
