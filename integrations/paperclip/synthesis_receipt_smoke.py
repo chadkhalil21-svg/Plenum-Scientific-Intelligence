@@ -10,7 +10,17 @@ from synthesis_smoke import scope,fixture_selection
 
 
 def main():
-    s=scope();company='synthetic-company';parent='synthetic-parent';selected=fixture_selection(s)
+    comparison=scope()
+    assert request_for(comparison,1)==request_v1(comparison,1)
+    assert request_for(comparison,2,fixture_selection(comparison))==request_v1(comparison,2,fixture_selection(comparison))
+    # A different, standalone extraction fixture; no comparison candidates.
+    s=scope();s['objective']='Extract the buyer approval condition and the warehouse access restriction.'
+    s['inputs']={'synthesis':{'documents':{'buyer':'Buyer approval requires a signed order. The buyer prefers blue stationery.',
+        'warehouse':'Warehouse access requires a badge.'}}}
+    expected=[{'type':'extract','citations':[x]} for x in ('buyer_1','warehouse_1')]
+    s['result_commitment']=digest(sorted(expected,key=encoded))
+    company='synthetic-company';parent='synthetic-parent'
+    selected={'extract_buyer_1':True,'extract_buyer_2':False,'extract_warehouse_1':True}
     rejected=dict(selected);rejected['extract_buyer_1']=False
     calls=[]
     def checked(path,expected):
