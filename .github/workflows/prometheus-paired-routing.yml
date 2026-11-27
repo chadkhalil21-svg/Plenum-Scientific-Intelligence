@@ -1,0 +1,137 @@
+name: Prometheus paired local model routing qualification
+on:
+  pull_request:
+    paths:
+      - 'integrations/prometheus_routing/**'
+      - '.github/workflows/prometheus-paired-routing.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  paired:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install smallest upstream routing dependency and original corpus loader
+        run: |
+          python -m pip install --disable-pip-version-check --only-binary=:all: 'gepa==0.1.4' 'scikit-learn==1.6.1'
+          python -m pip check
+      - name: Recover exact prior 4B evidence, not model inference
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 90 --max-filesize 20000000 -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' 'https://api.github.com/repos/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/artifacts/15191547610/zip' -o "$RUNNER_TEMP/original-gepa.zip"
+          echo "f6571bb878ecb45cf3fd52f13d0a16c3e98df5ebc91653d66d32b471d090fd9f  $RUNNER_TEMP/original-gepa.zip" | sha256sum -c -
+          PYTHONPATH=src:integrations/prometheus_routing python -c 'import sys; from pathlib import Path; from paired import prior,corpus; print("Verified prior cases:",sorted(prior(Path(sys.argv[1]),corpus())))' "$RUNNER_TEMP/original-gepa.zip"
+      - name: Independently reproduce already measured paired routing without inference
+        id: preserved
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
+          PYTHONPATH: src:integrations/prometheus_routing
+        run: |
+          set -eu
+          if [ "$PR_NUMBER" != 1034 ]; then
+            echo "reused=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git diff --exit-code 59522eae32cf0b36b9816917f509b1c9fcbbba8d HEAD -- integrations/prometheus_routing integrations/prometheus_gepa integrations/paperclip src
+          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 90 --max-filesize 20000000 -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' 'https://api.github.com/repos/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/artifacts/15193140816/zip' -o "$RUNNER_TEMP/paired-original.zip"
+          echo "3c5531b90143e6ce9429810a0bd65999edef9cca88efb547e3a1d898ae65526a  $RUNNER_TEMP/paired-original.zip" | sha256sum -c -
+          unset GH_TOKEN
+          python - <<'PY'
+          import json, os, zipfile, math
+          from pathlib import Path
+          from paired import corpus, prior, decoded, unique, mp, vm, MODEL, ARCHIVE_SHA, TfidfVectorizer, KNeighborsClassifier
+          tmp=Path(os.environ["RUNNER_TEMP"])
+          groups=corpus()
+          previous=prior(tmp/"original-gepa.zip",groups)
+          with zipfile.ZipFile(tmp/"paired-original.zip") as z:
+              names=z.namelist()
+              expected={"binding.json","outcome.json"}|{f"{i}.{s}.json" for i in "abcdefghi" for s in ("reserved","result")}
+              assert len(names)==len(expected) and set(names)==expected and z.testzip() is None
+              assert sum(x.file_size for x in z.infolist())<1000000
+              def read(name):
+                  return json.loads(z.read(name),object_pairs_hook=unique)
+              binding=read("binding.json")
+              assert binding=={"corpus_sha256":mp.digest(groups),"model_digest":"56671c2ab9385f9cfcb404638e32cd62d88e3501d44822208363c010179a3c90","original_4b_replayed":False,"paid_inference":False,"sklearn":"1.6.1","source_archive_sha256":ARCHIVE_SHA}
+              pairs={}
+              seen=set()
+              for split,items in groups.items():
+                  for item in items:
+                      key=item["id"]
+                      a,b=read(key+".reserved.json"),read(key+".result.json")
+                      req=vm.request(item["mission"]);req["model"]=MODEL
+                      h=mp.digest(req)
+                      assert h not in seen and h!=previous[key]["request_sha256"]
+                      assert a=={"case":key,"split":split,"request_sha256":h,"model_digest":binding["model_digest"],"paid_inference":False}
+                      assert all(b[k]==v for k,v in a.items())
+                      assert type(b["eval_count"]) is int and 0<b["eval_count"]<=req["options"]["num_predict"]
+                      assert type(b["prompt_eval_count"]) is int and 0<b["prompt_eval_count"]<=req["options"]["num_ctx"]
+                      assert type(b["seconds"]) in (int,float) and math.isfinite(b["seconds"]) and b["seconds"]>=0
+                      choice=decoded(b["response_sha256"],item["mission"]["authorized_inputs"])
+                      vm.graph(item["mission"],choice)
+                      assert choice==b["selection"] and int(choice==item["expected"])==b["score"]
+                      seen.add(h)
+                      pairs[key]={"split":split,"4b":previous[key],"9b":b}
+              outcome=read("outcome.json")
+              assert outcome["paired_results"]==pairs and len(seen)==9 and outcome["new_9b_calls"]==9 and outcome["4b_calls_replayed"]==0
+              assert all(outcome[k] is False for k in ("production_routing_admitted","general_autonomy_verified","paid_inference"))
+              train=groups["train"]+groups["val"];test=groups["test"]
+              def features(item):
+                  return item["mission"]["objective"]+" capabilities "+" ".join(sorted(item["mission"]["authorized_inputs"]))
+              v=TfidfVectorizer(ngram_range=(1,2),lowercase=True)
+              x=v.fit_transform([features(i) for i in train])
+              labels=["9b" if pairs[i["id"]]["9b"]["score"]>pairs[i["id"]]["4b"]["score"] else "4b" for i in train]
+              knn=KNeighborsClassifier(n_neighbors=1,metric="cosine",algorithm="brute")
+              knn.fit(x,labels)
+              routes=knn.predict(v.transform([features(i) for i in test])).tolist()
+              scored={i["id"]:{"route":r,"4b":pairs[i["id"]]["4b"]["score"],"9b":pairs[i["id"]]["9b"]["score"],"routed_score":pairs[i["id"]][r]["score"]} for i,r in zip(test,routes)}
+              totals={k:sum(r[k] for r in scored.values()) for k in ("4b","9b","routed_score")}
+              assert labels==outcome["training_labels"] and scored==outcome["held_out"] and totals==outcome["held_out_totals"]
+              receipt={"source_artifact":15193140816,"source_archive_sha256":"3c5531b90143e6ce9429810a0bd65999edef9cca88efb547e3a1d898ae65526a","source_unchanged":True,"historical_pairs_verified":9,"new_model_calls":0,"held_out_totals":totals,"production_routing_admitted":False,"paid_inference":False}
+          root=Path("reports/paired-routing");root.mkdir(parents=True,exist_ok=False)
+          (root/"independent-readback.json").write_text(json.dumps(receipt,sort_keys=True)+"\n")
+          print(json.dumps(receipt,sort_keys=True))
+          PY
+          echo "reused=true" >> "$GITHUB_OUTPUT"
+      - name: Start exact stronger model on isolated loopback
+        if: steps.preserved.outputs.reused == 'false'
+        run: |
+          set -eu
+          test "$(awk '/MemTotal/ {print $2}' /proc/meminfo)" -ge 14000000
+          test "$(awk '/MemAvailable/ {print $2}' /proc/meminfo)" -ge 11000000
+          test "$(df --output=avail -B1 / | tail -1 | tr -d ' ')" -ge 9000000000
+          docker pull ollama/ollama:latest
+          docker run -d --name plenum-routing-qwen --network host -e OLLAMA_HOST=127.0.0.1:11434 -e OLLAMA_CONTEXT_LENGTH=4096 -e OLLAMA_NUM_PARALLEL=1 --memory=10g --cpus=3 ollama/ollama:latest
+          for i in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
+            sleep 2
+          done
+          timeout 300 docker exec plenum-routing-qwen ollama pull qwen3.5:9b-q4_K_M
+          test "$(docker exec plenum-routing-qwen ollama list | awk '$1=="qwen3.5:9b-q4_K_M" {print $2}')" = 56671c2ab938
+      - name: Obtain new paired 9B measurements and evaluate held-out routing
+        if: steps.preserved.outputs.reused == 'false'
+        run: |
+          mkdir -p reports
+          python integrations/prometheus_routing/paired.py "$RUNNER_TEMP/original-gepa.zip" reports/paired-routing
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prometheus-paired-routing-evidence
+          path: reports/paired-routing
+          if-no-files-found: warn
+      - name: Remove disposable model
+        if: always() && steps.preserved.outputs.reused == 'false'
+        run: docker rm -f plenum-routing-qwen || true
