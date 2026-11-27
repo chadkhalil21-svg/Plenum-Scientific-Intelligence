@@ -47,6 +47,28 @@ def parse_candidate(text):
     raw = text.strip()
     if raw.startswith(chr(96) * 3):
         raw = raw.strip(chr(96)).removeprefix("json").strip()
+    # Bound structural nesting independently of Python decoder version.
+    # Brackets inside JSON strings are not structure; respect escaped quotes.
+    depth = 0
+    in_string = escaped = False
+    for char in raw:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == chr(92):
+                escaped = True
+            elif char == '"':
+                in_string = False
+        elif char == '"':
+            in_string = True
+        elif char in "[{":
+            depth += 1
+            if depth > 64:
+                return {"status": "invalid_json", "candidate": None}
+        elif char in "]}":
+            depth -= 1
+            if depth < 0:
+                return {"status": "invalid_json", "candidate": None}
     def reject_duplicate_keys(pairs):
         result = {}
         for key, value in pairs:
