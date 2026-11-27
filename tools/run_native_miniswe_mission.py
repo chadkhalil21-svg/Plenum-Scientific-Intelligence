@@ -152,6 +152,26 @@ def configure_staged_1060(issue_path):
     TEST = "test_public_business_watch.py"
 
 
+def bind_native_json_1060(archive):
+    global PRIOR_REQUESTS, CONTINUATION, OUT
+    expected="7e98553af13282475856adf3b1788ebaa16c9f28f96d6a1e6a1a959bfc621255"
+    if ISSUE!=1060 or os.getenv("PLENUM_STAGED_1060_NATIVE_JSON")!="confirmed" or archive.is_symlink() or not archive.is_file() or archive.stat().st_size!=6679 or sha(archive.read_bytes())!=expected:
+        raise PermissionError("Exact consumed 1060 evidence required")
+    with zipfile.ZipFile(archive) as z:
+        prefix="miniswe-1060/"
+        if set(z.namelist())!={prefix+x for x in ("model-reservations.jsonl","model-responses.jsonl","native-result.json","trajectory.json")} or z.testzip() is not None or sum(i.file_size for i in z.infolist())>100000:
+            raise ValueError("Invalid original evidence")
+        reserved=[json.loads(x) for x in z.read(prefix+"model-reservations.jsonl").splitlines()]
+        responses=[json.loads(x) for x in z.read(prefix+"model-responses.jsonl").splitlines()]
+        result=json.loads(z.read(prefix+"native-result.json"))
+        traj=json.loads(z.read(prefix+"trajectory.json"))
+    keys={"2ebb8bdaaeb1d255938bc91099726aae483bdd7980f20440b7d37c146c6e189e","7fd52a96a29dbc7856522e952b47853528fa7ec9dde2fda5e860976b384655b2"}
+    if result.get("exit_status")!="RepeatedFormatError" or result.get("model_digest")!=DIGEST or result.get("paid_inference") is not False or len(reserved)!=2 or len(responses)!=2 or {x["request_sha256"] for x in reserved}!=keys or {x["request_sha256"] for x in responses}!=keys or any(m.get("role")=="assistant" for m in traj["messages"]):
+        raise ValueError("Original failure identity mismatch")
+    PRIOR_REQUESTS |= keys
+    CONTINUATION={"original_run":46081084179,"original_archive_sha256":expected,"historical_requests_replayed":0,"strategy":"native structured JSON with thinking disabled"}
+    OUT=Path("reports/miniswe-1060-native-json")
+
 def bind_staged_timeout(archive):
     """Consume the original ambiguous timed-out request; never replay it."""
     global PRIOR_REQUESTS, CONTINUATION
@@ -238,16 +258,30 @@ class LocalOnlyModel(LitellmModel):
         self.requests = set()
 
     def _query(self, messages, **kwargs):
-        body = json.dumps(messages, sort_keys=True, separators=(",", ":")).encode()
+        use_native = ISSUE == 1060 and CONTINUATION is not None
+        if use_native:
+            from miniswe_native_json import request, response as convert_response
+            payload = request(messages, MODEL)
+        else:
+            payload = messages
+        body = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
         key = sha(body)
         if key in self.requests or key in PRIOR_REQUESTS or len(self.requests) >= 12 or len(body) > 100_000:
             raise RuntimeError("Duplicate or unbounded native request")
         self.requests.add(key)
         with (OUT / "model-reservations.jsonl").open("a", encoding="utf-8") as f:
             f.write(json.dumps({"request_sha256": key, "ordinal": len(self.requests)}) + "\n")
-        response = self.client.chat.completions.create(model=MODEL, messages=messages,
-                   tools=[BASH_TOOL], temperature=0, max_tokens=512 if ISSUE == 1060 else (640 if PROSPECTIVE or (ISSUE == 1055 and CONTINUATION) else 1200),
-                   extra_body={"think": False})
+        if use_native:
+            with httpx.Client(trust_env=False,timeout=180) as client:
+                reply=client.post("http://127.0.0.1:11434/api/chat",json=payload)
+                reply.raise_for_status()
+                raw=reply.json()
+            (OUT / ("native-json-response-"+str(len(self.requests))+".json")).write_text(json.dumps(raw,sort_keys=True))
+            response=convert_response(raw,MODEL,len(self.requests))
+        else:
+            response = self.client.chat.completions.create(model=MODEL, messages=messages,
+                       tools=[BASH_TOOL], temperature=0, max_tokens=512 if ISSUE == 1060 else (640 if PROSPECTIVE or (ISSUE == 1055 and CONTINUATION) else 1200),
+                       extra_body={"think": False})
         with (OUT / "model-responses.jsonl").open("a", encoding="utf-8") as f:
             f.write(json.dumps({"request_sha256": key, "response_sha256": sha(response.model_dump_json().encode()),
                                 "returned_model":response.model, "usage":response.usage.model_dump() if response.usage else None}) + "\n")
@@ -292,6 +326,7 @@ def main():
     parser.add_argument("--staged", action="store_true")
     parser.add_argument("--staged-1055", type=Path)
     parser.add_argument("--staged-1060", type=Path)
+    parser.add_argument("--native-json-archive", type=Path)
     parser.add_argument("--staged-timeout-archive", type=Path)
     args = parser.parse_args()
     if args.staged and (not (args.event or args.staged_1055 or args.staged_1060) or os.getenv("PLENUM_MINISWE_STAGED") != "confirmed"):
@@ -311,6 +346,10 @@ def main():
     if args.staged_1060:
         if not args.staged: raise PermissionError("Staged interface required")
         configure_staged_1060(args.staged_1060)
+        if args.native_json_archive:
+            bind_native_json_1060(args.native_json_archive)
+    elif args.native_json_archive:
+        raise PermissionError("Exact 1060 scope required")
     if args.prospective_arm:
         if not args.skill_archive:raise PermissionError("Bound learned archive required")
         configure_prospective(args.prospective_arm,args.skill_archive)
@@ -361,13 +400,15 @@ def main():
         agent_env = StagedInterface(env,SOURCE,TEST,original,OUT/"staged-actions.jsonl") if args.staged else env
         if args.staged:
             native_task = staged_task(native_task, original)
-            if ISSUE == 1060:
+            if ISSUE == 1060 and CONTINUATION:
+                native_task += "\nNative JSON mode: respond directly with one action object, no tool wrapper or reasoning prose."
+            elif ISSUE == 1060:
                 native_task += "\nReturn one tool call only. Prefer a small exact replacement and use regression feedback; do not reread all supplied source."
             if ISSUE == 1055 and CONTINUATION:
                 native_task += "\nPrior request timed out without a response. This is a new action request, not a replay. Keep the first replacement small and focused; return only a tool call, no exploratory prose."
         agent = DefaultAgent(model,agent_env,step_limit=12,cost_limit=0,wall_time_limit_seconds=1200 if PROSPECTIVE else 1050,
             max_consecutive_format_errors=2,
-            system_template=("You are the original Plenum engineering specialist. Use only the structured JSON action vocabulary carried by the bash tool. Make small exact edits, use automatic test feedback, and submit only after regression passes. No external services." if args.staged else "You are the original Plenum engineering specialist. Solve the authorized public code issue in the isolated workspace. Use bash tools for actual inspection, edits and tests. No external services. Preserve existing interfaces. Each reply must call bash. Work from observed test output, diagnose failures and revise your solution."),
+            system_template=("Return exactly one JSON action object, using op replace, view or submit. The original isolated executor performs your action and returns regression feedback. No shell or external service." if ISSUE == 1060 and CONTINUATION else "You are the original Plenum engineering specialist. Use only the structured JSON action vocabulary carried by the bash tool. Make small exact edits, use automatic test feedback, and submit only after regression passes. No external services." if args.staged else "You are the original Plenum engineering specialist. Solve the authorized public code issue in the isolated workspace. Use bash tools for actual inspection, edits and tests. No external services. Preserve existing interfaces. Each reply must call bash. Work from observed test output, diagnose failures and revise your solution."),
             instance_template=("Objective: {{task}}\nUse the structured action interface exactly as specified above; do not send shell commands." if args.staged else "Objective: {{task}}\nThe editable module is " + SOURCE + ". Existing tests: python -B -m unittest discover -s tests -p " + TEST + ". Inspect relevant code, independently reproduce the problem with your own tests, implement a minimal fix, run tests and correct failures. Do not modify existing tests. When satisfied, execute exactly: echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT"),
             output_path=OUT/"trajectory.json")
         started = time.monotonic()
