@@ -274,6 +274,29 @@ class TrustedRecoveryTests(unittest.TestCase):
                 self.assertEqual(raised.exception.stage,stage)
 
 
+    def test_general_python_semantics_available_to_both_edit_formats(self):
+        import subprocess
+        source=b"def first(x):\n    return x\n"
+        task="Repair function first. Preserve an ordinary public input contract."
+        scope=coder.local_function_scope(task,source)
+        for numbered, choice in (
+                (False, {"old":"return x","new":"return x+1"}),
+                (True, {"start":2,"end":2,"replacement":"    return x+1"})):
+            response={"model":coder.STRUCTURED_EDIT_MODEL,"done":True,"done_reason":"stop",
+                      "message":{"content":json.dumps(choice)}}
+            with self.subTest(numbered=numbered), patch.object(coder.subprocess,"run",
+                return_value=subprocess.CompletedProcess([],0,stdout=json.dumps(response).encode())) as run:
+                self.assertEqual(coder.structured_local_edit(task,scope,numbered=numbered),
+                                 source.replace(b"return x",b"return x+1"))
+                self.assertEqual(run.call_count,1)
+                payload=json.loads(run.call_args.kwargs["input"])
+                system=payload["messages"][0]["content"]
+                self.assertIn("bool is a subclass of int",system)
+                self.assertIn("preserve subclass acceptance",system)
+                self.assertEqual(json.loads(payload["messages"][1]["content"])["objective"],task)
+                self.assertNotIn("checkpoint_path",system)
+                self.assertNotIn("tests/acceptance",system)
+
     def test_readonly_context_exposes_referenced_declarations_without_editing_them(self):
         source=b"import math\nLIMIT=10\nUNRELATED=99\n\ndef helper(x):\n    return math.floor(x)\n\ndef target(x):\n    return min(LIMIT,helper(x))\n\ndef other():\n    return UNRELATED\n"
         scope=coder.local_function_scope("Repair function target. Correct the result.",source)
