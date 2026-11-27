@@ -92,6 +92,8 @@ def artifact_digest(root: Path, name: str) -> str | None:
 
 
 def checkpoint_path(root: Path, issue: int) -> Path:
+    if type(issue) is not int or not 1 <= issue < 10**9:
+        raise ValueError("Invalid original mission issue identifier")
     return root / f"chief-checkpoint-{issue}.json"
 
 
