@@ -1,0 +1,41 @@
+name: Independent archived producer readback
+on:
+  pull_request:
+    paths:
+      - 'tools/readback_completed_producers.py'
+      - '.github/workflows/prometheus-archived-producer-readback.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  readback:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-archived-producer-readback'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Reuse existing upstream independent verifier
+        run: |
+          python -m pip install --disable-pip-version-check --only-binary=:all: -r integrations/prometheus_oss/requirements.txt -r integrations/prometheus_oss/upstream-specialists-requirements.txt
+          python -m pip check
+      - name: Read exact original archived evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 90 --max-filesize 2000000 -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/repos/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/artifacts/15231859914/zip" -o "$RUNNER_TEMP/original.zip"
+          echo "5a33e4880a8d72956bda840d25748f7dde653e8908be124bbbba84221603ffb6  $RUNNER_TEMP/original.zip" | sha256sum -c -
+      - name: Independently verify completed outputs without original model or provider requests
+        run: |
+          mkdir -p reports
+          PYTHONPATH=src:integrations/paperclip python tools/readback_completed_producers.py "$RUNNER_TEMP/original.zip" reports/completed-producers.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: original-completed-producer-readback
+          path: reports/completed-producers.json
+          if-no-files-found: error
