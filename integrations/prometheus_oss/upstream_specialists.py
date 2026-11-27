@@ -134,10 +134,11 @@ def fixture(case):
         return vm.fixture("engineering"),mp.digest(["thermal"])
     raise ValueError("Unknown reviewed scope")
 
-def verify(root,case):
+def verify_bound(root,mission,commitment,identity):
     strict()
-    mission,commitment=fixture(case)
-    binding=checked(root/"binding.json",{"case":case,"mission_sha256":mp.digest(mission),"paid_inference":False,"versions":VERSIONS})
+    expected={**identity,"mission_sha256":mp.digest(mission),"paid_inference":False,"versions":VERSIONS}
+    binding=checked(root/"binding.json",expected)
+    if set(binding)!=set(expected)|{"model_digest"}:raise ValueError("Unexpected upstream identity")
     md=binding["model_digest"]
     if not mp.valid_digest(md):raise ValueError("Original model required")
     if checked(root/"scope-read.json",{})!=json.loads(vm.request(mission)["messages"][1]["content"]):raise ValueError("Source read changed")
@@ -155,9 +156,23 @@ def verify(root,case):
     if mp.digest(sorted(k for k,v in final.items() if v))!=commitment:raise ValueError("Independent selection commitment mismatch")
     if checked(root/"workflow-result.json",{})!={"selection":final,"paid_inference":False}:raise ValueError("Workflow result changed")
     if {p.name for p in root.iterdir()}!={"binding.json","scope-read.json","specialist.reserved.json","specialist.result.json","peer.reserved.json","peer.result.json","workflow-result.json"}:raise ValueError("Unexpected evidence")
-    return {"case":case,"versions":VERSIONS,"accepted":True,"selection":final,"model_calls":2,
+    return {"case":identity["case"],"versions":VERSIONS,"accepted":True,"selection":final,"model_calls":2,
             "peer_changed_selection":choices["specialist"]!=final,"model_calls_replayed":0,"provider_calls_replayed":0,
             "paid_inference":False,"production_integrated":False,"general_autonomy_verified":False}
+
+def verify(root,case):
+    mission,commitment=fixture(case)
+    return verify_bound(root,mission,commitment,{"case":case})
+
+def execute_bound(root,mission,commitment,identity):
+    strict()
+    if os.getenv("GITHUB_ACTIONS")!="true":raise PermissionError("Isolated CI only")
+    root.mkdir(mode=0o700,parents=False,exist_ok=False)
+    md=mp.check_local_model()
+    exclusive(root/"binding.json",{**identity,"mission_sha256":mp.digest(mission),"model_digest":md,"paid_inference":False,"versions":VERSIONS})
+    result=asyncio.run(coordinate(root,mission,md))
+    exclusive(root/"workflow-result.json",{"selection":result,"paid_inference":False})
+    return verify_bound(root,mission,commitment,identity)
 
 def main():
     phase,case,directory=sys.argv[1:]
