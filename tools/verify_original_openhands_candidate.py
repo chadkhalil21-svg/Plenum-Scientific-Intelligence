@@ -391,6 +391,20 @@ def recover_local_behavior(report_path: Path, verdict_path: Path, event_path: Pa
             second["structured_failure_stage"] = exc.stage
             second["structured_failure_clause"] = exc.clause
     second["behavioral_recovery"] = reservation
+    # A different request format is not evidence of a different correction.
+    # Preserve the second candidate but do not execute an already rejected
+    # byte-identical patch again. The original failure verdict remains binding.
+    if (patch.is_file() and not patch.is_symlink() and 0 < patch.stat().st_size <= 80_000
+            and hashlib.sha256(patch.read_bytes()).hexdigest() == digest):
+        second["status"] = "BLOCKED_REPEATED_REJECTED_PATCH"
+        second["repeated_rejected_patch"] = True
+        report_path.write_text(json.dumps(second, indent=2) + "\n", encoding="utf-8")
+        blocked = {**verdict, "reason": "byte_identical_rejected_patch",
+                   "repeated_rejected_patch": True, "corrective_sandbox_executed": False}
+        with verdict_path.open("x", encoding="utf-8") as out:
+            json.dump(blocked, out, indent=2, sort_keys=True)
+            out.write("\n")
+        return blocked
     report_path.write_text(json.dumps(second, indent=2) + "\n", encoding="utf-8")
     return verify(report_path, verdict_path)
 
