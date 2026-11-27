@@ -8,8 +8,10 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 jobs:
   original-concept:
+    if: github.event_name != 'pull_request' || github.event.pull_request.number != 1001 || github.event.pull_request.head.sha == 'cd163f7ea086563727120f9440393dea7cf9e74f'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -54,3 +56,33 @@ jobs:
             blender-package.txt
             docs/checkpoint-maintainer-guide/scene.json
           if-no-files-found: error
+
+  original-evidence-readback:
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 1001 && github.event.pull_request.head.sha != 'cd163f7ea086563727120f9440393dea7cf9e74f'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: prometheus-checkpoint-maintainer-static
+          run-id: 45940782788
+          github-token: ${{ github.token }}
+          path: accepted-original
+      - name: Check exact accepted source and output without rendering again
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, pathlib, subprocess
+          p = pathlib.Path('accepted-original')
+          h = lambda f: hashlib.sha256(f.read_bytes()).hexdigest()
+          r = json.loads((p / 'blender-acceptance.json').read_text())
+          assert r['paid_inference'] is False
+          assert r['owner_runtime_verified'] is False
+          assert h(pathlib.Path('docs/checkpoint-maintainer-guide/scene.json')) == h(p / 'docs/checkpoint-maintainer-guide/scene.json') == r['source_sha256'] == '6269007216266f36ae0169033e484eeacd69169ab78c3f7b2ebca0abb6ce9deb'
+          assert h(p / 'concept.png') == r['render_sha256'] == '872f370acaa1611fe988bbb731e1a3548187b3d1ae2aa0d6e24212302792e5bf'
+          assert subprocess.check_output(['git','hash-object','src/plenum_ai/blender_concept_render.py'],text=True).strip() == 'edc18b56ee36a7086c4f033a1e44b70c133da91e'
+          print('Original accepted artifact and source preserved; no rendering replay.')
+          PY
