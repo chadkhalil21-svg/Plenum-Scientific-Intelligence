@@ -154,6 +154,38 @@ class TrustedRecoveryTests(unittest.TestCase):
 
 
 
+    def test_reject_original_960_pattern_without_another_model_call(self):
+        # The preserved original #960 patch read job before its assignment.
+        import subprocess
+        source = (b"def diagnose(run, jobs):\n"
+                  b"    if run.get('conclusion') != 'failure':\n"
+                  b"        return False\n"
+                  b"    job = jobs[0]\n"
+                  b"    return bool(job)\n")
+        scope = coder.local_function_scope("Repair function diagnose. Inspect result.", source)
+        choice = {"old": "if run.get('conclusion') != 'failure':",
+                  "new": "if run.get('conclusion') != 'failure' or job.get('started_at'):"}
+        with self.assertRaises(coder.EarlyLocalReadError):
+            coder.apply_structured_edit(scope, choice)
+        with self.assertRaises(coder.EarlyLocalReadError):
+            coder.apply_numbered_edit(scope, {"start":2, "end":2,
+                                             "replacement":"    " + choice["new"]})
+        response = {"model":coder.STRUCTURED_EDIT_MODEL,"done":True,"done_reason":"stop",
+                    "message":{"content":json.dumps(choice)}}
+        with patch.object(coder.subprocess, "run", return_value=subprocess.CompletedProcess(
+                [],0,stdout=json.dumps(response).encode())) as run:
+            with self.assertRaises(coder.StructuredEditFailure) as error:
+                coder.structured_local_edit("Repair function diagnose. Inspect result.", scope)
+            self.assertEqual(error.exception.stage, "EARLY_LOCAL_READ")
+            self.assertEqual(run.call_count, 1)
+        # Correctly initialized local reads, parameters and globals remain legal.
+        self.assertEqual(coder.apply_structured_edit(scope, {
+            "old":"return bool(job)", "new":"return bool(job.get('started_at'))"
+        }), source.replace(b"return bool(job)", b"return bool(job.get('started_at'))"))
+        # Preserve existing execution behavior; this is not a full dataflow proof.
+        self.assertEqual(coder._early_local_reads(b"def f(x):\n    return bool(x)\n"), set())
+
+
     def test_two_function_edits_are_atomic_and_preserve_other_bytes(self):
         source=b"def first():\n    return 1\n\ndef second():\n    return 2\n\ndef untouched():\n    return 3\n"
         task="Repair function first. Return four. Then repair function second. Return five."
