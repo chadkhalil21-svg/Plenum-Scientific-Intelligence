@@ -297,7 +297,6 @@ def minister():
     scope=assigned_scope(api,ROOT,"minister") if persistent() else active_scope()
     binding=scope_binding(scope)
     specs=task_specs(scope)
-    extended_minister=scope.get("planning_engine")=="upstream-peer-v1"
     aid=env_id("PAPERCLIP_AGENT_ID")
     cid=env_id("PAPERCLIP_COMPANY_ID")
     identity=api("/api/agents/me",worker=True)
@@ -402,6 +401,7 @@ def qualify_locked(action):
     else:scope=active_scope()
     binding=scope_binding(scope)
     specs=task_specs(scope)
+    extended_minister=scope.get("planning_engine")=="upstream-peer-v1"
     if scope["kind"] in ("public_objective","variable_graph"):
         from production_wiring import load_prepared
         if not durable or (load_prepared(directory,cid,mid)["model_mode"] if action in ("activate","resume") else os.getenv("PLENUM_PAPERCLIP_MODEL","off"))!="local":
