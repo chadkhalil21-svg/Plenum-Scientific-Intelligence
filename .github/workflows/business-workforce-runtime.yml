@@ -67,7 +67,8 @@ jobs:
       github.event_name != 'issues' ||
       (github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
        github.event.issue.user.login == 'chadkhalil21-svg' &&
-       github.event.issue.title == '[Plenum OpenHands] public repair')
+       github.event.issue.title == '[Plenum OpenHands] public repair' &&
+       !startsWith(github.event.issue.body, 'PLENUM_MINISWE_LOCAL_PUBLIC_REPAIR_V1'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -474,3 +475,96 @@ jobs:
 
 
 
+
+  isolated-native-miniswe:
+    if: >-
+      github.event_name == 'issues' &&
+      github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' &&
+      github.event.issue.user.login == 'chadkhalil21-svg' &&
+      github.event.sender.login == 'chadkhalil21-svg' &&
+      github.event.issue.title == '[Plenum OpenHands] public repair' &&
+      startsWith(github.event.issue.body, 'PLENUM_MINISWE_LOCAL_PUBLIC_REPAIR_V1') &&
+      github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Authorize and reserve original owner coding execution
+        id: reserved
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PYTHONPATH: src
+        run: |
+          python - <<'PY'
+          from datetime import datetime, timezone
+          import json, os
+          from pathlib import Path
+          from plenum_ai.openhands_coding_agent import parse_owner_repair_event, MINISWE_ENGINE
+          from plenum_ai.minister_missed_public_wake import reserve_native_coder
+          event=json.load(open(os.environ["GITHUB_EVENT_PATH"]))
+          contract=parse_owner_repair_event(event)
+          if contract.get("engine") != MINISWE_ENGINE:
+              raise SystemExit("Wrong original engine")
+          source=Path(contract["source_file"])
+          test="test_public_business_watch.py" if source.stem=="business_public_watch" else "test_"+source.stem+".py"
+          if not (Path("tests")/test).is_file():
+              raise SystemExit("No existing public focused test")
+          if not reserve_native_coder(event,os.environ["GH_TOKEN"],run_id=int(os.environ["GITHUB_RUN_ID"]),attempt=1,now=datetime.now(timezone.utc)):
+              raise SystemExit("Original execution already reserved")
+          with open(os.environ["GITHUB_OUTPUT"],"a") as f: print("authorized=true",file=f)
+          PY
+      - name: Install original pinned upstream release
+        run: |
+          set -euo pipefail
+          python -m venv "$RUNNER_TEMP/mini-venv"
+          "$RUNNER_TEMP/mini-venv/bin/python" -m pip install --disable-pip-version-check --only-binary=:all: 'mini-swe-agent==2.4.6' 'litellm!=1.82.7,!=1.82.8'
+          "$RUNNER_TEMP/mini-venv/bin/python" -m pip check
+          docker pull python:3.12-slim
+          test "$(df --output=avail -B1 / | tail -1 | tr -d ' ')" -ge 9000000000
+          test "$(awk '/MemTotal/ {print $2}' /proc/meminfo)" -ge 14000000
+      - name: Start verified local-only model
+        run: |
+          set -euo pipefail
+          docker run -d --rm --name plenum-miniswe-ollama -p 127.0.0.1:11434:11434 -e OLLAMA_CONTEXT_LENGTH=8192 -e OLLAMA_NUM_PARALLEL=1 -e OLLAMA_NO_CLOUD=1 --memory=10g --cpus=3 ollama/ollama:latest
+          for i in $(seq 1 60); do curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null && break; sleep 2; done
+          docker exec plenum-miniswe-ollama ollama pull qwen3.5:9b-q4_K_M
+          test "$(docker exec plenum-miniswe-ollama ollama list | awk '$1=="qwen3.5:9b-q4_K_M" {print $2}')" = 56671c2ab938
+      - name: Execute original native agent and independent reviewer
+        id: native
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/mini-home"
+          env -i PATH="$RUNNER_TEMP/mini-venv/bin:/usr/bin:/bin" HOME="$RUNNER_TEMP/mini-home" PYTHONPATH=src GITHUB_ACTIONS=true GITHUB_REPOSITORY=chadkhalil21-svg/Plenum-Scientific-Intelligence GITHUB_EVENT_NAME=issues GITHUB_EVENT_PATH="$GITHUB_EVENT_PATH" PLENUM_MINISWE_RESERVED=true MSWEA_SILENT_STARTUP=1 MSWEA_MODEL_RETRY_STOP_AFTER_ATTEMPT=1 LITELLM_LOCAL_MODEL_COST_MAP=True LITELLM_LOG=ERROR DO_NOT_TRACK=1 "$RUNNER_TEMP/mini-venv/bin/python" tools/run_native_miniswe_mission.py --event "$GITHUB_EVENT_PATH"
+      - uses: actions/upload-artifact@v7
+        if: always() && steps.reserved.outputs.authorized == 'true'
+        id: evidence
+        with:
+          name: native-miniswe-original-issue-${{ github.event.issue.number }}-run-${{ github.run_id }}
+          path: |
+            reports/miniswe-${{ github.event.issue.number }}/
+            reports/openhands-review/issue-${{ github.event.issue.number }}.patch
+          if-no-files-found: warn
+      - name: Record review-only terminal evidence
+        if: always() && steps.reserved.outputs.authorized == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NATIVE_STATUS: ${{ steps.native.outcome }}
+          ARTIFACT_ID: ${{ steps.evidence.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.evidence.outputs.artifact-digest }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$ISSUE/comments" -f body="<!-- plenum-openhands-review:$GITHUB_RUN_ID:attempt:1 --> Native mini-SWE-agent outcome: $NATIVE_STATUS. Review only; no source merged. Artifact $ARTIFACT_ID SHA256 $ARTIFACT_DIGEST. https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+      - if: always()
+        env:
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          docker rm -f plenum-miniswe-ollama || true
+          docker ps -aq --filter "label=plenum-miniswe-$ISSUE" | xargs -r docker rm -f
