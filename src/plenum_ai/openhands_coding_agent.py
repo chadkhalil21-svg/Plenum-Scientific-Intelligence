@@ -332,6 +332,14 @@ def local_plan(task: str, *, source_file: str) -> dict:
         raise PermissionError("Source too large for bounded CPU whole-file local coding")
     result = plan(task, source_file=source_file)
     result.pop("sdk_version_required")
+    if (source_file, task) in SCOPED_AIDER_TASKS:
+        if len(requests) != 1:
+            raise PermissionError("Native scoped Aider requires one named function")
+        return {**result, "upstream":"Aider-AI/aider", "engine":LOCAL_ENGINE,
+                "aider_image":AIDER_IMAGE, "local_model":LOCAL_MODEL,
+                "local_edit_strategy":"native_aider_whole_function",
+                "authorized_function_edits":1,
+                "cloud_inference_used":False,"paid_api_authorized":False}
     if requests:
         return {**result, "upstream":"ollama/ollama", "engine":LOCAL_ENGINE,
                 "local_model":STRUCTURED_EDIT_MODEL,
@@ -677,6 +685,8 @@ def structured_local_edit(task,scope,*,numbered=False):
 # behavioral acceptance suites. No failed candidate, test answers or logs enter
 # the next model prompt. A distinct edit format is used only once.
 TASK_ACCEPTANCE = {
+    ("src/plenum_ai/mission_checkpoint.py", "Repair function load_checkpoint. Reject duplicate JSON object keys at every nesting level with ValueError. Preserve all valid checkpoint loading and existing checks."):
+        "checkpoint_duplicate_keys.py",
     ("src/plenum_ai/business_public_watch.py", "Repair function probe. Require exact application/json for health and text/html for HTML, ignoring case and parameters. Reject other media types and preserve all other checks."):
         "public_media_types.py",
     ("src/plenum_ai/noaa_revision_agent.py", "Repair function parse_candidate. Reject excessively nested JSON responses as invalid_json without raising exceptions. Preserve valid proposals and all existing validation gates."):
@@ -703,9 +713,12 @@ TASK_ACCEPTANCE = {
 
 # Derive recovery eligibility from the same reviewed acceptance registry.
 # Multi-function repairs and nonstructured tasks retain their prior restrictions.
+# Explicit reviewed opt-in only; no fallback into a different model or retry.
+SCOPED_AIDER_TASKS = {("src/plenum_ai/mission_checkpoint.py", "Repair function load_checkpoint. Reject duplicate JSON object keys at every nesting level with ValueError. Preserve all valid checkpoint loading and existing checks.")}
 STRUCTURED_RECOVERY_TASKS = {
     (source, task): test for (source, task), test in TASK_ACCEPTANCE.items()
     if task.startswith("Repair function ") and " Then repair function " not in task
+    and (source, task) not in SCOPED_AIDER_TASKS
 }
 
 
@@ -726,7 +739,12 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
     if regression_recovery and (not behavioral_recovery or len(requests) != 1 or (source_file, task) not in STRUCTURED_RECOVERY_TASKS):
         raise PermissionError("Unapproved regression recovery")
     scope=None
-    if requests:
+    native_scoped = (source_file, task) in SCOPED_AIDER_TASKS
+    if native_scoped:
+        if behavioral_recovery or regression_recovery or len(requests) != 1:
+            raise PermissionError("Native scoped Aider has one original attempt only")
+        scope = local_function_scope(requests[0], original)
+    if requests and not native_scoped:
         if behavioral_recovery:
             if len(requests) != 1 or (source_file, task) not in STRUCTURED_RECOVERY_TASKS:
                 raise PermissionError("Unapproved structured edit recovery")
@@ -771,6 +789,11 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
         return _candidate_report(result,original,raw,source_file,artifact,0)
     feedback = (" Edit only the shown function. All surrounding module definitions are "
                 "preserved unchanged; no new imports or top-level code." if scope else "")
+    if native_scoped:
+        dependencies = readonly_dependency_view(scope, task)
+        if dependencies:
+            feedback += " Read-only declarations for context, not editable code: " + json.dumps(dependencies)
+        feedback += " Return the complete original named function with only the requested change; preserve all valid behavior, signature and imports."
     if behavioral_recovery:
         # Only the pre-reviewed public health-monitor task has a trusted
         # behavioral diagnostic. No test stdout, model text or external data
