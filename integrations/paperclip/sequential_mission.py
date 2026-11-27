@@ -500,7 +500,8 @@ def qualify_locked(action):
     # Native graph work shares CPU inference with the prior verified adaptive
     # turns; keep a bounded mission deadline long enough for the worker cap.
     graph_scope=scope.get("inputs",{}).get("synthesis",{}).get("followup",{}).get("engine")=="deepagents"
-    deadline=time.monotonic()+(720 if graph_scope else 360)
+    magentic_scope=(scope.get("planning_engine")=="magentic-native-v1" and os.getenv("GITHUB_ACTIONS")=="true" and os.getenv("PLENUM_CI_MAGENTIC_NATIVE")=="confirmed")
+    deadline=time.monotonic()+(1080 if magentic_scope else 720 if graph_scope else 360)
     plan_path=directory/"minister-plan.json"
     while time.monotonic()<deadline:
         # The adapter writes a safe failure receipt before a nonzero exit.
