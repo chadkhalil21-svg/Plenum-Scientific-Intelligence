@@ -11,6 +11,7 @@ from acceptance.checkpoint_tree_invariants import CheckpointTreeAcceptance
 from acceptance.checkpoint_exact_issue_identity import ExactCheckpointIssueAcceptance
 from acceptance.checkpoint_path_identity import CheckpointPathIdentityAcceptance
 from acceptance.checkpoint_duplicate_keys import CheckpointDuplicateKeysAcceptance
+from acceptance.checkpoint_write_prevalidation import CheckpointWritePrevalidationAcceptance
 
 
 class MissionCheckpointLimitsTests(TestCase):
