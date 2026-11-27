@@ -62,6 +62,7 @@ jobs:
               (root / "tests/acceptance").mkdir(parents=True)
               shutil.copy2("tests/test_noaa_revision_agent.py", root / "tests")
               shutil.copy2("tests/acceptance/noaa_numeric_proposal.py", root / "tests/acceptance")
+              shutil.copy2("tests/acceptance/noaa_nested_response.py", root / "tests/acceptance")
               for directory, pattern in (
                   ("/work/tests", "test_noaa_revision_agent.py"),
                   ("/work/tests/acceptance", "noaa_numeric_proposal.py"),
