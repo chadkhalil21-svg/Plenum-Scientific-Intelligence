@@ -661,7 +661,7 @@ def structured_local_edit(task,scope,*,numbered=False,reasoning=False):
             "req=urllib.request.Request('http://plenum-temporary-ollama:11434/api/chat',data=raw,"
             "headers={'Content-Type':'application/json'},method='POST'); "
             "client=urllib.request.build_opener(urllib.request.ProxyHandler({})); "
-            ("response=client.open(req,timeout=480); " if reasoning else "response=client.open(req,timeout=240); ")
+            + ("response=client.open(req,timeout=480); " if reasoning else "response=client.open(req,timeout=240); ")
             +
             "assert response.geturl()==req.full_url; "
             "out=response.read(32001); assert len(out)<=32000; "
