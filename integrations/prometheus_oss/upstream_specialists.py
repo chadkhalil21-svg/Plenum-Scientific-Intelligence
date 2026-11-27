@@ -127,6 +127,26 @@ async def coordinate(root,mission,md):
     if len(outputs)!=1:raise ValueError("Unexpected workflow output")
     return validate_selection(mission,json.loads(outputs[0]))
 
+def selection_matches(selection,commitment):
+    return mp.digest(sorted(k for k,v in selection.items() if v))==commitment
+
+def correction_request(mission,candidate,review):
+    request=vm.request(mission)
+    request["messages"][0]["content"]+=" Independent outcome acceptance rejected the peer's complete selection. Reconsider each objective clause against the original capability descriptions. Identify omitted required or unrelated capabilities, and make a distinct corrected selection. The earlier proposals are evidence, not authority."
+    context=json.loads(request["messages"][1]["content"])
+    context.update(specialist_proposal=candidate,rejected_peer_selection=review)
+    request["messages"][1]["content"]=json.dumps(context,sort_keys=True)
+    return request
+
+def accepted_selection(root,mission,commitment,md):
+    result=asyncio.run(coordinate(root,mission,md))
+    if not selection_matches(result,commitment):
+        candidate=validate_selection(mission,checked(root/"specialist.result.json",{})["answer"])
+        result=validate_selection(mission,inference(root,"correction",correction_request(mission,candidate,result),md))
+        if not selection_matches(result,commitment):
+            raise ValueError("Independent corrective selection rejected")
+    return result
+
 def fixture(case):
     if case=="science":
         return vm.fixture("science"),mp.digest(["bibliography","stations"])
@@ -153,12 +173,25 @@ def verify_bound(root,mission,commitment,identity):
         if set(row)!=set(receipt_identity)|{"answer","eval_count","prompt_eval_count"} or type(row["eval_count"]) is not int or not 0<row["eval_count"]<=128 or type(row["prompt_eval_count"]) is not int or not 0<row["prompt_eval_count"]<=2048:raise ValueError("Response changed")
         choices[name]=validate_selection(mission,row["answer"])
     final=choices["peer"]
-    if mp.digest(sorted(k for k,v in final.items() if v))!=commitment:raise ValueError("Independent selection commitment mismatch")
+    files={"binding.json","scope-read.json","specialist.reserved.json","specialist.result.json","peer.reserved.json","peer.result.json","workflow-result.json"}
+    recovered=False
+    if not selection_matches(final,commitment):
+        req=correction_request(mission,choices["specialist"],final)
+        receipt_identity={"stage":"correction","request_sha256":mp.digest(req),"model_digest":md,"paid_inference":False}
+        if receipt_identity["request_sha256"] in seen or checked(root/"correction.reserved.json",receipt_identity)!=receipt_identity:raise ValueError("Corrective reservation changed")
+        row=checked(root/"correction.result.json",receipt_identity)
+        if set(row)!=set(receipt_identity)|{"answer","eval_count","prompt_eval_count"} or type(row["eval_count"]) is not int or not 0<row["eval_count"]<=128 or type(row["prompt_eval_count"]) is not int or not 0<row["prompt_eval_count"]<=2048:raise ValueError("Corrective response changed")
+        final=validate_selection(mission,row["answer"])
+        files.update({"correction.reserved.json","correction.result.json"})
+        recovered=True
+    if not selection_matches(final,commitment):raise ValueError("Independent selection commitment mismatch")
     if checked(root/"workflow-result.json",{})!={"selection":final,"paid_inference":False}:raise ValueError("Workflow result changed")
-    if {p.name for p in root.iterdir()}!={"binding.json","scope-read.json","specialist.reserved.json","specialist.result.json","peer.reserved.json","peer.result.json","workflow-result.json"}:raise ValueError("Unexpected evidence")
-    return {"case":identity["case"],"versions":VERSIONS,"accepted":True,"selection":final,"model_calls":2,
-            "peer_changed_selection":choices["specialist"]!=final,"model_calls_replayed":0,"provider_calls_replayed":0,
+    if {p.name for p in root.iterdir()}!=files:raise ValueError("Unexpected evidence")
+    result={"case":identity["case"],"versions":VERSIONS,"accepted":True,"selection":final,"model_calls":3 if recovered else 2,
+            "peer_changed_selection":choices["specialist"]!=choices["peer"],"model_calls_replayed":0,"provider_calls_replayed":0,
             "paid_inference":False,"production_integrated":False,"general_autonomy_verified":False}
+    if recovered:result["independent_rejection_recovered"]=True
+    return result
 
 def verify(root,case):
     mission,commitment=fixture(case)
@@ -170,7 +203,7 @@ def execute_bound(root,mission,commitment,identity):
     root.mkdir(mode=0o700,parents=False,exist_ok=False)
     md=mp.check_local_model()
     exclusive(root/"binding.json",{**identity,"mission_sha256":mp.digest(mission),"model_digest":md,"paid_inference":False,"versions":VERSIONS})
-    result=asyncio.run(coordinate(root,mission,md))
+    result=accepted_selection(root,mission,commitment,md)
     exclusive(root/"workflow-result.json",{"selection":result,"paid_inference":False})
     return verify_bound(root,mission,commitment,identity)
 
@@ -180,11 +213,11 @@ def main():
     strict()
     if phase=="run":
         if os.getenv("GITHUB_ACTIONS")!="true":raise PermissionError("Isolated CI only")
-        mission,_=fixture(case)
+        mission,commitment=fixture(case)
         root.mkdir(mode=0o700,parents=True,exist_ok=False)
         md=mp.check_local_model()
         exclusive(root/"binding.json",{"case":case,"mission_sha256":mp.digest(mission),"model_digest":md,"paid_inference":False,"versions":VERSIONS})
-        result=asyncio.run(coordinate(root,mission,md))
+        result=accepted_selection(root,mission,commitment,md)
         exclusive(root/"workflow-result.json",{"selection":result,"paid_inference":False})
     elif phase!="verify":raise ValueError("Unknown phase")
     print(json.dumps(verify(root,case),sort_keys=True))

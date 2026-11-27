@@ -169,7 +169,8 @@ def upstream_plan(root,scope,company,mission,*,execute=False):
     identity=upstream_identity(scope,company,mission)
     args=(sub,scope["mission"],scope["selection_commitment"],identity)
     proof=u.execute_bound(*args) if execute else u.verify_bound(*args)
-    row=checked(sub/"peer.result.json",{"answer":proof["selection"],"paid_inference":False})
+    stage="correction" if proof.get("independent_rejection_recovered") is True else "peer"
+    row=checked(sub/(stage+".result.json"),{"answer":proof["selection"],"paid_inference":False})
     plan={**vm.manifest(scope["mission"],proof["selection"],row["model_digest"]),"request_sha256":row["request_sha256"]}
     expected={"request_sha256":plan["request_sha256"],"selection_sha256":digest(plan["selection"]),
               "model_digest":plan["model_digest"],"eval_count":row["eval_count"],"prompt_eval_count":row["prompt_eval_count"],"paid_inference":False}
