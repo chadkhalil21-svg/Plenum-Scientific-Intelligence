@@ -1,0 +1,1 @@
+Validate the mission identifier before creating a directory. Write the checkpoint to a temporary file. Flush the file before replacing the original checkpoint. Reject invalid input. Never repeat a reserved operation without authorization.
