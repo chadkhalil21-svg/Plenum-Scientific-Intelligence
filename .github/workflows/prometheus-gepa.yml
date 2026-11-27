@@ -1,0 +1,112 @@
+name: Prometheus upstream GEPA planner optimization
+on:
+  pull_request:
+    paths:
+      - 'integrations/prometheus_gepa/**'
+      - '.github/workflows/prometheus-gepa.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  qualify:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Preserve accepted original qualification on exact unchanged source
+        id: evidence
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          if [ "$PR_NUMBER" != 1031 ]; then
+            echo "reused=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git diff --exit-code 2d627287b3596adb890b284390a8b1e297db2bd2 HEAD -- integrations/prometheus_gepa integrations/paperclip src
+          mkdir -p reports/gepa-readback
+          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 90 --max-filesize 20000000 -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/vnd.github+json' 'https://api.github.com/repos/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/artifacts/15191547610/zip' -o "$RUNNER_TEMP/gepa-original.zip"
+          echo "f6571bb878ecb45cf3fd52f13d0a16c3e98df5ebc91653d66d32b471d090fd9f  $RUNNER_TEMP/gepa-original.zip" | sha256sum -c -
+          python3 - <<'PY'
+          import json, os, re, zipfile
+          from pathlib import Path
+          with zipfile.ZipFile(Path(os.environ["RUNNER_TEMP"])/"gepa-original.zip") as z:
+              names=z.namelist()
+              expected={"binding.json","outcome.json"}|{f"call-{i:02d}.{kind}.json" for i in range(1,21) for kind in ("reserved","result")}
+              assert len(names)==len(expected) and set(names)==expected and z.testzip() is None
+              assert sum(x.file_size for x in z.infolist())<1000000
+              def read(name):
+                  return json.loads(z.read(name))
+              binding=read("binding.json")
+              assert binding=={"corpus_sha256":"718fafb7fa411ed4ca5fbb71a5283f245316e13133ea0ff14b69e31d4b92f8c3","gepa":"0.1.4","model_digest":"d8b0f5e9760cd1682034f292d7ef72ec46f432149be0df7574bf2d6e92e38c04","paid_inference":False,"skip_perfect_score":False,"synthetic_development_only":True}
+              seen=set()
+              reflection=0
+              for i in range(1,21):
+                  a=read(f"call-{i:02d}.reserved.json")
+                  b=read(f"call-{i:02d}.result.json")
+                  assert set(a)=={"stage","request_sha256","model_digest","paid_inference"}
+                  assert all(b[k]==v for k,v in a.items())
+                  assert a["model_digest"]==binding["model_digest"] and a["paid_inference"] is False
+                  assert a["stage"] in ("selection","reflection")
+                  assert re.fullmatch("[0-9a-f]{64}",a["request_sha256"]) and a["request_sha256"] not in seen
+                  assert re.fullmatch("[0-9a-f]{64}",b["response_sha256"])
+                  assert type(b["eval_count"]) is int and b["eval_count"]>0 and type(b["prompt_eval_count"]) is int and b["prompt_eval_count"]>0
+                  seen.add(a["request_sha256"])
+                  reflection+=a["stage"]=="reflection"
+              outcome=read("outcome.json")
+              assert len(seen)==20 and reflection==2 and outcome["model_calls"]==20 and outcome["reflection_calls"]==2
+              assert all(outcome[k] is False for k in ("candidate_changed","candidate_improved","automatic_adoption","general_autonomy_verified","paid_inference"))
+              assert outcome["model_calls_replayed"]==0
+              assert outcome["validation_baseline"]==outcome["validation_candidate"] and outcome["test_baseline"]==outcome["test_candidate"]
+              assert sum(x["score"] for x in outcome["validation_baseline"].values())==2 and sum(x["score"] for x in outcome["test_baseline"].values())==3
+          receipt={"source_artifact":15191547610,"source_archive_sha256":"f6571bb878ecb45cf3fd52f13d0a16c3e98df5ebc91653d66d32b471d090fd9f","original_source_head":"2d627287b3596adb890b284390a8b1e297db2bd2","source_unchanged":True,"historical_calls_verified":20,"historical_reflections_verified":2,"new_model_calls":0,"candidate_admitted":False,"paid_inference":False}
+          Path("reports/gepa-readback/receipt.json").write_text(json.dumps(receipt,sort_keys=True)+"\n")
+          print(json.dumps(receipt,sort_keys=True))
+          PY
+          echo "reused=true" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-python@v5
+        if: steps.evidence.outputs.reused == 'false'
+        with:
+          python-version: '3.12'
+      - name: Install exact upstream GEPA release and validate corpus
+        if: steps.evidence.outputs.reused == 'false'
+        run: |
+          python -m pip install --disable-pip-version-check --only-binary=:all: gepa==0.1.4
+          python -m pip check
+          python -m py_compile integrations/prometheus_gepa/optimize_planner.py
+          PYTHONPATH=src:integrations/prometheus_gepa python -c 'from optimize_planner import corpus; assert all(len(x)==3 for x in corpus().values())'
+      - name: Reuse original free local model
+        if: steps.evidence.outputs.reused == 'false'
+        run: |
+          set -eu
+          docker pull ollama/ollama:latest
+          docker run -d --name plenum-paperclip-qwen --network host -e OLLAMA_HOST=127.0.0.1:11434 -e OLLAMA_CONTEXT_LENGTH=4096 -e OLLAMA_NUM_PARALLEL=1 --memory=8g --cpus=3 ollama/ollama:latest
+          for i in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
+            sleep 2
+          done
+          bash integrations/paperclip/pull_original_qwen.sh
+          test "$(docker exec plenum-paperclip-qwen ollama list | awk '$1=="qwen3.5:4b" {print $2}')" = d8b0f5e9760c
+      - name: Run real upstream optimization and sealed withheld scoring
+        if: steps.evidence.outputs.reused == 'false'
+        run: |
+          mkdir -p reports
+          python integrations/prometheus_gepa/optimize_planner.py reports/gepa
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prometheus-gepa-qualification
+          path: |
+            reports/gepa
+            reports/gepa-readback
+          if-no-files-found: warn
+      - name: Remove disposable model
+        if: always() && steps.evidence.outputs.reused == 'false'
+        run: docker rm -f plenum-paperclip-qwen || true
