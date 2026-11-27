@@ -6,6 +6,7 @@ import asyncio
 import json
 import os
 import sys
+import httpx
 from hashlib import sha256
 from importlib.metadata import version
 from pathlib import Path
@@ -51,12 +52,16 @@ def model_digest():
     return found[0]
 
 
-class Guard:
+class Guard(httpx.AsyncBaseTransport):
     """Bound the actual SDK transport; reserve before inference, never resend."""
     def __init__(self, root, md):
         self.root, self.md, self.seen = root, md, set()
+        self.transport = httpx.AsyncHTTPTransport(retries=0, trust_env=False)
 
-    async def reserve(self, request):
+    async def aclose(self):
+        await self.transport.aclose()
+
+    async def handle_async_request(self, request):
         if str(request.url) != BASE + "chat/completions" or request.method != "POST":
             raise PermissionError("Only local chat completion is authorized")
         raw = await request.aread()
@@ -67,7 +72,10 @@ class Guard:
             raise PermissionError("Model or tool scope changed")
         # The upstream orchestrator owns planning, progress and replanning.
         # Bound local generation, not its choice of specialist.
-        payload["max_tokens"] = min(payload.get("max_tokens") or 1024, 1024)
+        requested = payload.pop("max_completion_tokens", None) or payload.get("max_tokens") or 1024
+        if type(requested) is not int or requested < 1:
+            raise ValueError("Invalid requested token bound")
+        payload["max_tokens"] = min(requested, 1024)
         payload["reasoning_effort"] = "none"
         raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
         digest = sha256(raw).hexdigest()
@@ -76,11 +84,12 @@ class Guard:
         exclusive(self.root / f"call-{len(self.seen)+1:02d}.reserved.json",
                   {"request_sha256":digest, "model_digest":self.md, "paid_inference":False})
         self.seen.add(digest)
-        # httpx request hook can replace the request stream; update the length.
-        import httpx
-        request.stream = httpx.ByteStream(raw)
-        request._content = raw
-        request.headers["Content-Length"] = str(len(raw))
+        # Forward exactly the reserved bytes, with no redirects or retries.
+        headers = request.headers.copy()
+        headers["Content-Length"] = str(len(raw))
+        forwarded = httpx.Request(request.method, request.url, headers=headers,
+                                  content=raw, extensions=request.extensions)
+        return await self.transport.handle_async_request(forwarded)
 
 
 def parse_selection(text, mission):
@@ -106,14 +115,13 @@ async def plan(root, mission, commitment):
     from agent_framework.orchestrations import MagenticBuilder
     from agent_framework.openai import OpenAIChatClient
     from openai import AsyncOpenAI
-    import httpx
     md = model_digest()
     root.mkdir(mode=0o700, parents=False, exist_ok=False)
     exclusive(root / "binding.json", {"mission_sha256":mp.digest(mission),
         "model_digest":md, "versions":VERSIONS, "paid_inference":False})
     guard = Guard(root, md)
     async with httpx.AsyncClient(trust_env=False, follow_redirects=False,
-                                 timeout=90, event_hooks={"request":[guard.reserve]}) as transport:
+                                 timeout=90, transport=guard) as transport:
         async with AsyncOpenAI(base_url=BASE, api_key="local-no-secret", max_retries=0,
                                http_client=transport) as sdk:
             client = OpenAIChatClient(model=MODEL, async_client=sdk)
@@ -171,6 +179,59 @@ def execute(root, mission, commitment):
         "general_autonomy_verified":False})
 
 
+def verify(root, mission, commitment):
+    """Independently reopen every contract and reservation without model/provider calls."""
+    strict()
+    def load(name):
+        p = root / name
+        if p.is_symlink() or not p.is_file() or p.stat().st_size > 2_000_000:
+            raise ValueError("Unsafe receipt")
+        return json.loads(p.read_text())
+    binding = load("binding.json")
+    md = binding.get("model_digest")
+    if (binding != {"mission_sha256":mp.digest(mission),"model_digest":md,
+                    "versions":VERSIONS,"paid_inference":False}
+            or not isinstance(md,str) or not md.removeprefix("sha256:").startswith(MODEL_PREFIX)):
+        raise ValueError("Mission binding changed")
+    plan = load("accepted-plan.json")
+    selection = plan["selection"]
+    if mp.digest(sorted(k for k,v in selection.items() if v)) != commitment:
+        raise ValueError("Selection commitment changed")
+    scope, graph = vm.graph(mission, selection)
+    n=plan["model_calls"]
+    if type(n) is not int or not 1 <= n <= MAX_CALLS or plan != {
+        "selection":selection,"model_calls":n,"model_calls_replayed":0,
+        "paid_inference":False,"model_digest":md}:
+        raise ValueError("Plan receipt changed")
+    hashes=set()
+    files={"binding.json","accepted-plan.json","outcome.json"}
+    for i in range(1,n+1):
+        name=f"call-{i:02d}.reserved.json";files.add(name)
+        row=load(name);h=row.get("request_sha256")
+        if not isinstance(h,str) or len(h)!=64 or h in hashes or row != {
+                "request_sha256":h,"model_digest":md,"paid_inference":False}:
+            raise ValueError("Inference reservation changed")
+        hashes.add(h)
+    results={}
+    for node in graph:
+        tool=node["id"];inputs={k:results[k] for k in node["depends_on"]}
+        reservation=tool+".reserved.json";receipt=tool+".result.json"
+        files.update((reservation,receipt))
+        if load(reservation)!={"tool":tool,"input_sha256":mp.digest(inputs)}:
+            raise ValueError("Contract reservation changed")
+        row=load(receipt);result=row["result"]
+        if row!={"result":result,"result_sha256":mp.digest(result)}:
+            raise ValueError("Contract result changed")
+        check_contract_result(tool,scope,inputs,result)
+        results[tool]=result
+    expected={"mission_sha256":mp.digest(mission),"selected_capabilities":selection,
+        "verified_contracts":len(results),"report_sha256":mp.digest(results["evidence_report"]),
+        "paid_inference":False,"production_integrated":False,"general_autonomy_verified":False}
+    if load("outcome.json")!=expected or {p.name for p in root.iterdir()}!=files:
+        raise ValueError("Outcome or archive changed")
+    print(json.dumps({**expected,"independent_readback":True,"model_calls":n},sort_keys=True))
+
+
 def main():
     # A useful new public evidence objective, not an additional production queue.
     # Distinct DOI evidence from two original published cattle studies.
@@ -181,7 +242,13 @@ def main():
             "thermal":{"initial_kelvin":330,"ambient_kelvin":298,"rate":0.03,"duration":15},
         },
     }
-    execute(Path(sys.argv[1]), mission, mp.digest(["bibliography"]))
+    phase, path = sys.argv[1:]
+    if phase == "run":
+        execute(Path(path), mission, mp.digest(["bibliography"]))
+    elif phase == "verify":
+        verify(Path(path), mission, mp.digest(["bibliography"]))
+    else:
+        raise ValueError("Unknown phase")
 
 
 if __name__ == "__main__":
