@@ -141,4 +141,51 @@ class NativeVariableTests(unittest.TestCase):
                 self.assertEqual(model.call_count,1)
                 worker.assert_not_called()
 
+    def test_native_setup_retry_only_before_provider_work(self):
+        import sequential_mission as seq
+        from unittest.mock import Mock
+        for blocked in (None, "provider", "reserved", "missing_bootstrap"):
+            with self.subTest(blocked=blocked), tempfile.TemporaryDirectory() as tmp:
+                root=Path(tmp)
+                scope,plan,graph=self.setup_plan(root,"science",["bibliography","stations"])
+                cid,mid=plan["company"],plan["parent"]
+                plan["scope_sha256"]=seq.scope_digest(scope)
+                (root/"minister-plan.json").write_text(json.dumps(plan))
+                agents={r:str(uuid4()) for r in seq.MISSION_ORDER}
+                iid=plan["tasks"]["research"]
+                rid=str(uuid4())
+                value={"input_sha256":{}}
+                exclusive(root/"intelligence.json",{"company":cid,"issue":plan["tasks"]["intelligence"],
+                          "role":"intelligence","result":value,"sha256":seq.digest(value)})
+                if blocked=="reserved":
+                    contract=nv.partition(graph)["research"][0]
+                    exclusive(nv.evidence_root(root)/(contract+".reserved.json"),{})
+                def call(path,method=None,payload=None):
+                    for role in ("intelligence","research"):
+                        if path=="/api/issues/"+plan["tasks"][role]:
+                            return {"id":plan["tasks"][role],"companyId":cid,"parentId":mid,
+                                    "assigneeAgentId":agents[role],"status":"done" if role=="intelligence" else "todo",
+                                    "interruption":{"observedRunId":rid}}
+                    if path=="/api/heartbeat-runs/"+rid:
+                        return {"id":rid,"companyId":cid,"agentId":agents["research"],
+                                "contextSnapshot":{"issueId":iid},"status":"failed","errorCode":"setup_failed",
+                                "exitCode":None,"finishedAt":"2026-11-27T00:00:00Z",
+                                "resultJson":{"executionRecovery":{"kind":"other" if blocked=="missing_bootstrap" else "bootstrap",
+                                                "providerWorkStarted":blocked=="provider"}}}
+                    if path=="/api/issues/"+iid+"/retry" and method=="POST":
+                        self.assertEqual(payload["observedRunId"],rid)
+                        return {"accepted":True,"stale":False,"requestId":str(uuid4())}
+                    raise AssertionError(path)
+                api=Mock(side_effect=call)
+                # Isolate the retry gate while preserving exact dependency and
+                # local reservation checks; no real provider or board action.
+                with patch.dict(os.environ,{"GITHUB_ACTIONS":"true","PLENUM_EPHEMERAL_RUNNER":"confirmed"}), \
+                     patch("production_wiring.load_prepared",return_value={"checkpoint_mode":"local"}), \
+                     patch.object(nv,"load",return_value=graph):
+                    self.assertEqual(seq.retry_unstarted_verifier(api,root,cid,mid,plan,agents,scope,target="research"),blocked is None)
+                    self.assertFalse(seq.retry_unstarted_verifier(api,root,cid,mid,plan,agents,scope,target="research"))
+                posts=[c for c in api.call_args_list if len(c.args)>1 and c.args[1]=="POST"]
+                self.assertEqual(len(posts),1 if blocked is None else 0)
+                self.assertEqual((root/"research-setup-retry-accepted.json").is_file(),blocked is None)
+
 if __name__=="__main__":unittest.main(verbosity=2)
