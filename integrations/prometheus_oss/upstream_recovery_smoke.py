@@ -23,8 +23,12 @@ def main():
             i=len(calls)
             assert path=="/api/chat" and i<len(answers) and request==requests[i]
             calls.append(u.mp.digest(request))
-            return {"model":u.mp.MODEL,"done":True,"eval_count":20,"prompt_eval_count":100,
-                    "message":{"content":json.dumps(answers[i])}}
+            message={"content":json.dumps(answers[i])}
+            if request["think"]:
+                assert request["options"]["num_predict"]==768 and timeout==360
+                message["thinking"]="Mock deliberation; never archive this field"
+            return {"model":u.mp.MODEL,"done":True,"done_reason":"stop","eval_count":20,"prompt_eval_count":100,
+                    "message":message}
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)/"original"
             with patch.object(u.mp,"check_local_model",return_value=md),patch.object(u.mp,"read_json",side_effect=fake):
@@ -32,6 +36,8 @@ def main():
                     proof=u.execute_bound(root,mission,commitment,identity)
                     assert proof["selection"]==good and proof["model_calls"]==len(answers)
                     assert proof.get("independent_rejection_recovered",False)==(len(answers)==3)
+                    assert proof["native_thinking_stages"]==(["peer","correction"] if len(answers)==3 else ["peer"])
+                    assert all("Mock deliberation" not in p.read_text() for p in root.glob("*.json"))
                 else:
                     try:u.execute_bound(root,mission,commitment,identity)
                     except ValueError as exc:assert str(exc)=="Independent corrective selection rejected"
@@ -41,6 +47,14 @@ def main():
             with patch.object(u.mp,"read_json",side_effect=AssertionError("Independent verifier called model")):
                 if accepted:
                     assert u.verify_bound(root,mission,commitment,identity)==proof
+                    # Demonstrate old archives are still verified from exact legacy digests.
+                    old_req=u.peer_request(mission,answers[0],reasoning=False)
+                    for suffix in ("reserved","result"):
+                        f=root/("peer."+suffix+".json")
+                        old=json.loads(f.read_text());old["request_sha256"]=u.mp.digest(old_req)
+                        old.pop("native_thinking_observed",None);f.write_text(json.dumps(old))
+                    legacy_proof=u.verify_bound(root,mission,commitment,identity)
+                    assert "peer" not in legacy_proof.get("native_thinking_stages",[])
                     if len(answers)==3:
                         f=root/"correction.result.json"
                         row=json.loads(f.read_text());row["answer"]=bad;f.write_text(json.dumps(row))
