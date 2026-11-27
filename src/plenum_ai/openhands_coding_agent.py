@@ -430,11 +430,23 @@ def _early_local_reads(source: bytes) -> set[str]:
     import inspect
     from types import CodeType
 
-    module = compile(source.decode("utf-8"), "<review-only>", "exec",
-                     dont_inherit=True)
-    functions = [value for value in module.co_consts if isinstance(value, CodeType)]
+    # CPython may emit additional top-level code objects for an annotation
+    # expression (including deferred annotation scopes in newer releases).
+    # Identify the original function itself rather than counting every code
+    # constant. The exact AST scope and signature checks remain independent.
+    tree = ast.parse(source.decode("utf-8"))
+    if (len(tree.body) != 1 or not isinstance(tree.body[0], ast.FunctionDef)
+            or tree.body[0].decorator_list):
+        raise ValueError("Expected a single undecorated review function")
+    node = tree.body[0]
+    module = compile(tree, "<review-only>", "exec", dont_inherit=True)
+    functions = [value for value in module.co_consts
+                 if isinstance(value, CodeType)
+                 and value.co_name == node.name
+                 and value.co_qualname == node.name
+                 and value.co_firstlineno == node.lineno]
     if len(functions) != 1:
-        raise ValueError("Expected a single compiled review function")
+        raise ValueError("Expected a single matching compiled review function")
     function = functions[0]
     count = function.co_argcount + function.co_kwonlyargcount
     count += bool(function.co_flags & inspect.CO_VARARGS)
