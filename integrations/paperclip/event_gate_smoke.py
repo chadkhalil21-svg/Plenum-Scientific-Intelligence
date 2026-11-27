@@ -78,6 +78,41 @@ class EventGateTests(TestCase):
             self.assertFalse(gate.reserve(42,"fixture",123,1,reader=self.reader)[0])
         self.assertEqual(self.writes,0)
 
+    def test_exact_reviewed_rich_scope_only(self):
+        import json
+        from mission_scope import MAGIC,parse_body
+        from reviewed_public_scopes import scopes
+        from composition_contract import accept_choice
+        from synthesis_contract import accept_choice as accept_synthesis,index,candidates
+        approved=scopes()
+        arithmetic=approved["terra-timing"]
+        accept_choice(arithmetic,{"narration_minutes":"words/words_per_minute","pause_minutes":"film_minutes-narration_minutes"})
+        synthesis=approved["terra-release"]
+        opts=candidates(index(synthesis["inputs"]["synthesis"]["documents"]))
+        accept_synthesis(synthesis,{k:k in ("extract_scene_1","extract_scene_2","extract_science_2") for k in opts})
+        for scope in approved.values():
+            self.issue.update(title=gate.PAPERCLIP_EVIDENCE_TITLE,body=MAGIC+"\n"+json.dumps(scope))
+            self.assertEqual(gate.issue_scope(self.issue),scope)
+            self.assertTrue(gate.authorize(self.issue,[],42))
+            self.assertFalse(gate.authorize(dict(self.issue,user={"login":"other"}),[],42))
+            for changed in (dict(scope,objective="Different unapproved objective."),
+                            dict(scope,result_commitment="0"*64)):
+                self.issue["body"]=MAGIC+"\n"+json.dumps(changed)
+                self.assertFalse(gate.authorize(self.issue,[],42))
+            self.issue["body"]=MAGIC+"\n"+json.dumps(scope)
+            with patch("reviewed_public_scopes.source",side_effect=ValueError("changed source")):
+                self.assertFalse(gate.authorize(self.issue,[],42))
+        from synthesis_smoke import scope as unapproved_synthesis
+        from composition_smoke import scope as unapproved_composition
+        for scope in (unapproved_synthesis(),unapproved_composition("composition-energy")):
+            self.issue["body"]=MAGIC+"\n"+json.dumps(scope)
+            self.assertFalse(gate.authorize(self.issue,[],42))
+        self.issue["body"]=MAGIC+"\n"+json.dumps(arithmetic)
+        self.assertTrue(gate.reserve(42,"fixture",123,1,reader=self.reader)[0])
+        self.assertFalse(gate.reserve(42,"fixture",124,1,reader=self.reader)[0])
+        self.assertEqual(self.writes,1)
+        print("EXACT REVIEWED RICH SCOPE PASS source pins, unchanged owner gate, no arbitrary scopes or replay",flush=True)
+
     def test_legacy_worker_does_not_execute_native_task(self):
         with patch.object(wake,"_read_original_wake_issue",return_value=(self.issue,[])), patch.object(wake,"run_issue",side_effect=AssertionError("duplicate worker")):
             actual=wake.process(42,"fixture",Path("/unused"))

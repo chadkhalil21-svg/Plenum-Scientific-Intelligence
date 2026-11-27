@@ -10,10 +10,10 @@ for attempt in 1 2 3; do
     else
         status=$?
         cat "$log" >&2
-        if [ "$status" -ne 1 ] || [ "$attempt" -ge 3 ] || ! grep -Eq '^Error: pull model manifest: 503(:|[[:space:]]|$)' "$log"; then
+        if [ "$status" -ne 1 ] || [ "$attempt" -ge 3 ] || ! grep -Eq '^Error: (pull model manifest: )?503(:|[[:space:]]|$)' "$log"; then
             exit "$status"
         fi
-        echo "Transient model manifest HTTP 503 before inference; retry $((attempt + 1))/3" >&2
+        echo "Transient model download HTTP 503 before inference; retry $((attempt + 1))/3" >&2
         sleep "$((attempt * 5))"
     fi
 done
