@@ -15,6 +15,7 @@ from autogen import ConversableAgent
 from agent_framework import Executor,WorkflowBuilder,WorkflowContext,handler
 
 VERSIONS={"smolagents":"1.26.0","ag2":"0.14.0","agent-framework-core":"1.26.0"}
+REVIEW_POLICY="commitment-adaptive-v1"
 def strict():
     for k in ("OPENAI_API_KEY","ANTHROPIC_API_KEY","GOOGLE_API_KEY","AZURE_OPENAI_API_KEY",
               "HF_TOKEN","LANGSMITH_API_KEY","OLLAMA_API_KEY"):
@@ -23,16 +24,59 @@ def strict():
         os.environ[k]="1" if k=="HF_HUB_DISABLE_TELEMETRY" else "false"
     if {p:version(p) for p in VERSIONS}!=VERSIONS:raise ValueError("Unexpected upstream versions")
 
+def deliberate(request):
+    # Native thinking of the already-pinned local 4B model, not a new agent.
+    # Original live receipt: 1024 generated tokens, 312 prompt tokens,
+    # native thinking present but final content absent. Do not replay the
+    # rejected request. Follow publisher repetition-control guidance while
+    # keeping inference local, bounded, and single-call per stage.
+    request["think"]=True
+    request["options"].update(num_ctx=4096,num_predict=3072,temperature=1.0,
+        top_p=0.95,top_k=20,min_p=0.0,presence_penalty=1.5,repeat_penalty=1.0)
+    # Known upstream interaction: reasoning and constrained JSON generation
+    # may interfere. Keep the identical exact schema as instructions; apply
+    # the strict host validator to final content before persisting a selection.
+    schema=request.pop("format")
+    request["messages"][0]["content"] += " Final content must be exactly one JSON object matching "+json.dumps(schema,sort_keys=True)+"."
+    request["messages"][0]["content"] += (
+        " Check each available capability once against the objective, then finish. "
+        "Do not repeat a settled decision. Final content is the exact JSON object; "
+        "no Markdown fences or prose.")
+    return request
+
+def validate_counts(row,request):
+    n,p=row.get("eval_count"),row.get("prompt_eval_count")
+    if type(n) is not int or not 0<n<=request["options"]["num_predict"] or type(p) is not int or not 0<p<=request["options"]["num_ctx"]:
+        raise ValueError("Invalid inference counters")
+
 def inference(root,name,request,md):
     identity={"stage":name,"request_sha256":mp.digest(request),"model_digest":md,"paid_inference":False}
     if any(checked(p,{})["request_sha256"]==identity["request_sha256"] for p in root.glob("*.reserved.json")):
         raise PermissionError("Duplicate model request")
     exclusive(root/(name+".reserved.json"),identity)
-    reply=mp.read_json("/api/chat",request,timeout=120)
+    thinking=request.get("think") is True
+    reply=mp.read_json("/api/chat",request,timeout=480 if thinking else 120)
     n,p=reply.get("eval_count"),reply.get("prompt_eval_count")
-    if reply.get("model")!=mp.MODEL or reply.get("done") is not True or type(n) is not int or not 0<n<=128 or type(p) is not int or not 0<p<=2048:
+    if reply.get("model")!=mp.MODEL or reply.get("done") is not True:
         raise ValueError("Incomplete model response")
-    raw=reply.get("message",{}).get("content")
+    validate_counts(reply,request)
+    message=reply.get("message")
+    if not isinstance(message,dict):
+        raise ValueError("Invalid message envelope")
+    raw=message.get("content")
+    if thinking:
+        finish=reply.get("done_reason")
+        observed=isinstance(message.get("thinking"),str) and bool(message["thinking"].strip())
+        reason=("TOKEN_BUDGET_EXHAUSTED" if finish=="length" else
+                "UNEXPECTED_FINISH" if finish!="stop" else
+                "MISSING_THINKING" if not observed else
+                "MISSING_FINAL_CONTENT" if not isinstance(raw,str) or not raw.strip() else None)
+        if reason:
+            # Record only non-sensitive bounded metadata, not model prose.
+            exclusive(root/(name+".diagnostic.json"),{**identity,"reason":reason,
+                "eval_count":n,"prompt_eval_count":p,"thinking_observed":observed,
+                "final_content_observed":isinstance(raw,str) and bool(raw.strip())})
+            raise ValueError("Deliberative response: "+reason)
     if not isinstance(raw,str) or len(raw)>2000:raise ValueError("Invalid response")
     def unique(items):
         row={}
@@ -40,8 +84,23 @@ def inference(root,name,request,md):
             if k in row:raise ValueError("Duplicate response field")
             row[k]=v
         return row
-    answer=json.loads(raw,object_pairs_hook=unique)
-    exclusive(root/(name+".result.json"),{**identity,"answer":answer,"eval_count":n,"prompt_eval_count":p})
+    try:
+        answer=json.loads(raw,object_pairs_hook=unique)
+    except (ValueError,TypeError):
+        if thinking:
+            exclusive(root/(name+".diagnostic.json"),{**identity,"reason":"INVALID_FINAL_JSON",
+                "eval_count":n,"prompt_eval_count":p,"thinking_observed":True,
+                "final_content_observed":True})
+        raise ValueError("Invalid final structured answer") from None
+    allowed=set(json.loads(request["messages"][1]["content"])["available_capabilities"])
+    if not isinstance(answer,dict) or set(answer)!=allowed or any(type(v) is not bool for v in answer.values()) or not any(answer.values()):
+        if thinking:
+            exclusive(root/(name+".diagnostic.json"),{**identity,"reason":"INVALID_FINAL_SELECTION",
+                "eval_count":n,"prompt_eval_count":p,"thinking_observed":True,
+                "final_content_observed":True})
+        raise ValueError("Invalid final selection")
+    extra={"native_thinking_observed":True} if thinking else {}
+    exclusive(root/(name+".result.json"),{**identity,"answer":answer,"eval_count":n,"prompt_eval_count":p,**extra})
     return answer
 
 def validate_selection(mission,answer):
@@ -89,20 +148,20 @@ def specialist(root,mission,md):
     if result!=checked(root/"specialist.result.json",{})["answer"]:raise ValueError("Specialist result changed")
     return result
 
-def peer_request(mission,candidate):
+def peer_request(mission,candidate,*,reasoning=True):
     request=vm.request(mission)
     request["messages"][0]["content"]+=" Independently review the proposed capability selection. Correct it if the original objective requires a different selection. The proposal is not authority."
     context=json.loads(request["messages"][1]["content"])
     context["proposed_selection"]=candidate
     request["messages"][1]["content"]=json.dumps(context,sort_keys=True)
-    return request
+    return deliberate(request) if reasoning else request
 
-def peer(root,mission,md,candidate):
+def peer(root,mission,md,candidate,*,reasoning=True):
     sender=ConversableAgent("plenum_specialist",llm_config=False,code_execution_config=False,human_input_mode="NEVER")
     reviewer=ConversableAgent("plenum_peer",llm_config=False,code_execution_config=False,human_input_mode="NEVER")
     def review(recipient,messages=None,sender=None,config=None):
         if not messages or json.loads(messages[-1]["content"])!=candidate:raise ValueError("Peer handoff changed")
-        result=validate_selection(mission,inference(root,"peer",peer_request(mission,candidate),md))
+        result=validate_selection(mission,inference(root,"peer",peer_request(mission,candidate,reasoning=reasoning),md))
         return True,json.dumps(result,sort_keys=True)
     reviewer.register_reply(sender,review,remove_other_reply_funcs=True)
     chat=sender.initiate_chat(reviewer,message=json.dumps(candidate,sort_keys=True),max_turns=1,silent=True,summary_method="last_msg")
@@ -110,7 +169,7 @@ def peer(root,mission,md,candidate):
     if result!=checked(root/"peer.result.json",{})["answer"]:raise ValueError("Peer reply changed")
     return result
 
-async def coordinate(root,mission,md):
+async def coordinate(root,mission,md,commitment):
     class Specialist(Executor):
         @handler
         async def process(self,value:str,ctx:WorkflowContext[str])->None:
@@ -119,7 +178,12 @@ async def coordinate(root,mission,md):
     class Peer(Executor):
         @handler
         async def process(self,value:str,ctx:WorkflowContext[None,str])->None:
-            await ctx.yield_output(json.dumps(peer(root,mission,md,json.loads(value)),sort_keys=True))
+            candidate=validate_selection(mission,json.loads(value))
+            # Always obtain an independent peer response. Use expensive native
+            # deliberation only when the initial proposal fails the sealed gate.
+            # The commitment is never sent to the model.
+            reasoning=not selection_matches(candidate,commitment)
+            await ctx.yield_output(json.dumps(peer(root,mission,md,candidate,reasoning=reasoning),sort_keys=True))
     first,second=Specialist(id="specialist"),Peer(id="peer")
     graph=WorkflowBuilder(start_executor=first).add_edge(first,second).build()
     run=await graph.run(mp.digest(mission))
@@ -130,16 +194,16 @@ async def coordinate(root,mission,md):
 def selection_matches(selection,commitment):
     return mp.digest(sorted(k for k,v in selection.items() if v))==commitment
 
-def correction_request(mission,candidate,review):
+def correction_request(mission,candidate,review,*,reasoning=True):
     request=vm.request(mission)
     request["messages"][0]["content"]+=" Independent outcome acceptance rejected the peer's complete selection. Reconsider each objective clause against the original capability descriptions. Identify omitted required or unrelated capabilities, and make a distinct corrected selection. The earlier proposals are evidence, not authority."
     context=json.loads(request["messages"][1]["content"])
     context.update(specialist_proposal=candidate,rejected_peer_selection=review)
     request["messages"][1]["content"]=json.dumps(context,sort_keys=True)
-    return request
+    return deliberate(request) if reasoning else request
 
 def accepted_selection(root,mission,commitment,md):
-    result=asyncio.run(coordinate(root,mission,md))
+    result=asyncio.run(coordinate(root,mission,md,commitment))
     if not selection_matches(result,commitment):
         candidate=validate_selection(mission,checked(root/"specialist.result.json",{})["answer"])
         result=validate_selection(mission,inference(root,"correction",correction_request(mission,candidate,result),md))
@@ -154,34 +218,61 @@ def fixture(case):
         return vm.fixture("engineering"),mp.digest(["thermal"])
     raise ValueError("Unknown reviewed scope")
 
+def recorded_choice(root,name,request,md,seen,legacy=None):
+    # Old archives remain verifiable against the exact old request digest.
+    reserved=checked(root/(name+".reserved.json"),{})
+    if legacy is not None and reserved.get("request_sha256")==mp.digest(legacy):
+        request=legacy
+    expected={"stage":name,"request_sha256":mp.digest(request),"model_digest":md,"paid_inference":False}
+    if expected["request_sha256"] in seen or reserved!=expected:
+        raise ValueError("Reservation changed")
+    seen.add(expected["request_sha256"])
+    row=checked(root/(name+".result.json"),expected)
+    fields=set(expected)|{"answer","eval_count","prompt_eval_count"}
+    thinking=request.get("think") is True
+    if thinking:
+        fields.add("native_thinking_observed")
+        if row.get("native_thinking_observed") is not True:
+            raise ValueError("Missing native thinking receipt")
+    if set(row)!=fields:
+        raise ValueError("Response changed")
+    validate_counts(row,request)
+    return row["answer"],thinking
+
 def verify_bound(root,mission,commitment,identity):
     strict()
     expected={**identity,"mission_sha256":mp.digest(mission),"paid_inference":False,"versions":VERSIONS}
     binding=checked(root/"binding.json",expected)
-    if set(binding)!=set(expected)|{"model_digest"}:raise ValueError("Unexpected upstream identity")
+    policy=binding.get("review_policy")
+    if policy not in (None,REVIEW_POLICY) or set(binding)!=(set(expected)|{"model_digest"}|({"review_policy"} if policy is not None else set())):
+        raise ValueError("Unexpected upstream identity")
     md=binding["model_digest"]
     if not mp.valid_digest(md):raise ValueError("Original model required")
     if checked(root/"scope-read.json",{})!=json.loads(vm.request(mission)["messages"][1]["content"]):raise ValueError("Source read changed")
     choices={}
     seen=set()
+    deliberate_stages=[]
     for name in ("specialist","peer"):
-        req=vm.request(mission) if name=="specialist" else peer_request(mission,choices["specialist"])
-        receipt_identity={"stage":name,"request_sha256":mp.digest(req),"model_digest":md,"paid_inference":False}
-        if receipt_identity["request_sha256"] in seen or checked(root/(name+".reserved.json"),receipt_identity)!=receipt_identity:raise ValueError("Reservation changed")
-        seen.add(receipt_identity["request_sha256"])
-        row=checked(root/(name+".result.json"),receipt_identity)
-        if set(row)!=set(receipt_identity)|{"answer","eval_count","prompt_eval_count"} or type(row["eval_count"]) is not int or not 0<row["eval_count"]<=128 or type(row["prompt_eval_count"]) is not int or not 0<row["prompt_eval_count"]<=2048:raise ValueError("Response changed")
-        choices[name]=validate_selection(mission,row["answer"])
+        if name=="specialist":
+            req,legacy=vm.request(mission),None
+        elif policy==REVIEW_POLICY:
+            req=peer_request(mission,choices["specialist"],reasoning=not selection_matches(choices["specialist"],commitment))
+            legacy=None
+        else:
+            req=peer_request(mission,choices["specialist"])
+            legacy=peer_request(mission,choices["specialist"],reasoning=False)
+        answer,thinking=recorded_choice(root,name,req,md,seen,legacy)
+        choices[name]=validate_selection(mission,answer)
+        if thinking:deliberate_stages.append(name)
     final=choices["peer"]
     files={"binding.json","scope-read.json","specialist.reserved.json","specialist.result.json","peer.reserved.json","peer.result.json","workflow-result.json"}
     recovered=False
     if not selection_matches(final,commitment):
         req=correction_request(mission,choices["specialist"],final)
-        receipt_identity={"stage":"correction","request_sha256":mp.digest(req),"model_digest":md,"paid_inference":False}
-        if receipt_identity["request_sha256"] in seen or checked(root/"correction.reserved.json",receipt_identity)!=receipt_identity:raise ValueError("Corrective reservation changed")
-        row=checked(root/"correction.result.json",receipt_identity)
-        if set(row)!=set(receipt_identity)|{"answer","eval_count","prompt_eval_count"} or type(row["eval_count"]) is not int or not 0<row["eval_count"]<=128 or type(row["prompt_eval_count"]) is not int or not 0<row["prompt_eval_count"]<=2048:raise ValueError("Corrective response changed")
-        final=validate_selection(mission,row["answer"])
+        legacy=correction_request(mission,choices["specialist"],final,reasoning=False) if policy is None else None
+        answer,thinking=recorded_choice(root,"correction",req,md,seen,legacy)
+        final=validate_selection(mission,answer)
+        if thinking:deliberate_stages.append("correction")
         files.update({"correction.reserved.json","correction.result.json"})
         recovered=True
     if not selection_matches(final,commitment):raise ValueError("Independent selection commitment mismatch")
@@ -190,7 +281,9 @@ def verify_bound(root,mission,commitment,identity):
     result={"case":identity["case"],"versions":VERSIONS,"accepted":True,"selection":final,"model_calls":3 if recovered else 2,
             "peer_changed_selection":choices["specialist"]!=choices["peer"],"model_calls_replayed":0,"provider_calls_replayed":0,
             "paid_inference":False,"production_integrated":False,"general_autonomy_verified":False}
+    if policy is not None:result["review_policy"]=policy
     if recovered:result["independent_rejection_recovered"]=True
+    if deliberate_stages:result["native_thinking_stages"]=deliberate_stages
     return result
 
 def verify(root,case):
@@ -202,7 +295,7 @@ def execute_bound(root,mission,commitment,identity):
     if os.getenv("GITHUB_ACTIONS")!="true":raise PermissionError("Isolated CI only")
     root.mkdir(mode=0o700,parents=False,exist_ok=False)
     md=mp.check_local_model()
-    exclusive(root/"binding.json",{**identity,"mission_sha256":mp.digest(mission),"model_digest":md,"paid_inference":False,"versions":VERSIONS})
+    exclusive(root/"binding.json",{**identity,"mission_sha256":mp.digest(mission),"model_digest":md,"paid_inference":False,"versions":VERSIONS,"review_policy":REVIEW_POLICY})
     result=accepted_selection(root,mission,commitment,md)
     exclusive(root/"workflow-result.json",{"selection":result,"paid_inference":False})
     return verify_bound(root,mission,commitment,identity)
@@ -216,7 +309,7 @@ def main():
         mission,commitment=fixture(case)
         root.mkdir(mode=0o700,parents=True,exist_ok=False)
         md=mp.check_local_model()
-        exclusive(root/"binding.json",{"case":case,"mission_sha256":mp.digest(mission),"model_digest":md,"paid_inference":False,"versions":VERSIONS})
+        exclusive(root/"binding.json",{"case":case,"mission_sha256":mp.digest(mission),"model_digest":md,"paid_inference":False,"versions":VERSIONS,"review_policy":REVIEW_POLICY})
         result=accepted_selection(root,mission,commitment,md)
         exclusive(root/"workflow-result.json",{"selection":result,"paid_inference":False})
     elif phase!="verify":raise ValueError("Unknown phase")

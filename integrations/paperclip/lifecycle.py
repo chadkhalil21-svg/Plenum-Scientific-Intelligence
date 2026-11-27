@@ -46,13 +46,15 @@ def assigned_scope(api, root, role):
 # encoded in the exact reviewed entrypoint and role argument, visible on readback.
 PERSISTENT_ENTRYPOINT="/plenum/integrations/paperclip/persistent_entrypoint.py"
 
+MINISTER_REASONING_TIMEOUT = 1140
+
 def persistent_adapter(role):
     if role not in ("minister","intelligence","research","engineering","commercial","verification"):
         raise ValueError("Unknown persistent role")
     return {"command":"python3","args":[PERSISTENT_ENTRYPOINT,role],
-            "cwd":"/plenum","timeoutSec":150 if role=="minister" else 480 if role=="commercial" else 120,"env":{}}
+            "cwd":"/plenum","timeoutSec":MINISTER_REASONING_TIMEOUT if role=="minister" else 480 if role=="commercial" else 120,"env":{}}
 
-def validate_roster(rows, company, specs):
+def validate_roster(rows, company, specs, *, require_extended_minister=False):
     if not isinstance(rows,list) or any(not isinstance(r,dict) for r in rows):
         raise ValueError("Persistent roster shape mismatch")
     names={"minister":"Minister of Operations",**{k:v[0] for k,v in specs.items()}}
@@ -67,7 +69,12 @@ def validate_roster(rows, company, specs):
         expected=persistent_adapter(role)
         # Missing or empty env are equivalent: there must be no stored binding,
         # redacted or otherwise. Never accept a redacted value as authorization.
-        if not isinstance(cfg,dict) or {**cfg,"env":cfg.get("env",{})}!=expected:
+        # Existing roster identity is preserved. Legacy 150-second adapters
+        # remain valid for ordinary missions, never for deliberative activation.
+        allowed=[expected]
+        if role=="minister" and not require_extended_minister:
+            allowed.append({**expected,"timeoutSec":150})
+        if not isinstance(cfg,dict) or {**cfg,"env":cfg.get("env",{})} not in allowed:
             raise ValueError("Persistent roster adapter mismatch: "+role)
         if (row.get("companyId")!=company or row.get("adapterType")!="process"
             or row.get("reportsTo")!=(None if role=="minister" else ids["minister"])

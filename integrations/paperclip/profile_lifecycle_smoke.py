@@ -50,6 +50,10 @@ class Tests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             # First seed and second readback from the same store; no env comparison.
             self.assertEqual(validate_roster(rows,c,SPECS),ids)
+            self.assertEqual(validate_roster(rows,c,SPECS,require_extended_minister=True),ids)
+            legacy=copy.deepcopy(rows);legacy[0]["adapterConfig"]["timeoutSec"]=150
+            self.assertEqual(validate_roster(legacy,c,SPECS),ids)
+            with self.assertRaises(ValueError):validate_roster(legacy,c,SPECS,require_extended_minister=True)
             first=bind_roster(tmp,c,ids)
             second=json_roundtrip(rows)
             self.assertEqual(bind_roster(tmp,c,validate_roster(second,c,SPECS)),first)

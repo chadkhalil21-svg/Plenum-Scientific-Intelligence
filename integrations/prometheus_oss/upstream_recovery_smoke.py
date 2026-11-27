@@ -15,16 +15,21 @@ def main():
     assert u.mp.valid_digest(md)
     for label,answers,accepted in (("first-pass",[good,good],True),
                                    ("recovered",[bad,bad,good],True),
+                                   ("peer-regressed",[good,bad,good],True),
                                    ("rejected",[bad,bad,bad],False)):
-        requests=[u.vm.request(mission),u.peer_request(mission,answers[0])]
+        requests=[u.vm.request(mission),u.peer_request(mission,answers[0],reasoning=not u.selection_matches(answers[0],commitment))]
         if len(answers)==3:requests.append(u.correction_request(mission,answers[0],answers[1]))
         calls=[]
         def fake(path,request,timeout):
             i=len(calls)
             assert path=="/api/chat" and i<len(answers) and request==requests[i]
             calls.append(u.mp.digest(request))
-            return {"model":u.mp.MODEL,"done":True,"eval_count":20,"prompt_eval_count":100,
-                    "message":{"content":json.dumps(answers[i])}}
+            message={"content":json.dumps(answers[i])}
+            if request["think"]:
+                assert request["options"]["num_predict"]==3072 and request["options"]["num_ctx"]==4096 and request["options"]["presence_penalty"]==1.5 and timeout==480 and "format" not in request
+                message["thinking"]="Mock deliberation; never archive this field"
+            return {"model":u.mp.MODEL,"done":True,"done_reason":"stop","eval_count":20,"prompt_eval_count":100,
+                    "message":message}
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)/"original"
             with patch.object(u.mp,"check_local_model",return_value=md),patch.object(u.mp,"read_json",side_effect=fake):
@@ -32,6 +37,10 @@ def main():
                     proof=u.execute_bound(root,mission,commitment,identity)
                     assert proof["selection"]==good and proof["model_calls"]==len(answers)
                     assert proof.get("independent_rejection_recovered",False)==(len(answers)==3)
+                    expected_thinking=(["peer"] if not u.selection_matches(answers[0],commitment) else [])+(["correction"] if len(answers)==3 else [])
+                    assert proof.get("native_thinking_stages",[])==expected_thinking
+                    assert proof["review_policy"]==u.REVIEW_POLICY
+                    assert all("Mock deliberation" not in p.read_text() for p in root.glob("*.json"))
                 else:
                     try:u.execute_bound(root,mission,commitment,identity)
                     except ValueError as exc:assert str(exc)=="Independent corrective selection rejected"
@@ -41,6 +50,16 @@ def main():
             with patch.object(u.mp,"read_json",side_effect=AssertionError("Independent verifier called model")):
                 if accepted:
                     assert u.verify_bound(root,mission,commitment,identity)==proof
+                    # Demonstrate old archives are still verified from exact legacy digests.
+                    binding=root/"binding.json"
+                    old_binding=json.loads(binding.read_text());old_binding.pop("review_policy");binding.write_text(json.dumps(old_binding))
+                    old_req=u.peer_request(mission,answers[0],reasoning=False)
+                    for suffix in ("reserved","result"):
+                        f=root/("peer."+suffix+".json")
+                        old=json.loads(f.read_text());old["request_sha256"]=u.mp.digest(old_req)
+                        old.pop("native_thinking_observed",None);f.write_text(json.dumps(old))
+                    legacy_proof=u.verify_bound(root,mission,commitment,identity)
+                    assert "peer" not in legacy_proof.get("native_thinking_stages",[])
                     if len(answers)==3:
                         f=root/"correction.result.json"
                         row=json.loads(f.read_text());row["answer"]=bad;f.write_text(json.dumps(row))
@@ -50,4 +69,24 @@ def main():
                     except ValueError:pass
                     else:raise AssertionError("Unexpected or altered evidence accepted")
             print(label,"PASS (mock model transport only)")
+    for label,finish,message in (
+        ("TOKEN_BUDGET_EXHAUSTED","length",{"thinking":"private mock","content":""}),
+        ("MISSING_THINKING","stop",{"content":json.dumps(good)}),
+        ("MISSING_FINAL_CONTENT","stop",{"thinking":"private mock","content":""}),
+        ("INVALID_FINAL_JSON","stop",{"thinking":"private mock","content":"not JSON"}),
+        ("INVALID_FINAL_SELECTION","stop",{"thinking":"private mock","content":json.dumps({"stations":True})}),
+    ):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            reply={"model":u.mp.MODEL,"done":True,"done_reason":finish,"eval_count":20,
+                   "prompt_eval_count":100,"message":message}
+            with patch.object(u.mp,"read_json",return_value=reply) as transport:
+                try:u.inference(root,"peer",u.peer_request(mission,good),md)
+                except ValueError:pass
+                else:raise AssertionError("Incomplete model response accepted")
+                assert transport.call_count==1
+                assert not (root/"peer.result.json").exists()
+                diagnostic=json.loads((root/"peer.diagnostic.json").read_text())
+                assert diagnostic["reason"]==label
+                assert "private mock" not in json.dumps(diagnostic)
 if __name__=="__main__":main()
