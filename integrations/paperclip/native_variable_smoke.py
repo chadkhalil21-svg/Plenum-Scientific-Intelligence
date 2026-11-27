@@ -34,6 +34,47 @@ class NativeVariableTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     nv.load(root,scope,dispatch["company"],str(uuid4()))
 
+    def test_topic_discovery_reuses_source_bound_contracts(self):
+        topic="Survey public concrete corrosion papers"
+        mission={"objective":"Find public concrete corrosion papers and verify the discovered records.",
+                 "authorized_inputs":{"literature_discovery":topic,"commercial":True}}
+        selection={"literature_discovery":True,"commercial":False}
+        scope,nodes=nv.vm.graph(mission,selection)
+        plan={"nodes":nodes}
+        self.assertEqual(nv.partition(plan),{"intelligence":["paper_discovery"],
+            "research":["paper_readback"],"engineering":[],"commercial":["evidence_report"]})
+        self.assertEqual(scope["paper_survey"],topic)
+        self.assertEqual(scope["dois"],[])
+        self.assertNotIn("business",scope)
+        doi="10.1234/example"
+        title="Concrete corrosion in coastal structures"
+        discovery={"schema":"plenum-public-horizon-snapshot-v1","topic":topic,"category":"journals",
+            "independent_breakthrough_verified":False,"records":[{"source":"crossref_journals",
+            "category":"journals","independent_fact_check_complete":False,
+            "title":title,"url":"https://doi.org/"+doi}]}
+        record={"doi":doi,"title":title,"year":2024,"publisher":"Example publisher"}
+        with patch("plenum_ai.world_horizon.scan_horizon",return_value=discovery) as search, \
+             patch("plenum_ai.chief_contract_plan.read_crossref",return_value=record) as readback:
+            first=nv.vm.run_contract("paper_discovery",scope,{})
+            nv.vm.check_contract_result("paper_discovery",scope,{},first)
+            search.assert_called_once_with(topic,category="journals",online=True)
+            prior={"paper_discovery":first}
+            second=nv.vm.run_contract("paper_readback",scope,prior)
+            nv.vm.check_contract_result("paper_readback",scope,prior,second)
+            readback.assert_called_once_with(doi,approved_dois=frozenset({doi}))
+            prior["paper_readback"]=second
+            report=nv.vm.run_contract("evidence_report",scope,prior)
+            nv.vm.check_contract_result("evidence_report",scope,prior,report)
+            self.assertEqual(set(report["sections"]),{"papers"})
+            with self.assertRaises(ValueError):
+                nv.vm.check_contract_result("paper_readback",scope,{"paper_discovery":first},
+                    {doi:{**record,"title":"Unrelated result"}})
+        for unsafe in ("https://example.com","Survey public private papers","Survey public one two three four five six papers"):
+            with self.assertRaises(ValueError):
+                nv.vm.validate({**mission,"authorized_inputs":{"literature_discovery":unsafe}})
+        other,_=nv.vm.graph(mission,{"literature_discovery":False,"commercial":True})
+        self.assertNotIn("paper_survey",other)
+
     def test_ambiguous_contract_does_not_replay(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)
