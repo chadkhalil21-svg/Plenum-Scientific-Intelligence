@@ -6,7 +6,7 @@ import asyncio
 import json
 import os
 import sys
-import httpx
+import httpx2 as httpx
 from hashlib import sha256
 from importlib.metadata import version
 from pathlib import Path
@@ -23,6 +23,8 @@ VERSIONS = {
     "agent-framework-core": "1.26.0",
     "agent-framework-orchestrations": "1.4.2",
     "agent-framework-openai": "1.18.2",
+    "openai": "3.60.0",
+    "httpx2": "2.16.2",
 }
 MAX_CALLS = 12
 BASE = "http://127.0.0.1:11434/v1/"
