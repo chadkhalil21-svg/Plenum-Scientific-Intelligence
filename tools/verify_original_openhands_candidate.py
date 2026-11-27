@@ -139,6 +139,17 @@ def completed_unittest(result, *, failed):
     return bool(re.search(r"(?m)^OK(?: \(skipped=[0-9]+\))?\s*\Z", tail))
 
 
+def completed_task_acceptance(result, acceptance):
+    """Require the complete frozen behavioral suite, with no skipped cases."""
+    expected = 3 if acceptance == "checkpoint_hardlink_1048.py" else 2
+    if not completed_unittest(result, failed=False):
+        return False
+    tail = result.stderr[-4096:]
+    summary = re.search(r"(?m)^Ran ([1-9][0-9]*) tests? in [0-9.]+s$", tail)
+    return (int(summary.group(1)) == expected
+            and bool(re.search(r"(?m)^OK\s*\Z", tail)))
+
+
 def verify(report_path: Path, verdict_path: Path, *, checkout: Path | None = None) -> dict:
     """Fail closed unless the original candidate passes EXISTING focused tests."""
     root = (checkout or Path.cwd()).resolve()
@@ -309,7 +320,7 @@ def verify(report_path: Path, verdict_path: Path, *, checkout: Path | None = Non
                                               })
                 except (OSError, subprocess.TimeoutExpired):
                     return persist("BLOCKED_TASK_ACCEPTANCE_UNAVAILABLE", "trusted_task_test_did_not_finish")
-                if accepted.returncode or "Ran 2 tests" not in accepted.stderr:
+                if not completed_task_acceptance(accepted, acceptance):
                     return persist("BLOCKED_TASK_ACCEPTANCE", "trusted_task_behavior_not_verified")
                 verdict["task_acceptance_passed"] = True
             return persist(("INTERRUPTED_FOCUSED_TESTS_PASS_REVIEW_STILL_REQUIRED" if interrupted
