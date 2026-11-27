@@ -378,25 +378,27 @@ def minister():
     print(json.dumps({"minister_dispatch":True,"plan_sha256":digest(plan),"tasks":tasks}),flush=True)
 
 
-def retry_unstarted_verifier(api,directory,cid,mid,plan,agents,scope):
+def retry_unstarted_verifier(api,directory,cid,mid,plan,agents,scope,*,target="verification"):
     """Reuse pinned Paperclip's native idempotent task retry, never a new task.
     Disposable CI only; absence of a local receipt alone is not proof of no work.
     """
+    if target not in MISSION_ORDER or (target!="verification" and scope.get("kind")!="variable_graph"):
+        return False
     if os.getenv("GITHUB_ACTIONS")!="true" or os.getenv("PLENUM_EPHEMERAL_RUNNER")!="confirmed":
         return False
     from checkpoint_store import checked
     from production_wiring import load_prepared
     if load_prepared(directory,cid,mid)["checkpoint_mode"]!="local":return False
-    marker=directory/"verification-setup-retry.json"
+    marker=directory/(target+"-setup-retry.json")
     if marker.exists() or marker.is_symlink():return False
     if any((directory/n).exists() or (directory/n).is_symlink() for n in
-           ("verification.json","verification.attempt-1","verification.attempt-2","qualification.json")):
+           (target+".json",target+".attempt-1",target+".attempt-2","qualification.json")):
         return False
     if plan!=checked(directory/"minister-plan.json",{"company":cid,"parent":mid,
                     "scope_sha256":scope_digest(scope),"order":list(MISSION_ORDER)}):
-        raise ValueError("Changed verifier recovery plan")
+        raise ValueError("Changed specialist recovery plan")
     prior={}
-    for role in MISSION_ORDER[:-1]:
+    for role in MISSION_ORDER[:MISSION_ORDER.index(target)]:
         iid=canonical(plan["tasks"][role])
         task=api("/api/issues/"+iid)
         if (task.get("id")!=iid or task.get("companyId")!=cid or task.get("parentId")!=mid
@@ -406,8 +408,16 @@ def retry_unstarted_verifier(api,directory,cid,mid,plan,agents,scope):
         if row["sha256"]!=digest(row["result"]) or row["result"]["input_sha256"]!=scope_inputs(prior):
             raise ValueError("Changed prerequisite evidence")
         prior[role]=row["result"]
-    iid=canonical(plan["tasks"]["verification"])
-    aid=canonical(agents["verification"])
+    if scope.get("kind")=="variable_graph" and target!="verification":
+        import native_variable as nv
+        graph=nv.load(directory,scope,cid,mid)
+        root=nv.evidence_root(directory)
+        for contract in nv.partition(graph)[target]:
+            for suffix in (".reserved.json",".result.json"):
+                evidence=root/(contract+suffix)
+                if evidence.exists() or evidence.is_symlink():return False
+    iid=canonical(plan["tasks"][target])
+    aid=canonical(agents[target])
     task=api("/api/issues/"+iid)
     if (task.get("id")!=iid or task.get("companyId")!=cid or task.get("parentId")!=mid
             or task.get("assigneeAgentId")!=aid or task.get("status") not in ("todo","in_progress")):
@@ -427,13 +437,13 @@ def retry_unstarted_verifier(api,directory,cid,mid,plan,agents,scope):
     # Upstream checks that observedRunId is still latest under its issue lock.
     # One reserved request only. Lost response remains unresolved; never replay.
     key=str(uuid4())
-    exclusive(marker,{"schema":"plenum-verifier-setup-retry-v1","company":cid,"mission":mid,
+    exclusive(marker,{"schema":("plenum-verifier-setup-retry-v1" if target=="verification" else "plenum-specialist-setup-retry-v1"),"company":cid,"mission":mid,
         "issue":iid,"run":runid,"idempotency_key":key,"prior_sha256":digest(prior),
         "provider_work_started":False,"paid_inference":False})
     reply=api("/api/issues/"+iid+"/retry","POST",{"observedRunId":runid,"idempotencyKey":key})
     if reply.get("accepted") is not True or reply.get("stale") is not False:
         raise RuntimeError("Native setup retry not accepted; no further dispatch")
-    exclusive(directory/"verification-setup-retry-accepted.json",{"company":cid,"mission":mid,
+    exclusive(directory/(target+"-setup-retry-accepted.json"),{"company":cid,"mission":mid,
         "issue":iid,"request":canonical(reply["requestId"]),"run":runid,"paid_inference":False})
     return True
 
@@ -574,9 +584,14 @@ def qualify_locked(action):
                 raise ValueError("Minister plan not bound to mission")
             if all(required(api("/api/issues/"+iid),"status","child_readback")=="done" for iid in plan["tasks"].values()):
                 break
-            if durable and scope.get("kind")!="coastal" and retry_unstarted_verifier(api,directory,cid,parent_id,plan,agents,scope):
-                # Allow only the existing native verifier to finish its first work.
-                deadline=max(deadline,time.monotonic()+150)
+            if durable and scope.get("kind")!="coastal":
+                # Only the first unfinished dependency can be eligible.
+                target="verification"
+                if scope.get("kind")=="variable_graph":
+                    target=next((role for role in MISSION_ORDER
+                        if required(api("/api/issues/"+plan["tasks"][role]),"status","child_readback")!="done"),"verification")
+                if retry_unstarted_verifier(api,directory,cid,parent_id,plan,agents,scope,target=target):
+                    deadline=max(deadline,time.monotonic()+150)
         time.sleep(3)
     else:
         diagnostics=[]
