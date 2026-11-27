@@ -118,7 +118,10 @@ def load_checkpoint(root: Path, *, issue: int, objective: str,
             result[key] = value
         return result
 
-    data = json.loads(raw.decode("utf-8"), object_pairs_hook=unique_object)
+    try:
+        data = json.loads(raw.decode("utf-8"), object_pairs_hook=unique_object)
+    except RecursionError:
+        raise ValueError("Unsafe original checkpoint")
     if (not isinstance(data, dict)
             or data.get("schema") != "plenum-chief-restart-v1"
             or type(data.get("issue_number")) is not int
