@@ -63,7 +63,29 @@ def scopes():
     synthesis={"kind":"public_objective","objective":"Extract Terra efficacy claim restriction, independent primary paper review requirement, and founder publication authorization. Check every sentence and include all relevant evidence. Retain relevant selections on correction.",
        "dois":DOIS,"inputs":{"synthesis":{"documents":{k:" ".join(v) for k,v in excerpts.items()}}},
        "result_commitment":digest(sorted(wanted,key=encoded))}
-    return {"terra-timing":arithmetic,"terra-release":synthesis}
+    # Nominal animal-days, not actual observed exposure or evidence of efficacy.
+    # Original source note: 21 steers over 147 days, 20 heifers over 59 days,
+    # four Cowley treatment groups. The alternate inputs are synthetic holdout.
+    if not all(x in scene for x in ("21 Angus–Hereford beef steers, 147 days",
+        "20 Angus heifers, 59 days", "five animals per treatment",
+        "delivering 0, 17, 34 or 51 mg")):
+        raise ValueError("Study scope no longer supports nominal cohort inputs")
+    exposure={"kind":"public_objective",
+        "objective":"Calculate nominal Roque animal days and Cowley animal days from cohort sizes and durations, their combined animal days, and Cowley animals per treatment group. Do not infer efficacy.",
+        "dois":DOIS,"inputs":{"composition":{
+        "values":{"roque_animals":21,"roque_days":147,"cowley_animals":20,"cowley_days":59,"cowley_groups":4},
+        "holdout":{"roque_animals":16,"roque_days":100,"cowley_animals":24,"cowley_days":45,"cowley_groups":6},
+        "outputs":["roque_animal_days","cowley_animal_days","combined_animal_days","cowley_per_group"],
+        "dimensions":{"roque_animals":{"animal":1},"roque_days":{"time":1},
+            "cowley_animals":{"animal":1},"cowley_days":{"time":1},"cowley_groups":{"group":1},
+            "roque_animal_days":{"animal":1,"time":1},"cowley_animal_days":{"animal":1,"time":1},
+            "combined_animal_days":{"animal":1,"time":1},"cowley_per_group":{"animal":1,"group":-1}},
+        "integer_outputs":["roque_animal_days","cowley_animal_days","combined_animal_days","cowley_per_group"]}},
+        "result_commitment":hash_value({"results":{"roque_animal_days":q(3087),"cowley_animal_days":q(1180),
+          "combined_animal_days":q(4267),"cowley_per_group":q(5)},
+          "holdout":{"roque_animal_days":q(1600),"cowley_animal_days":q(1080),
+          "combined_animal_days":q(2680),"cowley_per_group":q(4)}})}
+    return {"terra-timing":arithmetic,"terra-release":synthesis,"terra-study-exposure":exposure}
 
 def require(scope):
     from mission_scope import digest
