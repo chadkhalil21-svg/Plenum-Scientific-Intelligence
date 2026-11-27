@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Checkpoint maintainer guide</title>
+<style>
+html,body{margin:0;width:640px;height:360px;overflow:hidden}
+#stage{position:relative;width:640px;height:360px;background:#101827;overflow:hidden;color:#f4f7fb;font:18px sans-serif}
+#heading{position:absolute;left:34px;top:25px;font-size:26px;font-weight:bold}
+#rail{position:absolute;left:56px;top:133px;width:528px;height:4px;background:#44617f}
+#dot{position:absolute;left:49px;top:117px;width:36px;height:36px;border-radius:50%;background:#61d7c8}
+#steps{position:absolute;left:34px;top:170px;width:572px;display:flex;justify-content:space-between;gap:8px}
+#steps span{display:block;width:125px;font-size:15px;line-height:1.4}
+#note{position:absolute;left:34px;right:34px;top:255px;color:#f0c984;font-size:18px;line-height:1.4}
+#footer{position:absolute;left:34px;bottom:22px;color:#a5b5c7;font-size:13px}
+</style></head>
+<body><div id="stage" data-composition-id="checkpoint" data-start="0" data-duration="8" data-width="640" data-height="360">
+<div id="heading" class="clip" data-start="0" data-duration="8" data-track-index="0">Chief checkpoint: validate before writing</div>
+<div id="rail" class="clip" data-start="0" data-duration="8" data-track-index="1"></div>
+<div id="dot" class="clip" data-start="0" data-duration="8" data-track-index="2"></div>
+<div id="steps" class="clip" data-start="0" data-duration="8" data-track-index="3"><span>1. Validate<br>issue identity</span><span>2. Encode<br>bounded JSON</span><span>3. Temporary<br>write + fsync</span><span>4. Replace<br>checkpoint</span></div>
+<div id="note" class="clip" data-start="0" data-duration="8" data-track-index="4">Invalid identity or malformed input? Reject; do not infer permission to replay a reserved operation.</div>
+<div id="footer" class="clip" data-start="0" data-duration="8" data-track-index="5">Repository maintainer guide | source: mission_checkpoint.py | conceptual sequence</div>
+</div><script src="./gsap.min.js"></script><script>
+const tl=gsap.timeline({paused:true});tl.to("#dot",{x:516,duration:8,ease:"none"},0);
+window.__timelines=window.__timelines||{};window.__timelines.checkpoint=tl;
+</script></body></html>
