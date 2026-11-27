@@ -123,9 +123,9 @@ async def plan(root, mission, commitment):
         "model_digest":md, "versions":VERSIONS, "paid_inference":False})
     guard = Guard(root, md)
     async with httpx.AsyncClient(trust_env=False, follow_redirects=False,
-                                 timeout=90, transport=guard) as transport:
+                                 timeout=httpx.Timeout(240.0, connect=10.0), transport=guard) as transport:
         async with AsyncOpenAI(base_url=BASE, api_key="local-no-secret", max_retries=0,
-                               http_client=transport) as sdk:
+                               http_client=transport, timeout=240.0) as sdk:
             client = OpenAIChatCompletionClient(model=MODEL, async_client=sdk)
             researcher = Agent(client=client, name="research",
                 description="Reviews source and evidence requirements.",
@@ -141,9 +141,10 @@ async def plan(root, mission, commitment):
                 max_reset_count=1).build()
             scope = json.loads(vm.request(mission)["messages"][1]["content"])
             schema = vm.request(mission)["format"]
-            task = json.dumps({"mission":scope, "required_final_schema":schema},
+            task = json.dumps({"mission":scope, "required_final_schema":schema,
+                               "planning_constraint":"Use concise specialist findings and a compact final plan; avoid unnecessary discussion."},
                               sort_keys=True)
-            outcome = await asyncio.wait_for(workflow.run(task), timeout=540)
+            outcome = await asyncio.wait_for(workflow.run(task), timeout=840)
             outputs = outcome.get_outputs()
             if len(outputs) != 1:
                 raise ValueError("Unexpected Magentic terminal output")
