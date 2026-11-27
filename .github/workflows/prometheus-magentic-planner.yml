@@ -1,0 +1,60 @@
+name: Prometheus upstream Magentic planner
+on:
+  pull_request:
+    paths:
+      - 'integrations/prometheus_magentic/**'
+      - '.github/workflows/prometheus-magentic-planner.yml'
+permissions:
+  contents: read
+jobs:
+  qualify:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    env:
+      PYTHONPATH: src
+      AGENT_FRAMEWORK_TELEMETRY_ENABLED: 'false'
+      AGENT_FRAMEWORK_USER_AGENT_DISABLED: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Reuse pinned upstream Magentic implementation
+        run: |
+          python -m pip install --disable-pip-version-check --only-binary=:all: -r integrations/prometheus_magentic/requirements.txt
+          python -m pip check
+          python -m py_compile integrations/prometheus_magentic/planner.py
+          python -c 'from agent_framework.orchestrations import MagenticBuilder; from agent_framework.openai import OpenAIChatCompletionClient'
+      - name: Reuse the original free stronger engineering model resource gate
+        run: |
+          set -eu
+          test "$(df --output=avail -B1 / | tail -1 | tr -d ' ')" -ge 9000000000
+          test "$(awk '/MemTotal/ {print $2}' /proc/meminfo)" -ge 14000000
+          docker pull ollama/ollama:latest
+          docker run -d --name plenum-magentic-qwen --network host -e OLLAMA_HOST=127.0.0.1:11434 -e OLLAMA_CONTEXT_LENGTH=8192 -e OLLAMA_NUM_PARALLEL=1 --memory=10g --cpus=3 ollama/ollama:latest
+          for i in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
+            sleep 2
+          done
+          timeout 300 docker exec plenum-magentic-qwen ollama pull qwen3.5:9b-q4_K_M
+          test "$(docker exec plenum-magentic-qwen ollama list | awk '$1=="qwen3.5:9b-q4_K_M" {print $2}')" = 56671c2ab938
+      - name: Execute real Magentic-led public evidence assignment using original contract workers
+        run: |
+          mkdir -p reports
+          python integrations/prometheus_magentic/planner.py run reports/magentic
+      - name: Remove model and independently check original worker evidence
+        run: |
+          docker rm -f plenum-magentic-qwen
+          python integrations/prometheus_magentic/planner.py verify reports/magentic > reports/magentic-verification.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prometheus-magentic-public-evidence
+          path: reports/magentic*
+          if-no-files-found: warn
+      - name: Remove disposable model
+        if: always()
+        run: docker rm -f plenum-magentic-qwen || true
