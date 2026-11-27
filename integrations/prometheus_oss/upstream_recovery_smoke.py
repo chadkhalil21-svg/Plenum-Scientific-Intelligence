@@ -25,7 +25,7 @@ def main():
             calls.append(u.mp.digest(request))
             message={"content":json.dumps(answers[i])}
             if request["think"]:
-                assert request["options"]["num_predict"]==1024 and timeout==360 and "format" not in request
+                assert request["options"]["num_predict"]==3072 and request["options"]["num_ctx"]==4096 and request["options"]["presence_penalty"]==1.5 and timeout==480 and "format" not in request
                 message["thinking"]="Mock deliberation; never archive this field"
             return {"model":u.mp.MODEL,"done":True,"done_reason":"stop","eval_count":20,"prompt_eval_count":100,
                     "message":message}
