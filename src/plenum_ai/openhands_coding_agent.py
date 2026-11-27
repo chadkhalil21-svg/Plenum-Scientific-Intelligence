@@ -757,7 +757,7 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
             scope = local_function_scope(requests[0], original)
             feedback = ((" Existing focused regressions rejected the first proposal; the unchanged source passed. "
                          if regression_recovery else " Independent behavioral acceptance rejected the first proposal. ")
-                        + "Reconsider the stated requirements from the original function. "
+                        + "Re-read each explicit requirement separately. Identify the control-flow path that violates it, including the precise exception type if specified. Choose a materially different minimal correction that directly addresses the named defect, not adjacent cleanup. "
                         "Preserve its signature and all unrelated behavior.")
             # One different, numbered edit from the ORIGINAL source. Never
             # replay the first prompt or grant a further retry on any failure.

@@ -53,7 +53,11 @@ class TrustedRecoveryTests(unittest.TestCase):
             self.assertFalse(v.completed_unittest(subprocess.CompletedProcess([],code,stderr=stderr),failed=True))
         self.assertFalse(v.completed_unittest(subprocess.CompletedProcess([],0,stderr="Ran 0 tests in 0.1s\nOK\n"),failed=False))
 
-    def _assert_single_recovery(self, source, task, regression=False):
+    def test_byte_identical_correction_is_rejected_without_second_sandbox_execution(self):
+        source, task = next(iter(coder.STRUCTURED_RECOVERY_TASKS))
+        self._assert_single_recovery(source, task, duplicate=True)
+
+    def _assert_single_recovery(self, source, task, regression=False, duplicate=False):
         original = (ROOT / source).read_bytes()
         with tempfile.TemporaryDirectory() as tmp:
             previous = Path.cwd()
@@ -94,7 +98,7 @@ class TrustedRecoveryTests(unittest.TestCase):
                     self.assertIs(kwargs["regression_recovery"],regression)
                     self.assertEqual(args[0],task)
                     self.assertEqual((candidate.parent/"first-attempt"/candidate.name).read_bytes(),b"first rejected candidate")
-                    candidate.write_bytes(b"second review-only candidate")
+                    candidate.write_bytes(b"first rejected candidate" if duplicate else b"second review-only candidate")
                     return {**original_report,"repair_passes":1}
                 with patch.dict(os.environ,env),patch.object(coder,"execute_local",side_effect=corrected) as run,patch.object(v,"verify",return_value={"status":"REVIEW_ONLY_TEST_FIXTURE"}) as verify:
                     with patch.dict(os.environ,{"PLENUM_ORIGINAL_CODING_RESERVED":"false"}):
@@ -112,9 +116,17 @@ class TrustedRecoveryTests(unittest.TestCase):
                     run.assert_not_called()
                     verdict.write_text(json.dumps(original_verdict))
                     result=v.recover_local_behavior(report,verdict,event)
-                    self.assertEqual(result["status"],"REVIEW_ONLY_TEST_FIXTURE")
+                    if duplicate:
+                        self.assertEqual(result["status"], original_verdict["status"])
+                        self.assertEqual(result["reason"], "byte_identical_rejected_patch")
+                        self.assertIs(result["corrective_sandbox_executed"], False)
+                        self.assertEqual(json.loads(report.read_text())["status"], "BLOCKED_REPEATED_REJECTED_PATCH")
+                        self.assertEqual(candidate.read_bytes(), b"first rejected candidate")
+                        self.assertEqual(json.loads(verdict.read_text()), result)
+                    else:
+                        self.assertEqual(result["status"],"REVIEW_ONLY_TEST_FIXTURE")
                     self.assertEqual(run.call_count,1)
-                    self.assertEqual(verify.call_count,1)
+                    self.assertEqual(verify.call_count,0 if duplicate else 1)
                     saved=candidate.parent/"first-attempt"
                     self.assertEqual(json.loads((saved/verdict.name).read_text()),original_verdict)
                     self.assertEqual(json.loads((saved/report.name).read_text()),original_report)
