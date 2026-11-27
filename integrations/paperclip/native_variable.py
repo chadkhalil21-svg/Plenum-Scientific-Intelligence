@@ -185,12 +185,16 @@ def upstream_plan(root,scope,company,mission,*,execute=False):
 def magentic_plan(root, scope, company, mission, *, execute=False):
     import sys
     sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"prometheus_magentic"))
-    import planner
+    from native_proof import verify_native_plan
     sub=root/"magentic-planner"
     identity={"company":company,"mission":mission,"scope_sha256":digest(scope),
               "paid_inference":False}
     args=(sub,scope["mission"],scope["selection_commitment"],identity)
-    proof=planner.execute_native_plan(*args) if execute else planner.verify_native_plan(*args)
+    if execute:
+        from planner import execute_native_plan
+        proof=execute_native_plan(*args)
+    else:
+        proof=verify_native_plan(*args)
     selected=proof["selection"]
     approved,nodes=vm.graph(scope["mission"],selected)
     plan={"schema":"plenum-variable-mission-magentic-v1",
