@@ -230,6 +230,24 @@ class TrustedRecoveryTests(unittest.TestCase):
                                     behavioral_recovery=True,generic_regression=True)
             native.assert_called_once()
 
+    def test_compile_guard_ignores_annotation_code_objects_not_function_body(self):
+        # Annotation lambda adds a second CodeType to the module constants on
+        # pre-deferred CPython as well. Never evaluate the annotation.
+        original = b"def f(x: (lambda: int)()) -> int:\n    return x\n"
+        edited = b"def f(x: (lambda: int)()) -> int:\n    y = x + 1\n    return y\n"
+        broken = b"def f(x: (lambda: int)()) -> int:\n    z = y\n    y = x\n    return z\n"
+        self.assertEqual(coder._early_local_reads(original), set())
+        self.assertEqual(coder._early_local_reads(edited), set())
+        self.assertEqual(coder._early_local_reads(broken), {"y"})
+        scope = (b"", original, b"")
+        self.assertEqual(coder.restore_function_scope(scope, edited), edited)
+        with self.assertRaises(coder.EarlyLocalReadError):
+            coder.restore_function_scope(scope, broken)
+        with self.assertRaises(ValueError):
+            coder._early_local_reads(original + b"\ndef other():\n    return 0\n")
+        with self.assertRaises(ValueError):
+            coder.restore_function_scope(scope, edited.replace(b" -> int:", b" -> str:"))
+
     def test_native_miniswe_uses_original_exact_owner_public_contract(self):
         event={"action":"opened","repository":{"full_name":coder.REPO},
                "issue":{"number":124,"user":{"login":coder.OWNER},"title":coder.REPAIR_TITLE,
