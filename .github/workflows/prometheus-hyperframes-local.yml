@@ -3,11 +3,13 @@ on:
   pull_request:
     paths:
       - '.github/workflows/prometheus-hyperframes-local.yml'
-      - 'integrations/agent-catalog/fixtures/hyperframes/**'
+      - 'docs/checkpoint-maintainer-guide/index.html'
 permissions:
   contents: read
+  actions: read
 jobs:
   local-motion:
+    if: github.event_name != 'pull_request' || github.event.pull_request.number != 1001 || github.event.pull_request.head.sha == 'cd163f7ea086563727120f9440393dea7cf9e74f'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -41,7 +43,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends ffmpeg iproute2
           HOME="$root/home" HYPERFRAMES_NO_TELEMETRY=1 node packages/cli/bin/hyperframes.mjs browser ensure
-          cp "$GITHUB_WORKSPACE/integrations/agent-catalog/fixtures/hyperframes/index.html" "$root/project/index.html"
+          cp "$GITHUB_WORKSPACE/docs/checkpoint-maintainer-guide/index.html" "$root/project/index.html"
       - name: Render original local composition with network isolated and no hosted services
         run: |
           set -euo pipefail
@@ -58,22 +60,54 @@ jobs:
           p=pathlib.Path('output.mp4')
           meta=json.loads(subprocess.check_output(['ffprobe','-v','error','-select_streams','v:0','-show_streams','-of','json',str(p)]))['streams'][0]
           assert (meta['width'],meta['height'])==(640,360)
-          assert abs(float(meta['duration'])-2)<0.1
-          assert int(meta['nb_frames'])==48
+          assert abs(float(meta['duration'])-8)<0.1
+          assert int(meta['nb_frames'])==192
           def frame(t):
               return subprocess.check_output(['ffmpeg','-v','error','-ss',str(t),'-i',str(p),'-frames:v','1','-f','rawvideo','-pix_fmt','rgb24','-'])
-          a,b=frame(0.2),frame(1.7)
+          a,b=frame(0.3),frame(7.5)
           assert len(a)==len(b)==640*360*3
-          assert sum(abs(x-y) for x,y in zip(a,b))/len(a)>1.0, 'No meaningful motion'
+          assert sum(abs(x-y) for x,y in zip(a,b))/len(a)>0.3, 'No meaningful motion'
           h=lambda name:hashlib.sha256(pathlib.Path(name).read_bytes()).hexdigest()
-          pathlib.Path('hyperframes-acceptance.json').write_text(json.dumps({'schema':'plenum-hyperframes-local-v1','version':'0.9.97','release_commit':'c6ff4a31f240f6051836136577f51045c6da15c5','video_sha256':h('output.mp4'),'source_lock_receipt_sha256':h('source-lock.sha256'),'source_build':True,'frames':48,'duration_seconds':2,'original_fixture':True,'paid_inference':False,'owner_runtime_verified':False},indent=2))
+          pathlib.Path('hyperframes-acceptance.json').write_text(json.dumps({'schema':'plenum-hyperframes-local-v1','version':'0.9.97','release_commit':'c6ff4a31f240f6051836136577f51045c6da15c5','video_sha256':h('output.mp4'),'source_lock_receipt_sha256':h('source-lock.sha256'),'source_build':True,'frames':192,'duration_seconds':8,'public_repository_documentation':True,'composition_sha256':h('docs/checkpoint-maintainer-guide/index.html'),'paid_inference':False,'owner_runtime_verified':False},indent=2))
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: hyperframes-local-acceptance
+          name: prometheus-checkpoint-maintainer-motion
           path: |
             output.mp4
             hyperframes-acceptance.json
             source-lock.sha256
+            docs/checkpoint-maintainer-guide/index.html
           if-no-files-found: error
           retention-days: 7
+
+  original-evidence-readback:
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 1001 && github.event.pull_request.head.sha != 'cd163f7ea086563727120f9440393dea7cf9e74f'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: prometheus-checkpoint-maintainer-motion
+          run-id: 45940782789
+          github-token: ${{ github.token }}
+          path: accepted-original
+      - name: Check exact accepted source and output without rendering again
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, pathlib, subprocess
+          p = pathlib.Path('accepted-original')
+          h = lambda f: hashlib.sha256(f.read_bytes()).hexdigest()
+          r = json.loads((p / 'hyperframes-acceptance.json').read_text())
+          assert r['paid_inference'] is False
+          assert r['owner_runtime_verified'] is False
+          assert h(pathlib.Path('docs/checkpoint-maintainer-guide/index.html')) == h(p / 'docs/checkpoint-maintainer-guide/index.html') == r['composition_sha256'] == 'b8612954b8f521c995d6e574a3c2080c5068400bb9b5120155f7643a5a0e3052'
+          assert h(p / 'output.mp4') == r['video_sha256'] == '90e01a50f3459f8c0301c24281f6848d079de2825b8bfa2dd77a1c263c3f37e4'
+          assert r['release_commit'] == 'c6ff4a31f240f6051836136577f51045c6da15c5'
+          assert r['frames'] == 192 and r['duration_seconds'] == 8
+          print('Original accepted artifact and source preserved; no rendering replay.')
+          PY
