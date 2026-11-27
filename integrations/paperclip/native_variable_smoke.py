@@ -100,4 +100,47 @@ class NativeVariableTests(unittest.TestCase):
                 self.assertEqual(model.call_count,1)
                 worker.assert_not_called()
 
+
+    def test_magentic_native_proof_and_dispatch_binding(self):
+        # Synthetic receipts only; no SDK, model, provider, or claimed live agent.
+        import sys
+        sys.path.insert(0,str(Path(nv.__file__).resolve().parents[1]/"prometheus_magentic"))
+        from native_proof import VERSIONS, MODEL_PREFIX
+        with tempfile.TemporaryDirectory() as tmp:
+            directory=Path(tmp)
+            cid,mid=str(uuid4()),str(uuid4())
+            scope={**nv.fixture("engineering"),"planning_engine":"magentic-native-v1"}
+            root=directory/"variable-graph"
+            root.mkdir()
+            sub=root/"magentic-planner"
+            sub.mkdir()
+            identity={"company":cid,"mission":mid,"scope_sha256":digest(scope),"paid_inference":False}
+            exclusive(root/"native-binding.json",identity)
+            md=MODEL_PREFIX+"a"*52
+            exclusive(sub/"binding.json",{"mission_sha256":digest(scope["mission"]),
+                     "model_digest":md,"versions":VERSIONS,"paid_inference":False,"native_identity":identity})
+            selection={k:k=="thermal" for k in scope["mission"]["authorized_inputs"]}
+            proof={"selection":selection,"model_calls":2,"model_calls_replayed":0,"paid_inference":False,"model_digest":md}
+            exclusive(sub/"accepted-plan.json",proof)
+            for i,h in ((1,"1"*64),(2,"2"*64)):
+                exclusive(sub/f"call-{i:02d}.reserved.json",{"request_sha256":h,"model_digest":md,"paid_inference":False})
+            plan,_=nv.magentic_plan(root,scope,cid,mid)
+            exclusive(root/"plan.json",plan)
+            tasks={r:str(uuid4()) for r in (*nv.ORDER,"verification")}
+            dispatch={"company":cid,"parent":mid,"tasks":tasks,"order":[*nv.ORDER,"verification"],"variable_graph_sha256":digest(plan)}
+            exclusive(directory/"minister-plan.json",dispatch)
+            with patch.object(nv,"read_json") as model,patch.object(nv.vm,"run_contract") as provider:
+                self.assertEqual(nv.load(directory,scope,cid,mid),plan)
+                with patch.dict(os.environ,{"GITHUB_ACTIONS":"true"}):
+                    self.assertEqual(nv.prepare(directory,scope,cid,mid),plan)
+                self.assertEqual(nv.partition(plan)["engineering"],["cooling_solution","cooling_readback"])
+                with self.assertRaises(ValueError):
+                    nv.load(directory,scope,cid,str(uuid4()))
+                row=sub/"call-02.reserved.json"
+                row.write_text(json.dumps({"request_sha256":"1"*64,"model_digest":md,"paid_inference":False}))
+                with self.assertRaises(ValueError):
+                    nv.load(directory,scope,cid,mid)
+                model.assert_not_called()
+                provider.assert_not_called()
+
 if __name__=="__main__":unittest.main(verbosity=2)
