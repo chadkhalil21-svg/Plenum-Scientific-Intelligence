@@ -52,4 +52,39 @@ class Tests(unittest.TestCase):
                 with self.assertRaises(ValueError):c.build_scope({**PRIOR,**change},"999","a"*40,"pr")
             p.write_bytes(encoded(PRIOR)+b"\n")
             with self.assertRaises(ValueError):c.prepare(p,"999","a"*40,"pr")
+class AuthorizedContinuationTests(unittest.TestCase):
+    def test_request_reservation_scope_and_archive(self):
+        import io, zipfile
+        import cross_run_authorized as a
+        raw_memory=encoded(PRIOR)
+        stream=io.BytesIO()
+        with zipfile.ZipFile(stream,"w") as z:
+            z.writestr("memory.json",raw_memory)
+        raw=stream.getvalue()
+        pin={**c.source_pin(),"zip_sha256":hashlib.sha256(raw).hexdigest()}
+        req={"source":pin,"parameters":{"tariff_cents_kwh":70,"labor_cents_module_day":200,
+             "revenue_cents_day":3500,"capital_cents_module":62000},"dois":["10.3390/w15020243"]}
+        event={"action":"opened","repository":{"full_name":a.REPO},"sender":{"login":a.OWNER},
+               "issue":{"number":42,"title":a.TITLE,"state":"open","user":{"login":a.OWNER},
+                        "body":a.MAGIC+"\n"+encoded(req).decode()}}
+        self.assertEqual(a.parse_request(event),(42,"commercial",req))
+        self.assertEqual(a.archive_memory(raw,pin),raw_memory)
+        scope=a.build_scope(req,PRIOR,"999","a"*40)
+        self.assertEqual(a.check_scope(event,scope,"999","a"*40),("commercial",scope))
+        comments=[]
+        def reader(url,token,*,body=None):
+            if body is not None:
+                comments.append({"body":body["body"],"user":{"login":"github-actions[bot]"}})
+                return {"html_url":"https://github.com/example/receipt","user":{"login":"github-actions[bot]"}}
+            if url.endswith("/comments?per_page=100"):
+                return comments
+            return {**event["issue"],"comments":len(comments)}
+        self.assertEqual(a.reserve(event,"test","999",reader=reader),("commercial",req))
+        with self.assertRaises(PermissionError):a.reserve(event,"test","1000",reader=reader)
+        with self.assertRaises(PermissionError):a.parse_request({**event,"sender":{"login":"other"}})
+        with self.assertRaises(ValueError):a.archive_memory(raw+b"x",pin)
+        changed=copy.deepcopy(scope)
+        changed["inputs"]["pipeline"]["parameters"]["tariff_cents_kwh"]=71
+        with self.assertRaises(ValueError):a.check_scope(event,changed,"999","a"*40)
+
 if __name__=="__main__":unittest.main(verbosity=2)
