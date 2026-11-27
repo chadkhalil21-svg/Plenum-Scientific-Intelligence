@@ -103,6 +103,31 @@ class ExistingReviewedDomainWorkerTests(unittest.TestCase):
         self.assertTrue(all(v["source"] == "Cloudflare" for v in data))
         self.assertTrue(all(v["independently_quoted_page_text"] is False for v in data))
 
+    def test_default_official_reader_refuses_redirect_before_following(self):
+        from urllib.error import HTTPError
+        from unittest.mock import Mock
+        from plenum_ai.chief_of_staff_pilot import NoRedirects
+
+        # Precommitted independent acceptance: the original default urlopen
+        # would reach a redirect-following default opener before checking URL.
+        default_opener = Mock()
+        default_opener.open.side_effect = AssertionError("Default redirect-capable opener used")
+        guarded = Mock()
+        guarded.open.side_effect = HTTPError(
+            DOMAIN_SOURCES["noaa_water_station_metadata"][0][2],
+            302, "Found", {"Location": "https://example.invalid/"}, None)
+        with patch("urllib.request._opener", default_opener), patch(
+                "urllib.request.build_opener", return_value=guarded) as build:
+            self.assertEqual(official_source_records("noaa_water_station_metadata"), [])
+        default_opener.open.assert_not_called()
+        guarded.open.assert_called_once()
+        build.assert_called_once()
+        self.assertTrue(any(arg is NoRedirects or isinstance(arg, NoRedirects)
+                            for arg in build.call_args.args))
+        request = guarded.open.call_args.args[0]
+        self.assertEqual(request.full_url,
+                         DOMAIN_SOURCES["noaa_water_station_metadata"][0][2])
+
     def test_real_original_chief_delegates_relevant_sources_and_real_code(self):
         with TemporaryDirectory() as folder, patch(
             "plenum_ai.reviewed_domain_workers.official_source_records",
