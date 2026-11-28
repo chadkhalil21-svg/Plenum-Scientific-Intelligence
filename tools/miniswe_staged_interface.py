@@ -28,7 +28,7 @@ print("Exact source replacement applied")
 
 class StagedInterface:
     """Upstream still plans and calls tools; only its action vocabulary changes."""
-    def __init__(self, env, source, test, original, receipt):
+    def __init__(self, env, source, test, original, receipt, independent_feedback=None):
         if not re.fullmatch(r"src/plenum_ai/[a-z][a-z0-9_]{1,64}\.py",source):
             raise ValueError("invalid source")
         if not re.fullmatch(r"test_[a-z0-9_]+\.py",test):
@@ -42,6 +42,7 @@ class StagedInterface:
         self.actions=0
         self.original_sha=hashlib.sha256(original).hexdigest()
         self.recovery=NativeRecovery()
+        self.independent_feedback=independent_feedback
 
     def __getattr__(self,name):
         return getattr(self.env,name)
@@ -99,6 +100,8 @@ class StagedInterface:
         elif op=="submit" and set(d)=={"op"}:
             if not self.edits or not self.passed:
                 return self._reject("A successful changed-source regression is required before submission.")
+            if self.independent_feedback is not None and not self.independent_feedback(self.env):
+                return self._reject("Independent objective acceptance failed. Existing regression success is insufficient. Diagnose the stated objective, revise the candidate, and try again. Do not modify tests.")
             self._record("submit",0)
             return self.env.execute({"command":"echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT"})
         else:
