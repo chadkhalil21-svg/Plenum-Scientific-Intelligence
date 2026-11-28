@@ -298,7 +298,20 @@ class PaperOutageRetryTests(TestCase):
                     "public_program":{"attempt":1,"status":"DRAFT_READY_FOR_FOUNDER","verified":True,
                         "worker":"existing_worker","artifact_path":program,"output_artifact":program,
                         "sha256":artifact_digest(root,program),"plan_sha256":digest}}
-                save_checkpoint(root,issue=1001,objective=objective,team=team,results=results)
+                if variant=="bool_attempt":
+                    results["public_research"]["attempt"]=1
+                    save_checkpoint(root,issue=1001,objective=objective,team=team,results=results)
+                    path=root/"chief-checkpoint-1001.json"
+                    before=path.read_bytes()
+                    results["public_research"]["attempt"]=True
+                    with self.assertRaises(ValueError):
+                        save_checkpoint(root,issue=1001,objective=objective,team=team,results=results)
+                    self.assertEqual(path.read_bytes(),before)
+                    corrupt=json.loads(before)
+                    corrupt["results"]["public_research"]["attempt"]=True
+                    path.write_text(json.dumps(corrupt))
+                else:
+                    save_checkpoint(root,issue=1001,objective=objective,team=team,results=results)
                 (root/"chief-result-1001.json").write_text(json.dumps({
                     "issue_number":1001,"mode":"multi","expected_team":list(team),
                     "status":"BLOCKED_PARTIAL_TEAM","independent_verified":False}))

@@ -20,7 +20,16 @@ class CheckpointTreeAcceptance(unittest.TestCase):
             for bad in (None,[],42,{},{"attempt":True},{"attempt":False},{"attempt":0},
                         {"attempt":3},{"attempt":-1},{"attempt":1.0},{"attempt":"1"}):
                 with self.subTest(entry=bad):
-                    m.save_checkpoint(root,**args,results={**valid,"research":bad})
+                    path=m.checkpoint_path(root,42)
+                    m.save_checkpoint(root,**args,results=valid)
+                    before=path.read_bytes()
+                    with self.assertRaises(ValueError):
+                        m.save_checkpoint(root,**args,results={**valid,"research":bad})
+                    self.assertEqual(path.read_bytes(),before)
+                    # Simulate corruption from outside the validated writer.
+                    corrupted=json.loads(before)
+                    corrupted["results"]["research"]=bad
+                    path.write_text(json.dumps(corrupted))
                     with self.assertRaises(ValueError):
                         m.load_checkpoint(root,**args)
 
