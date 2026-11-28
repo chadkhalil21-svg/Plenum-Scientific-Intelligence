@@ -1,0 +1,200 @@
+name: Prometheus optimized native cross-domain learned skill transfer
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - '.github/workflows/prometheus-optimized-native-skill-transfer.yml'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: prometheus-optimized-native-skill-transfer-once
+  cancel-in-progress: false
+jobs:
+  native:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus/optimized-native-skill-transfer' && github.actor == 'chadkhalil21-svg' && github.run_attempt == 1 && (github.event.action == 'opened' || (github.event.action == 'synchronize' && github.event.before == 'a97858fad261a70313471831be62f3666905e48a'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Bind exact independently reviewed native skill and freeze new objective
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Permit only the first corrected dispatch after the verified pre-inference failure.
+          if [ "${{ github.event.action }}" = synchronize ]; then
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/46132345781/jobs" > "$RUNNER_TEMP/prior-transfer-jobs.json"
+            python - "$RUNNER_TEMP/prior-transfer-jobs.json" <<'PY'
+          import json,sys
+          j=next(j for j in json.load(open(sys.argv[1]))["jobs"] if j["id"]==140940054758)
+          assert j["conclusion"]=="failure"
+          steps={s["name"]:s["conclusion"] for s in j["steps"]}
+          assert steps["Verify actual baseline defect before native inference"]=="failure"
+          assert steps["Execute official whole Hermes agent with exact prospective skill"]=="skipped"
+          assert steps["Independent networkless regression and frozen acceptance"]=="skipped"
+          PY
+          fi
+          mkdir -p "$RUNNER_TEMP/hermes-evidence" "$RUNNER_TEMP/hermes-work" "$RUNNER_TEMP/hermes-home" "$RUNNER_TEMP/hermes-grade/src/plenum_ai" "$RUNNER_TEMP/hermes-grade/tests/acceptance" "$RUNNER_TEMP/hermes-skills/plenum-public-provider-boundary"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/15257825051/zip" > "$RUNNER_TEMP/mimo-diagnostic.zip"
+          echo "4155e475468a2e7f2ec00f4947ae29a53a752c2c280fd8a5c8661f309f36f047  $RUNNER_TEMP/mimo-diagnostic.zip" | sha256sum -c -
+          python - "$RUNNER_TEMP/mimo-diagnostic.zip" <<'PY'
+          import json,sys,zipfile
+          with zipfile.ZipFile(sys.argv[1]) as z:
+              assert z.testzip() is None
+              d=json.loads(z.read("diagnostic.json"))
+              assert d["done"] and d["tool_call_correct"] and not d["paid_inference"] and not d["tool_executed"]
+          PY
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/46125864627/jobs" > "$RUNNER_TEMP/learning-jobs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/15255144198/zip" > "$RUNNER_TEMP/accepted-skill.zip"
+          echo "cbc5fab151b3ffc52a5853fdb8ce216517e91810a7ab53af7cf46deaf608bf4f  $RUNNER_TEMP/accepted-skill.zip" | sha256sum -c -
+          python - "$RUNNER_TEMP/accepted-skill.zip" "$RUNNER_TEMP/learning-jobs.json" "$RUNNER_TEMP/hermes-skills/plenum-public-provider-boundary/SKILL.md" <<'PY'
+          import hashlib,json,pathlib,sys,zipfile
+          jobs=json.load(open(sys.argv[2]))["jobs"]
+          assert next(j for j in jobs if j["id"]==140920201187)["conclusion"]=="success"
+          with zipfile.ZipFile(sys.argv[1]) as z:
+              assert z.testzip() is None
+              receipt=json.loads(z.read("staging-receipt.json"))
+              raw=z.read("candidate-skill.txt")
+              assert len(raw)<8000
+              assert hashlib.sha256(raw).hexdigest()=="1b7a0507db13b2c974a1782cd593fe79955231eb324fbc51390121a179cbb2a0"
+              assert receipt["native_exit"]==0 and receipt["native_staged"] is True and receipt["approved"] is False and receipt["active"] is False
+              assert receipt["corrects_artifact"]==15254857150
+              assert z.read("upstream-format-verdict.txt").decode().splitlines()==["HERMES_VALIDATOR_CONTROLS_PASS","HERMES_NATIVE_FRONTMATTER_VALID"]
+              pathlib.Path(sys.argv[3]).write_bytes(raw)
+          PY
+          test "$(git hash-object src/plenum_ai/creative_sources.py)" = 45b13745ffb9a90bbdad0c5e4029865ff25466a2
+          test "$(git hash-object tests/acceptance/creative_provider_boundary_transfer.py)" = 5b9f4e5c45cbecb2f168bebe3237af8473a9f8ad
+          cp src/plenum_ai/creative_sources.py "$RUNNER_TEMP/hermes-work/creative_sources.py"
+          cp src/plenum_ai/creative_sources.py src/plenum_ai/creative_studio.py src/plenum_ai/chief_of_staff_pilot.py src/plenum_ai/__init__.py "$RUNNER_TEMP/hermes-grade/src/plenum_ai/"
+          cp tests/test_creative_studio.py "$RUNNER_TEMP/hermes-grade/tests/"
+          cp tests/acceptance/creative_provider_boundary_transfer.py "$RUNNER_TEMP/hermes-grade/tests/test_creative_provider_boundary_transfer.py"
+          sha256sum src/plenum_ai/creative_sources.py tests/acceptance/creative_provider_boundary_transfer.py "$RUNNER_TEMP/hermes-skills/plenum-public-provider-boundary/SKILL.md" > "$RUNNER_TEMP/hermes-evidence/frozen-inputs.txt"
+          sudo chown -R 10000:10000 "$RUNNER_TEMP/hermes-work" "$RUNNER_TEMP/hermes-home"
+          chmod -R a+rX "$RUNNER_TEMP/hermes-skills" "$RUNNER_TEMP/hermes-grade"
+      - name: Pull versioned official upstream runtime and existing local model
+        run: |
+          set -euo pipefail
+          docker pull nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f
+          docker run --init --rm --network none --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --entrypoint /opt/hermes/.venv/bin/hermes-agent nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f --version > "$RUNNER_TEMP/hermes-evidence/hermes-version.txt"
+          grep -Eq '(^|[^0-9])0[.]23[.]4([^0-9]|$)' "$RUNNER_TEMP/hermes-evidence/hermes-version.txt"
+          docker pull ollama/ollama@sha256:7e8c7ba387b11b09dcce1eff1118b1ab433564ed263434a7730c209f2ee346f4
+          docker pull python:3.12-slim
+          docker image inspect nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f --format '{{json .RepoDigests}}' > "$RUNNER_TEMP/hermes-evidence/hermes-image.json"
+          docker image inspect ollama/ollama@sha256:7e8c7ba387b11b09dcce1eff1118b1ab433564ed263434a7730c209f2ee346f4 --format '{{json .RepoDigests}}' > "$RUNNER_TEMP/hermes-evidence/ollama-image.json"
+          docker run -d --name plenum-hermes-ollama -p 127.0.0.1:11434:11434 -e OLLAMA_CONTEXT_LENGTH=65536 -e OLLAMA_FLASH_ATTENTION=1 -e OLLAMA_KV_CACHE_TYPE=q8_0 -e OLLAMA_NUM_PARALLEL=1 -e OLLAMA_NO_CLOUD=1 --memory=10g --cpus=3 ollama/ollama@sha256:7e8c7ba387b11b09dcce1eff1118b1ab433564ed263434a7730c209f2ee346f4
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:11434/api/tags && break; sleep 2; done
+          docker exec plenum-hermes-ollama ollama pull mimo-v2.6:9b-q4_K_M
+          curl -fsS http://127.0.0.1:11434/api/tags > "$RUNNER_TEMP/hermes-evidence/model.json"
+          python -c 'import json,sys; d=json.load(open(sys.argv[1])); assert any(m["name"]=="mimo-v2.6:9b-q4_K_M" and m["digest"].removeprefix("sha256:")=="cc58eacf0e3e4a96556657fe6f29c80ca38401bf242eec83f4eee074dd02bc86" for m in d["models"])' "$RUNNER_TEMP/hermes-evidence/model.json"
+          docker network create --internal plenum-hermes-internal
+          docker network connect --alias ollama plenum-hermes-internal plenum-hermes-ollama
+          docker network disconnect bridge plenum-hermes-ollama
+          test "$(docker network inspect plenum-hermes-internal --format '{{.Internal}}')" = true
+      - name: Verify actual baseline defect before native inference
+        run: |
+          set -euo pipefail
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=16m,mode=1777 --user 65534:65534 --pids-limit 64 --memory 768m -e PYTHONPATH=/work/src:/work/tests -e PYTHONDONTWRITEBYTECODE=1 -v "$RUNNER_TEMP/hermes-grade:/work:ro" -w /work python:3.12-slim python -B -m unittest discover -s tests -p 'test_creative_studio.py' -v
+          set +e
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=16m,mode=1777 --user 65534:65534 --pids-limit 64 --memory 768m -e PYTHONPATH=/work/src:/work/tests -e PYTHONDONTWRITEBYTECODE=1 -v "$RUNNER_TEMP/hermes-grade:/work:ro" -w /work python:3.12-slim python -B -m unittest discover -s tests -p 'test_creative_provider_boundary_transfer.py' -v > "$RUNNER_TEMP/hermes-evidence/baseline.txt" 2>&1
+          rc=$?
+          set -e
+          test "$rc" -eq 1
+          grep -q 'FAILED (failures=5)' "$RUNNER_TEMP/hermes-evidence/baseline.txt"
+          grep -q 'test_valid_injected_legacy_and_bound.*ok' "$RUNNER_TEMP/hermes-evidence/baseline.txt"
+      - name: Execute official whole Hermes agent with exact prospective skill
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/hermes-config.yaml" <<'YAML'
+          model:
+            provider: custom
+            model: mimo-v2.6:9b-q4_K_M
+            base_url: http://ollama:11434/v1
+            api_key: local-only
+            context_length: 65536
+          platform_toolsets:
+            cli: [file]
+          security:
+            allow_lazy_installs: false
+          skills:
+            write_approval: true
+            external_dirs: [/opt/plenum-skills]
+          terminal:
+            backend: local
+            cwd: /opt/data/work
+          agent:
+            max_turns: 8
+          YAML
+          sudo install -o 10000 -g 10000 -m 0600 "$RUNNER_TEMP/hermes-config.yaml" "$RUNNER_TEMP/hermes-home/config.yaml"
+          docker run --rm --network none --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --read-only -v "$RUNNER_TEMP/hermes-home:/opt/data" -v "$RUNNER_TEMP/hermes-work:/opt/data/work" --entrypoint /bin/sh nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f -ec 'test -r /opt/data/config.yaml; test -w /opt/data; test "$HERMES_WRITE_SAFE_ROOT" = /opt/data; test -w /opt/data/work/creative_sources.py; test -x /opt/hermes/.venv/bin/hermes; /opt/hermes/.venv/bin/hermes chat --help' > "$RUNNER_TEMP/hermes-evidence/container-preflight.txt"
+          grep -q -- "--oneshot" "$RUNNER_TEMP/hermes-evidence/container-preflight.txt"
+          grep -q -- "--max-turns" "$RUNNER_TEMP/hermes-evidence/container-preflight.txt"
+          grep -Eq -- '(^|[ ,])(-s|--skills)([ ,=]|$)' "$RUNNER_TEMP/hermes-evidence/container-preflight.txt"
+          # One-shot CLI only: no gateway, Docker socket, host credentials, external network, or checkout mount.
+          set +e
+          public_context="$(python -c 'import ast,pathlib; s=pathlib.Path("src/plenum_ai/creative_sources.py").read_text(); n=next(x for x in ast.parse(s).body if isinstance(x,ast.FunctionDef) and x.name=="_get"); print(ast.get_source_segment(s,n))')"
+          timeout 720 docker run --init --name plenum-hermes-native --network plenum-hermes-internal --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --pids-limit 128 --memory 3g --cpus 1 --workdir /opt/data/work -e HERMES_WRITE_SAFE_ROOT=/opt/data/work -e HOME=/opt/data -e HERMES_HOME=/opt/data -e OPENAI_API_KEY=local-only -e HERMES_SKIP_CONFIG_MIGRATION=1 -v "$RUNNER_TEMP/hermes-home:/opt/data" -v "$RUNNER_TEMP/hermes-work:/opt/data/work" -v "$RUNNER_TEMP/hermes-skills:/opt/plenum-skills:ro" --entrypoint /opt/hermes/.venv/bin/hermes nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f chat --oneshot --toolsets file --max-turns 8 -s plenum-public-provider-boundary -q "You are the existing Plenum Engineering specialist. Apply the preloaded advisory procedure to the distinct Creative workforce public metadata response defect. Repair only _get in /opt/data/work/creative_sources.py so unexpected final destinations and non-200 responses are rejected before any body read, default redirects are refused, and the existing byte bound and legacy injected offline opener compatibility remain. Imports may be local to the function. Make the actual edit with native tools; do not edit tests or other files. The historical test count is not authoritative. Use the already provided current function to avoid a redundant initial read. If write access is denied, stop. No external actions. Current function: $public_context" > "$RUNNER_TEMP/hermes-native-output.txt" 2>&1
+          native_rc=$?
+          set -e
+          printf '%s\n' "$native_rc" > "$RUNNER_TEMP/hermes-evidence/native-exit.txt"
+          docker logs plenum-hermes-ollama > "$RUNNER_TEMP/hermes-server.log" 2>&1 || true
+          docker inspect --format '{{json .State}}' plenum-hermes-ollama > "$RUNNER_TEMP/hermes-server-state.json" || true
+          python - "$RUNNER_TEMP/hermes-native-output.txt" "$RUNNER_TEMP/hermes-server.log" "$RUNNER_TEMP/hermes-server-state.json" "$RUNNER_TEMP/hermes-home" "$RUNNER_TEMP/hermes-evidence/native-diagnostics.json" <<'PY'
+          import hashlib,json,pathlib,sqlite3,sys
+          raw=pathlib.Path(sys.argv[1]).read_bytes()
+          log=pathlib.Path(sys.argv[2]).read_bytes()
+          try: state=json.loads(pathlib.Path(sys.argv[3]).read_text())
+          except Exception: state={}
+          tags={"timeout":(b"timed out",b"timeout"),"memory":(b"out of memory",b"failed to allocate"),"tool_template":(b"tool call",b"template"),"http_error":(b"http 500",b"status code: 500",b"apierror"),"runner_exit":(b"runner process has terminated",)}
+          combined=(raw+log).lower()
+          receipt={"transcript_bytes":len(raw),"transcript_sha256":hashlib.sha256(raw).hexdigest(),"skill_name_mentions":raw.count(b"plenum-public-provider-boundary"),"raw_transcript_retained":False,"oom_killed":state.get("OOMKilled"),"error_indicators":{k:any(t in combined for t in ts) for k,ts in tags.items()},"persisted_system_prompt_skill_phrase":False}
+          for p in pathlib.Path(sys.argv[4]).rglob("*.db"):
+              if p.is_symlink() or not p.is_file() or p.stat().st_size>32_000_000: continue
+              try:
+                  with sqlite3.connect(p.as_uri()+"?mode=ro",uri=True) as conn:
+                      for (prompt,) in conn.execute("SELECT system_prompt FROM sessions LIMIT 50"):
+                          if isinstance(prompt,str) and "Unexpected final URL or non-200 status rejected immediately; do not read response data" in prompt:
+                              receipt["persisted_system_prompt_skill_phrase"]=True
+                              receipt["matching_system_prompt_sha256"]=hashlib.sha256(prompt.encode()).hexdigest()
+              except (sqlite3.Error,OSError): pass
+          pathlib.Path(sys.argv[5]).write_text(json.dumps(receipt,sort_keys=True))
+          PY
+          test "$native_rc" -eq 0
+          docker exec plenum-hermes-ollama ollama ps > "$RUNNER_TEMP/hermes-evidence/allocated-context.txt"
+          cat "$RUNNER_TEMP/hermes-evidence/allocated-context.txt"
+          grep -Eq '(^|[[:space:]])(65536|64K)([[:space:]]|$)' "$RUNNER_TEMP/hermes-evidence/allocated-context.txt"
+      - name: Independent networkless regression and frozen acceptance
+        run: |
+          set -euo pipefail
+          source="$RUNNER_TEMP/hermes-work/creative_sources.py"
+          test -f "$source" && test ! -L "$source"
+          test "$(stat -c %s "$source")" -le 40000
+          test "$(stat -c %h "$source")" -eq 1
+          ! cmp -s src/plenum_ai/creative_sources.py "$source"
+          python - src/plenum_ai/creative_sources.py "$source" <<'PY'
+          import ast,pathlib,sys
+          def outside(path):
+              tree=ast.parse(pathlib.Path(path).read_text())
+              matches=[node for node in tree.body if isinstance(node,ast.FunctionDef) and node.name=="_get"]
+              assert len(matches)==1
+              return ast.dump(ast.Module(body=[node for node in tree.body if node is not matches[0]],type_ignores=tree.type_ignores),include_attributes=False)
+          assert outside(sys.argv[1])==outside(sys.argv[2]),"Out-of-scope candidate changes"
+          PY
+          cp "$source" "$RUNNER_TEMP/hermes-grade/src/plenum_ai/creative_sources.py"
+          chmod -R a+rX "$RUNNER_TEMP/hermes-grade"
+          diff -u src/plenum_ai/creative_sources.py "$source" > "$RUNNER_TEMP/hermes-evidence/candidate.patch" || test "$?" -eq 1
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=16m,mode=1777 --user 65534:65534 --pids-limit 64 --memory 768m -e PYTHONPATH=/work/src:/work/tests -e PYTHONDONTWRITEBYTECODE=1 -v "$RUNNER_TEMP/hermes-grade:/work:ro" -w /work python:3.12-slim python -B -m unittest discover -s tests -p 'test_*.py' -v 2>&1 | tee "$RUNNER_TEMP/hermes-evidence/independent-verdict.txt"
+          printf '%s\n' 'Native Hermes prospective candidate passed independent public engineering acceptance; review only; actual skill loading and semantic transfer still require independent evidence.' > "$RUNNER_TEMP/hermes-evidence/status.txt"
+      - name: Preserve bounded public evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prometheus-optimized-native-skill-transfer
+          path: ${{ runner.temp }}/hermes-evidence/
+      - name: Clean temporary isolated containers
+        if: always()
+        run: |
+          docker rm -f plenum-hermes-native plenum-hermes-ollama || true
+          docker network rm plenum-hermes-internal || true
