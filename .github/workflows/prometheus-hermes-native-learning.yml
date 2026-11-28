@@ -12,36 +12,48 @@ concurrency:
   cancel-in-progress: false
 jobs:
   native:
-    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-hermes-native-learning' && github.run_attempt == 1 && github.event.before == '5e13a93969649a121295f1aad90c2ceadd4b080a'
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-hermes-native-learning' && github.run_attempt == 1 && github.event.before == '0493a94c73323446359d06dc82cb6f15871e573d'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Bind accepted engineering and subsequent review experience
+      - name: Bind new independently accepted scholarly discovery experience
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/hermes-evidence" "$RUNNER_TEMP/hermes-work" "$RUNNER_TEMP/hermes-home"
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/46103340148/jobs" > "$RUNNER_TEMP/hermes-prior-jobs.json"
-          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/15246534681/zip" > "$RUNNER_TEMP/hermes-prior.zip"
-          echo "d873b04ac3d540bc54139052ff0ba6e69310e91348f698f5bd19ff77fbbf8fb2  $RUNNER_TEMP/hermes-prior.zip" | sha256sum -c -
-          python -c 'import json,sys; a=next(x for x in json.load(open(sys.argv[1]))["jobs"] if x["id"]==140850493441); assert a["conclusion"]=="success" and any(x["name"]=="Independent networkless regression and frozen acceptance" and x["conclusion"]=="success" for x in a["steps"])' "$RUNNER_TEMP/hermes-prior-jobs.json"
-          python - "$RUNNER_TEMP/hermes-prior.zip" "$RUNNER_TEMP/hermes-work" <<'PY'
-          import sys,zipfile,pathlib
-          z=zipfile.ZipFile(sys.argv[1]); assert z.testzip() is None
-          root=pathlib.Path(sys.argv[2])
-          for name in ("candidate.patch","independent-verdict.txt"):
-              info=z.getinfo(name); assert 0<info.file_size<30000
-              (root/name).write_bytes(z.read(name))
-          assert b"Ran 15 tests" in (root/"independent-verdict.txt").read_bytes()
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/46106202156/jobs" > "$RUNNER_TEMP/discovery-jobs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/15247567493/zip" > "$RUNNER_TEMP/discovery.zip"
+          echo "4ee4e2e086e692cccad2c2a4e33aa73556fd5deafd9cb582c538778335323ed8  $RUNNER_TEMP/discovery.zip" | sha256sum -c -
+          python - "$RUNNER_TEMP/discovery-jobs.json" "$RUNNER_TEMP/discovery.zip" "$RUNNER_TEMP/hermes-work/experience.json" <<'PY'
+          import json,sys,zipfile,pathlib
+          jobs=json.load(open(sys.argv[1]))["jobs"]
+          for ident in (140859404231,140861602798):
+              assert next(j for j in jobs if j["id"]==ident)["conclusion"]=="success"
+          z=zipfile.ZipFile(sys.argv[2]); assert z.testzip() is None
+          def receipt(suffix):
+              names=[n for n in z.namelist() if n.endswith(suffix)]
+              assert len(names)==1 and z.getinfo(names[0]).file_size<100000
+              return json.loads(z.read(names[0]))
+          q=receipt("/qualification.json"); v=q["independent_verification"]
+          assert v["verified_contracts"]==5 and v["independent_actual_input_test"] and v["provider_calls_replayed"]==0
+          d=receipt("/paper_discovery.result.json")["result"]
+          r=receipt("/paper_readback.result.json")["result"]
+          assert 1<=len(r)<=2 and 1<=len(d["records"])<=4
+          assert all(any(row["url"]=="https://doi.org/"+doi and row["title"]==meta["title"] for row in d["records"]) for doi,meta in r.items())
+          # Only trusted structural facts; remote text is not a skill instruction.
+          facts={"objective":"Find public concrete corrosion papers and independently check deposited records; solve and verify thermal model.",
+                 "discovery_records":len(d["records"]),"independent_doi_readbacks":len(r),"matching_title_and_identifier":True,
+                 "verified_contracts":v["verified_contracts"],"provider_calls_replayed":0,
+                 "source":"Crossref deposited metadata; separate same-provider readback, not paper-content or independent scientific confirmation",
+                 "prior_defect":"Producer admitted identifiers incompatible with downstream DOI policy, case duplicates and titles truncated after relevance checking.",
+                 "accepted_correction":"Reuse existing downstream DOI grammar; normalize identifier case, remove duplicates and check normalized title relevance before limiting accepted records.",
+                 "provenance":{"run":46106202156,"artifact":15247567493,"merge":"8e8544bd5661c8a03b050e43f938d85a08bb099d"}}
+          pathlib.Path(sys.argv[3]).write_text(json.dumps(facts,separators=(",",":")))
           PY
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/46105158171/jobs" > "$RUNNER_TEMP/learning-prior-jobs.json"
-          python -c 'import json,sys; a=next(x for x in json.load(open(sys.argv[1]))["jobs"] if x["id"]==140856143572); assert a["conclusion"]=="failure"; s={x["name"]:x["conclusion"] for x in a["steps"]}; assert s["Native Hermes extracts a staged procedural skill"]=="success" and s["Independently verify staged candidate and no active installation"]=="failure"' "$RUNNER_TEMP/learning-prior-jobs.json"
-          test "$(git hash-object src/plenum_ai/business_public_watch.py)" = 7643820329b4c5214f464cf1c36d344b6f3be317
-          cp src/plenum_ai/business_public_watch.py "$RUNNER_TEMP/hermes-work/reviewed-source.py"
           sudo chown -R 10000:10000 "$RUNNER_TEMP/hermes-home"
           chmod -R a+rX "$RUNNER_TEMP/hermes-work"
       - name: Pull versioned official upstream runtime and existing local model
@@ -62,7 +74,8 @@ jobs:
           docker network connect --alias ollama plenum-hermes-internal plenum-hermes-ollama
           docker network disconnect bridge plenum-hermes-ollama
           test "$(docker network inspect plenum-hermes-internal --format '{{.Internal}}')" = true
-      - name: Native Hermes extracts a staged procedural skill
+      - id: learn
+        name: Native Hermes extracts a staged procedural skill
         run: |
           set -euo pipefail
           cat > "$RUNNER_TEMP/hermes-config.yaml" <<'YAML'
@@ -73,7 +86,7 @@ jobs:
             api_key: local-only
             context_length: 65536
           platform_toolsets:
-            cli: [file, skills]
+            cli: [skills]
           security:
             allow_lazy_installs: false
           skills:
@@ -82,21 +95,29 @@ jobs:
             backend: local
             cwd: /opt/data/work
           agent:
-            max_turns: 6
+            max_turns: 3
           YAML
           sudo install -o 10000 -g 10000 -m 0600 "$RUNNER_TEMP/hermes-config.yaml" "$RUNNER_TEMP/hermes-home/config.yaml"
           # No write access to prior evidence, checkout or external endpoints.
           # Only native skill staging is authorized; no approval or activation.
-          timeout 720 docker run --init --name plenum-hermes-native --network plenum-hermes-internal --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --pids-limit 128 --memory 3g --cpus 1 --workdir /opt/data/work -e HERMES_WRITE_SAFE_ROOT=/opt/data/work -e HOME=/opt/data -e HERMES_HOME=/opt/data -e OPENAI_API_KEY=local-only -e HERMES_SKIP_CONFIG_MIGRATION=1 -v "$RUNNER_TEMP/hermes-home:/opt/data" -v "$RUNNER_TEMP/hermes-work:/opt/data/work:ro" --entrypoint /opt/hermes/.venv/bin/hermes nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f chat --oneshot --toolsets file,skills --max-turns 6 -q 'You are the existing Plenum Engineering specialist. Read candidate.patch, independent-verdict.txt and reviewed-source.py in /opt/data/work. Compare the accepted original patch with the subsequently reviewed implementation. Derive a reusable procedure for validating untrusted inputs and preventing unsafe or misleading error diagnostics in future software assignments. Explain why consuming an iterator and inspecting unvalidated attributes are mistakes. Use the native skill_manage operations array with exactly one create operation named plenum-safe-validation-diagnostics and concise valid SKILL.md content grounded in the comparison. Skill write approval is enabled: stop after staging, do not approve, edit other skills, execute code, or make external calls.' > "$RUNNER_TEMP/hermes-native-output.txt" 2>&1
+          experience=$(cat "$RUNNER_TEMP/hermes-work/experience.json")
+          set +e
+          timeout 720 docker run --init --name plenum-hermes-native --network plenum-hermes-internal --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --pids-limit 128 --memory 3g --cpus 1 --workdir /opt/data/work -e HERMES_WRITE_SAFE_ROOT=/opt/data/work -e HOME=/opt/data -e HERMES_HOME=/opt/data -e OPENAI_API_KEY=local-only -e HERMES_SKIP_CONFIG_MIGRATION=1 -v "$RUNNER_TEMP/hermes-home:/opt/data" -v "$RUNNER_TEMP/hermes-work:/opt/data/work:ro" --entrypoint /opt/hermes/.venv/bin/hermes nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f chat --oneshot --toolsets skills --max-turns 3 -q "You are the existing Plenum Research specialist. Derive one transferable research-quality procedure from this independently accepted experience: $experience . Stage exactly one skill_manage operations create named plenum-source-evidence-quality with valid SKILL.md. Use only that tool; no other action. Do not approve. Stop after staging." > "$RUNNER_TEMP/hermes-native-output.txt" 2>&1
+          rc=$?
+          set -e
+          printf '{"native_exit":%s}\n' "$rc" > "$RUNNER_TEMP/hermes-evidence/native-exit.json"
+          exit "$rc"
       - name: Independently verify staged candidate and no active installation
+        if: always() && steps.learn.outcome != 'skipped'
         run: |
           set -euo pipefail
           sudo python - "$RUNNER_TEMP/hermes-home" "$RUNNER_TEMP/hermes-evidence" <<'PY'
           import pathlib,sys,json,hashlib
           home,out=map(pathlib.Path,sys.argv[1:])
           pending=home/"pending"/"skills"
-          assert pending.is_dir() and not pending.is_symlink()
-          rows=list(pending.glob("*.json")); assert len(rows)==1
+          rows=list(pending.glob("*.json")) if pending.is_dir() and not pending.is_symlink() else []
+          (out/"pending-count.json").write_text(json.dumps({"pending_count":min(len(rows),100)}))
+          assert len(rows)==1
           p=rows[0]; assert not p.is_symlink() and 0<p.stat().st_size<20000
           r=json.loads(p.read_bytes()); a=r["payload"]
           # v0.23.4 advertises operations[]; the upstream approval gate
@@ -104,17 +125,17 @@ jobs:
           shape="batch" if a.get("action")=="batch" else "flat" if a.get("action")=="create" else "other"
           ops=a.get("operations") if shape=="batch" else [a] if shape=="flat" else []
           count=len(ops) if isinstance(ops,list) else -1
-          exact=count==1 and isinstance(ops[0],dict) and ops[0].get("action")=="create" and ops[0].get("name")=="plenum-safe-validation-diagnostics"
+          exact=count==1 and isinstance(ops[0],dict) and ops[0].get("action")=="create" and ops[0].get("name")=="plenum-source-evidence-quality"
           (out/"staging-diagnostic.json").write_text(json.dumps({"shape":shape,"operation_count":count,"exact_create":bool(exact)}))
           assert exact
           a=ops[0]
           assert not any(a.get(k) for k in ("file_path","file_content","old_string","new_string","absorbed_into","operations"))
           content=a["content"]; assert isinstance(content,str) and 100<len(content)<8000
           assert content.startswith("---") and "description:" in content
-          assert not any((home/"skills").rglob("plenum-safe-validation-diagnostics"))
+          assert not any((home/"skills").rglob("plenum-source-evidence-quality"))
           # Candidate remains untrusted data: preserve for separate review, never execute.
           (out/"candidate-skill.txt").write_text(content,encoding="utf-8")
-          (out/"staging-receipt.json").write_text(json.dumps({"schema":"plenum-hermes-staged-skill-v1","source_artifact":15246534681,"source_sha256":"d873b04ac3d540bc54139052ff0ba6e69310e91348f698f5bd19ff77fbbf8fb2","candidate_sha256":hashlib.sha256(content.encode()).hexdigest(),"reviewed_source_blob":"7643820329b4c5214f464cf1c36d344b6f3be317","native_staged":True,"approved":False,"active":False,"transfer_verified":False,"paid_inference":False}))
+          (out/"staging-receipt.json").write_text(json.dumps({"schema":"plenum-hermes-staged-skill-v1","source_artifact":15247567493,"source_sha256":"4ee4e2e086e692cccad2c2a4e33aa73556fd5deafd9cb582c538778335323ed8","candidate_sha256":hashlib.sha256(content.encode()).hexdigest(),"native_exit":json.loads((out/"native-exit.json").read_text())["native_exit"],"native_staged":True,"approved":False,"active":False,"transfer_verified":False,"paid_inference":False}))
           PY
       - name: Preserve bounded candidate evidence
         if: always()
