@@ -413,6 +413,8 @@ def recover_local_behavior(report_path: Path, verdict_path: Path, event_path: Pa
                   "failure_category": type(exc).__name__, "repair_passes": 1}
         if isinstance(exc, StructuredEditFailure):
             second["structured_failure_stage"] = exc.stage
+            if exc.terminal_reason is not None:
+                second["structured_terminal_reason"] = exc.terminal_reason
             second["structured_failure_clause"] = exc.clause
     second["behavioral_recovery"] = reservation
     # A different request format is not evidence of a different correction.
