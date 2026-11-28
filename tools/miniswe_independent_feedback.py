@@ -54,13 +54,17 @@ class IndependentFeedback:
     def __init__(self, source, acceptance, receipt):
         self.source,self.acceptance,self.receipt=source,acceptance,Path(receipt)
         self.seen={}
+        self.last_candidate_sha256=None
+        self.last_was_cached=False
     def __call__(self, env):
         candidate=subprocess.run(["docker","exec",env.container_id,"bash","-c",
             f'test -f /work/{self.source} && test ! -L /work/{self.source} && head -c 12001 /work/{self.source}'],
             capture_output=True,check=True,timeout=15).stdout
         if not 0<len(candidate)<=12000: raise ValueError("Unbounded candidate")
         key=sha(candidate)
-        if key in self.seen: return self.seen[key]
+        self.last_candidate_sha256=key
+        self.last_was_cached=key in self.seen
+        if self.last_was_cached: return self.seen[key]
         if len(self.seen)>=6: raise RuntimeError("Independent grading budget exhausted")
         with tempfile.TemporaryDirectory(prefix="plenum-hidden-grade-") as folder:
             root=Path(folder); root.chmod(0o755)
