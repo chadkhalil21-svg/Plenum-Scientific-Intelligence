@@ -75,6 +75,31 @@ class NativeVariableTests(unittest.TestCase):
         other,_=nv.vm.graph(mission,{"literature_discovery":False,"commercial":True})
         self.assertNotIn("paper_survey",other)
 
+    def test_discovery_rejection_retains_safe_facts_without_replay(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            scope,dispatch,plan=self.setup_plan(root,"discovery",["literature_discovery","thermal"])
+            evidence=nv.evidence_root(root)
+            rejected={"records":[],"providers":[{"source":"crossref_journals",
+                "status":"unavailable","records":[],"error_type":"HTTPError",
+                "query_strategy":"bibliographic_recovery","raw":"secret marker",
+                "first_attempt":{"status":"retrieved_metadata","records":[]}}]}
+            with patch.dict(os.environ,{"GITHUB_ACTIONS":"true"}), \
+                 patch.object(nv.vm,"run_contract",return_value=rejected) as worker:
+                with self.assertRaises(ValueError):
+                    nv.collect(evidence,dispatch,plan,nv.ORDER[:1],execute_role="intelligence")
+                receipt=json.loads((evidence/"paper_discovery.rejected.json").read_text())
+                self.assertFalse(receipt["accepted"])
+                self.assertEqual(receipt["diagnostic"],{"records":0,"providers":[{
+                    "status":"unavailable","records":0,"error_type":"HTTPError",
+                    "bibliographic_recovery":True,"first_attempt":{
+                        "status":"retrieved_metadata","records":0,"error_type":None}}]})
+                self.assertNotIn("secret marker",json.dumps(receipt))
+                self.assertFalse((evidence/"paper_discovery.result.json").exists())
+                with self.assertRaises(FileExistsError):
+                    nv.collect(evidence,dispatch,plan,nv.ORDER[:1],execute_role="intelligence")
+                self.assertEqual(worker.call_count,1)
+
     def test_ambiguous_contract_does_not_replay(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)
