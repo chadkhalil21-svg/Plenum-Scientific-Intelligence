@@ -1025,6 +1025,20 @@ def execute(task: str = DEFAULT_TASK, *, source_file: str | None = None,
                     "Candidate still failed independent Python syntax validation "
                     "after one bounded agent repair"
                 ) from None
+            # A pre-existing valid source copy is not evidence of an edit.
+            # Reuse the already bounded corrective pass only for the existing
+            # cloud route; never add a Gemini attempt or a new provider.
+            if (original_bytes is not None and raw == original_bytes
+                    and attempt + 1 < passes
+                    and model == "openai/glm-4.7-flash"
+                    and base_url == ORIGINAL_FREE_CODING_ENDPOINT):
+                conversation.send_message(
+                    "Independent readback found the source copy byte-identical. "
+                    "Re-read the original task and relevant source, then use "
+                    "FileEditorTool to make the smallest actual correction. "
+                    "Do not execute code or edit any other file. If unable, stop."
+                )
+                continue
             return _candidate_report(result, original_bytes, raw, source_file, artifact, attempt)
         raise AssertionError("Unreachable bounded repair exit")
 
