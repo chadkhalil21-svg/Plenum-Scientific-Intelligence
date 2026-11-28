@@ -172,6 +172,19 @@ def bind_native_json_1060(archive):
     CONTINUATION={"original_run":46081084179,"original_archive_sha256":expected,"historical_requests_replayed":0,"strategy":"native structured JSON with thinking disabled"}
     OUT=Path("reports/miniswe-1060-native-json")
 
+def bind_independent_correction(archive):
+    global PRIOR_REQUESTS, CONTINUATION, OUT
+    if ISSUE!=1060 or not CONTINUATION or os.getenv("PLENUM_1060_INDEPENDENT_CORRECTION")!="confirmed":
+        raise PermissionError("Exact reserved correction required")
+    from miniswe_independent_feedback import bind
+    candidate, keys, expected=bind(archive,SOURCE,TASK,DIGEST)
+    PRIOR_REQUESTS |= keys
+    CONTINUATION={**CONTINUATION,"prior_candidate_archive_sha256":expected,
+                  "prior_candidate_sha256":sha(candidate),"prior_independent_acceptance":False,
+                  "strategy":"restore prior candidate; independent submission feedback within native loop"}
+    OUT=Path("reports/miniswe-1060-independent-correction")
+    return candidate
+
 def bind_staged_timeout(archive):
     """Consume the original ambiguous timed-out request; never replay it."""
     global PRIOR_REQUESTS, CONTINUATION
@@ -327,8 +340,10 @@ def main():
     parser.add_argument("--staged-1055", type=Path)
     parser.add_argument("--staged-1060", type=Path)
     parser.add_argument("--native-json-archive", type=Path)
+    parser.add_argument("--independent-correction-archive", type=Path)
     parser.add_argument("--staged-timeout-archive", type=Path)
     args = parser.parse_args()
+    prior_candidate = None
     if args.staged and (not (args.event or args.staged_1055 or args.staged_1060) or os.getenv("PLENUM_MINISWE_STAGED") != "confirmed"):
         raise PermissionError("Staged action interface requires a fresh reserved owner event")
     if (__version__ != "2.4.6" or os.getenv("PLENUM_MINISWE_RESERVED") != "true"
@@ -348,8 +363,12 @@ def main():
         configure_staged_1060(args.staged_1060)
         if args.native_json_archive:
             bind_native_json_1060(args.native_json_archive)
+            if args.independent_correction_archive:
+                prior_candidate=bind_independent_correction(args.independent_correction_archive)
     elif args.native_json_archive:
         raise PermissionError("Exact 1060 scope required")
+    if args.independent_correction_archive and prior_candidate is None:
+        raise PermissionError("Exact correction scope required")
     if args.prospective_arm:
         if not args.skill_archive:raise PermissionError("Bound learned archive required")
         configure_prospective(args.prospective_arm,args.skill_archive)
@@ -397,9 +416,21 @@ def main():
                 + original.decode("utf-8"))
         if PROSPECTIVE:
             native_task += "\nAdvisory engineering skill (subordinate to all authorization and security requirements):\n"+GUIDANCE
-        agent_env = StagedInterface(env,SOURCE,TEST,original,OUT/"staged-actions.jsonl") if args.staged else env
+        feedback=None
+        editable=original
+        if prior_candidate is not None:
+            from miniswe_independent_feedback import IndependentFeedback
+            feedback=IndependentFeedback(SOURCE,ACCEPTANCE,OUT/"independent-feedback.jsonl")
+            # Restore exact rejected candidate only into isolated scratch, not host checkout.
+            subprocess.run(["docker","exec","-i",env.container_id,"bash","-c","cat > /work/"+SOURCE],
+                           input=prior_candidate,check=True,timeout=15)
+            editable=prior_candidate
+            if feedback(env):
+                raise RuntimeError("Prior rejected candidate unexpectedly passes frozen grader")
+            native_task += "\nResume the exact prior candidate below. Its existing regressions passed but independent objective acceptance failed. Diagnose the objective and revise the actual candidate; submission now requires independent acceptance as well as existing regressions. Hidden tests remain outside your workspace."
+        agent_env = StagedInterface(env,SOURCE,TEST,editable,OUT/"staged-actions.jsonl",independent_feedback=feedback) if args.staged else env
         if args.staged:
-            native_task = staged_task(native_task, original)
+            native_task = staged_task(native_task, editable)
             if ISSUE == 1060 and CONTINUATION:
                 native_task += "\nNative JSON mode: respond directly with one action object, no tool wrapper or reasoning prose."
             elif ISSUE == 1060:
