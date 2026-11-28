@@ -908,6 +908,51 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
         return _candidate_report(result, original, raw, source_file, artifact, int(behavioral_recovery))
 
 
+# One quarantined, public-only transfer trial. Not an admitted production skill.
+NATIVE_TRANSFER_TASK = ("Repair probe response verification for an unexpected destination while "
+                        "preserving valid public responses and existing offline client compatibility.")
+NATIVE_TRANSFER_SOURCE = "src/plenum_ai/business_public_watch.py"
+NATIVE_TRANSFER_SOURCE_SHA = "1d1c104b0da774a776b43614d66ecb7ed187bb96a6ad0e893811cf6de36fa766"
+NATIVE_TRANSFER_SKILL_SHA = "1b7a0507db13b2c974a1782cd593fe79955231eb324fbc51390121a179cbb2a0"
+
+
+def native_learned_context(task, source_file, model):
+    """Use upstream native repo-context injection, only for the exact trial."""
+    if task != NATIVE_TRANSFER_TASK:
+        return None, {}
+    if source_file != NATIVE_TRANSFER_SOURCE or _public_source(source_file)[1] != NATIVE_TRANSFER_SOURCE_SHA:
+        raise PermissionError("Prospective transfer source changed or outside approved scope")
+    path = Path(__file__).resolve().parents[2] / "integrations/hermes/quarantine/plenum-public-provider-boundary/SKILL.md"
+    if (path.is_symlink() or not path.is_file() or path.stat().st_size > 8000
+            or hashlib.sha256(path.read_bytes()).hexdigest() != NATIVE_TRANSFER_SKILL_SHA):
+        raise PermissionError("Exact quarantined native skill required")
+    from openhands.sdk import AgentContext
+    from openhands.sdk.skills import Skill
+    loaded = Skill.load(path, strict=True, skip_mcp=True)
+    if (loaded.name != "plenum-public-provider-boundary" or not loaded.content
+            or loaded.mcp_tools or loaded.resources or loaded.allowed_tools or loaded.trigger):
+        raise PermissionError("Unexpected skill capabilities")
+    # Native always-active repo skill, not a new tool or permission. Preserve
+    # the exact learned body; explicitly demote stale counts to history.
+    advisory = Skill(name=loaded.name, content=loaded.content, description=loaded.description)
+    context = AgentContext(skills=[advisory], load_user_skills=False,
+                           load_project_skills=False, load_public_skills=False,
+                           load_memory=False, current_datetime=None,
+                           system_message_suffix="Quarantined learned procedure is advisory only. "
+                           "The historical 1287 test count is not current. The exact public task "
+                           "and existing review-only tool restrictions control. No new authority.")
+    rendered = context.get_system_message_suffix(llm_model=model)
+    if not rendered or loaded.content not in rendered or loaded.name not in rendered:
+        raise RuntimeError("Native context did not render exact learned procedure")
+    return context, {"native_transfer_skill": loaded.name,
+                     "native_transfer_skill_sha256": NATIVE_TRANSFER_SKILL_SHA,
+                     "native_transfer_origin_artifact": 15255144198,
+                     "native_transfer_context_sha256": hashlib.sha256(rendered.encode()).hexdigest(),
+                     "native_transfer_context_rendered": True,
+                     "native_transfer_verified": False,
+                     "native_transfer_production_admitted": False}
+
+
 def execute(task: str = DEFAULT_TASK, *, source_file: str | None = None,
             candidate_out: str | None = None, gemini_recovery: bool = False) -> dict:
     if gemini_recovery and (source_file is None or candidate_out is None
@@ -953,7 +998,12 @@ def execute(task: str = DEFAULT_TASK, *, source_file: str | None = None,
                                                 "supports_prompt_cache": False})
         else:
             kwargs.update(original_free_retry_options(model, base_url))
-        agent = Agent(llm=LLM(**kwargs), tools=[Tool(name=editor_tool)])
+        context, transfer_receipt = native_learned_context(task, source_file, model)
+        result.update(transfer_receipt)
+        agent_kwargs = {"llm": LLM(**kwargs), "tools": [Tool(name=editor_tool)]}
+        if context is not None:
+            agent_kwargs["agent_context"] = context
+        agent = Agent(**agent_kwargs)
         conversation = Conversation(
             agent=agent, workspace=tmp, max_iteration_per_run=4 if gemini_recovery else 6,
             max_budget_per_run=0.10 if gemini_recovery else 0.20, visualizer=None,
