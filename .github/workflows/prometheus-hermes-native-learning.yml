@@ -131,12 +131,20 @@ jobs:
           a=ops[0]
           assert not any(a.get(k) for k in ("file_path","file_content","old_string","new_string","absorbed_into","operations"))
           content=a["content"]; assert isinstance(content,str) and 100<len(content)<8000
-          assert content.startswith("---") and "description:" in content
-          assert not any((home/"skills").rglob("plenum-source-evidence-quality"))
-          # Candidate remains untrusted data: preserve for separate review, never execute.
+          # Preserve the exact bounded untrusted candidate before content checks.
+          # Never auto-wrap, rewrite, approve, install or execute it.
           (out/"candidate-skill.txt").write_text(content,encoding="utf-8")
+          (out/"content-diagnostic.json").write_text(json.dumps({"candidate_sha256":hashlib.sha256(content.encode()).hexdigest(),"frontmatter_prefix":content.lstrip("\ufeff").startswith("---"),"description_marker":"description:" in content,"approved":False}))
+          assert not any((home/"skills").rglob("plenum-source-evidence-quality"))
+          assert content.lstrip("\ufeff").startswith("---") and "description:" in content
           (out/"staging-receipt.json").write_text(json.dumps({"schema":"plenum-hermes-staged-skill-v1","source_artifact":15247567493,"source_sha256":"4ee4e2e086e692cccad2c2a4e33aa73556fd5deafd9cb582c538778335323ed8","candidate_sha256":hashlib.sha256(content.encode()).hexdigest(),"native_exit":json.loads((out/"native-exit.json").read_text())["native_exit"],"native_staged":True,"approved":False,"active":False,"transfer_verified":False,"paid_inference":False}))
           PY
+      - name: Validate candidate with pinned upstream Hermes frontmatter validator
+        if: always() && steps.learn.outcome != 'skipped'
+        run: |
+          set -euo pipefail
+          test -f "$RUNNER_TEMP/hermes-evidence/candidate-skill.txt"
+          docker run --rm --network none --user 65534:65534 --cap-drop ALL --security-opt no-new-privileges --read-only --pids-limit 64 --memory 768m -v "$RUNNER_TEMP/hermes-evidence/candidate-skill.txt:/candidate.txt:ro" --entrypoint /opt/hermes/.venv/bin/python nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f -c 'from pathlib import Path; from tools.skill_manager_tool import _validate_frontmatter,_validate_content_size; c=Path("/candidate.txt").read_text(); ok=_validate_frontmatter(c) is None and _validate_content_size(c) is None; print("HERMES_NATIVE_FRONTMATTER_VALID" if ok else "HERMES_NATIVE_FRONTMATTER_REJECTED"); raise SystemExit(0 if ok else 1)' > "$RUNNER_TEMP/hermes-evidence/upstream-format-verdict.txt"
       - name: Preserve bounded candidate evidence
         if: always()
         uses: actions/upload-artifact@v4
