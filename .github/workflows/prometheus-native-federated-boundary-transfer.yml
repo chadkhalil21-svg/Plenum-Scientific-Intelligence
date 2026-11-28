@@ -1,7 +1,7 @@
 name: Prometheus native scientific provider learned skill transfer
 on:
   pull_request:
-    types: [opened]
+    types: [synchronize]
     paths:
       - '.github/workflows/prometheus-native-federated-boundary-transfer.yml'
 permissions:
@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   native:
-    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-native-federated-boundary-transfer' && github.actor == 'chadkhalil21-svg' && github.run_attempt == 1
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-native-federated-boundary-transfer' && github.actor == 'chadkhalil21-svg' && github.run_attempt == 1 && github.event.before == '282a5caf61ac0455bbf6cbc5853678793bc6a9e8'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -25,6 +25,23 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/hermes-evidence" "$RUNNER_TEMP/hermes-work" "$RUNNER_TEMP/hermes-home" "$RUNNER_TEMP/hermes-grade/src/plenum_ai" "$RUNNER_TEMP/hermes-grade/tests/acceptance" "$RUNNER_TEMP/hermes-skills/plenum-public-provider-boundary"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/46128709813/jobs" > "$RUNNER_TEMP/prior-transfer-jobs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/15257181971/zip" > "$RUNNER_TEMP/prior-transfer.zip"
+          echo "4bbd836e6bc0620926f8de4827730243b28d2224f75edf12d2e2f055b9f4435b  $RUNNER_TEMP/prior-transfer.zip" | sha256sum -c -
+          python - "$RUNNER_TEMP/prior-transfer.zip" "$RUNNER_TEMP/prior-transfer-jobs.json" <<'PY'
+          import json,sys,zipfile
+          jobs=json.load(open(sys.argv[2]))["jobs"]
+          j=next(j for j in jobs if j["id"]==140928943682)
+          assert j["conclusion"]=="failure"
+          steps={x["name"]:x["conclusion"] for x in j["steps"]}
+          assert steps["Execute official whole Hermes agent with exact prospective skill"]=="success" and steps["Independent networkless regression and frozen acceptance"]=="failure"
+          with zipfile.ZipFile(sys.argv[1]) as z:
+              assert z.testzip() is None and z.read("native-exit.txt").strip()==b"0"
+              verdict=z.read("independent-verdict.txt")
+              assert b"FAILED (errors=5)" in verdict and b"has no attribute 'getcode'" in verdict
+              candidate=z.read("candidate.patch")
+              assert len(candidate)<4096 and b"status_code = response.getcode()" in candidate
+          PY
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/46125864627/jobs" > "$RUNNER_TEMP/learning-jobs.json"
           gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/15255144198/zip" > "$RUNNER_TEMP/accepted-skill.zip"
           echo "cbc5fab151b3ffc52a5853fdb8ce216517e91810a7ab53af7cf46deaf608bf4f  $RUNNER_TEMP/accepted-skill.zip" | sha256sum -c -
@@ -62,11 +79,11 @@ jobs:
           docker pull python:3.12-slim
           docker image inspect nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f --format '{{json .RepoDigests}}' > "$RUNNER_TEMP/hermes-evidence/hermes-image.json"
           docker image inspect ollama/ollama@sha256:7e8c7ba387b11b09dcce1eff1118b1ab433564ed263434a7730c209f2ee346f4 --format '{{json .RepoDigests}}' > "$RUNNER_TEMP/hermes-evidence/ollama-image.json"
-          docker run -d --name plenum-hermes-ollama -p 127.0.0.1:11434:11434 -e OLLAMA_CONTEXT_LENGTH=65536 -e OLLAMA_NUM_PARALLEL=1 -e OLLAMA_NO_CLOUD=1 --memory=9g --cpus=3 ollama/ollama@sha256:7e8c7ba387b11b09dcce1eff1118b1ab433564ed263434a7730c209f2ee346f4
+          docker run -d --name plenum-hermes-ollama -p 127.0.0.1:11434:11434 -e OLLAMA_CONTEXT_LENGTH=65536 -e OLLAMA_NUM_PARALLEL=1 -e OLLAMA_NO_CLOUD=1 --memory=10g --cpus=3 ollama/ollama@sha256:7e8c7ba387b11b09dcce1eff1118b1ab433564ed263434a7730c209f2ee346f4
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:11434/api/tags && break; sleep 2; done
-          docker exec plenum-hermes-ollama ollama pull qwen3.5:4b
+          docker exec plenum-hermes-ollama ollama pull mimo-v2.6:latest
           curl -fsS http://127.0.0.1:11434/api/tags > "$RUNNER_TEMP/hermes-evidence/model.json"
-          python -c 'import json,sys; d=json.load(open(sys.argv[1])); assert any(m["name"]=="qwen3.5:4b" and m["digest"]=="d8b0f5e9760cd1682034f292d7ef72ec46f432149be0df7574bf2d6e92e38c04" for m in d["models"])' "$RUNNER_TEMP/hermes-evidence/model.json"
+          python -c 'import json,sys; d=json.load(open(sys.argv[1])); assert any(m["name"]=="mimo-v2.6:latest" and m["digest"].removeprefix("sha256:").startswith("cc58eacf0e3e") and len(m["digest"].removeprefix("sha256:"))==64 for m in d["models"])' "$RUNNER_TEMP/hermes-evidence/model.json"
           docker network create --internal plenum-hermes-internal
           docker network connect --alias ollama plenum-hermes-internal plenum-hermes-ollama
           docker network disconnect bridge plenum-hermes-ollama
@@ -89,7 +106,7 @@ jobs:
           cat > "$RUNNER_TEMP/hermes-config.yaml" <<'YAML'
           model:
             provider: custom
-            model: qwen3.5:4b
+            model: mimo-v2.6:latest
             base_url: http://ollama:11434/v1
             api_key: local-only
             context_length: 65536
@@ -114,7 +131,7 @@ jobs:
           # One-shot CLI only: no gateway, Docker socket, host credentials, external network, or checkout mount.
           set +e
           public_context="$(python -c 'import ast,pathlib; s=pathlib.Path("src/plenum_ai/federated_sources.py").read_text(); n=next(x for x in ast.parse(s).body if isinstance(x,ast.FunctionDef) and x.name=="_read_json"); print(ast.get_source_segment(s,n))')"
-          timeout 720 docker run --init --name plenum-hermes-native --network plenum-hermes-internal --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --pids-limit 128 --memory 3g --cpus 1 --workdir /opt/data/work -e HERMES_WRITE_SAFE_ROOT=/opt/data/work -e HOME=/opt/data -e HERMES_HOME=/opt/data -e OPENAI_API_KEY=local-only -e HERMES_SKIP_CONFIG_MIGRATION=1 -v "$RUNNER_TEMP/hermes-home:/opt/data" -v "$RUNNER_TEMP/hermes-work:/opt/data/work" -v "$RUNNER_TEMP/hermes-skills:/opt/plenum-skills:ro" --entrypoint /opt/hermes/.venv/bin/hermes nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f chat --oneshot --toolsets file --max-turns 8 -s plenum-public-provider-boundary -q "You are the existing Plenum Engineering specialist. Apply the preloaded advisory procedure to the distinct scientific provider defect. Repair only _read_json in /opt/data/work/federated_sources.py so unexpected final destinations and non-200 responses are rejected before any body read, default redirects are refused, and the existing byte bound and legacy injected offline opener compatibility remain. Imports may be local to the function. Make the actual edit with native tools; do not edit tests or other files. The historical test count is not authoritative. Use the already provided current function to avoid a redundant initial read. If write access is denied, stop. No external actions. Current function: $public_context" > "$RUNNER_TEMP/hermes-native-output.txt" 2>&1
+          timeout 720 docker run --init --name plenum-hermes-native --network plenum-hermes-internal --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --pids-limit 128 --memory 3g --cpus 1 --workdir /opt/data/work -e HERMES_WRITE_SAFE_ROOT=/opt/data/work -e HOME=/opt/data -e HERMES_HOME=/opt/data -e OPENAI_API_KEY=local-only -e HERMES_SKIP_CONFIG_MIGRATION=1 -v "$RUNNER_TEMP/hermes-home:/opt/data" -v "$RUNNER_TEMP/hermes-work:/opt/data/work" -v "$RUNNER_TEMP/hermes-skills:/opt/plenum-skills:ro" --entrypoint /opt/hermes/.venv/bin/hermes nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f chat --oneshot --toolsets file --max-turns 8 -s plenum-public-provider-boundary -q "You are the existing Plenum Engineering specialist. Apply the preloaded advisory procedure to the distinct scientific provider defect. Repair only _read_json in /opt/data/work/federated_sources.py so unexpected final destinations and non-200 responses are rejected before any body read, default redirects are refused, and the existing byte bound and legacy injected offline opener compatibility remain. Imports may be local to the function. Make the actual edit with native tools; do not edit tests or other files. Independent feedback from the rejected prior agent: its unconditional getcode call raised AttributeError on valid injected clients, and its computed final URL was never compared for equality. A successful native exit did not pass functional acceptance. Correct these observed defects rather than repeat that candidate. The historical test count is not authoritative. Use the already provided current function to avoid a redundant initial read. If write access is denied, stop. No external actions. Current function: $public_context" > "$RUNNER_TEMP/hermes-native-output.txt" 2>&1
           native_rc=$?
           set -e
           printf '%s\n' "$native_rc" > "$RUNNER_TEMP/hermes-evidence/native-exit.txt"
