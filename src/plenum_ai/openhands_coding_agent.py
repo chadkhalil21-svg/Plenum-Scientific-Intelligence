@@ -401,7 +401,7 @@ def _register_proposal_editor() -> str:
 def local_function_scope(task: str, original: bytes):
     """Optional owner-named top-level function; keep every other byte unchanged."""
     import re
-    match = re.match(r"Repair function ([a-z][a-z0-9_]{1,60})\. ", task)
+    match = re.match(r"Repair function (_normalize|[a-z][a-z0-9_]{1,60})\. ", task)
     if not match:
         return None
     nodes = [n for n in ast.parse(original.decode("utf-8")).body
@@ -499,7 +499,7 @@ def local_edit_requests(task, original):
         return []
     names=[]
     for clause in clauses:
-        match=re.match(r"Repair function ([a-z][a-z0-9_]{1,60})\. ",clause)
+        match=re.match(r"Repair function (_normalize|[a-z][a-z0-9_]{1,60})\. ",clause)
         if not match or match.group(1) in names or local_function_scope(clause,original) is None:
             raise ValueError("Invalid or repeated original function")
         names.append(match.group(1))
@@ -724,6 +724,7 @@ NATIVE_TRANSFER_SKILL_SHA = "1b7a0507db13b2c974a1782cd593fe79955231eb324fbc51390
 ARCHITECT_AIDER_TASKS = {("src/plenum_ai/federated_sources.py", "Repair function search_federated. Deduplicate valid scholarly records when DOI metadata is not a string, retaining title and year fallback. Preserve other provider and offline behavior.")}
 
 TASK_ACCEPTANCE = {
+    ("src/plenum_ai/federated_sources.py", "Repair function _normalize. Treat nonstring Europe PMC and Semantic Scholar DOI fields as absent. Preserve valid DOI URLs and all other provider fields."): "federated_provider_doi_normalization.py",
     ("src/plenum_ai/federated_sources.py", "Repair function search_federated. Deduplicate valid scholarly records when DOI metadata is not a string, retaining title and year fallback. Preserve other provider and offline behavior."): "federated_malformed_doi.py",
     (NATIVE_TRANSFER_SOURCE, NATIVE_TRANSFER_TASK): "business_response_boundary_transfer.py",
     ("src/plenum_ai/business_public_watch.py", "Repair function probe. Reject excessively nested health JSON as unexpected_content without raising RecursionError. Preserve existing target, media type, byte limit and ordinary response checks."):
