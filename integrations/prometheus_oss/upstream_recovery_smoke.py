@@ -13,9 +13,21 @@ def main():
     bad={k:k=="stations" for k in good}
     assert u.selection_matches(good,commitment) and not u.selection_matches(bad,commitment)
     assert u.mp.valid_digest(md)
+    empty={k:False for k in good}
+    assert not u.selection_matches(empty,u.mp.digest([]))
+    for malformed in ({}, {**empty,"unauthorized":True}, {**empty,"stations":1}):
+        try:u.validate_selection(mission,malformed)
+        except ValueError:pass
+        else:raise AssertionError("Malformed proposal accepted")
+    try:u.vm.graph(mission,empty)
+    except ValueError:pass
+    else:raise AssertionError("Empty executable graph accepted")
     for label,answers,accepted in (("first-pass",[good,good],True),
                                    ("recovered",[bad,bad,good],True),
-                                   ("rejected",[bad,bad,bad],False)):
+                                   ("rejected",[bad,bad,bad],False),
+                                   ("empty-specialist",[empty,good],True),
+                                   ("empty-peer-recovery",[empty,empty,good],True),
+                                   ("empty-terminal-rejected",[empty,empty,empty],False)):
         requests=[u.vm.request(mission),u.peer_request(mission,answers[0])]
         if len(answers)==3:requests.append(u.correction_request(mission,answers[0],answers[1]))
         calls=[]
