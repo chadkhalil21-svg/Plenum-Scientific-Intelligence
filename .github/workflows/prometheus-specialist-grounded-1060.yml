@@ -16,6 +16,7 @@ jobs:
     permissions:
       issues: write
       contents: read
+      actions: read
     outputs:
       reserved: ${{ steps.reserve.outputs.reserved }}
     steps:
@@ -26,8 +27,9 @@ jobs:
           set -euo pipefail
           repo=chadkhalil21-svg/Plenum-Scientific-Intelligence
           gh api "repos/$repo/issues/1060" | jq -e '.user.login=="chadkhalil21-svg" and .state=="open" and .title=="[Plenum Prometheus] Independent native 4B recovery assignment: strict public health JSON"' >/dev/null
-          gh api --paginate "repos/$repo/issues/1060/comments?per_page=100" | jq -s add | jq -e 'any(.[]; (.body|contains("plenum-independent-correction-1060-reserved-v1:46095144362"))) and all(.[]; (.body|contains("plenum-specialist-grounded-1060-reserved-v1")|not))' >/dev/null
-          gh api --method POST "repos/$repo/issues/1060/comments" -f body="<!-- plenum-specialist-grounded-1060-reserved-v1:$GITHUB_RUN_ID --> One evidence-bound code-specialist with API reference, no replay." >/dev/null
+          gh api "repos/$repo/actions/runs/46096572989/jobs?per_page=100" | jq -e 'any(.jobs[]; .id==140829188246 and .conclusion=="failure" and any(.steps[]; .name=="Retrieve terminal exhausted correction evidence" and .conclusion=="failure") and any(.steps[]; .name=="Start original free local inference" and .conclusion=="skipped") and any(.steps[]; .name=="Run original native agent with staged action feedback and independent grader" and .conclusion=="skipped"))' >/dev/null
+          gh api --paginate "repos/$repo/issues/1060/comments?per_page=100" | jq -s add | jq -e 'any(.[]; (.body|contains("plenum-specialist-grounded-1060-reserved-v1:46096572989"))) and all(.[]; (.body|contains("plenum-specialist-preflight-recovery-v1")|not))' >/dev/null
+          gh api --method POST "repos/$repo/issues/1060/comments" -f body="<!-- plenum-specialist-preflight-recovery-v1:$GITHUB_RUN_ID --> One continuation after exact verified pre-inference failure, no replay." >/dev/null
           echo reserved=true >> "$GITHUB_OUTPUT"
   engineering:
     needs: reserve
