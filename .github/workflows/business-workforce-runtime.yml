@@ -375,6 +375,11 @@ jobs:
                   and hashlib.sha256(partial.read_bytes()).hexdigest()==d.get('candidate_artifact_sha256')):
                   status='BLOCKED_INTERRUPTED_WITH_REVIEW_ARTIFACT'
                   digest=d['candidate_artifact_sha256']
+                  # Only typed, origin-bound interruption categories are public.
+                  cloud_status={
+                      'LOCAL_DURABLE_OBJECT_DAILY_BUDGET':'BLOCKED_ORIGINAL_DAILY_FREE_AI_CAP',
+                      'ORIGINAL_ENGINE_TRANSPORT':'BLOCKED_ORIGINAL_CLOUD_TRANSPORT',
+                  }.get(d.get('failure_category'),'UNKNOWN_INTERRUPTION')
               if (not attempted and d.get("status")=="BLOCKED_ORIGINAL_DAILY_FREE_AI_CAP"
                   and d.get("failure_category")=="LOCAL_DURABLE_OBJECT_DAILY_BUDGET"
                   and not d.get("model_run_completed")
