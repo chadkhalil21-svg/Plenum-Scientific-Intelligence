@@ -1,0 +1,71 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "46127402605",
+  "source_revision": "caa8832b2d9281146cbdf700974826e8b2f47965",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-28T08:47:16.996897+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 29,
+    "sources_returning_records": 22,
+    "source_outages": [
+      "mit_technology_review",
+      "dod_public_news",
+      "un_geneva_releases",
+      "gdelt_headlines"
+    ],
+    "new_public_links_before_limit": 4,
+    "signals": [
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/us6000ue2y",
+        "title_untrusted": "M 2.8 - 13 km S of Pearsall, Texas",
+        "claimed_publication_date": "1795855116244",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41581008",
+        "title_untrusted": "M 1.9 - 0 km WNW of Pacoima, CA",
+        "claimed_publication_date": "1795855097090",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75470646",
+        "title_untrusted": "M 1.5 - 8 km NW of The Geysers, CA",
+        "claimed_publication_date": "1795854886730",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41581000",
+        "title_untrusted": "M 1.0 - 15 km E of Ocotillo, CA",
+        "claimed_publication_date": "1795853606800",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
