@@ -206,7 +206,7 @@ export default {
       return handlePrivateMemory(request, env);
     if (pathname === "/health" && request.method === "GET")
       return response(200, {state:"REACHABLE_NOT_A_RUNNING_AGENT", no_model:true,
-        source_contract_revision:"original-oidc-and-openhands-chat-v2",
+        source_contract_revision:"original-oidc-and-openhands-chat-v3",
         ai_binding_present:typeof env?.AI?.run === "function"});
     if (pathname !== "/wake" || request.method !== "POST")
       return response(404, {error:"route_not_found"});

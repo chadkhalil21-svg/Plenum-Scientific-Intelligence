@@ -132,6 +132,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # A public, read-only health check consumes no inference quota. Fail closed
+          # before minting OIDC or invoking any model if production is stale.
+          curl -fsS --max-time 15 --max-filesize 8192 https://plenum-public-wake.chadkhalil21.workers.dev/health | python -c '
+          import json,sys
+          data=json.load(sys.stdin)
+          if not (data.get("source_contract_revision")=="original-oidc-and-openhands-chat-v3" and data.get("state")=="REACHABLE_NOT_A_RUNNING_AGENT" and data.get("no_model") is True and data.get("ai_binding_present") is True):
+              raise SystemExit("BLOCKED_ORIGINAL_CLOUD_REVISION_NOT_VERIFIED")
+          print("ORIGINAL_CLOUD_REVISION_VERIFIED")
+          '
           json=$(curl -fsS --max-time 15 -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=plenum-original-public-coder")
           jwt=$(printf '%s' "$json" | python -c 'import json,sys;print(json.load(sys.stdin)["value"])')
           test "${#jwt}" -gt 300
