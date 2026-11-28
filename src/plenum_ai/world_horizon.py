@@ -211,36 +211,24 @@ def fetch_public(key, query, opener=urlopen, *, paper_alternative=False):
         subject=funding_survey_subject(query)
         if not subject:
             return []
-        from .chief_of_staff_pilot import NoRedirects
         request=Request(url,data=json.dumps({"rows":25,"keyword":" ".join(subject),
                           "oppStatuses":"posted|forecasted"}).encode("utf-8"),
                         headers={"Content-Type":"application/json","Accept":"application/json",
                                  "User-Agent":"PlenumPublicFundingSurvey/1"},method="POST")
-        client=build_opener(NoRedirects).open if opener is urlopen else opener
-        with client(request,timeout=13) as response:
-            if getattr(response,"status",200)!=200 or (hasattr(response,"geturl") and response.geturl()!=url):
-                raise ValueError("Unexpected public funding search response")
-            raw=response.read(MAX_BYTES+1)
-        if len(raw)>MAX_BYTES:
-            raise ValueError("Public provider exceeded response byte limit")
-        return parse_public(key,raw,query=query)
-    request = Request(url, headers={
-        "User-Agent":"PlenumScientificIntelligence/1.8 read-only-public-signals",
-        "Accept":"application/json,text/html,application/rss+xml,application/atom+xml,application/xml",
-    })
-    if key=="crossref_journals" and paper_survey_subject(query):
-        from .chief_of_staff_pilot import NoRedirects
-        client=build_opener(NoRedirects).open if opener is urlopen else opener
-        with client(request,timeout=13) as response:
-            if getattr(response,"status",200)!=200 or (hasattr(response,"geturl") and response.geturl()!=url):
-                raise ValueError("Unexpected scholarly search response")
-            data=response.read(MAX_BYTES+1)
     else:
-        with opener(request, timeout=13) as response:
-            data = response.read(MAX_BYTES + 1)
-    if len(data) > MAX_BYTES:
+        request = Request(url, headers={
+            "User-Agent":"PlenumScientificIntelligence/1.8 read-only-public-signals",
+            "Accept":"application/json,text/html,application/rss+xml,application/atom+xml,application/xml",
+        })
+    from .chief_of_staff_pilot import NoRedirects
+    client=build_opener(NoRedirects).open if opener is urlopen else opener
+    with client(request,timeout=13) as response:
+        if getattr(response,"status",200)!=200 or (hasattr(response,"geturl") and response.geturl()!=url):
+            raise ValueError("Unexpected public provider response")
+        data=response.read(MAX_BYTES+1)
+    if len(data)>MAX_BYTES:
         raise ValueError("Public provider exceeded response byte limit")
-    return parse_public(key, data, query=query)
+    return parse_public(key,data,query=query)
 
 
 def _text(node, tag):
