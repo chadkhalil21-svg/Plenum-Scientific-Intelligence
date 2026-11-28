@@ -40,6 +40,15 @@ def probe(target: Target, *, opener=None, timeout: int = 12) -> tuple[bool, str,
             code = resp.status
             if code != 200:
                 return False, "non_200_http", code
+            # urllib exposes the final destination through geturl(); some injected
+            # clients expose url only. Reject any explicit mismatch before reading.
+            geturl = getattr(resp, "geturl", None)
+            has_geturl = callable(geturl)
+            has_url = hasattr(resp, "url")
+            if ((has_geturl and geturl() != target.url)
+                    or (has_url and resp.url != target.url)
+                    or (not has_geturl and not has_url and opener is None)):
+                return False, "unexpected_destination", code
             ct = resp.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
             if target.kind == "health":
                 if ct != "application/json":
