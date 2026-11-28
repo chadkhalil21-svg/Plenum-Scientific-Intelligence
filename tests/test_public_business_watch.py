@@ -61,5 +61,39 @@ class BusinessPublicWatchTests(unittest.TestCase):
     def test_redirects_are_not_followed(self):
         self.assertIsNone(NoRedirects().redirect_request(None, None, 302, "", {}, "http://private/"))
 
+class DestinationInterfaceTests(unittest.TestCase):
+    def test_geturl_only_mismatch_is_rejected_without_read(self):
+        from plenum_ai.business_public_watch import probe
+        target = TARGETS[2]
+        class Response:
+            status = 200
+            headers = {"Content-Type": "application/json"}
+            def __enter__(self): return self
+            def __exit__(self, *args): return False
+            def geturl(self): return "https://unexpected.invalid/health"
+            def read(self, size): raise AssertionError("must not read mismatched response")
+        class Client:
+            def open(self, request, timeout): return Response()
+        self.assertEqual(probe(target, opener=Client()), (False, "unexpected_destination", 200))
+
+    def test_valid_geturl_only_and_conflicting_metadata(self):
+        from plenum_ai.business_public_watch import probe
+        target = TARGETS[2]
+        class Response:
+            status = 200
+            headers = {"Content-Type": "application/json"}
+            def __enter__(self): return self
+            def __exit__(self, *args): return False
+            def geturl(self): return target.url
+            def read(self, size): return b'{"service":"american-rider-server"}'
+        class Client:
+            def __init__(self, response): self.response = response
+            def open(self, request, timeout): return self.response
+        self.assertEqual(probe(target, opener=Client(Response())), (True, "verified_read", 200))
+        conflicting = Response()
+        conflicting.url = "https://unexpected.invalid/health"
+        self.assertEqual(probe(target, opener=Client(conflicting)), (False, "unexpected_destination", 200))
+
+
 if __name__ == "__main__":
     unittest.main()
