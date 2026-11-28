@@ -515,7 +515,8 @@ class ScopedModuleBudgetTests(unittest.TestCase):
         self.assertEqual(candidate, original.replace(b"return 1", b"return 2"))
 
     def test_native_scoped_aider_routes_only_registered_task(self):
-        source, task = next(iter(coder.SCOPED_AIDER_TASKS))
+        # This fixture exercises the original whole-function editor, not the separate architect route.
+        source, task = next(iter(coder.SCOPED_AIDER_TASKS - coder.ARCHITECT_AIDER_TASKS))
         original = (ROOT / source).read_bytes()
         scope = coder.local_function_scope(task, original)
         self.assertEqual(coder.local_plan(task, source_file=source)["local_model"], coder.LOCAL_MODEL)
