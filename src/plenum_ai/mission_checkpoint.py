@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import tempfile
 from pathlib import Path, PurePosixPath
@@ -97,6 +98,26 @@ def checkpoint_path(root: Path, issue: int) -> Path:
     return root / f"chief-checkpoint-{issue}.json"
 
 
+def _valid_results(results: object, team: tuple[str, ...]) -> bool:
+    return (isinstance(results, dict)
+            and not (set(results) - set(team))
+            and all(isinstance(entry, dict)
+                    and type(entry.get("attempt")) is int
+                    and entry["attempt"] in (1, 2)
+                    for entry in results.values()))
+
+
+def _reject_nonfinite(value: str):
+    raise ValueError("Nonfinite checkpoint number")
+
+
+def _finite_float(value: str) -> float:
+    number = float(value)
+    if not math.isfinite(number):
+        raise ValueError("Nonfinite checkpoint number")
+    return number
+
+
 def load_checkpoint(root: Path, *, issue: int, objective: str,
                     team: tuple[str, ...]) -> dict:
     path = checkpoint_path(root, issue)
@@ -119,7 +140,8 @@ def load_checkpoint(root: Path, *, issue: int, objective: str,
         return result
 
     try:
-        data = json.loads(raw.decode("utf-8"), object_pairs_hook=unique_object)
+        data = json.loads(raw.decode("utf-8"), object_pairs_hook=unique_object,
+                          parse_constant=_reject_nonfinite, parse_float=_finite_float)
     except RecursionError:
         raise ValueError("Unsafe original checkpoint")
     if (not isinstance(data, dict)
@@ -130,12 +152,7 @@ def load_checkpoint(root: Path, *, issue: int, objective: str,
             or data.get("team") != list(team)
             or data.get("only_original_public_workers") is not True
             or data.get("owner_private_accounts_used") is not False
-            or not isinstance(data.get("results"), dict)
-            or set(data["results"]) - set(team)
-            or any(not isinstance(entry, dict)
-                   or type(entry.get("attempt")) is not int
-                   or entry["attempt"] not in (1, 2)
-                   for entry in data["results"].values())):
+            or not _valid_results(data.get("results"), team)):
         raise ValueError("Checkpoint belongs to a different or untrusted mission")
     return data["results"]
 
@@ -144,7 +161,8 @@ def save_checkpoint(root: Path, *, issue: int, objective: str,
                     team: tuple[str, ...], results: dict) -> None:
     # Validate issue identifier before creating any directories
     path = checkpoint_path(root, issue)
-    root.mkdir(parents=True, exist_ok=True)
+    if not _valid_results(results, team):
+        raise ValueError("Invalid original checkpoint results")
     data = {
         "schema": "plenum-chief-restart-v1",
         "issue_number": issue,
@@ -156,9 +174,10 @@ def save_checkpoint(root: Path, *, issue: int, objective: str,
     }
     if path.is_symlink() or (path.exists() and not path.is_file()):
         raise ValueError("Unsafe original checkpoint")
-    raw = (json.dumps(data, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    raw = (json.dumps(data, indent=2, sort_keys=True, allow_nan=False) + "\n").encode("utf-8")
     if len(raw) > 200_000:
         raise ValueError("Unsafe original checkpoint")
+    root.mkdir(parents=True, exist_ok=True)
     # Exclusive random temporary file avoids pre-existing aliases and stale
     # temp filenames; replacement preserves the previous complete checkpoint.
     temporary = None
