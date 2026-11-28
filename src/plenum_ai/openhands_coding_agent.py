@@ -726,7 +726,7 @@ NATIVE_TRANSFER_SOURCE_SHA = "1d1c104b0da774a776b43614d66ecb7ed187bb96a6ad0e8938
 NATIVE_TRANSFER_SKILL_SHA = "1b7a0507db13b2c974a1782cd593fe79955231eb324fbc51390121a179cbb2a0"
 
 # Distinct prospective Research worker transfer; preserve old trial binding.
-GLOBAL_TRANSFER_TASK = ("Repair function _get. Reject unexpected destination or non-200 public responses "
+GLOBAL_TRANSFER_TASK = ("Repair _get. Reject unexpected destination or non-200 public responses "
                         "before reading. Refuse default redirects and preserve legacy offline openers and byte limits.")
 GLOBAL_TRANSFER_SOURCE = "src/plenum_ai/global_sources.py"
 GLOBAL_TRANSFER_SOURCE_BLOB = "073fef9fc8671448ff1f6ff1c8d3324848f7bf6a"
