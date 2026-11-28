@@ -1,7 +1,7 @@
 name: Prometheus Hermes native skill learning
 on:
   pull_request:
-    types: [opened]
+    types: [synchronize]
     paths:
       - '.github/workflows/prometheus-hermes-native-learning.yml'
 permissions:
@@ -12,14 +12,14 @@ concurrency:
   cancel-in-progress: false
 jobs:
   native:
-    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-hermes-native-learning' && github.run_attempt == 1
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-hermes-native-learning' && github.run_attempt == 1 && github.event.before == '5e13a93969649a121295f1aad90c2ceadd4b080a'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Bind accepted engineering experience without repeating inference
+      - name: Bind accepted engineering and subsequent review experience
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -38,6 +38,10 @@ jobs:
               (root/name).write_bytes(z.read(name))
           assert b"Ran 15 tests" in (root/"independent-verdict.txt").read_bytes()
           PY
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/46105158171/jobs" > "$RUNNER_TEMP/learning-prior-jobs.json"
+          python -c 'import json,sys; a=next(x for x in json.load(open(sys.argv[1]))["jobs"] if x["id"]==140856143572); assert a["conclusion"]=="failure"; s={x["name"]:x["conclusion"] for x in a["steps"]}; assert s["Native Hermes extracts a staged procedural skill"]=="success" and s["Independently verify staged candidate and no active installation"]=="failure"' "$RUNNER_TEMP/learning-prior-jobs.json"
+          test "$(git hash-object src/plenum_ai/business_public_watch.py)" = 7643820329b4c5214f464cf1c36d344b6f3be317
+          cp src/plenum_ai/business_public_watch.py "$RUNNER_TEMP/hermes-work/reviewed-source.py"
           sudo chown -R 10000:10000 "$RUNNER_TEMP/hermes-home"
           chmod -R a+rX "$RUNNER_TEMP/hermes-work"
       - name: Pull versioned official upstream runtime and existing local model
@@ -83,7 +87,7 @@ jobs:
           sudo install -o 10000 -g 10000 -m 0600 "$RUNNER_TEMP/hermes-config.yaml" "$RUNNER_TEMP/hermes-home/config.yaml"
           # No write access to prior evidence, checkout or external endpoints.
           # Only native skill staging is authorized; no approval or activation.
-          timeout 720 docker run --init --name plenum-hermes-native --network plenum-hermes-internal --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --pids-limit 128 --memory 3g --cpus 1 --workdir /opt/data/work -e HERMES_WRITE_SAFE_ROOT=/opt/data/work -e HOME=/opt/data -e HERMES_HOME=/opt/data -e OPENAI_API_KEY=local-only -e HERMES_SKIP_CONFIG_MIGRATION=1 -v "$RUNNER_TEMP/hermes-home:/opt/data" -v "$RUNNER_TEMP/hermes-work:/opt/data/work:ro" --entrypoint /opt/hermes/.venv/bin/hermes nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f chat --oneshot --toolsets file,skills --max-turns 6 -q 'You are the existing Plenum Engineering specialist. Read candidate.patch and independent-verdict.txt in /opt/data/work. They are your prior independently accepted engineering experience. Derive a reusable procedure for a different future assignment involving validation before side effects, not a copy of this patch. Use the native skill_manage create tool once with name plenum-validated-boundaries, a concise valid SKILL.md and general procedure grounded in that evidence. Skill write approval is enabled: stop after staging, do not approve, edit other skills, execute code, or make external calls.' > "$RUNNER_TEMP/hermes-native-output.txt" 2>&1
+          timeout 720 docker run --init --name plenum-hermes-native --network plenum-hermes-internal --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --pids-limit 128 --memory 3g --cpus 1 --workdir /opt/data/work -e HERMES_WRITE_SAFE_ROOT=/opt/data/work -e HOME=/opt/data -e HERMES_HOME=/opt/data -e OPENAI_API_KEY=local-only -e HERMES_SKIP_CONFIG_MIGRATION=1 -v "$RUNNER_TEMP/hermes-home:/opt/data" -v "$RUNNER_TEMP/hermes-work:/opt/data/work:ro" --entrypoint /opt/hermes/.venv/bin/hermes nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f chat --oneshot --toolsets file,skills --max-turns 6 -q 'You are the existing Plenum Engineering specialist. Read candidate.patch, independent-verdict.txt and reviewed-source.py in /opt/data/work. Compare the accepted original patch with the subsequently reviewed implementation. Derive a reusable procedure for validating untrusted inputs and preventing unsafe or misleading error diagnostics in future software assignments. Explain why consuming an iterator and inspecting unvalidated attributes are mistakes. Use the native skill_manage operations array with exactly one create operation named plenum-safe-validation-diagnostics and concise valid SKILL.md content grounded in the comparison. Skill write approval is enabled: stop after staging, do not approve, edit other skills, execute code, or make external calls.' > "$RUNNER_TEMP/hermes-native-output.txt" 2>&1
       - name: Independently verify staged candidate and no active installation
         run: |
           set -euo pipefail
@@ -95,13 +99,22 @@ jobs:
           rows=list(pending.glob("*.json")); assert len(rows)==1
           p=rows[0]; assert not p.is_symlink() and 0<p.stat().st_size<20000
           r=json.loads(p.read_bytes()); a=r["payload"]
-          assert a["action"]=="create" and a["name"]=="plenum-validated-boundaries"
+          # v0.23.4 advertises operations[]; the upstream approval gate
+          # stages the entire batch as {"action":"batch","operations":[...]}.
+          shape="batch" if a.get("action")=="batch" else "flat" if a.get("action")=="create" else "other"
+          ops=a.get("operations") if shape=="batch" else [a] if shape=="flat" else []
+          count=len(ops) if isinstance(ops,list) else -1
+          exact=count==1 and isinstance(ops[0],dict) and ops[0].get("action")=="create" and ops[0].get("name")=="plenum-safe-validation-diagnostics"
+          (out/"staging-diagnostic.json").write_text(json.dumps({"shape":shape,"operation_count":count,"exact_create":bool(exact)}))
+          assert exact
+          a=ops[0]
+          assert not any(a.get(k) for k in ("file_path","file_content","old_string","new_string","absorbed_into","operations"))
           content=a["content"]; assert isinstance(content,str) and 100<len(content)<8000
           assert content.startswith("---") and "description:" in content
-          assert not any((home/"skills").rglob("plenum-validated-boundaries"))
+          assert not any((home/"skills").rglob("plenum-safe-validation-diagnostics"))
           # Candidate remains untrusted data: preserve for separate review, never execute.
           (out/"candidate-skill.txt").write_text(content,encoding="utf-8")
-          (out/"staging-receipt.json").write_text(json.dumps({"schema":"plenum-hermes-staged-skill-v1","source_artifact":15246534681,"source_sha256":"d873b04ac3d540bc54139052ff0ba6e69310e91348f698f5bd19ff77fbbf8fb2","candidate_sha256":hashlib.sha256(content.encode()).hexdigest(),"native_staged":True,"approved":False,"active":False,"transfer_verified":False,"paid_inference":False}))
+          (out/"staging-receipt.json").write_text(json.dumps({"schema":"plenum-hermes-staged-skill-v1","source_artifact":15246534681,"source_sha256":"d873b04ac3d540bc54139052ff0ba6e69310e91348f698f5bd19ff77fbbf8fb2","candidate_sha256":hashlib.sha256(content.encode()).hexdigest(),"reviewed_source_blob":"7643820329b4c5214f464cf1c36d344b6f3be317","native_staged":True,"approved":False,"active":False,"transfer_verified":False,"paid_inference":False}))
           PY
       - name: Preserve bounded candidate evidence
         if: always()
