@@ -61,6 +61,17 @@ jobs:
           assert canonical == compatibility, "Wrangler compatibility config drift"
           print("Identical effective configuration and entrypoint:", canonical["main"])
           PY
+      - name: Observe current public production contract without inference or credentials
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          curl -fsS --max-time 15 --max-filesize 8192 https://plenum-public-wake.chadkhalil21.workers.dev/health | python -c '
+          import json,sys
+          value=json.load(sys.stdin)
+          print("LIVE_CORRECTED_CONTRACT="+str(value.get("source_contract_revision")=="original-oidc-and-openhands-chat-v3"))
+          print("LIVE_AI_BINDING="+str(value.get("ai_binding_present") is True))
+          print("LIVE_HEALTH_ONLY="+str(value.get("no_model") is True and value.get("state")=="REACHABLE_NOT_A_RUNNING_AGENT"))
+          '
       - name: Verify both existing Worker entrypoints bundle with official Wrangler without deployment
         run: |
           npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/plenum-worker-bundle
