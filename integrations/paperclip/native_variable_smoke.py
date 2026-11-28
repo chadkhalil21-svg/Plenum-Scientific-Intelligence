@@ -168,6 +168,68 @@ class NativeVariableTests(unittest.TestCase):
                 self.assertEqual(model.call_count,1)
                 worker.assert_not_called()
 
+    def test_model_proposed_contract_dag_uses_original_native_executor(self):
+        import contract_dag as dag
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            scope={**nv.fixture("science"),"planning_engine":"contract-dag-v1"}
+            cid,mid=str(uuid4()),str(uuid4())
+            # Noncanonical branch ordering must survive actual model proposal.
+            steps=[{"tool":"crossref_metadata","after":[]},
+                   {"tool":"bibliography_readback","after":["crossref_metadata"]},
+                   {"tool":"noaa_metadata","after":[]},
+                   {"tool":"station_validation","after":["noaa_metadata"]},
+                   {"tool":"evidence_report","after":["station_validation","noaa_metadata",
+                                                       "bibliography_readback","crossref_metadata"]}]
+            wrong={"steps":[{**step,"after":[]} for step in steps]}
+            right={"steps":steps}
+            def reply(proposal):
+                return {"model":MODEL,"done":True,"message":{"content":json.dumps(proposal)},
+                        "eval_count":240,"prompt_eval_count":700}
+            with patch.dict(os.environ,{"GITHUB_ACTIONS":"true"}), \
+                 patch.object(dag.mp,"check_local_model",return_value=MODEL_DIGEST+"a"*52), \
+                 patch.object(dag.mp,"read_json",side_effect=[reply(wrong),reply(right)]) as model, \
+                 patch.object(nv.vm,"run_contract") as worker:
+                plan=nv.prepare(root,scope,cid,mid)
+                self.assertEqual([n["id"] for n in plan["nodes"]],[x["tool"] for x in steps])
+                self.assertEqual(nv.prepare(root,scope,cid,mid),plan)
+                self.assertEqual(dag.verify(nv.evidence_root(root),scope)[1]["dag_attempts"],2)
+                self.assertEqual(model.call_count,2)
+                self.assertNotEqual(model.call_args_list[0].args[1],model.call_args_list[1].args[1])
+                for call in model.call_args_list:
+                    self.assertNotIn(scope["selection_commitment"],json.dumps(call.args[1]))
+                worker.assert_not_called()
+                receipt=nv.evidence_root(root)/"contract-dag"/"1.result.json"
+                original=json.loads(receipt.read_text())
+                self.assertIs(original["accepted"],False)
+                receipt.write_text(json.dumps({**original,"accepted":True}))
+                with self.assertRaises(ValueError):
+                    nv.load(root,scope,cid,mid,require_dispatch=False)
+                self.assertEqual(model.call_count,2)
+
+    def test_contract_dag_scope_and_no_replay(self):
+        import contract_dag as dag
+        for mode in ("ambiguous","unknown","twice_wrong"):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as tmp:
+                root=Path(tmp)
+                scope={**nv.fixture("engineering"),"planning_engine":"contract-dag-v1"}
+                cid,mid=str(uuid4()),str(uuid4())
+                proposal={"steps":[{"tool":"unknown" if mode=="unknown" else "evidence_report","after":[]}]}
+                reply={"model":MODEL,"done":True,"message":{"content":json.dumps(proposal)},
+                       "eval_count":40,"prompt_eval_count":600}
+                responses=[TimeoutError()] if mode=="ambiguous" else [reply,reply]
+                with patch.dict(os.environ,{"GITHUB_ACTIONS":"true"}), \
+                     patch.object(dag.mp,"check_local_model",return_value=MODEL_DIGEST+"a"*52), \
+                     patch.object(dag.mp,"read_json",side_effect=responses) as model, \
+                     patch.object(nv.vm,"run_contract") as worker:
+                    with self.assertRaises((ValueError,TimeoutError)):
+                        nv.prepare(root,scope,cid,mid)
+                    self.assertFalse((nv.evidence_root(root)/"plan.json").exists())
+                    with self.assertRaises(FileExistsError):
+                        nv.prepare(root,scope,cid,mid)
+                    self.assertEqual(model.call_count,2 if mode=="twice_wrong" else 1)
+                    worker.assert_not_called()
+
     def test_native_setup_retry_only_before_provider_work(self):
         import sequential_mission as seq
         from unittest.mock import Mock
