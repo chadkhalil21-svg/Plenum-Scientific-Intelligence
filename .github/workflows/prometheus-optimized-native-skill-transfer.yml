@@ -1,7 +1,7 @@
 name: Prometheus optimized native cross-domain learned skill transfer
 on:
   pull_request:
-    types: [opened]
+    types: [opened, synchronize]
     paths:
       - '.github/workflows/prometheus-optimized-native-skill-transfer.yml'
 permissions:
@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   native:
-    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus/optimized-native-skill-transfer' && github.actor == 'chadkhalil21-svg' && github.run_attempt == 1
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus/optimized-native-skill-transfer' && github.actor == 'chadkhalil21-svg' && github.run_attempt == 1 && (github.event.action == 'opened' || (github.event.action == 'synchronize' && github.event.before == 'a97858fad261a70313471831be62f3666905e48a'))
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -24,6 +24,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          # Permit only the first corrected dispatch after the verified pre-inference failure.
+          if [ "${{ github.event.action }}" = synchronize ]; then
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/46132345781/jobs" > "$RUNNER_TEMP/prior-transfer-jobs.json"
+            python - "$RUNNER_TEMP/prior-transfer-jobs.json" <<'PY'
+          import json,sys
+          j=next(j for j in json.load(open(sys.argv[1]))["jobs"] if j["id"]==140940054758)
+          assert j["conclusion"]=="failure"
+          steps={s["name"]:s["conclusion"] for s in j["steps"]}
+          assert steps["Verify actual baseline defect before native inference"]=="failure"
+          assert steps["Execute official whole Hermes agent with exact prospective skill"]=="skipped"
+          assert steps["Independent networkless regression and frozen acceptance"]=="skipped"
+          PY
+          fi
           mkdir -p "$RUNNER_TEMP/hermes-evidence" "$RUNNER_TEMP/hermes-work" "$RUNNER_TEMP/hermes-home" "$RUNNER_TEMP/hermes-grade/src/plenum_ai" "$RUNNER_TEMP/hermes-grade/tests/acceptance" "$RUNNER_TEMP/hermes-skills/plenum-public-provider-boundary"
           gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/15257825051/zip" > "$RUNNER_TEMP/mimo-diagnostic.zip"
           echo "4155e475468a2e7f2ec00f4947ae29a53a752c2c280fd8a5c8661f309f36f047  $RUNNER_TEMP/mimo-diagnostic.zip" | sha256sum -c -
@@ -83,9 +96,9 @@ jobs:
       - name: Verify actual baseline defect before native inference
         run: |
           set -euo pipefail
-          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges --read-only --user 65534:65534 --pids-limit 64 --memory 768m -e PYTHONPATH=/work/src:/work/tests -e PYTHONDONTWRITEBYTECODE=1 -v "$RUNNER_TEMP/hermes-grade:/work:ro" -w /work python:3.12-slim python -B -m unittest discover -s tests -p 'test_creative_studio.py' -v
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=16m,mode=1777 --user 65534:65534 --pids-limit 64 --memory 768m -e PYTHONPATH=/work/src:/work/tests -e PYTHONDONTWRITEBYTECODE=1 -v "$RUNNER_TEMP/hermes-grade:/work:ro" -w /work python:3.12-slim python -B -m unittest discover -s tests -p 'test_creative_studio.py' -v
           set +e
-          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges --read-only --user 65534:65534 --pids-limit 64 --memory 768m -e PYTHONPATH=/work/src:/work/tests -e PYTHONDONTWRITEBYTECODE=1 -v "$RUNNER_TEMP/hermes-grade:/work:ro" -w /work python:3.12-slim python -B -m unittest discover -s tests -p 'test_creative_provider_boundary_transfer.py' -v > "$RUNNER_TEMP/hermes-evidence/baseline.txt" 2>&1
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=16m,mode=1777 --user 65534:65534 --pids-limit 64 --memory 768m -e PYTHONPATH=/work/src:/work/tests -e PYTHONDONTWRITEBYTECODE=1 -v "$RUNNER_TEMP/hermes-grade:/work:ro" -w /work python:3.12-slim python -B -m unittest discover -s tests -p 'test_creative_provider_boundary_transfer.py' -v > "$RUNNER_TEMP/hermes-evidence/baseline.txt" 2>&1
           rc=$?
           set -e
           test "$rc" -eq 1
@@ -172,7 +185,7 @@ jobs:
           cp "$source" "$RUNNER_TEMP/hermes-grade/src/plenum_ai/creative_sources.py"
           chmod -R a+rX "$RUNNER_TEMP/hermes-grade"
           diff -u src/plenum_ai/creative_sources.py "$source" > "$RUNNER_TEMP/hermes-evidence/candidate.patch" || test "$?" -eq 1
-          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges --read-only --user 65534:65534 --pids-limit 64 --memory 768m -e PYTHONPATH=/work/src:/work/tests -e PYTHONDONTWRITEBYTECODE=1 -v "$RUNNER_TEMP/hermes-grade:/work:ro" -w /work python:3.12-slim python -B -m unittest discover -s tests -p 'test_*.py' -v 2>&1 | tee "$RUNNER_TEMP/hermes-evidence/independent-verdict.txt"
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges --read-only --tmpfs /tmp:rw,noexec,nosuid,nodev,size=16m,mode=1777 --user 65534:65534 --pids-limit 64 --memory 768m -e PYTHONPATH=/work/src:/work/tests -e PYTHONDONTWRITEBYTECODE=1 -v "$RUNNER_TEMP/hermes-grade:/work:ro" -w /work python:3.12-slim python -B -m unittest discover -s tests -p 'test_*.py' -v 2>&1 | tee "$RUNNER_TEMP/hermes-evidence/independent-verdict.txt"
           printf '%s\n' 'Native Hermes prospective candidate passed independent public engineering acceptance; review only; actual skill loading and semantic transfer still require independent evidence.' > "$RUNNER_TEMP/hermes-evidence/status.txt"
       - name: Preserve bounded public evidence
         if: always()
