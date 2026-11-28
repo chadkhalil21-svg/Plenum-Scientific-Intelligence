@@ -401,7 +401,7 @@ def _register_proposal_editor() -> str:
 def local_function_scope(task: str, original: bytes):
     """Optional owner-named top-level function; keep every other byte unchanged."""
     import re
-    match = re.match(r"Repair function ([a-z][a-z0-9_]{1,60})\. ", task)
+    match = re.match(r"Repair function (_normalize|[a-z][a-z0-9_]{1,60})\. ", task)
     if not match:
         return None
     nodes = [n for n in ast.parse(original.decode("utf-8")).body
@@ -499,7 +499,7 @@ def local_edit_requests(task, original):
         return []
     names=[]
     for clause in clauses:
-        match=re.match(r"Repair function ([a-z][a-z0-9_]{1,60})\. ",clause)
+        match=re.match(r"Repair function (_normalize|[a-z][a-z0-9_]{1,60})\. ",clause)
         if not match or match.group(1) in names or local_function_scope(clause,original) is None:
             raise ValueError("Invalid or repeated original function")
         names.append(match.group(1))
