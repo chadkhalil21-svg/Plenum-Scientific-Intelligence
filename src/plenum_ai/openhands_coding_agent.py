@@ -713,7 +713,16 @@ def structured_local_edit(task,scope,*,numbered=False,reasoning=False):
 # Recovery is limited to exact tasks already possessing independent, trusted
 # behavioral acceptance suites. No failed candidate, test answers or logs enter
 # the next model prompt. A distinct edit format is used only once.
+# One quarantined, public-only transfer trial. Not an admitted production skill.
+NATIVE_TRANSFER_TASK = ("Repair probe response verification for an unexpected destination while "
+                        "preserving valid public responses and existing offline client compatibility.")
+NATIVE_TRANSFER_SOURCE = "src/plenum_ai/business_public_watch.py"
+NATIVE_TRANSFER_SOURCE_SHA = "1d1c104b0da774a776b43614d66ecb7ed187bb96a6ad0e893811cf6de36fa766"
+NATIVE_TRANSFER_SKILL_SHA = "1b7a0507db13b2c974a1782cd593fe79955231eb324fbc51390121a179cbb2a0"
+
+
 TASK_ACCEPTANCE = {
+    (NATIVE_TRANSFER_SOURCE, NATIVE_TRANSFER_TASK): "business_response_boundary_transfer.py",
     ("src/plenum_ai/business_public_watch.py", "Repair function probe. Reject excessively nested health JSON as unexpected_content without raising RecursionError. Preserve existing target, media type, byte limit and ordinary response checks."):
         "public_health_nested_json.py",
     ("src/plenum_ai/mission_checkpoint.py", "Repair function load_checkpoint. Reject excessively nested JSON checkpoint content with ValueError instead of RecursionError. Preserve valid checkpoint loading and all existing checks."):
@@ -906,14 +915,6 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
         if scope:
             result["editing_scope"]="owner_named_function_only"
         return _candidate_report(result, original, raw, source_file, artifact, int(behavioral_recovery))
-
-
-# One quarantined, public-only transfer trial. Not an admitted production skill.
-NATIVE_TRANSFER_TASK = ("Repair probe response verification for an unexpected destination while "
-                        "preserving valid public responses and existing offline client compatibility.")
-NATIVE_TRANSFER_SOURCE = "src/plenum_ai/business_public_watch.py"
-NATIVE_TRANSFER_SOURCE_SHA = "1d1c104b0da774a776b43614d66ecb7ed187bb96a6ad0e893811cf6de36fa766"
-NATIVE_TRANSFER_SKILL_SHA = "1b7a0507db13b2c974a1782cd593fe79955231eb324fbc51390121a179cbb2a0"
 
 
 def native_learned_context(task, source_file, model):
