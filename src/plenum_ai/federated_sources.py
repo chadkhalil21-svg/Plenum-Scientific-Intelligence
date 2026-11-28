@@ -99,7 +99,8 @@ def search_federated(query, offline=True, fetcher=_read_json):
     unique = {}
     for provider in outcomes:
         for record in provider["records"]:
-            doi=(record.get("doi") or "").lower().strip()
+            raw_doi = record.get("doi")
+            doi = raw_doi.lower().strip() if isinstance(raw_doi, str) else ""
             key=("doi:"+doi) if doi else (
                 "title:"+str(record.get("title","")).lower().strip()
                 +" year:"+str(record.get("year")))
