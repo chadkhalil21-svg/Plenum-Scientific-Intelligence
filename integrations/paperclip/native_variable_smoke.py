@@ -171,7 +171,7 @@ class NativeVariableTests(unittest.TestCase):
     def test_native_setup_retry_only_before_provider_work(self):
         import sequential_mission as seq
         from unittest.mock import Mock
-        for blocked in (None, "provider", "reserved", "missing_bootstrap"):
+        for blocked in (None, "provider", "reserved", "missing_bootstrap", "system_blocked", "user_blocked", "scheduled", "unknown_blocked"):
             with self.subTest(blocked=blocked), tempfile.TemporaryDirectory() as tmp:
                 root=Path(tmp)
                 scope,plan,graph=self.setup_plan(root,"science",["bibliography","stations"])
@@ -190,9 +190,17 @@ class NativeVariableTests(unittest.TestCase):
                 def call(path,method=None,payload=None):
                     for role in ("intelligence","research"):
                         if path=="/api/issues/"+plan["tasks"][role]:
+                            interruption={"observedRunId":rid}
+                            status="done" if role=="intelligence" else "todo"
+                            if role=="research" and blocked in ("system_blocked","user_blocked","scheduled","unknown_blocked"):
+                                status="blocked"
+                                if blocked!="unknown_blocked":
+                                    interruption.update(responsibility="user" if blocked=="user_blocked" else "system",
+                                        state="waiting_for_user" if blocked=="user_blocked" else "retry_scheduled" if blocked=="scheduled" else "failed",
+                                        canRetry=blocked!="user_blocked",userAction="approval" if blocked=="user_blocked" else None)
                             return {"id":plan["tasks"][role],"companyId":cid,"parentId":mid,
-                                    "assigneeAgentId":agents[role],"status":"done" if role=="intelligence" else "todo",
-                                    "interruption":{"observedRunId":rid}}
+                                    "assigneeAgentId":agents[role],"status":status,
+                                    "interruption":interruption}
                     if path=="/api/heartbeat-runs/"+rid:
                         return {"id":rid,"companyId":cid,"agentId":agents["research"],
                                 "contextSnapshot":{"issueId":iid},"status":"failed","errorCode":"setup_failed",
@@ -209,10 +217,10 @@ class NativeVariableTests(unittest.TestCase):
                 with patch.dict(os.environ,{"GITHUB_ACTIONS":"true","PLENUM_EPHEMERAL_RUNNER":"confirmed"}), \
                      patch("production_wiring.load_prepared",return_value={"checkpoint_mode":"local"}), \
                      patch.object(nv,"load",return_value=graph):
-                    self.assertEqual(seq.retry_unstarted_verifier(api,root,cid,mid,plan,agents,scope,target="research"),blocked is None)
+                    self.assertEqual(seq.retry_unstarted_verifier(api,root,cid,mid,plan,agents,scope,target="research"),blocked in (None,"system_blocked"))
                     self.assertFalse(seq.retry_unstarted_verifier(api,root,cid,mid,plan,agents,scope,target="research"))
                 posts=[c for c in api.call_args_list if len(c.args)>1 and c.args[1]=="POST"]
-                self.assertEqual(len(posts),1 if blocked is None else 0)
-                self.assertEqual((root/"research-setup-retry-accepted.json").is_file(),blocked is None)
+                self.assertEqual(len(posts),1 if blocked in (None,"system_blocked") else 0)
+                self.assertEqual((root/"research-setup-retry-accepted.json").is_file(),blocked in (None,"system_blocked"))
 
 if __name__=="__main__":unittest.main(verbosity=2)
