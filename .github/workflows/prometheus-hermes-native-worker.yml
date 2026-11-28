@@ -12,23 +12,23 @@ concurrency:
   cancel-in-progress: false
 jobs:
   native:
-    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-hermes-native-worker' && github.run_attempt == 1 && github.event.before == 'cb7f60b44430dcf79db13310eb9422ac3589b75e'
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-hermes-native-worker' && github.run_attempt == 1 && github.event.before == 'bc55faae5ba15becc29b43dbb35c87aaa61459eb'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Verify original pre-inference failure before allowing one continuation
+      - name: Verify original write-policy failure before allowing corrected continuation
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/46101751964/jobs" > "$RUNNER_TEMP/hermes-original-jobs.json"
-          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/15246171018/zip" > "$RUNNER_TEMP/hermes-prior.zip"
-          echo "c0f322432b890be1947110b86b2729bbcebfca38f9ad7589ad8fd07c7cc35544  $RUNNER_TEMP/hermes-prior.zip" | sha256sum -c -
-          python -c 'import sys,zipfile; z=zipfile.ZipFile(sys.argv[1]); assert z.testzip() is None and set(z.namelist())=={"hermes-image.json","model.json","frozen-inputs.txt","hermes-version.txt","ollama-image.json"}' "$RUNNER_TEMP/hermes-prior.zip"
-          python -c 'import json,sys; j=json.load(open(sys.argv[1]))["jobs"]; a=next(x for x in j if x["id"]==140845536718); assert a["conclusion"]=="failure"; s={x["name"]:x["conclusion"] for x in a["steps"]}; assert s["Pull versioned official upstream runtime and existing local model"]=="success" and s["Execute official whole Hermes agent on new actual engineering assignment"]=="failure" and s["Independent networkless regression and frozen acceptance"]=="skipped"' "$RUNNER_TEMP/hermes-original-jobs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/46101922332/jobs" > "$RUNNER_TEMP/hermes-original-jobs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/15246795159/zip" > "$RUNNER_TEMP/hermes-prior.zip"
+          echo "0fb9785ef37b6c75e845da51e74f51cfcd0c07d67c22463ebe00bd5303c87f8e  $RUNNER_TEMP/hermes-prior.zip" | sha256sum -c -
+          python -c 'import sys,zipfile; z=zipfile.ZipFile(sys.argv[1]); assert z.testzip() is None and set(z.namelist())=={"hermes-image.json","model.json","frozen-inputs.txt","hermes-version.txt","ollama-image.json","container-preflight.txt","native-output.txt"}; raw=z.read("native-output.txt"); assert raw.count(b"Write denied:")>=2 and b"HERMES_WRITE_SAFE_ROOT" in raw and b"KeyboardInterrupt" in raw' "$RUNNER_TEMP/hermes-prior.zip"
+          python -c 'import json,sys; j=json.load(open(sys.argv[1]))["jobs"]; a=next(x for x in j if x["id"]==140846069732); assert a["conclusion"]=="failure"; s={x["name"]:x["conclusion"] for x in a["steps"]}; assert s["Pull versioned official upstream runtime and existing local model"]=="success" and s["Execute official whole Hermes agent on new actual engineering assignment"]=="failure" and s["Independent networkless regression and frozen acceptance"]=="skipped"' "$RUNNER_TEMP/hermes-original-jobs.json"
       - name: Freeze genuine public source and independent acceptance before inference
         run: |
           set -euo pipefail
@@ -94,16 +94,16 @@ jobs:
             allow_lazy_installs: false
           terminal:
             backend: local
-            cwd: /work
+            cwd: /opt/data/work
           agent:
             max_turns: 8
           YAML
           sudo install -o 10000 -g 10000 -m 0600 "$RUNNER_TEMP/hermes-config.yaml" "$RUNNER_TEMP/hermes-home/config.yaml"
-          docker run --rm --network none --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --read-only -v "$RUNNER_TEMP/hermes-home:/opt/data" -v "$RUNNER_TEMP/hermes-work:/work" --entrypoint /bin/sh nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f -ec 'test -r /opt/data/config.yaml; test -w /opt/data; test -w /work/business_public_watch.py; test -x /opt/hermes/.venv/bin/hermes; /opt/hermes/.venv/bin/hermes chat --help' > "$RUNNER_TEMP/hermes-evidence/container-preflight.txt"
+          docker run --rm --network none --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --read-only -v "$RUNNER_TEMP/hermes-home:/opt/data" -v "$RUNNER_TEMP/hermes-work:/opt/data/work" --entrypoint /bin/sh nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f -ec 'test -r /opt/data/config.yaml; test -w /opt/data; test "$HERMES_WRITE_SAFE_ROOT" = /opt/data; test -w /opt/data/work/business_public_watch.py; test -x /opt/hermes/.venv/bin/hermes; /opt/hermes/.venv/bin/hermes chat --help' > "$RUNNER_TEMP/hermes-evidence/container-preflight.txt"
           grep -q -- "--oneshot" "$RUNNER_TEMP/hermes-evidence/container-preflight.txt"
           grep -q -- "--max-turns" "$RUNNER_TEMP/hermes-evidence/container-preflight.txt"
           # One-shot CLI only: no gateway, Docker socket, host credentials, external network, or checkout mount.
-          timeout 720 docker run --init --name plenum-hermes-native --network plenum-hermes-internal --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --pids-limit 128 --memory 3g --cpus 1 --workdir /work -e HOME=/opt/data -e HERMES_HOME=/opt/data -e OPENAI_API_KEY=local-only -e HERMES_SKIP_CONFIG_MIGRATION=1 -v "$RUNNER_TEMP/hermes-home:/opt/data" -v "$RUNNER_TEMP/hermes-work:/work" --entrypoint /opt/hermes/.venv/bin/hermes nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f chat --oneshot --toolsets file --max-turns 8 -q 'You are the existing Plenum Engineering specialist. Inspect /work/business_public_watch.py using your file tools and repair only its run function: reject an empty selection, duplicates, and targets outside the existing allowlist with ValueError before any probe is invoked. Preserve valid subsets, order, reporting and two independent reads. Modify the actual file; do not merely suggest a patch. Use native read and edit tools and verify your edit by rereading. No other files or external actions.' > "$RUNNER_TEMP/hermes-evidence/native-output.txt" 2>&1
+          timeout 720 docker run --init --name plenum-hermes-native --network plenum-hermes-internal --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --pids-limit 128 --memory 3g --cpus 1 --workdir /opt/data/work -e HERMES_WRITE_SAFE_ROOT=/opt/data/work -e HOME=/opt/data -e HERMES_HOME=/opt/data -e OPENAI_API_KEY=local-only -e HERMES_SKIP_CONFIG_MIGRATION=1 -v "$RUNNER_TEMP/hermes-home:/opt/data" -v "$RUNNER_TEMP/hermes-work:/opt/data/work" --entrypoint /opt/hermes/.venv/bin/hermes nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f chat --oneshot --toolsets file --max-turns 8 -q 'You are the existing Plenum Engineering specialist. Inspect /opt/data/work/business_public_watch.py using your file tools and repair only its run function: reject an empty selection, duplicates, and targets outside the existing allowlist with ValueError before any probe is invoked. Preserve valid subsets, order, reporting and two independent reads. Modify the actual file; do not merely suggest a patch. Use native read and edit tools and verify your edit by rereading. The file is inside the approved writable scratch root. If any file tool denies access, stop rather than trying another path. No other files or external actions.' > "$RUNNER_TEMP/hermes-native-output.txt" 2>&1
           docker exec plenum-hermes-ollama ollama ps > "$RUNNER_TEMP/hermes-evidence/allocated-context.txt"
           cat "$RUNNER_TEMP/hermes-evidence/allocated-context.txt"
           grep -Eq '(^|[[:space:]])(65536|64K)([[:space:]]|$)' "$RUNNER_TEMP/hermes-evidence/allocated-context.txt"
