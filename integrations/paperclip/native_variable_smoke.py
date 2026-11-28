@@ -138,6 +138,44 @@ class NativeVariableTests(unittest.TestCase):
                     nv.load(root,scope,cid,mid,require_dispatch=False)
                 self.assertEqual(model.call_count,2)
 
+    def test_empty_complete_selection_can_be_corrected_but_not_executed(self):
+        for corrected in (True, False):
+            with self.subTest(corrected=corrected), tempfile.TemporaryDirectory() as tmp:
+                root=Path(tmp)
+                scope={**nv.fixture("engineering"),"planning_recovery":True}
+                cid,mid=str(uuid4()),str(uuid4())
+                empty={k:False for k in scope["mission"]["authorized_inputs"]}
+                def reply(selection):
+                    return {"model":MODEL,"done":True,"message":{"content":json.dumps(selection)},
+                            "eval_count":20,"prompt_eval_count":200}
+                final={k:corrected and k=="thermal" for k in empty}
+                with patch.dict(os.environ,{"GITHUB_ACTIONS":"true"}), \
+                     patch.object(nv,"check_local_model",return_value=MODEL_DIGEST+"a"*52), \
+                     patch.object(nv,"read_json",side_effect=[reply(empty),reply(final)]) as model, \
+                     patch.object(nv.vm,"run_contract") as worker:
+                    if corrected:
+                        plan=nv.prepare(root,scope,cid,mid)
+                        self.assertEqual(plan["selection"],final)
+                        self.assertEqual(nv.prepare(root,scope,cid,mid),plan)
+                    else:
+                        with self.assertRaises(ValueError):
+                            nv.prepare(root,scope,cid,mid)
+                        self.assertFalse((nv.evidence_root(root)/"plan.json").exists())
+                        with self.assertRaises(FileExistsError):
+                            nv.prepare(root,scope,cid,mid)
+                    evidence=nv.evidence_root(root)
+                    first=json.loads((evidence/"planning-response-1.json").read_text())
+                    self.assertEqual(first["selection"],empty)
+                    self.assertIs(first["accepted"],False)
+                    self.assertNotEqual(model.call_args_list[0].args[1],model.call_args_list[1].args[1])
+                    self.assertEqual(model.call_count,2)
+                    worker.assert_not_called()
+                with self.assertRaises(ValueError):
+                    nv.vm.graph(scope["mission"],empty)
+                for malformed in ({}, {**empty,"extra":False}, {**empty,"thermal":0}):
+                    with self.assertRaises(ValueError):
+                        nv.validate_recovery_selection(scope,malformed)
+
     def test_correction_never_replays_interrupted_or_twice_rejected_request(self):
         for interrupted in (True,False):
             with tempfile.TemporaryDirectory() as tmp:
