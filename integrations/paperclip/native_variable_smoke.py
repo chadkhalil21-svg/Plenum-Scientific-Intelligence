@@ -24,6 +24,55 @@ class NativeVariableTests(unittest.TestCase):
         exclusive(directory/"minister-plan.json",dispatch)
         return scope,dispatch,plan
 
+    def test_model_composed_graph_corrects_dependencies_and_preserves_receipts(self):
+        import contract_graph_plan as cg
+        for failure in ("edge","twice_rejected","interrupted","unknown"):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as tmp:
+                root=Path(tmp)
+                scope={**nv.fixture("science"),"planning_engine":"contract-graph-v2"}
+                cid,mid=str(uuid4()),str(uuid4())
+                # Deliberately noncanonical producer ordering, still topological.
+                good={"steps":[{"tool":"crossref_metadata","depends_on":[]},
+                    {"tool":"noaa_metadata","depends_on":[]},
+                    {"tool":"bibliography_readback","depends_on":["crossref_metadata"]},
+                    {"tool":"station_validation","depends_on":["noaa_metadata"]},
+                    {"tool":"evidence_report","depends_on":["crossref_metadata","noaa_metadata","bibliography_readback","station_validation"]}]}
+                bad=json.loads(json.dumps(good))
+                bad["steps"][2]["depends_on"]=[]
+                if failure=="unknown":bad["steps"][0]["tool"]="unapproved"
+                def reply(proposal):
+                    return {"model":MODEL,"done":True,"message":{"content":json.dumps(proposal)},
+                            "eval_count":180,"prompt_eval_count":500}
+                responses=([TimeoutError()] if failure=="interrupted" else
+                    [reply(bad),reply(bad if failure=="twice_rejected" else good)])
+                with patch.dict(os.environ,{"GITHUB_ACTIONS":"true"}), \
+                     patch.object(cg,"check_local_model",return_value=MODEL_DIGEST+"a"*52), \
+                     patch.object(cg,"read_json",side_effect=responses) as model, \
+                     patch.object(nv.vm,"run_contract") as worker:
+                    if failure=="edge":
+                        plan=nv.prepare(root,scope,cid,mid)
+                        self.assertEqual([n["id"] for n in plan["nodes"]],[s["tool"] for s in good["steps"]])
+                        self.assertEqual(nv.prepare(root,scope,cid,mid),plan)
+                        evidence=nv.evidence_root(root)
+                        rejected=json.loads((evidence/"graph-response-1.json").read_text())
+                        self.assertIs(rejected["accepted"],False)
+                        self.assertEqual(rejected["proposal"],bad)
+                        for call in model.call_args_list:
+                            self.assertNotIn(scope["selection_commitment"],json.dumps(call.args[1]))
+                        self.assertNotEqual(model.call_args_list[0].args[1],model.call_args_list[1].args[1])
+                        rejected["accepted"]=True
+                        (evidence/"graph-response-1.json").write_text(json.dumps(rejected))
+                        with self.assertRaises(ValueError):
+                            nv.load(root,scope,cid,mid,require_dispatch=False)
+                    else:
+                        with self.assertRaises((TimeoutError,ValueError)):
+                            nv.prepare(root,scope,cid,mid)
+                        self.assertFalse((nv.evidence_root(root)/"plan.json").exists())
+                        with self.assertRaises(FileExistsError):
+                            nv.prepare(root,scope,cid,mid)
+                    self.assertEqual(model.call_count,1 if failure in ("interrupted","unknown") else 2)
+                    worker.assert_not_called()
+
     def test_partition_exact_and_unselected_scope(self):
         for case,selected,count in (("science",["bibliography","stations"],5),("engineering",["thermal"],3),("commercial",["commercial"],3)):
             with tempfile.TemporaryDirectory() as tmp:

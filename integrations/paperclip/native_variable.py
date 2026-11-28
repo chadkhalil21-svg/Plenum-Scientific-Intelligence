@@ -33,7 +33,7 @@ def validate(scope):
     if (not isinstance(scope, dict) or set(scope) not in (fields, fields | {"planning_recovery"}, fields | {"planning_engine"})
             or scope["kind"] != "variable_graph"
             or ("planning_recovery" in scope and scope["planning_recovery"] is not True)
-            or ("planning_engine" in scope and scope["planning_engine"]!="upstream-peer-v1")):
+            or ("planning_engine" in scope and scope["planning_engine"] not in ("upstream-peer-v1","contract-graph-v2"))):
         raise ValueError("Exact variable graph scope required")
     vm.validate(scope["mission"])
     if not isinstance(scope["selection_commitment"], str) or not re.fullmatch(r"[0-9a-f]{64}", scope["selection_commitment"]):
@@ -220,6 +220,9 @@ def prepare(directory, scope, company, mission):
     path = root / "plan.json"
     if not path.exists() and scope.get("planning_engine")=="upstream-peer-v1":
         upstream_plan(root,scope,company,mission,execute=True)
+    elif not path.exists() and scope.get("planning_engine")=="contract-graph-v2":
+        from contract_graph_plan import prepare as prepare_graph
+        prepare_graph(root,scope)
     elif not path.exists() and scope.get("planning_recovery") is True:
         prepare_recovery(root, scope)
     elif not path.exists():
@@ -259,12 +262,16 @@ def load(directory, scope, company, mission, *, require_dispatch=True):
     plan = checked(root / "plan.json", {})
     if scope.get("planning_engine")=="upstream-peer-v1":
         if plan!=upstream_plan(root,scope,company,mission)[0]:raise ValueError("Upstream native plan changed")
+    elif scope.get("planning_engine")=="contract-graph-v2":
+        from contract_graph_plan import verify as verify_graph
+        verify_graph(root,scope,plan)
     elif scope.get("planning_recovery") is True:
         verify_recovery(root,scope,plan)
     elif plan != vm.manifest(scope["mission"], plan["selection"], plan["model_digest"]):
         raise ValueError("Variable graph changed")
     vm.require_commitment(plan, scope["selection_commitment"])
-    vm.validate_model_receipt(root, plan)
+    if scope.get("planning_engine")!="contract-graph-v2":
+        vm.validate_model_receipt(root, plan)
     partition(plan)
     if require_dispatch:
         dispatch = checked(Path(directory) / "minister-plan.json", {"company":company, "parent":mission, "variable_graph_sha256":digest(plan)})
@@ -376,6 +383,9 @@ def verify(scope, prior, directory, *, functional_test):
         expected.update(verify_recovery(root,scope,plan))
     if scope.get("planning_engine")=="upstream-peer-v1":
         expected.add("upstream-planner")
+    if scope.get("planning_engine")=="contract-graph-v2":
+        from contract_graph_plan import verify as verify_graph
+        expected.update(verify_graph(root,scope,plan))
     for name in hashes:
         expected.update({name+".reserved.json",name+".result.json"})
     if {p.name for p in root.iterdir()} != expected:
@@ -386,6 +396,9 @@ def verify(scope, prior, directory, *, functional_test):
         proof=upstream_plan(root,scope,dispatch["company"],dispatch["parent"])[1]
         recovery.update({"upstream_planning_verified":True,"upstream_planning_proof_sha256":digest(proof),
                          "upstream_model_calls":proof["model_calls"],"upstream_peer_changed_selection":proof["peer_changed_selection"]})
+    if scope.get("planning_engine")=="contract-graph-v2":
+        recovery.update({"model_composed_contract_graph_verified":True,
+                         "graph_planning_attempts":len(list(root.glob("graph-attempt-*.json")))})
     return {**recovery,"verified_producers":4, "independent_actual_input_test":functional_test,
             "native_variable_graph_verified":True, "verified_contracts":len(hashes),
             "active_contract_divisions":[r for r in ORDER if not products[r]["scope_review_only"]],
