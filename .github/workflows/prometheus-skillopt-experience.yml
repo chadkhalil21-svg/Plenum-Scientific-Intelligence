@@ -96,7 +96,8 @@ jobs:
           from pathlib import Path
           from unittest.mock import patch
           from types import SimpleNamespace
-          from learn_native_experience import LocalReflect, verify_upstream_revision
+          import httpx
+          from learn_native_experience import LocalReflect, verify_upstream_revision, verify_native_response, mp
           from skillopt_sleep.backend import AzureOpenAIBackend
           verify_upstream_revision()
           assert issubclass(LocalReflect, AzureOpenAIBackend)
@@ -129,5 +130,19 @@ jobs:
                       pass
                   else:
                       raise AssertionError("Nonlocal endpoint accepted")
-          print("Native source import and offline bounded transport passed; no model invocation")
+          valid = {"model": mp.MODEL, "choices": [{"finish_reason": "stop", "message": {"role": "assistant", "content": "fixture"}}]}
+          verify_native_response(httpx.Response(200, json=valid))
+          for invalid in (
+              {**valid, "model": "other-model"},
+              {**valid, "choices": [{**valid["choices"][0], "finish_reason": "length"}]},
+              {**valid, "choices": []},
+              {**valid, "choices": [{**valid["choices"][0], "message": {"role": "assistant", "content": ""}}]},
+          ):
+              try:
+                  verify_native_response(httpx.Response(200, json=invalid))
+              except ValueError:
+                  pass
+              else:
+                  raise AssertionError("Invalid model response accepted")
+          print("Native source import and offline bounded transport and response validation passed; no model invocation")
           PY
