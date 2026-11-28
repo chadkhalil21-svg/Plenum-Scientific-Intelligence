@@ -103,3 +103,39 @@ test("existing replay guard atomically bounds native AI budget per UTC day",asyn
     method:"POST",body:JSON.stringify({day,reserve:0,maximum:4000})});
   assert.equal((await guard.fetch(wrong())).status,429);
 });
+
+
+test("native incomplete or inconsistent cloud completions never become successful stops or partial tool calls",async()=>{
+  let response;
+  let calls=0;
+  const env={PLENUM_FREE_AI_ENABLED:"true",AI:{async run(){calls++;return response;}},
+    PLENUM_REPLAY_GUARD:{getByName:()=>({fetch:async()=>new Response(null,{status:204})})}};
+  const tool={id:"call_1",function:{name:"file_editor",arguments:"{}"}};
+  const invoke=stream=>handleFreeCodingAI(new Request("https://example.invalid/ai/v1/chat/completions",{
+    method:"POST",headers:{"Authorization":"Bearer "+"z".repeat(450),"Content-Type":"application/json"},
+    body:JSON.stringify({model:"glm-4.7-flash",messages:[{role:"user",content:"Public task"}],stream})}),env,{verifier:async()=>true});
+  for (const invalid of [
+    {choices:[{finish_reason:"length",message:{content:"partial"}}]},
+    {finish_reason:"content_filter",response:"partial"},
+    {choices:[{finish_reason:"tool_calls",message:{content:"missing tools"}}]},
+    {choices:[{finish_reason:"stop",message:{tool_calls:[tool]}}]},
+    {finish_reason:"unrecognized",response:"partial"},
+    {tool_calls:Array(9).fill(tool)},
+  ]) {
+    response=invalid;
+    for(const stream of [false,true]) {
+      const rejected=await invoke(stream);
+      assert.equal(rejected.status,502);
+      assert.equal((await rejected.json()).error.message,"free_model_unavailable_or_invalid_result");
+    }
+  }
+  assert.equal(calls,12);
+  response={choices:[{finish_reason:"tool_calls",message:{tool_calls:[tool]}}]};
+  const valid=await invoke(false);
+  assert.equal(valid.status,200);
+  assert.equal((await valid.json()).choices[0].finish_reason,"tool_calls");
+  response={choices:[{finish_reason:"stop",message:{content:"complete"}}]};
+  const stopped=await invoke(true);
+  assert.equal(stopped.status,200);
+  assert.match(await stopped.text(),/"finish_reason":"stop"/);
+});
