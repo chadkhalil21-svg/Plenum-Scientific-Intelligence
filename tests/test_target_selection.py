@@ -14,3 +14,10 @@ class TargetSelection(unittest.TestCase):
         self.assertEqual(calls,[TARGETS[1],TARGETS[1]])
         self.assertEqual((result["verified"],result["total"]),(1,1))
         self.assertFalse(result["asserts_commercial_readiness"])
+    def test_unauthorized_diagnostic_is_bounded(self):
+        for invalid in (Target("untrusted\nname","https://example.org","html"), None):
+            with self.subTest(invalid=invalid):
+                calls=[]
+                with self.assertRaisesRegex(ValueError, "^Unauthorized target selection$"):
+                    run(probe_fn=lambda t: calls.append(t),sleep_fn=lambda _:None,targets=(TARGETS[0],invalid))
+                self.assertEqual(calls,[])
