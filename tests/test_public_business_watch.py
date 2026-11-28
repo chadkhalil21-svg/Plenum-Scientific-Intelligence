@@ -1,6 +1,7 @@
 """Offline checks: bounded recovery, double readback, no account mutation."""
 import unittest
 # Reuse the frozen independent acceptance cases in ordinary regression CI.
+from acceptance.business_response_boundary_transfer import BusinessResponseBoundaryTransfer
 from acceptance.health_body_limit import HealthBodyAcceptance
 from acceptance.probe_scope import ProbeScopeAcceptance
 from acceptance.public_media_types import PublicMediaTypeAcceptance
