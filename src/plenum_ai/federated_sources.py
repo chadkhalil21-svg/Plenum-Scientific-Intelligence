@@ -14,7 +14,19 @@ PROVIDERS = ("openalex", "europepmc", "semanticscholar")
 
 def _read_json(url, opener=urlopen):
     req = Request(url, headers={"User-Agent":"PlenumScientificIntelligence/0.7 research-metadata"})
-    with opener(req, timeout=12) as response:
+    from urllib.request import build_opener
+    from .chief_of_staff_pilot import NoRedirects
+    default = opener is urlopen
+    client = build_opener(NoRedirects).open if default else opener
+    with client(req, timeout=12) as response:
+        geturl = getattr(response, "geturl", None)
+        has_geturl = callable(geturl)
+        has_url = hasattr(response, "url")
+        if (getattr(response, "status", None if default else 200) != 200
+                or (has_geturl and geturl() != url)
+                or (has_url and response.url != url)
+                or (default and not has_geturl and not has_url)):
+            raise ValueError("Unexpected scientific provider response")
         body = response.read(MAX_BODY + 1)
     if len(body) > MAX_BODY:
         raise ValueError("Metadata response exceeded safety limit")
