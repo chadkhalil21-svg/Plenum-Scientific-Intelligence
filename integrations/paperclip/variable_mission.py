@@ -136,10 +136,11 @@ def require_commitment(plan, commitment):
     if not isinstance(commitment,str) or not re.fullmatch(r"[0-9a-f]{64}",commitment) or digest(sorted(k for k,v in plan["selection"].items() if v))!=commitment:
         raise ValueError("Independent objective commitment mismatch")
 
-def validate_model_receipt(root,plan):
+def validate_model_receipt(root,plan,*,max_eval=128):
+    if max_eval not in (128,512):raise ValueError("Unexpected model output bound")
     expected={"request_sha256":plan["request_sha256"],"selection_sha256":digest(plan["selection"]),"model_digest":plan["model_digest"],"paid_inference":False}
     row=checked(root/"model-response.json",expected)
-    if set(row)!=set(expected)|{"eval_count","prompt_eval_count"} or type(row["eval_count"]) is not int or not 0<row["eval_count"]<=128 or type(row["prompt_eval_count"]) is not int or not 0<row["prompt_eval_count"]<=2048:
+    if set(row)!=set(expected)|{"eval_count","prompt_eval_count"} or type(row["eval_count"]) is not int or not 0<row["eval_count"]<=max_eval or type(row["prompt_eval_count"]) is not int or not 0<row["prompt_eval_count"]<=2048:
         raise ValueError("Invalid model response binding")
     reserved={"request_sha256":plan["request_sha256"],"maximum":1,"model_digest":plan["model_digest"]}
     if checked(root/"model-reservation.json",reserved)!=reserved:raise ValueError("Invalid model reservation")
