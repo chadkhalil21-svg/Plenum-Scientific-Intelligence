@@ -1,0 +1,67 @@
+name: Prometheus SkillOpt real engineering experience
+on:
+  pull_request:
+    paths:
+      - 'integrations/prometheus_skillopt/learn_native_experience.py'
+      - '.github/workflows/prometheus-skillopt-experience.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  learn:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.actor == 'chadkhalil21-svg' && github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt == 1 && github.event.pull_request.head.ref == 'prometheus-skillopt-native-experience'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONPATH: src
+      SKILLOPT_SLEEP_WORKERS: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install exact Microsoft SkillOpt release
+        run: |
+          set -eu
+          python -m pip download --no-deps --only-binary=:all: skillopt==0.2.0 -d /tmp/skillopt-wheel
+          echo '818db802507c6f82553fd24c75aa70c953ab0a712647f60e68e4595052c4b150  /tmp/skillopt-wheel/skillopt-0.2.0-py3-none-any.whl' | sha256sum -c -
+          python -m pip install --only-binary=:all: /tmp/skillopt-wheel/skillopt-0.2.0-py3-none-any.whl
+          python -m pip check
+          python -m py_compile integrations/prometheus_skillopt/learn_native_experience.py
+      - name: Read original immutable experience, verify before inference
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for entry in '15230648247 a4190790a727d212d305a5eceebf670fea64a17f6de817ee046a8679c84399a3 first' '15232100681 d197363c3b62a5593a91cd43269f09027485b4531b9c8dde88cc362bfc86604e continuation'; do
+            read -r id digest label <<< "$entry"
+            curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 90 --max-filesize 2000000 -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/repos/chadkhalil21-svg/Plenum-Scientific-Intelligence/actions/artifacts/$id/zip" -o "$RUNNER_TEMP/$label.zip"
+            echo "$digest  $RUNNER_TEMP/$label.zip" | sha256sum -c -
+          done
+          PYTHONPATH=src:integrations/prometheus_skillopt python -c 'import sys; from pathlib import Path; from learn_native_experience import historical_failures; a,b=historical_failures(Path(sys.argv[1]),Path(sys.argv[2])); assert len(a)==2 and len(b)==13' "$RUNNER_TEMP/first.zip" "$RUNNER_TEMP/continuation.zip"
+      - name: Reuse original free local model
+        run: |
+          set -eu
+          docker pull ollama/ollama:latest
+          docker run -d --name plenum-paperclip-qwen --network host -e OLLAMA_HOST=127.0.0.1:11434 -e OLLAMA_CONTEXT_LENGTH=4096 -e OLLAMA_NUM_PARALLEL=1 --memory=8g --cpus=3 ollama/ollama:latest
+          for i in $(seq 1 45); do
+            if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
+            sleep 2
+          done
+          bash integrations/paperclip/pull_original_qwen.sh
+          test "$(docker exec plenum-paperclip-qwen ollama list | awk '$1=="qwen3.5:4b" {print $2}')" = d8b0f5e9760c
+      - name: Reflect through upstream SkillOpt on real original failure evidence
+        run: |
+          mkdir -p reports
+          python integrations/prometheus_skillopt/learn_native_experience.py "$RUNNER_TEMP/first.zip" "$RUNNER_TEMP/continuation.zip" reports/skillopt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prometheus-skillopt-native-experience
+          path: reports/skillopt
+          if-no-files-found: warn
+      - name: Remove local model
+        if: always()
+        run: docker rm -f plenum-paperclip-qwen || true
