@@ -352,17 +352,29 @@ def parse_public(key, data, query=None):
     elif kind == "crossref":
         rows = (payload.get("message") or {}).get("items") or []
         subject=paper_survey_subject(query) if query else None
+        seen_dois=set()
+        if subject:
+            # Reuse the contract's exact readback DOI policy rather than
+            # admitting identifiers its independent verifier must reject.
+            from .chief_contract_plan import DOI_RE
         for p in rows[:20 if subject else MAX_RESULTS]:
             title = (p.get("title") or [""])[0]
             doi = str(p.get("DOI") or "")
-            if subject and (not paper_title_matches(subject,title) or not re.fullmatch(r"10\.[0-9]{4,9}/[^\s?#]+",doi)):
-                continue
-            if subject and len(result)>=MAX_RESULTS:
-                break
+            if subject:
+                doi=doi.lower()
+                if not DOI_RE.fullmatch(doi) or doi in seen_dois:
+                    continue
+                if len(result)>=MAX_RESULTS:
+                    break
             url = "https://doi.org/"+doi if doi.startswith("10.") else p.get("URL","")
             journal = (p.get("container-title") or [""])[0]
             published = str((p.get("published") or {}).get("date-parts") or "")[:55]
-            result.append(_record(key,title,url,published,journal))
+            row=_record(key,title,url,published,journal)
+            if subject:
+                if row is None or not paper_title_matches(subject,row["title"]):
+                    continue
+                seen_dois.add(doi)
+            result.append(row)
     elif kind == "gdelt":
         for p in payload.get("articles",[])[:MAX_RESULTS]:
             result.append(_record(key,p.get("title"),p.get("url"),p.get("seendate"),

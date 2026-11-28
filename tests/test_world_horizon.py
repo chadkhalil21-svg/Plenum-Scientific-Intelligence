@@ -208,6 +208,25 @@ class WorldHorizonTests(unittest.TestCase):
         self.assertEqual([r["url"] for r in report["records"]],["https://doi.org/10.1000/right"])
         self.assertFalse(report["records"][0]["independent_fact_check_complete"])
 
+    def test_paper_survey_filters_to_independent_readback_contract_before_limit(self):
+        from plenum_ai.chief_contract_plan import selected_paper_ids
+        topic="Survey public concrete corrosion papers"
+        rows=[{"title":["Concrete corrosion"],"DOI":"10.1000/legacy;id"},
+              {"title":["Concrete corrosion"],"DOI":"10.1000/UPPER"},
+              {"title":["Concrete corrosion"],"DOI":"10.1000/upper"},
+              {"title":["Concrete "+("x"*340)+" corrosion"],"DOI":"10.1000/truncated"},
+              {"title":["Concrete corrosion study"],"DOI":"10.1000/second"}]
+        calls=[]
+        def opener(req,timeout):
+            calls.append(req.full_url)
+            return Stream(json.dumps({"message":{"items":rows}}).encode())
+        report=scan_horizon(topic,category="journals",online=True,opener=opener)
+        self.assertEqual(len(calls),1)
+        self.assertEqual([row["url"] for row in report["records"]],
+                         ["https://doi.org/10.1000/upper","https://doi.org/10.1000/second"])
+        self.assertEqual(selected_paper_ids({"paper_survey":topic},report),
+                         ["10.1000/upper","10.1000/second"])
+
     def test_paper_search_changes_strategy_once_when_first_results_are_irrelevant(self):
         from urllib.parse import parse_qs
         calls=[]

@@ -378,6 +378,89 @@ def minister():
     print(json.dumps({"minister_dispatch":True,"plan_sha256":digest(plan),"tasks":tasks}),flush=True)
 
 
+def retry_unstarted_verifier(api,directory,cid,mid,plan,agents,scope,*,target="verification"):
+    """Reuse pinned Paperclip's native idempotent task retry, never a new task.
+    Disposable CI only; absence of a local receipt alone is not proof of no work.
+    """
+    if target not in MISSION_ORDER or (target!="verification" and scope.get("kind")!="variable_graph"):
+        return False
+    if os.getenv("GITHUB_ACTIONS")!="true" or os.getenv("PLENUM_EPHEMERAL_RUNNER")!="confirmed":
+        return False
+    from checkpoint_store import checked
+    from production_wiring import load_prepared
+    if load_prepared(directory,cid,mid)["checkpoint_mode"]!="local":return False
+    marker=directory/(target+"-setup-retry.json")
+    if marker.exists() or marker.is_symlink():return False
+    if any((directory/n).exists() or (directory/n).is_symlink() for n in
+           (target+".json",target+".attempt-1",target+".attempt-2","qualification.json")):
+        return False
+    if plan!=checked(directory/"minister-plan.json",{"company":cid,"parent":mid,
+                    "scope_sha256":scope_digest(scope),"order":list(MISSION_ORDER)}):
+        raise ValueError("Changed specialist recovery plan")
+    prior={}
+    for role in MISSION_ORDER[:MISSION_ORDER.index(target)]:
+        iid=canonical(plan["tasks"][role])
+        task=api("/api/issues/"+iid)
+        if (task.get("id")!=iid or task.get("companyId")!=cid or task.get("parentId")!=mid
+                or task.get("assigneeAgentId")!=agents[role] or task.get("status")!="done"):
+            return False
+        row=checked(directory/(role+".json"),{"company":cid,"issue":iid,"role":role})
+        if row["sha256"]!=digest(row["result"]) or row["result"]["input_sha256"]!=scope_inputs(prior):
+            raise ValueError("Changed prerequisite evidence")
+        prior[role]=row["result"]
+    if scope.get("kind")=="variable_graph" and target!="verification":
+        import native_variable as nv
+        graph=nv.load(directory,scope,cid,mid)
+        root=nv.evidence_root(directory)
+        for contract in nv.partition(graph)[target]:
+            for suffix in (".reserved.json",".result.json"):
+                evidence=root/(contract+suffix)
+                if evidence.exists() or evidence.is_symlink():return False
+    iid=canonical(plan["tasks"][target])
+    aid=canonical(agents[target])
+    task=api("/api/issues/"+iid)
+    if (task.get("id")!=iid or task.get("companyId")!=cid or task.get("parentId")!=mid
+            or task.get("assigneeAgentId")!=aid):
+        return False
+    interruption=task.get("interruption") or {}
+    # Upstream permits retry of a system-failed blocked task, but never
+    # override a user action, approval, pause, or an active scheduled retry.
+    if (interruption.get("responsibility")=="user" or interruption.get("userAction") is not None
+            or interruption.get("state") in ("working","waiting_for_user","retry_scheduled","resolved")):
+        return False
+    if task.get("status")=="blocked":
+        if not (interruption.get("responsibility")=="system"
+                and interruption.get("state")=="failed" and interruption.get("canRetry") is True
+                and "userAction" in interruption and interruption["userAction"] is None):
+            return False
+    elif task.get("status") not in ("todo","in_progress"):
+        return False
+    observed=interruption.get("observedRunId")
+    if not observed:return False
+    runid=canonical(observed)
+    run=api("/api/heartbeat-runs/"+runid)
+    context=run.get("contextSnapshot") or {}
+    execution=(run.get("resultJson") or {}).get("executionRecovery") or {}
+    if (run.get("id")!=runid or run.get("companyId")!=cid or run.get("agentId")!=aid
+            or context.get("issueId")!=iid or run.get("status")!="failed"
+            or run.get("errorCode")!="setup_failed" or run.get("exitCode") is not None
+            or not run.get("finishedAt") or execution.get("kind")!="bootstrap"
+            or execution.get("providerWorkStarted") is not False):
+        return False
+    # Upstream checks that observedRunId is still latest under its issue lock.
+    # One reserved request only. Lost response remains unresolved; never replay.
+    key=str(uuid4())
+    exclusive(marker,{"schema":("plenum-verifier-setup-retry-v1" if target=="verification" else "plenum-specialist-setup-retry-v1"),"company":cid,"mission":mid,
+        "issue":iid,"run":runid,"idempotency_key":key,"prior_sha256":digest(prior),
+        "provider_work_started":False,"paid_inference":False})
+    reply=api("/api/issues/"+iid+"/retry","POST",{"observedRunId":runid,"idempotencyKey":key})
+    if reply.get("accepted") is not True or reply.get("stale") is not False:
+        raise RuntimeError("Native setup retry not accepted; no further dispatch")
+    exclusive(directory/(target+"-setup-retry-accepted.json"),{"company":cid,"mission":mid,
+        "issue":iid,"request":canonical(reply["requestId"]),"run":runid,"paid_inference":False})
+    return True
+
+
 def qualify(action="qualify"):
     from production_wiring import company_lock
     if persistent():
@@ -514,6 +597,14 @@ def qualify_locked(action):
                 raise ValueError("Minister plan not bound to mission")
             if all(required(api("/api/issues/"+iid),"status","child_readback")=="done" for iid in plan["tasks"].values()):
                 break
+            if durable and scope.get("kind")!="coastal":
+                # Only the first unfinished dependency can be eligible.
+                target="verification"
+                if scope.get("kind")=="variable_graph":
+                    target=next((role for role in MISSION_ORDER
+                        if required(api("/api/issues/"+plan["tasks"][role]),"status","child_readback")!="done"),"verification")
+                if retry_unstarted_verifier(api,directory,cid,parent_id,plan,agents,scope,target=target):
+                    deadline=max(deadline,time.monotonic()+150)
         time.sleep(3)
     else:
         diagnostics=[]
@@ -526,6 +617,17 @@ def qualify_locked(action):
                     d["categories"]=[x for x in ("HTTPError","PermissionError","ValueError","RuntimeError","ModuleNotFoundError",
                         "KeyError","FileNotFoundError","Terminal specialist failure","Task assignment") if x in raw]
                 except Exception as exc: d["log_error"]=type(exc).__name__
+                # Read only bounded, identity-bound native startup facts.
+                if row.get("status")=="failed" and row.get("errorCode")=="setup_failed":
+                    from failure_handoff import native_recovery_facts
+                    issue=None
+                    if key in agents and plan_path.is_file():
+                        try:
+                            bound=__import__("checkpoint_store").checked(plan_path,{"company":cid,"parent":parent_id,"order":list(MISSION_ORDER)})
+                            issue=canonical(bound["tasks"][key])
+                        except (ValueError,KeyError,OSError):
+                            pass
+                    d["native_recovery"]=native_recovery_facts(api,row,cid,parent_id,aid,issue)
                 diagnostic={"division":key,"diagnostic":d}
                 diagnostics.append(diagnostic)
                 print(json.dumps(diagnostic),flush=True)

@@ -184,7 +184,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(inputs.pipeline_stage != '' && '[{"mode":"local","kind":"pipeline"}]' || github.event_name == 'pull_request' && '[{"mode":"off","kind":"legacy"},{"mode":"local","kind":"legacy"},{"mode":"local","kind":"budget"},{"mode":"local","kind":"objective"},{"mode":"local","kind":"composition-logistics"},{"mode":"local","kind":"composition-energy"},{"mode":"local","kind":"synthesis"},{"mode":"local","kind":"adaptive-review"},{"mode":"local","kind":"adaptive-defer"},{"mode":"local","kind":"oss-review"},{"mode":"local","kind":"oss-defer"},{"mode":"local","kind":"variable-science"},{"mode":"local","kind":"variable-engineering"},{"mode":"local","kind":"variable-commercial"},{"mode":"local","kind":"variable-upstream"}]' || '[{"mode":"local","kind":"event"}]') }}
+        include: ${{ fromJSON(inputs.pipeline_stage != '' && '[{"mode":"local","kind":"pipeline"}]' || github.event_name == 'pull_request' && '[{"mode":"off","kind":"legacy"},{"mode":"local","kind":"legacy"},{"mode":"local","kind":"budget"},{"mode":"local","kind":"objective"},{"mode":"local","kind":"composition-logistics"},{"mode":"local","kind":"composition-energy"},{"mode":"local","kind":"synthesis"},{"mode":"local","kind":"adaptive-review"},{"mode":"local","kind":"adaptive-defer"},{"mode":"local","kind":"oss-review"},{"mode":"local","kind":"oss-defer"},{"mode":"local","kind":"variable-science"},{"mode":"local","kind":"variable-engineering"},{"mode":"local","kind":"variable-commercial"},{"mode":"local","kind":"variable-upstream"},{"mode":"local","kind":"variable-discovery"}]' || '[{"mode":"local","kind":"event"}]') }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -239,7 +239,7 @@ jobs:
           docker exec --user root plenum-paperclip-integration python3 -c 'import site,pathlib; pathlib.Path(site.getsitepackages()[0],"plenum_numerical.pth").write_text("/opt/plenum-numerical-deps"+chr(10))'
           docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 -c 'import numpy,scipy;from scipy.integrate import solve_ivp;assert numpy.__version__=="2.2.6" and scipy.__version__=="1.15.3";assert callable(solve_ivp)'
       - name: Install actual upstream specialist frameworks in native board
-        if: ${{ matrix.kind == 'variable-upstream' || (matrix.kind == 'event' && fromJSON(needs.authorize.outputs.scope || '{}').planning_engine == 'upstream-peer-v1') }}
+        if: ${{ (matrix.kind == 'variable-upstream' || matrix.kind == 'variable-discovery') || (matrix.kind == 'event' && fromJSON(needs.authorize.outputs.scope || '{}').planning_engine == 'upstream-peer-v1') }}
         run: |
           set -eu
           python -m pip install --disable-pip-version-check --only-binary=:all: --target "$RUNNER_TEMP/plenum-upstream-specialists" -r integrations/prometheus_oss/upstream-specialists-requirements.txt
@@ -287,7 +287,7 @@ jobs:
             synthesis) scope=$(PYTHONPATH=src python3 integrations/paperclip/synthesis_smoke.py scope) ;;
             adaptive-review|adaptive-defer) scope=$(PYTHONPATH=src python3 integrations/paperclip/adaptive_turns_smoke.py "$KIND") ;;
             oss-review|oss-defer) scope=$(PYTHONPATH=src python3 integrations/prometheus_oss/native_scope.py "$KIND") ;;
-            variable-science|variable-engineering|variable-commercial) scope=$(PYTHONPATH=src:integrations/paperclip python3 -c 'import json,sys;from native_variable import fixture;print(json.dumps(fixture(sys.argv[1])))' "${KIND#variable-}") ;;
+            variable-science|variable-engineering|variable-commercial|variable-discovery) scope=$(PYTHONPATH=src:integrations/paperclip python3 -c 'import json,sys;from native_variable import fixture;print(json.dumps(fixture(sys.argv[1])))' "${KIND#variable-}") ;;
             variable-upstream) scope=$(PYTHONPATH=src:integrations/paperclip python3 -c 'import json;from native_variable import fixture;print(json.dumps(dict(fixture("science"),planning_engine="upstream-peer-v1")))') ;;
             event) scope="$EVENT_SCOPE"; test -n "$scope" ;;
             pipeline) scope="$PIPELINE_SCOPE"; test -n "$scope" ;;
@@ -297,7 +297,11 @@ jobs:
             docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_CI_SUPERVISOR_PROOF=confirmed -e PLENUM_MISSION_SCOPE="$scope" -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/supervise_native.py event
             docker exec --user node -e PYTHONPATH=/plenum/src plenum-paperclip-integration python3 /plenum/integrations/paperclip/event_native.py resume
           else
-            docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_MISSION_SCOPE="$scope" -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/supervise_native.py event
+            if [ "$KIND" = variable-upstream ]; then
+              docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_EPHEMERAL_RUNNER=confirmed -e PLENUM_MISSION_SCOPE="$scope" -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/supervise_native.py event
+            else
+              docker exec --user node -e PYTHONPATH=/plenum/src -e PLENUM_MISSION_SCOPE="$scope" -e PLENUM_ISSUE_CREATED_AT="$ISSUE_CREATED" -e PLENUM_PAPERCLIP_MODEL="$MODE" plenum-paperclip-integration python3 /plenum/integrations/paperclip/supervise_native.py event
+            fi
           fi
       - name: Qualify consecutive persistent model-directed missions and bounded recovery
         if: matrix.mode == 'local' && matrix.kind == 'budget'

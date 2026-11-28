@@ -18,6 +18,8 @@ OWNERS = {
     "noaa_metadata": "intelligence",
     "crossref_metadata": "intelligence",
     "bibliography_readback": "research",
+    "paper_discovery": "intelligence",
+    "paper_readback": "research",
     "station_validation": "engineering",
     "cooling_solution": "engineering",
     "cooling_readback": "engineering",
@@ -39,6 +41,13 @@ def validate(scope):
     return scope
 
 def fixture(case):
+    if case=="discovery":
+        mission={"objective":"Find public concrete corrosion papers, independently check the discovered scholarly records, and solve and verify the illustrative thermal cooling model.",
+                 "authorized_inputs":{"literature_discovery":"Survey public concrete corrosion papers",
+                                      "thermal":{"initial_kelvin":350,"ambient_kelvin":300,"rate":0.05,"duration":20},
+                                      "commercial":True}}
+        return {"kind":"variable_graph","mission":mission,"selection_commitment":digest(["literature_discovery","thermal"]),
+                "planning_engine":"upstream-peer-v1"}
     chosen = {"science":["bibliography","stations"], "engineering":["thermal"], "commercial":["commercial"]}
     return {"kind":"variable_graph", "mission":vm.fixture(case), "selection_commitment":digest(sorted(chosen[case]))}
 
@@ -259,6 +268,31 @@ def context(directory, scope):
     plan = load(directory, scope, dispatch["company"], dispatch["parent"])
     return evidence_root(directory), dispatch, plan
 
+def discovery_failure_summary(value):
+    """Record only bounded provider status/counts; never raw remote text."""
+    statuses = value.get("providers") if isinstance(value, dict) else None
+    rows = value.get("records") if isinstance(value, dict) else None
+    safe = []
+    if isinstance(statuses, list):
+        for row in statuses[:1]:
+            if not isinstance(row, dict) or row.get("source") != "crossref_journals":
+                continue
+            def facts(item):
+                status = item.get("status")
+                records = item.get("records")
+                return {"status": status if status in ("retrieved_metadata", "unavailable") else "unknown",
+                        "records": min(len(records), 100) if isinstance(records, list) else None,
+                        "error_type": item.get("error_type") if item.get("error_type") in
+                            ("HTTPError","URLError","TimeoutError","ValueError","OSError","JSONDecodeError",
+                             "TypeError","KeyError","AttributeError","RuntimeError") else None}
+            entry = facts(row)
+            entry["bibliographic_recovery"] = row.get("query_strategy") == "bibliographic_recovery"
+            first = row.get("first_attempt")
+            entry["first_attempt"] = facts(first) if isinstance(first, dict) else None
+            safe.append(entry)
+    return {"records": min(len(rows), 100) if isinstance(rows, list) else None, "providers": safe}
+
+
 def collect(root, dispatch, plan, roles, *, execute_role=None):
     if tuple(roles) != ORDER[:len(roles)]:
         raise ValueError("Unexpected division order")
@@ -285,7 +319,13 @@ def collect(root, dispatch, plan, roles, *, execute_role=None):
                 # A prior reservation without an acknowledged result is terminal.
                 exclusive(reserved, identity)
                 value = vm.run_contract(name, plan["scope"], inputs)
-                vm.check_contract_result(name, plan["scope"], inputs, value)
+                try:
+                    vm.check_contract_result(name, plan["scope"], inputs, value)
+                except ValueError:
+                    if name == "paper_discovery":
+                        exclusive(root / "paper_discovery.rejected.json", {**identity,
+                            "accepted":False, "diagnostic":discovery_failure_summary(value)})
+                    raise
                 row = {**identity,"result":value,"result_sha256":digest(value)}
                 exclusive(result, row)
             if set(row) != set(identity) | {"result","result_sha256"} or row["result_sha256"] != digest(row["result"]):
