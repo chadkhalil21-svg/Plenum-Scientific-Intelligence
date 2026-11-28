@@ -40,7 +40,10 @@ async function signed(id, {stamp = Math.floor(Date.now() / 1000)} = {}) {
 test("health reports reachable not a running model", async () => {
   const reply=await worker.fetch(new Request("https://placeholder.workers.dev/health"), {});
   assert.equal(reply.status,200);
-  assert.equal((await reply.json()).state,"REACHABLE_NOT_A_RUNNING_AGENT");
+  const health=await reply.json();
+  assert.equal(health.state,"REACHABLE_NOT_A_RUNNING_AGENT");
+  assert.equal(health.source_contract_revision,"original-oidc-and-openhands-chat-v3");
+  assert.equal(health.no_model,true);
 });
 
 test("isolated preview is health-only even with accidentally configured production-like bindings", async () => {
