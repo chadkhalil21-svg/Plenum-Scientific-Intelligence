@@ -1,0 +1,140 @@
+name: Prometheus Ornith native unfamiliar provider engineering
+on:
+  pull_request:
+    types: [opened]
+    paths:
+      - '.github/workflows/prometheus-ornith-native-provider-resilience.yml'
+permissions:
+  contents: read
+concurrency:
+  group: prometheus-ornith-native-provider-resilience-once
+  cancel-in-progress: false
+jobs:
+  native:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-ornith-native-provider-resilience' && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Freeze real source and held-out outcome tests
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/hermes-evidence" "$RUNNER_TEMP/hermes-work" "$RUNNER_TEMP/hermes-home" "$RUNNER_TEMP/hermes-grade/tests"
+          test "$(git hash-object src/plenum_ai/world_horizon.py)" = 0424f24610ae9b4555cdf40a49e77a8bcdc65ed8
+          cp src/plenum_ai/world_horizon.py "$RUNNER_TEMP/hermes-work/world_horizon.py"
+          cp -a src "$RUNNER_TEMP/hermes-grade/"
+          cp tests/test_world_horizon.py "$RUNNER_TEMP/hermes-grade/tests/"
+          cat > "$RUNNER_TEMP/hermes-grade/tests/test_discovery_resilience.py" <<'PY'
+          import json,unittest
+          from plenum_ai.world_horizon import parse_public
+          class Resilience(unittest.TestCase):
+              def test_malformed_neighbors(self):
+                  cases=[
+                    ("gdelt_headlines","articles",{"title":"Science update","url":"https://example.org/science"},[None,42,[]]),
+                    ("github_public_code","items",{"full_name":"example/project","html_url":"https://github.com/example/project"},[None,42,[]]),
+                    ("usgs_earthquakes","features",{"properties":{"title":"Earthquake observation","url":"https://earthquake.usgs.gov/event"}},[None,42,[],{"properties":42}])]
+                  for key,field,good,bads in cases:
+                      for bad in bads:
+                          with self.subTest(key=key,bad=bad):
+                              rows=parse_public(key,json.dumps({field:[bad,good]}).encode())
+                              self.assertEqual(len(rows),1)
+                              self.assertEqual(rows[0]["source"],key)
+                              self.assertTrue(rows[0]["untrusted_external_content"])
+                              self.assertFalse(rows[0]["primary_source_verified"])
+              def test_invalid_envelopes(self):
+                  for key,field in (("gdelt_headlines","articles"),("github_public_code","items"),("usgs_earthquakes","features")):
+                      for payload in ([],{field:42},{field:"invalid"},{field:{}}):
+                          with self.subTest(key=key,payload=payload),self.assertRaises((ValueError,TypeError,AttributeError)):
+                              parse_public(key,json.dumps(payload).encode())
+              def test_preserves_rejection_and_limit(self):
+                  good={"title":"Science update","url":"https://example.org/science"}
+                  rows=parse_public("gdelt_headlines",json.dumps({"articles":[{"title":"Unsafe link","url":"http://example.org"}]+[good]*8}).encode())
+                  self.assertEqual(len(rows),3)
+                  self.assertTrue(all(r["url"].startswith("https://") for r in rows))
+          PY
+          sha256sum src/plenum_ai/world_horizon.py "$RUNNER_TEMP/hermes-grade/tests/"*.py > "$RUNNER_TEMP/hermes-evidence/frozen-inputs.txt"
+          sudo chown -R 10000:10000 "$RUNNER_TEMP/hermes-work" "$RUNNER_TEMP/hermes-home"
+      - name: Pull versioned official upstream runtime and existing local model
+        run: |
+          set -euo pipefail
+          docker pull nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f
+          docker run --init --rm --network none --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --entrypoint /opt/hermes/.venv/bin/hermes-agent nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f --version > "$RUNNER_TEMP/hermes-evidence/hermes-version.txt"
+          grep -Eq '(^|[^0-9])0[.]23[.]4([^0-9]|$)' "$RUNNER_TEMP/hermes-evidence/hermes-version.txt"
+          docker pull ollama/ollama@sha256:7e8c7ba387b11b09dcce1eff1118b1ab433564ed263434a7730c209f2ee346f4
+          docker pull python:3.12-slim
+          docker image inspect nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f --format '{{json .RepoDigests}}' > "$RUNNER_TEMP/hermes-evidence/hermes-image.json"
+          docker image inspect ollama/ollama@sha256:7e8c7ba387b11b09dcce1eff1118b1ab433564ed263434a7730c209f2ee346f4 --format '{{json .RepoDigests}}' > "$RUNNER_TEMP/hermes-evidence/ollama-image.json"
+          docker run -d --name plenum-hermes-ollama -p 127.0.0.1:11434:11434 -e OLLAMA_CONTEXT_LENGTH=65536 -e OLLAMA_NUM_PARALLEL=1 -e OLLAMA_NO_CLOUD=1 --memory=9g --cpus=3 ollama/ollama@sha256:7e8c7ba387b11b09dcce1eff1118b1ab433564ed263434a7730c209f2ee346f4
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:11434/api/tags && break; sleep 2; done
+          docker exec plenum-hermes-ollama ollama pull ornith-1.5:9b
+          curl -fsS http://127.0.0.1:11434/api/tags > "$RUNNER_TEMP/hermes-evidence/model.json"
+          python -c 'import json,sys; d=json.load(open(sys.argv[1])); assert any(m["name"]=="ornith-1.5:9b" and m["digest"].startswith("e5df7dcdd8a2") for m in d["models"])' "$RUNNER_TEMP/hermes-evidence/model.json"
+          docker network create --internal plenum-hermes-internal
+          docker network connect --alias ollama plenum-hermes-internal plenum-hermes-ollama
+          docker network disconnect bridge plenum-hermes-ollama
+          test "$(docker network inspect plenum-hermes-internal --format '{{.Internal}}')" = true
+      - name: Confirm frozen acceptance exposes original defect
+        run: |
+          set -euo pipefail
+          set +e
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges --read-only --user 65534:65534 --pids-limit 64 --memory 768m -e PYTHONPATH=/work/src:/work/tests -e PYTHONDONTWRITEBYTECODE=1 -v "$RUNNER_TEMP/hermes-grade:/work:ro" -w /work python:3.12-slim python -B -m unittest discover -s tests -p test_discovery_resilience.py -v > "$RUNNER_TEMP/hermes-evidence/baseline-verdict.txt" 2>&1
+          rc=$?
+          set -e
+          test "$rc" -eq 1
+          grep -q 'test_malformed_neighbors' "$RUNNER_TEMP/hermes-evidence/baseline-verdict.txt"
+          grep -Eq 'FAILED \(.*(errors|failures)=' "$RUNNER_TEMP/hermes-evidence/baseline-verdict.txt"
+          ! grep -q 'Failed to import test module' "$RUNNER_TEMP/hermes-evidence/baseline-verdict.txt"
+      - id: execute
+        name: Native specialist independently repairs provider record resilience
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/hermes-config.yaml" <<'YAML'
+          model:
+            provider: custom
+            model: ornith-1.5:9b
+            base_url: http://ollama:11434/v1
+            api_key: local-only
+            context_length: 65536
+          platform_toolsets:
+            cli: [file]
+          security:
+            allow_lazy_installs: false
+          terminal:
+            backend: local
+            cwd: /opt/data/work
+          agent:
+            max_turns: 8
+          YAML
+          sudo install -o 10000 -g 10000 -m 0600 "$RUNNER_TEMP/hermes-config.yaml" "$RUNNER_TEMP/hermes-home/config.yaml"
+          set +e
+          timeout 840 docker run --init --name plenum-hermes-native --network plenum-hermes-internal --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --pids-limit 128 --memory 3g --cpus 1 --workdir /opt/data/work -e HERMES_WRITE_SAFE_ROOT=/opt/data/work -e HOME=/opt/data -e HERMES_HOME=/opt/data -e OPENAI_API_KEY=local-only -e HERMES_SKIP_CONFIG_MIGRATION=1 -v "$RUNNER_TEMP/hermes-home:/opt/data" -v "$RUNNER_TEMP/hermes-work:/opt/data/work" --entrypoint /opt/hermes/.venv/bin/hermes nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f chat --oneshot --toolsets file --max-turns 8 -q 'You are the existing Plenum Engineering specialist. The public horizon scanner must preserve valid GDELT, GitHub and USGS records when individual provider rows are malformed, reject invalid response envelopes, preserve existing row limits and metadata trust boundaries, and leave all other adapters unchanged. Diagnose the actual source in /opt/data/work/world_horizon.py and implement the necessary repair in that file. Preserve existing behavior outside these three adapters, allowlists, limits and public read-only scope. Decide your own repair. No other files, commands or external actions. Verify by rereading. Stop if access is denied.' > "$RUNNER_TEMP/hermes-native-output.txt" 2>&1
+          rc=$?
+          set -e
+          printf '{"native_exit":%s}\n' "$rc" > "$RUNNER_TEMP/hermes-evidence/native-exit.json"
+          exit "$rc"
+      - name: Independently grade actual candidate, preserve evidence even on timeout
+        if: always() && steps.execute.outcome != 'skipped'
+        run: |
+          set -euo pipefail
+          source="$RUNNER_TEMP/hermes-work/world_horizon.py"
+          test -f "$source" && test ! -L "$source"
+          test "$(stat -c %s "$source")" -le 60000
+          test "$(stat -c %h "$source")" -eq 1
+          diff -u src/plenum_ai/world_horizon.py "$source" > "$RUNNER_TEMP/hermes-evidence/candidate.patch" || test "$?" -eq 1
+          ! cmp -s src/plenum_ai/world_horizon.py "$source"
+          cp "$source" "$RUNNER_TEMP/hermes-grade/src/plenum_ai/world_horizon.py"
+          chmod -R a+rX "$RUNNER_TEMP/hermes-grade"
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges --read-only --user 65534:65534 --pids-limit 64 --memory 768m -e PYTHONPATH=/work/src:/work/tests -e PYTHONDONTWRITEBYTECODE=1 -v "$RUNNER_TEMP/hermes-grade:/work:ro" -w /work python:3.12-slim python -B -m unittest discover -s tests -p 'test_*.py' -v 2>&1 | tee "$RUNNER_TEMP/hermes-evidence/independent-verdict.txt"
+      - name: Preserve bounded public evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prometheus-ornith-native-provider-resilience
+          path: ${{ runner.temp }}/hermes-evidence/
+      - name: Clean temporary isolated containers
+        if: always()
+        run: |
+          docker rm -f plenum-hermes-native plenum-hermes-ollama || true
+          docker network rm plenum-hermes-internal || true
