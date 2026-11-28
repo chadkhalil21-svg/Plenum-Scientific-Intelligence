@@ -12,6 +12,45 @@ from plenum_ai import openhands_coding_agent as coding
 
 
 class AiderLocalRouteTest(unittest.TestCase):
+    def test_native_architect_editor_is_exact_scoped_and_no_repeat(self):
+        source_file, task = next(iter(coding.ARCHITECT_AIDER_TASKS))
+        original = (Path(__file__).resolve().parents[1] / source_file).read_bytes()
+        with tempfile.TemporaryDirectory() as folder:
+            previous = Path.cwd()
+            try:
+                os.chdir(folder)
+                source = Path(source_file)
+                source.parent.mkdir(parents=True)
+                source.write_bytes(original)
+                plan = coding.local_plan(task, source_file=source_file)
+                self.assertEqual(plan["local_edit_strategy"], "native_aider_architect_editor")
+                self.assertNotIn((source_file, task), coding.STRUCTURED_RECOVERY_TASKS)
+                def isolated(command, **kwargs):
+                    self.assertEqual(command[command.index("--edit-format")+1], "architect")
+                    self.assertEqual(command[command.index("--editor-edit-format")+1], "editor-whole")
+                    self.assertEqual(command[command.index("--editor-model")+1], command[command.index("--model")+1])
+                    self.assertIn("--auto-accept-architect", command)
+                    self.assertIn("--no-auto-test", command)
+                    self.assertIn("--read-only", command)
+                    mount=next(x for x in command if x.startswith("type=bind,src="))
+                    proposal=Path(mount.split(",")[1].removeprefix("src="))/"proposal.py"
+                    data=proposal.read_text()
+                    self.assertTrue(data.startswith("def search_federated("))
+                    self.assertNotIn("def _get_provider(", data)
+                    proposal.write_text(data.replace('    # Prefer DOI identifiers', '    # Fixture edit only. Prefer DOI identifiers',1))
+                with patch.dict(os.environ, {"PLENUM_EPHEMERAL_RUNNER":"confirmed"}), patch.object(coding.subprocess,"run",side_effect=isolated) as call:
+                    with self.assertRaises(PermissionError):
+                        coding.execute_local(task,source_file=source_file,candidate_out="reports/openhands-review/issue-1.patch",behavioral_recovery=True)
+                    call.assert_not_called()
+                    report=coding.execute_local(task,source_file=source_file,candidate_out="reports/openhands-review/issue-1.patch")
+                    self.assertEqual(call.call_count,1)
+                    self.assertEqual(report["editing_scope"],"owner_named_function_only")
+                    self.assertEqual(report["local_edit_strategy"],"native_aider_architect_editor")
+                    self.assertEqual(source.read_bytes(),original)
+                    self.assertTrue(Path(report["candidate_artifact"]).is_file())
+            finally:
+                os.chdir(previous)
+
     def test_owner_explicit_local_route_keeps_review_only_and_emits_single_diff(self):
         with tempfile.TemporaryDirectory() as folder:
             previous = Path.cwd()

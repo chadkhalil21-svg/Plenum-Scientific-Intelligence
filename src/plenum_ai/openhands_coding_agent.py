@@ -337,7 +337,7 @@ def local_plan(task: str, *, source_file: str) -> dict:
             raise PermissionError("Native scoped Aider requires one named function")
         return {**result, "upstream":"Aider-AI/aider", "engine":LOCAL_ENGINE,
                 "aider_image":AIDER_IMAGE, "local_model":LOCAL_MODEL,
-                "local_edit_strategy":"native_aider_whole_function",
+                "local_edit_strategy":("native_aider_architect_editor" if (source_file, task) in ARCHITECT_AIDER_TASKS else "native_aider_whole_function"),
                 "authorized_function_edits":1,
                 "cloud_inference_used":False,"paid_api_authorized":False}
     if requests:
@@ -721,7 +721,10 @@ NATIVE_TRANSFER_SOURCE_SHA = "1d1c104b0da774a776b43614d66ecb7ed187bb96a6ad0e8938
 NATIVE_TRANSFER_SKILL_SHA = "1b7a0507db13b2c974a1782cd593fe79955231eb324fbc51390121a179cbb2a0"
 
 
+ARCHITECT_AIDER_TASKS = {("src/plenum_ai/federated_sources.py", "Repair function search_federated. Deduplicate valid scholarly records when DOI metadata is not a string, retaining title and year fallback. Preserve other provider and offline behavior.")}
+
 TASK_ACCEPTANCE = {
+    ("src/plenum_ai/federated_sources.py", "Repair function search_federated. Deduplicate valid scholarly records when DOI metadata is not a string, retaining title and year fallback. Preserve other provider and offline behavior."): "federated_malformed_doi.py",
     (NATIVE_TRANSFER_SOURCE, NATIVE_TRANSFER_TASK): "business_response_boundary_transfer.py",
     ("src/plenum_ai/business_public_watch.py", "Repair function probe. Reject excessively nested health JSON as unexpected_content without raising RecursionError. Preserve existing target, media type, byte limit and ordinary response checks."):
         "public_health_nested_json.py",
@@ -758,7 +761,7 @@ TASK_ACCEPTANCE = {
 # Derive recovery eligibility from the same reviewed acceptance registry.
 # Multi-function repairs and nonstructured tasks retain their prior restrictions.
 # Explicit reviewed opt-in only; no fallback into a different model or retry.
-SCOPED_AIDER_TASKS = {("src/plenum_ai/mission_checkpoint.py", "Repair function load_checkpoint. Reject duplicate JSON object keys at every nesting level with ValueError. Preserve all valid checkpoint loading and existing checks.")}
+SCOPED_AIDER_TASKS = {("src/plenum_ai/mission_checkpoint.py", "Repair function load_checkpoint. Reject duplicate JSON object keys at every nesting level with ValueError. Preserve all valid checkpoint loading and existing checks.")} | ARCHITECT_AIDER_TASKS
 STRUCTURED_RECOVERY_TASKS = {
     (source, task): test for (source, task), test in TASK_ACCEPTANCE.items()
     if task.startswith("Repair function ") and " Then repair function " not in task
@@ -865,6 +868,10 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
     with tempfile.TemporaryDirectory(prefix="plenum-aider-public-") as tmp:
         candidate = Path(tmp) / "proposal.py"
         candidate.write_bytes(scope[1] if scope else original)
+        architect = (source_file, task) in ARCHITECT_AIDER_TASKS
+        edit_options = (["--edit-format", "architect", "--editor-model", "ollama_chat/" + LOCAL_MODEL,
+                         "--editor-edit-format", "editor-whole", "--auto-accept-architect"]
+                        if architect else ["--edit-format", "diff" if generic_regression else "whole"])
         command = [
             "docker", "run", "--rm", "--pull=never", "--network=plenum-coding-isolated",
             "--cap-drop=ALL", "--security-opt=no-new-privileges", "--pids-limit=128",
@@ -877,7 +884,7 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
             "--weak-model", "ollama_chat/" + LOCAL_MODEL,
             # #755's 1.5B model emitted an unterminated SEARCH block; use
             # Aider's documented whole-file format for the single copied file.
-            "--edit-format", "diff" if generic_regression else "whole", "--no-git", "--no-auto-commits",
+            *edit_options, "--no-git", "--no-auto-commits",
             "--no-auto-lint", "--no-auto-test", "--no-suggest-shell-commands",
             "--no-detect-urls", "--no-analytics", "--no-check-update",
             "--no-show-release-notes", "--no-fancy-input", "--no-stream", "--yes-always", "--map-tokens", "0",
