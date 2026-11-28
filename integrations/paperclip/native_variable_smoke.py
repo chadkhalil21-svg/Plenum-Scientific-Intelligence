@@ -78,7 +78,9 @@ class NativeVariableTests(unittest.TestCase):
     def test_discovery_rejection_retains_safe_facts_without_replay(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)
-            scope,dispatch,plan=self.setup_plan(root,"discovery",["literature_discovery","thermal"])
+            local_scope={k:v for k,v in nv.fixture("discovery").items() if k!="planning_engine"}
+            with patch.object(nv,"fixture",return_value=local_scope):
+                scope,dispatch,plan=self.setup_plan(root,"discovery",["literature_discovery","thermal"])
             evidence=nv.evidence_root(root)
             rejected={"records":[],"providers":[{"source":"crossref_journals",
                 "status":"unavailable","records":[],"error_type":"HTTPError",
