@@ -17,10 +17,20 @@ class NativeTransferTests(unittest.TestCase):
             with self.assertRaises(PermissionError):
                 agent.native_learned_context(agent.NATIVE_TRANSFER_TASK, agent.NATIVE_TRANSFER_SOURCE, "irrelevant")
 
+    def test_current_repaired_source_cannot_reauthorize_historical_trial(self):
+        _, current = agent._public_source(agent.NATIVE_TRANSFER_SOURCE)
+        self.assertNotEqual(current, agent.NATIVE_TRANSFER_SOURCE_SHA)
+        with self.assertRaises(PermissionError):
+            agent.native_learned_context(agent.NATIVE_TRANSFER_TASK,
+                agent.NATIVE_TRANSFER_SOURCE, "openai/glm-4.7-flash")
+
     @unittest.skipUnless(SDK_AVAILABLE, "Optional pinned OpenHands SDK")
     def test_native_sdk_renders_exact_quarantined_skill(self):
-        context, receipt = agent.native_learned_context(agent.NATIVE_TRANSFER_TASK,
-            agent.NATIVE_TRANSFER_SOURCE, "openai/glm-4.7-flash")
+        # Rendering is a historical, offline SDK contract, not authorization
+        # to run the old objective against the subsequently repaired source.
+        with patch.object(agent, "_public_source", return_value=(b"", agent.NATIVE_TRANSFER_SOURCE_SHA)):
+            context, receipt = agent.native_learned_context(agent.NATIVE_TRANSFER_TASK,
+                agent.NATIVE_TRANSFER_SOURCE, "openai/glm-4.7-flash")
         from openhands.sdk import AgentContext
         self.assertIsInstance(context, AgentContext)
         self.assertEqual(len(context.skills), 1)
