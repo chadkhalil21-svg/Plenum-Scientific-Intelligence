@@ -89,11 +89,10 @@ def inspect_target(target: Target, *, probe_fn=probe, sleep_fn=time.sleep,
 def run(probe_fn=probe, sleep_fn=time.sleep, targets=TARGETS) -> dict:
     if not targets:
         raise ValueError("Selection cannot be empty")
-    if len(targets) != len(set(str(t.name) for t in targets)):
+    if any(t not in TARGETS for t in targets):
+        raise ValueError("Unauthorized target selection")
+    if len(targets) != len(set(t.name for t in targets)):
         raise ValueError("Duplicate targets detected")
-    unauthorized = (t for t in targets if t not in TARGETS)
-    if any(unauthorized):
-        raise ValueError(f"Unauthorized target(s) detected: {[t.name for t in unauthorized]}")
     reports = [inspect_target(t, probe_fn=probe_fn, sleep_fn=sleep_fn) for t in targets]
     return {
         "schema": "plenum-public-business-readback-v1",
