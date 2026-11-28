@@ -27,7 +27,19 @@ def _get(url, opener=urlopen):
         "User-Agent": "PlenumScientificIntelligence/1.3 bounded-public-literature",
         "Accept": "application/atom+xml, application/json",
     })
-    with opener(request, timeout=18) as stream:
+    from urllib.request import build_opener
+    from .chief_of_staff_pilot import NoRedirects
+    default = opener is urlopen
+    client = build_opener(NoRedirects).open if default else opener
+    with client(request, timeout=18) as stream:
+        geturl = getattr(stream, "geturl", None)
+        has_geturl = callable(geturl)
+        has_url = hasattr(stream, "url")
+        if (getattr(stream, "status", None if default else 200) != 200
+                or (has_geturl and geturl() != url)
+                or (has_url and stream.url != url)
+                or (default and not has_geturl and not has_url)):
+            raise ValueError("Unexpected literature provider response")
         data = stream.read(MAX_BYTES + 1)
     if len(data) > MAX_BYTES:
         raise ValueError("Literature metadata response exceeds bounded limit")
