@@ -107,6 +107,26 @@ def historical_failures(first, continuation):
         failures.append((task, replay))
     return failures, prior | {calls2[0]["request_sha256"]}
 
+def verify_native_response(response):
+    """Reject partial or mismatched local completions before upstream parsing."""
+    if response.status_code != 200:
+        return  # The official SDK handles provider errors; retries disabled.
+    response.read()
+    data = response.json()
+    if not isinstance(data, dict) or data.get("model") != mp.MODEL:
+        raise ValueError("Unexpected local model identity")
+    choices = data.get("choices")
+    if (not isinstance(choices, list) or len(choices) != 1
+            or not isinstance(choices[0], dict)
+            or choices[0].get("finish_reason") != "stop"):
+        raise ValueError("Incomplete local model response")
+    message = choices[0].get("message")
+    if (not isinstance(message, dict) or message.get("role") != "assistant"
+            or not isinstance(message.get("content"), str)
+            or not message["content"].strip() or message.get("tool_calls")):
+        raise ValueError("Invalid local reflection response")
+
+
 class LocalReflect(AzureOpenAIBackend):
     """Native upstream inference and reflection, with original Plenum bounds."""
 
@@ -123,7 +143,8 @@ class LocalReflect(AzureOpenAIBackend):
         self._client = OpenAI(base_url=LOCAL_ENDPOINT, api_key="local-only",
                               max_retries=0, timeout=180,
                               http_client=httpx.Client(trust_env=False,
-                                                        follow_redirects=False, timeout=180))
+                                                        follow_redirects=False, timeout=180,
+                                                        event_hooks={"response": [verify_native_response]}))
         self.root, self.md, self.forbidden, self.seen = root, digest, forbidden, set()
         self.preferences = ("General engineering advice only. No specific file, solution, commands, "
                             "authority changes, hidden test knowledge, or extra paid resources. "
