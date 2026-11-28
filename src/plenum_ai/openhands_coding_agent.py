@@ -725,6 +725,13 @@ NATIVE_TRANSFER_SOURCE = "src/plenum_ai/business_public_watch.py"
 NATIVE_TRANSFER_SOURCE_SHA = "1d1c104b0da774a776b43614d66ecb7ed187bb96a6ad0e893811cf6de36fa766"
 NATIVE_TRANSFER_SKILL_SHA = "1b7a0507db13b2c974a1782cd593fe79955231eb324fbc51390121a179cbb2a0"
 
+# Distinct prospective Research worker transfer; preserve old trial binding.
+GLOBAL_TRANSFER_TASK = ("Repair _get. Reject unexpected destination or non-200 public responses "
+                        "before reading. Refuse default redirects and preserve legacy offline openers and byte limits.")
+GLOBAL_TRANSFER_SOURCE = "src/plenum_ai/global_sources.py"
+GLOBAL_TRANSFER_SOURCE_BLOB = "073fef9fc8671448ff1f6ff1c8d3324848f7bf6a"
+
+
 
 ARCHITECT_AIDER_TASKS = {("src/plenum_ai/federated_sources.py", "Repair function search_federated. Deduplicate valid scholarly records when DOI metadata is not a string, retaining title and year fallback. Preserve other provider and offline behavior.")}
 
@@ -733,6 +740,7 @@ TASK_ACCEPTANCE = {
     ("src/plenum_ai/federated_sources.py", "Repair function _normalize. Treat nonstring Europe PMC and Semantic Scholar DOI fields as absent. Preserve valid DOI URLs and all other provider fields."): "federated_provider_doi_normalization.py",
     ("src/plenum_ai/federated_sources.py", "Repair function search_federated. Deduplicate valid scholarly records when DOI metadata is not a string, retaining title and year fallback. Preserve other provider and offline behavior."): "federated_malformed_doi.py",
     (NATIVE_TRANSFER_SOURCE, NATIVE_TRANSFER_TASK): "business_response_boundary_transfer.py",
+    (GLOBAL_TRANSFER_SOURCE, GLOBAL_TRANSFER_TASK): "global_literature_boundary_transfer.py",
     ("src/plenum_ai/business_public_watch.py", "Repair function probe. Reject excessively nested health JSON as unexpected_content without raising RecursionError. Preserve existing target, media type, byte limit and ordinary response checks."):
         "public_health_nested_json.py",
     ("src/plenum_ai/mission_checkpoint.py", "Repair function load_checkpoint. Reject excessively nested JSON checkpoint content with ValueError instead of RecursionError. Preserve valid checkpoint loading and all existing checks."):
@@ -933,10 +941,18 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
 
 def native_learned_context(task, source_file, model):
     """Use upstream native repo-context injection, only for the exact trial."""
-    if task != NATIVE_TRANSFER_TASK:
+    if task == NATIVE_TRANSFER_TASK:
+        if source_file != NATIVE_TRANSFER_SOURCE or _public_source(source_file)[1] != NATIVE_TRANSFER_SOURCE_SHA:
+            raise PermissionError("Prospective transfer source changed or outside approved scope")
+    elif task == GLOBAL_TRANSFER_TASK:
+        if source_file != GLOBAL_TRANSFER_SOURCE:
+            raise PermissionError("Prospective global transfer outside approved scope")
+        raw, _ = _public_source(source_file)
+        git_blob = hashlib.sha1(("blob %d" % len(raw)).encode() + b"\0" + raw).hexdigest()
+        if git_blob != GLOBAL_TRANSFER_SOURCE_BLOB:
+            raise PermissionError("Prospective global transfer source changed")
+    else:
         return None, {}
-    if source_file != NATIVE_TRANSFER_SOURCE or _public_source(source_file)[1] != NATIVE_TRANSFER_SOURCE_SHA:
-        raise PermissionError("Prospective transfer source changed or outside approved scope")
     path = Path(__file__).resolve().parents[2] / "integrations/hermes/quarantine/plenum-public-provider-boundary/SKILL.md"
     if (path.is_symlink() or not path.is_file() or path.stat().st_size > 8000
             or hashlib.sha256(path.read_bytes()).hexdigest() != NATIVE_TRANSFER_SKILL_SHA):
@@ -964,6 +980,8 @@ def native_learned_context(task, source_file, model):
                      "native_transfer_origin_artifact": 15255144198,
                      "native_transfer_context_sha256": hashlib.sha256(rendered.encode()).hexdigest(),
                      "native_transfer_context_rendered": True,
+                     "native_transfer_objective": task,
+                     "native_transfer_source_sha256": _public_source(source_file)[1],
                      "native_transfer_verified": False,
                      "native_transfer_production_admitted": False}
 

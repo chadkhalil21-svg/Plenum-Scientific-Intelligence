@@ -48,5 +48,30 @@ class NativeTransferTests(unittest.TestCase):
         self.assertFalse(receipt["native_transfer_verified"])
         self.assertFalse(receipt["native_transfer_production_admitted"])
 
+    def test_global_trial_is_exact_and_does_not_change_historical_scope(self):
+        self.assertEqual(agent.TASK_ACCEPTANCE[(agent.GLOBAL_TRANSFER_SOURCE, agent.GLOBAL_TRANSFER_TASK)],
+                         "global_literature_boundary_transfer.py")
+        with self.assertRaises(PermissionError):
+            agent.native_learned_context(agent.GLOBAL_TRANSFER_TASK, agent.NATIVE_TRANSFER_SOURCE, "irrelevant")
+        with patch.object(agent, "_public_source", return_value=(b"changed", "changed")):
+            with self.assertRaises(PermissionError):
+                agent.native_learned_context(agent.GLOBAL_TRANSFER_TASK, agent.GLOBAL_TRANSFER_SOURCE, "irrelevant")
+
+    @unittest.skipUnless(SDK_AVAILABLE, "Optional pinned OpenHands SDK")
+    def test_global_trial_native_context_for_existing_gemini_fallback(self):
+        from hashlib import sha1
+        raw, source_sha = agent._public_source(agent.GLOBAL_TRANSFER_SOURCE)
+        # Keep this historical rendering contract testable after a later source repair.
+        with patch.object(agent, "GLOBAL_TRANSFER_SOURCE_BLOB",
+                          sha1(("blob %d" % len(raw)).encode() + b"\0" + raw).hexdigest()):
+            context, receipt = agent.native_learned_context(agent.GLOBAL_TRANSFER_TASK,
+                agent.GLOBAL_TRANSFER_SOURCE, agent.GEMINI_MODEL)
+        self.assertEqual(len(context.skills), 1)
+        self.assertEqual(receipt["native_transfer_objective"], agent.GLOBAL_TRANSFER_TASK)
+        self.assertEqual(receipt["native_transfer_source_sha256"], source_sha)
+        self.assertFalse(receipt["native_transfer_production_admitted"])
+        self.assertIn("Reject any unexpected final URL",
+                      context.get_system_message_suffix(llm_model=agent.GEMINI_MODEL))
+
 if __name__ == "__main__":
     unittest.main()
