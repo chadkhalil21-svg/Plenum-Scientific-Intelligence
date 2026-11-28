@@ -52,6 +52,12 @@ class GlobalBoundaryAcceptance(unittest.TestCase):
                 if isinstance(h, HTTPRedirectHandler):
                     self.assertIsNone(h.redirect_request(None, None, 302, "", {}, "https://example.com/"))
             return SimpleNamespace(open=lambda *a, **k: response)
-        with patch("urllib.request.build_opener", side_effect=fake_build) as builder:
-            self.assertEqual(_get(url), b"metadata")
-            self.assertEqual(builder.call_count, 1)
+        # Fail the original implementation locally instead of allowing even
+        # an attempted network read during the pre-inference baseline.
+        from types import SimpleNamespace
+        def forbidden(*args, **kwargs):
+            raise AssertionError("Default redirect-capable opener must not be used")
+        with patch("urllib.request._opener", SimpleNamespace(open=forbidden)):
+            with patch("urllib.request.build_opener", side_effect=fake_build) as builder:
+                self.assertEqual(_get(url), b"metadata")
+                self.assertEqual(builder.call_count, 1)
