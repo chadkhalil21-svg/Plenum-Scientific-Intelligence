@@ -129,6 +129,8 @@ def parse_musicbrainz(data):
         raise ValueError("Invalid MusicBrainz works response")
     rows=[]
     for work in data["works"][:3]:
+        if not isinstance(work,dict):
+            continue
         name=str(work.get("title") or "").strip()
         mbid=str(work.get("id") or "")
         if not name or len(mbid)!=36:
