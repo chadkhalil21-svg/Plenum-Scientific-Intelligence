@@ -8,11 +8,13 @@ on:
       - 'tools/memento_recovery_adapter.py'
       - 'tools/miniswe_staged_interface.py'
       - 'tests/test_memento_recovery_adapter.py'
+      - 'tools/test_miniswe_candidate_cycle.py'
+      - 'tools/miniswe_independent_feedback.py'
 permissions:
   contents: read
 jobs:
   offline:
-    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-native-memento-recovery'
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && (github.event.pull_request.head.ref == 'prometheus-native-memento-recovery' || github.event.pull_request.head.ref == 'prometheus-candidate-cycle-control')
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
@@ -29,3 +31,4 @@ jobs:
           python3 -B -m unittest discover -s tests -p test_memento_recovery_adapter.py -v
           python3 -B -m unittest discover -s tests -p test_miniswe_staged_interface.py -v
           python3 -B -m unittest discover -s tests -p test_prospective_1048_grader.py -v
+          if [ -f tools/test_miniswe_candidate_cycle.py ]; then python3 -B tools/test_miniswe_candidate_cycle.py -v; fi

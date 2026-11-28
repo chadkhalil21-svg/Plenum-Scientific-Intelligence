@@ -43,6 +43,7 @@ class StagedInterface:
         self.original_sha=hashlib.sha256(original).hexdigest()
         self.recovery=NativeRecovery()
         self.independent_feedback=independent_feedback
+        self.independent_passed=False
 
     def __getattr__(self,name):
         return getattr(self.env,name)
@@ -94,14 +95,26 @@ class StagedInterface:
                 self.edits+=1
                 self.views=0
                 self.passed=False
+                self.independent_passed=False
                 checked=self.env.execute({"command":"printf 'Focused regression\\n'; python -B -m unittest discover -s tests -p "+self.test})
                 self.passed=checked["returncode"]==0
                 result={"returncode":checked["returncode"],"output":result["output"]+"\nAutomatic focused regression:\n"+checked["output"],"exception_info":checked.get("exception_info","")}
+                if self.passed and self.independent_feedback is not None:
+                    self.independent_passed=bool(self.independent_feedback(self.env))
+                    repeated=getattr(self.independent_feedback,"last_was_cached",False) is True
+                    if self.independent_passed:
+                        result["output"]+="\nIndependent objective acceptance passed. Submit the verified candidate without further edits."
+                    else:
+                        result["returncode"]=1
+                        result["output"]+="\nIndependent objective acceptance failed. Existing regressions alone do not establish the stated behavior."
+                        if repeated:
+                            result["output"]+=" Previously rejected candidate state revisited. Do not revert to a known failed state or repeat its submission."
+                        result["output"]+=" Re-read the public objective, identify which required behavior your change actually enforces, and change the algorithm rather than toggle equivalent implementations. Hidden tests remain private."
         elif op=="submit" and set(d)=={"op"}:
             if not self.edits or not self.passed:
                 return self._reject("A successful changed-source regression is required before submission.")
-            if self.independent_feedback is not None and not self.independent_feedback(self.env):
-                return self._reject("Independent objective acceptance failed. Existing regression success is insufficient. Diagnose the stated objective, revise the candidate, and try again. Do not modify tests.")
+            if self.independent_feedback is not None and not self.independent_passed:
+                return self._reject("Independent objective acceptance is not established for the current candidate. Revise the implementation using the edit feedback; resubmitting unchanged source cannot help. Do not modify tests.")
             self._record("submit",0)
             return self.env.execute({"command":"echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT"})
         else:
@@ -114,5 +127,5 @@ def staged_task(task,original):
         'a JSON string encoding one action: {"op":"replace","old":"exact unique source fragment","new":"replacement"}, '
         '{"op":"view","start":1,"end":30}, or {"op":"submit"}. '
         "Use replace promptly; every successful replacement automatically runs existing focused regressions and returns feedback. "
-        "At most two views between edits. Submit only after passing regression. Independent hidden acceptance still applies.\n\n"
+        "At most two views between edits. Submit only after passing regression and, when reported, independent objective acceptance. Never resubmit a known failed candidate. Independent hidden acceptance still applies.\n\n"
         "Original source:\n"+original.decode("utf-8"))
