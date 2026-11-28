@@ -258,7 +258,11 @@ def _record(key, title, url, published=None, note=None):
 def _feed(key, data):
     if b"<!DOCTYPE" in data.upper() or b"<!ENTITY" in data.upper():
         raise ValueError("XML entities or DTD not accepted")
-    root = ET.fromstring(data)
+    # Native XML parser callbacks recognize declarations independently of encoding.
+    class NoDTDTreeBuilder(ET.TreeBuilder):
+        def doctype(self, name, pubid, system):
+            raise ValueError("XML entities or DTD not accepted")
+    root = ET.fromstring(data, parser=ET.XMLParser(target=NoDTDTreeBuilder()))
     items = []
     if root.tag in ("rss","RDF", "{http://www.w3.org/1999/02/22-rdf-syntax-ns#}RDF"):
         rss1 = "{http://purl.org/rss/1.0/}"
