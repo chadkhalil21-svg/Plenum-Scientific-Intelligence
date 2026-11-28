@@ -46,13 +46,13 @@ def _normalize(provider, item):
         doi=item.get("doi")
         ref=item.get("source","MED") + "/" + str(item.get("id",""))
         return {"source":provider, "id":ref, "title":item.get("title"),
-                "year":year, "doi":("https://doi.org/"+doi) if doi else None,
+                "year":year, "doi":("https://doi.org/"+doi) if isinstance(doi,str) and doi else None,
                 "url":"https://europepmc.org/article/"+ref}
     if provider == "semanticscholar":
         doi=(item.get("externalIds") or {}).get("DOI")
         return {"source":provider,"id":item.get("paperId"),
                 "title":item.get("title"),"year":item.get("year"),
-                "doi":("https://doi.org/"+doi) if doi else None,
+                "doi":("https://doi.org/"+doi) if isinstance(doi,str) and doi else None,
                 "url":item.get("url")}
     raise ValueError("Invalid bibliographic provider")
 
