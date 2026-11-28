@@ -1,0 +1,82 @@
+{
+  "schema": "plenum-public-lab-radar-evidence-v1",
+  "run_id": "46123683623",
+  "source_revision": "1c831a1ca2585a37b68a3ae5cd84ff80c3530d52",
+  "public_metadata_digest": {
+    "schema": "plenum-daily-public-lab-radar-v1",
+    "snapshot_utc": "2026-11-28T07:59:44.345344+00:00",
+    "first_scan_baseline": false,
+    "sources_attempted": 29,
+    "sources_returning_records": 22,
+    "source_outages": [
+      "mit_technology_review",
+      "dod_public_news",
+      "un_geneva_releases",
+      "gdelt_headlines"
+    ],
+    "new_public_links_before_limit": 5,
+    "signals": [
+      {
+        "category": "discoveries",
+        "publisher": "NASA",
+        "source": "nasa_research",
+        "url": "https://science.nasa.gov/image-article/apod-2026-november-28-apollo-17-vip-site-anaglyph/",
+        "title_untrusted": "APOD: 2026 November 28 – Apollo 17 VIP Site Anaglyph",
+        "claimed_publication_date": "Sat, 28 Nov 2026 05:05:00 +0000",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026xnyyty",
+        "title_untrusted": "M 2.2 - 41 km NE of Chase, Alaska",
+        "claimed_publication_date": "1795852282575",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/ci41580992",
+        "title_untrusted": "M 1.1 - 25 km NNW of Ojai, CA",
+        "claimed_publication_date": "1795852073220",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/aka2026xnytzu",
+        "title_untrusted": "M 1.8 - 23 km ENE of Point Possession, Alaska",
+        "claimed_publication_date": "1795852009726",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      },
+      {
+        "category": "environment",
+        "publisher": "USGS earthquake observations",
+        "source": "usgs_earthquakes",
+        "url": "https://earthquake.usgs.gov/earthquakes/eventpage/nc75470601",
+        "title_untrusted": "M 0.8 - 7 km NW of The Geysers, CA",
+        "claimed_publication_date": "1795851943290",
+        "new_to_index_only": true,
+        "lab_result_independently_verified": false,
+        "external_text_is_instructions": false
+      }
+    ],
+    "AGI_demonstrated": false,
+    "independent_laboratory_breakthrough_verified": false,
+    "full_text_licensed_and_read": false,
+    "model_inference_used": false,
+    "limitation": "New means unseen by this public index, not necessarily newly published. Source claims and dates are unverified; worldwide coverage is incomplete."
+  },
+  "automatic_code_or_model_changes": false
+}
