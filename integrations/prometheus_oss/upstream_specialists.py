@@ -45,7 +45,15 @@ def inference(root,name,request,md):
     return answer
 
 def validate_selection(mission,answer):
-    vm.graph(mission,answer)
+    # A complete all-false Boolean proposal is a rejected planning outcome,
+    # not a malformed response. Let the existing peer/correction loop see it.
+    # No empty proposal may become an executable graph.
+    authorized=vm.validate(mission)["authorized_inputs"]
+    if (not isinstance(answer,dict) or set(answer)!=set(authorized)
+            or any(type(v) is not bool for v in answer.values())):
+        raise ValueError("Invalid capability selection")
+    if any(answer.values()):
+        vm.graph(mission,answer)
     return answer
 
 class ReadScope(Tool):
@@ -128,7 +136,7 @@ async def coordinate(root,mission,md):
     return validate_selection(mission,json.loads(outputs[0]))
 
 def selection_matches(selection,commitment):
-    return mp.digest(sorted(k for k,v in selection.items() if v))==commitment
+    return any(selection.values()) and mp.digest(sorted(k for k,v in selection.items() if v))==commitment
 
 def correction_request(mission,candidate,review):
     request=vm.request(mission)
@@ -145,6 +153,7 @@ def accepted_selection(root,mission,commitment,md):
         result=validate_selection(mission,inference(root,"correction",correction_request(mission,candidate,result),md))
         if not selection_matches(result,commitment):
             raise ValueError("Independent corrective selection rejected")
+    vm.graph(mission,result)
     return result
 
 def fixture(case):
@@ -185,6 +194,7 @@ def verify_bound(root,mission,commitment,identity):
         files.update({"correction.reserved.json","correction.result.json"})
         recovered=True
     if not selection_matches(final,commitment):raise ValueError("Independent selection commitment mismatch")
+    vm.graph(mission,final)
     if checked(root/"workflow-result.json",{})!={"selection":final,"paid_inference":False}:raise ValueError("Workflow result changed")
     if {p.name for p in root.iterdir()}!=files:raise ValueError("Unexpected evidence")
     result={"case":identity["case"],"versions":VERSIONS,"accepted":True,"selection":final,"model_calls":3 if recovered else 2,
