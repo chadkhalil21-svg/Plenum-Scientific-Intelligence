@@ -1,0 +1,133 @@
+name: Prometheus full upstream Hermes native worker
+on:
+  pull_request:
+    types: [synchronize]
+    paths:
+      - '.github/workflows/prometheus-hermes-native-worker.yml'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: prometheus-hermes-native-worker-once
+  cancel-in-progress: false
+jobs:
+  native:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-hermes-native-worker' && github.run_attempt == 1 && github.event.before == 'bc55faae5ba15becc29b43dbb35c87aaa61459eb'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify original write-policy failure before allowing corrected continuation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/46101922332/jobs" > "$RUNNER_TEMP/hermes-original-jobs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/15246795159/zip" > "$RUNNER_TEMP/hermes-prior.zip"
+          echo "0fb9785ef37b6c75e845da51e74f51cfcd0c07d67c22463ebe00bd5303c87f8e  $RUNNER_TEMP/hermes-prior.zip" | sha256sum -c -
+          python -c 'import sys,zipfile; z=zipfile.ZipFile(sys.argv[1]); assert z.testzip() is None and set(z.namelist())=={"hermes-image.json","model.json","frozen-inputs.txt","hermes-version.txt","ollama-image.json","container-preflight.txt","native-output.txt"}; raw=z.read("native-output.txt"); assert raw.count(b"Write denied:")>=2 and b"HERMES_WRITE_SAFE_ROOT" in raw and b"KeyboardInterrupt" in raw' "$RUNNER_TEMP/hermes-prior.zip"
+          python -c 'import json,sys; j=json.load(open(sys.argv[1]))["jobs"]; a=next(x for x in j if x["id"]==140846069732); assert a["conclusion"]=="failure"; s={x["name"]:x["conclusion"] for x in a["steps"]}; assert s["Pull versioned official upstream runtime and existing local model"]=="success" and s["Execute official whole Hermes agent on new actual engineering assignment"]=="failure" and s["Independent networkless regression and frozen acceptance"]=="skipped"' "$RUNNER_TEMP/hermes-original-jobs.json"
+      - name: Freeze genuine public source and independent acceptance before inference
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/hermes-evidence" "$RUNNER_TEMP/hermes-work" "$RUNNER_TEMP/hermes-home" "$RUNNER_TEMP/hermes-grade/src/plenum_ai" "$RUNNER_TEMP/hermes-grade/tests/acceptance"
+          cp src/plenum_ai/business_public_watch.py "$RUNNER_TEMP/hermes-work/business_public_watch.py"
+          cp src/plenum_ai/__init__.py "$RUNNER_TEMP/hermes-grade/src/plenum_ai/"
+          cp tests/test_public_business_watch.py "$RUNNER_TEMP/hermes-grade/tests/"
+          cp tests/acceptance/{health_body_limit,probe_scope,public_media_types}.py "$RUNNER_TEMP/hermes-grade/tests/acceptance/"
+          cat > "$RUNNER_TEMP/hermes-grade/tests/test_target_selection.py" <<'PY'
+          import unittest
+          from plenum_ai.business_public_watch import run, TARGETS, Target
+          class TargetSelection(unittest.TestCase):
+              def test_reject_before_any_probe(self):
+                  for targets in ((), (TARGETS[0], TARGETS[0]), (TARGETS[0], Target("other","https://example.org","html"))):
+                      with self.subTest(targets=targets):
+                          calls=[]
+                          with self.assertRaises(ValueError):
+                              run(probe_fn=lambda t: calls.append(t) or (True,"verified_read",200),sleep_fn=lambda _:None,targets=targets)
+                          self.assertEqual(calls,[])
+              def test_valid_subset(self):
+                  calls=[]
+                  result=run(probe_fn=lambda t: calls.append(t) or (True,"verified_read",200),sleep_fn=lambda _:None,targets=(TARGETS[1],))
+                  self.assertEqual(calls,[TARGETS[1],TARGETS[1]])
+                  self.assertEqual((result["verified"],result["total"]),(1,1))
+                  self.assertFalse(result["asserts_commercial_readiness"])
+          PY
+          echo "da65f890aa542233d74d75aa6f284ccf0a628767718debf4b9f31871be3df1b9  src/plenum_ai/business_public_watch.py" | sha256sum -c -
+          echo "d67b4a758f83ca532884c59c7f6a99afb37aeebbee22c32c018d805b77729ac5  $RUNNER_TEMP/hermes-grade/tests/test_target_selection.py" | sha256sum -c -
+          sha256sum src/plenum_ai/business_public_watch.py "$RUNNER_TEMP/hermes-grade/tests/test_target_selection.py" > "$RUNNER_TEMP/hermes-evidence/frozen-inputs.txt"
+          sudo chown -R 10000:10000 "$RUNNER_TEMP/hermes-work" "$RUNNER_TEMP/hermes-home"
+      - name: Pull versioned official upstream runtime and existing local model
+        run: |
+          set -euo pipefail
+          docker pull nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f
+          docker run --init --rm --network none --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --entrypoint /opt/hermes/.venv/bin/hermes-agent nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f --version > "$RUNNER_TEMP/hermes-evidence/hermes-version.txt"
+          grep -Eq '(^|[^0-9])0[.]23[.]4([^0-9]|$)' "$RUNNER_TEMP/hermes-evidence/hermes-version.txt"
+          docker pull ollama/ollama@sha256:7e8c7ba387b11b09dcce1eff1118b1ab433564ed263434a7730c209f2ee346f4
+          docker pull python:3.12-slim
+          docker image inspect nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f --format '{{json .RepoDigests}}' > "$RUNNER_TEMP/hermes-evidence/hermes-image.json"
+          docker image inspect ollama/ollama@sha256:7e8c7ba387b11b09dcce1eff1118b1ab433564ed263434a7730c209f2ee346f4 --format '{{json .RepoDigests}}' > "$RUNNER_TEMP/hermes-evidence/ollama-image.json"
+          docker run -d --name plenum-hermes-ollama -p 127.0.0.1:11434:11434 -e OLLAMA_CONTEXT_LENGTH=65536 -e OLLAMA_NUM_PARALLEL=1 -e OLLAMA_NO_CLOUD=1 --memory=9g --cpus=3 ollama/ollama@sha256:7e8c7ba387b11b09dcce1eff1118b1ab433564ed263434a7730c209f2ee346f4
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:11434/api/tags && break; sleep 2; done
+          docker exec plenum-hermes-ollama ollama pull qwen3.5:4b
+          curl -fsS http://127.0.0.1:11434/api/tags > "$RUNNER_TEMP/hermes-evidence/model.json"
+          python -c 'import json,sys; d=json.load(open(sys.argv[1])); assert any(m["name"]=="qwen3.5:4b" and m["digest"]=="d8b0f5e9760cd1682034f292d7ef72ec46f432149be0df7574bf2d6e92e38c04" for m in d["models"])' "$RUNNER_TEMP/hermes-evidence/model.json"
+          docker network create --internal plenum-hermes-internal
+          docker network connect --alias ollama plenum-hermes-internal plenum-hermes-ollama
+          docker network disconnect bridge plenum-hermes-ollama
+          test "$(docker network inspect plenum-hermes-internal --format '{{.Internal}}')" = true
+      - name: Execute official whole Hermes agent on new actual engineering assignment
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/hermes-config.yaml" <<'YAML'
+          model:
+            provider: custom
+            model: qwen3.5:4b
+            base_url: http://ollama:11434/v1
+            api_key: local-only
+            context_length: 65536
+          platform_toolsets:
+            cli: [file]
+          security:
+            allow_lazy_installs: false
+          terminal:
+            backend: local
+            cwd: /opt/data/work
+          agent:
+            max_turns: 8
+          YAML
+          sudo install -o 10000 -g 10000 -m 0600 "$RUNNER_TEMP/hermes-config.yaml" "$RUNNER_TEMP/hermes-home/config.yaml"
+          docker run --rm --network none --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --read-only -v "$RUNNER_TEMP/hermes-home:/opt/data" -v "$RUNNER_TEMP/hermes-work:/opt/data/work" --entrypoint /bin/sh nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f -ec 'test -r /opt/data/config.yaml; test -w /opt/data; test "$HERMES_WRITE_SAFE_ROOT" = /opt/data; test -w /opt/data/work/business_public_watch.py; test -x /opt/hermes/.venv/bin/hermes; /opt/hermes/.venv/bin/hermes chat --help' > "$RUNNER_TEMP/hermes-evidence/container-preflight.txt"
+          grep -q -- "--oneshot" "$RUNNER_TEMP/hermes-evidence/container-preflight.txt"
+          grep -q -- "--max-turns" "$RUNNER_TEMP/hermes-evidence/container-preflight.txt"
+          # One-shot CLI only: no gateway, Docker socket, host credentials, external network, or checkout mount.
+          timeout 720 docker run --init --name plenum-hermes-native --network plenum-hermes-internal --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --pids-limit 128 --memory 3g --cpus 1 --workdir /opt/data/work -e HERMES_WRITE_SAFE_ROOT=/opt/data/work -e HOME=/opt/data -e HERMES_HOME=/opt/data -e OPENAI_API_KEY=local-only -e HERMES_SKIP_CONFIG_MIGRATION=1 -v "$RUNNER_TEMP/hermes-home:/opt/data" -v "$RUNNER_TEMP/hermes-work:/opt/data/work" --entrypoint /opt/hermes/.venv/bin/hermes nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f chat --oneshot --toolsets file --max-turns 8 -q 'You are the existing Plenum Engineering specialist. Inspect /opt/data/work/business_public_watch.py using your file tools and repair only its run function: reject an empty selection, duplicates, and targets outside the existing allowlist with ValueError before any probe is invoked. Preserve valid subsets, order, reporting and two independent reads. Modify the actual file; do not merely suggest a patch. Use native read and edit tools and verify your edit by rereading. The file is inside the approved writable scratch root. If any file tool denies access, stop rather than trying another path. No other files or external actions.' > "$RUNNER_TEMP/hermes-native-output.txt" 2>&1
+          docker exec plenum-hermes-ollama ollama ps > "$RUNNER_TEMP/hermes-evidence/allocated-context.txt"
+          cat "$RUNNER_TEMP/hermes-evidence/allocated-context.txt"
+          grep -Eq '(^|[[:space:]])(65536|64K)([[:space:]]|$)' "$RUNNER_TEMP/hermes-evidence/allocated-context.txt"
+      - name: Independent networkless regression and frozen acceptance
+        run: |
+          set -euo pipefail
+          source="$RUNNER_TEMP/hermes-work/business_public_watch.py"
+          test -f "$source" && test ! -L "$source"
+          test "$(stat -c %s "$source")" -le 40000
+          test "$(stat -c %h "$source")" -eq 1
+          ! cmp -s src/plenum_ai/business_public_watch.py "$source"
+          cp "$source" "$RUNNER_TEMP/hermes-grade/src/plenum_ai/business_public_watch.py"
+          chmod -R a+rX "$RUNNER_TEMP/hermes-grade"
+          diff -u src/plenum_ai/business_public_watch.py "$source" > "$RUNNER_TEMP/hermes-evidence/candidate.patch" || test "$?" -eq 1
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges --read-only --user 65534:65534 --pids-limit 64 --memory 768m -e PYTHONPATH=/work/src:/work/tests -e PYTHONDONTWRITEBYTECODE=1 -v "$RUNNER_TEMP/hermes-grade:/work:ro" -w /work python:3.12-slim python -B -m unittest discover -s tests -p 'test_*.py' -v 2>&1 | tee "$RUNNER_TEMP/hermes-evidence/independent-verdict.txt"
+          printf '%s\n' 'Native Hermes candidate passed independent public engineering acceptance; review only; no production write or learning claim.' > "$RUNNER_TEMP/hermes-evidence/status.txt"
+      - name: Preserve bounded public evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prometheus-hermes-native-worker
+          path: ${{ runner.temp }}/hermes-evidence/
+      - name: Clean temporary isolated containers
+        if: always()
+        run: |
+          docker rm -f plenum-hermes-native plenum-hermes-ollama || true
+          docker network rm plenum-hermes-internal || true
