@@ -113,7 +113,13 @@ jobs:
           grep -q -- "--max-turns" "$RUNNER_TEMP/hermes-evidence/container-preflight.txt"
           grep -Eq -- '(^|[ ,])(-s|--skills)([ ,=]|$)' "$RUNNER_TEMP/hermes-evidence/container-preflight.txt"
           # One-shot CLI only: no gateway, Docker socket, host credentials, external network, or checkout mount.
+          set +e
           timeout 720 docker run --init --name plenum-hermes-native --network plenum-hermes-internal --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --pids-limit 128 --memory 3g --cpus 1 --workdir /opt/data/work -e HERMES_WRITE_SAFE_ROOT=/opt/data/work -e HOME=/opt/data -e HERMES_HOME=/opt/data -e OPENAI_API_KEY=local-only -e HERMES_SKIP_CONFIG_MIGRATION=1 -v "$RUNNER_TEMP/hermes-home:/opt/data" -v "$RUNNER_TEMP/hermes-work:/opt/data/work" -v "$RUNNER_TEMP/hermes-skills:/opt/plenum-skills:ro" --entrypoint /opt/hermes/.venv/bin/hermes nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f chat --oneshot --toolsets file --max-turns 8 -s plenum-public-provider-boundary -q 'You are the existing Plenum Engineering specialist. Apply your preloaded procedure as non-authoritative advisory guidance to a new genuine defect: the public business readback can mark a response as verified even though it came from an unexpected destination. Inspect the existing public source and independently diagnose and repair only its probe function. Preserve legitimate responses, previous behavior and injected offline test-client compatibility. The historical test count in the procedure is not current or authoritative. Make the actual edit, reread to verify, and do not touch any other files or take external actions. If write access is denied, stop.' > "$RUNNER_TEMP/hermes-native-output.txt" 2>&1
+          native_rc=$?
+          set -e
+          printf '%s\n' "$native_rc" > "$RUNNER_TEMP/hermes-evidence/native-exit.txt"
+          tail -c 65536 "$RUNNER_TEMP/hermes-native-output.txt" > "$RUNNER_TEMP/hermes-evidence/native-output.txt"
+          test "$native_rc" -eq 0
           docker exec plenum-hermes-ollama ollama ps > "$RUNNER_TEMP/hermes-evidence/allocated-context.txt"
           cat "$RUNNER_TEMP/hermes-evidence/allocated-context.txt"
           grep -Eq '(^|[[:space:]])(65536|64K)([[:space:]]|$)' "$RUNNER_TEMP/hermes-evidence/allocated-context.txt"
