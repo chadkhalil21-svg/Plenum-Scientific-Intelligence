@@ -1,0 +1,106 @@
+name: Prometheus MiMo local runtime diagnosis
+on:
+  pull_request:
+    types: [opened]
+    paths:
+      - '.github/workflows/prometheus-mimo-runtime-diagnosis.yml'
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: prometheus-mimo-runtime-diagnosis-once
+  cancel-in-progress: false
+jobs:
+  diagnose:
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus/mimo-native-runtime-diagnosis' && github.actor == 'chadkhalil21-svg' && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Authenticate previous failed execution without replay
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/mimo-diagnostics"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/15256684028/zip" > "$RUNNER_TEMP/prior.zip"
+          echo "c8b1c94c164bf289bbf0846bc9edbb9ed8c8e07bb191880086b2994a0a1033ae  $RUNNER_TEMP/prior.zip" | sha256sum -c -
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/46129287158/jobs" > "$RUNNER_TEMP/prior-jobs.json"
+          python - "$RUNNER_TEMP/prior.zip" "$RUNNER_TEMP/prior-jobs.json" <<'PY'
+          import json,sys,zipfile
+          j=next(j for j in json.load(open(sys.argv[2]))["jobs"] if j["id"]==140930709081)
+          assert j["conclusion"]=="failure"
+          with zipfile.ZipFile(sys.argv[1]) as z:
+              assert z.testzip() is None and z.read("native-exit.txt").strip()==b"1"
+          PY
+      - name: Initialize exact model with upstream memory-efficient cache
+        run: |
+          set -euo pipefail
+          docker pull ollama/ollama@sha256:7e8c7ba387b11b09dcce1eff1118b1ab433564ed263434a7730c209f2ee346f4
+          docker run -d --name plenum-mimo-diagnosis -p 127.0.0.1:11434:11434 -e OLLAMA_CONTEXT_LENGTH=65536 -e OLLAMA_FLASH_ATTENTION=1 -e OLLAMA_KV_CACHE_TYPE=q8_0 -e OLLAMA_NUM_PARALLEL=1 -e OLLAMA_NO_CLOUD=1 --memory=10g --cpus=3 ollama/ollama@sha256:7e8c7ba387b11b09dcce1eff1118b1ab433564ed263434a7730c209f2ee346f4
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:11434/api/tags && break; sleep 2; done
+          docker exec plenum-mimo-diagnosis ollama pull mimo-v2.6:9b-q4_K_M
+          curl -fsS http://127.0.0.1:11434/api/tags > "$RUNNER_TEMP/mimo-diagnostics/model.json"
+          python -c 'import json,sys; assert any(m["name"]=="mimo-v2.6:9b-q4_K_M" and m["digest"].removeprefix("sha256:")=="cc58eacf0e3e4a96556657fe6f29c80ca38401bf242eec83f4eee074dd02bc86" for m in json.load(open(sys.argv[1]))["models"])' "$RUNNER_TEMP/mimo-diagnostics/model.json"
+          docker network create --internal plenum-mimo-internal
+          docker network connect plenum-mimo-internal plenum-mimo-diagnosis
+          docker network disconnect bridge plenum-mimo-diagnosis
+          test "$(docker network inspect plenum-mimo-internal --format '{{.Internal}}')" = true
+      - name: Distinguish model loading and native tool response from Hermes failure
+        run: |
+          set -euo pipefail
+          # A single distinct diagnostic request: no historical objective, no tools executed.
+          docker exec -i plenum-mimo-diagnosis sh -c 'command -v curl >/dev/null' || true
+          ip="$(docker inspect --format '{{(index .NetworkSettings.Networks "plenum-mimo-internal").IPAddress}}' plenum-mimo-diagnosis)"
+          python - "$ip" "$RUNNER_TEMP/mimo-diagnostics/diagnostic.json" <<'PY'
+          import json,sys,time,urllib.request,urllib.error
+          addr,out=sys.argv[1:]
+          payload={"model":"mimo-v2.6:9b-q4_K_M","messages":[{"role":"user","content":"Call the diagnostic tool record_result with value 42. Do not explain."}],"tools":[{"type":"function","function":{"name":"record_result","description":"Record a diagnostic integer","parameters":{"type":"object","properties":{"value":{"type":"integer"}},"required":["value"]}}}],"think":False,"stream":False,"options":{"num_ctx":65536,"num_predict":128,"temperature":0}}
+          start=time.monotonic()
+          receipt={"stage":"native_api","paid_inference":False,"request_count":1,"tool_executed":False,"cache_requested":"q8_0","context_requested":65536}
+          try:
+              req=urllib.request.Request("http://"+addr+":11434/api/chat",json.dumps(payload).encode(),{"Content-Type":"application/json"})
+              with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(req,timeout=360) as response:
+                  raw=response.read(65537)
+                  assert len(raw)<=65536
+                  d=json.loads(raw)
+              calls=d.get("message",{}).get("tool_calls",[])
+              receipt.update(done=d.get("done") is True,tool_call_correct=any(c.get("function",{}).get("name")=="record_result" and c.get("function",{}).get("arguments")=={"value":42} for c in calls))
+              for k in ("load_duration","prompt_eval_count","prompt_eval_duration","eval_count","eval_duration","total_duration"):
+                  if type(d.get(k)) is int: receipt[k]=d[k]
+          except urllib.error.HTTPError as e:
+              raw=e.read(4096).decode(errors="replace").lower()
+              receipt.update(http_status=e.code,error_category=next((k for k,v in {"memory":("memory","allocat","out of memory"),"template":("template","tool call"),"unsupported":("unsupported","not support"),"runner_exit":("runner","terminated","exit status")}.items() if any(x in raw for x in v)),"unclassified_http_error"))
+          except Exception as e:
+              receipt.update(error_type=type(e).__name__)
+          receipt["elapsed_seconds"]=round(time.monotonic()-start,3)
+          with open(out,"w") as f: json.dump(receipt,f,sort_keys=True)
+          print(json.dumps(receipt,sort_keys=True))
+          PY
+      - name: Preserve bounded runtime diagnostics regardless of result
+        if: always()
+        run: |
+          set +e
+          d="$RUNNER_TEMP/mimo-diagnostics"
+          mkdir -p "$d"
+          docker inspect --format '{{json .State}}' plenum-mimo-diagnosis > "$RUNNER_TEMP/mimo-state.json" 2>/dev/null
+          docker logs plenum-mimo-diagnosis > "$RUNNER_TEMP/mimo-logs.txt" 2>&1
+          docker exec plenum-mimo-diagnosis ollama ps > "$d/allocated-context.txt" 2>/dev/null
+          python - "$RUNNER_TEMP/mimo-state.json" "$RUNNER_TEMP/mimo-logs.txt" "$d/runtime.json" <<'PY'
+          import json,pathlib,sys
+          try: state=json.loads(pathlib.Path(sys.argv[1]).read_text())
+          except Exception: state={}
+          raw=pathlib.Path(sys.argv[2]).read_text(errors="replace").lower()
+          terms={"memory_error":["out of memory","unable to allocate","failed to allocate"],"runner_failure":["runner process has terminated","runner exited"],"flash_attention":["flash attention enabled","flash attention is enabled"],"cache_q8":["q8_0"],"template_error":["template error","failed to parse tool"]}
+          result={"oom_killed":state.get("OOMKilled"),"running":state.get("Running"),"exit_code":state.get("ExitCode"),"log_categories":{k:any(v in raw for v in vs) for k,vs in terms.items()},"raw_logs_retained":False}
+          pathlib.Path(sys.argv[3]).write_text(json.dumps(result,sort_keys=True))
+          PY
+          docker rm -f plenum-mimo-diagnosis || true
+          docker network rm plenum-mimo-internal || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prometheus-mimo-runtime-diagnosis
+          path: ${{ runner.temp }}/mimo-diagnostics/
