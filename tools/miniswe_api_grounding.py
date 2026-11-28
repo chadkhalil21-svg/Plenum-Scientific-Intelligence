@@ -28,7 +28,9 @@ def bind_exhaustion(path):
         raise ValueError("Unbound exhausted execution")
     prefix="miniswe-1060-independent-correction/"
     with zipfile.ZipFile(path) as z:
-        if len(z.namelist())!=19 or len(set(z.namelist()))!=19 or z.testzip() is not None or sum(i.file_size for i in z.infolist())>300000:
+        expected_names={prefix+n for n in ("continuation-binding.json","independent-feedback.jsonl","memento-recovery.jsonl","model-reservations.jsonl","model-responses.jsonl","native-result.json","staged-actions.jsonl","trajectory.json")}
+        expected_names.update(prefix+"native-json-response-"+str(i)+".json" for i in range(1,13))
+        if set(z.namelist())!=expected_names or len(z.namelist())!=len(expected_names) or z.testzip() is not None or sum(i.file_size for i in z.infolist())>300000:
             raise ValueError("Invalid archived execution")
         def records(name): return [json.loads(x) for x in z.read(prefix+name).splitlines()]
         result=json.loads(z.read(prefix+"native-result.json"))
