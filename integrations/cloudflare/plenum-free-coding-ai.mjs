@@ -60,16 +60,24 @@ export async function verifyOriginalGithubOIDC(token, {now = Math.floor(Date.now
 }
 
 function asOpenAI(result, request) {
-  const message = Array.isArray(result?.choices) ? result.choices[0]?.message : null;
+  const choice = Array.isArray(result?.choices) ? result.choices[0] : null;
+  const message = choice?.message ?? null;
+  const terminal = choice?.finish_reason ?? result?.finish_reason;
   let content = message?.content ?? result?.response ?? result?.result ?? "";
   const nativeTools = message?.tool_calls ?? result?.tool_calls ?? [];
   if (typeof content !== "string") content = "";
-  const tool_calls = Array.isArray(nativeTools) ? nativeTools.slice(0,8).map((t,i) => {
+  if (!Array.isArray(nativeTools) || nativeTools.length > 8) throw Error("unsupported_tool_response");
+  if (terminal != null && !["stop","length","tool_calls","content_filter"].includes(terminal))
+    throw Error("unknown_model_finish_reason");
+  if (terminal === "length" || terminal === "content_filter") throw Error("incomplete_model_response");
+  if (terminal === "tool_calls" && !nativeTools.length) throw Error("missing_tool_response");
+  if (terminal === "stop" && nativeTools.length) throw Error("inconsistent_model_finish_reason");
+  const tool_calls = nativeTools.map((t,i) => {
     const f = t?.function ?? t;
     if (!/^[A-Za-z_][A-Za-z0-9_]{0,63}$/.test(f?.name ?? "")) throw Error("unsupported_tool_response");
     return {id:String(t?.id ?? "call_"+i),type:"function",
       function:{name:f.name,arguments:typeof f.arguments==="string" ? f.arguments : JSON.stringify(f.arguments ?? {})}};
-  }) : [];
+  });
   if (!content && !tool_calls.length) throw Error("empty_model_response");
   const created = Math.floor(Date.now()/1000);
   const id = "chatcmpl-plenum-"+created;
