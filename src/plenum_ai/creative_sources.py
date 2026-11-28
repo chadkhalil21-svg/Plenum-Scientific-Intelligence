@@ -19,7 +19,19 @@ def _get(url,opener=urlopen):
         "User-Agent":"PlenumScientificIntelligence/1.4 source-metadata-not-downloader",
         "Accept":"application/json",
     })
-    with opener(req,timeout=18) as res:
+    from urllib.request import build_opener
+    from .chief_of_staff_pilot import NoRedirects
+    default = opener is urlopen
+    client = build_opener(NoRedirects).open if default else opener
+    with client(req,timeout=18) as res:
+        geturl = getattr(res, "geturl", None)
+        has_geturl = callable(geturl)
+        has_url = hasattr(res, "url")
+        if (getattr(res, "status", None if default else 200) != 200
+                or (has_geturl and geturl() != url)
+                or (has_url and res.url != url)
+                or (default and not has_geturl and not has_url)):
+            raise ValueError("Unexpected creative provider response")
         body=res.read(MAX_BYTES+1)
     if len(body)>MAX_BYTES:
         raise ValueError("Creative source exceeds bounded size")
