@@ -28,6 +28,7 @@ INTERRUPTED = "BLOCKED_INTERRUPTED_WITH_REVIEW_ARTIFACT"
 # Preserve the original, already existing regression suite when its historical
 # filename differs from the module name. No candidate can select its own tests.
 FOCUSED_TESTS = {
+    "src/plenum_ai/creative_sources.py": "test_creative_studio.py",
     "src/plenum_ai/business_public_watch.py": "test_public_business_watch.py",
 }
 
