@@ -309,7 +309,8 @@ def verify(report_path: Path, verdict_path: Path, *, checkout: Path | None = Non
                                               })
                 except (OSError, subprocess.TimeoutExpired):
                     return persist("BLOCKED_TASK_ACCEPTANCE_UNAVAILABLE", "trusted_task_test_did_not_finish")
-                if accepted.returncode or "Ran 2 tests" not in accepted.stderr:
+                expected_tests = 3 if acceptance == "business_response_boundary_transfer.py" else 2
+                if accepted.returncode or f"Ran {expected_tests} tests" not in accepted.stderr:
                     return persist("BLOCKED_TASK_ACCEPTANCE", "trusted_task_behavior_not_verified")
                 verdict["task_acceptance_passed"] = True
             return persist(("INTERRUPTED_FOCUSED_TESTS_PASS_REVIEW_STILL_REQUIRED" if interrupted
