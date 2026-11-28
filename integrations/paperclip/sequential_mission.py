@@ -420,9 +420,22 @@ def retry_unstarted_verifier(api,directory,cid,mid,plan,agents,scope,*,target="v
     aid=canonical(agents[target])
     task=api("/api/issues/"+iid)
     if (task.get("id")!=iid or task.get("companyId")!=cid or task.get("parentId")!=mid
-            or task.get("assigneeAgentId")!=aid or task.get("status") not in ("todo","in_progress")):
+            or task.get("assigneeAgentId")!=aid):
         return False
-    observed=(task.get("interruption") or {}).get("observedRunId")
+    interruption=task.get("interruption") or {}
+    # Upstream permits retry of a system-failed blocked task, but never
+    # override a user action, approval, pause, or an active scheduled retry.
+    if (interruption.get("responsibility")=="user" or interruption.get("userAction") is not None
+            or interruption.get("state") in ("working","waiting_for_user","retry_scheduled","resolved")):
+        return False
+    if task.get("status")=="blocked":
+        if not (interruption.get("responsibility")=="system"
+                and interruption.get("state")=="failed" and interruption.get("canRetry") is True
+                and "userAction" in interruption and interruption["userAction"] is None):
+            return False
+    elif task.get("status") not in ("todo","in_progress"):
+        return False
+    observed=interruption.get("observedRunId")
     if not observed:return False
     runid=canonical(observed)
     run=api("/api/heartbeat-runs/"+runid)
