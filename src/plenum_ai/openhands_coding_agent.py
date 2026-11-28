@@ -522,10 +522,12 @@ def apply_structured_edit(scope, choice):
 
 class StructuredEditFailure(ValueError):
     """Only enumerated, non-model-controlled diagnostics enter receipts."""
-    def __init__(self, stage, clause=0):
+    def __init__(self, stage, clause=0, terminal_reason=None):
         super().__init__(stage)
         self.stage=stage
         self.clause=clause
+        self.terminal_reason = terminal_reason if terminal_reason in (
+            "TOKEN_LIMIT", "NOT_DONE", "WRONG_MODEL", "OTHER_STOP_REASON") else None
 
 
 def apply_numbered_edit(scope, choice):
@@ -692,7 +694,10 @@ def structured_local_edit(task,scope,*,numbered=False,reasoning=False):
     try:
         data=json.loads(reply.stdout)
         if data.get("done") is not True or data.get("done_reason")!="stop" or data.get("model")!=STRUCTURED_EDIT_MODEL:
-            raise StructuredEditFailure("INCOMPLETE_MODEL_RESPONSE")
+            reason = ("WRONG_MODEL" if data.get("model") != STRUCTURED_EDIT_MODEL else
+                      "NOT_DONE" if data.get("done") is not True else
+                      "TOKEN_LIMIT" if data.get("done_reason") == "length" else "OTHER_STOP_REASON")
+            raise StructuredEditFailure("INCOMPLETE_MODEL_RESPONSE", terminal_reason=reason)
         if reasoning and (not isinstance(data.get("message",{}).get("thinking"),str) or not data["message"]["thinking"].strip()):
             raise StructuredEditFailure("REASONING_OUTPUT_MISSING")
         choice=json.loads(data["message"]["content"])
@@ -836,7 +841,7 @@ def execute_local(task: str, *, source_file: str, candidate_out: str,
                 if candidate==raw or len(candidate)>_candidate_byte_limit(original):
                     raise StructuredEditFailure("CANDIDATE_BOUND")
             except StructuredEditFailure as exc:
-                raise StructuredEditFailure(exc.stage,index) from exc
+                raise StructuredEditFailure(exc.stage,index,exc.terminal_reason) from exc
             raw=candidate
         result["structured_edit_strategies"]=strategies
         # Persist only after every authorized clause produced a bounded edit.
@@ -1272,6 +1277,8 @@ def main() -> None:
                       "failure_category": type(exc).__name__, "no_paid_fallback": True}
             if isinstance(exc,StructuredEditFailure):
                 report["structured_failure_stage"]=exc.stage
+                if exc.terminal_reason is not None:
+                    report["structured_terminal_reason"]=exc.terminal_reason
                 report["structured_failure_clause"]=exc.clause
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
