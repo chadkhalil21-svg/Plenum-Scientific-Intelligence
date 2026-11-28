@@ -15,6 +15,9 @@ jobs:
     env:
       PYTHONPATH: src
       SKILLOPT_SLEEP_WORKERS: '1'
+      AZURE_OPENAI_AUTH_MODE: openai_compatible
+      AZURE_OPENAI_ENDPOINT: http://127.0.0.1:11434/v1
+      OLLAMA_NO_CLOUD: '1'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,12 +25,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install exact Microsoft SkillOpt release
+      - name: Install exact reviewed Microsoft SkillOpt source
         run: |
           set -eu
-          python -m pip download --no-deps --only-binary=:all: skillopt==0.2.0 -d /tmp/skillopt-wheel
-          echo '818db802507c6f82553fd24c75aa70c953ab0a712647f60e68e4595052c4b150  /tmp/skillopt-wheel/skillopt-0.2.0-py3-none-any.whl' | sha256sum -c -
-          python -m pip install --only-binary=:all: /tmp/skillopt-wheel/skillopt-0.2.0-py3-none-any.whl
+          python -m pip install 'skillopt @ git+https://github.com/microsoft/SkillOpt.git@dc0b5e654cafa1073a2819086151c1e0d13012f0'
+          PYTHONPATH=src:integrations/prometheus_skillopt python -c 'from learn_native_experience import verify_upstream_revision; verify_upstream_revision()'
           python -m pip check
           python -m py_compile integrations/prometheus_skillopt/learn_native_experience.py
       - name: Read original immutable experience, verify before inference
@@ -45,7 +47,7 @@ jobs:
         run: |
           set -eu
           docker pull ollama/ollama:latest
-          docker run -d --name plenum-paperclip-qwen --network host -e OLLAMA_HOST=127.0.0.1:11434 -e OLLAMA_CONTEXT_LENGTH=4096 -e OLLAMA_NUM_PARALLEL=1 --memory=8g --cpus=3 ollama/ollama:latest
+          docker run -d --name plenum-paperclip-qwen --network host -e OLLAMA_HOST=127.0.0.1:11434 -e OLLAMA_CONTEXT_LENGTH=4096 -e OLLAMA_NUM_PARALLEL=1 -e OLLAMA_NO_CLOUD=1 --memory=8g --cpus=3 ollama/ollama:latest
           for i in $(seq 1 45); do
             if curl --fail --silent http://127.0.0.1:11434/api/tags >/dev/null; then break; fi
             sleep 2
@@ -65,3 +67,82 @@ jobs:
       - name: Remove local model
         if: always()
         run: docker rm -f plenum-paperclip-qwen || true
+  verify-native-source:
+    # Source migration only. The original #1040 experience is NOT replayed.
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-skillopt-upstream-native-transport'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    env:
+      PYTHONPATH: src:integrations/prometheus_skillopt
+      SKILLOPT_SLEEP_WORKERS: '1'
+      AZURE_OPENAI_AUTH_MODE: openai_compatible
+      AZURE_OPENAI_ENDPOINT: http://127.0.0.1:11434/v1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Import exact upstream source and verify the native bounded transport
+        run: |
+          set -eu
+          python -m pip install 'skillopt @ git+https://github.com/microsoft/SkillOpt.git@dc0b5e654cafa1073a2819086151c1e0d13012f0'
+          python -m pip check
+          python - <<'PY'
+          import os, tempfile
+          from pathlib import Path
+          from unittest.mock import patch
+          from types import SimpleNamespace
+          import httpx
+          from learn_native_experience import LocalReflect, verify_upstream_revision, verify_native_response, mp
+          from skillopt_sleep.backend import AzureOpenAIBackend
+          verify_upstream_revision()
+          assert issubclass(LocalReflect, AzureOpenAIBackend)
+          with tempfile.TemporaryDirectory() as directory:
+              root = Path(directory)
+              backend = LocalReflect(root, "offline-contract", set())
+              assert backend._client.max_retries == 0
+              assert str(backend._client.base_url).rstrip("/") == "http://127.0.0.1:11434/v1"
+              def response(**kwargs):
+                  assert (root / "reflection-1.reserved.json").is_file()
+                  assert kwargs["max_tokens"] == 384
+                  assert kwargs["messages"] == [{"role": "user", "content": "offline fixture"}]
+                  return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="bounded fixture"))],
+                      usage=SimpleNamespace(prompt_tokens=7, completion_tokens=3))
+              with patch.object(backend._client.chat.completions, "create", side_effect=response) as call:
+                  assert backend._call("offline fixture") == "bounded fixture"
+                  try:
+                      backend._call("offline fixture")
+                  except RuntimeError:
+                      pass
+                  else:
+                      raise AssertionError("Duplicate request accepted")
+                  assert call.call_count == 1
+              assert (root / "reflection-1.result.json").is_file()
+              backend._client.close()
+              with patch.dict(os.environ, {"AZURE_OPENAI_ENDPOINT": "https://example.invalid/v1"}):
+                  try:
+                      LocalReflect(root, "offline-contract", set())
+                  except PermissionError:
+                      pass
+                  else:
+                      raise AssertionError("Nonlocal endpoint accepted")
+          valid = {"model": mp.MODEL, "choices": [{"finish_reason": "stop", "message": {"role": "assistant", "content": "fixture"}}]}
+          verify_native_response(httpx.Response(200, json=valid))
+          for invalid in (
+              {**valid, "model": "other-model"},
+              {**valid, "choices": [{**valid["choices"][0], "finish_reason": "length"}]},
+              {**valid, "choices": []},
+              {**valid, "choices": [{**valid["choices"][0], "message": {"role": "assistant", "content": ""}}]},
+          ):
+              try:
+                  verify_native_response(httpx.Response(200, json=invalid))
+              except ValueError:
+                  pass
+              else:
+                  raise AssertionError("Invalid model response accepted")
+          print("Native source import and offline bounded transport and response validation passed; no model invocation")
+          PY

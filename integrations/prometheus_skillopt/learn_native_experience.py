@@ -10,14 +10,30 @@ import os
 from pathlib import Path
 import sys
 import zipfile
-from importlib.metadata import version
+from importlib.metadata import distribution, version
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "paperclip"))
 import model_plan as mp
 from checkpoint_store import exclusive
-from skillopt_sleep.backend import CliBackend
+from skillopt_sleep.backend import AzureOpenAIBackend
+from openai import OpenAI
+import httpx
 from skillopt_sleep.memory import apply_edits
 from skillopt_sleep.types import TaskRecord, ReplayResult
+
+SKILLOPT_REVISION = "dc0b5e654cafa1073a2819086151c1e0d13012f0"
+LOCAL_ENDPOINT = "http://127.0.0.1:11434/v1"
+
+
+def verify_upstream_revision():
+    metadata = distribution("skillopt").read_text("direct_url.json")
+    if not metadata:
+        raise PermissionError("Exact upstream source installation required")
+    source = json.loads(metadata)
+    if (source.get("url") != "https://github.com/microsoft/SkillOpt.git"
+            or source.get("vcs_info", {}).get("commit_id") != SKILLOPT_REVISION):
+        raise PermissionError("Unexpected SkillOpt source revision")
+
 
 SEED = "Inspect relevant source, implement an authorized repair, test and refine it, and submit a review-only patch."
 ARCHIVES = {
@@ -91,38 +107,80 @@ def historical_failures(first, continuation):
         failures.append((task, replay))
     return failures, prior | {calls2[0]["request_sha256"]}
 
-class LocalReflect(CliBackend):
+def verify_native_response(response):
+    """Reject partial or mismatched local completions before upstream parsing."""
+    if response.status_code != 200:
+        return  # The official SDK handles provider errors; retries disabled.
+    response.read()
+    data = response.json()
+    if not isinstance(data, dict) or data.get("model") != mp.MODEL:
+        raise ValueError("Unexpected local model identity")
+    choices = data.get("choices")
+    if (not isinstance(choices, list) or len(choices) != 1
+            or not isinstance(choices[0], dict)
+            or choices[0].get("finish_reason") != "stop"):
+        raise ValueError("Incomplete local model response")
+    message = choices[0].get("message")
+    if (not isinstance(message, dict) or message.get("role") != "assistant"
+            or not isinstance(message.get("content"), str)
+            or not message["content"].strip() or message.get("tool_calls")):
+        raise ValueError("Invalid local reflection response")
+
+
+class LocalReflect(AzureOpenAIBackend):
+    """Native upstream inference and reflection, with original Plenum bounds."""
+
     def __init__(self, root, digest, forbidden):
-        super().__init__(model=mp.MODEL)
+        if os.getenv("AZURE_OPENAI_AUTH_MODE") != "openai_compatible":
+            raise PermissionError("Explicit local-only compatibility mode required")
+        if os.getenv("AZURE_OPENAI_ENDPOINT") != LOCAL_ENDPOINT:
+            raise PermissionError("Nonlocal SkillOpt endpoint prohibited")
+        if os.getenv("SKILLOPT_SLEEP_CHAT_EXTRA_BODY"):
+            raise PermissionError("Unreviewed provider-specific fields prohibited")
+        super().__init__(deployment=mp.MODEL, endpoint=LOCAL_ENDPOINT, timeout=180)
+        self.compat_max_tokens = 384
+        self.chat_extra_body = None
+        self._client = OpenAI(base_url=LOCAL_ENDPOINT, api_key="local-only",
+                              max_retries=0, timeout=180,
+                              http_client=httpx.Client(trust_env=False,
+                                                        follow_redirects=False, timeout=180,
+                                                        event_hooks={"response": [verify_native_response]}))
         self.root, self.md, self.forbidden, self.seen = root, digest, forbidden, set()
         self.preferences = ("General engineering advice only. No specific file, solution, commands, "
                             "authority changes, hidden test knowledge, or extra paid resources. "
                             "Prefer bounded context and concrete progress within available inference.")
 
     def _call(self, prompt, *, max_tokens=1024):
-        req = {"model": mp.MODEL, "stream": False, "think": False,
-               "options": {"temperature": 0, "num_ctx": 4096, "num_predict": min(384,max_tokens)},
-               "messages": [{"role":"system","content":"Return bounded reusable advisory skill edits only. Preserve existing security and review requirements."},
-                            {"role":"user","content":prompt}]}
+        if (not self._compat_mode() or self.endpoint != LOCAL_ENDPOINT
+                or str(self._client.base_url).rstrip("/") != LOCAL_ENDPOINT
+                or self._client.max_retries != 0):
+            raise PermissionError("Native transport safety configuration changed")
+        # This is the exact native request shape at the pinned upstream revision.
+        self.compat_max_tokens = min(384, max_tokens)
+        req = {"model": mp.MODEL, "messages": [{"role": "user", "content": prompt}],
+               "max_tokens": self.compat_max_tokens}
         key = mp.digest(req)
         if key in self.seen or key in self.forbidden or len(self.seen) >= 2 or len(prompt)>14000:
             raise RuntimeError("Unbounded or duplicate reflection")
         self.seen.add(key)
         label = self.root / f"reflection-{len(self.seen)}"
-        receipt = {"request_sha256":key,"model_digest":self.md,"paid_inference":False}
+        receipt = {"request_sha256":key,"model_digest":self.md,"paid_inference":False,
+                   "skillopt_revision":SKILLOPT_REVISION,"transport":"native-openai-compatible"}
         exclusive(label.with_suffix(".reserved.json"),receipt)
-        reply = mp.read_json("/api/chat",req,timeout=180)
-        raw = reply.get("message",{}).get("content")
-        if (reply.get("model")!=mp.MODEL or reply.get("done") is not True
-                or not isinstance(raw,str) or not raw.strip() or len(raw)>5000):
-            raise ValueError("Invalid reflection response")
+        before = self._tokens
+        raw = super()._call(prompt, max_tokens=self.compat_max_tokens, retries=1)
+        if (self.last_call_error or not isinstance(raw,str) or not raw.strip() or len(raw)>5000):
+            raise ValueError("Native reflection response unavailable or invalid")
         exclusive(label.with_suffix(".result.json"),{**receipt,"response_sha256":sha(raw.encode()),
-                  "eval_count":reply.get("eval_count"),"prompt_eval_count":reply.get("prompt_eval_count")})
+                  "provider_usage_reported":bool(self._thread_local.charged_in_call),
+                  "provider_reported_tokens":self._tokens-before if self._thread_local.charged_in_call else None})
         return raw
+
 
 def main():
     if os.getenv("GITHUB_ACTIONS")!="true" or version("skillopt")!="0.2.0":
         raise PermissionError("Pinned original public runner only")
+    verify_upstream_revision()
     for key in ("OPENAI_API_KEY","ANTHROPIC_API_KEY","AZURE_OPENAI_API_KEY","GOOGLE_API_KEY","HF_TOKEN","OLLAMA_API_KEY"):
         if os.getenv(key):
             raise PermissionError("External credentials prohibited")
@@ -134,7 +192,7 @@ def main():
     exclusive(dest/"training-binding.json",{"archive_ids":[15230648247,15232100681],
         "archive_sha256":[ARCHIVES[x][0] for x in ("first","continuation")],
         "historical_missions":1,"historical_failure_phases":2,"historical_requests":13,
-        "historical_requests_replayed":0,"skillopt":"0.2.0","reflection_model_digest":md,
+        "historical_requests_replayed":0,"skillopt":"0.2.0","skillopt_revision":SKILLOPT_REVISION,"reflection_model_digest":md,
         "training_observations":[{"task":t.to_dict(),"outcome":r.to_dict()} for t,r in failures],
         "paid_inference":False})
     edits = backend.reflect(failures,[],SEED,"",edit_budget=2,evolve_skill=True,evolve_memory=False)
