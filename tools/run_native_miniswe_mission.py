@@ -285,7 +285,7 @@ class LocalOnlyModel(LitellmModel):
         with (OUT / "model-reservations.jsonl").open("a", encoding="utf-8") as f:
             f.write(json.dumps({"request_sha256": key, "ordinal": len(self.requests)}) + "\n")
         if use_native:
-            with httpx.Client(trust_env=False,timeout=180) as client:
+            with httpx.Client(trust_env=False,timeout=240 if MODEL=="qwen2.5-coder:7b-instruct" else 180) as client:
                 reply=client.post("http://127.0.0.1:11434/api/chat",json=payload)
                 reply.raise_for_status()
                 raw=reply.json()
@@ -331,6 +331,7 @@ def original_workspace():
     return buffer.getvalue()
 
 def main():
+    global MODEL,DIGEST,CONTINUATION,OUT,PRIOR_REQUESTS
     parser = argparse.ArgumentParser()
     parser.add_argument("--event", type=Path)
     parser.add_argument("--continuation", type=Path)
@@ -341,6 +342,7 @@ def main():
     parser.add_argument("--staged-1060", type=Path)
     parser.add_argument("--native-json-archive", type=Path)
     parser.add_argument("--independent-correction-archive", type=Path)
+    parser.add_argument("--exhausted-correction-archive", type=Path)
     parser.add_argument("--staged-timeout-archive", type=Path)
     args = parser.parse_args()
     prior_candidate = None
@@ -376,6 +378,21 @@ def main():
         configure_event(args.event)
     if args.continuation:
         configure_continuation(args.continuation)
+    if args.exhausted_correction_archive:
+        if ISSUE!=1060 or prior_candidate is None or os.getenv("PLENUM_1060_SPECIALIST")!="confirmed":
+            raise PermissionError("Exact exhausted correction scope required")
+        from miniswe_api_grounding import bind_exhaustion
+        keys,expected=bind_exhaustion(args.exhausted_correction_archive)
+        if keys & PRIOR_REQUESTS: raise ValueError("Overlapping historical requests")
+        PRIOR_REQUESTS |= keys
+        if len(PRIOR_REQUESTS)!=18: raise ValueError("Historical evidence incomplete")
+        MODEL="qwen2.5-coder:7b-instruct"
+        DIGEST=os.environ["PLENUM_1060_SPECIALIST_DIGEST"]
+        if not re.fullmatch(r"dae161e27b0e[0-9a-f]{52}",DIGEST):
+            raise ValueError("Specialist model identity")
+        OUT=Path("reports/miniswe-1060-specialist-grounded")
+        CONTINUATION={**CONTINUATION,"exhausted_archive_sha256":expected,
+                      "strategy":"code-specialist with trusted installed API documentation and independent feedback"}
     tags = httpx.get("http://127.0.0.1:11434/api/tags",trust_env=False,timeout=10).json()
     if not any(x.get("name")==MODEL and x.get("digest")==DIGEST for x in tags["models"]):
         raise ValueError("Local model digest mismatch")
@@ -428,6 +445,12 @@ def main():
             if feedback(env):
                 raise RuntimeError("Prior rejected candidate unexpectedly passes frozen grader")
             native_task += "\nResume the exact prior candidate below. Its existing regressions passed but independent objective acceptance failed. Diagnose the objective and revise the actual candidate; submission now requires independent acceptance as well as existing regressions. Hidden tests remain outside your workspace."
+        if args.exhausted_correction_archive:
+            from miniswe_api_grounding import reference
+            refs=reference(editable)
+            (OUT/"api-reference.json").write_text(json.dumps(refs,indent=2))
+            native_task += "\nAuthoritative installed Python API reference (documentation, not a solution):\n"+json.dumps(refs)
+            native_task += "\nThe previous model exhausted its action budget with repeated invalid solutions. Use the API reference to change the underlying approach, not merely repeat post-processing edits. Preserve original behavior."
         agent_env = StagedInterface(env,SOURCE,TEST,editable,OUT/"staged-actions.jsonl",independent_feedback=feedback) if args.staged else env
         if args.staged:
             native_task = staged_task(native_task, editable)
