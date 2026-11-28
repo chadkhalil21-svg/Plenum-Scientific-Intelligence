@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   native:
-    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-hermes-native-worker' && github.run_attempt == 1 && github.event.before == '7c1fcc1668ee5c2affae0644ed19d6a57107d160'
+    if: github.repository == 'chadkhalil21-svg/Plenum-Scientific-Intelligence' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'prometheus-hermes-native-worker' && github.run_attempt == 1 && github.event.before == 'ff3b7bc82b479cb017ef5a1099ce8d36b6e0a564'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -24,8 +24,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/46100246193/jobs" > "$RUNNER_TEMP/hermes-original-jobs.json"
-          python -c 'import json,sys; j=json.load(open(sys.argv[1]))["jobs"]; a=next(x for x in j if x["id"]==140840813432); assert a["conclusion"]=="failure"; s={x["name"]:x["conclusion"] for x in a["steps"]}; assert s["Pull versioned official upstream runtime and existing local model"]=="failure" and s["Execute official whole Hermes agent on new actual engineering assignment"]=="skipped" and s["Independent networkless regression and frozen acceptance"]=="skipped"' "$RUNNER_TEMP/hermes-original-jobs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/46100363227/jobs" > "$RUNNER_TEMP/hermes-original-jobs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/15244309434/zip" > "$RUNNER_TEMP/hermes-prior.zip"
+          echo "7afaf9c0db865ec76d1523e234671e3bd1782324520c3f6272345a9a6ce8dec6  $RUNNER_TEMP/hermes-prior.zip" | sha256sum -c -
+          python -c 'import sys,zipfile; z=zipfile.ZipFile(sys.argv[1]); assert z.testzip() is None and set(z.namelist())=={"hermes-image.json","model.json","frozen-inputs.txt","hermes-version.txt","ollama-image.json"}' "$RUNNER_TEMP/hermes-prior.zip"
+          python -c 'import json,sys; j=json.load(open(sys.argv[1]))["jobs"]; a=next(x for x in j if x["id"]==140841176042); assert a["conclusion"]=="failure"; s={x["name"]:x["conclusion"] for x in a["steps"]}; assert s["Pull versioned official upstream runtime and existing local model"]=="success" and s["Execute official whole Hermes agent on new actual engineering assignment"]=="failure" and s["Independent networkless regression and frozen acceptance"]=="skipped"' "$RUNNER_TEMP/hermes-original-jobs.json"
       - name: Freeze genuine public source and independent acceptance before inference
         run: |
           set -euo pipefail
@@ -52,19 +55,21 @@ jobs:
                   self.assertEqual((result["verified"],result["total"]),(1,1))
                   self.assertFalse(result["asserts_commercial_readiness"])
           PY
+          echo "da65f890aa542233d74d75aa6f284ccf0a628767718debf4b9f31871be3df1b9  src/plenum_ai/business_public_watch.py" | sha256sum -c -
+          echo "d67b4a758f83ca532884c59c7f6a99afb37aeebbee22c32c018d805b77729ac5  $RUNNER_TEMP/hermes-grade/tests/test_target_selection.py" | sha256sum -c -
           sha256sum src/plenum_ai/business_public_watch.py "$RUNNER_TEMP/hermes-grade/tests/test_target_selection.py" > "$RUNNER_TEMP/hermes-evidence/frozen-inputs.txt"
           sudo chown -R 10000:10000 "$RUNNER_TEMP/hermes-work" "$RUNNER_TEMP/hermes-home"
       - name: Pull versioned official upstream runtime and existing local model
         run: |
           set -euo pipefail
-          docker pull nousresearch/hermes-agent:stable
-          docker run --init --rm --network none --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --entrypoint /opt/hermes/.venv/bin/hermes-agent nousresearch/hermes-agent:stable --version > "$RUNNER_TEMP/hermes-evidence/hermes-version.txt"
+          docker pull nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f
+          docker run --init --rm --network none --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --entrypoint /opt/hermes/.venv/bin/hermes-agent nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f --version > "$RUNNER_TEMP/hermes-evidence/hermes-version.txt"
           grep -Eq '(^|[^0-9])0[.]23[.]4([^0-9]|$)' "$RUNNER_TEMP/hermes-evidence/hermes-version.txt"
-          docker pull ollama/ollama:latest
+          docker pull ollama/ollama@sha256:7e8c7ba387b11b09dcce1eff1118b1ab433564ed263434a7730c209f2ee346f4
           docker pull python:3.12-slim
-          docker image inspect nousresearch/hermes-agent:stable --format '{{json .RepoDigests}}' > "$RUNNER_TEMP/hermes-evidence/hermes-image.json"
-          docker image inspect ollama/ollama:latest --format '{{json .RepoDigests}}' > "$RUNNER_TEMP/hermes-evidence/ollama-image.json"
-          docker run -d --name plenum-hermes-ollama -p 127.0.0.1:11434:11434 -e OLLAMA_CONTEXT_LENGTH=65536 -e OLLAMA_NUM_PARALLEL=1 -e OLLAMA_NO_CLOUD=1 --memory=9g --cpus=3 ollama/ollama:latest
+          docker image inspect nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f --format '{{json .RepoDigests}}' > "$RUNNER_TEMP/hermes-evidence/hermes-image.json"
+          docker image inspect ollama/ollama@sha256:7e8c7ba387b11b09dcce1eff1118b1ab433564ed263434a7730c209f2ee346f4 --format '{{json .RepoDigests}}' > "$RUNNER_TEMP/hermes-evidence/ollama-image.json"
+          docker run -d --name plenum-hermes-ollama -p 127.0.0.1:11434:11434 -e OLLAMA_CONTEXT_LENGTH=65536 -e OLLAMA_NUM_PARALLEL=1 -e OLLAMA_NO_CLOUD=1 --memory=9g --cpus=3 ollama/ollama@sha256:7e8c7ba387b11b09dcce1eff1118b1ab433564ed263434a7730c209f2ee346f4
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:11434/api/tags && break; sleep 2; done
           docker exec plenum-hermes-ollama ollama pull qwen3.5:4b
           curl -fsS http://127.0.0.1:11434/api/tags > "$RUNNER_TEMP/hermes-evidence/model.json"
@@ -76,7 +81,7 @@ jobs:
       - name: Execute official whole Hermes agent on new actual engineering assignment
         run: |
           set -euo pipefail
-          cat > "$RUNNER_TEMP/hermes-home/config.yaml" <<'YAML'
+          cat > "$RUNNER_TEMP/hermes-config.yaml" <<'YAML'
           model:
             provider: custom
             model: qwen3.5:4b
@@ -85,15 +90,19 @@ jobs:
             context_length: 65536
           platform_toolsets:
             cli: [file]
+          security:
+            allow_lazy_installs: false
           terminal:
             backend: local
             cwd: /work
           agent:
             max_turns: 8
           YAML
-          sudo chown 10000:10000 "$RUNNER_TEMP/hermes-home/config.yaml"
+          sudo install -o 10000 -g 10000 -m 0600 "$RUNNER_TEMP/hermes-config.yaml" "$RUNNER_TEMP/hermes-home/config.yaml"
+          sudo -u "#10000" test -r "$RUNNER_TEMP/hermes-home/config.yaml"
+          sudo -u "#10000" test -w "$RUNNER_TEMP/hermes-work/business_public_watch.py"
           # One-shot CLI only: no gateway, Docker socket, host credentials, external network, or checkout mount.
-          timeout 720 docker run --init --name plenum-hermes-native --network plenum-hermes-internal --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --pids-limit 128 --memory 3g --cpus 1 --workdir /work -e HOME=/opt/data -e HERMES_HOME=/opt/data -e OPENAI_API_KEY=local-only -e HERMES_SKIP_CONFIG_MIGRATION=1 -v "$RUNNER_TEMP/hermes-home:/opt/data" -v "$RUNNER_TEMP/hermes-work:/work" --entrypoint /opt/hermes/.venv/bin/hermes nousresearch/hermes-agent:stable chat --oneshot --toolsets file -q 'You are the existing Plenum Engineering specialist. Inspect /work/business_public_watch.py using your file tools and repair only its run function: reject an empty selection, duplicates, and targets outside the existing allowlist with ValueError before any probe is invoked. Preserve valid subsets, order, reporting and two independent reads. Modify the actual file; do not merely suggest a patch. Use native read and edit tools and verify your edit by rereading. No other files or external actions.' > "$RUNNER_TEMP/hermes-evidence/native-output.txt" 2>&1
+          timeout 720 docker run --init --name plenum-hermes-native --network plenum-hermes-internal --user 10000:10000 --cap-drop ALL --security-opt no-new-privileges --pids-limit 128 --memory 3g --cpus 1 --workdir /work -e HOME=/opt/data -e HERMES_HOME=/opt/data -e OPENAI_API_KEY=local-only -e HERMES_SKIP_CONFIG_MIGRATION=1 -v "$RUNNER_TEMP/hermes-home:/opt/data" -v "$RUNNER_TEMP/hermes-work:/work" --entrypoint /opt/hermes/.venv/bin/hermes nousresearch/hermes-agent@sha256:ef0650d523ee1b5ab32c779acabc446d9936869a9932591553688a62bcf0c42f chat --oneshot --toolsets file -q 'You are the existing Plenum Engineering specialist. Inspect /work/business_public_watch.py using your file tools and repair only its run function: reject an empty selection, duplicates, and targets outside the existing allowlist with ValueError before any probe is invoked. Preserve valid subsets, order, reporting and two independent reads. Modify the actual file; do not merely suggest a patch. Use native read and edit tools and verify your edit by rereading. No other files or external actions.' > "$RUNNER_TEMP/hermes-evidence/native-output.txt" 2>&1
           docker exec plenum-hermes-ollama ollama ps > "$RUNNER_TEMP/hermes-evidence/allocated-context.txt"
           cat "$RUNNER_TEMP/hermes-evidence/allocated-context.txt"
           grep -Eq '(^|[[:space:]])(65536|64K)([[:space:]]|$)' "$RUNNER_TEMP/hermes-evidence/allocated-context.txt"
