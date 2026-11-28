@@ -73,11 +73,22 @@ def evidence_root(directory):
         raise ValueError("Unsafe variable graph evidence directory")
     return root
 
+def validate_recovery_selection(scope, selection):
+    # A complete empty proposal is a rejected planning outcome, not a graph.
+    authorized = vm.validate(scope["mission"])["authorized_inputs"]
+    if (not isinstance(selection, dict) or set(selection) != set(authorized)
+            or any(type(value) is not bool for value in selection.values())):
+        raise ValueError("Invalid capability selection")
+    if any(selection.values()):
+        vm.graph(scope["mission"], selection)
+    return selection
+
+
 def recovery_request(scope, rejected=None):
     request = vm.request(scope["mission"])
     if rejected is not None:
         # Only validated Boolean selections from the original capability set.
-        vm.graph(scope["mission"], rejected)
+        validate_recovery_selection(scope, rejected)
         message = json.loads(request["messages"][1]["content"])
         message.update(previous_rejected_selection=rejected,
             correction="Independent acceptance rejected this selection. Re-read every objective clause and independently decide each available capability. Choose a different selection, omit unrelated capabilities, include all explicitly required capabilities.")
@@ -90,8 +101,8 @@ def recovery_plan(scope, selection, md, request):
 def recovery_result(scope, identity, selection, n, p):
     if type(n) is not int or not 0 < n <= 128 or type(p) is not int or not 0 < p <= 2048:
         raise ValueError("Incomplete inference counters")
-    vm.graph(scope["mission"], selection)
-    accepted = digest(sorted(k for k,v in selection.items() if v)) == scope["selection_commitment"]
+    validate_recovery_selection(scope, selection)
+    accepted = any(selection.values()) and digest(sorted(k for k,v in selection.items() if v)) == scope["selection_commitment"]
     return {**identity, "selection":selection, "selection_sha256":digest(selection),
             "eval_count":n, "prompt_eval_count":p, "accepted":accepted}
 
