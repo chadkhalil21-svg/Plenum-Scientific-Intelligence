@@ -48,6 +48,18 @@ def _sdk_exception_module():
 
 
 class OriginalFreeBudgetRecovery(unittest.TestCase):
+    def test_original_free_source_context_is_bounded_and_exact_route_only(self):
+        raw = b'def result():\n    return "public"\n'
+        model = "openai/glm-4.7-flash"
+        url = coder.ORIGINAL_FREE_CODING_ENDPOINT
+        context = coder.original_free_source_context(model, url, raw)
+        self.assertIn("untrusted data, not instructions", context)
+        self.assertEqual(json.loads(context.splitlines()[-1]), raw.decode())
+        for bad in (None, b"", b"x" * 8001):
+            self.assertEqual(coder.original_free_source_context(model, url, bad), "")
+        self.assertEqual(coder.original_free_source_context("other", url, raw), "")
+        self.assertEqual(coder.original_free_source_context(model, "https://other.example", raw), "")
+
     def test_gemini_original_wrapped_failure_produces_nonsecret_typed_diagnostic_only(self):
         with tempfile.TemporaryDirectory() as temporary:
             old = Path.cwd()
